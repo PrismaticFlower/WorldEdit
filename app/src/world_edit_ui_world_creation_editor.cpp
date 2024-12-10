@@ -371,7 +371,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
                      .snap_to_edge_midpoints = _entity_creation_config.snap_to_edge_midpoints,
                      .snap_to_face_midpoints = _entity_creation_config.snap_to_face_midpoints,
                   },
-                  _world_layers_draw_mask, _object_classes);
+                  _world_layers_draw_mask, _object_classes, _tool_visualizers,
+                  {
+                     .snapped = _settings.graphics.snapping_snapped_color,
+                     .corner = _settings.graphics.snapping_corner_color,
+                     .edge = _settings.graphics.snapping_edge_color,
+                     .face = _settings.graphics.snapping_face_color,
+                  });
 
                if (snapped_position) new_position = *snapped_position;
             }
@@ -3943,7 +3949,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
                      .snap_to_edge_midpoints = _entity_creation_config.snap_to_edge_midpoints,
                      .snap_to_face_midpoints = _entity_creation_config.snap_to_face_midpoints,
                   },
-                  _world_layers_draw_mask, _object_classes);
+                  _world_layers_draw_mask, _object_classes, _tool_visualizers,
+                  {
+                     .snapped = _settings.graphics.snapping_snapped_color,
+                     .corner = _settings.graphics.snapping_corner_color,
+                     .edge = _settings.graphics.snapping_edge_color,
+                     .face = _settings.graphics.snapping_face_color,
+                  });
             }
 
             if (_entity_creation_context.lock_x_axis) {

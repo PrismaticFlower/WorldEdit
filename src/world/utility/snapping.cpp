@@ -8,6 +8,8 @@ namespace we::world {
 
 namespace {
 
+constexpr float visualizer_size = 0.125f;
+
 auto get_snapping_corners(const quaternion& rotation, const float3 positionWS,
                           const math::bounding_box& bboxOS) -> std::array<float3, 8>
 {
@@ -42,13 +44,28 @@ auto get_snapping_face_midpoints(const std::array<float3, 8>& corners)
    };
 }
 
+void draw_point(tool_visualizers& visualizers, const float3& point,
+                const float4& color) noexcept
+{
+   visualizers.add_octahedron(
+      float4x4{
+         float4{visualizer_size, 0.0f, 0.0f, 0.0f},
+         float4{0.0f, visualizer_size, 0.0f, 0.0f},
+         float4{0.0f, 0.0f, visualizer_size, 0.0f},
+         float4{point.x, point.y, point.z, 1.0f},
+      },
+      color);
+}
+
 }
 
 auto get_snapped_position(const snapping_entity& snapping,
                           const std::span<const object> world_objects,
                           const float snap_radius, const snapping_flags flags,
                           const active_layers active_layers,
-                          const object_class_library& object_classes) noexcept -> float3
+                          const object_class_library& object_classes,
+                          tool_visualizers& visualizers,
+                          const snapping_visualizer_colors& colors) noexcept -> float3
 {
    const float cull_distance =
       distance(snapping.bboxOS.min, snapping.bboxOS.max) + snap_radius;
@@ -105,6 +122,8 @@ auto get_snapped_position(const snapping_entity& snapping,
                   snapping_pointWS = snapping_object_cornersWS[i];
                }
             }
+
+            draw_point(visualizers, cornerWS, colors.corner);
          }
       }
 
@@ -123,6 +142,8 @@ auto get_snapped_position(const snapping_entity& snapping,
                   snapping_pointWS = snapping_object_edgesWS[i];
                }
             }
+
+            draw_point(visualizers, pointWS, colors.edge);
          }
       }
 
@@ -141,9 +162,7 @@ auto get_snapped_position(const snapping_entity& snapping,
                   snapping_pointWS = snapping_object_facesWS[i];
                }
             }
-         }
 
-         for (const float3& pointWS : closest_object_facesWS) {
             for (uint32 i = 0; i < snapping_object_edgesWS.size(); ++i) {
                const float point_distance =
                   distance(pointWS, snapping_object_edgesWS[i]);
@@ -154,6 +173,8 @@ auto get_snapped_position(const snapping_entity& snapping,
                   snapping_pointWS = snapping_object_edgesWS[i];
                }
             }
+
+            draw_point(visualizers, pointWS, colors.edge);
          }
 
          for (const float3& pointWS : closest_object_edgesWS) {
@@ -171,28 +192,69 @@ auto get_snapped_position(const snapping_entity& snapping,
       }
    }
 
+   float3 new_positionWS;
+
    if (closest_distance <= snap_radius) {
       const float3 snap_directionWS = normalize(closest_pointWS - snapping_pointWS);
 
-      return snapping.positionWS + snap_directionWS * closest_distance;
+      new_positionWS = snapping.positionWS + snap_directionWS * closest_distance;
    }
    else {
-      return snapping.positionWS;
+      new_positionWS = snapping.positionWS;
    }
+
+   const std::array<float3, 8> snapped_object_cornersWS =
+      get_snapping_corners(snapping.rotation, new_positionWS, snapping.bboxOS);
+
+   if (flags.snap_to_corners) {
+      for (const float3& pointWS : snapped_object_cornersWS) {
+         draw_point(visualizers, pointWS, colors.corner);
+      }
+   }
+
+   if (flags.snap_to_edge_midpoints) {
+      for (const float3& pointWS :
+           get_snapping_edge_midpoints(snapped_object_cornersWS)) {
+         draw_point(visualizers, pointWS, colors.edge);
+      }
+   }
+
+   if (flags.snap_to_face_midpoints) {
+      for (const float3& pointWS :
+           get_snapping_face_midpoints(snapped_object_cornersWS)) {
+         draw_point(visualizers, pointWS, colors.face);
+      }
+   }
+
+   if (closest_distance <= snap_radius) {
+      visualizers.add_octahedron(
+         float4x4{
+            float4{visualizer_size * 2.0f, 0.0f, 0.0f, 0.0f},
+            float4{0.0f, visualizer_size * 2.0f, 0.0f, 0.0f},
+            float4{0.0f, 0.0f, visualizer_size * 2.0f, 0.0f},
+            float4{closest_pointWS.x, closest_pointWS.y, closest_pointWS.z, 1.0f},
+         },
+         colors.snapped);
+   }
+
+   return new_positionWS;
 }
 
 auto get_snapped_position(const object& snapping_object, const float3 snapping_positionWS,
                           const std::span<const object> world_objects,
                           const float snap_radius, const snapping_flags flags,
                           const active_layers active_layers,
-                          const object_class_library& object_classes) noexcept -> float3
+                          const object_class_library& object_classes,
+                          tool_visualizers& visualizers,
+                          const snapping_visualizer_colors& colors) noexcept -> float3
 {
-   return get_snapped_position(
-      snapping_entity{.rotation = snapping_object.rotation,
-                      .positionWS = snapping_positionWS,
-                      .bboxOS =
-                         object_classes[snapping_object.class_handle].model->bounding_box},
-      world_objects, snap_radius, flags, active_layers, object_classes);
+   return get_snapped_position(snapping_entity{.rotation = snapping_object.rotation,
+                                               .positionWS = snapping_positionWS,
+                                               .bboxOS =
+                                                  object_classes[snapping_object.class_handle]
+                                                     .model->bounding_box},
+                               world_objects, snap_radius, flags, active_layers,
+                               object_classes, visualizers, colors);
 }
 
 }

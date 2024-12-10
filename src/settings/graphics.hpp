@@ -67,6 +67,14 @@ struct graphics {
 
    float3 animation_spline_color = {0.5f, 0.0f, 0.f};
 
+   float4 snapping_snapped_color = {0.05f, 0.05f, 1.0f, 0.75f};
+
+   float4 snapping_corner_color = {1.0f, 0.25f, 0.25f, 0.5f};
+
+   float4 snapping_edge_color = {0.25f, 0.25f, 1.0f, 0.5f};
+
+   float4 snapping_face_color = {1.0f, 0.25f, 1.0f, 0.5f};
+
    float terrain_grid_line_width = 0.025f;
 
    float barrier_height = 32.0f;
