@@ -4211,10 +4211,15 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          ImGui::SeparatorText("Snapping");
 
+         const ImVec2 cell_padding = ImGui::GetStyle().CellPadding;
+
+         ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, {cell_padding.x, 0.0f});
+
          if (ImGui::BeginTable("Snapping", 2,
                                ImGuiTableFlags_NoSavedSettings |
                                   ImGuiTableFlags_SizingStretchSame)) {
             ImGui::TableNextColumn();
+
             if (ImGui::Selectable("Off", not _entity_creation_config.placement_cursor_snapping)) {
                _entity_creation_config.placement_cursor_snapping = false;
             }
@@ -4228,22 +4233,34 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (_entity_creation_config.placement_cursor_snapping) {
-            ImGui::Checkbox("Corners", &_entity_creation_config.snap_to_corners);
-            ImGui::SetItemTooltip("Snap with bounding box corners.");
-            ImGui::SameLine();
+            if (ImGui::BeginTable("Snapping Config", 3,
+                                  ImGuiTableFlags_NoSavedSettings |
+                                     ImGuiTableFlags_SizingStretchSame)) {
 
-            ImGui::Checkbox("Edges", &_entity_creation_config.snap_to_edge_midpoints);
-            ImGui::SetItemTooltip("Snap with bounding box edge midpoints.");
-            ImGui::SameLine();
+               ImGui::TableNextColumn();
+               ImGui::Selectable("Corners", &_entity_creation_config.snap_to_corners);
+               ImGui::SetItemTooltip("Snap with bounding box corners.");
 
-            ImGui::Checkbox("Faces", &_entity_creation_config.snap_to_face_midpoints);
-            ImGui::SetItemTooltip(
-               "Snap with bounding box top and bottom face midpoints.");
+               ImGui::TableNextColumn();
+               ImGui::Selectable("Edges", &_entity_creation_config.snap_to_edge_midpoints);
+               ImGui::SetItemTooltip("Snap with bounding box edge midpoints.");
+
+               ImGui::TableNextColumn();
+               ImGui::Selectable("Faces", &_entity_creation_config.snap_to_face_midpoints);
+               ImGui::SetItemTooltip(
+                  "Snap with bounding box top and bottom face midpoints.");
+
+               ImGui::EndTable();
+            }
+
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + cell_padding.y);
 
             ImGui::DragFloat("Snap Distance",
                              &_entity_creation_config.snap_distance, 0.1f, 0.0f,
                              1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
          }
+
+         ImGui::PopStyleVar();
       }
 
       if (traits.has_placement_ground) {
