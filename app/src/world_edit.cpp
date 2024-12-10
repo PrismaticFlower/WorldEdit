@@ -10,6 +10,7 @@
 #include "edits/insert_entity.hpp"
 #include "edits/insert_node.hpp"
 #include "edits/insert_point.hpp"
+#include "edits/set_class_name.hpp"
 #include "edits/set_terrain_area.hpp"
 #include "edits/set_value.hpp"
 #include "math/frustum.hpp"
@@ -2585,11 +2586,10 @@ void world_edit::cycle_creation_entity_object_class() noexcept
          [(_entity_creation_config.cycle_object_class_index++) %
           _last_created_entities.last_used_object_classes.size()];
 
-   _edit_stack_world
-      .apply(edits::make_set_value(
-                &_interaction_targets.creation_entity.get<world::object>().class_name,
-                class_name),
-             _edit_context, {.closed = true});
+   _edit_stack_world.apply(edits::make_set_class_name(
+                              &_interaction_targets.creation_entity.get<world::object>(),
+                              class_name, _object_classes),
+                           _edit_context, {.closed = true});
 }
 
 void world_edit::toggle_planning_entity_type() noexcept
