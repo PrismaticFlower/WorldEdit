@@ -934,6 +934,8 @@ private:
    bool _selection_cursor_move_lock_x_axis = false;
    bool _selection_cursor_move_lock_y_axis = false;
    bool _selection_cursor_move_lock_z_axis = false;
+   bool _selection_cursor_move_rotate_forward = false;
+   bool _selection_cursor_move_rotate_back = false;
    world::active_entity_types _selection_cursor_move_hit_mask;
    float _selection_cursor_move_snap_distance = 0.125f;
 

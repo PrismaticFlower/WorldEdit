@@ -247,6 +247,10 @@ void world_edit::initialize_commands() noexcept
                  _selection_cursor_move_lock_y_axis);
    _commands.add("entity_edit.cursor_move_lock_z_axis"s,
                  _selection_cursor_move_lock_z_axis);
+   _commands.add("entity_edit.cursor_move_rotate_forward"s,
+                 _selection_cursor_move_rotate_forward);
+   _commands.add("entity_edit.cursor_move_rotate_back"s,
+                 _selection_cursor_move_rotate_back);
    _commands.add("entity_edit.finish_match_transform"s,
                  [this] { _selection_match_transform_context.clicked = true; });
    _commands.add("entity_edit.finish_pick_sector"s,
@@ -1056,6 +1060,12 @@ void world_edit::initialize_hotkeys() noexcept
             {"Lock X Axis", "entity_edit.cursor_move_lock_x_axis", {.key = key::z}},
             {"Lock Y Axis", "entity_edit.cursor_move_lock_y_axis", {.key = key::x}},
             {"Lock Z Axis", "entity_edit.cursor_move_lock_z_axis", {.key = key::c}},
+            {"Rotate Selection Forward",
+             "entity_edit.cursor_move_rotate_forward",
+             {.key = key::mouse_wheel_forward}},
+            {"Rotate Selection Back",
+             "entity_edit.cursor_move_rotate_back",
+             {.key = key::mouse_wheel_back}},
          },
 
       .hidden = true,
