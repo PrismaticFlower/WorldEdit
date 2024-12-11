@@ -127,6 +127,8 @@ void world_edit::initialize_commands() noexcept
          finish_entity_select(select_method::remove);
       }
    });
+   _commands.add("selection.lock_rect_size"s,
+                 [this]() { lock_entity_select_size(); });
    _commands.add("selection.clear"s,
                  [this]() { _interaction_targets.selection.clear(); });
 
@@ -1126,6 +1128,17 @@ void world_edit::initialize_hotkeys() noexcept
          {
             {"Finish", "entity_edit.add_branch_weight_click", {.key = key::mouse1}},
             {"Finish (Escape)", "entity_edit.clear_selection_edit_tool", {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Entity Editing (Drag Select)",
+      .activated = [this] { return _selecting_entity; },
+      .default_hotkeys =
+         {
+            {"Lock", "selection.lock_rect_size", {.key = key::space}},
          },
 
       .hidden = true,

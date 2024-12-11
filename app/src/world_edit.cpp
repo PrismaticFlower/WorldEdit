@@ -754,8 +754,21 @@ void world_edit::ui_draw_select_box() noexcept
 
    const float2 current_cursor_position = {ImGui::GetIO().MousePos.x,
                                            ImGui::GetIO().MousePos.y};
-   const float2 rect_min = min(current_cursor_position, _select_start_position);
-   const float2 rect_max = max(current_cursor_position, _select_start_position);
+
+   float2 rect_min;
+   float2 rect_max;
+
+   if (not _selecting_entity_locked_size) {
+      rect_min = min(current_cursor_position, _select_start_position);
+      rect_max = max(current_cursor_position, _select_start_position);
+   }
+   else {
+      float2 start = current_cursor_position;
+      float2 end = current_cursor_position + _select_locked_sign * _select_locked_size;
+
+      rect_min = min(start, end);
+      rect_max = max(start, end);
+   }
 
    if (distance(rect_max, rect_min) >= (8.0f * _display_scale)) {
       const float3 color =
@@ -777,6 +790,7 @@ void world_edit::start_entity_select() noexcept
 {
    _select_start_position = std::bit_cast<float2>(ImGui::GetMousePos());
    _selecting_entity = true;
+   _selecting_entity_locked_size = false;
 }
 
 void world_edit::finish_entity_select(const select_method method) noexcept
@@ -786,8 +800,22 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
    const float2 current_cursor_position =
       std::bit_cast<float2>(ImGui::GetMousePos());
-   const float2 rect_min = min(current_cursor_position, _select_start_position);
-   const float2 rect_max = max(current_cursor_position, _select_start_position);
+
+   float2 rect_min;
+   float2 rect_max;
+
+   if (not _selecting_entity_locked_size) {
+      rect_min = min(current_cursor_position, _select_start_position);
+      rect_max = max(current_cursor_position, _select_start_position);
+   }
+   else {
+      float2 start = current_cursor_position;
+      float2 end = current_cursor_position + _select_locked_sign * _select_locked_size;
+
+      rect_min = min(start, end);
+      rect_max = max(start, end);
+   }
+
    const bool drag_select = distance(rect_max, rect_min) >= (8.0f * _display_scale);
 
    if (drag_select) {
@@ -1217,6 +1245,21 @@ void world_edit::finish_entity_select(const select_method method) noexcept
          _interaction_targets.selection.add(*_interaction_targets.hovered_entity);
       }
    }
+}
+
+void world_edit::lock_entity_select_size() noexcept
+{
+   if (not _selecting_entity) return;
+
+   _selecting_entity_locked_size = true;
+
+   const float2 current_cursor_position = {ImGui::GetIO().MousePos.x,
+                                           ImGui::GetIO().MousePos.y};
+   const float2 rect_min = min(current_cursor_position, _select_start_position);
+   const float2 rect_max = max(current_cursor_position, _select_start_position);
+
+   _select_locked_sign = sign(_select_start_position - current_cursor_position);
+   _select_locked_size = abs(rect_max - rect_min);
 }
 
 void world_edit::place_creation_entity() noexcept

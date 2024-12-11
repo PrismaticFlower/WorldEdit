@@ -333,6 +333,8 @@ private:
 
    void finish_entity_select(const select_method method) noexcept;
 
+   void lock_entity_select_size() noexcept;
+
    void place_creation_entity() noexcept;
 
    void place_creation_entity_at_camera() noexcept;
@@ -480,6 +482,7 @@ private:
    bool _pan_camera = false;
    bool _orbit_camera_active = false;
    bool _selecting_entity = false;
+   bool _selecting_entity_locked_size = false;
    bool _cursor_placement_undo_lock = false;
    bool _draw_overlay_grid = false;
    bool _draw_terrain_grid = false;
@@ -940,6 +943,8 @@ private:
    float _selection_cursor_move_snap_distance = 0.125f;
 
    float2 _select_start_position;
+   float2 _select_locked_sign;
+   float2 _select_locked_size;
    float2 _cursor_placement_lock_position;
 
    std::optional<world::terrain_light_map_baker> _terrain_light_map_baker;
