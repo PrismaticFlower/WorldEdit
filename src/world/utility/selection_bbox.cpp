@@ -273,12 +273,14 @@ auto selection_bbox_for_camera(const world& world,
    return selection_bbox;
 }
 
-auto selection_bbox_for_move(const world& world,
-                             const std::span<const selected_entity> selection,
-                             const object_class_library& object_classes) -> math::bounding_box
+auto selection_metrics_for_move(const world& world,
+                                const std::span<const selected_entity> selection,
+                                const object_class_library& object_classes) -> selection_metrics
 {
    math::bounding_box selection_bbox{.min = float3{FLT_MAX, FLT_MAX, FLT_MAX},
                                      .max = float3{-FLT_MAX, -FLT_MAX, -FLT_MAX}};
+   float3 centreWS = {};
+   float point_count = 0.0f;
 
    for (const auto& selected : selection) {
       if (selected.is<object_id>()) {
@@ -292,6 +294,9 @@ auto selection_bbox_for_move(const world& world,
             bbox = object->rotation * bbox + object->position;
 
             selection_bbox = math::combine(selection_bbox, bbox);
+
+            centreWS += object->position;
+            point_count += 1.0f;
          }
       }
       else if (selected.is<path_id_node_mask>()) {
@@ -308,6 +313,9 @@ auto selection_bbox_for_move(const world& world,
 
                selection_bbox =
                   math::integrate(selection_bbox, path->nodes[node_index].position);
+
+               centreWS += path->nodes[node_index].position;
+               point_count += 1.0f;
             }
          }
       }
@@ -372,6 +380,9 @@ auto selection_bbox_for_move(const world& world,
                selection_bbox = math::combine(bbox, selection_bbox);
             } break;
             }
+
+            centreWS += light->position;
+            point_count += 1.0f;
          }
       }
       else if (selected.is<region_id>()) {
@@ -409,6 +420,9 @@ auto selection_bbox_for_move(const world& world,
                selection_bbox = math::combine(bbox, selection_bbox);
             } break;
             }
+
+            centreWS += region->position;
+            point_count += 1.0f;
          }
       }
       else if (selected.is<sector_id>()) {
@@ -422,6 +436,9 @@ auto selection_bbox_for_move(const world& world,
 
                selection_bbox.max.x = std::max(selection_bbox.max.x, point.x);
                selection_bbox.max.z = std::max(selection_bbox.max.z, point.y);
+
+               centreWS += float3{point.x, sector->base, point.y};
+               point_count += 1.0f;
             }
 
             selection_bbox.min.y = std::min(selection_bbox.min.y, sector->base);
@@ -443,6 +460,9 @@ auto selection_bbox_for_move(const world& world,
             bbox = portal->rotation * bbox + portal->position;
 
             selection_bbox = math::combine(bbox, selection_bbox);
+
+            centreWS += portal->position;
+            point_count += 1.0f;
          }
       }
       else if (selected.is<hintnode_id>()) {
@@ -451,6 +471,9 @@ auto selection_bbox_for_move(const world& world,
 
          if (hintnode) {
             selection_bbox = math::integrate(selection_bbox, hintnode->position);
+
+            centreWS += hintnode->position;
+            point_count += 1.0f;
          }
       }
       else if (selected.is<barrier_id>()) {
@@ -459,6 +482,9 @@ auto selection_bbox_for_move(const world& world,
 
          if (barrier) {
             selection_bbox = math::integrate(selection_bbox, barrier->position);
+
+            centreWS += barrier->position;
+            point_count += 1.0f;
          }
       }
       else if (selected.is<planning_hub_id>()) {
@@ -467,6 +493,9 @@ auto selection_bbox_for_move(const world& world,
 
          if (planning_hub) {
             selection_bbox = math::integrate(selection_bbox, planning_hub->position);
+
+            centreWS += planning_hub->position;
+            point_count += 1.0f;
          }
       }
       else if (selected.is<boundary_id>()) {
@@ -482,6 +511,9 @@ auto selection_bbox_for_move(const world& world,
                                                         boundary->size.y}};
 
             selection_bbox = math::combine(bbox, selection_bbox);
+
+            centreWS += boundary->position;
+            point_count += 1.0f;
          }
       }
       else if (selected.is<measurement_id>()) {
@@ -491,11 +523,15 @@ auto selection_bbox_for_move(const world& world,
          if (measurement) {
             selection_bbox = math::integrate(selection_bbox, measurement->start);
             selection_bbox = math::integrate(selection_bbox, measurement->end);
+
+            centreWS += measurement->start;
+            centreWS += measurement->end;
+            point_count += 2.0f;
          }
       }
    }
 
-   return selection_bbox;
+   return {selection_bbox, centreWS / std::max(point_count, 1.0f)};
 }
 
 }

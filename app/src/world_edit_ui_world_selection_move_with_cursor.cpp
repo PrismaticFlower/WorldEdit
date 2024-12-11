@@ -9,6 +9,7 @@
 #include "world/utility/raycast.hpp"
 #include "world/utility/raycast_terrain.hpp"
 #include "world/utility/selection_bbox.hpp"
+#include "world/utility/snapping.hpp"
 #include "world/utility/terrain_cut.hpp"
 #include "world/utility/world_utilities.hpp"
 
@@ -23,15 +24,6 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
 
    if (ImGui::Begin("Move Selection##With Cursor", &open,
                     ImGuiWindowFlags_AlwaysAutoResize)) {
-      const math::bounding_box selection_bbox =
-         selection_bbox_for_move(_world, _interaction_targets.selection, _object_classes);
-
-      float3 selection_centre = (selection_bbox.min + selection_bbox.max) / 2.0f;
-
-      if (_selection_cursor_move_ground_with_bbox) {
-         selection_centre.y = selection_bbox.min.y;
-      }
-
       const world::active_entity_types raycast_mask = _selection_cursor_move_hit_mask;
 
       graphics::camera_ray ray =
@@ -185,15 +177,67 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
          }
       }
 
+      const world::selection_metrics metrics =
+         selection_metrics_for_move(_world, _interaction_targets.selection,
+                                    _object_classes);
+
+      float3 selection_centreWS = metrics.centreWS;
       float3 cursor_positionWS = cursor_distance != std::numeric_limits<float>::max()
                                     ? ray.origin + ray.direction * cursor_distance
                                     : float3{0.0f, 0.0f, 0.0f};
+
+      if (_selection_cursor_move_ground_with_bbox) {
+         const float ground_distance = metrics.bboxWS.min.y - selection_centreWS.y;
+
+         cursor_positionWS.y -= ground_distance;
+      }
 
       if (_selection_cursor_move_align_cursor) {
          cursor_positionWS.x =
             std::round(cursor_positionWS.x / _editor_grid_size) * _editor_grid_size;
          cursor_positionWS.z =
             std::round(cursor_positionWS.z / _editor_grid_size) * _editor_grid_size;
+      }
+
+      if (_selection_cursor_move_snap_cursor) {
+         math::bounding_box bboxOS;
+         quaternion world_from_object;
+
+         if (_interaction_targets.selection.size() == 1 and
+             _interaction_targets.selection[0].is<world::object_id>()) {
+            if (world::object* object =
+                   world::find_entity(_world.objects,
+                                      _interaction_targets.selection[0].get<world::object_id>());
+                object) {
+               bboxOS = _object_classes[object->class_handle].model->bounding_box;
+               world_from_object = object->rotation;
+            }
+         }
+         else {
+            bboxOS = {.min = metrics.bboxWS.min - selection_centreWS,
+                      .max = metrics.bboxWS.max - selection_centreWS};
+         }
+
+         cursor_positionWS = world::get_snapped_position_filtered(
+            {
+               .rotation = world_from_object,
+               .positionWS = cursor_positionWS,
+               .bboxOS = bboxOS,
+            },
+            _world.objects, _interaction_targets.selection,
+            _selection_cursor_move_snap_distance,
+            {
+               .snap_to_corners = _selection_cursor_move_snap_to_corners,
+               .snap_to_edge_midpoints = _selection_cursor_move_snap_to_edge_midpoints,
+               .snap_to_face_midpoints = _selection_cursor_move_snap_to_face_midpoints,
+            },
+            _world_layers_draw_mask, _object_classes, _tool_visualizers,
+            {
+               .snapped = _settings.graphics.snapping_snapped_color,
+               .corner = _settings.graphics.snapping_corner_color,
+               .edge = _settings.graphics.snapping_edge_color,
+               .face = _settings.graphics.snapping_face_color,
+            });
       }
 
       edits::bundle_vector bundled_edits;
@@ -205,7 +249,7 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
       const auto update_position = [&](float3* position) {
          assert(position);
 
-         float3 new_position = *position - selection_centre + cursor_positionWS;
+         float3 new_position = *position - selection_centreWS + cursor_positionWS;
 
          if (lock_x) new_position.x = position->x;
          if (lock_y) new_position.y = position->y;
@@ -236,7 +280,7 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                   const world::path::node& node = path->nodes[node_index];
 
                   float3 new_position =
-                     node.position - selection_centre + cursor_positionWS;
+                     node.position - selection_centreWS + cursor_positionWS;
 
                   // clang-format off
 
@@ -273,7 +317,8 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                std::vector<float2> new_points = sector->points;
 
                for (std::size_t i = 0; i < new_points.size(); ++i) {
-                  new_points[i] -= float2{selection_centre.x, selection_centre.z};
+                  new_points[i] -=
+                     float2{selection_centreWS.x, selection_centreWS.z};
                   new_points[i] += float2{cursor_positionWS.x, cursor_positionWS.z};
 
                   if (lock_x) new_points[i].x = sector->points[i].x;
@@ -286,7 +331,7 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                if (not lock_y) {
                   bundled_edits.push_back(
                      edits::make_set_value(&sector->base,
-                                           (sector->base - selection_centre.y) +
+                                           (sector->base - selection_centreWS.y) +
                                               cursor_positionWS.y));
                }
             }
@@ -352,6 +397,38 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                       &_selection_cursor_move_ground_with_bbox);
 
       ImGui::Checkbox("Align Cursor to Grid", &_selection_cursor_move_align_cursor);
+
+      ImGui::Checkbox("Snapping", &_selection_cursor_move_snap_cursor);
+
+      if (_selection_cursor_move_snap_cursor) {
+         ImGui::SeparatorText("Snapping Config");
+
+         if (ImGui::BeginTable("Snapping Config", 3,
+                               ImGuiTableFlags_NoSavedSettings |
+                                  ImGuiTableFlags_SizingStretchSame)) {
+
+            ImGui::TableNextColumn();
+            ImGui::Selectable("Corners", &_selection_cursor_move_snap_to_corners);
+            ImGui::SetItemTooltip("Snap with bounding box corners.");
+
+            ImGui::TableNextColumn();
+            ImGui::Selectable("Edges", &_selection_cursor_move_snap_to_edge_midpoints);
+            ImGui::SetItemTooltip("Snap with bounding box edge midpoints.");
+
+            ImGui::TableNextColumn();
+            ImGui::Selectable("Faces", &_selection_cursor_move_snap_to_face_midpoints);
+            ImGui::SetItemTooltip(
+               "Snap with bounding box top and bottom face midpoints.");
+
+            ImGui::EndTable();
+         }
+
+         ImGui::SetCursorPosY(ImGui::GetCursorPosY() +
+                              ImGui::GetStyle().CellPadding.y);
+
+         ImGui::DragFloat("Snap Distance", &_selection_cursor_move_snap_distance,
+                          0.1f, 0.0f, 1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      }
 
       ImGui::SeparatorText("Cursor Collision");
 

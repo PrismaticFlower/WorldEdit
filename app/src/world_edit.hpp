@@ -927,10 +927,15 @@ private:
    int16 _selection_set_layer = 0;
    bool _selection_cursor_move_ground_with_bbox = true;
    bool _selection_cursor_move_align_cursor = false;
+   bool _selection_cursor_move_snap_cursor = false;
+   bool _selection_cursor_move_snap_to_corners = true;
+   bool _selection_cursor_move_snap_to_edge_midpoints = true;
+   bool _selection_cursor_move_snap_to_face_midpoints = true;
    bool _selection_cursor_move_lock_x_axis = false;
    bool _selection_cursor_move_lock_y_axis = false;
    bool _selection_cursor_move_lock_z_axis = false;
    world::active_entity_types _selection_cursor_move_hit_mask;
+   float _selection_cursor_move_snap_distance = 0.125f;
 
    float2 _select_start_position;
    float2 _cursor_placement_lock_position;

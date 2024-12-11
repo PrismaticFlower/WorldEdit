@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../active_elements.hpp"
+#include "../interaction_context.hpp"
 #include "../object_class_library.hpp"
 #include "../tool_visualizers.hpp"
 #include "../world.hpp"
@@ -43,5 +44,13 @@ auto get_snapped_position(const object& snapping_object, const float3 snapping_p
                           const object_class_library& object_classes,
                           tool_visualizers& visualizers,
                           const snapping_visualizer_colors& colors) noexcept -> float3;
+
+/// @brief Gets a snapped position, ignoring selected objects.
+auto get_snapped_position_filtered(
+   const snapping_entity& snapping, const std::span<const object> world_objects,
+   const selection& selection, const float snap_radius,
+   const snapping_flags flags, const active_layers active_layers,
+   const object_class_library& object_classes, tool_visualizers& visualizers,
+   const snapping_visualizer_colors& colors) noexcept -> float3;
 
 }
