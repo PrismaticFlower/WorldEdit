@@ -237,6 +237,10 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_edit.cancel_add_sector_object"s, [this] {
       _selection_edit_context.using_add_object_to_sector = false;
    });
+   _commands.add("entity_edit.cursor_toggle_alignment"s,
+                 _selection_cursor_move_align_cursor);
+   _commands.add("entity_edit.cursor_toggle_snapping"s,
+                 _selection_cursor_move_snap_cursor);
    _commands.add("entity_edit.cursor_move_lock_x_axis"s,
                  _selection_cursor_move_lock_x_axis);
    _commands.add("entity_edit.cursor_move_lock_y_axis"s,
@@ -1045,6 +1049,10 @@ void world_edit::initialize_hotkeys() noexcept
          },
       .default_hotkeys =
          {
+            {"Toggle Cursor Alignment", "entity_edit.cursor_toggle_alignment", {.key = key::g}},
+            {"Toggle Cursor Snapping",
+             "entity_edit.cursor_toggle_snapping",
+             {.key = key::s, .modifiers = {.alt = true}}},
             {"Lock X Axis", "entity_edit.cursor_move_lock_x_axis", {.key = key::z}},
             {"Lock Y Axis", "entity_edit.cursor_move_lock_y_axis", {.key = key::x}},
             {"Lock Z Axis", "entity_edit.cursor_move_lock_z_axis", {.key = key::c}},

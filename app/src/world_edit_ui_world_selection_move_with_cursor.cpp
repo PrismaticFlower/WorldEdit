@@ -512,6 +512,16 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
 
       ImGui::SeparatorText("Move Selection with Cursor");
 
+      ImGui::Text("Toggle Cursor Alignment");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Entity Editing (Move Selection with Cursor)",
+                                "Toggle Cursor Alignment")));
+
+      ImGui::Text("Toggle Cursor Snapping");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Entity Editing (Move Selection with Cursor)",
+                                "Toggle Cursor Snapping")));
+
       ImGui::Text("Lock X Axis");
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Entity Editing (Move Selection with Cursor)",
