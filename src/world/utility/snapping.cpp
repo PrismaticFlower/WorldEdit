@@ -194,7 +194,7 @@ auto get_snapped_position(const snapping_entity& snapping,
 
    float3 new_positionWS;
 
-   if (closest_distance <= snap_radius) {
+   if (closest_distance > 0.0f and closest_distance <= snap_radius) {
       const float3 snap_directionWS = normalize(closest_pointWS - snapping_pointWS);
 
       new_positionWS = snapping.positionWS + snap_directionWS * closest_distance;
