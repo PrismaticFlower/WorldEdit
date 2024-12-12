@@ -162,4 +162,20 @@ auto indent(std::size_t level, std::string_view input,
    return result;
 }
 
+void token_iterator::advance() noexcept
+{
+   do {
+      const std::size_t sep_offset = _str.find_first_of(_separator);
+
+      if (sep_offset == _str.npos) {
+         _token = _str;
+         _str = "";
+      }
+      else {
+         _token = _str.substr(0, sep_offset);
+         _str.remove_prefix(sep_offset + 1);
+      }
+   } while (_token.empty() and not _str.empty());
+}
+
 }

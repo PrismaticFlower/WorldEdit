@@ -151,4 +151,61 @@ private:
    bool _is_end = false;
 };
 
+struct token_iterator {
+   using value_type = std::string_view;
+   using pointer = std::string_view*;
+   using reference = std::string_view&;
+   using iterator_category = std::input_iterator_tag;
+
+   token_iterator(std::string_view str, char separator) noexcept
+      : _str{str}, _separator{separator}
+   {
+      advance();
+   }
+
+   auto operator++() noexcept -> token_iterator&
+   {
+      advance();
+
+      return *this;
+   }
+
+   void operator++(int) noexcept
+   {
+      advance();
+   }
+
+   auto operator*() const noexcept -> const std::string_view&
+   {
+      return _token;
+   }
+
+   auto operator->() const noexcept -> const std::string_view&
+   {
+      return _token;
+   }
+
+   auto begin() noexcept -> token_iterator
+   {
+      return *this;
+   }
+
+   auto end() noexcept -> std::nullptr_t
+   {
+      return nullptr;
+   }
+
+   bool operator==(std::nullptr_t) const noexcept
+   {
+      return _token.empty();
+   }
+
+private:
+   void advance() noexcept;
+
+   std::string_view _str;
+   std::string_view _token;
+   char _separator = ' ';
+};
+
 }

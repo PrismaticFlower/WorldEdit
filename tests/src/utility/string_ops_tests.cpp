@@ -123,4 +123,64 @@ TEST_CASE("string indention", "[Utility][StringOp]")
    REQUIRE(indent(1, input, "   "sv) == expected_input);
 }
 
+TEST_CASE("string token iterator", "[Utility][StringOp]")
+{
+   const std::string_view input = "A-B-C"sv;
+   const std::array expected_tokens{"A"sv, "B"sv, "C"sv};
+
+   std::size_t i = 0;
+   for (auto token : token_iterator{input, '-'}) {
+      CHECK(token == expected_tokens.at(i));
+
+      ++i;
+   }
+
+   REQUIRE(i == expected_tokens.size());
+}
+
+TEST_CASE("string token iterator prefix", "[Utility][StringOp]")
+{
+   const std::string_view input = "-A-B-C"sv;
+   const std::array expected_tokens{"A"sv, "B"sv, "C"sv};
+
+   std::size_t i = 0;
+   for (auto token : token_iterator{input, '-'}) {
+      CHECK(token == expected_tokens.at(i));
+
+      ++i;
+   }
+
+   REQUIRE(i == expected_tokens.size());
+}
+
+TEST_CASE("string token iterator suffix", "[Utility][StringOp]")
+{
+   const std::string_view input = "A-B-C-"sv;
+   const std::array expected_tokens{"A"sv, "B"sv, "C"sv};
+
+   std::size_t i = 0;
+   for (auto token : token_iterator{input, '-'}) {
+      CHECK(token == expected_tokens.at(i));
+
+      ++i;
+   }
+
+   REQUIRE(i == expected_tokens.size());
+}
+
+TEST_CASE("string token iterator prefix-suffix", "[Utility][StringOp]")
+{
+   const std::string_view input = "-A-B-C-"sv;
+   const std::array expected_tokens{"A"sv, "B"sv, "C"sv};
+
+   std::size_t i = 0;
+   for (auto token : token_iterator{input, '-'}) {
+      CHECK(token == expected_tokens.at(i));
+
+      ++i;
+   }
+
+   REQUIRE(i == expected_tokens.size());
+}
+
 }
