@@ -3828,6 +3828,26 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
    case error::device_removed: {
       _recreate_renderer_pending = true;
    } break;
+   case error::device_hung: {
+      if (MessageBoxA(_window, "The GPU has hung during rendering. This often (but not always) indicates a bug in the editor's renderer.\n\nIt may or may not be possible to recover, attempt?",
+                      "GPU Hung", MB_YESNO | MB_ICONERROR) == IDYES) {
+         _recreate_renderer_pending = true;
+
+         break;
+      }
+
+      if (not _edit_stack_world.modified_flag()) std::terminate();
+
+      switch (MessageBoxA(_window, "You have unsaved changes, save world?",
+                          "GPU Hung", MB_YESNO | MB_ICONERROR)) {
+      case IDYES:
+         save_world_with_picker();
+         [[fallthrough]];
+      case IDNO:
+      default:
+         std::terminate();
+      }
+   } break;
    case error::no_suitable_device: {
       switch (MessageBoxA(
          _window,

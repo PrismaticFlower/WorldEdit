@@ -30,6 +30,10 @@ inline void throw_if_fail(const HRESULT hresult)
          throw exception{
             error::device_removed,
             "The GPU was removed, reset or it's driver was updated."};
+      case DXGI_ERROR_DEVICE_HUNG:
+         throw exception{
+            error::device_hung,
+            "The GPU has hung, most likely because of an invalid command"};
       default:
          std::terminate();
       }
