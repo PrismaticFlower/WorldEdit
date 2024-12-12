@@ -3848,6 +3848,17 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
          std::terminate();
       }
    } break;
+   case error::driver_internal_error: {
+      switch (MessageBoxA(_window, "An unknown error has occured inside the GPU driver. The editor can not safely recover, save world?",
+                          "GPU Driver Internal Error", MB_YESNO | MB_ICONERROR)) {
+      case IDYES:
+         save_world_with_picker();
+         [[fallthrough]];
+      case IDNO:
+      default:
+         std::terminate();
+      }
+   } break;
    case error::no_suitable_device: {
       switch (MessageBoxA(
          _window,

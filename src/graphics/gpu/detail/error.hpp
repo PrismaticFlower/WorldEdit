@@ -34,6 +34,9 @@ inline void throw_if_fail(const HRESULT hresult)
          throw exception{
             error::device_hung,
             "The GPU has hung, most likely because of an invalid command"};
+      case DXGI_ERROR_DRIVER_INTERNAL_ERROR:
+         throw exception{error::driver_internal_error,
+                         "An unknown error has occured inside the GPU driver."};
       default:
          std::terminate();
       }

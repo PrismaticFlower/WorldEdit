@@ -8,6 +8,7 @@ enum class error {
    out_of_memory,
    device_removed,
    device_hung,
+   driver_internal_error,
    no_suitable_device
 };
 
