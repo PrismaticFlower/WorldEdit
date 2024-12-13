@@ -203,6 +203,7 @@
     <ClCompile Include="src\assets\config\io_tests.cpp" />
     <ClCompile Include="src\assets\config\key_node_tests.cpp" />
     <ClCompile Include="src\assets\config\values_tests.cpp" />
+    <ClCompile Include="src\assets\library_tree_tests.cpp" />
     <ClCompile Include="src\assets\msh\flat_model_tests.cpp" />
     <ClCompile Include="src\assets\msh\validate_scene_tests.cpp" />
     <ClCompile Include="src\assets\odf\definition_io_tests.cpp" />

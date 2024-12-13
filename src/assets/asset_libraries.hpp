@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 #include <span>
+#include <vector>
 
 #include "asset_ref.hpp"
 
@@ -45,6 +46,31 @@ struct texture;
 namespace sky {
 struct config;
 }
+
+/// @brief A directory inside the asset tree.
+struct library_tree_branch {
+   /// @brief Name of this directory.
+   std::string name;
+
+   /// @brief Child directories containing assets of this directory.
+   std::vector<library_tree_branch> directories;
+
+   /// @brief Assets inside this directory.
+   std::vector<lowercase_string> assets;
+};
+
+/// @brief The root of the asset tree.
+struct library_tree {
+   /// @brief Directories inside the root containing assets.
+   std::vector<library_tree_branch> directories;
+
+   /// @brief Assets inside this directory.
+   std::vector<lowercase_string> assets;
+
+   void add(const io::path& asset_path) noexcept;
+
+   void remove(const io::path& asset_path) noexcept;
+};
 
 /// @brief Tracks in the project folder and loads assets in the background using the thread pool when needed.
 /// @tparam T The type of the asset.
@@ -100,6 +126,10 @@ struct library {
    void view_existing(
       function_ptr<void(const std::span<const stable_string> assets) noexcept> callback) noexcept;
 
+   /// @brief Allows you to view a tree of existing (on disk) assets. A shared lock is taken on the underlying data as such `add` or `clear` must not be called from within the callback.
+   /// @param callback The function to call with a const reference to the tree of existing assets.
+   void view_tree(function_ptr<void(const library_tree& tree) noexcept> callback) noexcept;
+
    /// @brief Query the file path of an asset.
    /// @param name The name of the asset.
    /// @return The file path to the asset. Can be empty if the asset does not exist.
@@ -113,7 +143,7 @@ struct library {
 private:
    struct impl;
 
-   implementation_storage<impl, 232> self;
+   implementation_storage<impl, 296> self;
 };
 
 /// @brief Tracks assets like library but does no loading or lifetime management.

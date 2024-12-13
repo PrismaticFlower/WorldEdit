@@ -18,7 +18,6 @@
 #include <mutex>
 #include <shared_mutex>
 #include <string_view>
-#include <vector>
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
@@ -60,6 +59,155 @@ bool is_parent_path_ignored(const io::path& asset_path) noexcept
 
 }
 
+void library_tree::add(const io::path& asset_path) noexcept
+{
+   const std::string_view asset = asset_path.stem();
+   std::string_view parent_path_view = asset_path.parent_path();
+
+   if (parent_path_view == asset_path) {
+      assets.emplace(std::lower_bound(assets.begin(), assets.end(), asset,
+                                      [](const std::string_view left,
+                                         const std::string_view right) {
+                                         return string::iless_than(left, right);
+                                      }),
+                     asset);
+   }
+
+   library_tree_branch* branch = nullptr;
+
+   for (std::string_view part : string::token_iterator{parent_path_view, '\\'}) {
+      std::vector<library_tree_branch>& branches =
+         branch ? branch->directories : directories;
+
+      auto lower_it = std::lower_bound(branches.begin(), branches.end(), part,
+                                       [](const library_tree_branch& left,
+                                          const std::string_view right) {
+                                          return string::iless_than(left.name, right);
+                                       });
+
+      if (lower_it == branches.end() or not string::iequals(lower_it->name, part)) {
+         auto inserted =
+            branches.insert(lower_it, library_tree_branch{.name = std::string{part}});
+
+         branch = &(*inserted);
+      }
+      else {
+         branch = &(*lower_it);
+      }
+   }
+
+   if (branch) {
+      branch->assets.emplace(std::lower_bound(branch->assets.begin(),
+                                              branch->assets.end(), asset,
+                                              [](const std::string_view left,
+                                                 const std::string_view right) {
+                                                 return string::iless_than(left, right);
+                                              }),
+                             asset);
+   }
+}
+
+void library_tree::remove(const io::path& asset_path) noexcept
+{
+   const std::string_view asset = asset_path.stem();
+   std::string_view parent_path_view = asset_path.parent_path();
+
+   if (parent_path_view == asset_path) {
+      auto asset_it = std::lower_bound(assets.begin(), assets.end(), asset,
+                                       [](const std::string_view left,
+                                          const std::string_view right) {
+                                          return string::iless_than(left, right);
+                                       });
+
+      if (asset_it == assets.end()) return;
+
+      if (string::iequals(asset, *asset_it)) assets.erase(asset_it);
+
+      return;
+   }
+
+   library_tree_branch* branch = nullptr;
+   std::size_t tree_depth = 0;
+
+   for (std::string_view part : string::token_iterator{parent_path_view, '\\'}) {
+      std::vector<library_tree_branch>& branches =
+         branch ? branch->directories : directories;
+
+      auto branch_it = std::lower_bound(branches.begin(), branches.end(), part,
+                                        [](const library_tree_branch& left,
+                                           const std::string_view right) {
+                                           return string::iless_than(left.name, right);
+                                        });
+
+      if (branch_it == branches.end()) return;
+      if (not string::iequals(branch_it->name, part)) return;
+
+      branch = &(*branch_it);
+   }
+
+   if (branch) {
+      auto asset_it =
+         std::lower_bound(branch->assets.begin(), branch->assets.end(), asset,
+                          [](const std::string_view left, const std::string_view right) {
+                             return string::iless_than(left, right);
+                          });
+
+      if (asset_it == branch->assets.end()) return;
+
+      branch->assets.erase(asset_it);
+
+      // Trim empty branches.
+      //
+      // This code's a bit involved but we start by building a stack of
+      // library_tree_branch* that make up the path to the removed asset.
+      //
+      // If the stack has more than 1 entry we iterate it in reverse order (so child to parents) and remove any empty children parents.
+      // Stopping when we hit a non-empty child.
+      //
+      // Finally we handle removing the root entry in branch stack from the tree root, if needed.
+      //
+      // During this code we take advantage of the fact we know we have a valid path through the tree to skip some work.
+      if (branch->directories.empty() and branch->assets.empty()) {
+         std::vector<library_tree_branch*> branch_stack;
+         branch_stack.reserve(tree_depth);
+
+         for (std::string_view part : string::token_iterator{parent_path_view, '\\'}) {
+            std::vector<library_tree_branch>& branches =
+               branch_stack.empty() ? directories : branch_stack.back()->directories;
+
+            auto branch_it =
+               std::lower_bound(branches.begin(), branches.end(), part,
+                                [](const library_tree_branch& left,
+                                   const std::string_view right) {
+                                   return string::iless_than(left.name, right);
+                                });
+
+            branch_stack.push_back(&(*branch_it));
+         }
+
+         if (branch_stack.size() > 1) {
+            for (std::ptrdiff_t i = std::ssize(branch_stack) - 1; i != 0; --i) {
+               library_tree_branch* child = branch_stack[i];
+               library_tree_branch* parent = branch_stack[i - 1];
+
+               if (child->directories.empty() and child->assets.empty()) {
+                  parent->directories.erase(parent->directories.begin() +
+                                            (child - parent->directories.data()));
+               }
+               else {
+                  break;
+               }
+            }
+         }
+
+         if (branch_stack[0]->directories.empty() and branch_stack[0]->assets.empty()) {
+            directories.erase(directories.begin() +
+                              (branch_stack[0] - directories.data()));
+         }
+      }
+   }
+}
+
 template<typename T>
 struct library<T>::impl {
    impl(output_stream& stream, std::shared_ptr<async::thread_pool> thread_pool)
@@ -82,11 +230,18 @@ struct library<T>::impl {
       auto state = state_pair->second;
 
       if (not inserted) {
-         std::scoped_lock state_lock{state->mutex, _existing_assets_mutex};
+         std::scoped_lock state_lock{state->mutex, _existing_assets_mutex,
+                                     _assets_tree_mutex};
 
          if (not state->exists) {
             _existing_assets.emplace_back(name);
             _existing_assets_sorted = false;
+
+            _assets_tree.add(asset_path);
+         }
+         else if (state->path != asset_path) {
+            _assets_tree.remove(state->path);
+            _assets_tree.add(asset_path);
          }
 
          state->exists = true;
@@ -96,10 +251,12 @@ struct library<T>::impl {
          state->last_write_time.store(last_write_time, std::memory_order_relaxed);
       }
       else {
-         std::scoped_lock lock{_existing_assets_mutex};
+         std::scoped_lock lock{_existing_assets_mutex, _assets_tree_mutex};
 
          _existing_assets.emplace_back(name);
          _existing_assets_sorted = false;
+
+         _assets_tree.add(asset_path);
       }
 
       if (state->ref_count.load(std::memory_order_relaxed) > 0) {
@@ -125,8 +282,8 @@ struct library<T>::impl {
 
       // Remove Asset
       {
-         std::scoped_lock lock{_assets_mutex, _load_tasks_mutex,
-                               _existing_assets_mutex, asset_state->mutex};
+         std::scoped_lock lock{_assets_mutex, _load_tasks_mutex, _existing_assets_mutex,
+                               _assets_tree_mutex, asset_state->mutex};
 
          if (asset_state->path != asset_path) return;
 
@@ -136,6 +293,8 @@ struct library<T>::impl {
 
          std::erase_if(_existing_assets,
                        [&](const stable_string& asset) { return asset == name; });
+
+         _assets_tree.remove(asset_path);
       }
 
       _change_event.broadcast(name);
@@ -252,6 +411,13 @@ struct library<T>::impl {
       std::shared_lock lock{_existing_assets_mutex};
 
       callback(_existing_assets);
+   }
+
+   void view_tree(function_ptr<void(const library_tree& tree) noexcept> callback) noexcept
+   {
+      std::shared_lock lock{_assets_tree_mutex};
+
+      callback(_assets_tree);
    }
 
    auto query_path(const lowercase_string& name) noexcept -> io::path
@@ -385,6 +551,9 @@ private:
    std::vector<stable_string> _existing_assets;
    std::atomic_bool _existing_assets_sorted = true;
 
+   std::shared_mutex _assets_tree_mutex;
+   library_tree _assets_tree;
+
    std::shared_ptr<async::thread_pool> _thread_pool;
 
    const std::shared_ptr<asset_state<T>> _null_asset = make_placeholder_asset_state();
@@ -459,6 +628,12 @@ void library<T>::view_existing(
    function_ptr<void(const std::span<const stable_string> assets) noexcept> callback) noexcept
 {
    self->view_existing(callback);
+}
+
+template<typename T>
+void library<T>::view_tree(function_ptr<void(const library_tree& tree) noexcept> callback) noexcept
+{
+   self->view_tree(callback);
 }
 
 template<typename T>
