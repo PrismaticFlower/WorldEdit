@@ -915,6 +915,17 @@ private:
 
    world::animation_solver _animation_solver;
 
+   struct class_browser_context {
+      std::string filter;
+
+      std::vector<uint32> selected_stack;
+      lowercase_string selected_name;
+
+      std::vector<uint32> traversal_stack;
+
+      std::vector<const assets::library_tree_branch*> branch_stack;
+   } _class_browser_context;
+
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;
 

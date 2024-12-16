@@ -15,6 +15,79 @@ namespace {
 
 constexpr float thumbnail_base_size = 128.0f;
 
+void show_tree_branch(const assets::library_tree_branch& branch,
+                      std::vector<uint32>& traversal_stack,
+                      std::vector<uint32>& selected_stack,
+                      std::string& selected_name, bool& found_root) noexcept
+{
+   if (not found_root and branch.directories.size() == 1) {
+      traversal_stack.push_back(0);
+
+      show_tree_branch(branch.directories[0], traversal_stack, selected_stack,
+                       selected_name, found_root);
+
+      traversal_stack.pop_back();
+
+      return;
+   }
+
+   const bool is_selected = traversal_stack == selected_stack and
+                            string::iequals(selected_name, branch.name);
+
+   ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth;
+
+   if (branch.directories.empty()) flags |= ImGuiTreeNodeFlags_Leaf;
+   if (is_selected) flags |= ImGuiTreeNodeFlags_Selected;
+
+   found_root |= not branch.directories.empty();
+
+   if (ImGui::TreeNodeEx(branch.name.c_str(), flags)) {
+      if (ImGui::IsItemClicked() or ImGui::IsItemToggledOpen()) {
+         if (is_selected and not ImGui::IsItemToggledOpen()) {
+            selected_stack.clear();
+            selected_name.clear();
+         }
+         else {
+            selected_stack = traversal_stack;
+            selected_name = branch.name;
+         }
+      }
+
+      for (uint32 i = 0; i < branch.directories.size(); ++i) {
+         traversal_stack.push_back(i);
+
+         show_tree_branch(branch.directories[i], traversal_stack,
+                          selected_stack, selected_name, found_root);
+
+         traversal_stack.pop_back();
+      }
+
+      ImGui::TreePop();
+   }
+}
+
+auto walk_to_selected_branch(const assets::library_tree& tree,
+                             const std::vector<uint32>& selected_stack,
+                             const std::string_view selected_name) noexcept
+   -> const assets::library_tree_branch*
+{
+   if (selected_stack.empty()) return nullptr;
+   if (selected_stack.front() >= tree.directories.size()) return nullptr;
+
+   const assets::library_tree_branch* branch =
+      &tree.directories[selected_stack.front()];
+
+   for (uint32 iter_index = 1; iter_index < selected_stack.size(); ++iter_index) {
+      const uint32 selected_index = selected_stack[iter_index];
+
+      if (selected_index >= branch->directories.size()) return nullptr;
+
+      branch = &branch->directories[selected_index];
+   }
+
+   return string::iequals(branch->name, selected_name) ? branch : nullptr;
+}
+
 }
 
 void world_edit::ui_show_object_class_browser() noexcept
@@ -25,10 +98,54 @@ void world_edit::ui_show_object_class_browser() noexcept
                             ImGuiCond_FirstUseEver);
 
    if (ImGui::Begin("Object Class Browser", &_object_class_browser_open)) {
+      class_browser_context& context = _class_browser_context;
+
+      if (ImGui::BeginChild("##directories", {176.0f * _display_scale, 0.0f},
+                            ImGuiChildFlags_ResizeX)) {
+         ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, ImGui::GetFontSize());
+         ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign,
+                             {ImGui::GetStyle().FramePadding.x /
+                                 ImGui::GetContentRegionAvail().x,
+                              0.0f});
+
+         if (ImGui::Selectable("<All>", context.selected_stack.empty())) {
+            context.selected_stack.clear();
+            context.selected_name.clear();
+         }
+
+         ImGui::PopStyleVar();
+
+         _asset_libraries.odfs.view_tree([&](const assets::library_tree& tree) noexcept {
+            context.traversal_stack.clear();
+
+            for (uint32 i = 0; i < std::size(tree.directories); ++i) {
+               bool found_root = false;
+
+               context.traversal_stack.push_back(i);
+
+               show_tree_branch(tree.directories[i], context.traversal_stack,
+                                context.selected_stack, context.selected_name,
+                                found_root);
+
+               context.traversal_stack.pop_back();
+            }
+         });
+
+         ImGui::PopStyleVar();
+      }
+
+      ImGui::EndChild();
+
+      ImGui::SameLine();
+
+      ImGui::BeginChild("##classes");
+
       if (ImGui::InputTextWithHint("Filter", "e.g. com_bldg_controlzone",
-                                   &_world_explorer_class_filter)) {
+                                   &context.filter)) {
          ImGui::SetNextWindowScroll({0.0f, 0.0f});
       }
+
+      ImGui::BeginChild("Classes", ImGui::GetContentRegionAvail());
 
       const float button_size = thumbnail_base_size * _display_scale;
       const float item_size = button_size + ImGui::GetStyle().ItemSpacing.x;
@@ -37,101 +154,226 @@ void world_edit::ui_show_object_class_browser() noexcept
       const ImU32 text_color = ImGui::GetColorU32(ImGuiCol_Text);
       const float text_offset = 4.0f * _display_scale;
 
-      ImGui::BeginChild("Classes", ImGui::GetContentRegionAvail());
+      if (not context.selected_stack.empty()) {
+         _asset_libraries.odfs.view_tree([&](const assets::library_tree& tree) noexcept {
+            const assets::library_tree_branch* selected_branch =
+               walk_to_selected_branch(tree, context.selected_stack,
+                                       context.selected_name);
 
-      _asset_libraries.odfs.view_existing([&](const std::span<const assets::stable_string> assets) noexcept {
-         for (std::string_view asset : assets) {
-            if (not _world_explorer_class_filter.empty() and
-                not string::icontains(asset, _world_explorer_class_filter)) {
-               continue;
+            if (not selected_branch) {
+               context.selected_stack.clear();
+               context.selected_name.clear();
+
+               return;
             }
 
-            if (ImGui::IsRectVisible({button_size, button_size})) {
-               const std::optional<graphics::object_class_thumbnail> thumbnail =
-                  [&]() -> std::optional<graphics::object_class_thumbnail> {
-                  try {
-                     return _renderer->request_object_class_thumbnail(asset);
+            context.branch_stack.push_back(selected_branch);
+
+            while (not context.branch_stack.empty()) {
+               const assets::library_tree_branch* branch =
+                  context.branch_stack.back();
+
+               context.branch_stack.pop_back();
+
+               for (const lowercase_string& asset : branch->assets) {
+                  if (not context.filter.empty() and
+                      not string::icontains(asset, context.filter)) {
+                     continue;
                   }
-                  catch (graphics::gpu::exception& e) {
-                     handle_gpu_error(e);
 
-                     return std::nullopt;
-                  }
-               }();
+                  if (ImGui::IsRectVisible({button_size, button_size})) {
+                     const std::optional<graphics::object_class_thumbnail> thumbnail =
+                        [&]() -> std::optional<graphics::object_class_thumbnail> {
+                        try {
+                           return _renderer->request_object_class_thumbnail(asset);
+                        }
+                        catch (graphics::gpu::exception& e) {
+                           handle_gpu_error(e);
 
-               if (not thumbnail) continue;
+                           return std::nullopt;
+                        }
+                     }();
 
-               ImGui::PushID(asset.data(), asset.data() + asset.size());
+                     if (not thumbnail) continue;
 
-               const ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
+                     ImGui::PushID(asset.data(), asset.data() + asset.size());
 
-               if (ImGui::ImageButton("##add", thumbnail->imgui_texture_id,
-                                      {button_size, button_size},
-                                      {thumbnail->uv_left, thumbnail->uv_top},
-                                      {thumbnail->uv_right, thumbnail->uv_bottom})) {
-                  if (_interaction_targets.creation_entity.is<world::object>()) {
-                     world::object& object =
-                        _interaction_targets.creation_entity.get<world::object>();
+                     const ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
 
-                     _edit_stack_world.apply(edits::make_set_class_name(&object,
-                                                                        lowercase_string{asset},
-                                                                        _object_classes),
-                                             _edit_context);
+                     if (ImGui::ImageButton("##add", thumbnail->imgui_texture_id,
+                                            {button_size, button_size},
+                                            {thumbnail->uv_left, thumbnail->uv_top},
+                                            {thumbnail->uv_right, thumbnail->uv_bottom})) {
+                        if (_interaction_targets.creation_entity.is<world::object>()) {
+                           world::object& object =
+                              _interaction_targets.creation_entity.get<world::object>();
+
+                           _edit_stack_world
+                              .apply(edits::make_set_class_name(&object,
+                                                                lowercase_string{asset},
+                                                                _object_classes),
+                                     _edit_context);
+                        }
+                        else {
+                           _edit_stack_world.apply(
+                              edits::make_creation_entity_set(
+                                 world::object{.name = "",
+                                               .layer = _last_created_entities.last_layer,
+                                               .class_name = lowercase_string{asset},
+                                               .id = world::max_id},
+                                 _object_classes),
+                              _edit_context);
+                           _entity_creation_context = {};
+                        }
+                     }
+
+                     const ImVec4 label_clip{cursor_pos.x, cursor_pos.y,
+                                             cursor_pos.x + button_size,
+                                             cursor_pos.y + button_size};
+
+                     ImGui::GetWindowDrawList()
+                        ->AddText(ImGui::GetFont(), ImGui::GetFontSize(),
+                                  {cursor_pos.x + text_offset, cursor_pos.y}, text_color,
+                                  asset.data(), asset.data() + asset.size(),
+                                  button_size - text_offset, &label_clip);
+
+                     if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
+                        ImGui::TextUnformatted(asset.data(),
+                                               asset.data() + asset.size());
+
+                        ImGui::EndTooltip();
+                     }
+
+                     if (ImGui::BeginPopupContextItem("Class Name")) {
+                        if (ImGui::MenuItem("Open .odf in Text Editor")) {
+                           open_odf_in_text_editor(asset);
+                        }
+
+                        if (ImGui::MenuItem("Show .odf in Explorer")) {
+                           show_odf_in_explorer(asset);
+                        }
+
+                        ImGui::EndPopup();
+                     }
+
+                     ImGui::PopID();
                   }
                   else {
-                     _edit_stack_world
-                        .apply(edits::make_creation_entity_set(
-                                  world::object{.name = "",
-                                                .layer = _last_created_entities.last_layer,
-                                                .class_name = lowercase_string{asset},
-                                                .id = world::max_id},
-                                  _object_classes),
-                               _edit_context);
-                     _entity_creation_context = {};
+                     ImGui::Dummy({button_size, button_size});
+                  }
+
+                  ImGui::SameLine();
+
+                  if (ImGui::GetCursorPosX() + item_size > window_space) {
+                     ImGui::NewLine();
                   }
                }
 
-               const ImVec4 label_clip{cursor_pos.x, cursor_pos.y,
-                                       cursor_pos.x + button_size,
-                                       cursor_pos.y + button_size};
-
-               ImGui::GetWindowDrawList()
-                  ->AddText(ImGui::GetFont(), ImGui::GetFontSize(),
-                            {cursor_pos.x + text_offset, cursor_pos.y},
-                            text_color, asset.data(), asset.data() + asset.size(),
-                            button_size - text_offset, &label_clip);
-
-               if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
-                  ImGui::TextUnformatted(asset.data(), asset.data() + asset.size());
-
-                  ImGui::EndTooltip();
+               for (std::ptrdiff_t i = std::ssize(branch->directories) - 1;
+                    i >= 0; --i) {
+                  context.branch_stack.push_back(&branch->directories[i]);
+               }
+            }
+         });
+      }
+      else {
+         _asset_libraries.odfs.view_existing([&](const std::span<const assets::stable_string> assets) noexcept {
+            for (std::string_view asset : assets) {
+               if (not context.filter.empty() and
+                   not string::icontains(asset, context.filter)) {
+                  continue;
                }
 
-               if (ImGui::BeginPopupContextItem("Class Name")) {
-                  if (ImGui::MenuItem("Open .odf in Text Editor")) {
-                     open_odf_in_text_editor(lowercase_string{asset});
+               if (ImGui::IsRectVisible({button_size, button_size})) {
+                  const std::optional<graphics::object_class_thumbnail> thumbnail =
+                     [&]() -> std::optional<graphics::object_class_thumbnail> {
+                     try {
+                        return _renderer->request_object_class_thumbnail(asset);
+                     }
+                     catch (graphics::gpu::exception& e) {
+                        handle_gpu_error(e);
+
+                        return std::nullopt;
+                     }
+                  }();
+
+                  if (not thumbnail) continue;
+
+                  ImGui::PushID(asset.data(), asset.data() + asset.size());
+
+                  const ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
+
+                  if (ImGui::ImageButton("##add", thumbnail->imgui_texture_id,
+                                         {button_size, button_size},
+                                         {thumbnail->uv_left, thumbnail->uv_top},
+                                         {thumbnail->uv_right, thumbnail->uv_bottom})) {
+                     if (_interaction_targets.creation_entity.is<world::object>()) {
+                        world::object& object =
+                           _interaction_targets.creation_entity.get<world::object>();
+
+                        _edit_stack_world
+                           .apply(edits::make_set_class_name(&object,
+                                                             lowercase_string{asset},
+                                                             _object_classes),
+                                  _edit_context);
+                     }
+                     else {
+                        _edit_stack_world.apply(
+                           edits::make_creation_entity_set(
+                              world::object{.name = "",
+                                            .layer = _last_created_entities.last_layer,
+                                            .class_name = lowercase_string{asset},
+                                            .id = world::max_id},
+                              _object_classes),
+                           _edit_context);
+                        _entity_creation_context = {};
+                     }
                   }
 
-                  if (ImGui::MenuItem("Show .odf in Explorer")) {
-                     show_odf_in_explorer({lowercase_string{asset}});
+                  const ImVec4 label_clip{cursor_pos.x, cursor_pos.y,
+                                          cursor_pos.x + button_size,
+                                          cursor_pos.y + button_size};
+
+                  ImGui::GetWindowDrawList()
+                     ->AddText(ImGui::GetFont(), ImGui::GetFontSize(),
+                               {cursor_pos.x + text_offset, cursor_pos.y}, text_color,
+                               asset.data(), asset.data() + asset.size(),
+                               button_size - text_offset, &label_clip);
+
+                  if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
+                     ImGui::TextUnformatted(asset.data(), asset.data() + asset.size());
+
+                     ImGui::EndTooltip();
                   }
 
-                  ImGui::EndPopup();
+                  if (ImGui::BeginPopupContextItem("Class Name")) {
+                     if (ImGui::MenuItem("Open .odf in Text Editor")) {
+                        open_odf_in_text_editor(lowercase_string{asset});
+                     }
+
+                     if (ImGui::MenuItem("Show .odf in Explorer")) {
+                        show_odf_in_explorer({lowercase_string{asset}});
+                     }
+
+                     ImGui::EndPopup();
+                  }
+
+                  ImGui::PopID();
+               }
+               else {
+                  ImGui::Dummy({button_size, button_size});
                }
 
-               ImGui::PopID();
-            }
-            else {
-               ImGui::Dummy({button_size, button_size});
-            }
+               ImGui::SameLine();
 
-            ImGui::SameLine();
-
-            if (ImGui::GetCursorPosX() + item_size > window_space) {
-               ImGui::NewLine();
+               if (ImGui::GetCursorPosX() + item_size > window_space) {
+                  ImGui::NewLine();
+               }
             }
-         }
-      });
+         });
+      }
+
+      ImGui::EndChild();
 
       ImGui::EndChild();
    }
