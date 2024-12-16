@@ -1,4 +1,4 @@
 #pragma once
 
 #define WE_MAJOR_VERSION 0
-#define WE_MINOR_VERSION 122
+#define WE_MINOR_VERSION 123
