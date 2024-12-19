@@ -76,18 +76,11 @@
     <ClangTidyChecks>-clang-diagnostic-sign-compare</ClangTidyChecks>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
-    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+    <VcpkgEnabled>false</VcpkgEnabled>
   </PropertyGroup>
-  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <VcpkgUseStatic>true</VcpkgUseStatic>
-  </PropertyGroup>
-  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <VcpkgUseStatic>true</VcpkgUseStatic>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Develop|x64'" Label="Vcpkg">
-    <VcpkgUseStatic>true</VcpkgUseStatic>
-    <VcpkgConfiguration>Release</VcpkgConfiguration>
-  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Develop|x64'" Label="Vcpkg" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>
@@ -97,7 +90,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -137,7 +130,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -179,7 +172,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -407,14 +400,6 @@
     <ClCompile Include="src\world\utility\snapping.cpp" />
     <ClCompile Include="src\world\utility\terrain_cut.cpp" />
     <ClCompile Include="src\world\utility\world_utilities.cpp" />
-    <ClCompile Include="third_party\imgui\backends\imgui_impl_win32.cpp" />
-    <ClCompile Include="third_party\imgui\imgui.cpp" />
-    <ClCompile Include="third_party\imgui\imgui_demo.cpp" />
-    <ClCompile Include="third_party\imgui\imgui_draw.cpp" />
-    <ClCompile Include="third_party\imgui\imgui_tables.cpp" />
-    <ClCompile Include="third_party\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="third_party\imgui\misc\cpp\imgui_stdlib.cpp" />
-    <ClCompile Include="third_party\imgui\misc\freetype\imgui_freetype.cpp" />
     <ClCompile Include="third_party\stb_image_resize2\stb_image_resize2.c" />
     <ClInclude Include="include\assets\config\io.hpp" />
     <ClInclude Include="include\assets\config\key_node.hpp" />
@@ -726,15 +711,6 @@
     <ClInclude Include="src\world\utility\terrain_cut.hpp" />
     <ClInclude Include="src\world\utility\world_utilities.hpp" />
     <ClInclude Include="src\world\world.hpp" />
-    <ClInclude Include="third_party\imgui\backends\imgui_impl_win32.h" />
-    <ClInclude Include="third_party\imgui\imconfig.h" />
-    <ClInclude Include="third_party\imgui\imgui.h" />
-    <ClInclude Include="third_party\imgui\imgui_internal.h" />
-    <ClInclude Include="third_party\imgui\imstb_rectpack.h" />
-    <ClInclude Include="third_party\imgui\imstb_textedit.h" />
-    <ClInclude Include="third_party\imgui\imstb_truetype.h" />
-    <ClInclude Include="third_party\imgui\misc\cpp\imgui_stdlib.h" />
-    <ClInclude Include="third_party\imgui\misc\freetype\imgui_freetype.h" />
     <ClInclude Include="third_party\stb_image_resize2\stb_image_resize2.h" />
   </ItemGroup>
   <ItemGroup>
@@ -785,13 +761,11 @@
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
     </CustomBuild>
     <None Include="packages.config" />
-    <None Include="third_party\imgui\misc\debuggers\imgui.natstepfilter" />
     <None Include="third_party\licenses\vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="src\container\container.natvis" />
     <Natvis Include="src\utility\implementation_storage.natvis" />
-    <Natvis Include="third_party\imgui\misc\debuggers\imgui.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

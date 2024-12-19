@@ -4,6 +4,7 @@
 #include "math/vector_funcs.hpp"
 
 #include <cassert>
+#include <iterator>
 #include <optional>
 
 #include <fmt/format.h>

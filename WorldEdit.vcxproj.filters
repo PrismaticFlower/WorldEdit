@@ -2,7 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Natvis Include="src\utility\implementation_storage.natvis" />
-    <Natvis Include="third_party\imgui\misc\debuggers\imgui.natvis" />
     <Natvis Include="src\container\container.natvis" />
   </ItemGroup>
   <ItemGroup>
@@ -150,14 +149,6 @@
     <ClCompile Include="src\world\utility\snapping.cpp" />
     <ClCompile Include="src\world\utility\terrain_cut.cpp" />
     <ClCompile Include="src\world\utility\world_utilities.cpp" />
-    <ClCompile Include="third_party\imgui\backends\imgui_impl_win32.cpp" />
-    <ClCompile Include="third_party\imgui\imgui.cpp" />
-    <ClCompile Include="third_party\imgui\imgui_demo.cpp" />
-    <ClCompile Include="third_party\imgui\imgui_draw.cpp" />
-    <ClCompile Include="third_party\imgui\imgui_tables.cpp" />
-    <ClCompile Include="third_party\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="third_party\imgui\misc\cpp\imgui_stdlib.cpp" />
-    <ClCompile Include="third_party\imgui\misc\freetype\imgui_freetype.cpp" />
     <ClCompile Include="src\assets\asset_traits.cpp" />
     <ClCompile Include="src\assets\msh\default_missing_scene.cpp" />
     <ClCompile Include="src\assets\msh\generate_tangents.cpp" />
@@ -488,15 +479,6 @@
     <ClInclude Include="src\world\utility\terrain_cut.hpp" />
     <ClInclude Include="src\world\utility\world_utilities.hpp" />
     <ClInclude Include="src\world\world.hpp" />
-    <ClInclude Include="third_party\imgui\backends\imgui_impl_win32.h" />
-    <ClInclude Include="third_party\imgui\imconfig.h" />
-    <ClInclude Include="third_party\imgui\imgui.h" />
-    <ClInclude Include="third_party\imgui\imgui_internal.h" />
-    <ClInclude Include="third_party\imgui\imstb_rectpack.h" />
-    <ClInclude Include="third_party\imgui\imstb_textedit.h" />
-    <ClInclude Include="third_party\imgui\imstb_truetype.h" />
-    <ClInclude Include="third_party\imgui\misc\cpp\imgui_stdlib.h" />
-    <ClInclude Include="third_party\imgui\misc\freetype\imgui_freetype.h" />
     <ClInclude Include="src\world\io\load_failure.hpp" />
     <ClInclude Include="src\world\io\load_effects.hpp" />
     <ClInclude Include="src\world\io\save_effects.hpp" />
@@ -544,7 +526,6 @@
     <CustomBuild Include="shaders\WorldEdit.shaders" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="third_party\imgui\misc\debuggers\imgui.natstepfilter" />
     <None Include="third_party\licenses\vcpkg.json" />
     <None Include="packages.config" />
   </ItemGroup>

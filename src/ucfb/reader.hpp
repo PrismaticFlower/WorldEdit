@@ -14,6 +14,7 @@
 
 #include <absl/container/inlined_vector.h>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 namespace we::ucfb {
 

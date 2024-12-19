@@ -4,6 +4,8 @@
 #include "io/output_file.hpp"
 #include "math/vector_funcs.hpp"
 
+#include <iterator>
+
 namespace we::world {
 
 namespace {

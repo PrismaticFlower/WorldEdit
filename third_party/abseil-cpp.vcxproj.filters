@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="abseil-cpp\absl\container\internal\hashtablez_sampler.cc" />
+    <ClCompile Include="abseil-cpp\absl\container\internal\raw_hash_set.cc" />
+    <ClCompile Include="abseil-cpp\absl\hash\internal\city.cc" />
+    <ClCompile Include="abseil-cpp\absl\hash\internal\hash.cc" />
+    <ClCompile Include="abseil-cpp\absl\hash\internal\low_level_hash.cc" />
+    <ClCompile Include="abseil-cpp\absl\base\internal\raw_logging.cc" />
+    <ClCompile Include="abseil-cpp\absl\base\internal\throw_delegate.cc" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,6 @@
+freetype 2.13.3
+fmt 11.0.2
+mimalloc 2.1.7
+DirectXTex Oct 2024
+wil (commit: 27d66a24b55a2f7baf91c06c196ba1a2d256c2db)
+abseil-cpp (commit: f0e59054ffd7b4be7838d24725a760066964dfbe)

@@ -1,0 +1,60 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "abseil-cpp", "abseil-cpp.vcxproj", "{83EE89C2-763E-45E4-975D-A9F16171EBA0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTex", "DirectXTex.vcxproj", "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fmt", "fmt.vcxproj", "{65F673AB-46F0-461B-BC96-A8911FDBF56D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "freetype2", "freetype2.vcxproj", "{8CDD9406-6B76-48DD-AFA1-358E271E4EF3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mimalloc", "mimalloc.vcxproj", "{ABB5EAE7-B3E6-432E-B636-333449892EA6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Develop|x64 = Develop|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{83EE89C2-763E-45E4-975D-A9F16171EBA0}.Debug|x64.ActiveCfg = Debug|x64
+		{83EE89C2-763E-45E4-975D-A9F16171EBA0}.Debug|x64.Build.0 = Debug|x64
+		{83EE89C2-763E-45E4-975D-A9F16171EBA0}.Develop|x64.ActiveCfg = Develop|x64
+		{83EE89C2-763E-45E4-975D-A9F16171EBA0}.Develop|x64.Build.0 = Develop|x64
+		{83EE89C2-763E-45E4-975D-A9F16171EBA0}.Release|x64.ActiveCfg = Release|x64
+		{83EE89C2-763E-45E4-975D-A9F16171EBA0}.Release|x64.Build.0 = Release|x64
+		{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}.Debug|x64.ActiveCfg = Debug|x64
+		{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}.Debug|x64.Build.0 = Debug|x64
+		{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}.Develop|x64.ActiveCfg = Develop|x64
+		{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}.Develop|x64.Build.0 = Develop|x64
+		{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}.Release|x64.ActiveCfg = Release|x64
+		{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}.Release|x64.Build.0 = Release|x64
+		{65F673AB-46F0-461B-BC96-A8911FDBF56D}.Debug|x64.ActiveCfg = Debug|x64
+		{65F673AB-46F0-461B-BC96-A8911FDBF56D}.Debug|x64.Build.0 = Debug|x64
+		{65F673AB-46F0-461B-BC96-A8911FDBF56D}.Develop|x64.ActiveCfg = Develop|x64
+		{65F673AB-46F0-461B-BC96-A8911FDBF56D}.Develop|x64.Build.0 = Develop|x64
+		{65F673AB-46F0-461B-BC96-A8911FDBF56D}.Release|x64.ActiveCfg = Release|x64
+		{65F673AB-46F0-461B-BC96-A8911FDBF56D}.Release|x64.Build.0 = Release|x64
+		{8CDD9406-6B76-48DD-AFA1-358E271E4EF3}.Debug|x64.ActiveCfg = Debug|x64
+		{8CDD9406-6B76-48DD-AFA1-358E271E4EF3}.Debug|x64.Build.0 = Debug|x64
+		{8CDD9406-6B76-48DD-AFA1-358E271E4EF3}.Develop|x64.ActiveCfg = Develop|x64
+		{8CDD9406-6B76-48DD-AFA1-358E271E4EF3}.Develop|x64.Build.0 = Develop|x64
+		{8CDD9406-6B76-48DD-AFA1-358E271E4EF3}.Release|x64.ActiveCfg = Release|x64
+		{8CDD9406-6B76-48DD-AFA1-358E271E4EF3}.Release|x64.Build.0 = Release|x64
+		{ABB5EAE7-B3E6-432E-B636-333449892EA6}.Debug|x64.ActiveCfg = Debug|x64
+		{ABB5EAE7-B3E6-432E-B636-333449892EA6}.Debug|x64.Build.0 = Debug|x64
+		{ABB5EAE7-B3E6-432E-B636-333449892EA6}.Develop|x64.ActiveCfg = Develop|x64
+		{ABB5EAE7-B3E6-432E-B636-333449892EA6}.Develop|x64.Build.0 = Develop|x64
+		{ABB5EAE7-B3E6-432E-B636-333449892EA6}.Release|x64.ActiveCfg = Release|x64
+		{ABB5EAE7-B3E6-432E-B636-333449892EA6}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CDD55A05-6AF0-4A9A-B264-5D6748070169}
+	EndGlobalSection
+EndGlobal
