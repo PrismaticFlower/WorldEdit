@@ -141,6 +141,7 @@
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
       <BuildStlModules>false</BuildStlModules>
       <UseStandardPreprocessor>true</UseStandardPreprocessor>
+      <GuardEHContMetadata>true</GuardEHContMetadata>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -175,6 +176,7 @@
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
       <BuildStlModules>false</BuildStlModules>
       <ControlFlowGuard>Guard</ControlFlowGuard>
+      <GuardEHContMetadata>true</GuardEHContMetadata>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -213,6 +215,7 @@
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
       <BuildStlModules>false</BuildStlModules>
       <UseStandardPreprocessor>true</UseStandardPreprocessor>
+      <GuardEHContMetadata>true</GuardEHContMetadata>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
