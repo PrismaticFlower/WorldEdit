@@ -474,3 +474,8 @@ int main(int arg_count, const char** args)
 
    run_application(command_line{arg_count, args});
 }
+
+// Export Nahimic's kill switch. Should stop issues like: https://github.com/ocornut/imgui/issues/4542
+//
+// Dear ImGui viewports aren't used yet but there are plans to.
+extern "C" __declspec(dllexport) extern UINT NoHotPatch = 0x1;
