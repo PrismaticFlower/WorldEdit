@@ -208,6 +208,8 @@ void camera::update() noexcept
    _view_matrix = rotation_inverse;
    _view_matrix[3] = {rotation_inverse * -_position, 1.0f};
 
+   float projection_zw_det = 0.0f;
+
    if (_projection == camera_projection::perspective) {
       _projection_matrix = {{0.0f, 0.0f, 0.0f, 0.0f}, //
                             {0.0f, 0.0f, 0.0f, 0.0f}, //
@@ -224,6 +226,8 @@ void camera::update() noexcept
       _projection_matrix[2].z = near_clip / (far_clip - near_clip);
       _projection_matrix[3].z = far_clip * near_clip / (far_clip - near_clip);
       _projection_matrix[2].w = -1.0f;
+
+      projection_zw_det = 1.0f / _projection_matrix[3].z;
    }
    else {
       _projection_matrix = {{1.0f, 0.0f, 0.0f, 0.0f}, //
@@ -242,11 +246,25 @@ void camera::update() noexcept
       _projection_matrix[1].y = 2.0f / view_height;
       _projection_matrix[2].z = z_range;
       _projection_matrix[3].z = far_clip * z_range;
+
+      projection_zw_det = 1.0f / _projection_matrix[2].z;
    }
 
-   _view_projection_matrix = _projection_matrix * _view_matrix;
+   _inv_projection_matrix = {{0.0f, 0.0f, 0.0f, 0.0f}, //
+                             {0.0f, 0.0f, 0.0f, 0.0f}, //
+                             {0.0f, 0.0f, 0.0f, 0.0f}, //
+                             {0.0f, 0.0f, 0.0f, 0.0f}};
 
-   _inv_view_projection_matrix = inverse(_view_projection_matrix);
+   _inv_projection_matrix[0].x = 1.0f / _projection_matrix[0].x;
+   _inv_projection_matrix[1].y = 1.0f / _projection_matrix[1].y;
+
+   _inv_projection_matrix[2].z = projection_zw_det * _projection_matrix[3].w;
+   _inv_projection_matrix[3].w = projection_zw_det * _projection_matrix[2].z;
+   _inv_projection_matrix[2].w = projection_zw_det * -_projection_matrix[2].w;
+   _inv_projection_matrix[3].z = projection_zw_det * -_projection_matrix[3].z;
+
+   _view_projection_matrix = _projection_matrix * _view_matrix;
+   _inv_view_projection_matrix = _world_matrix * _inv_projection_matrix;
 }
 
 auto unproject_depth_value(const camera& camera, const float depth) noexcept -> float

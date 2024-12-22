@@ -81,6 +81,7 @@ private:
    float4x4 _world_matrix;
    float4x4 _view_matrix;
    float4x4 _projection_matrix;
+   float4x4 _inv_projection_matrix;
    float4x4 _view_projection_matrix;
    float4x4 _inv_view_projection_matrix;
 
