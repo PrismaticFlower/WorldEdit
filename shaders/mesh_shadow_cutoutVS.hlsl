@@ -5,7 +5,7 @@ struct camera_matrices {
 };
 
 struct object_constants {
-   float4x4 world_matrix;
+   float4x4 world_from_object;
 };
 
 ConstantBuffer<camera_matrices> camera : register(FRAME_CB_REGISTER);
@@ -30,7 +30,7 @@ output_vertex main(input_vertex input)
 
    output.texcoords = input.texcoords;
    output.positionPS =
-      mul(camera.projection_from_world, mul(object.world_matrix, float4(input.positionOS, 1.0)));
+      mul(camera.projection_from_world, mul(object.world_from_object, float4(input.positionOS, 1.0)));
    output.positionPS.z = max(output.positionPS.z, 0.0);
 
    return output;

@@ -2734,8 +2734,8 @@ void renderer_impl::draw_interaction_targets(
 
             world_mesh_constants constants{};
 
-            constants.object_to_world = to_matrix(object.rotation);
-            constants.object_to_world[3] = float4{object.position, 1.0f};
+            constants.world_from_object = to_matrix(object.rotation);
+            constants.world_from_object[3] = float4{object.position, 1.0f};
 
             std::memcpy(allocation.cpu_address, &constants,
                         sizeof(world_mesh_constants));
@@ -3595,11 +3595,11 @@ void renderer_impl::build_world_mesh_list(
 
          world_mesh_constants constants;
 
-         constants.object_to_world = to_matrix(object.rotation);
-         constants.object_to_world[3] = float4{object.position, 1.0f};
+         constants.world_from_object = to_matrix(object.rotation);
+         constants.world_from_object[3] = float4{object.position, 1.0f};
 
          std::memcpy(constants_upload_data + object_constants_offset,
-                     &constants.object_to_world, sizeof(world_mesh_constants));
+                     &constants.world_from_object, sizeof(world_mesh_constants));
 
          constants_data_head += sizeof(world_mesh_constants);
 
@@ -3666,11 +3666,11 @@ void renderer_impl::build_world_mesh_list(
 
          world_mesh_constants constants;
 
-         constants.object_to_world = to_matrix(object_rotation);
-         constants.object_to_world[3] = float4{object_positionWS, 1.0f};
+         constants.world_from_object = to_matrix(object_rotation);
+         constants.world_from_object[3] = float4{object_positionWS, 1.0f};
 
          std::memcpy(constants_upload_data + object_constants_offset,
-                     &constants.object_to_world, sizeof(world_mesh_constants));
+                     &constants.world_from_object, sizeof(world_mesh_constants));
 
          constants_data_head += sizeof(world_mesh_constants);
 
@@ -3735,10 +3735,10 @@ void renderer_impl::build_world_mesh_list(
 
       world_mesh_constants constants;
 
-      constants.object_to_world = ghost.transform;
+      constants.world_from_object = ghost.transform;
 
       std::memcpy(constants_upload_data + object_constants_offset,
-                  &constants.object_to_world, sizeof(world_mesh_constants));
+                  &constants.world_from_object, sizeof(world_mesh_constants));
 
       constants_data_head += sizeof(world_mesh_constants);
 

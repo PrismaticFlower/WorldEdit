@@ -2,7 +2,7 @@
 #include "frame_constants.hlsli"
 
 struct object_constants {
-   float4x4 world_matrix;
+   float4x4 world_from_object;
 };
 
 ConstantBuffer<object_constants> cb_object_constants : register(OBJECT_CB_REGISTER);
@@ -20,7 +20,7 @@ output_vertex main(input_vertex input)
 {
    output_vertex output;
 
-   const float3 positionWS = mul(cb_object_constants.world_matrix, float4(input.positionOS, 1.0)).xyz;
+   const float3 positionWS = mul(cb_object_constants.world_from_object, float4(input.positionOS, 1.0)).xyz;
    const float4 positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
 
    output.positionPS = positionPS;

@@ -16,7 +16,7 @@ namespace we::graphics {
 using mesh_opaque_flags = depth_prepass_pipeline_flags;
 
 struct alignas(16) world_mesh_constants {
-   float4x4 object_to_world;
+   float4x4 world_from_object;
    std::array<std::byte, 192> padding;
 };
 
