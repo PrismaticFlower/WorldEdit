@@ -34,7 +34,7 @@ constexpr uint32 atlas_thumbnails = 256;
 constexpr uint32 aa_factor = 4;
 
 struct camera_info {
-   float4x4 view_projection_matrix;
+   float4x4 projection_from_world;
    float3 camera_position;
 };
 
@@ -52,17 +52,17 @@ auto make_camera_info(const model& model) -> camera_info
 
    const float3 position = bounding_sphere_centre + bounding_sphere_radius * backward;
 
-   float4x4 world_matrix = rotation;
-   world_matrix[3] = {position, 1.0f};
+   float4x4 world_from_view = rotation;
+   world_from_view[3] = {position, 1.0f};
 
    float4x4 rotation_inverse = transpose(rotation);
-   float4x4 view_matrix = rotation_inverse;
-   view_matrix[3] = {rotation_inverse * -position, 1.0f};
+   float4x4 view_from_world = rotation_inverse;
+   view_from_world[3] = {rotation_inverse * -position, 1.0f};
 
-   float4x4 projection_matrix = {{1.0f, 0.0f, 0.0f, 0.0f}, //
-                                 {0.0f, 1.0f, 0.0f, 0.0f}, //
-                                 {0.0f, 0.0f, 1.0f, 0.0f}, //
-                                 {0.0f, 0.0f, 0.0f, 1.0f}};
+   float4x4 projection_from_view = {{1.0f, 0.0f, 0.0f, 0.0f}, //
+                                    {0.0f, 1.0f, 0.0f, 0.0f}, //
+                                    {0.0f, 0.0f, 1.0f, 0.0f}, //
+                                    {0.0f, 0.0f, 0.0f, 1.0f}};
 
    const float near_clip = 0.0f;
    const float far_clip = bounding_sphere_radius * 2.0f;
@@ -71,14 +71,14 @@ auto make_camera_info(const model& model) -> camera_info
    const float view_height = bounding_sphere_radius * 2.0f;
    const float z_range = 1.0f / (far_clip - near_clip);
 
-   projection_matrix[0].x = 2.0f / view_width;
-   projection_matrix[1].y = 2.0f / view_height;
-   projection_matrix[2].z = z_range;
-   projection_matrix[3].z = z_range * far_clip;
+   projection_from_view[0].x = 2.0f / view_width;
+   projection_from_view[1].y = 2.0f / view_height;
+   projection_from_view[2].z = z_range;
+   projection_from_view[3].z = z_range * far_clip;
 
-   const float4x4 view_projection_matrix = projection_matrix * view_matrix;
+   const float4x4 projection_from_world = projection_from_view * view_from_world;
 
-   return {.view_projection_matrix = view_projection_matrix, .camera_position = position};
+   return {.projection_from_world = projection_from_world, .camera_position = position};
 }
 
 struct invalidation_save_entry {
@@ -954,7 +954,7 @@ private:
                                                 0);
       command_list.set_graphics_cbv(rs::thumbnail_mesh::camera_matrix_cbv,
                                     dynamic_buffer_allocator
-                                       .allocate_and_copy(camera.view_projection_matrix)
+                                       .allocate_and_copy(camera.projection_from_world)
                                        .gpu_address);
 
       command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
