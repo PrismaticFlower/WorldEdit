@@ -18,7 +18,7 @@ output_vertex main(input_vertex input)
    const float3 positionVS = input.positionOS * cb_gizmo_cone.bbox_scaleVS + cb_gizmo_cone.bbox_positionVS;
 
    output.ray_directionVS = positionVS;
-   output.positionPS = mul(cb_frame.projection_matrix, float4(positionVS, 1.0));
+   output.positionPS = mul(cb_frame.projection_from_view, float4(positionVS, 1.0));
 
    return output;
 }

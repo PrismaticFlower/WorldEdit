@@ -21,7 +21,7 @@ output_vertex main(input_vertex input)
 
    const float3 positionWS = mul(cb_object_constants.world_matrix, float4(input.positionOS, 1.0)).xyz;
 
-   output.positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
+   output.positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
 
    return output;
 }

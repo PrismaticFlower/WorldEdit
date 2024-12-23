@@ -515,7 +515,7 @@ void world_edit::update_hovered_entity() noexcept
       if (std::optional<world::measurement_id> hit =
              world::mouse_pick(std::bit_cast<float2>(ImGui::GetMousePos()),
                                std::bit_cast<float2>(ImGui::GetMainViewport()->Size),
-                               _camera.view_projection_matrix(), _world.measurements);
+                               _camera.projection_from_world(), _world.measurements);
           hit) {
          _interaction_targets.hovered_entity = *hit;
          hovered_entity_distance = 0.0f;
@@ -834,7 +834,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
          _interaction_targets.selection.clear();
       }
 
-      frustum frustumWS{_camera.inv_view_projection_matrix(),
+      frustum frustumWS{_camera.world_from_projection(),
                         {min_ndc_pos.x, min_ndc_pos.y, 0.0f},
                         {max_ndc_pos.x, max_ndc_pos.y, 1.0f}};
 
@@ -2139,7 +2139,7 @@ void world_edit::place_creation_entity_at_camera() noexcept
 {
    if (not _interaction_targets.creation_entity.holds_entity()) return;
 
-   const quaternion rotation = make_quat_from_matrix(_camera.world_matrix()) *
+   const quaternion rotation = make_quat_from_matrix(_camera.world_from_view()) *
                                quaternion{0.0f, 0.0f, 1.0f, 0.0f};
 
    if (_interaction_targets.creation_entity.is<world::object>()) {

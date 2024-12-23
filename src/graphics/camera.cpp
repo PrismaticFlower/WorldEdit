@@ -10,57 +10,63 @@ namespace we::graphics {
 
 auto camera::right() const noexcept -> float3
 {
-   return float3{_world_matrix[0].x, _world_matrix[0].y, _world_matrix[0].z};
+   return float3{_world_from_view[0].x, _world_from_view[0].y,
+                 _world_from_view[0].z};
 }
 
 auto camera::left() const noexcept -> float3
 {
-   return -float3{_world_matrix[0].x, _world_matrix[0].y, _world_matrix[0].z};
+   return -float3{_world_from_view[0].x, _world_from_view[0].y,
+                  _world_from_view[0].z};
 }
 
 auto camera::up() const noexcept -> float3
 {
-   return float3{_world_matrix[1].x, _world_matrix[1].y, _world_matrix[1].z};
+   return float3{_world_from_view[1].x, _world_from_view[1].y,
+                 _world_from_view[1].z};
 }
 
 auto camera::down() const noexcept -> float3
 {
-   return -float3{_world_matrix[1].x, _world_matrix[1].y, _world_matrix[1].z};
+   return -float3{_world_from_view[1].x, _world_from_view[1].y,
+                  _world_from_view[1].z};
 }
 
 auto camera::forward() const noexcept -> float3
 {
-   return -float3{_world_matrix[2].x, _world_matrix[2].y, _world_matrix[2].z};
+   return -float3{_world_from_view[2].x, _world_from_view[2].y,
+                  _world_from_view[2].z};
 }
 
 auto camera::back() const noexcept -> float3
 {
-   return float3{_world_matrix[2].x, _world_matrix[2].y, _world_matrix[2].z};
+   return float3{_world_from_view[2].x, _world_from_view[2].y,
+                 _world_from_view[2].z};
 }
 
-auto camera::world_matrix() const noexcept -> const float4x4&
+auto camera::world_from_view() const noexcept -> const float4x4&
 {
-   return _world_matrix;
+   return _world_from_view;
 }
 
-auto camera::view_matrix() const noexcept -> const float4x4&
+auto camera::view_from_world() const noexcept -> const float4x4&
 {
-   return _view_matrix;
+   return _view_from_world;
 }
 
-auto camera::projection_matrix() const noexcept -> const float4x4&
+auto camera::projection_from_view() const noexcept -> const float4x4&
 {
-   return _projection_matrix;
+   return _projection_from_view;
 }
 
-auto camera::view_projection_matrix() const noexcept -> const float4x4&
+auto camera::projection_from_world() const noexcept -> const float4x4&
 {
-   return _view_projection_matrix;
+   return _projection_from_world;
 }
 
-auto camera::inv_view_projection_matrix() const noexcept -> const float4x4&
+auto camera::world_from_projection() const noexcept -> const float4x4&
 {
-   return _inv_view_projection_matrix;
+   return _world_from_projection;
 }
 
 auto camera::position() const noexcept -> float3
@@ -201,39 +207,39 @@ void camera::update() noexcept
 
    float4x4 rotation = make_rotation_matrix_from_euler({pitch, yaw, 0.0f});
 
-   _world_matrix = rotation;
-   _world_matrix[3] = {_position, 1.0f};
+   _world_from_view = rotation;
+   _world_from_view[3] = {_position, 1.0f};
 
    float4x4 rotation_inverse = transpose(rotation);
-   _view_matrix = rotation_inverse;
-   _view_matrix[3] = {rotation_inverse * -_position, 1.0f};
+   _view_from_world = rotation_inverse;
+   _view_from_world[3] = {rotation_inverse * -_position, 1.0f};
 
    float projection_zw_det = 0.0f;
 
    if (_projection == camera_projection::perspective) {
-      _projection_matrix = {{0.0f, 0.0f, 0.0f, 0.0f}, //
-                            {0.0f, 0.0f, 0.0f, 0.0f}, //
-                            {0.0f, 0.0f, 0.0f, 0.0f}, //
-                            {0.0f, 0.0f, 0.0f, 0.0f}};
+      _projection_from_view = {{0.0f, 0.0f, 0.0f, 0.0f}, //
+                               {0.0f, 0.0f, 0.0f, 0.0f}, //
+                               {0.0f, 0.0f, 0.0f, 0.0f}, //
+                               {0.0f, 0.0f, 0.0f, 0.0f}};
 
       const float fov = _fov / _zoom;
       const float near_clip = _near_clip;
       const float far_clip = _far_clip;
 
-      _projection_matrix[0].x = 1.0f / std::tan(fov * 0.5f);
-      _projection_matrix[1].y = _projection_matrix[0].x * _aspect_ratio;
+      _projection_from_view[0].x = 1.0f / std::tan(fov * 0.5f);
+      _projection_from_view[1].y = _projection_from_view[0].x * _aspect_ratio;
 
-      _projection_matrix[2].z = near_clip / (far_clip - near_clip);
-      _projection_matrix[3].z = far_clip * near_clip / (far_clip - near_clip);
-      _projection_matrix[2].w = -1.0f;
+      _projection_from_view[2].z = near_clip / (far_clip - near_clip);
+      _projection_from_view[3].z = far_clip * near_clip / (far_clip - near_clip);
+      _projection_from_view[2].w = -1.0f;
 
-      projection_zw_det = 1.0f / _projection_matrix[3].z;
+      projection_zw_det = 1.0f / _projection_from_view[3].z;
    }
    else {
-      _projection_matrix = {{1.0f, 0.0f, 0.0f, 0.0f}, //
-                            {0.0f, 1.0f, 0.0f, 0.0f}, //
-                            {0.0f, 0.0f, 1.0f, 0.0f}, //
-                            {0.0f, 0.0f, 0.0f, 1.0f}};
+      _projection_from_view = {{1.0f, 0.0f, 0.0f, 0.0f}, //
+                               {0.0f, 1.0f, 0.0f, 0.0f}, //
+                               {0.0f, 0.0f, 1.0f, 0.0f}, //
+                               {0.0f, 0.0f, 0.0f, 1.0f}};
 
       const float near_clip = -_far_clip;
       const float far_clip = _far_clip;
@@ -242,29 +248,29 @@ void camera::update() noexcept
       const float view_height = view_width / _aspect_ratio;
       const float z_range = 1.0f / (far_clip - near_clip);
 
-      _projection_matrix[0].x = 2.0f / view_width;
-      _projection_matrix[1].y = 2.0f / view_height;
-      _projection_matrix[2].z = z_range;
-      _projection_matrix[3].z = far_clip * z_range;
+      _projection_from_view[0].x = 2.0f / view_width;
+      _projection_from_view[1].y = 2.0f / view_height;
+      _projection_from_view[2].z = z_range;
+      _projection_from_view[3].z = far_clip * z_range;
 
-      projection_zw_det = 1.0f / _projection_matrix[2].z;
+      projection_zw_det = 1.0f / _projection_from_view[2].z;
    }
 
-   _inv_projection_matrix = {{0.0f, 0.0f, 0.0f, 0.0f}, //
-                             {0.0f, 0.0f, 0.0f, 0.0f}, //
-                             {0.0f, 0.0f, 0.0f, 0.0f}, //
-                             {0.0f, 0.0f, 0.0f, 0.0f}};
+   _view_from_projection = {{0.0f, 0.0f, 0.0f, 0.0f}, //
+                            {0.0f, 0.0f, 0.0f, 0.0f}, //
+                            {0.0f, 0.0f, 0.0f, 0.0f}, //
+                            {0.0f, 0.0f, 0.0f, 0.0f}};
 
-   _inv_projection_matrix[0].x = 1.0f / _projection_matrix[0].x;
-   _inv_projection_matrix[1].y = 1.0f / _projection_matrix[1].y;
+   _view_from_projection[0].x = 1.0f / _projection_from_view[0].x;
+   _view_from_projection[1].y = 1.0f / _projection_from_view[1].y;
 
-   _inv_projection_matrix[2].z = projection_zw_det * _projection_matrix[3].w;
-   _inv_projection_matrix[3].w = projection_zw_det * _projection_matrix[2].z;
-   _inv_projection_matrix[2].w = projection_zw_det * -_projection_matrix[2].w;
-   _inv_projection_matrix[3].z = projection_zw_det * -_projection_matrix[3].z;
+   _view_from_projection[2].z = projection_zw_det * _projection_from_view[3].w;
+   _view_from_projection[3].w = projection_zw_det * _projection_from_view[2].z;
+   _view_from_projection[2].w = projection_zw_det * -_projection_from_view[2].w;
+   _view_from_projection[3].z = projection_zw_det * -_projection_from_view[3].z;
 
-   _view_projection_matrix = _projection_matrix * _view_matrix;
-   _inv_view_projection_matrix = _world_matrix * _inv_projection_matrix;
+   _projection_from_world = _projection_from_view * _view_from_world;
+   _world_from_projection = _world_from_view * _view_from_projection;
 }
 
 auto unproject_depth_value(const camera& camera, const float depth) noexcept -> float
@@ -285,7 +291,7 @@ auto make_camera_ray(const camera& camera, const float2 cursor_position,
 
       float4 corner = float4{ndc_pos.x, ndc_pos.y, 0.0f, 1.0f};
 
-      corner = camera.inv_view_projection_matrix() * corner;
+      corner = camera.world_from_projection() * corner;
       corner /= corner.w;
 
       float3 ray_direction =
@@ -294,11 +300,11 @@ auto make_camera_ray(const camera& camera, const float2 cursor_position,
       return {.origin = camera.position(), .direction = ray_direction};
    }
    else {
-      const float4 origin = camera.inv_view_projection_matrix() *
-                            float4{ndc_pos.x, ndc_pos.y, 1.0f, 1.0f};
+      const float4 origin =
+         camera.world_from_projection() * float4{ndc_pos.x, ndc_pos.y, 1.0f, 1.0f};
 
       return {.origin = float3{origin.x, origin.y, origin.z},
-              .direction = float3x3{transpose(camera.view_matrix())} *
+              .direction = float3x3{transpose(camera.view_from_world())} *
                            float3{0.0f, 0.0f, -1.0f}};
    }
 }

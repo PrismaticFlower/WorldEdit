@@ -72,7 +72,7 @@ void world_edit::ui_show_render_env_map() noexcept
       _env_map_render_params.positionWS = positionWS;
 
       const float marker_length = 0.1f * distance(_camera.position(), positionWS) *
-                                  _camera.projection_matrix()[0].x;
+                                  _camera.projection_from_view()[0].x;
 
       _tool_visualizers.add_line_overlay(positionWS - float3{1.0f, 0.0f, 0.0f} * marker_length,
                                          positionWS + float3{1.0f, 0.0f, 0.0f} * marker_length,

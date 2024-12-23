@@ -38,7 +38,7 @@ output_vertex main(uint vertex_index : SV_VertexID)
    }
 
    output.outer_edge = outer_edge;
-   output.positionPS = mul(cb_frame.projection_matrix, float4(positionVS, 1.0));
+   output.positionPS = mul(cb_frame.projection_from_view, float4(positionVS, 1.0));
 
    return output;
 }

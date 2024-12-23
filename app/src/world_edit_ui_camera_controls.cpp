@@ -85,7 +85,8 @@ void world_edit::ui_show_camera_controls() noexcept
       ImGui::Separator();
 
       if (ImGui::Button("Copy Camera Shot", {ImGui::CalcItemWidth(), 0.0f})) {
-         const quaternion rotation = make_quat_from_matrix(_camera.world_matrix());
+         const quaternion rotation =
+            make_quat_from_matrix(_camera.world_from_view());
          const float3 positionWS = _camera.position();
 
          ImGui::SetClipboardText(

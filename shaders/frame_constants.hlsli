@@ -3,8 +3,8 @@
 #include "bindings.hlsli"
 
 struct frame_constant_buffer {
-   float4x4 view_projection_matrix;
-   float4x4 projection_matrix;
+   float4x4 projection_from_world;
+   float4x4 projection_from_view;
 
    float3 view_positionWS;
    float texture_scroll_duration;

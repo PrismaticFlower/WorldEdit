@@ -25,8 +25,8 @@ output_vertex main(uint vertex_id : SV_VertexID)
 
    meta_draw_line ln = lines[line_id];
 
-   const float4 position0PS = mul(cb_frame.view_projection_matrix, float4(ln.position0WS, 1.0));
-   const float4 position1PS = mul(cb_frame.view_projection_matrix, float4(ln.position1WS, 1.0));
+   const float4 position0PS = mul(cb_frame.projection_from_world, float4(ln.position0WS, 1.0));
+   const float4 position1PS = mul(cb_frame.projection_from_world, float4(ln.position1WS, 1.0));
 
    const float2 position0RT = to_rendertarget_position(position0PS);
    const float2 position1RT = to_rendertarget_position(position1PS);

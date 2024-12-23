@@ -58,7 +58,7 @@ output_vertex mainVS(uint vertex_index : SV_VertexID)
    positionWS.x += cb_grid.grid_offsetWS_x;
    positionWS.z += cb_grid.grid_offsetWS_z;
 
-   output.positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
+   output.positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
    
    return output;
 }

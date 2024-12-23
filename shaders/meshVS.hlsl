@@ -40,7 +40,7 @@ output_vertex main(input_vertex input)
    output.bitangentWS = mul((float3x3)cb_object_constants.world_matrix, input.bitangentOS);
    output.texcoords = input.texcoords;
    output.color = srgb_to_linear(input.color);
-   output.positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
+   output.positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
 
    return output;
 }

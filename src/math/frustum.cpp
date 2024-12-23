@@ -26,8 +26,8 @@ bool outside_plane(const float4& plane, const float3& point, const float radius)
 
 }
 
-frustum::frustum(const float4x4& inv_view_projection_matrix,
-                 const float3 ndc_min, const float3 ndc_max) noexcept
+frustum::frustum(const float4x4& world_from_projection, const float3 ndc_min,
+                 const float3 ndc_max) noexcept
 {
    const container::enum_array<float4, frustum_corner> corners_proj =
       container::make_enum_array<float4, frustum_corner>(
@@ -44,7 +44,7 @@ frustum::frustum(const float4x4& inv_view_projection_matrix,
           {frustum_corner::top_right_far, {ndc_max.x, ndc_max.y, ndc_min.z, 1.0f}}});
 
    for (std::size_t i = 0; i < corners.size(); ++i) {
-      const float4 position = inv_view_projection_matrix * corners_proj[i];
+      const float4 position = world_from_projection * corners_proj[i];
 
       corners[i] = float3{position.x, position.y, position.z} / position.w;
    }
@@ -80,14 +80,14 @@ frustum::frustum(const float4x4& inv_view_projection_matrix,
                  corners[frustum_corner::bottom_right_far]);
 }
 
-frustum::frustum(const float4x4& inv_view_projection_matrix, const float z_min,
+frustum::frustum(const float4x4& world_from_projection, const float z_min,
                  const float z_max) noexcept
-   : frustum{inv_view_projection_matrix, {-1.0f, -1.0f, z_min}, {1.0f, 1.0f, z_max}}
+   : frustum{world_from_projection, {-1.0f, -1.0f, z_min}, {1.0f, 1.0f, z_max}}
 {
 }
 
-frustum::frustum(const float4x4& inv_view_projection_matrix) noexcept
-   : frustum{inv_view_projection_matrix, 0.0f, 1.0f}
+frustum::frustum(const float4x4& world_from_projection) noexcept
+   : frustum{world_from_projection, 0.0f, 1.0f}
 {
 }
 

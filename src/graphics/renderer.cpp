@@ -46,8 +46,8 @@ namespace {
 
 // TODO: Put this somewhere.
 struct alignas(256) frame_constant_buffer {
-   float4x4 view_projection_matrix;
-   float4x4 projection_matrix;
+   float4x4 projection_from_world;
+   float4x4 projection_from_view;
 
    float3 view_positionWS;
    float texture_scroll_duration;
@@ -395,7 +395,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    _device.new_frame();
    _ui_texture_manager.new_frame();
 
-   const frustum view_frustum{camera.inv_view_projection_matrix()};
+   const frustum view_frustum{camera.world_from_projection()};
    const gpu::viewport viewport{.width = static_cast<float>(_swap_chain.width()),
                                 .height = static_cast<float>(_swap_chain.height())};
 
@@ -747,7 +747,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       camera.yaw(camera_angles[i].x);
       camera.pitch(camera_angles[i].y);
 
-      const frustum view_frustum{camera.inv_view_projection_matrix()};
+      const frustum view_frustum{camera.world_from_projection()};
       const gpu::viewport viewport{.width = static_cast<float>(super_sample_length),
                                    .height = static_cast<float>(super_sample_length)};
 
@@ -927,7 +927,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       camera.yaw(camera_angles[i].x);
       camera.pitch(camera_angles[i].y);
 
-      const frustum view_frustum{camera.inv_view_projection_matrix()};
+      const frustum view_frustum{camera.world_from_projection()};
       const gpu::viewport viewport{.width = static_cast<float>(super_sample_length),
                                    .height = static_cast<float>(super_sample_length)};
       // Pre-Render Work
@@ -1172,19 +1172,17 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
 {
    _texture_scroll_time = std::fmod(_texture_scroll_time + delta_time, 255.0f);
 
-   frame_constant_buffer constants{.view_projection_matrix =
-                                      camera.view_projection_matrix(),
-                                   .projection_matrix = camera.projection_matrix(),
+   frame_constant_buffer constants{
+      .projection_from_world = camera.projection_from_world(),
+      .projection_from_view = camera.projection_from_view(),
 
-                                   .view_positionWS = camera.position(),
-                                   .texture_scroll_duration =
-                                      scroll_textures ? _texture_scroll_time : 0.0f,
+      .view_positionWS = camera.position(),
+      .texture_scroll_duration = scroll_textures ? _texture_scroll_time : 0.0f,
 
-                                   .viewport_size = {viewport.width, viewport.height},
-                                   .viewport_topleft = {viewport.top_left_x,
-                                                        viewport.top_left_y},
+      .viewport_size = {viewport.width, viewport.height},
+      .viewport_topleft = {viewport.top_left_x, viewport.top_left_y},
 
-                                   .line_width = line_width * _display_scale};
+      .line_width = line_width * _display_scale};
 
    auto allocation = _dynamic_buffer_allocator.allocate_and_copy(constants);
 
@@ -1451,7 +1449,7 @@ void renderer_impl::draw_world_meta_objects(
 
          const float segment_length = distance(b, c);
          const float camera_scale = distance(camera.position(), midpoint) *
-                                    camera.projection_matrix()[0].x;
+                                    camera.projection_from_view()[0].x;
 
          const float steps_target = settings.path_node_cr_spline_target_tessellation;
          const float max_steps = settings.path_node_cr_spline_max_tessellation;
@@ -2393,7 +2391,7 @@ void renderer_impl::draw_world_meta_objects(
 
          const float3 centreWS = (measurement_startWS + measurement_endWS) * 0.5f;
          const float4 centrePS =
-            camera.view_projection_matrix() * float4{centreWS, 1.0f};
+            camera.projection_from_world() * float4{centreWS, 1.0f};
          const float inv_w = 1.0f / centrePS.w;
          const float3 centreNDC = {centrePS.x * inv_w, centrePS.y * inv_w,
                                    centrePS.z * inv_w};
@@ -3352,8 +3350,8 @@ void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& dr
                                 gpu::graphics_command_list& command_list)
 {
    for (const gizmo_draw_line& line : draw_lists.lines) {
-      const float3 startVS = camera.view_matrix() * line.position_start;
-      const float3 endVS = camera.view_matrix() * line.position_end;
+      const float3 startVS = camera.view_from_world() * line.position_start;
+      const float3 endVS = camera.view_from_world() * line.position_end;
 
       const float3 normalVS =
          normalize(float3{-(startVS.y - endVS.y), startVS.x - endVS.x, 0.0f});
@@ -3390,8 +3388,8 @@ void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& dr
    }
 
    for (const gizmo_draw_cone& cone : draw_lists.cones) {
-      const float3 startVS = camera.view_matrix() * cone.position_start;
-      const float3 endVS = camera.view_matrix() * cone.position_end;
+      const float3 startVS = camera.view_from_world() * cone.position_start;
+      const float3 endVS = camera.view_from_world() * cone.position_end;
 
       const math::bounding_box bboxVS = {
          .min = min(startVS - cone.base_radius, endVS),
@@ -3479,7 +3477,7 @@ void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& dr
    }
 
    for (const gizmo_draw_rotation_widget& widget : draw_lists.rotation_widgets) {
-      const float3 positionVS = camera.view_matrix() * widget.positionWS;
+      const float3 positionVS = camera.view_from_world() * widget.positionWS;
 
       const math::bounding_box bboxVS = {
          .min = positionVS - widget.outer_radius,
@@ -3520,13 +3518,13 @@ void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& dr
 
                .positionVS = positionVS,
 
-               .x_axisVS = float3x3{camera.view_matrix()} * widget.x_axisWS,
+               .x_axisVS = float3x3{camera.view_from_world()} * widget.x_axisWS,
                .x_visible = widget.x_visible,
 
-               .y_axisVS = float3x3{camera.view_matrix()} * widget.y_axisWS,
+               .y_axisVS = float3x3{camera.view_from_world()} * widget.y_axisWS,
                .y_visible = widget.y_visible,
 
-               .z_axisVS = float3x3{camera.view_matrix()} * widget.z_axisWS,
+               .z_axisVS = float3x3{camera.view_from_world()} * widget.z_axisWS,
                .z_visible = widget.z_visible,
 
                .x_color = widget.x_color,

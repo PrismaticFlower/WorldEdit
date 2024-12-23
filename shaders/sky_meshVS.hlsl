@@ -32,7 +32,7 @@ output_vertex main(input_vertex input)
 
    output.texcoords = input.texcoords;
    output.color = srgb_to_linear(input.color);
-   output.positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
+   output.positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
    output.positionPS.z = 0.0;
 
    return output;

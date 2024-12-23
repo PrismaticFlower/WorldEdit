@@ -25,15 +25,15 @@ public:
 
    auto back() const noexcept -> float3;
 
-   auto world_matrix() const noexcept -> const float4x4&;
+   auto world_from_view() const noexcept -> const float4x4&;
 
-   auto view_matrix() const noexcept -> const float4x4&;
+   auto view_from_world() const noexcept -> const float4x4&;
 
-   auto projection_matrix() const noexcept -> const float4x4&;
+   auto projection_from_view() const noexcept -> const float4x4&;
 
-   auto view_projection_matrix() const noexcept -> const float4x4&;
+   auto projection_from_world() const noexcept -> const float4x4&;
 
-   auto inv_view_projection_matrix() const noexcept -> const float4x4&;
+   auto world_from_projection() const noexcept -> const float4x4&;
 
    auto position() const noexcept -> float3;
 
@@ -78,12 +78,12 @@ public:
 private:
    void update() noexcept;
 
-   float4x4 _world_matrix;
-   float4x4 _view_matrix;
-   float4x4 _projection_matrix;
-   float4x4 _inv_projection_matrix;
-   float4x4 _view_projection_matrix;
-   float4x4 _inv_view_projection_matrix;
+   float4x4 _world_from_view;
+   float4x4 _view_from_world;
+   float4x4 _projection_from_view;
+   float4x4 _view_from_projection;
+   float4x4 _projection_from_world;
+   float4x4 _world_from_projection;
 
    float _near_clip = 1.0f;
    float _far_clip = 20000.0f;

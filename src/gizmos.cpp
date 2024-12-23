@@ -189,7 +189,7 @@ struct gizmos::impl {
          camera.projection() == graphics::camera_projection::orthographic;
 
       const float projection_scale = not _orthographic_projection
-                                        ? camera.projection_matrix()[0].x
+                                        ? camera.projection_from_view()[0].x
                                         : camera.view_width() * ortho_gizmo_scale;
 
       _gizmo_scale = gizmo_scale * projection_scale;

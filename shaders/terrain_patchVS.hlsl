@@ -38,7 +38,7 @@ output_vertex main(uint vertex_index : SV_VertexID, uint patch_index : SV_Instan
    output.terrain_coords = (float2(x, y) + 0.5) * terrain_constants.inv_terrain_length;
    output.active_textures = patch.active_textures;
    output.static_light = static_light;
-   output.positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
+   output.positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
 
    for (uint i = 1; i < terrain_max_textures; ++i) {
       [branch] if (patch.active_textures & (1u << i)) {

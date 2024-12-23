@@ -47,7 +47,7 @@ output_vertex main(uint vertex_index : SV_VertexID)
 
    output.rect_coords = rect_coords;
    output.outer_edge = outer_edge;
-   output.positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
+   output.positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
 
    return output;
 }

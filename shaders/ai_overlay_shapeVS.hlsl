@@ -18,5 +18,5 @@ float4 main(input_vertex input) : SV_Position
    
    const float3 positionWS = mul(instance.transform, float4(input.positionOS, 1.0)).xyz;
    
-   return mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
+   return mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
 }
