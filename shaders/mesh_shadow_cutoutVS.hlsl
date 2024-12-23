@@ -1,7 +1,7 @@
 #include "bindings.hlsli"
 
 struct camera_matrices {
-   float4x4 view_projection_matrix;
+   float4x4 projection_from_world;
 };
 
 struct object_constants {
@@ -30,7 +30,7 @@ output_vertex main(input_vertex input)
 
    output.texcoords = input.texcoords;
    output.positionPS =
-      mul(camera.view_projection_matrix, mul(object.world_matrix, float4(input.positionOS, 1.0)));
+      mul(camera.projection_from_world, mul(object.world_matrix, float4(input.positionOS, 1.0)));
    output.positionPS.z = max(output.positionPS.z, 0.0);
 
    return output;

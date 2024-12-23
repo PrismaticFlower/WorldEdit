@@ -50,7 +50,7 @@ struct alignas(16) tiling_inputs {
    std::array<uint32, 2> tile_counts;
    std::array<uint32, 2> padding0{};
 
-   float4x4 view_projection_matrix;
+   float4x4 projection_from_world;
 };
 
 static_assert(sizeof(tiling_inputs) == 80);
@@ -207,7 +207,7 @@ auto make_cascade_shadow_camera(const float3 light_direction,
    shadow_camera.look_at(shadow_camera_position, view_frustum_center,
                          float3{0.0f, 1.0f, 0.0f});
 
-   auto shadow_view_projection = shadow_camera.view_projection_matrix();
+   auto shadow_view_projection = shadow_camera.projection_from_world();
 
    float4 shadow_origin = shadow_view_projection * float4{0.0f, 0.0f, 0.0f, 1.0f};
    shadow_origin /= shadow_origin.w;
@@ -568,15 +568,15 @@ void light_clusters::prepare_lights(const camera& view_camera,
 
    if (optional_placement_light) process_light(*optional_placement_light);
 
-   light_constants.shadow_transforms = {_sun_shadow_cascades[0].texture_matrix(),
-                                        _sun_shadow_cascades[1].texture_matrix(),
-                                        _sun_shadow_cascades[2].texture_matrix(),
-                                        _sun_shadow_cascades[3].texture_matrix()};
+   light_constants.shadow_transforms = {_sun_shadow_cascades[0].texture_from_world(),
+                                        _sun_shadow_cascades[1].texture_from_world(),
+                                        _sun_shadow_cascades[2].texture_from_world(),
+                                        _sun_shadow_cascades[3].texture_from_world()};
 
    // copy tile culling inputs
    {
       tiling_inputs tiling_inputs{.tile_counts = {_tiles_width, _tiles_height},
-                                  .view_projection_matrix =
+                                  .projection_from_world =
                                      view_camera.projection_from_world()};
 
       auto upload_buffer = dynamic_buffer_allocator.allocate(sizeof(tiling_inputs));
@@ -749,7 +749,7 @@ void light_clusters::draw_shadow_maps(
       command_list.set_graphics_cbv(rs::mesh_shadow::camera_cbv,
                                     dynamic_buffer_allocator
                                        .allocate_and_copy(
-                                          shadow_camera.view_projection_matrix())
+                                          shadow_camera.projection_from_world())
                                        .gpu_address);
 
       command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
@@ -759,7 +759,7 @@ void light_clusters::draw_shadow_maps(
 
       command_list.om_set_render_targets(depth_stencil_view);
 
-      frustum shadow_frustum{shadow_camera.inv_view_projection_matrix(), 1.0f, 0.0f};
+      frustum shadow_frustum{shadow_camera.world_from_projection(), 1.0f, 0.0f};
 
       cull_objects_shadow_cascade_avx2(
          shadow_frustum, meshes.opaque[mesh_opaque_flags::none].bbox.min.x,
