@@ -25,9 +25,9 @@ struct object_class_library;
 struct terrain_light_map_baker_config {
    bool include_object_shadows = true;
    bool ambient_occlusion = true;
-   bool supersample = true;
    bool bake_ps2_light_map = false;
 
+   int32 triangle_samples = 8;
    int32 ambient_occlusion_samples = 32;
 };
 

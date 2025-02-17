@@ -47,6 +47,23 @@ inline auto uniform_sample_hemisphere(const float u, const float v) noexcept -> 
    return {r * std::cos(phi), r * std::sin(phi), z};
 }
 
+inline auto uniform_sample_triangle(const float2 u) noexcept -> float3
+{
+   float w0;
+   float w1;
+
+   if (u.x + u.y < 1.0f) {
+      w0 = u.x;
+      w1 = u.y;
+   }
+   else {
+      w0 = 1.0f - u.x;
+      w1 = 1.0f - u.y;
+   }
+
+   return float3{w0, w1, 1.0f - w0 - w1};
+}
+
 // Martin Roberts - The Unreasonable Effectiveness of Quasirandom Sequences https://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
 inline auto R2(int32 i) noexcept -> float2
 {

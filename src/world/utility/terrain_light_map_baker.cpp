@@ -289,6 +289,35 @@ private:
    }
 };
 
+struct terrain_point {
+   int16 x;
+   int16 z;
+};
+
+struct bake_triangle {
+   bake_triangle(std::array<terrain_point, 3> points, const terrain& terrain,
+                 const container::dynamic_array_2d<float3>& normal_map)
+   {
+      const float terrain_half_length = terrain.length / 2.0f;
+
+      for (int i = 0; i < 3; ++i) {
+         const auto& [x, z] = points[i];
+
+         positionWS[i] = float3{(x - terrain_half_length) * terrain.grid_scale,
+                                terrain.height_map[{x, z}] * terrain.height_scale,
+                                (z - terrain_half_length + 1) * terrain.grid_scale};
+         normalWS[i] = normal_map[{x, z}];
+         index[i] = points[i];
+      }
+   }
+
+   std::array<float3, 3> positionWS;
+   std::array<float3, 3> normalWS;
+   std::array<terrain_point, 3> index;
+
+   std::span<float3> samples;
+};
+
 auto build_normal_map(const terrain& terrain) noexcept
    -> container::dynamic_array_2d<float3>
 {
@@ -351,97 +380,120 @@ auto build_normal_map(const terrain& terrain) noexcept
    return normal_map;
 }
 
+auto build_triangles(const terrain& terrain,
+                     const container::dynamic_array_2d<float3>& normal_map) noexcept
+   -> std::vector<bake_triangle>
+{
+   const int32 terrain_length_quads = terrain.length - 1;
+   const int32 terrain_length_tris = terrain_length_quads * 2;
+
+   std::vector<bake_triangle> triangles;
+
+   triangles.reserve(terrain_length_quads * terrain_length_tris);
+
+   for (int16 z = 0; z < terrain_length_quads; ++z) {
+      for (int16 x = 0; x < terrain_length_quads; ++x) {
+         if (z & 1) {
+            triangles.push_back({{
+                                    terrain_point{x, z},
+                                    terrain_point{x, static_cast<int16>(z + 1)},
+                                    terrain_point{static_cast<int16>(x + 1), z},
+                                 },
+                                 terrain,
+                                 normal_map});
+            triangles.push_back({{
+                                    terrain_point{x, static_cast<int16>(z + 1)},
+                                    terrain_point{static_cast<int16>(x + 1),
+                                                  static_cast<int16>(z + 1)},
+                                    terrain_point{static_cast<int16>(x + 1), z},
+                                 },
+                                 terrain,
+                                 normal_map});
+         }
+         else {
+            triangles.push_back({{
+                                    terrain_point{x, z},
+                                    terrain_point{static_cast<int16>(x + 1),
+                                                  static_cast<int16>(z + 1)},
+                                    terrain_point{static_cast<int16>(x + 1), z},
+                                 },
+                                 terrain,
+                                 normal_map});
+            triangles.push_back({{
+                                    terrain_point{x, z},
+                                    terrain_point{x, static_cast<int16>(z + 1)},
+                                    terrain_point{static_cast<int16>(x + 1),
+                                                  static_cast<int16>(z + 1)},
+                                 },
+                                 terrain,
+                                 normal_map});
+         }
+      }
+   }
+
+   return triangles;
+}
+
+auto build_filtered_light_map(const int32 terrain_length,
+                              std::span<const std::array<float, 3>> triangle_sample_coords,
+                              std::span<const bake_triangle> triangles) noexcept
+   -> container::dynamic_array_2d<float4>
+{
+   container::dynamic_array_2d<float4> light_map{terrain_length, terrain_length};
+
+   for (const bake_triangle& tri : triangles) {
+      const float area =
+         0.5f * length(cross(tri.positionWS[1] - tri.positionWS[0],
+                             tri.positionWS[2] - tri.positionWS[0]));
+
+      assert(triangle_sample_coords.size() == tri.samples.size());
+
+      for (int32 sample_index = 0;
+           sample_index < std::ssize(triangle_sample_coords); ++sample_index) {
+         const std::array<float, 3>& sample_coords =
+            triangle_sample_coords[sample_index];
+
+         for (int vertex_index = 0; vertex_index < std::ssize(tri.index);
+              ++vertex_index) {
+            const terrain_point& point = tri.index[vertex_index];
+            const float weight = sample_coords[vertex_index] * area;
+
+            light_map[{point.x, point.z}] +=
+               float4{tri.samples[sample_index] * weight, weight};
+         }
+      }
+   }
+
+   for (float4& light : light_map) {
+      if (light.w == 0.0f) continue;
+
+      light /= light.w;
+   }
+
+   return light_map;
+}
+
+auto pack_light_map(const container::dynamic_array_2d<float4>& light_map) noexcept
+   -> container::dynamic_array_2d<uint32>
+{
+   container::dynamic_array_2d<uint32> packed = {light_map.s_width(),
+                                                 light_map.s_height()};
+
+   for (int32 z = 0; z < light_map.s_height(); ++z) {
+      for (int32 x = 0; x < light_map.s_width(); ++x) {
+         packed[{x, z}] = utility::pack_srgb_bgra(light_map[{x, z}]);
+      }
+   }
+
+   return packed;
+}
+
 auto calculate_ambient_light(const float3& normalWS, const float3& ambient_ground_color,
                              const float3& ambient_sky_color) noexcept -> float3
 {
    const float factor = normalWS.y * 2.0f - 1.0f;
 
    return ambient_ground_color * (1.0f - factor) + ambient_sky_color * factor;
-}
-
-auto sample_terrain(const container::dynamic_array_2d<int16>& height_map,
-                    int32 terrain_max_index, float terrain_half_length,
-                    float terrain_grid_scale, float terrain_height_scale,
-                    float x, float z) noexcept -> float3
-{
-   const int32 ix = static_cast<int32>(x);
-   const int32 iz = static_cast<int32>(z);
-
-   const auto get_position = [&](const int32 x, const int32 z) {
-      return float3{(x - terrain_half_length) * terrain_grid_scale,
-                    height_map[{std::clamp(x, 0, terrain_max_index), std::clamp(z, 0, terrain_max_index)}] *
-                       terrain_height_scale,
-                    (z - terrain_half_length + 1) * terrain_grid_scale};
-   };
-
-   const float3 position_00WS = get_position(ix, iz);
-   const float3 position_01WS = get_position(ix, iz + 1);
-   const float3 position_10WS = get_position(ix + 1, iz);
-   const float3 position_11WS = get_position(ix + 1, iz + 1);
-
-   const float3 ray_originWS =
-      float3{(x - terrain_half_length) * terrain_grid_scale,
-             INT16_MAX * terrain_height_scale,
-             (z - terrain_half_length + 1) * terrain_grid_scale};
-   const float3 ray_directionWS = {0.0f, -1.0f, 0.0f};
-
-   if (iz & 1) {
-      const std::array tri0 = {position_00WS, position_01WS, position_10WS};
-
-      if (float distance = 0.0f; intersect_tri(ray_originWS, ray_directionWS,
-                                               tri0[0], tri0[1], tri0[2], distance)) {
-         return ray_originWS + ray_directionWS * distance;
-      }
-
-      const std::array tri1 = {position_01WS, position_11WS, position_10WS};
-
-      if (float distance = 0.0f; intersect_tri(ray_originWS, ray_directionWS,
-                                               tri1[0], tri1[1], tri1[2], distance)) {
-         return ray_originWS + ray_directionWS * distance;
-      }
-   }
-   else {
-      const std::array tri0 = {position_00WS, position_11WS, position_10WS};
-
-      if (float distance = 0.0f; intersect_tri(ray_originWS, ray_directionWS,
-                                               tri0[0], tri0[1], tri0[2], distance)) {
-         return ray_originWS + ray_directionWS * distance;
-      }
-
-      const std::array tri1 = {position_00WS, position_01WS, position_11WS};
-
-      if (float distance = 0.0f; intersect_tri(ray_originWS, ray_directionWS,
-                                               tri1[0], tri1[1], tri1[2], distance)) {
-         return ray_originWS + ray_directionWS * distance;
-      }
-   }
-
-   return ray_originWS;
-}
-
-auto sample_terrain_normal(const container::dynamic_array_2d<float3>& normal_map,
-                           const int32 terrain_max_index, float x,
-                           float z) noexcept -> float3
-{
-   const int32 ix = static_cast<int32>(x);
-   const int32 iz = static_cast<int32>(z);
-
-   const float3 normal00 =
-      normal_map[{std::clamp(ix, 0, terrain_max_index), std::clamp(iz, 0, terrain_max_index)}];
-   const float3 normal10 =
-      normal_map[{std::clamp(ix + 1, 0, terrain_max_index), std::clamp(iz, 0, terrain_max_index)}];
-   const float3 normal01 =
-      normal_map[{std::clamp(ix, 0, terrain_max_index), std::clamp(iz + 1, 0, terrain_max_index)}];
-   const float3 normal11 =
-      normal_map[{std::clamp(ix + 1, 0, terrain_max_index), std::clamp(iz + 1, 0, terrain_max_index)}];
-
-   const float x_factor = x - floorf(x);
-   const float z_factor = z - floorf(z);
-
-   const float3 x_normal0 = normal00 * (1.0f - x_factor) + normal10 * x_factor;
-   const float3 x_normal1 = normal01 * (1.0f - x_factor) + normal11 * x_factor;
-
-   return normalize(x_normal0 * (1.0f - z_factor) + x_normal1 * z_factor);
 }
 
 auto get_orthonormal_basis(float3 normal) noexcept -> float3x3
@@ -456,48 +508,6 @@ auto get_orthonormal_basis(float3 normal) noexcept -> float3x3
    return float3x3{b1, b2, normal};
 };
 
-constexpr static std::array<float2, 16> super_sample_grid_offsets = {{
-   {1.0f, 1.0f},
-   {-1.0f, -3.0f},
-   {-3.0f, 2.0f},
-   {4.0f, -1.0f},
-   {-5.0f, -2.0f},
-   {2.0f, 5.0f},
-   {5.0f, 3.0f},
-   {3.0f, -5.0f},
-   {-2.0f, 6.0f},
-   {0.0f, -7.0f},
-   {-4.0f, -6.0f},
-   {-6.0f, 4.0f},
-   {-8.0f, 0.0f},
-   {7.0f, -4.0f},
-   {6.0f, 7.0f},
-   {-7.0f, -8.0f},
-}};
-
-constexpr static std::array<float2, 16> super_sample_offsets = {{
-   super_sample_grid_offsets[0] / 8.0f,
-   super_sample_grid_offsets[1] / 8.0f,
-   super_sample_grid_offsets[2] / 8.0f,
-   super_sample_grid_offsets[3] / 8.0f,
-   super_sample_grid_offsets[4] / 8.0f,
-   super_sample_grid_offsets[5] / 8.0f,
-   super_sample_grid_offsets[6] / 8.0f,
-   super_sample_grid_offsets[7] / 8.0f,
-   super_sample_grid_offsets[8] / 8.0f,
-   super_sample_grid_offsets[9] / 8.0f,
-   super_sample_grid_offsets[10] / 8.0f,
-   super_sample_grid_offsets[11] / 8.0f,
-   super_sample_grid_offsets[12] / 8.0f,
-   super_sample_grid_offsets[13] / 8.0f,
-   super_sample_grid_offsets[14] / 8.0f,
-   super_sample_grid_offsets[15] / 8.0f,
-}};
-
-constexpr static std::array<float2, 1> single_sample_offsets = {{
-   {0.0f, 0.0f},
-}};
-
 }
 
 struct detail::terrain_light_map_baker_impl {
@@ -505,8 +515,7 @@ struct detail::terrain_light_map_baker_impl {
                                 const active_layers active_layers,
                                 async::thread_pool& thread_pool,
                                 const terrain_light_map_baker_config& config) noexcept
-      : _total_points{static_cast<float>(world.terrain.length * world.terrain.length)},
-        _scene{world, library, active_layers, config}
+      : _scene{world, library, active_layers, config}
    {
       if (not std::has_single_bit(static_cast<uint32>(world.terrain.length))) {
          std::terminate();
@@ -518,35 +527,46 @@ struct detail::terrain_light_map_baker_impl {
          utility::decompress_srgb(world.global_lights.ambient_sky_color);
 
       _terrain_length = world.terrain.length;
+      _terrain_length_quads = _terrain_length - 1;
+      _terrain_length_tris = _terrain_length_quads * 2;
       _terrain_max_index = _terrain_length - 1;
       _terrain_half_length = world.terrain.length / 2.0f;
       _terrain_grid_scale = world.terrain.grid_scale;
       _terrain_height_scale = world.terrain.height_scale;
 
+      _total_points = static_cast<float>(_terrain_length_quads * _terrain_length_tris);
+
       _height_map = world.terrain.height_map;
       _normal_map = build_normal_map(world.terrain);
-      _light_map = {_terrain_length, _terrain_length};
 
       if (config.bake_ps2_light_map) {
-         _light_map_dynamic_ps2 = {_terrain_length, _terrain_length};
          _total_points *= 2.0f;
       }
 
-      if (config.supersample) {
-         _sample_offsets = super_sample_offsets;
-      }
-      else {
-         _sample_offsets = single_sample_offsets;
+      _triangle_sample_coords.resize(config.triangle_samples);
+
+      for (int32 i = 0; i < std::ssize(_triangle_sample_coords); ++i) {
+         const float3 coords = uniform_sample_triangle(R2(i));
+
+         _triangle_sample_coords[i] = {coords.x, coords.y, coords.z};
       }
 
-      _inv_sample_count = 1.0f / _sample_offsets.size();
+      _bake_triangles = build_triangles(world.terrain, _normal_map);
+      _bake_triangle_sample_storage.resize(_bake_triangles.size() *
+                                           _triangle_sample_coords.size());
+
+      for (std::size_t i = 0; i < _bake_triangles.size(); ++i) {
+         _bake_triangles[i].samples = std::span{_bake_triangle_sample_storage}
+                                         .subspan(i * _triangle_sample_coords.size(),
+                                                  _triangle_sample_coords.size());
+      }
 
       if (config.ambient_occlusion) {
          _ao_sample_count = std::max(config.ambient_occlusion_samples, 1);
          _ao_sample_count_flt = static_cast<float>(_ao_sample_count);
          _inv_ao_sample_count_flt = 1.0f / _ao_sample_count_flt;
 
-         _ao_sample_directions.resize(_sample_offsets.size() * _ao_sample_count);
+         _ao_sample_directions.resize(_triangle_sample_coords.size() * _ao_sample_count);
 
          for (int32 i = 0; i < std::ssize(_ao_sample_directions); ++i) {
             _ao_sample_directions[i] = cosine_sample_hemisphere(R2(i));
@@ -593,6 +613,8 @@ private:
    constexpr static int32 _bake_patch_length = 8;
 
    int32 _terrain_length = 0;
+   int32 _terrain_length_quads = 0;
+   int32 _terrain_length_tris = 0;
    int32 _terrain_max_index = 0;
    float _terrain_half_length = 0.0f;
    float _terrain_grid_scale = 0.0f;
@@ -604,8 +626,10 @@ private:
    container::dynamic_array_2d<uint32> _light_map;
    container::dynamic_array_2d<uint32> _light_map_dynamic_ps2;
 
-   std::span<const float2> _sample_offsets;
-   float _inv_sample_count = 0.0f;
+   std::vector<std::array<float, 3>> _triangle_sample_coords;
+
+   std::vector<float3> _bake_triangle_sample_storage;
+   std::vector<bake_triangle> _bake_triangles;
 
    int32 _ao_sample_count = 128;
    float _ao_sample_count_flt = 128.0f;
@@ -630,9 +654,10 @@ private:
             while (true) {
                const int32 my_z = z.fetch_add(1, std::memory_order_relaxed);
 
-               if (my_z >= _terrain_length) return;
+               if (my_z >= _terrain_length_quads) return;
 
-               bake_row(my_z);
+               bake_row(std::span{_bake_triangles}.subspan(my_z * _terrain_length_tris,
+                                                           _terrain_length_tris));
             }
          }));
       }
@@ -640,10 +665,17 @@ private:
       while (true) {
          const int32 my_z = z.fetch_add(1, std::memory_order_relaxed);
 
-         if (my_z >= _terrain_length) break;
+         if (my_z >= _terrain_length_quads) break;
 
-         bake_row(my_z);
+         bake_row(std::span{_bake_triangles}.subspan(my_z * _terrain_length_tris,
+                                                     _terrain_length_tris));
       }
+
+      tasks.clear();
+
+      _light_map = pack_light_map(build_filtered_light_map(_terrain_length,
+                                                           _triangle_sample_coords,
+                                                           _bake_triangles));
 
       if (bake_ps2_dynamic_light_map) {
          std::atomic_int32_t z_dynamic = 0;
@@ -654,9 +686,11 @@ private:
                while (true) {
                   const int32 my_z = z_dynamic.fetch_add(1, std::memory_order_relaxed);
 
-                  if (my_z >= _terrain_length) return;
+                  if (my_z >= _terrain_length_quads) return;
 
-                  bake_row_dynamic(my_z);
+                  bake_row_dynamic(
+                     std::span{_bake_triangles}.subspan(my_z * _terrain_length_tris,
+                                                        _terrain_length_tris));
                }
             }));
          }
@@ -664,32 +698,43 @@ private:
          while (true) {
             const int32 my_z = z_dynamic.fetch_add(1, std::memory_order_relaxed);
 
-            if (my_z >= _terrain_length) break;
+            if (my_z >= _terrain_length_quads) break;
 
-            bake_row_dynamic(my_z);
+            bake_row_dynamic(
+               std::span{_bake_triangles}.subspan(my_z * _terrain_length_tris,
+                                                  _terrain_length_tris));
          }
-      }
 
-      tasks.clear();
+         tasks.clear();
+
+         const container::dynamic_array_2d<float4> filtered_light_map =
+            build_filtered_light_map(_terrain_length, _triangle_sample_coords,
+                                     _bake_triangles);
+
+         _light_map_dynamic_ps2 = pack_light_map(
+            build_filtered_light_map(_terrain_length, _triangle_sample_coords,
+                                     _bake_triangles));
+      }
    }
 
-   void bake_row(int32 zi) noexcept
+   void bake_row(std::span<bake_triangle> row) noexcept
    {
-      for (int32 xi = 0; xi < _terrain_length; ++xi) {
-         float3 light_color = {};
+      for (bake_triangle& tri : row) {
+         assert(tri.samples.size() == _triangle_sample_coords.size());
 
          for (int32 sample_index = 0;
-              sample_index < std::ssize(_sample_offsets); ++sample_index) {
-            const float2& sample = _sample_offsets[sample_index];
+              sample_index < std::ssize(_triangle_sample_coords); ++sample_index) {
+            float3 light_color = {};
 
-            float x = static_cast<float>(xi) + sample.x * 0.5f;
-            float z = static_cast<float>(zi) + sample.y * 0.5f;
+            const std::array<float, 3>& sample_coords =
+               _triangle_sample_coords[sample_index];
 
-            const float3 positionWS =
-               sample_terrain(_height_map, _terrain_max_index, _terrain_half_length,
-                              _terrain_grid_scale, _terrain_height_scale, x, z);
-            const float3 normalWS =
-               sample_terrain_normal(_normal_map, _terrain_max_index, x, z);
+            const float3 positionWS = tri.positionWS[0] * sample_coords[0] +
+                                      tri.positionWS[1] * sample_coords[1] +
+                                      tri.positionWS[2] * sample_coords[2];
+            const float3 normalWS = normalize(tri.normalWS[0] * sample_coords[0] +
+                                              tri.normalWS[1] * sample_coords[1] +
+                                              tri.normalWS[2] * sample_coords[2]);
 
             const float3x3 world_from_basis = get_orthonormal_basis(normalWS);
 
@@ -785,32 +830,32 @@ private:
                light_color += std::clamp(NdotL, 0.0f, 1.0f) * attenuation *
                               cone_falloff * light.color;
             }
-         }
 
-         _light_map[{xi, zi}] =
-            utility::pack_srgb_bgra({light_color * _inv_sample_count, 1.0f});
+            tri.samples[sample_index] = light_color;
+         }
 
          _points_baked.fetch_add(1, std::memory_order_relaxed);
       }
    }
 
-   void bake_row_dynamic(int32 zi) noexcept
+   void bake_row_dynamic(std::span<bake_triangle> row) noexcept
    {
-      for (int32 xi = 0; xi < _terrain_length; ++xi) {
-         float3 light_color = {};
+      for (bake_triangle& tri : row) {
+         assert(tri.samples.size() == _triangle_sample_coords.size());
 
          for (int32 sample_index = 0;
-              sample_index < std::ssize(_sample_offsets); ++sample_index) {
-            const float2& sample = _sample_offsets[sample_index];
+              sample_index < std::ssize(_triangle_sample_coords); ++sample_index) {
+            float3 light_color = {};
 
-            float x = static_cast<float>(xi) + sample.x * 0.5f;
-            float z = static_cast<float>(zi) + sample.y * 0.5f;
+            const std::array<float, 3>& sample_coords =
+               _triangle_sample_coords[sample_index];
 
-            const float3 positionWS =
-               sample_terrain(_height_map, _terrain_max_index, _terrain_half_length,
-                              _terrain_grid_scale, _terrain_height_scale, x, z);
-            const float3 normalWS =
-               sample_terrain_normal(_normal_map, _terrain_max_index, x, z);
+            const float3 positionWS = tri.positionWS[0] * sample_coords[0] +
+                                      tri.positionWS[1] * sample_coords[1] +
+                                      tri.positionWS[2] * sample_coords[2];
+            const float3 normalWS = normalize(tri.normalWS[0] * sample_coords[0] +
+                                              tri.normalWS[1] * sample_coords[1] +
+                                              tri.normalWS[2] * sample_coords[2]);
 
             for (auto& light : _scene.dynamic_directional_lights()) {
                const float NdotL = dot(normalWS, light.directionWS);
@@ -881,10 +926,9 @@ private:
                light_color += std::clamp(NdotL, 0.0f, 1.0f) * attenuation *
                               cone_falloff * light.color;
             }
-         }
 
-         _light_map_dynamic_ps2[{xi, zi}] =
-            utility::pack_srgb_bgra({light_color * _inv_sample_count, 1.0f});
+            tri.samples[sample_index] = light_color;
+         }
 
          _points_baked.fetch_add(1, std::memory_order_relaxed);
       }

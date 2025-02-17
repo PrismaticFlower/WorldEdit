@@ -19,6 +19,15 @@ void world_edit::ui_show_terrain_light_baker() noexcept
 
       world::terrain_light_map_baker_config& config = _terrain_light_baker_config;
 
+      ImGui::DragInt("Triangle Samples", &config.triangle_samples, 1.0f, 1,
+                     1024, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+      ImGui::SetItemTooltip(
+         "Number of samples to take per terrain triangle. "
+         "Bake time will scale almost linearly with this. Reduce to low counts "
+         "for very fast preview bakes, increase as high as you can stand for "
+         "your \"final\" bake.");
+
       ImGui::Checkbox("Object Shadows", &config.include_object_shadows);
 
       ImGui::SetItemTooltip(
@@ -38,16 +47,11 @@ void world_edit::ui_show_terrain_light_baker() noexcept
          "Lower this to get faster Ambient Occlusion bakes "
          "at the expense of quality. Increase it to boost the quality.");
 
-      ImGui::Checkbox("Supersample", &config.supersample);
-
-      ImGui::SetItemTooltip(
-         "Sample the lighting multiple times for each terrain grid point. "
-         "Increases quality and bake time.");
-
       ImGui::Checkbox("Bake PS2 Light Map", &config.bake_ps2_light_map);
 
       ImGui::SetItemTooltip(
-         "Bake the extra PS2 light map. Only needed when targetting the PS2.");
+         "Bake the extra PS2 light map. Only needed when targetting the PS2. "
+         "Significantly increases bake time.");
 
       ImGui::Separator();
 
