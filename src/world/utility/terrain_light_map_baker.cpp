@@ -539,10 +539,6 @@ struct detail::terrain_light_map_baker_impl {
       _height_map = world.terrain.height_map;
       _normal_map = build_normal_map(world.terrain);
 
-      if (config.bake_ps2_light_map) {
-         _total_points *= 2.0f;
-      }
-
       _triangle_sample_coords.resize(config.triangle_samples);
 
       for (int32 i = 0; i < std::ssize(_triangle_sample_coords); ++i) {
@@ -589,9 +585,19 @@ struct detail::terrain_light_map_baker_impl {
       return _task.ready();
    }
 
-   auto progress() const noexcept -> float
+   auto progress_status() const noexcept -> terrain_light_map_baker_status
    {
-      return _points_baked.load(std::memory_order_relaxed) / _total_points;
+      return _status.load(std::memory_order_relaxed);
+   }
+
+   auto sampling_progress() const noexcept -> float
+   {
+      return _tris_sampled.load(std::memory_order_relaxed) / _total_points;
+   }
+
+   auto sampling_ps2_progress() const noexcept -> float
+   {
+      return _tris_ps2_sampled.load(std::memory_order_relaxed) / _total_points;
    }
 
    auto light_map() noexcept -> container::dynamic_array_2d<uint32>
@@ -607,7 +613,10 @@ struct detail::terrain_light_map_baker_impl {
    }
 
 private:
-   std::atomic_int32_t _points_baked = 0;
+   std::atomic<terrain_light_map_baker_status> _status =
+      terrain_light_map_baker_status::sampling;
+   std::atomic_int32_t _tris_sampled = 0;
+   std::atomic_int32_t _tris_ps2_sampled = 0;
    float _total_points = 0.0f;
 
    constexpr static int32 _bake_patch_length = 8;
@@ -646,6 +655,8 @@ private:
       std::vector<async::task<void>> tasks;
       tasks.reserve(thread_pool.thread_count(async::task_priority::low) - 1);
 
+      _status.store(terrain_light_map_baker_status::sampling, std::memory_order_relaxed);
+
       std::atomic_int32_t z = 0;
 
       for (std::size_t i = 0;
@@ -673,11 +684,16 @@ private:
 
       tasks.clear();
 
+      _status.store(terrain_light_map_baker_status::filtering, std::memory_order_relaxed);
+
       _light_map = pack_light_map(build_filtered_light_map(_terrain_length,
                                                            _triangle_sample_coords,
                                                            _bake_triangles));
 
       if (bake_ps2_dynamic_light_map) {
+         _status.store(terrain_light_map_baker_status::sampling_ps2,
+                       std::memory_order_relaxed);
+
          std::atomic_int32_t z_dynamic = 0;
 
          for (std::size_t i = 0;
@@ -707,9 +723,8 @@ private:
 
          tasks.clear();
 
-         const container::dynamic_array_2d<float4> filtered_light_map =
-            build_filtered_light_map(_terrain_length, _triangle_sample_coords,
-                                     _bake_triangles);
+         _status.store(terrain_light_map_baker_status::filtering_ps2,
+                       std::memory_order_relaxed);
 
          _light_map_dynamic_ps2 = pack_light_map(
             build_filtered_light_map(_terrain_length, _triangle_sample_coords,
@@ -834,7 +849,7 @@ private:
             tri.samples[sample_index] = light_color;
          }
 
-         _points_baked.fetch_add(1, std::memory_order_relaxed);
+         _tris_sampled.fetch_add(1, std::memory_order_relaxed);
       }
    }
 
@@ -930,7 +945,7 @@ private:
             tri.samples[sample_index] = light_color;
          }
 
-         _points_baked.fetch_add(1, std::memory_order_relaxed);
+         _tris_ps2_sampled.fetch_add(1, std::memory_order_relaxed);
       }
    }
 };
@@ -952,9 +967,19 @@ bool terrain_light_map_baker::ready() const noexcept
    return _impl->ready();
 }
 
-auto terrain_light_map_baker::progress() const noexcept -> float
+auto terrain_light_map_baker::progress_status() const noexcept -> terrain_light_map_baker_status
 {
-   return _impl->progress();
+   return _impl->progress_status();
+}
+
+auto terrain_light_map_baker::sampling_progress() const noexcept -> float
+{
+   return _impl->sampling_progress();
+}
+
+auto terrain_light_map_baker::sampling_ps2_progress() const noexcept -> float
+{
+   return _impl->sampling_ps2_progress();
 }
 
 auto terrain_light_map_baker::light_map() noexcept

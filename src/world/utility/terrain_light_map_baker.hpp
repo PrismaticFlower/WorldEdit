@@ -31,6 +31,13 @@ struct terrain_light_map_baker_config {
    int32 ambient_occlusion_samples = 32;
 };
 
+enum class terrain_light_map_baker_status {
+   sampling,
+   filtering,
+   sampling_ps2,
+   filtering_ps2
+};
+
 struct terrain_light_map_baker {
    terrain_light_map_baker(const world& world, const object_class_library& library,
                            const active_layers active_layers,
@@ -44,7 +51,11 @@ struct terrain_light_map_baker {
 
    bool ready() const noexcept;
 
-   auto progress() const noexcept -> float;
+   auto progress_status() const noexcept -> terrain_light_map_baker_status;
+
+   auto sampling_progress() const noexcept -> float;
+
+   auto sampling_ps2_progress() const noexcept -> float;
 
    auto light_map() noexcept -> container::dynamic_array_2d<uint32>;
 

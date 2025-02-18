@@ -78,7 +78,25 @@ void world_edit::ui_show_terrain_light_bake_progress() noexcept
 
    if (ImGui::Begin("Baking Lighting...", nullptr,
                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize)) {
-      ImGui::ProgressBar(_terrain_light_map_baker->progress());
+
+      switch (_terrain_light_map_baker->progress_status()) {
+      case world::terrain_light_map_baker_status::sampling: {
+         ImGui::ProgressBar(_terrain_light_map_baker->sampling_progress(),
+                            {-1.0f, 0.0f}, "Sampling lighting...");
+      } break;
+      case world::terrain_light_map_baker_status::filtering: {
+         ImGui::ProgressBar(-0.5f * (float)ImGui::GetTime(), {-1.0f, 0.0f},
+                            "Filtering lighting...");
+      } break;
+      case world::terrain_light_map_baker_status::sampling_ps2: {
+         ImGui::ProgressBar(_terrain_light_map_baker->sampling_ps2_progress(),
+                            {-1.0f, 0.0f}, "Sampling PS2 lighting...");
+      } break;
+      case world::terrain_light_map_baker_status::filtering_ps2: {
+         ImGui::ProgressBar(-0.5f * (float)ImGui::GetTime(), {-1.0f, 0.0f},
+                            "Filtering PS2 lighting...");
+      } break;
+      }
    }
 
    ImGui::End();
