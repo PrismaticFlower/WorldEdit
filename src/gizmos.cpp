@@ -279,6 +279,9 @@ struct gizmos::impl {
          _last_gizmo_deactivated = gizmo.state == state::active;
          gizmo.state = state::idle;
       }
+      else {
+         _last_gizmo_deactivated = false;
+      }
 
       if (gizmo.state == state::idle or gizmo.state == state::hovered) {
          const float3 ray_originGS =
@@ -819,6 +822,9 @@ struct gizmos::impl {
          _last_gizmo_deactivated = gizmo.state == state::active;
          gizmo.state = state::idle;
       }
+      else {
+         _last_gizmo_deactivated = false;
+      }
 
       if (gizmo.state == state::idle or gizmo.state == state::hovered) {
          gizmo.active_widget = rotation_widget::none;
@@ -1103,6 +1109,9 @@ struct gizmos::impl {
       if (not _input.left_mouse_down) {
          _last_gizmo_deactivated = gizmo.state == state::active;
          gizmo.state = state::idle;
+      }
+      else {
+         _last_gizmo_deactivated = false;
       }
 
       if (gizmo.state == state::idle or gizmo.state == state::hovered) {
