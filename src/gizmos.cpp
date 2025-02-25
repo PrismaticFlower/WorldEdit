@@ -28,6 +28,18 @@ enum class position_widget : uint8 {
 
 enum class rotation_widget : uint8 { none, x, y, z };
 
+enum class size_widget : uint8 {
+   none,
+
+   x_neg,
+   y_neg,
+   z_neg,
+
+   x_pos,
+   y_pos,
+   z_pos,
+};
+
 enum class state : uint8 { idle, hovered, active, locked };
 
 struct gizmo_id {
@@ -75,6 +87,24 @@ struct gizmo_rotation_state {
    bool submitted_last_frame = true;
 };
 
+struct gizmo_size_state {
+   gizmo_id id;
+   quaternion rotation;
+
+   state state = state::idle;
+   size_widget active_widget = size_widget::none;
+
+   float3 active_positionWS;
+   float3 activation_positionGS;
+   float3 activation_size;
+
+   float alignment = 1.0f;
+
+   bool show_y_axis = true;
+
+   bool submitted_last_frame = true;
+};
+
 constexpr float3 x_color = {0.7835378f, 0.051269457f, 0.051269457f};
 constexpr float3 y_color = {0.051269457f, 0.116970666f, 0.7835378f};
 constexpr float3 z_color = {0.029556835f, 0.7835378f, 0.029556835f};
@@ -105,6 +135,8 @@ constexpr float rotate_gizmo_radius = 0.1f;
 constexpr float rotate_gizmo_hit_pad = 0.005f;
 constexpr float rotate_gizmo_alignment = 0.17453292519943295769f; // 10 degrees
 constexpr float rotate_gizmo_ring_cull_angle = 0.15f;
+
+constexpr float size_gizmo_radius = 0.0075f;
 
 auto align_value(const float value, const float alignment) noexcept -> float
 {
@@ -1023,6 +1055,418 @@ struct gizmos::impl {
       return gizmo.state == state::active;
    }
 
+   bool gizmo_size(const gizmo_size_desc& desc, float3& positionWS, float3& size) noexcept
+   {
+      gizmo_size_state& gizmo = add_size_gizmo(desc.name, desc.instance);
+
+      gizmo.rotation = normalize(desc.gizmo_rotation);
+      gizmo.alignment = desc.alignment;
+      gizmo.show_y_axis = desc.show_y_axis;
+
+      float gizmo_camera_scale = 1.0f;
+
+      if (not _orthographic_projection) {
+         gizmo_camera_scale =
+            distance(_camera_positionWS,
+                     gizmo.rotation * float3{-size.x, 0.0f, 0.0f} + positionWS);
+         gizmo_camera_scale = gizmo_camera_scale =
+            std::min(gizmo_camera_scale,
+                     distance(_camera_positionWS,
+                              gizmo.rotation * float3{0.0f, -size.y, 0.0f} + positionWS));
+         gizmo_camera_scale =
+            std::min(gizmo_camera_scale,
+                     distance(_camera_positionWS,
+                              gizmo.rotation * float3{0.0f, 0.0f, -size.z} + positionWS));
+
+         gizmo_camera_scale =
+            std::min(gizmo_camera_scale,
+                     distance(_camera_positionWS,
+                              gizmo.rotation * float3{size.x, 0.0f, 0.0f} + positionWS));
+         gizmo_camera_scale =
+            std::min(gizmo_camera_scale,
+                     distance(_camera_positionWS,
+                              gizmo.rotation * float3{0.0f, size.y, 0.0f} + positionWS));
+         gizmo_camera_scale =
+            std::min(gizmo_camera_scale,
+                     distance(_camera_positionWS,
+                              gizmo.rotation * float3{0.0f, 0.0f, size.z} + positionWS));
+      }
+
+      const float gizmo_radius = size_gizmo_radius * _gizmo_scale * gizmo_camera_scale;
+      const float gizmo_length = gizmo_radius * 2.0f;
+
+      const float3 ray_originWS = _cursor_rayWS.origin;
+      const float3 ray_directionWS = _cursor_rayWS.direction;
+      const float3 view_directionGS =
+         normalize(conjugate(gizmo.rotation) * (_camera_positionWS - positionWS));
+
+      if (not _input.left_mouse_down) {
+         _last_gizmo_deactivated = gizmo.state == state::active;
+         gizmo.state = state::idle;
+      }
+
+      if (gizmo.state == state::idle or gizmo.state == state::hovered) {
+         const float3 ray_originGS =
+            conjugate(gizmo.rotation) * (ray_originWS - positionWS);
+         const float3 ray_directionGS = conjugate(gizmo.rotation) * ray_directionWS;
+
+         const float3 x_negGS = float3{-size.x, 0.0f, 0.0f};
+         const float3 y_negGS = float3{0.0f, -size.y, 0.0f};
+         const float3 z_negGS = float3{0.0f, 0.0f, -size.z};
+
+         const float3 x_posGS = float3{size.x, 0.0f, 0.0f};
+         const float3 y_posGS = float3{0.0f, size.y, 0.0f};
+         const float3 z_posGS = float3{0.0f, 0.0f, size.z};
+
+         const float x_neg_hit =
+            iCappedCone(ray_originGS, ray_directionGS, x_negGS,
+                        x_negGS - float3{gizmo_length, 0.0f, 0.0f}, gizmo_radius, 0.0f)
+               .x;
+         const float y_neg_hit =
+            iCappedCone(ray_originGS, ray_directionGS, y_negGS,
+                        y_negGS - float3{0.0f, gizmo_length, 0.0f}, gizmo_radius, 0.0f)
+               .x;
+         const float z_neg_hit =
+            iCappedCone(ray_originGS, ray_directionGS, z_negGS,
+                        z_negGS - float3{0.0f, 0.0f, gizmo_length}, gizmo_radius, 0.0f)
+               .x;
+
+         const float x_pos_hit =
+            iCappedCone(ray_originGS, ray_directionGS, x_posGS,
+                        x_posGS + float3{gizmo_length, 0.0f, 0.0f}, gizmo_radius, 0.0f)
+               .x;
+         const float y_pos_hit =
+            iCappedCone(ray_originGS, ray_directionGS, y_posGS,
+                        y_posGS + float3{0.0f, gizmo_length, 0.0f}, gizmo_radius, 0.0f)
+               .x;
+         const float z_pos_hit =
+            iCappedCone(ray_originGS, ray_directionGS, z_posGS,
+                        z_posGS + float3{0.0f, 0.0f, gizmo_length}, gizmo_radius, 0.0f)
+               .x;
+
+         gizmo.active_widget = size_widget::none;
+         gizmo.state = state::idle;
+
+         float nearest = FLT_MAX;
+
+         if (x_neg_hit > 0.0f and x_neg_hit < nearest) {
+            nearest = x_neg_hit;
+            gizmo.state = state::hovered;
+            gizmo.active_widget = size_widget::x_neg;
+         }
+
+         if (y_neg_hit > 0.0f and y_neg_hit < nearest and gizmo.show_y_axis) {
+            nearest = y_neg_hit;
+            gizmo.state = state::hovered;
+            gizmo.active_widget = size_widget::y_neg;
+         }
+
+         if (z_neg_hit > 0.0f and z_neg_hit < nearest) {
+            nearest = z_neg_hit;
+            gizmo.state = state::hovered;
+            gizmo.active_widget = size_widget::z_neg;
+         }
+
+         if (x_pos_hit > 0.0f and x_pos_hit < nearest) {
+            nearest = x_pos_hit;
+            gizmo.state = state::hovered;
+            gizmo.active_widget = size_widget::x_pos;
+         }
+
+         if (y_pos_hit > 0.0f and y_pos_hit < nearest and gizmo.show_y_axis) {
+            nearest = y_pos_hit;
+            gizmo.state = state::hovered;
+            gizmo.active_widget = size_widget::y_pos;
+         }
+
+         if (z_pos_hit > 0.0f and z_pos_hit < nearest) {
+            nearest = z_pos_hit;
+            gizmo.state = state::hovered;
+            gizmo.active_widget = size_widget::z_pos;
+         }
+
+         if (gizmo.state == state::hovered) {
+            if (nearest >= _closest_gizmo and gizmo.id != _closest_gizmo_id) {
+               gizmo.state = state::idle;
+               gizmo.active_widget = size_widget::none;
+            }
+
+            if (nearest < _next_frame_closest_gizmo) {
+               _next_frame_closest_gizmo = nearest;
+               _next_frame_closest_gizmo_id = gizmo.id;
+            }
+         }
+      }
+
+      if (_input.left_mouse_down) {
+         if (gizmo.state == state::idle) {
+            gizmo.state = state::locked;
+         }
+         else if (gizmo.state == state::hovered) {
+            gizmo.state = state::active;
+            gizmo.active_positionWS = positionWS;
+            gizmo.activation_size = size;
+
+            const float3 ray_originGS = conjugate(gizmo.rotation) * ray_originWS;
+            const float3 ray_directionGS = conjugate(gizmo.rotation) * ray_directionWS;
+            const float3 positionGS = conjugate(gizmo.rotation) * positionWS;
+
+            float3 plane_normalGS = {};
+
+            switch (gizmo.active_widget) {
+            case size_widget::x_neg:
+            case size_widget::y_neg:
+            case size_widget::z_neg:
+            case size_widget::x_pos:
+            case size_widget::y_pos:
+            case size_widget::z_pos: {
+               const float3 eye_directionGS =
+                  conjugate(gizmo.rotation) * (positionWS - _camera_positionWS);
+               float3 axisGS = {};
+
+               if (gizmo.active_widget == size_widget::x_neg or
+                   gizmo.active_widget == size_widget::x_pos) {
+                  axisGS = float3{1.0f, 0.0f, 0.0f};
+               }
+               else if (gizmo.active_widget == size_widget::y_neg or
+                        gizmo.active_widget == size_widget::y_pos) {
+                  axisGS = float3{0.0f, 1.0f, 0.0f};
+               }
+               else if (gizmo.active_widget == size_widget::z_neg or
+                        gizmo.active_widget == size_widget::z_pos) {
+                  axisGS = float3{0.0f, 0.0f, 1.0f};
+               }
+
+               const float3 plane_tangentGS = cross(axisGS, eye_directionGS);
+               plane_normalGS = cross(axisGS, plane_tangentGS);
+            } break;
+            }
+
+            const float4 planeGS = make_plane_from_point(positionGS, plane_normalGS);
+
+            if (const float hit = intersect_plane(ray_originGS, ray_directionGS, planeGS);
+                hit > 0.0f) {
+               gizmo.activation_positionGS = ray_originGS + ray_directionGS * hit;
+            }
+         }
+      }
+
+      if (gizmo.state == state::active) {
+         const float3 active_positionWS = gizmo.active_positionWS;
+         const float3 ray_originGS = conjugate(gizmo.rotation) * ray_originWS;
+         const float3 ray_directionGS = conjugate(gizmo.rotation) * ray_directionWS;
+         const float3 positionGS = conjugate(gizmo.rotation) * active_positionWS;
+
+         float3 plane_normalGS = {};
+
+         switch (gizmo.active_widget) {
+         case size_widget::x_neg:
+         case size_widget::y_neg:
+         case size_widget::z_neg:
+         case size_widget::x_pos:
+         case size_widget::y_pos:
+         case size_widget::z_pos: {
+            const float3 eye_directionGS =
+               conjugate(gizmo.rotation) * (active_positionWS - _camera_positionWS);
+            float3 axisGS = {};
+
+            if (gizmo.active_widget == size_widget::x_neg or
+                gizmo.active_widget == size_widget::x_pos) {
+               axisGS = float3{1.0f, 0.0f, 0.0f};
+            }
+            else if (gizmo.active_widget == size_widget::y_neg or
+                     gizmo.active_widget == size_widget::y_pos) {
+               axisGS = float3{0.0f, 1.0f, 0.0f};
+            }
+            else if (gizmo.active_widget == size_widget::z_neg or
+                     gizmo.active_widget == size_widget::z_pos) {
+               axisGS = float3{0.0f, 0.0f, 1.0f};
+            }
+
+            const float3 plane_tangentGS = cross(axisGS, eye_directionGS);
+            plane_normalGS = cross(axisGS, plane_tangentGS);
+         } break;
+         }
+
+         const float4 planeGS = make_plane_from_point(positionGS, plane_normalGS);
+
+         if (const float hit = intersect_plane(ray_originGS, ray_directionGS, planeGS);
+             hit > 0.0f) {
+            const float alignment = gizmo.alignment;
+            const bool align = _input.ctrl_down;
+
+            const float3 hit_positionGS = ray_originGS + ray_directionGS * hit;
+
+            float3 axisGS = {};
+
+            if (gizmo.active_widget == size_widget::x_neg) {
+               axisGS = {-1.0f, 0.0f, 0.0f};
+            }
+            else if (gizmo.active_widget == size_widget::y_neg) {
+               axisGS = {0.0f, -1.0f, 0.0f};
+            }
+            else if (gizmo.active_widget == size_widget::z_neg) {
+               axisGS = {0.0f, 0.0f, -1.0f};
+            }
+            else if (gizmo.active_widget == size_widget::x_pos) {
+               axisGS = {1.0f, 0.0f, 0.0f};
+            }
+            else if (gizmo.active_widget == size_widget::y_pos) {
+               axisGS = {0.0f, 1.0f, 0.0f};
+            }
+            else if (gizmo.active_widget == size_widget::z_pos) {
+               axisGS = {0.0f, 0.0f, 1.0f};
+            }
+
+            const float cursor_sign =
+               dot(axisGS, hit_positionGS - gizmo.activation_positionGS) > 0.0f
+                  ? 1.0f
+                  : -1.0f;
+            const float cursor_movement =
+               distance(hit_positionGS, gizmo.activation_positionGS);
+            const float aligned_cursor_movement =
+               align ? align_value(cursor_movement, alignment) : cursor_movement;
+            float offset = aligned_cursor_movement * 0.5f * cursor_sign;
+
+            // Clamp offset to avoid negative sizes.
+            if (gizmo.active_widget == size_widget::x_neg or
+                gizmo.active_widget == size_widget::x_pos) {
+               offset = std::max(-gizmo.activation_size.x, offset);
+            }
+            else if (gizmo.active_widget == size_widget::y_neg or
+                     gizmo.active_widget == size_widget::y_pos) {
+               offset = std::max(-gizmo.activation_size.y, offset);
+            }
+            else if (gizmo.active_widget == size_widget::z_neg or
+                     gizmo.active_widget == size_widget::z_pos) {
+               offset = std::max(-gizmo.activation_size.z, offset);
+            }
+
+            float3 new_positionGS = positionGS;
+
+            if (gizmo.active_widget == size_widget::x_neg) {
+               size.x = gizmo.activation_size.x + offset;
+               new_positionGS.x -= offset;
+            }
+            else if (gizmo.active_widget == size_widget::y_neg) {
+               size.y = gizmo.activation_size.y + offset;
+               new_positionGS.y -= offset;
+            }
+            else if (gizmo.active_widget == size_widget::z_neg) {
+               size.z = gizmo.activation_size.z + offset;
+               new_positionGS.z -= offset;
+            }
+            else if (gizmo.active_widget == size_widget::x_pos) {
+               size.x = gizmo.activation_size.x + offset;
+               new_positionGS.x += offset;
+            }
+            else if (gizmo.active_widget == size_widget::y_pos) {
+               size.y = gizmo.activation_size.y + offset;
+               new_positionGS.y += offset;
+            }
+            else if (gizmo.active_widget == size_widget::z_pos) {
+               size.z = gizmo.activation_size.z + offset;
+               new_positionGS.z += offset;
+            }
+
+            positionWS = gizmo.rotation * new_positionGS;
+         }
+      }
+
+      {
+         const bool is_hover = gizmo.state == state::hovered;
+         const bool is_active = gizmo.state == state::active;
+         const bool x_neg_active = gizmo.active_widget == size_widget::x_neg;
+         const bool y_neg_active = gizmo.active_widget == size_widget::y_neg;
+         const bool z_neg_active = gizmo.active_widget == size_widget::z_neg;
+         const bool x_pos_active = gizmo.active_widget == size_widget::x_pos;
+         const bool y_pos_active = gizmo.active_widget == size_widget::y_pos;
+         const bool z_pos_active = gizmo.active_widget == size_widget::z_pos;
+
+         const float3 x_axisWS = gizmo.rotation * float3{1.0f, 0.0f, 0.0f};
+         const float3 y_axisWS = gizmo.rotation * float3{0.0f, 1.0f, 0.0f};
+         const float3 z_axisWS = gizmo.rotation * float3{0.0f, 0.0f, 1.0f};
+
+         const float3 x_negWS = positionWS - x_axisWS * size.x;
+         const float3 y_negWS = positionWS - y_axisWS * size.y;
+         const float3 z_negWS = positionWS - z_axisWS * size.z;
+
+         const float3 x_posWS = positionWS + x_axisWS * size.x;
+         const float3 y_posWS = positionWS + y_axisWS * size.y;
+         const float3 z_posWS = positionWS + z_axisWS * size.z;
+
+         if (is_active) {
+            if (x_neg_active) {
+               draw_lists.cones.emplace_back(x_negWS, x_negWS - x_axisWS * gizmo_length,
+                                             gizmo_radius, x_color_hover);
+            }
+
+            if (y_neg_active) {
+               draw_lists.cones.emplace_back(y_negWS, y_negWS - y_axisWS * gizmo_length,
+                                             gizmo_radius, y_color_hover);
+            }
+
+            if (z_neg_active) {
+               draw_lists.cones.emplace_back(z_negWS, z_negWS - z_axisWS * gizmo_length,
+                                             gizmo_radius, z_color_hover);
+            }
+
+            if (x_pos_active) {
+               draw_lists.cones.emplace_back(x_posWS, x_posWS + x_axisWS * gizmo_length,
+                                             gizmo_radius, x_color_hover);
+            }
+
+            if (y_pos_active) {
+               draw_lists.cones.emplace_back(y_posWS, y_posWS + y_axisWS * gizmo_length,
+                                             gizmo_radius, y_color_hover);
+            }
+
+            if (z_pos_active) {
+               draw_lists.cones.emplace_back(z_posWS, z_posWS + z_axisWS * gizmo_length,
+                                             gizmo_radius, z_color_hover);
+            }
+         }
+         else {
+            draw_lists.cones.emplace_back(x_negWS, x_negWS - x_axisWS * gizmo_length,
+                                          gizmo_radius,
+                                          is_hover and x_neg_active ? x_color_hover
+                                                                    : x_color);
+
+            draw_lists.cones.emplace_back(z_negWS, z_negWS - z_axisWS * gizmo_length,
+                                          gizmo_radius,
+                                          is_hover and z_neg_active ? z_color_hover
+                                                                    : z_color);
+
+            draw_lists.cones.emplace_back(x_posWS, x_posWS + x_axisWS * gizmo_length,
+                                          gizmo_radius,
+                                          is_hover and x_pos_active ? x_color_hover
+                                                                    : x_color);
+            draw_lists.cones.emplace_back(z_posWS, z_posWS + z_axisWS * gizmo_length,
+                                          gizmo_radius,
+                                          is_hover and z_pos_active ? z_color_hover
+                                                                    : z_color);
+
+            if (gizmo.show_y_axis) {
+               draw_lists.cones.emplace_back(y_negWS, y_negWS - y_axisWS * gizmo_length,
+                                             gizmo_radius,
+                                             is_hover and y_neg_active ? y_color_hover
+                                                                       : y_color);
+
+               draw_lists.cones.emplace_back(y_posWS, y_posWS + y_axisWS * gizmo_length,
+                                             gizmo_radius,
+                                             is_hover and y_pos_active ? y_color_hover
+                                                                       : y_color);
+            }
+         }
+      }
+
+      _want_mouse_input |=
+         (gizmo.state == state::hovered or gizmo.state == state::active);
+      _want_keyboard_input |= gizmo.state == state::active;
+
+      return gizmo.state == state::active;
+   }
+
    bool can_close_last_edit() const noexcept
    {
       return _last_gizmo_deactivated;
@@ -1043,6 +1487,7 @@ private:
    std::vector<gizmo_position_state> _position_gizmos;
    std::vector<gizmo_movement_state> _movement_gizmos;
    std::vector<gizmo_rotation_state> _rotation_gizmos;
+   std::vector<gizmo_size_state> _size_gizmos;
 
    float _gizmo_scale = 1.0f;
    float3 _camera_positionWS = {0.0f, 0.0f, 0.0f};
@@ -1102,6 +1547,21 @@ private:
          .id = {.name = std::string{name}, .instance = instance}});
    }
 
+   auto add_size_gizmo(const std::string_view name, const int64 instance) noexcept
+      -> gizmo_size_state&
+   {
+      for (gizmo_size_state& existing : _size_gizmos) {
+         if (existing.id.name == name and existing.id.instance == instance) {
+            existing.submitted_last_frame = true;
+
+            return existing;
+         }
+      }
+
+      return _size_gizmos.emplace_back(
+         gizmo_size_state{.id = {.name = std::string{name}, .instance = instance}});
+   }
+
    void garbage_collect() noexcept
    {
       for (auto it = _position_gizmos.begin(); it != _position_gizmos.end();) {
@@ -1135,6 +1595,19 @@ private:
 
          if (not gizmo.submitted_last_frame) {
             it = _rotation_gizmos.erase(it);
+         }
+         else {
+            gizmo.submitted_last_frame = false;
+
+            it += 1;
+         }
+      }
+
+      for (auto it = _size_gizmos.begin(); it != _size_gizmos.end();) {
+         gizmo_size_state& gizmo = *it;
+
+         if (not gizmo.submitted_last_frame) {
+            it = _size_gizmos.erase(it);
          }
          else {
             gizmo.submitted_last_frame = false;
@@ -1184,6 +1657,11 @@ bool gizmos::gizmo_movement(const gizmo_movement_desc& desc, float3& out_movemen
 bool gizmos::gizmo_rotation(const gizmo_rotation_desc& desc, float3& rotation) noexcept
 {
    return impl->gizmo_rotation(desc, rotation);
+}
+
+bool gizmos::gizmo_size(const gizmo_size_desc& desc, float3& positionWS, float3& size) noexcept
+{
+   return impl->gizmo_size(desc, positionWS, size);
 }
 
 bool gizmos::can_close_last_edit() const noexcept
