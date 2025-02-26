@@ -941,6 +941,7 @@ auto device::create_graphics_pipeline(const graphics_pipeline_desc& desc) -> pip
             .FrontCounterClockwise = true,
             .DepthBias = desc.rasterizer_state.depth_bias,
             .DepthBiasClamp = desc.rasterizer_state.depth_bias_clamp,
+            .DepthClipEnable = true,
             .AntialiasedLineEnable = desc.rasterizer_state.antialiased_lines,
             .ForcedSampleCount = desc.rasterizer_state.forced_sample_count,
             .ConservativeRaster = desc.rasterizer_state.conservative_raster
