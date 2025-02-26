@@ -1928,6 +1928,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                                       _interaction_targets.selection);
       }
 
+      if (ImGui::Button("Resize Selected Entity", {ImGui::CalcItemWidth(), 0.0f})) {
+         _selection_edit_tool = selection_edit_tool::resize_entity;
+      }
+
       if (ImGui::Button("Match Transform", {ImGui::CalcItemWidth(), 0.0f})) {
          _selection_edit_tool = selection_edit_tool::match_transform;
          _selection_match_transform_context = {};
@@ -1981,6 +1985,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Entity Editing",
                                 "Rotate Selection Around Centre")));
+
+      ImGui::Text("Resize Selected Entity");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Entity Editing", "Resize Selected Entity")));
 
       ImGui::Text("Match Transform");
       ImGui::BulletText(get_display_string(

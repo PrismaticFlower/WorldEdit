@@ -122,7 +122,8 @@ enum class selection_edit_tool : uint8 {
    set_layer,
    match_transform,
    pick_sector,
-   add_branch_weight
+   add_branch_weight,
+   resize_entity
 };
 
 enum class add_branch_weight_step : uint8 { connection, target };
@@ -284,6 +285,8 @@ private:
    void ui_show_world_selection_pick_sector() noexcept;
 
    void ui_show_world_selection_add_branch_weight() noexcept;
+
+   void ui_show_world_selection_resize_entity() noexcept;
 
    void ui_show_terrain_editor() noexcept;
 

@@ -101,6 +101,7 @@ struct gizmo_size_state {
    float alignment = 1.0f;
 
    bool show_y_axis = true;
+   bool show_z_axis = true;
 
    bool submitted_last_frame = true;
 };
@@ -1068,6 +1069,7 @@ struct gizmos::impl {
       gizmo.rotation = normalize(desc.gizmo_rotation);
       gizmo.alignment = desc.alignment;
       gizmo.show_y_axis = desc.show_y_axis;
+      gizmo.show_z_axis = desc.show_z_axis;
 
       float gizmo_camera_scale = 1.0f;
 
@@ -1170,7 +1172,7 @@ struct gizmos::impl {
             gizmo.active_widget = size_widget::y_neg;
          }
 
-         if (z_neg_hit > 0.0f and z_neg_hit < nearest) {
+         if (z_neg_hit > 0.0f and z_neg_hit < nearest and gizmo.show_z_axis) {
             nearest = z_neg_hit;
             gizmo.state = state::hovered;
             gizmo.active_widget = size_widget::z_neg;
@@ -1188,7 +1190,7 @@ struct gizmos::impl {
             gizmo.active_widget = size_widget::y_pos;
          }
 
-         if (z_pos_hit > 0.0f and z_pos_hit < nearest) {
+         if (z_pos_hit > 0.0f and z_pos_hit < nearest and gizmo.show_z_axis) {
             nearest = z_pos_hit;
             gizmo.state = state::hovered;
             gizmo.active_widget = size_widget::z_pos;
@@ -1441,19 +1443,10 @@ struct gizmos::impl {
                                           is_hover and x_neg_active ? x_color_hover
                                                                     : x_color);
 
-            draw_lists.cones.emplace_back(z_negWS, z_negWS - z_axisWS * gizmo_length,
-                                          gizmo_radius,
-                                          is_hover and z_neg_active ? z_color_hover
-                                                                    : z_color);
-
             draw_lists.cones.emplace_back(x_posWS, x_posWS + x_axisWS * gizmo_length,
                                           gizmo_radius,
                                           is_hover and x_pos_active ? x_color_hover
                                                                     : x_color);
-            draw_lists.cones.emplace_back(z_posWS, z_posWS + z_axisWS * gizmo_length,
-                                          gizmo_radius,
-                                          is_hover and z_pos_active ? z_color_hover
-                                                                    : z_color);
 
             if (gizmo.show_y_axis) {
                draw_lists.cones.emplace_back(y_negWS, y_negWS - y_axisWS * gizmo_length,
@@ -1465,6 +1458,18 @@ struct gizmos::impl {
                                              gizmo_radius,
                                              is_hover and y_pos_active ? y_color_hover
                                                                        : y_color);
+            }
+
+            if (gizmo.show_z_axis) {
+               draw_lists.cones.emplace_back(z_negWS, z_negWS - z_axisWS * gizmo_length,
+                                             gizmo_radius,
+                                             is_hover and z_neg_active ? z_color_hover
+                                                                       : z_color);
+
+               draw_lists.cones.emplace_back(z_posWS, z_posWS + z_axisWS * gizmo_length,
+                                             gizmo_radius,
+                                             is_hover and z_pos_active ? z_color_hover
+                                                                       : z_color);
             }
          }
       }

@@ -41,6 +41,7 @@ struct gizmo_size_desc {
    quaternion gizmo_rotation;
 
    bool show_y_axis = true;
+   bool show_z_axis = true;
 };
 
 struct gizmo_draw_cone {

@@ -212,6 +212,9 @@ void world_edit::initialize_commands() noexcept
       _selection_edit_tool = selection_edit_tool::match_transform;
       _selection_match_transform_context = {};
    });
+   _commands.add("entity_edit.resize_entity"s, [this] {
+      _selection_edit_tool = selection_edit_tool::resize_entity;
+   });
    _commands.add("entity_edit.clear_selection_edit_tool"s,
                  [this] { _selection_edit_tool = selection_edit_tool::none; });
    _commands.add("entity_edit.align_selection"s,
@@ -834,6 +837,9 @@ void world_edit::initialize_hotkeys() noexcept
           {"Rotate Selection Around Centre",
            "entity_edit.rotate_selection_around_centre",
            {.key = key::c}},
+          {"Resize Selected Entity",
+           "entity_edit.resize_entity",
+           {.key = key::c, .modifiers = {.shift = true}}},
           {"Match Transform",
            "entity_edit.match_transform",
            {.key = key::x, .modifiers = {.shift = true}}},
