@@ -232,7 +232,11 @@ auto create_shadow_pipelines(gpu::device& device, const std::string_view name_ba
               .ps_bytecode = alpha_cutout ? shader_library["mesh_shadow_cutoutPS"sv]
                                           : std::span<const std::byte>{},
 
-              .rasterizer_state = doublesided ? rasterizer_cull_none : rasterizer_cull_backfacing,
+              .rasterizer_state =
+                 {
+                    .cull_mode = doublesided ? gpu::cull_mode::none : gpu::cull_mode::back,
+                    .depth_clip_enabled = false,
+                 },
               .depth_stencil_state = {.depth_test_enabled = true,
                                       .depth_test_func = gpu::comparison_func::less_equal},
               .input_layout =

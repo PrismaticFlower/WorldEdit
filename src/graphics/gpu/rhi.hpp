@@ -448,6 +448,7 @@ struct rasterizer_state_desc {
    int32 depth_bias = 0;
    float depth_bias_clamp = 0.0f;
 
+   bool depth_clip_enabled = true;
    bool antialiased_lines = false;
    bool conservative_raster = false;
 
