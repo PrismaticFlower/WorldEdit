@@ -106,6 +106,7 @@ struct gizmo_size_state {
    state state = state::idle;
    size_widget active_widget = size_widget::none;
 
+   float3 plane_positionWS;
    float3 active_positionWS;
    float3 activation_positionGS;
    float3 activation_size;
@@ -1245,6 +1246,7 @@ struct gizmos::impl {
          }
          else if (gizmo.state == state::hovered) {
             gizmo.state = state::active;
+            gizmo.plane_positionWS = ray_originWS + ray_directionWS * _closest_gizmo;
             gizmo.active_positionWS = positionWS;
             gizmo.activation_size = size;
 
@@ -1262,7 +1264,8 @@ struct gizmos::impl {
             case size_widget::y_pos:
             case size_widget::z_pos: {
                const float3 eye_directionGS =
-                  conjugate(gizmo.rotation) * (positionWS - _camera_positionWS);
+                  conjugate(gizmo.rotation) *
+                  (gizmo.plane_positionWS - _camera_positionWS);
                float3 axisGS = {};
 
                if (gizmo.active_widget == size_widget::x_neg or
@@ -1283,7 +1286,10 @@ struct gizmos::impl {
             } break;
             }
 
-            const float4 planeGS = make_plane_from_point(positionGS, plane_normalGS);
+            const float3 plane_positionGS =
+               conjugate(gizmo.rotation) * gizmo.plane_positionWS;
+            const float4 planeGS =
+               make_plane_from_point(plane_positionGS, plane_normalGS);
 
             if (const float hit = intersect_plane(ray_originGS, ray_directionGS, planeGS);
                 hit > 0.0f) {
@@ -1293,10 +1299,9 @@ struct gizmos::impl {
       }
 
       if (gizmo.state == state::active) {
-         const float3 active_positionWS = gizmo.active_positionWS;
          const float3 ray_originGS = conjugate(gizmo.rotation) * ray_originWS;
          const float3 ray_directionGS = conjugate(gizmo.rotation) * ray_directionWS;
-         const float3 positionGS = conjugate(gizmo.rotation) * active_positionWS;
+         const float3 positionGS = conjugate(gizmo.rotation) * gizmo.active_positionWS;
 
          float3 plane_normalGS = {};
 
@@ -1308,7 +1313,7 @@ struct gizmos::impl {
          case size_widget::y_pos:
          case size_widget::z_pos: {
             const float3 eye_directionGS =
-               conjugate(gizmo.rotation) * (active_positionWS - _camera_positionWS);
+               conjugate(gizmo.rotation) * (gizmo.plane_positionWS - _camera_positionWS);
             float3 axisGS = {};
 
             if (gizmo.active_widget == size_widget::x_neg or
@@ -1329,7 +1334,10 @@ struct gizmos::impl {
          } break;
          }
 
-         const float4 planeGS = make_plane_from_point(positionGS, plane_normalGS);
+         const float3 plane_positionGS =
+            conjugate(gizmo.rotation) * gizmo.plane_positionWS;
+         const float4 planeGS =
+            make_plane_from_point(plane_positionGS, plane_normalGS);
 
          if (const float hit = intersect_plane(ray_originGS, ray_directionGS, planeGS);
              hit > 0.0f) {
