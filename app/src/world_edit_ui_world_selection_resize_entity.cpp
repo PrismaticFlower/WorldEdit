@@ -57,7 +57,51 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                   }
                } break;
                case world::light_type::spot: {
+                  const float start_outer_radius =
+                     light->range * std::tan(light->outer_cone_angle * 0.5f);
 
+                  float new_range = light->range;
+                  float new_outer_radius = start_outer_radius;
+
+                  if (_gizmos.gizmo_cone_size(
+                         {
+                            .name = "Light Size",
+                            .instance = static_cast<int64>(light->id),
+                            .alignment = _editor_grid_size,
+                            .gizmo_rotation = light->rotation,
+                            .gizmo_positionWS = light->position,
+                         },
+                         new_range, new_outer_radius)) {
+                     float new_inner_angle = light->inner_cone_angle;
+                     float new_outer_angle = light->outer_cone_angle;
+
+                     if (new_outer_radius != start_outer_radius) {
+                        new_outer_angle =
+                           std::atan(new_outer_radius / light->range) * 2.0f;
+
+                        const float inner_radius =
+                           light->range * std::tan(light->inner_cone_angle * 0.5f);
+
+                        new_outer_angle =
+                           std::atan(new_outer_radius / light->range) * 2.0f;
+
+                        const float inner_scale =
+                           start_outer_radius > 0.0f
+                              ? (new_outer_radius / start_outer_radius)
+                              : 1.0f;
+
+                        new_inner_angle =
+                           std::atan((inner_radius * inner_scale) / light->range) * 2.0f;
+                     }
+
+                     _edit_stack_world
+                        .apply(edits::make_set_multi_value(&light->range, new_range,
+                                                           &light->inner_cone_angle,
+                                                           new_inner_angle,
+                                                           &light->outer_cone_angle,
+                                                           new_outer_angle),
+                               _edit_context);
+                  }
                } break;
                case world::light_type::directional_region_box: {
                   float3 new_position = light->position;

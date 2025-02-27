@@ -44,6 +44,14 @@ struct gizmo_size_desc {
    bool show_z_axis = true;
 };
 
+struct gizmo_cone_size_desc {
+   std::string_view name;
+   int64 instance = 0;
+   float alignment = 1.0f;
+   quaternion gizmo_rotation;
+   float3 gizmo_positionWS;
+};
+
 struct gizmo_draw_cone {
    float3 position_start;
    float3 position_end;
@@ -131,6 +139,9 @@ struct gizmos {
    bool gizmo_rotation(const gizmo_rotation_desc& desc, float3& rotation) noexcept;
 
    bool gizmo_size(const gizmo_size_desc& desc, float3& positionWS, float3& size) noexcept;
+
+   bool gizmo_cone_size(const gizmo_cone_size_desc& desc, float& length,
+                        float& base_radius) noexcept;
 
    bool can_close_last_edit() const noexcept;
 
