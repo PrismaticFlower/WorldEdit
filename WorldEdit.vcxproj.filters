@@ -231,6 +231,11 @@
     <ClCompile Include="src\graphics\shaders\gizmo_rotation_widgetPS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_rotation_widget_orthographicPS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_cone_orthographicPS.cpp" />
+    <ClCompile Include="src\graphics\blocks.cpp" />
+    <ClCompile Include="src\graphics\shaders\block_basicPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\blockVS.cpp" />
+    <ClCompile Include="src\world\blocks\dirty_range_tracker.cpp" />
+    <ClCompile Include="src\edits\add_block.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -521,6 +526,10 @@
     <ClInclude Include="src\world\io\save_entity_group.hpp" />
     <ClInclude Include="src\io\path.hpp" />
     <ClInclude Include="src\gizmos.hpp" />
+    <ClInclude Include="src\world\blocks.hpp" />
+    <ClInclude Include="src\graphics\blocks.hpp" />
+    <ClInclude Include="src\world\blocks\dirty_range_tracker.hpp" />
+    <ClInclude Include="src\edits\add_block.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

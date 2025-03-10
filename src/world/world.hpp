@@ -2,6 +2,7 @@
 
 #include "animation.hpp"
 #include "barrier.hpp"
+#include "blocks.hpp"
 #include "boundary.hpp"
 #include "effects.hpp"
 #include "game_mode_description.hpp"
@@ -65,6 +66,8 @@ struct world {
       pinned_vector_init{max_animation_groups, 256};
    pinned_vector<animation_hierarchy> animation_hierarchies =
       pinned_vector_init{max_animation_hierarchies, 256};
+
+   blocks blocks;
 
    effects effects;
 

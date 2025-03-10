@@ -37,7 +37,7 @@ struct float3 {
       -> bool = default;
 };
 
-struct alignas(16) float4 {
+struct float4 {
    float x = 0.0f;
    float y = 0.0f;
    float z = 0.0f;

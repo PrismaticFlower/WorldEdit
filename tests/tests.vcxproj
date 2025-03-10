@@ -237,6 +237,7 @@
     <ClCompile Include="src\edits\add_animation_hierarchy_child_tests.cpp" />
     <ClCompile Include="src\edits\add_animation_hierarchy_tests.cpp" />
     <ClCompile Include="src\edits\add_animation_tests.cpp" />
+    <ClCompile Include="src\edits\add_block_tests.cpp" />
     <ClCompile Include="src\edits\add_branch_weight_tests.cpp" />
     <ClCompile Include="src\edits\add_game_mode_tests.cpp" />
     <ClCompile Include="src\edits\add_property_tests.cpp" />
@@ -305,6 +306,7 @@
     <ClCompile Include="src\world\io\save_effects_tests.cpp" />
     <ClCompile Include="src\world\io\save_entity_group_tests.cpp" />
     <ClCompile Include="src\world\object_class_library_tests.cpp" />
+    <ClCompile Include="src\world\blocks\dirty_range_tracker_tests.cpp" />
     <ClCompile Include="src\world\utility\region_properties_tests.cpp" />
     <ClCompile Include="src\world\world_io_load_tests.cpp" />
     <ClCompile Include="src\world\world_io_save_tests.cpp" />

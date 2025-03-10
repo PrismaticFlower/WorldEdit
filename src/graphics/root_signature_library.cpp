@@ -21,6 +21,8 @@ constexpr uint32 gizmo_shape_cb_register = 10;
 constexpr uint32 terrain_patch_data_register = 0;
 constexpr uint32 meta_draw_instance_data_register = 1;
 constexpr uint32 water_patch_data_register = 2;
+constexpr uint32 block_instance_index_register = 3;
+constexpr uint32 block_instance_data_register = 4;
 
 constexpr gpu::root_parameter frame_constant_buffer = {
    .type = gpu::root_parameter_type::constant_buffer_view,
@@ -48,6 +50,20 @@ constexpr gpu::root_parameter material_constant_buffer{
 
    .shader_register = material_cb_register,
    .visibility = gpu::root_shader_visibility::pixel,
+};
+
+constexpr gpu::root_parameter block_instance_index_buffer{
+   .type = gpu::root_parameter_type::shader_resource_view,
+
+   .shader_register = block_instance_index_register,
+   .visibility = gpu::root_shader_visibility::vertex,
+};
+
+constexpr gpu::root_parameter block_instance_buffer{
+   .type = gpu::root_parameter_type::shader_resource_view,
+
+   .shader_register = block_instance_data_register,
+   .visibility = gpu::root_shader_visibility::vertex,
 };
 
 constexpr std::array<gpu::static_sampler_desc, sampler_count> static_samplers =
@@ -172,7 +188,6 @@ const gpu::root_signature_desc mesh_depth_prepass_desc{
 
    .debug_name = "mesh_depth_prepass_root_signature",
 };
-
 const gpu::root_signature_desc sky_mesh_desc{
    .parameters =
       {
@@ -187,6 +202,22 @@ const gpu::root_signature_desc sky_mesh_desc{
    .flags = {.allow_input_assembler_input_layout = true},
 
    .debug_name = "sky_mesh_root_signature",
+};
+
+const gpu::root_signature_desc block_desc{
+   .parameters =
+      {
+         block_instance_index_buffer,
+         block_instance_buffer,
+         frame_constant_buffer,
+         lights_constant_buffer,
+      },
+
+   .samplers = pixel_static_samplers,
+
+   .flags = {.allow_input_assembler_input_layout = true},
+
+   .debug_name = "block_root_signature",
 };
 
 const gpu::root_signature_desc grid_overlay_desc{
@@ -432,6 +463,7 @@ root_signature_library::root_signature_library(gpu::device& device)
    mesh_wireframe = {device.create_root_signature(mesh_wireframe_desc),
                      device.direct_queue};
    sky_mesh = {device.create_root_signature(sky_mesh_desc), device.direct_queue};
+   block = {device.create_root_signature(block_desc), device.direct_queue};
    grid_overlay = {device.create_root_signature(grid_overlay_desc), device.direct_queue};
    thumbnail_mesh = {device.create_root_signature(thumbnail_mesh_desc),
                      device.direct_queue};

@@ -19,32 +19,32 @@ public:
    explicit geometric_shapes(gpu::device& device,
                              copy_command_list_pool& copy_command_list_pool);
 
-   auto cube() noexcept -> geometric_shape
+   auto cube() const noexcept -> const geometric_shape&
    {
       return _cube;
    }
 
-   auto cylinder() noexcept -> geometric_shape
+   auto cylinder() const noexcept -> const geometric_shape&
    {
       return _cylinder;
    }
 
-   auto icosphere() noexcept -> geometric_shape
+   auto icosphere() const noexcept -> const geometric_shape&
    {
       return _icosphere;
    }
 
-   auto octahedron() -> geometric_shape
+   auto octahedron() const noexcept -> const geometric_shape&
    {
       return _octahedron;
    }
 
-   auto hint_hexahedron() -> geometric_shape
+   auto hint_hexahedron() const noexcept -> const geometric_shape&
    {
       return _hint_hexahedron;
    }
 
-   auto cone() -> geometric_shape
+   auto cone() const noexcept -> const geometric_shape&
    {
       return _cone;
    }

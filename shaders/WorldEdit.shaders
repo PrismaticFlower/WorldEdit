@@ -36,6 +36,9 @@ sky_meshPS
 waterVS
 waterPS
 
+blockVS
+block_basicPS
+
 thumbnail_meshVS
 thumbnail_meshPS
 thumbnail_mesh_alpha_cutoutPS

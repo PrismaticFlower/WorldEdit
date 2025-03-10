@@ -2,6 +2,7 @@
 #include "renderer.hpp"
 #include "ai_overlay_batches.hpp"
 #include "async/thread_pool.hpp"
+#include "blocks.hpp"
 #include "camera.hpp"
 #include "copy_command_list_pool.hpp"
 #include "cull_objects.hpp"
@@ -159,6 +160,7 @@ private:
 
    void draw_world(const frustum& view_frustum,
                    const world::active_entity_types active_entity_types,
+                   const world::blocks& blocks,
                    gpu::graphics_command_list& command_list);
 
    void setup_pre_draw_world_render_list_depth_prepass(gpu::graphics_command_list& command_list);
@@ -288,6 +290,7 @@ private:
                     _texture_manager};
    water _water{_device, _texture_manager};
    sky _sky;
+   blocks _blocks{_device, _copy_command_list_pool, _dynamic_buffer_allocator};
 
    constexpr static std::size_t max_drawn_objects = 2048;
    constexpr static std::size_t objects_constants_buffer_size =
@@ -446,6 +449,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                             : nullptr,
                          {scene_depth_min_max.x, scene_depth_min_max.y},
                          _pre_render_command_list, _dynamic_buffer_allocator);
+      _blocks.update(world.blocks, _pre_render_command_list,
+                     _dynamic_buffer_allocator, _texture_manager);
 
       _pre_render_command_list.close();
 
@@ -512,7 +517,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    command_list.om_set_render_targets(back_buffer_rtv, _depth_stencil_view.get());
 
    // Render World
-   draw_world(view_frustum, active_entity_types, command_list);
+   draw_world(view_frustum, active_entity_types, world.blocks, command_list);
 
    // Render World Meta Objects
    _meta_draw_batcher.clear();
@@ -990,7 +995,8 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       command_list.om_set_render_targets(env_map_super_sample_rtv.get(),
                                          env_map_depth_stencil_view.get());
 
-      draw_world(view_frustum, active_entity_types, command_list);
+      draw_world(view_frustum, active_entity_types, world.blocks, command_list);
+
 
       // Downsample to desired size.
 
@@ -1207,6 +1213,7 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
 
 void renderer_impl::draw_world(const frustum& view_frustum,
                                const world::active_entity_types active_entity_types,
+                               const world::blocks& shapes,
                                gpu::graphics_command_list& command_list)
 {
    if (active_entity_types.terrain) {
@@ -1286,6 +1293,13 @@ void renderer_impl::draw_world(const frustum& view_frustum,
                     _camera_constant_buffer_view,
                     _light_clusters.lights_constant_buffer_view(), command_list,
                     _root_signatures, _pipelines, _dynamic_buffer_allocator);
+   }
+
+   if (active_entity_types.blocks) {
+      _blocks.draw(shapes, view_frustum, _camera_constant_buffer_view,
+                   _light_clusters.lights_constant_buffer_view(), command_list,
+                   _root_signatures, _pipelines, _dynamic_buffer_allocator,
+                   _geometric_shapes);
    }
 
    {

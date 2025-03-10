@@ -99,6 +99,18 @@ constexpr std::array mesh_input_layout_position_only = {
    mesh_input_layout[0],
 };
 
+constexpr std::array block_input_layout = {
+   gpu::input_element_desc{.semantic_name = "POSITION",
+                           .format = DXGI_FORMAT_R32G32B32_FLOAT,
+                           .input_slot = 0},
+   gpu::input_element_desc{.semantic_name = "NORMAL",
+                           .format = DXGI_FORMAT_R32G32B32_FLOAT,
+                           .input_slot = 0},
+   gpu::input_element_desc{.semantic_name = "TEXCOORD",
+                           .format = DXGI_FORMAT_R32G32_FLOAT,
+                           .input_slot = 0},
+};
+
 constexpr std::array meta_draw_input_layout = {
    gpu::input_element_desc{.semantic_name = "POSITION",
                            .format = DXGI_FORMAT_R32G32B32_FLOAT},
@@ -540,6 +552,23 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                    .debug_name = "sky_mesh"sv}),
                device.direct_queue};
+
+   block_basic = {device.create_graphics_pipeline(
+                     {.root_signature = root_signature_library.block.get(),
+
+                      .vs_bytecode = shader_library["blockVS"sv],
+                      .ps_bytecode = shader_library["block_basicPS"sv],
+
+                      .rasterizer_state = rasterizer_cull_backfacing,
+                      .depth_stencil_state = depth_stencil_enabled,
+                      .input_layout = block_input_layout,
+
+                      .render_target_count = 1,
+                      .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                      .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+
+                      .debug_name = "block_basic"sv}),
+                  device.direct_queue};
 
    grid_overlay = {device.create_graphics_pipeline(
                       {.root_signature = root_signature_library.grid_overlay.get(),
