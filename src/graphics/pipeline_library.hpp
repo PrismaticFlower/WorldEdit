@@ -80,6 +80,8 @@ struct pipeline_library {
 
    gpu::unique_pipeline_handle sky_mesh;
 
+   gpu::unique_pipeline_handle block_basic;
+
    gpu::unique_pipeline_handle terrain_depth_prepass;
    gpu::unique_pipeline_handle terrain_basic;
    gpu::unique_pipeline_handle terrain_lighting;

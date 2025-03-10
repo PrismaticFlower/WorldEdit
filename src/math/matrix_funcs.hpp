@@ -34,6 +34,15 @@ constexpr auto transpose(const float4x4& matrix) -> float4x4
            {matrix[0].w, matrix[1].w, matrix[2].w, matrix[3].w}};
 }
 
+constexpr auto adjugate(const float4x4& matrix) -> float3x3
+{
+   const float3 m0 = float3{matrix[0].x, matrix[0].y, matrix[0].z};
+   const float3 m1 = float3{matrix[1].x, matrix[1].y, matrix[1].z};
+   const float3 m2 = float3{matrix[2].x, matrix[2].y, matrix[2].z};
+
+   return {cross(m1, m2), cross(m2, m0), cross(m0, m1)};
+}
+
 auto inverse(const float4x4& matrix) -> float4x4;
 
 inline auto look_at_lh(const float3& eye_position, const float3& focus_position,

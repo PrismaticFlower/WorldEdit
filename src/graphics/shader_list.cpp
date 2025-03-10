@@ -28,6 +28,8 @@ auto sky_meshVS() noexcept -> shader_def;
 auto sky_meshPS() noexcept -> shader_def;
 auto waterVS() noexcept -> shader_def;
 auto waterPS() noexcept -> shader_def;
+auto blockVS() noexcept -> shader_def;
+auto block_basicPS() noexcept -> shader_def;
 auto thumbnail_meshVS() noexcept -> shader_def;
 auto thumbnail_meshPS() noexcept -> shader_def;
 auto thumbnail_mesh_alpha_cutoutPS() noexcept -> shader_def;
@@ -99,6 +101,8 @@ shaders::sky_meshVS(),
 shaders::sky_meshPS(),
 shaders::waterVS(),
 shaders::waterPS(),
+shaders::blockVS(),
+shaders::block_basicPS(),
 shaders::thumbnail_meshVS(),
 shaders::thumbnail_meshPS(),
 shaders::thumbnail_mesh_alpha_cutoutPS(),

@@ -226,6 +226,7 @@
     <ClCompile Include="src\edits\add_animation_group_entry.cpp" />
     <ClCompile Include="src\edits\add_animation_hierarchy.cpp" />
     <ClCompile Include="src\edits\add_animation_hierarchy_child.cpp" />
+    <ClCompile Include="src\edits\add_block.cpp" />
     <ClCompile Include="src\edits\add_branch_weight.cpp" />
     <ClCompile Include="src\edits\add_game_mode.cpp" />
     <ClCompile Include="src\edits\add_layer.cpp" />
@@ -279,6 +280,8 @@
     <ClCompile Include="src\graphics\shaders\ai_overlay_applyPS.cpp" />
     <ClCompile Include="src\graphics\shaders\ai_overlay_applyVS.cpp" />
     <ClCompile Include="src\graphics\shaders\ai_overlay_shapeVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\blockVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\block_basicPS.cpp" />
     <ClCompile Include="src\graphics\shaders\depth_reduce_minmaxCS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_conePS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_coneVS.cpp" />
@@ -349,6 +352,7 @@
     <ClCompile Include="src\graphics\thumbnail_manager.cpp" />
     <ClCompile Include="src\graphics\ui_texture_manager.cpp" />
     <ClCompile Include="src\graphics\water.cpp" />
+    <ClCompile Include="src\graphics\blocks.cpp" />
     <ClCompile Include="src\hotkeys.cpp" />
     <ClCompile Include="src\hotkeys_io.cpp" />
     <ClCompile Include="src\imgui_ext.cpp" />
@@ -370,6 +374,7 @@
     <ClCompile Include="src\utility\srgb_conversion.cpp" />
     <ClCompile Include="src\utility\stopwatch.cpp" />
     <ClCompile Include="src\utility\string_icompare.cpp" />
+    <ClCompile Include="src\world\blocks\dirty_range_tracker.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
     <ClCompile Include="src\world\io\load.cpp" />
     <ClCompile Include="src\world\io\load_effects.cpp" />
@@ -504,6 +509,7 @@
     <ClInclude Include="src\edits\add_animation_group_entry.hpp" />
     <ClInclude Include="src\edits\add_animation_hierarchy.hpp" />
     <ClInclude Include="src\edits\add_animation_hierarchy_child.hpp" />
+    <ClInclude Include="src\edits\add_block.hpp" />
     <ClInclude Include="src\edits\add_branch_weight.hpp" />
     <ClInclude Include="src\edits\add_game_mode.hpp" />
     <ClInclude Include="src\edits\add_layer.hpp" />
@@ -585,6 +591,7 @@
     <ClInclude Include="src\graphics\ui_texture_manager.hpp" />
     <ClInclude Include="src\graphics\water.hpp" />
     <ClInclude Include="src\graphics\world_mesh_list.hpp" />
+    <ClInclude Include="src\graphics\blocks.hpp" />
     <ClInclude Include="src\hotkeys.hpp" />
     <ClInclude Include="src\hotkeys_io.hpp" />
     <ClInclude Include="src\imgui_ext.hpp" />
@@ -689,6 +696,8 @@
     <ClInclude Include="src\world\requirement_list.hpp" />
     <ClInclude Include="src\world\sector.hpp" />
     <ClInclude Include="src\world\interaction_context.hpp" />
+    <ClInclude Include="src\world\blocks.hpp" />
+    <ClInclude Include="src\world\blocks\dirty_range_tracker.hpp" />
     <ClInclude Include="src\world\terrain.hpp" />
     <ClInclude Include="src\world\tool_visualizers.hpp" />
     <ClInclude Include="src\world\utility\animation.hpp" />
