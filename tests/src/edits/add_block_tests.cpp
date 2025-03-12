@@ -13,10 +13,12 @@ TEST_CASE("edits add_block cube", "[Edits]")
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   auto edit = make_add_block(
-      world::block_description_cube{.rotation = {0.0f, 1.0f, 0.0f, 0.0f},
-                                    .position = {10.0f, 10.0f, 10.0f},
-                                    .size = {5.0f, 5.0f, 5.0f}});
+   const world::block_cube_id id = world.blocks.next_id.cubes.aquire();
+
+   auto edit = make_add_block({.rotation = {0.0f, 1.0f, 0.0f, 0.0f},
+                               .position = {10.0f, 10.0f, 10.0f},
+                               .size = {5.0f, 5.0f, 5.0f}},
+                              id);
 
    edit->apply(edit_context);
 
@@ -32,6 +34,7 @@ TEST_CASE("edits add_block cube", "[Edits]")
    REQUIRE(blocks.cubes.bbox.max_z.size() == 1);
    REQUIRE(blocks.cubes.hidden.size() == 1);
    REQUIRE(blocks.cubes.description.size() == 1);
+   REQUIRE(blocks.cubes.ids.size() == 1);
 
    CHECK(blocks.cubes.bbox.min_x[0] == 5.0f);
    CHECK(blocks.cubes.bbox.min_y[0] == 5.0f);
@@ -43,6 +46,7 @@ TEST_CASE("edits add_block cube", "[Edits]")
    CHECK(blocks.cubes.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
    CHECK(blocks.cubes.description[0].position == float3{10.0f, 10.0f, 10.0f});
    CHECK(blocks.cubes.description[0].size == float3{5.0f, 5.0f, 5.0f});
+   CHECK(blocks.cubes.ids[0] == id);
 
    REQUIRE(blocks.cubes.dirty.size() == 1);
    CHECK(blocks.cubes.dirty[0] == world::blocks_dirty_range{0, 1});
@@ -59,6 +63,7 @@ TEST_CASE("edits add_block cube", "[Edits]")
    REQUIRE(blocks.cubes.bbox.max_z.size() == 0);
    REQUIRE(blocks.cubes.hidden.size() == 0);
    REQUIRE(blocks.cubes.description.size() == 0);
+   REQUIRE(blocks.cubes.ids.size() == 0);
 
    REQUIRE(blocks.cubes.dirty.size() == 0);
 }

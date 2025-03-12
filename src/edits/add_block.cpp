@@ -15,11 +15,15 @@ bool is_balanced(const world::blocks_cubes& blocks) noexcept
           blocks.bbox.min_x.size() == blocks.bbox.max_y.size() and
           blocks.bbox.min_x.size() == blocks.bbox.max_z.size() and
           blocks.bbox.min_x.size() == blocks.hidden.size() and
-          blocks.bbox.min_x.size() == blocks.description.size();
+          blocks.bbox.min_x.size() == blocks.description.size() and
+          blocks.bbox.min_x.size() == blocks.ids.size();
 }
 
 struct add_block final : edit<world::edit_context> {
-   add_block(world::block_description_cube box) : box{box} {}
+   add_block(world::block_description_cube box, world::block_cube_id id)
+      : box{box}, id{id}
+   {
+   }
 
    void apply(world::edit_context& context) noexcept override
    {
@@ -41,6 +45,7 @@ struct add_block final : edit<world::edit_context> {
 
       blocks.hidden.push_back(false);
       blocks.description.push_back(box);
+      blocks.ids.push_back(id);
 
       blocks.dirty.add({block_index, block_index + 1});
 
@@ -61,6 +66,7 @@ struct add_block final : edit<world::edit_context> {
 
       blocks.hidden.pop_back();
       blocks.description.pop_back();
+      blocks.ids.pop_back();
 
       const uint32 block_index = static_cast<uint32>(blocks.size());
 
@@ -78,14 +84,15 @@ struct add_block final : edit<world::edit_context> {
 
 private:
    world::block_description_cube box;
+   world::block_cube_id id;
 };
 
 }
 
-auto make_add_block(world::block_description_cube box)
+auto make_add_block(world::block_description_cube box, world::block_cube_id id)
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<add_block>(box);
+   return std::make_unique<add_block>(box, id);
 }
 
 }

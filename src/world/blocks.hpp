@@ -1,5 +1,6 @@
 #pragma once
 
+#include "id.hpp"
 #include "types.hpp"
 
 #include "blocks/dirty_range_tracker.hpp"
@@ -36,6 +37,8 @@ struct blocks_cubes {
 
    pinned_vector<block_description_cube> description = blocks_init;
 
+   pinned_vector<id<block_description_cube>> ids = blocks_init;
+
    blocks_dirty_range_tracker dirty;
 
    auto size() const noexcept -> std::size_t
@@ -46,6 +49,12 @@ struct blocks_cubes {
 
 struct blocks {
    blocks_cubes cubes;
+
+   struct next_ids {
+      id_generator<block_description_cube> cubes;
+   } next_id;
 };
+
+using block_cube_id = id<block_description_cube>;
 
 }

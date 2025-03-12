@@ -7,7 +7,7 @@
 
 namespace we::edits {
 
-auto make_add_block(world::block_description_cube box)
+auto make_add_block(world::block_description_cube box, world::block_cube_id id)
    -> std::unique_ptr<edit<world::edit_context>>;
 
 }
