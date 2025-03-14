@@ -38,6 +38,7 @@ waterPS
 
 blockVS
 block_basicPS
+block_basic_lightingPS
 
 thumbnail_meshVS
 thumbnail_meshPS

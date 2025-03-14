@@ -680,6 +680,13 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("animation_hierarchy.cancel_pick_object"s,
                  [this] { _animation_hierarchy_editor_context.pick_object = {}; });
+
+   _commands.add("blocks.activate_draw"s, [this] {
+      _block_editor_context.activate_tool = block_edit_tool::draw;
+   });
+   _commands.add("blocks.deactivate_tool"s,
+                 [this] { _block_editor_context.tool = block_edit_tool::none; });
+   _commands.add("blocks.draw_click"s, _block_editor_context.draw_click);
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -1353,6 +1360,34 @@ void world_edit::initialize_hotkeys() noexcept
           },
 
        .hidden = true});
+
+   _hotkeys.add_set({
+      .name = "Block Editing",
+      .description = "Active while the block editor is open."s,
+      .activated = [this] { return _block_editor_open; },
+      .default_hotkeys =
+         {
+            {"Draw Block", "blocks.activate_draw", {.key = key::d, .modifiers = {.ctrl = true}}},
+         },
+   });
+
+   _hotkeys.add_set({.name = "Block Editing (Draw Block)",
+                     .description = "Active while the block editor is open."s,
+                     .activated =
+                        [this] {
+                           return _block_editor_open and
+                                  _block_editor_context.tool == block_edit_tool::draw;
+                        },
+                     .default_hotkeys =
+                        {
+                           {"Click", "blocks.draw_click", {.key = key::mouse1}},
+                           {"Click (Aligned)",
+                            "blocks.draw_click",
+                            {.key = key::mouse1, .modifiers = {.ctrl = true}}},
+                           {"Cancel", "blocks.deactivate_tool", {.key = key::escape}},
+                        },
+
+                     .hidden = true});
 }
 
 }

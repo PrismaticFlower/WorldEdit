@@ -260,6 +260,7 @@
     <ClCompile Include="src\edits\insert_point.cpp" />
     <ClCompile Include="src\edits\rename_game_mode.cpp" />
     <ClCompile Include="src\edits\rename_layer.cpp" />
+    <ClCompile Include="src\edits\set_block.cpp" />
     <ClCompile Include="src\edits\set_class_name.cpp" />
     <ClCompile Include="src\edits\set_world_req_entry.cpp" />
     <ClCompile Include="src\edits\set_terrain.cpp" />
@@ -282,6 +283,7 @@
     <ClCompile Include="src\graphics\shaders\ai_overlay_shapeVS.cpp" />
     <ClCompile Include="src\graphics\shaders\blockVS.cpp" />
     <ClCompile Include="src\graphics\shaders\block_basicPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\block_basic_lightingPS.cpp" />
     <ClCompile Include="src\graphics\shaders\depth_reduce_minmaxCS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_conePS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_coneVS.cpp" />
@@ -542,6 +544,7 @@
     <ClInclude Include="src\edits\add_property.hpp" />
     <ClInclude Include="src\edits\rename_game_mode.hpp" />
     <ClInclude Include="src\edits\rename_layer.hpp" />
+    <ClInclude Include="src\edits\set_block.hpp" />
     <ClInclude Include="src\edits\set_class_name.hpp" />
     <ClInclude Include="src\edits\set_world_req_entry.hpp" />
     <ClInclude Include="src\edits\set_terrain.hpp" />
