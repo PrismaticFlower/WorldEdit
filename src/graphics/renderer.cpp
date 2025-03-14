@@ -160,7 +160,7 @@ private:
 
    void draw_world(const frustum& view_frustum,
                    const world::active_entity_types active_entity_types,
-                   const world::blocks& blocks,
+                   const blocks::view& blocks_view,
                    gpu::graphics_command_list& command_list);
 
    void setup_pre_draw_world_render_list_depth_prepass(gpu::graphics_command_list& command_list);
@@ -405,6 +405,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    const frustum view_frustum{camera.world_from_projection()};
    const gpu::viewport viewport{.width = static_cast<float>(_swap_chain.width()),
                                 .height = static_cast<float>(_swap_chain.height())};
+   blocks::view blocks_view;
 
    auto [back_buffer, back_buffer_rtv] = _swap_chain.current_back_buffer();
    _dynamic_buffer_allocator.reset(_device.frame_index());
@@ -451,6 +452,11 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                          _pre_render_command_list, _dynamic_buffer_allocator);
       _blocks.update(world.blocks, _pre_render_command_list,
                      _dynamic_buffer_allocator, _texture_manager);
+
+      if (active_entity_types.blocks) {
+         blocks_view = _blocks.prepare_view(world.blocks, view_frustum,
+                                            _dynamic_buffer_allocator);
+      }
 
       _pre_render_command_list.close();
 
@@ -517,7 +523,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    command_list.om_set_render_targets(back_buffer_rtv, _depth_stencil_view.get());
 
    // Render World
-   draw_world(view_frustum, active_entity_types, world.blocks, command_list);
+   draw_world(view_frustum, active_entity_types, blocks_view, command_list);
 
    // Render World Meta Objects
    _meta_draw_batcher.clear();
@@ -995,8 +1001,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       command_list.om_set_render_targets(env_map_super_sample_rtv.get(),
                                          env_map_depth_stencil_view.get());
 
-      draw_world(view_frustum, active_entity_types, world.blocks, command_list);
-
+      draw_world(view_frustum, active_entity_types, blocks::view{}, command_list);
 
       // Downsample to desired size.
 
@@ -1213,7 +1218,7 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
 
 void renderer_impl::draw_world(const frustum& view_frustum,
                                const world::active_entity_types active_entity_types,
-                               const world::blocks& shapes,
+                               const blocks::view& blocks_view,
                                gpu::graphics_command_list& command_list)
 {
    if (active_entity_types.terrain) {
@@ -1285,6 +1290,12 @@ void renderer_impl::draw_world(const frustum& view_frustum,
       }
    }
 
+   if (active_entity_types.blocks) {
+      _blocks.draw(blocks_draw::depth_prepass, blocks_view, _camera_constant_buffer_view,
+                   _light_clusters.lights_constant_buffer_view(), command_list,
+                   _root_signatures, _pipelines);
+   }
+
    if (active_entity_types.terrain) {
       profile_section profile{"Terrain - Draw", command_list, _profiler,
                               profiler_queue::direct};
@@ -1296,10 +1307,9 @@ void renderer_impl::draw_world(const frustum& view_frustum,
    }
 
    if (active_entity_types.blocks) {
-      _blocks.draw(shapes, view_frustum, _camera_constant_buffer_view,
+      _blocks.draw(blocks_draw::main, blocks_view, _camera_constant_buffer_view,
                    _light_clusters.lights_constant_buffer_view(), command_list,
-                   _root_signatures, _pipelines, _dynamic_buffer_allocator,
-                   _geometric_shapes);
+                   _root_signatures, _pipelines);
    }
 
    {
