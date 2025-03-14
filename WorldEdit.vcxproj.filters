@@ -533,6 +533,7 @@
     <ClInclude Include="src\world\blocks\dirty_range_tracker.hpp" />
     <ClInclude Include="src\edits\add_block.hpp" />
     <ClInclude Include="src\edits\set_block.hpp" />
+    <ClInclude Include="src\graphics\constant_buffers.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

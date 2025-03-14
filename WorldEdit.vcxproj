@@ -556,6 +556,7 @@
     <ClInclude Include="src\gizmos.hpp" />
     <ClInclude Include="src\graphics\ai_overlay_batches.hpp" />
     <ClInclude Include="src\graphics\camera.hpp" />
+    <ClInclude Include="src\graphics\constant_buffers.hpp" />
     <ClInclude Include="src\graphics\dynamic_buffer_allocator.hpp" />
     <ClInclude Include="src\graphics\fallback_imgui_texture.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\command_allocator_pool.hpp" />

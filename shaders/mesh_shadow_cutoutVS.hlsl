@@ -1,14 +1,10 @@
 #include "bindings.hlsli"
-
-struct camera_matrices {
-   float4x4 projection_from_world;
-};
+#include "frame_constants.hlsli"
 
 struct object_constants {
    float4x4 world_from_object;
 };
 
-ConstantBuffer<camera_matrices> camera : register(FRAME_CB_REGISTER);
 ConstantBuffer<object_constants> object : register(OBJECT_CB_REGISTER);
 
 struct input_vertex {
@@ -30,7 +26,7 @@ output_vertex main(input_vertex input)
 
    output.texcoords = input.texcoords;
    output.positionPS =
-      mul(camera.projection_from_world, mul(object.world_from_object, float4(input.positionOS, 1.0)));
+      mul(cb_frame.projection_from_world, mul(object.world_from_object, float4(input.positionOS, 1.0)));
 
    return output;
 }
