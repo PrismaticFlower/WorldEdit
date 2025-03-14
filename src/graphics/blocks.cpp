@@ -52,6 +52,17 @@ struct blocks_ia_buffer {
       0, 18, 1, 3, 19, 4, 6, 20, 7, 9, 21, 10, 12, 22, 13, 15, 23, 16,
    }};
 };
+auto select_pipeline(const blocks_draw draw, pipeline_library& pipelines) -> gpu::pipeline_handle
+{
+   switch (draw) {
+   case blocks_draw::depth_prepass:
+      return pipelines.block_depth_prepass.get();
+   case blocks_draw::main:
+      return pipelines.block_basic_lighting.get();
+   }
+
+   std::unreachable();
+}
 
 }
 
@@ -141,22 +152,12 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
    (void)texture_manager;
 }
 
-void blocks::draw(const world::blocks& blocks, const frustum& view_frustum,
-                  gpu_virtual_address frame_constant_buffer_view,
-                  gpu_virtual_address lights_constant_buffer_view,
-                  gpu::graphics_command_list& command_list,
-                  root_signature_library& root_signatures, pipeline_library& pipelines,
-                  dynamic_buffer_allocator& dynamic_buffer_allocator,
-                  const geometric_shapes& geometric_shapes)
+auto blocks::prepare_view(const world::blocks& blocks, const frustum& view_frustum,
+                          dynamic_buffer_allocator& dynamic_buffer_allocator) -> view
 {
+   view view;
+
    _TEMP_culling_storage.clear();
-
-   command_list.set_graphics_root_signature(root_signatures.block.get());
-
-   command_list.set_graphics_cbv(rs::block::frame_cbv, frame_constant_buffer_view);
-   command_list.set_graphics_cbv(rs::block::lights_cbv, lights_constant_buffer_view);
-
-   command_list.set_pipeline_state(pipelines.block_basic.get());
 
    _TEMP_culling_storage.reserve(blocks.cubes.size());
 
@@ -179,8 +180,29 @@ void blocks::draw(const world::blocks& blocks, const frustum& view_frustum,
          next_instance += 1;
       }
 
-      command_list.set_graphics_srv(rs::block::instances_index_srv,
-                                    instance_index_allocation.gpu_address);
+      view.cube_instances_count = static_cast<uint32>(_TEMP_culling_storage.size());
+      view.cube_instances = instance_index_allocation.gpu_address;
+   }
+
+   return view;
+}
+
+void blocks::draw(blocks_draw draw, const view& view,
+                  gpu_virtual_address frame_constant_buffer_view,
+                  gpu_virtual_address lights_constant_buffer_view,
+                  gpu::graphics_command_list& command_list,
+                  root_signature_library& root_signatures,
+                  pipeline_library& pipelines) const
+{
+   command_list.set_graphics_root_signature(root_signatures.block.get());
+
+   command_list.set_graphics_cbv(rs::block::frame_cbv, frame_constant_buffer_view);
+   command_list.set_graphics_cbv(rs::block::lights_cbv, lights_constant_buffer_view);
+
+   command_list.set_pipeline_state(select_pipeline(draw, pipelines));
+
+   if (view.cube_instances_count > 0) {
+      command_list.set_graphics_srv(rs::block::instances_index_srv, view.cube_instances);
       command_list.set_graphics_srv(rs::block::instances_srv,
                                     _device.get_gpu_virtual_address(
                                        _boxes_instance_data.get()));
@@ -200,12 +222,8 @@ void blocks::draw(const world::blocks& blocks, const frustum& view_frustum,
             });
 
       command_list.draw_indexed_instanced(sizeof(blocks_ia_buffer::cube_indices) / 2,
-                                          static_cast<uint32>(
-                                             _TEMP_culling_storage.size()),
-                                          0, 0, 0);
+                                          view.cube_instances_count, 0, 0, 0);
    }
-
-   (void)geometric_shapes;
 }
 
 }
