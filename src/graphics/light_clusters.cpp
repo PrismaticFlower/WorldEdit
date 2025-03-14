@@ -1,10 +1,13 @@
 
 #include "light_clusters.hpp"
+#include "constant_buffers.hpp"
 #include "cull_objects.hpp"
+
 #include "math/align.hpp"
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
+
 #include "utility/enum_bitflags.hpp"
 #include "utility/srgb_conversion.hpp"
 
@@ -748,8 +751,11 @@ void light_clusters::draw_shadow_maps(
       command_list.set_graphics_root_signature(root_signatures.mesh_shadow.get());
       command_list.set_graphics_cbv(rs::mesh_shadow::camera_cbv,
                                     dynamic_buffer_allocator
-                                       .allocate_and_copy(
-                                          shadow_camera.projection_from_world())
+                                       .allocate_and_copy(frame_constant_buffer{
+                                          .projection_from_world =
+                                             shadow_camera.projection_from_world(),
+                                          .projection_from_view =
+                                             shadow_camera.projection_from_view()})
                                        .gpu_address);
 
       command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
