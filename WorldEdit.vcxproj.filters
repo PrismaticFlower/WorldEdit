@@ -236,6 +236,8 @@
     <ClCompile Include="src\graphics\shaders\blockVS.cpp" />
     <ClCompile Include="src\world\blocks\dirty_range_tracker.cpp" />
     <ClCompile Include="src\edits\add_block.cpp" />
+    <ClCompile Include="src\edits\set_block.cpp" />
+    <ClCompile Include="src\graphics\shaders\block_basic_lightingPS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -530,6 +532,7 @@
     <ClInclude Include="src\graphics\blocks.hpp" />
     <ClInclude Include="src\world\blocks\dirty_range_tracker.hpp" />
     <ClInclude Include="src\edits\add_block.hpp" />
+    <ClInclude Include="src\edits\set_block.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

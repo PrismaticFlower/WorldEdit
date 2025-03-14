@@ -270,6 +270,7 @@
     <ClCompile Include="src\edits\null_asset_libraries.cpp" />
     <ClCompile Include="src\edits\rename_game_mode_tests.cpp" />
     <ClCompile Include="src\edits\rename_layer_tests.cpp" />
+    <ClCompile Include="src\edits\set_block_tests.cpp" />
     <ClCompile Include="src\edits\set_class_name_tests.cpp" />
     <ClCompile Include="src\edits\set_world_req_entry_tests.cpp" />
     <ClCompile Include="src\edits\set_terrain_area_tests.cpp" />

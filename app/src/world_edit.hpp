@@ -181,6 +181,15 @@ enum class animation_key_type : uint8 { position, rotation };
 
 enum class animation_playback_state : uint8 { stopped, paused, play };
 
+enum class block_edit_tool : uint8 { none, draw };
+
+enum class draw_block_step : uint8 {
+   start,
+   cube_depth,
+   cube_width,
+   cube_height,
+};
+
 constexpr float tool_window_start_x = 264.0f;
 
 class world_edit {
@@ -323,6 +332,8 @@ private:
    void ui_show_animation_group_editor() noexcept;
 
    void ui_show_animation_hierarchy_editor() noexcept;
+
+   void ui_show_block_editor() noexcept;
 
    void ui_draw_select_box() noexcept;
 
@@ -508,6 +519,7 @@ private:
    bool _animation_editor_open = false;
    bool _animation_group_editor_open = false;
    bool _animation_hierarchy_editor_open = false;
+   bool _block_editor_open = false;
    terrain_edit_tool _terrain_edit_tool = terrain_edit_tool::none;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
@@ -929,6 +941,28 @@ private:
 
       std::vector<const assets::library_tree_branch*> branch_stack;
    } _class_browser_context;
+
+   struct block_editor_config {
+      int xz_alignment_exponent = 0;
+      int y_alignment_exponent = 0;
+   } _block_editor_config;
+
+   struct block_editor_context {
+      block_edit_tool activate_tool = block_edit_tool::none;
+      block_edit_tool tool = block_edit_tool::none;
+
+      bool draw_click = false;
+
+      struct draw_block {
+         draw_block_step step = draw_block_step::start;
+         float3 start;
+         float3 depth;
+         float3 width;
+         float rotation_angle = 0.0f;
+         uint32 index = 0;
+         world::block_cube_id cube_id = world::max_id;
+      } draw_block;
+   } _block_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;

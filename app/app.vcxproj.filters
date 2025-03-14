@@ -48,6 +48,7 @@
     <ClCompile Include="src\world_edit_ui_terrain_light_baker.cpp" />
     <ClCompile Include="src\world_edit_ui_world_selection_add_branch_weight.cpp" />
     <ClCompile Include="src\world_edit_ui_world_selection_resize_entity.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_block_editor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />

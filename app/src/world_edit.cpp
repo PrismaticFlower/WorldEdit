@@ -3,6 +3,7 @@
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
 #include "assets/texture/save_env_map.hpp"
+#include "edits/add_block.hpp"
 #include "edits/add_sector_object.hpp"
 #include "edits/bundle.hpp"
 #include "edits/creation_entity_set.hpp"
@@ -3749,6 +3750,15 @@ auto world_edit::get_mouse_cursor() const noexcept -> mouse_cursor
    if (_animation_hierarchy_editor_open) {
       if (_animation_hierarchy_editor_context.pick_object.active) {
          return mouse_cursor::cross;
+      }
+   }
+
+   if (_block_editor_open) {
+      switch (_block_editor_context.tool) {
+      case block_edit_tool::none:
+         return mouse_cursor::arrow;
+      case block_edit_tool::draw:
+         return mouse_cursor::pen;
       }
    }
 
