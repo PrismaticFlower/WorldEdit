@@ -377,6 +377,7 @@
     <ClCompile Include="src\utility\stopwatch.cpp" />
     <ClCompile Include="src\utility\string_icompare.cpp" />
     <ClCompile Include="src\world\blocks\dirty_range_tracker.cpp" />
+    <ClCompile Include="src\world\blocks\raycast.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
     <ClCompile Include="src\world\io\load.cpp" />
     <ClCompile Include="src\world\io\load_effects.cpp" />
@@ -672,6 +673,7 @@
     <ClInclude Include="src\world\ai_path_flags.hpp" />
     <ClInclude Include="src\world\animation.hpp" />
     <ClInclude Include="src\world\barrier.hpp" />
+    <ClInclude Include="src\world\blocks\raycast.hpp" />
     <ClInclude Include="src\world\boundary.hpp" />
     <ClInclude Include="src\world\effects.hpp" />
     <ClInclude Include="src\world\entity_group.hpp" />
