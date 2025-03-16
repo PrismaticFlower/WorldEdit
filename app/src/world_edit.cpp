@@ -1,8 +1,11 @@
 
 #include "world_edit.hpp"
+#include "resource.h"
+
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
 #include "assets/texture/save_env_map.hpp"
+
 #include "edits/add_block.hpp"
 #include "edits/add_sector_object.hpp"
 #include "edits/bundle.hpp"
@@ -14,11 +17,12 @@
 #include "edits/set_class_name.hpp"
 #include "edits/set_terrain_area.hpp"
 #include "edits/set_value.hpp"
+
 #include "math/frustum.hpp"
 #include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
-#include "resource.h"
+
 #include "utility/file_pickers.hpp"
 #include "utility/os_execute.hpp"
 #include "utility/overload.hpp"
@@ -26,6 +30,8 @@
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
+
+#include "world/blocks/raycast.hpp"
 #include "world/io/load.hpp"
 #include "world/io/load_entity_group.hpp"
 #include "world/io/save.hpp"
@@ -540,6 +546,22 @@ void world_edit::update_hovered_entity() noexcept
                   cursor_distance = *hit;
                }
             }
+         }
+      }
+   }
+
+   if (raycast_mask.blocks) {
+      if (std::optional<world::raycast_block_result> hit =
+             world::raycast(ray.origin, ray.direction, _world.blocks.cubes);
+          hit) {
+         if (hit->distance < hovered_entity_distance) {
+            // _interaction_targets.hovered_entity = hit->id;
+            hovered_entity_distance = hit->distance;
+         }
+
+         if (hit->distance < cursor_distance) {
+            //  _cursor_surface_normalWS = hit->normalWS;
+            cursor_distance = hit->distance;
          }
       }
    }

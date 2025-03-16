@@ -238,6 +238,7 @@
     <ClCompile Include="src\edits\add_block.cpp" />
     <ClCompile Include="src\edits\set_block.cpp" />
     <ClCompile Include="src\graphics\shaders\block_basic_lightingPS.cpp" />
+    <ClCompile Include="src\world\blocks\raycast.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -534,6 +535,7 @@
     <ClInclude Include="src\edits\add_block.hpp" />
     <ClInclude Include="src\edits\set_block.hpp" />
     <ClInclude Include="src\graphics\constant_buffers.hpp" />
+    <ClInclude Include="src\world\blocks\raycast.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
