@@ -601,6 +601,23 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                                .debug_name = "block_basic"sv}),
                            device.direct_queue};
 
+   block_shadow = {device.create_graphics_pipeline(
+                      {.root_signature = root_signature_library.block.get(),
+
+                       .vs_bytecode = shader_library["blockVS"sv],
+
+                       .rasterizer_state = {.cull_mode = gpu::cull_mode::back,
+                                            .depth_clip_enabled = false},
+                       .depth_stencil_state = {.depth_test_enabled = true,
+                                               .depth_test_func =
+                                                  gpu::comparison_func::less_equal},
+                       .input_layout = block_input_layout,
+
+                       .dsv_format = DXGI_FORMAT_D32_FLOAT,
+
+                       .debug_name = "block_shadow"sv}),
+                   device.direct_queue};
+
    grid_overlay = {device.create_graphics_pipeline(
                       {.root_signature = root_signature_library.grid_overlay.get(),
 

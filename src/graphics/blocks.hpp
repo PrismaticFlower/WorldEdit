@@ -16,7 +16,7 @@
 
 namespace we::graphics {
 
-enum class blocks_draw { depth_prepass, main };
+enum class blocks_draw { depth_prepass, main, shadow };
 
 struct blocks {
    struct view {
@@ -31,7 +31,8 @@ struct blocks {
                dynamic_buffer_allocator& dynamic_buffer_allocator,
                texture_manager& texture_manager);
 
-   auto prepare_view(const world::blocks& blocks, const frustum& view_frustum,
+   auto prepare_view(blocks_draw draw, const world::blocks& blocks,
+                     const frustum& view_frustum,
                      dynamic_buffer_allocator& dynamic_buffer_allocator) -> view;
 
    void draw(blocks_draw draw, const view& view,

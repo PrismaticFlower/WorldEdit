@@ -414,14 +414,14 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                          interaction_targets.creation_entity.is<world::light>()
                             ? &interaction_targets.creation_entity.get<world::light>()
                             : nullptr,
-                         {scene_depth_min_max.x, scene_depth_min_max.y},
+                         {scene_depth_min_max.x, scene_depth_min_max.y}, _blocks,
                          _pre_render_command_list, _dynamic_buffer_allocator);
       _blocks.update(world.blocks, _pre_render_command_list,
                      _dynamic_buffer_allocator, _texture_manager);
 
       if (active_entity_types.blocks) {
-         blocks_view = _blocks.prepare_view(world.blocks, view_frustum,
-                                            _dynamic_buffer_allocator);
+         blocks_view = _blocks.prepare_view(blocks_draw::main, world.blocks,
+                                            view_frustum, _dynamic_buffer_allocator);
       }
 
       _pre_render_command_list.close();
@@ -441,7 +441,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    _light_clusters.tile_lights(_root_signatures, _pipelines, command_list,
                                _dynamic_buffer_allocator, _profiler);
-   _light_clusters.draw_shadow_maps(_world_mesh_list, _root_signatures,
+   _light_clusters.draw_shadow_maps(_world_mesh_list, _blocks, _root_signatures,
                                     _pipelines, command_list,
                                     _dynamic_buffer_allocator, _profiler);
 
@@ -920,7 +920,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
 
          _light_clusters.prepare_lights(camera, view_frustum, world, nullptr,
                                         {shadow_min_depth, shadow_max_depth},
-                                        pre_render_command_list,
+                                        _blocks, pre_render_command_list,
                                         _dynamic_buffer_allocator);
 
          pre_render_command_list.close();
@@ -939,8 +939,8 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
 
       _light_clusters.tile_lights(_root_signatures, _pipelines, command_list,
                                   _dynamic_buffer_allocator, _profiler);
-      _light_clusters.draw_shadow_maps(_world_mesh_list, _root_signatures,
-                                       _pipelines, command_list,
+      _light_clusters.draw_shadow_maps(_world_mesh_list, _blocks,
+                                       _root_signatures, _pipelines, command_list,
                                        _dynamic_buffer_allocator, _profiler);
 
       command_list.flush_barriers();

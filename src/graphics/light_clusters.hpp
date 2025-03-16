@@ -1,20 +1,23 @@
 #pragma once
 
+#include "blocks.hpp"
 #include "camera.hpp"
 #include "copy_command_list_pool.hpp"
 #include "dynamic_buffer_allocator.hpp"
 #include "gpu/resource.hpp"
 #include "gpu/rhi.hpp"
-#include "math/frustum.hpp"
 #include "model_manager.hpp"
 #include "pipeline_library.hpp"
 #include "profiler.hpp"
 #include "root_signature_library.hpp"
 #include "shadow_camera.hpp"
 #include "terrain.hpp"
+#include "world_mesh_list.hpp"
+
+#include "math/frustum.hpp"
+
 #include "world/object_class.hpp"
 #include "world/world.hpp"
-#include "world_mesh_list.hpp"
 
 #include <array>
 #include <memory>
@@ -33,7 +36,7 @@ public:
                        const world::world& world,
                        const world::light* optional_placement_light,
                        const std::array<float, 2> scene_depth_min_max,
-                       gpu::copy_command_list& command_list,
+                       blocks& blocks, gpu::copy_command_list& command_list,
                        dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void tile_lights(root_signature_library& root_signatures, pipeline_library& pipelines,
@@ -41,7 +44,7 @@ public:
                     dynamic_buffer_allocator& dynamic_buffer_allocator,
                     profiler& profiler);
 
-   void draw_shadow_maps(const world_mesh_list& meshes,
+   void draw_shadow_maps(const world_mesh_list& meshes, const blocks& blocks,
                          root_signature_library& root_signatures,
                          pipeline_library& pipelines,
                          gpu::graphics_command_list& command_list,
@@ -102,7 +105,10 @@ private:
    uint32 _light_proxy_count = 0;
    gpu_virtual_address _sphere_light_proxies_srv = 0;
 
+   bool _has_sun_shadows = false;
+
    std::array<shadow_ortho_camera, sun_cascade_count> _sun_shadow_cascades;
+   std::array<blocks::view, sun_cascade_count> _sun_shadow_blocks_view;
    std::vector<uint16> _shadow_render_list;
 };
 

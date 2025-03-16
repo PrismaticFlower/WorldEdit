@@ -59,6 +59,8 @@ auto select_pipeline(const blocks_draw draw, pipeline_library& pipelines) -> gpu
       return pipelines.block_depth_prepass.get();
    case blocks_draw::main:
       return pipelines.block_basic_lighting.get();
+   case blocks_draw::shadow:
+      return pipelines.block_shadow.get();
    }
 
    std::unreachable();
@@ -152,7 +154,8 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
    (void)texture_manager;
 }
 
-auto blocks::prepare_view(const world::blocks& blocks, const frustum& view_frustum,
+auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
+                          const frustum& view_frustum,
                           dynamic_buffer_allocator& dynamic_buffer_allocator) -> view
 {
    view view;
@@ -161,10 +164,20 @@ auto blocks::prepare_view(const world::blocks& blocks, const frustum& view_frust
 
    _TEMP_culling_storage.reserve(blocks.cubes.size());
 
-   cull_objects_avx2(view_frustum, blocks.cubes.bbox.min_x,
-                     blocks.cubes.bbox.min_y, blocks.cubes.bbox.min_z,
-                     blocks.cubes.bbox.max_x, blocks.cubes.bbox.max_y,
-                     blocks.cubes.bbox.max_z, _TEMP_culling_storage);
+   if (draw == blocks_draw::shadow) {
+      cull_objects_shadow_cascade_avx2(view_frustum, blocks.cubes.bbox.min_x,
+                                       blocks.cubes.bbox.min_y,
+                                       blocks.cubes.bbox.min_z,
+                                       blocks.cubes.bbox.max_x,
+                                       blocks.cubes.bbox.max_y,
+                                       blocks.cubes.bbox.max_z, _TEMP_culling_storage);
+   }
+   else {
+      cull_objects_avx2(view_frustum, blocks.cubes.bbox.min_x,
+                        blocks.cubes.bbox.min_y, blocks.cubes.bbox.min_z,
+                        blocks.cubes.bbox.max_x, blocks.cubes.bbox.max_y,
+                        blocks.cubes.bbox.max_z, _TEMP_culling_storage);
+   }
 
    if (not _TEMP_culling_storage.empty()) {
       const dynamic_buffer_allocator::allocation& instance_index_allocation =

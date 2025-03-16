@@ -369,7 +369,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
                                     const world::world& world,
                                     const world::light* optional_placement_light,
                                     const std::array<float, 2> scene_depth_min_max,
-                                    gpu::copy_command_list& command_list,
+                                    blocks& blocks, gpu::copy_command_list& command_list,
                                     dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    static_assert((sizeof(_tiles_start_value) / sizeof(uint32)) == tile_light_words);
@@ -377,6 +377,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
    _tiles_start_value = {};
    _light_count = 0;
    _light_proxy_count = 0;
+   _has_sun_shadows = false;
    uint32 region_lights_count = 0;
 
    light_constants light_constants{.light_tiles_width = _tiles_width,
@@ -410,9 +411,10 @@ void light_clusters::prepare_lights(const camera& view_camera,
          const float3 light_direction =
             normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
 
-         if (light.shadow_caster) {
+         if (light.shadow_caster and not _has_sun_shadows) {
             _sun_shadow_cascades =
                make_shadow_cascades(light.rotation, view_camera, scene_depth_min_max);
+            _has_sun_shadows = true;
 
             flags |= light_flags::is_shadow_caster;
          }
@@ -621,6 +623,19 @@ void light_clusters::prepare_lights(const camera& view_camera,
 
       _sphere_light_proxies_srv = upload_buffer.gpu_address;
    }
+
+   if (_has_sun_shadows) {
+      for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
+         _sun_shadow_blocks_view[cascade_index] =
+            blocks.prepare_view(blocks_draw::shadow, world.blocks,
+                                frustum{_sun_shadow_cascades[cascade_index].world_from_projection(),
+                                        1.0f, 0.0f},
+                                dynamic_buffer_allocator);
+      }
+   }
+   else {
+      _sun_shadow_blocks_view = {};
+   }
 }
 
 void light_clusters::tile_lights(root_signature_library& root_signatures,
@@ -716,10 +731,13 @@ void light_clusters::tile_lights(root_signature_library& root_signatures,
 }
 
 void light_clusters::draw_shadow_maps(
-   const world_mesh_list& meshes, root_signature_library& root_signatures,
-   pipeline_library& pipelines, gpu::graphics_command_list& command_list,
+   const world_mesh_list& meshes, const blocks& blocks,
+   root_signature_library& root_signatures, pipeline_library& pipelines,
+   gpu::graphics_command_list& command_list,
    dynamic_buffer_allocator& dynamic_buffer_allocator, profiler& profiler)
 {
+   if (not _has_sun_shadows) return;
+
    profile_section profile{"Lights - Draw Shadow Maps", command_list, profiler,
                            profiler_queue::direct};
 
@@ -745,18 +763,19 @@ void light_clusters::draw_shadow_maps(
       auto& shadow_camera = _sun_shadow_cascades[cascade_index];
 
       gpu::dsv_handle depth_stencil_view = _shadow_map_dsv[cascade_index].get();
+      gpu_virtual_address frame_cbv =
+         dynamic_buffer_allocator
+            .allocate_and_copy(
+               frame_constant_buffer{.projection_from_world =
+                                        shadow_camera.projection_from_world(),
+                                     .projection_from_view =
+                                        shadow_camera.projection_from_view()})
+            .gpu_address;
 
       command_list.clear_depth_stencil_view(depth_stencil_view, {}, 1.0f, 0x0);
 
       command_list.set_graphics_root_signature(root_signatures.mesh_shadow.get());
-      command_list.set_graphics_cbv(rs::mesh_shadow::camera_cbv,
-                                    dynamic_buffer_allocator
-                                       .allocate_and_copy(frame_constant_buffer{
-                                          .projection_from_world =
-                                             shadow_camera.projection_from_world(),
-                                          .projection_from_view =
-                                             shadow_camera.projection_from_view()})
-                                       .gpu_address);
+      command_list.set_graphics_cbv(rs::mesh_shadow::camera_cbv, frame_cbv);
 
       command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
@@ -837,6 +856,10 @@ void light_clusters::draw_shadow_maps(
             .mesh_shadow[depth_prepass_pipeline_flags::alpha_cutout | depth_prepass_pipeline_flags::doublesided]
             .get(),
          command_list);
+
+      blocks.draw(blocks_draw::shadow, _sun_shadow_blocks_view[cascade_index],
+                  frame_cbv, _lights_constant_buffer_view, command_list,
+                  root_signatures, pipelines);
    }
 
    [[likely]] if (_device.supports_enhanced_barriers()) {
