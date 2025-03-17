@@ -39,6 +39,14 @@ struct tool_visualizers_connection_highlight {
    float3 color;
 };
 
+struct tool_visualizers_mini_grid {
+   float3 positionWS;
+   float size = 1.0f;
+   float divisions = 1.0f;
+   float line_width = 0.01f;
+   float3 color;
+};
+
 struct tool_visualizers {
    tool_visualizers() noexcept;
 
@@ -62,6 +70,8 @@ struct tool_visualizers {
 
    void add_highlight(id<planning_connection> connection_id, float3 color);
 
+   void add_mini_grid(const tool_visualizers_mini_grid& grid);
+
    void clear() noexcept;
 
    auto lines_overlay() const noexcept -> std::span<const tool_visualizers_line>;
@@ -83,6 +93,8 @@ struct tool_visualizers {
    auto connection_highlights() const noexcept
       -> std::span<const tool_visualizers_connection_highlight>;
 
+   auto mini_grids() const noexcept -> std::span<const tool_visualizers_mini_grid>;
+
 private:
    std::vector<tool_visualizers_line> _lines_overlay;
    std::vector<tool_visualizers_line> _lines;
@@ -92,6 +104,7 @@ private:
    std::vector<tool_visualizers_ghost> _ghost_objects;
    std::vector<tool_visualizers_hub_highlight> _hub_highlights;
    std::vector<tool_visualizers_connection_highlight> _connection_highlights;
+   std::vector<tool_visualizers_mini_grid> _mini_grids;
 };
 
 }

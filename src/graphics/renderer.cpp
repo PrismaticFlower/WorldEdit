@@ -158,6 +158,10 @@ private:
                           const settings::graphics& settings,
                           gpu::graphics_command_list& command_list);
 
+   void draw_mini_grid_overlays(std::span<const world::tool_visualizers_mini_grid> mini_grids,
+                                const float camera_height,
+                                gpu::graphics_command_list& command_list);
+
    void draw_ai_overlay(gpu::rtv_handle back_buffer_rtv,
                         const settings::graphics& settings,
                         gpu::graphics_command_list& command_list);
@@ -517,6 +521,11 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
       draw_grid_overlay(frame_options.overlay_grid_height + grid_height_bias,
                         16384.0f, frame_options.overlay_grid_size,
                         camera.position(), settings, command_list);
+   }
+
+   if (not tool_visualizers.mini_grids().empty()) {
+      draw_mini_grid_overlays(tool_visualizers.mini_grids(),
+                              camera.position().y, command_list);
    }
 
    if (settings.visualize_terrain_cutters) {
@@ -2555,6 +2564,53 @@ void renderer_impl::draw_grid_overlay(const float height, const float length,
    command_list.set_pipeline_state(_pipelines.grid_overlay.get());
 
    command_list.draw_instanced(6, 1, 0, 0);
+}
+
+void renderer_impl::draw_mini_grid_overlays(
+   std::span<const world::tool_visualizers_mini_grid> mini_grids,
+   const float camera_height, gpu::graphics_command_list& command_list)
+{
+   struct grid_constants {
+      float3 grid_color;
+      float length;
+      float grid_offsetWS_x;
+      float grid_offsetWS_z;
+      float height;
+      float inv_grid_scale;
+      float line_width;
+      float inv_grid_major_scale;
+      float major_line_width;
+   };
+
+   command_list.set_graphics_root_signature(_root_signatures.grid_overlay.get());
+   command_list.set_graphics_cbv(rs::grid_overlay::frame_cbv,
+                                 _camera_constant_buffer_view);
+
+   command_list.set_pipeline_state(_pipelines.grid_overlay_fade.get());
+
+   for (const world::tool_visualizers_mini_grid& grid : mini_grids) {
+      const float grid_height_bias =
+         camera_height >= grid.positionWS.y ? 0.002f : -0.002f;
+
+      grid_constants grid_constants{
+         .grid_color = grid.color,
+         .length = grid.size * (grid.divisions + 1.0f),
+         .grid_offsetWS_x = std::roundf(grid.positionWS.x / grid.size) * grid.size,
+         .grid_offsetWS_z = std::roundf(grid.positionWS.z / grid.size) * grid.size,
+         .height = grid.positionWS.y + grid_height_bias,
+         .inv_grid_scale = 1.0f / grid.size,
+         .line_width = grid.line_width,
+         .inv_grid_major_scale = 1.0f / grid.size,
+         .major_line_width = grid.line_width,
+      };
+
+      command_list.set_graphics_32bit_constants(rs::grid_overlay::inputs,
+                                                std::as_bytes(
+                                                   std::span{&grid_constants, 1}),
+                                                0);
+
+      command_list.draw_instanced(6, 1, 0, 0);
+   }
 }
 
 void renderer_impl::draw_ai_overlay(gpu::rtv_handle back_buffer_rtv,

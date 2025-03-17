@@ -299,6 +299,7 @@
     <ClCompile Include="src\graphics\shaders\gizmo_rotation_widget_orthographicPS.cpp" />
     <ClCompile Include="src\graphics\shaders\grid_overlayPS.cpp" />
     <ClCompile Include="src\graphics\shaders\grid_overlayVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\grid_overlay_fadePS.cpp" />
     <ClCompile Include="src\graphics\shaders\imguiPS.cpp" />
     <ClCompile Include="src\graphics\shaders\imguiVS.cpp" />
     <ClCompile Include="src\graphics\shaders\meshVS.cpp" />

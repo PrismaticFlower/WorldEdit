@@ -96,3 +96,15 @@ float4 mainPS(output_vertex input) : SV_Target0
    
    return float4(cb_grid.grid_color * alpha, alpha);
 }
+
+[earlydepthstencil]
+float4 main_fadePS(output_vertex input) : SV_Target0
+{
+   float4 color = mainPS(input);
+   float distance = length(float2(input.positionWS_x, input.positionWS_z));
+   float fade = 1.0 - ((distance * distance) / (cb_grid.length * cb_grid.length));
+
+   color *= fade;
+
+   return color;
+}
