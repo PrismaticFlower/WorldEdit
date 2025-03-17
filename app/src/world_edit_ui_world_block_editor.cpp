@@ -102,12 +102,33 @@ void world_edit::ui_show_block_editor() noexcept
       const bool align = (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
                           ImGui::IsKeyDown(ImGuiKey_RightCtrl)) and
                          not ImGui::GetIO().WantCaptureKeyboard;
+      float3 cursor_positionWS = _cursor_positionWS;
+
+      if (_block_editor_context.draw_block.step != draw_block_step::start) {
+         if (cursor_positionWS.y < _block_editor_context.draw_block.height) {
+            const graphics::camera_ray rayWS =
+               make_camera_ray(_camera,
+                               {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                               {ImGui::GetMainViewport()->Size.x,
+                                ImGui::GetMainViewport()->Size.y});
+
+            const float4 draw_planeWS =
+               make_plane_from_point({0.0f, _block_editor_context.draw_block.height, 0.0f},
+                                     float3{0.0f, 1.0f, 0.0f});
+
+            if (float hit = intersect_plane(rayWS.origin, rayWS.direction, draw_planeWS);
+                hit > 0.0f) {
+               cursor_positionWS = rayWS.origin + rayWS.direction * hit;
+            }
+         }
+      }
+
       const float3 alignment =
          {std::exp2f(static_cast<float>(_block_editor_config.xz_alignment_exponent)),
           std::exp2f(static_cast<float>(_block_editor_config.y_alignment_exponent)),
           std::exp2f(static_cast<float>(_block_editor_config.xz_alignment_exponent))};
       const float3 aligned_cursorWS =
-         align ? round(_cursor_positionWS / alignment) * alignment : _cursor_positionWS;
+         align ? round(cursor_positionWS / alignment) * alignment : cursor_positionWS;
 
       const uint32 line_color =
          utility::pack_srgb_bgra({_settings.graphics.creation_color, 1.0f});
@@ -115,18 +136,21 @@ void world_edit::ui_show_block_editor() noexcept
       switch (_block_editor_context.draw_block.step) {
       case draw_block_step::start: {
          if (align) {
-            _tool_visualizers.add_line(aligned_cursorWS - float3{4.0f, 0.0f, 0.0f},
-                                       aligned_cursorWS + float3{4.0f, 0.0f, 0.0f},
+            _tool_visualizers.add_line(aligned_cursorWS - float3{alignment.x, 0.0f, 0.0f},
+                                       aligned_cursorWS + float3{alignment.x, 0.0f, 0.0f},
                                        line_color);
-            _tool_visualizers.add_line(aligned_cursorWS - float3{0.0f, 4.0f, 0.0f},
-                                       aligned_cursorWS + float3{0.0f, 4.0f, 0.0f},
+            _tool_visualizers.add_line(aligned_cursorWS - float3{0.0f, alignment.y, 0.0f},
+                                       aligned_cursorWS + float3{0.0f, alignment.y, 0.0f},
                                        line_color);
-            _tool_visualizers.add_line(aligned_cursorWS - float3{0.0f, 0.0f, 4.0f},
-                                       aligned_cursorWS + float3{0.0f, 0.0f, 4.0f},
+            _tool_visualizers.add_line(aligned_cursorWS -
+                                          float3{0.0f, 0.0f, alignment.z},
+                                       aligned_cursorWS +
+                                          float3{0.0f, 0.0f, alignment.z},
                                        line_color);
          }
 
          if (click) {
+            _block_editor_context.draw_block.height = aligned_cursorWS.y;
             _block_editor_context.draw_block.start = aligned_cursorWS;
             _block_editor_context.draw_block.step = draw_block_step::box_depth;
          }
@@ -134,6 +158,7 @@ void world_edit::ui_show_block_editor() noexcept
       case draw_block_step::box_depth: {
          _tool_visualizers.add_line_overlay(_block_editor_context.draw_block.start,
                                             aligned_cursorWS, line_color);
+
          if (click) {
             _block_editor_context.draw_block.depth = aligned_cursorWS;
             _block_editor_context.draw_block.step = draw_block_step::box_width;
