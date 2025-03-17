@@ -1,6 +1,6 @@
 #include "raycast.hpp"
 
-#include "math/intersectors.hpp"
+#include "math/iq_intersectors.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
@@ -13,14 +13,19 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
    uint32 closest_index = UINT32_MAX;
 
    for (uint32 box_index = 0; box_index < boxes.size(); ++box_index) {
+      if (boxes.hidden[box_index]) continue;
+
       const block_description_box& box = boxes.description[box_index];
 
-      const quaternion cube_from_world = conjugate(box.rotation);
-      const float3 ray_originCS = cube_from_world * ray_originWS - box.position;
-      const float3 ray_directionCS = cube_from_world * ray_directionWS;
+      const quaternion local_from_world = conjugate(box.rotation);
 
-      if (float hit = 0.0f; intersect_aabb(ray_originCS, 1.0f / ray_directionCS,
-                                           {-box.size, box.size}, closest, hit)) {
+      const float3 positionLS = local_from_world * -box.position;
+
+      const float3 ray_originLS = local_from_world * ray_originWS + positionLS;
+      const float3 ray_directionLS = normalize(local_from_world * ray_directionWS);
+
+      if (const float hit = boxIntersection(ray_originLS, ray_directionLS, box.size);
+          hit >= 0.0f and hit < closest) {
          closest = hit;
          closest_index = box_index;
       }
