@@ -128,19 +128,19 @@ void world_edit::ui_show_block_editor() noexcept
 
          if (click) {
             _block_editor_context.draw_block.start = aligned_cursorWS;
-            _block_editor_context.draw_block.step = draw_block_step::cube_depth;
+            _block_editor_context.draw_block.step = draw_block_step::box_depth;
          }
       } break;
-      case draw_block_step::cube_depth: {
+      case draw_block_step::box_depth: {
          _tool_visualizers.add_line_overlay(_block_editor_context.draw_block.start,
                                             aligned_cursorWS, line_color);
          if (click) {
             _block_editor_context.draw_block.depth = aligned_cursorWS;
-            _block_editor_context.draw_block.step = draw_block_step::cube_width;
+            _block_editor_context.draw_block.step = draw_block_step::box_width;
          }
 
       } break;
-      case draw_block_step::cube_width: {
+      case draw_block_step::box_width: {
          const float3 draw_block_start = _block_editor_context.draw_block.start;
          const float3 draw_block_depth = _block_editor_context.draw_block.depth;
 
@@ -179,14 +179,14 @@ void world_edit::ui_show_block_editor() noexcept
                                             line_color);
 
          if (click) {
-            const world::block_cube_id id = _world.blocks.next_id.cubes.aquire();
+            const world::block_box_id id = _world.blocks.next_id.boxes.aquire();
 
             _block_editor_context.draw_block.width = draw_block_width;
             _block_editor_context.draw_block.rotation_angle = rotation_angle;
-            _block_editor_context.draw_block.step = draw_block_step::cube_height;
+            _block_editor_context.draw_block.step = draw_block_step::box_height;
             _block_editor_context.draw_block.index =
-               static_cast<uint32>(_world.blocks.cubes.size());
-            _block_editor_context.draw_block.cube_id = id;
+               static_cast<uint32>(_world.blocks.boxes.size());
+            _block_editor_context.draw_block.box_id = id;
 
             const std::array<float3, 2> cornersWS{draw_block_start, draw_block_width};
             std::array<float3, 2> cornersOS{};
@@ -205,14 +205,14 @@ void world_edit::ui_show_block_editor() noexcept
             const float3 position = (draw_block_start + draw_block_width) / 2.0f;
 
             _edit_stack_world.apply(
-               edits::make_add_block(world::block_description_cube{.rotation = rotation,
-                                                                   .position = position,
-                                                                   .size = size},
+               edits::make_add_block(world::block_description_box{.rotation = rotation,
+                                                                  .position = position,
+                                                                  .size = size},
                                      id),
                _edit_context);
          }
       } break;
-      case draw_block_step::cube_height: {
+      case draw_block_step::box_height: {
          const float3 draw_block_start = _block_editor_context.draw_block.start;
          const float3 draw_block_depth = _block_editor_context.draw_block.depth;
          const float3 draw_block_width = _block_editor_context.draw_block.width;
@@ -255,32 +255,33 @@ void world_edit::ui_show_block_editor() noexcept
             cursor_position = ray.origin + hit * ray.direction;
          }
 
-         const float unaligned_cube_height =
+         const float unaligned_box_height =
             std::max(cursor_position.y - draw_block_width.y, 0.0f);
-         const float cube_height =
-            align ? std::round(unaligned_cube_height / alignment.y) * alignment.y
-                  : unaligned_cube_height;
+         const float box_height =
+            align ? std::round(unaligned_box_height / alignment.y) * alignment.y
+                  : unaligned_box_height;
          const float3 draw_block_height =
-            draw_block_width + float3{0.0f, cube_height, 0.0f};
+            draw_block_width + float3{0.0f, box_height, 0.0f};
 
          const float3 position = (draw_block_start + draw_block_height) / 2.0f;
 
-         const float3 size = float3{std::fabs(block_max.x - block_min.x), cube_height,
+         const float3 size = float3{std::fabs(block_max.x - block_min.x), box_height,
                                     std::fabs(block_max.z - block_min.z)} /
                              2.0f;
 
          if (const uint32 index = _block_editor_context.draw_block.index;
-             index < _world.blocks.cubes.size() and
-             _world.blocks.cubes.ids[index] == _block_editor_context.draw_block.cube_id) {
-            _edit_stack_world.apply(edits::make_set_block_cube_metrics(index, rotation,
-                                                                       position, size),
+             index < _world.blocks.boxes.size() and
+             _world.blocks.boxes.ids[index] == _block_editor_context.draw_block.box_id) {
+            _edit_stack_world.apply(edits::make_set_block_box_metrics(index, rotation,
+                                                                      position, size),
                                     _edit_context, {.transparent = true});
          }
 
-         _tool_visualizers
-            .add_line_overlay(position - float3{0.0f, cube_height * 0.5f, 0.0f},
-                              position + float3{0.0f, cube_height * 0.5f, 0.0f},
-                              line_color);
+         _tool_visualizers.add_line_overlay(position -
+                                               float3{0.0f, box_height * 0.5f, 0.0f},
+                                            position +
+                                               float3{0.0f, box_height * 0.5f, 0.0f},
+                                            line_color);
 
          if (click) {
             _block_editor_context.draw_block = {};

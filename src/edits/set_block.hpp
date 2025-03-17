@@ -7,8 +7,8 @@
 
 namespace we::edits {
 
-auto make_set_block_cube_metrics(const uint32 index, const quaternion& rotation,
-                                 const float3& position, const float3& size) noexcept
+auto make_set_block_box_metrics(const uint32 index, const quaternion& rotation,
+                                const float3& position, const float3& size) noexcept
    -> std::unique_ptr<edit<world::edit_context>>;
 
 }

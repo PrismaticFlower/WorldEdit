@@ -15,7 +15,7 @@ constexpr std::size_t reserved_blocks = 2048;
 constexpr pinned_vector_init blocks_init{.max_size = max_blocks,
                                          .initial_capacity = reserved_blocks};
 
-struct block_description_cube {
+struct block_description_box {
    quaternion rotation;
    float3 position;
    float3 size;
@@ -30,14 +30,14 @@ struct blocks_bbox_soa {
    pinned_vector<float> max_z = blocks_init;
 };
 
-struct blocks_cubes {
+struct blocks_boxes {
    blocks_bbox_soa bbox;
 
    pinned_vector<bool> hidden = blocks_init;
 
-   pinned_vector<block_description_cube> description = blocks_init;
+   pinned_vector<block_description_box> description = blocks_init;
 
-   pinned_vector<id<block_description_cube>> ids = blocks_init;
+   pinned_vector<id<block_description_box>> ids = blocks_init;
 
    blocks_dirty_range_tracker dirty;
 
@@ -48,13 +48,13 @@ struct blocks_cubes {
 };
 
 struct blocks {
-   blocks_cubes cubes;
+   blocks_boxes boxes;
 
    struct next_ids {
-      id_generator<block_description_cube> cubes;
+      id_generator<block_description_box> boxes;
    } next_id;
 };
 
-using block_cube_id = id<block_description_cube>;
+using block_box_id = id<block_description_box>;
 
 }

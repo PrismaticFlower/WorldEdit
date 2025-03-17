@@ -52,6 +52,7 @@ struct blocks_ia_buffer {
       0, 18, 1, 3, 19, 4, 6, 20, 7, 9, 21, 10, 12, 22, 13, 15, 23, 16,
    }};
 };
+
 auto select_pipeline(const blocks_draw draw, pipeline_library& pipelines) -> gpu::pipeline_handle
 {
    switch (draw) {
@@ -94,12 +95,12 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
                     dynamic_buffer_allocator& dynamic_buffer_allocator,
                     texture_manager& texture_manager)
 {
-   if (_boxes_instance_data_capacity < blocks.cubes.size()) {
+   if (_boxes_instance_data_capacity < blocks.boxes.size()) {
       const gpu::unique_resource_handle old_boxes_instance_data =
          std::move(_boxes_instance_data);
       const uint64 old_boxes_instance_data_capacity = _boxes_instance_data_capacity;
 
-      _boxes_instance_data_capacity = blocks.cubes.size() * 16180 / 10000;
+      _boxes_instance_data_capacity = blocks.boxes.size() * 16180 / 10000;
       _boxes_instance_data =
          {_device.create_buffer({.size = _boxes_instance_data_capacity *
                                          sizeof(block_instance_transform),
@@ -115,7 +116,7 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
       }
    }
 
-   for (const world::blocks_dirty_range& range : blocks.cubes.dirty) {
+   for (const world::blocks_dirty_range& range : blocks.boxes.dirty) {
       const uint32 range_size = range.end - range.begin;
 
       const dynamic_buffer_allocator::allocation& upload_allocation =
@@ -123,7 +124,7 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
       std::byte* upload_ptr = upload_allocation.cpu_address;
 
       for (uint32 i = range.begin; i < range.end; ++i) {
-         const world::block_description_cube& block = blocks.cubes.description[i];
+         const world::block_description_box& block = blocks.boxes.description[i];
 
          const float4x4 scale = {
             {block.size.x, 0.0f, 0.0f, 0.0f},
@@ -162,21 +163,21 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
 
    _TEMP_culling_storage.clear();
 
-   _TEMP_culling_storage.reserve(blocks.cubes.size());
+   _TEMP_culling_storage.reserve(blocks.boxes.size());
 
    if (draw == blocks_draw::shadow) {
-      cull_objects_shadow_cascade_avx2(view_frustum, blocks.cubes.bbox.min_x,
-                                       blocks.cubes.bbox.min_y,
-                                       blocks.cubes.bbox.min_z,
-                                       blocks.cubes.bbox.max_x,
-                                       blocks.cubes.bbox.max_y,
-                                       blocks.cubes.bbox.max_z, _TEMP_culling_storage);
+      cull_objects_shadow_cascade_avx2(view_frustum, blocks.boxes.bbox.min_x,
+                                       blocks.boxes.bbox.min_y,
+                                       blocks.boxes.bbox.min_z,
+                                       blocks.boxes.bbox.max_x,
+                                       blocks.boxes.bbox.max_y,
+                                       blocks.boxes.bbox.max_z, _TEMP_culling_storage);
    }
    else {
-      cull_objects_avx2(view_frustum, blocks.cubes.bbox.min_x,
-                        blocks.cubes.bbox.min_y, blocks.cubes.bbox.min_z,
-                        blocks.cubes.bbox.max_x, blocks.cubes.bbox.max_y,
-                        blocks.cubes.bbox.max_z, _TEMP_culling_storage);
+      cull_objects_avx2(view_frustum, blocks.boxes.bbox.min_x,
+                        blocks.boxes.bbox.min_y, blocks.boxes.bbox.min_z,
+                        blocks.boxes.bbox.max_x, blocks.boxes.bbox.max_y,
+                        blocks.boxes.bbox.max_z, _TEMP_culling_storage);
    }
 
    if (not _TEMP_culling_storage.empty()) {
@@ -193,8 +194,8 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
          next_instance += 1;
       }
 
-      view.cube_instances_count = static_cast<uint32>(_TEMP_culling_storage.size());
-      view.cube_instances = instance_index_allocation.gpu_address;
+      view.box_instances_count = static_cast<uint32>(_TEMP_culling_storage.size());
+      view.box_instances = instance_index_allocation.gpu_address;
    }
 
    return view;
@@ -214,8 +215,8 @@ void blocks::draw(blocks_draw draw, const view& view,
 
    command_list.set_pipeline_state(select_pipeline(draw, pipelines));
 
-   if (view.cube_instances_count > 0) {
-      command_list.set_graphics_srv(rs::block::instances_index_srv, view.cube_instances);
+   if (view.box_instances_count > 0) {
+      command_list.set_graphics_srv(rs::block::instances_index_srv, view.box_instances);
       command_list.set_graphics_srv(rs::block::instances_srv,
                                     _device.get_gpu_virtual_address(
                                        _boxes_instance_data.get()));
@@ -235,7 +236,7 @@ void blocks::draw(blocks_draw draw, const view& view,
             });
 
       command_list.draw_indexed_instanced(sizeof(blocks_ia_buffer::cube_indices) / 2,
-                                          view.cube_instances_count, 0, 0, 0);
+                                          view.box_instances_count, 0, 0, 0);
    }
 }
 
