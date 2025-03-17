@@ -12,6 +12,7 @@ tool_visualizers::tool_visualizers() noexcept
    _ghost_objects.reserve(64);
    _hub_highlights.reserve(8);
    _connection_highlights.reserve(8);
+   _mini_grids.reserve(8);
 }
 
 void tool_visualizers::add_line_overlay(float3 v0, float3 v1, uint32 color)
@@ -65,6 +66,11 @@ void tool_visualizers::add_highlight(id<planning_connection> connection_id, floa
    _connection_highlights.emplace_back(connection_id, color);
 }
 
+void tool_visualizers::add_mini_grid(const tool_visualizers_mini_grid& grid)
+{
+   _mini_grids.push_back(grid);
+}
+
 void tool_visualizers::clear() noexcept
 {
    _lines_overlay.clear();
@@ -75,6 +81,7 @@ void tool_visualizers::clear() noexcept
    _ghost_objects.clear();
    _hub_highlights.clear();
    _connection_highlights.clear();
+   _mini_grids.clear();
 }
 
 auto tool_visualizers::lines_overlay() const noexcept
@@ -122,6 +129,12 @@ auto tool_visualizers::connection_highlights() const noexcept
    -> std::span<const tool_visualizers_connection_highlight>
 {
    return _connection_highlights;
+}
+
+auto tool_visualizers::mini_grids() const noexcept
+   -> std::span<const tool_visualizers_mini_grid>
+{
+   return _mini_grids;
 }
 
 }

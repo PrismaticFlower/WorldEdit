@@ -635,6 +635,24 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                        .debug_name = "grid_overlay"sv}),
                    device.direct_queue};
 
+   grid_overlay_fade = {device.create_graphics_pipeline(
+                           {.root_signature =
+                               root_signature_library.grid_overlay.get(),
+
+                            .vs_bytecode = shader_library["grid_overlayVS"sv],
+                            .ps_bytecode = shader_library["grid_overlay_fadePS"sv],
+
+                            .blend_state = blend_premult_alpha,
+                            .rasterizer_state = {.cull_mode = gpu::cull_mode::none},
+                            .depth_stencil_state = depth_stencil_readonly_greater_equal,
+
+                            .render_target_count = 1,
+                            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+
+                            .debug_name = "grid_overlay"sv}),
+                        device.direct_queue};
+
    terrain_cut_mesh_mark =
       {device.create_graphics_pipeline(
           {.root_signature = root_signature_library.terrain_cut_mesh.get(),

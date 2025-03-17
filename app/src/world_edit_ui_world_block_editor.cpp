@@ -133,6 +133,13 @@ void world_edit::ui_show_block_editor() noexcept
       const uint32 line_color =
          utility::pack_srgb_bgra({_settings.graphics.creation_color, 1.0f});
 
+      const world::tool_visualizers_mini_grid xz_grid_desc = {
+         .positionWS = aligned_cursorWS,
+         .size = alignment.x,
+         .divisions = 3.0f,
+         .color = float3{1.0f, 1.0f, 1.0f},
+      };
+
       switch (_block_editor_context.draw_block.step) {
       case draw_block_step::start: {
          if (align) {
@@ -149,6 +156,8 @@ void world_edit::ui_show_block_editor() noexcept
                                        line_color);
          }
 
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
          if (click) {
             _block_editor_context.draw_block.height = aligned_cursorWS.y;
             _block_editor_context.draw_block.start = aligned_cursorWS;
@@ -158,6 +167,7 @@ void world_edit::ui_show_block_editor() noexcept
       case draw_block_step::box_depth: {
          _tool_visualizers.add_line_overlay(_block_editor_context.draw_block.start,
                                             aligned_cursorWS, line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             _block_editor_context.draw_block.depth = aligned_cursorWS;
@@ -202,6 +212,7 @@ void world_edit::ui_show_block_editor() noexcept
                                             line_color);
          _tool_visualizers.add_line_overlay(draw_block_depth, draw_block_width,
                                             line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             const world::block_box_id id = _world.blocks.next_id.boxes.aquire();

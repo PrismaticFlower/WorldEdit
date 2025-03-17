@@ -239,6 +239,7 @@
     <ClCompile Include="src\edits\set_block.cpp" />
     <ClCompile Include="src\graphics\shaders\block_basic_lightingPS.cpp" />
     <ClCompile Include="src\world\blocks\raycast.cpp" />
+    <ClCompile Include="src\graphics\shaders\grid_overlay_fadePS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
