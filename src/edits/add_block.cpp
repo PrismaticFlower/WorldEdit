@@ -7,7 +7,7 @@ namespace we::edits {
 
 namespace {
 
-bool is_balanced(const world::blocks_cubes& blocks) noexcept
+bool is_balanced(const world::blocks_boxes& blocks) noexcept
 {
    return blocks.bbox.min_x.size() == blocks.bbox.min_y.size() and
           blocks.bbox.min_x.size() == blocks.bbox.min_z.size() and
@@ -20,14 +20,14 @@ bool is_balanced(const world::blocks_cubes& blocks) noexcept
 }
 
 struct add_block final : edit<world::edit_context> {
-   add_block(world::block_description_cube box, world::block_cube_id id)
+   add_block(world::block_description_box box, world::block_box_id id)
       : box{box}, id{id}
    {
    }
 
    void apply(world::edit_context& context) noexcept override
    {
-      world::blocks_cubes& blocks = context.world.blocks.cubes;
+      world::blocks_boxes& blocks = context.world.blocks.boxes;
 
       const math::bounding_box bbox =
          box.rotation * math::bounding_box{.min = -box.size, .max = box.size} +
@@ -54,7 +54,7 @@ struct add_block final : edit<world::edit_context> {
 
    void revert(world::edit_context& context) noexcept override
    {
-      world::blocks_cubes& blocks = context.world.blocks.cubes;
+      world::blocks_boxes& blocks = context.world.blocks.boxes;
 
       blocks.bbox.min_x.pop_back();
       blocks.bbox.min_y.pop_back();
@@ -83,13 +83,13 @@ struct add_block final : edit<world::edit_context> {
    void coalesce([[maybe_unused]] edit& other) noexcept override {}
 
 private:
-   world::block_description_cube box;
-   world::block_cube_id id;
+   world::block_description_box box;
+   world::block_box_id id;
 };
 
 }
 
-auto make_add_block(world::block_description_cube box, world::block_cube_id id)
+auto make_add_block(world::block_description_box box, world::block_box_id id)
    -> std::unique_ptr<edit<world::edit_context>>
 {
    return std::make_unique<add_block>(box, id);

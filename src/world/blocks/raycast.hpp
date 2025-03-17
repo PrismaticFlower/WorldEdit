@@ -12,7 +12,7 @@ struct raycast_block_result {
 };
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
-             const blocks_cubes& cubes) noexcept
+             const blocks_boxes& boxes) noexcept
    -> std::optional<raycast_block_result>;
 
 }

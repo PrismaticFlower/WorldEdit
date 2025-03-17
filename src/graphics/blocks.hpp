@@ -20,8 +20,8 @@ enum class blocks_draw { depth_prepass, main, shadow };
 
 struct blocks {
    struct view {
-      uint32 cube_instances_count = 0;
-      gpu_virtual_address cube_instances = 0;
+      uint32 box_instances_count = 0;
+      gpu_virtual_address box_instances = 0;
    };
 
    blocks(gpu::device& device, copy_command_list_pool& copy_command_list_pool,

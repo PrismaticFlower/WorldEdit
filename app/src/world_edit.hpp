@@ -185,9 +185,9 @@ enum class block_edit_tool : uint8 { none, draw };
 
 enum class draw_block_step : uint8 {
    start,
-   cube_depth,
-   cube_width,
-   cube_height,
+   box_depth,
+   box_width,
+   box_height,
 };
 
 constexpr float tool_window_start_x = 264.0f;
@@ -960,7 +960,7 @@ private:
          float3 width;
          float rotation_angle = 0.0f;
          uint32 index = 0;
-         world::block_cube_id cube_id = world::max_id;
+         world::block_box_id box_id = world::max_id;
       } draw_block;
    } _block_editor_context;
 
