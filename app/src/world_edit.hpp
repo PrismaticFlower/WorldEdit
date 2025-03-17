@@ -955,6 +955,7 @@ private:
 
       struct draw_block {
          draw_block_step step = draw_block_step::start;
+         float height = 0.0f;
          float3 start;
          float3 depth;
          float3 width;
