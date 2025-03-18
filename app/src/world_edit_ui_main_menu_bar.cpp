@@ -359,6 +359,24 @@ void world_edit::ui_show_main_menu_bar() noexcept
          ImGui::EndMenu();
       }
 
+      if (ImGui::BeginMenu("Blocks")) {
+         if (ImGui::MenuItem("Blocks Editor",
+                             get_display_string(_hotkeys.query_binding("Global", "Show Blocks Editor")),
+                             _block_editor_open)) {
+            _block_editor_open = not _block_editor_open;
+            _block_editor_context = {};
+         }
+
+         ImGui::Separator();
+
+         if (ImGui::MenuItem("New Box")) {
+            _block_editor_open = true;
+            _block_editor_context = {.activate_tool = block_edit_tool::draw};
+         }
+
+         ImGui::EndMenu();
+      }
+
       if (ImGui::BeginMenu("Settings")) {
          ImGui::MenuItem("Settings Editor", nullptr, &_settings_editor_open);
          ImGui::MenuItem("Hotkeys Editor", nullptr, &_hotkeys_editor_open);
