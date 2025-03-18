@@ -21,10 +21,9 @@ namespace we {
 
 namespace {
 
-constexpr std::array<const char*, 17> alignment_names =
-   {"0.015625", "0.03125", "0.0625", "0.125", "0.25",  "0.5",
-    "1.0",      "2.0",     "4.0",    "8.0",   "16.0",  "32.0",
-    "64.0",     "128.0",   "256.0",  "512.0", "1024.0"};
+constexpr std::array<const char*, 13> alignment_names =
+   {"0.0625", "0.125", "0.25", "0.5",  "1.0",   "2.0",  "4.0",
+    "8.0",    "16.0",  "32.0", "64.0", "128.0", "256.0"};
 
 }
 
@@ -50,18 +49,18 @@ void world_edit::ui_show_block_editor() noexcept
       ImGui::BeginGroup();
 
       _block_editor_config.xz_alignment_exponent =
-         std::clamp(_block_editor_config.xz_alignment_exponent, -6, 10);
+         std::clamp(_block_editor_config.xz_alignment_exponent, -4, 8);
       _block_editor_config.y_alignment_exponent =
-         std::clamp(_block_editor_config.y_alignment_exponent, -6, 10);
+         std::clamp(_block_editor_config.y_alignment_exponent, -4, 8);
 
       ImGui::SliderInt("Draw XZ Alignment",
-                       &_block_editor_config.xz_alignment_exponent, -6, 10,
-                       alignment_names[_block_editor_config.xz_alignment_exponent + 6],
+                       &_block_editor_config.xz_alignment_exponent, -4, 8,
+                       alignment_names[_block_editor_config.xz_alignment_exponent + 4],
                        ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoInput);
 
       ImGui::SliderInt("Draw Y Alignment",
-                       &_block_editor_config.y_alignment_exponent, -6, 10,
-                       alignment_names[_block_editor_config.y_alignment_exponent + 6],
+                       &_block_editor_config.y_alignment_exponent, -4, 8,
+                       alignment_names[_block_editor_config.y_alignment_exponent + 4],
                        ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoInput);
 
       ImGui::EndGroup();
