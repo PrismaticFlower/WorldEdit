@@ -186,6 +186,10 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("show.bake_terrain_lighting"s,
                  [this] { _terrain_edit_tool = terrain_edit_tool::light_baker; });
+   _commands.add("show.block_editor"s, [this] {
+      _block_editor_open = true;
+      _block_editor_context = {};
+   });
 
    _commands.add("show.overlay_grid"s, _draw_overlay_grid);
    _commands.add("show.terrain_grid"s, _draw_terrain_grid);
@@ -818,6 +822,10 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show Animation Hierarchy Editor",
            "show.animation_hierarchy_editor",
            {.key = key::f3, .modifiers = {.shift = true}}},
+
+          {"Show Blocks Editor",
+           "show.block_editor",
+           {.key = key::f4, .modifiers = {.shift = true}}},
 
           {"Show Floor Grid",
            "show.overlay_grid",
