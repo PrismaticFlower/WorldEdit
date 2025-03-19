@@ -10,10 +10,23 @@ namespace we::graphics {
 
 namespace {
 
-struct block_instance_transform {
+struct surface_info {
+   uint32 material_index : 8 = 0;
+   uint32 scale : 8 = 0;
+   uint32 rotation : 2 = 0;
+   uint32 : 14;
+};
+
+static_assert(sizeof(surface_info) == 4);
+
+struct block_instance_description {
    float4x4 world_from_object;
    float3x3 adjugate_world_from_object;
+   std::array<surface_info, 6> surfaces;
+   uint32 padding = 0;
 };
+
+static_assert(sizeof(block_instance_description) == 128);
 
 struct blocks_ia_buffer {
    std::array<world::block_vertex, 24> cube_vertices = world::block_cube_vertices;
@@ -70,7 +83,7 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
       _boxes_instance_data_capacity = blocks.boxes.size() * 16180 / 10000;
       _boxes_instance_data =
          {_device.create_buffer({.size = _boxes_instance_data_capacity *
-                                         sizeof(block_instance_transform),
+                                         sizeof(block_instance_description),
                                  .debug_name = "World blocks (Boxes)"},
                                 gpu::heap_type::default_),
           _device.direct_queue};
@@ -79,7 +92,7 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
          command_list.copy_buffer_region(_boxes_instance_data.get(), 0,
                                          old_boxes_instance_data.get(), 0,
                                          old_boxes_instance_data_capacity *
-                                            sizeof(block_instance_transform));
+                                            sizeof(block_instance_description));
       }
    }
 
@@ -87,11 +100,13 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
       const uint32 range_size = range.end - range.begin;
 
       const dynamic_buffer_allocator::allocation& upload_allocation =
-         dynamic_buffer_allocator.allocate(range_size * sizeof(block_instance_transform));
+         dynamic_buffer_allocator.allocate(range_size *
+                                           sizeof(block_instance_description));
       std::byte* upload_ptr = upload_allocation.cpu_address;
 
-      for (uint32 i = range.begin; i < range.end; ++i) {
-         const world::block_description_box& block = blocks.boxes.description[i];
+      for (uint32 block_index = range.begin; block_index < range.end; ++block_index) {
+         const world::block_description_box& block =
+            blocks.boxes.description[block_index];
 
          const float4x4 scale = {
             {block.size.x, 0.0f, 0.0f, 0.0f},
@@ -101,22 +116,30 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
          };
          const float4x4 rotation = to_matrix(block.rotation);
 
-         block_instance_transform transform;
+         block_instance_description description;
 
-         transform.world_from_object = rotation * scale;
-         transform.adjugate_world_from_object = float3x3(transform.world_from_object);
-         transform.world_from_object[3] = {block.position, 1.0f};
+         description.world_from_object = rotation * scale;
+         description.adjugate_world_from_object =
+            float3x3(description.world_from_object);
+         description.world_from_object[3] = {block.position, 1.0f};
 
-         std::memcpy(upload_ptr, &transform, sizeof(block_instance_transform));
+         for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
+            description.surfaces[i] = {.material_index = block.surface_materials[i],
+                                       .scale = block.surface_texture_scale[i],
+                                       .rotation = static_cast<uint32>(
+                                          block.surface_texture_rotation[i])};
+         }
 
-         upload_ptr += sizeof(block_instance_transform);
+         std::memcpy(upload_ptr, &description, sizeof(block_instance_description));
+
+         upload_ptr += sizeof(block_instance_description);
       }
 
       command_list.copy_buffer_region(_boxes_instance_data.get(),
-                                      range.begin * sizeof(block_instance_transform),
+                                      range.begin * sizeof(block_instance_description),
                                       upload_allocation.resource,
                                       upload_allocation.offset,
-                                      range_size * sizeof(block_instance_transform));
+                                      range_size * sizeof(block_instance_description));
    }
 
    (void)texture_manager;

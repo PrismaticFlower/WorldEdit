@@ -1,18 +1,32 @@
 #include "bindings.hlsli"
 #include "frame_constants.hlsli"
 
-struct block_instance_transform {
+#define MAX_SURFACES 6
+
+enum texture_rotation { texture_rotation_d0, texture_rotation_d90, texture_rotation_d180, texture_rotation_d270 };
+
+struct surface_info {
+   uint material_index : 8; 
+   uint scale : 8; 
+   uint rotation : 2;
+   uint : 14;
+};
+
+struct block_instance_description {
    float4x4 world_from_object;
    float3x3 adjugate_world_from_object;
+   surface_info surfaces[MAX_SURFACES];
+   uint padding;
 };
 
 StructuredBuffer<uint> instance_index : register(BLOCK_INSTANCE_INDEX_REGISTER);
-StructuredBuffer<block_instance_transform> instance_descs : register(BLOCK_INSTANCE_DATA_REGISTER);
+StructuredBuffer<block_instance_description> instance_descs : register(BLOCK_INSTANCE_DATA_REGISTER);
 
 struct input_vertex {
    float3 positionOS : POSITION;
    float3 normalOS : NORMAL;
    float2 texcoords : TEXCOORD;
+   uint surface_index : SURFACE;
    uint instance_id : SV_InstanceID;
 };
 
@@ -20,22 +34,38 @@ struct output_vertex {
    float3 positionWS : POSITIONWS;
    float3 normalWS : NORMALWS;
    float2 texcoords : TEXCOORD;
+   nointerpolation uint material_index : MATERIAL;
    float4 positionPS : SV_Position;
 };
 
 output_vertex main(input_vertex input)
 {
-   block_instance_transform instance = instance_descs[instance_index[input.instance_id]];
+   block_instance_description instance = instance_descs[instance_index[input.instance_id]];
+   surface_info surface = instance.surfaces[min(input.surface_index, MAX_SURFACES - 1)];
 
    output_vertex output;
 
    const float3 positionWS = mul(instance.world_from_object, float4(input.positionOS, 1.0)).xyz;
    const float3 normalWS = normalize(mul(instance.adjugate_world_from_object, input.normalOS));
    const float4 positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
+   float2 texcoords = input.texcoords;
+
+   if (surface.rotation == texture_rotation_d90) {
+      texcoords = float2(-texcoords.y, texcoords.x);
+   }
+   else if (surface.rotation == texture_rotation_d180) {
+      texcoords = -texcoords;
+   }
+   else if (surface.rotation == texture_rotation_d270) {
+      texcoords = float2(texcoords.y, -texcoords.x);
+   }
+
+   texcoords *= surface.scale;
 
    output.positionWS = positionWS;
    output.normalWS = normalWS;
-   output.texcoords = input.texcoords;
+   output.texcoords = texcoords;
+   output.material_index = surface.material_index;
    output.positionPS = positionPS;
 
    return output;

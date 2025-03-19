@@ -8,6 +8,8 @@
 #include "container/pinned_vector.hpp"
 #include "container/slim_bitset.hpp"
 
+#include <array>
+
 namespace we::world {
 
 constexpr std::size_t max_blocks = 1'048'576;
@@ -15,10 +17,15 @@ constexpr std::size_t reserved_blocks = 2048;
 constexpr pinned_vector_init blocks_init{.max_size = max_blocks,
                                          .initial_capacity = reserved_blocks};
 
+enum class block_texture_rotation : uint8 { d0, d90, d180, d270 };
+
 struct block_description_box {
    quaternion rotation;
    float3 position;
    float3 size;
+   std::array<uint8, 6> surface_materials = {};
+   std::array<block_texture_rotation, 6> surface_texture_rotation = {};
+   std::array<uint8, 6> surface_texture_scale = {1, 1, 1, 1};
 };
 
 struct blocks_bbox_soa {
