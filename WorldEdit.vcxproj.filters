@@ -240,6 +240,8 @@
     <ClCompile Include="src\graphics\shaders\block_basic_lightingPS.cpp" />
     <ClCompile Include="src\world\blocks\raycast.cpp" />
     <ClCompile Include="src\graphics\shaders\grid_overlay_fadePS.cpp" />
+    <ClCompile Include="src\world\blocks\find.cpp" />
+    <ClCompile Include="src\world\blocks\mesh_geometry.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -537,6 +539,8 @@
     <ClInclude Include="src\edits\set_block.hpp" />
     <ClInclude Include="src\graphics\constant_buffers.hpp" />
     <ClInclude Include="src\world\blocks\raycast.hpp" />
+    <ClInclude Include="src\world\blocks\find.hpp" />
+    <ClInclude Include="src\world\blocks\mesh_geometry.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
