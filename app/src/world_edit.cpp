@@ -555,12 +555,11 @@ void world_edit::update_hovered_entity() noexcept
              world::raycast(ray.origin, ray.direction, _world.blocks.boxes);
           hit) {
          if (hit->distance < hovered_entity_distance) {
-            // _interaction_targets.hovered_entity = hit->id;
+            _interaction_targets.hovered_entity = _world.blocks.boxes.ids[hit->index];
             hovered_entity_distance = hit->distance;
          }
 
          if (hit->distance < cursor_distance) {
-            //  _cursor_surface_normalWS = hit->normalWS;
             cursor_distance = hit->distance;
          }
       }
