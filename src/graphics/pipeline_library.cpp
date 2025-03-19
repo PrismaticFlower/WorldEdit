@@ -109,6 +109,9 @@ constexpr std::array block_input_layout = {
    gpu::input_element_desc{.semantic_name = "TEXCOORD",
                            .format = DXGI_FORMAT_R32G32_FLOAT,
                            .input_slot = 0},
+   gpu::input_element_desc{.semantic_name = "SURFACE",
+                           .format = DXGI_FORMAT_R32_UINT,
+                           .input_slot = 0},
 };
 
 constexpr std::array meta_draw_input_layout = {
