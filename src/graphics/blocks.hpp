@@ -25,7 +25,8 @@ struct blocks {
    };
 
    blocks(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
-          dynamic_buffer_allocator& dynamic_buffer_allocator);
+          dynamic_buffer_allocator& dynamic_buffer_allocator,
+          texture_manager& texture_manager);
 
    void update(const world::blocks& blocks, gpu::copy_command_list& command_list,
                dynamic_buffer_allocator& dynamic_buffer_allocator,
@@ -41,17 +42,54 @@ struct blocks {
              gpu::graphics_command_list& command_list,
              root_signature_library& root_signatures, pipeline_library& pipelines) const;
 
-   void process_updated_texture(const updated_textures& updated);
+   /// @brief Process updated material textures.
+   /// @param command_list The copy command list to use to update the constant buffer.
+   /// @param updated The updated textures.
+   void process_updated_textures(gpu::copy_command_list& command_list,
+                                 const updated_textures& updated);
+
+   /// @brief Process updated material textures using copy_buffer_region instead of write_buffer_immediate.
+   /// @param allocator The dynamic buffer allocator.
+   /// @param mesh_buffer The handle to the mesh buffer containing the material.
+   /// @param command_list The copy command list to use to update the constant buffer.
+   /// @param updated The updated textures.
+   void process_updated_textures_copy(dynamic_buffer_allocator& allocator,
+                                      gpu::copy_command_list& command_list,
+                                      const updated_textures& updated);
+
+   struct material {
+      struct texture {
+         lowercase_string name;
+         std::shared_ptr<const world_texture> texture;
+         std::shared_ptr<const world_texture_load_token> load_token;
+
+         void update(const std::string_view new_name, texture_manager& texture_manager);
+      };
+
+      texture diffuse_map;
+      texture normal_map;
+      texture detail_map;
+      texture env_map;
+
+      std::array<uint8, 2> detail_tiling = {0, 0};
+      bool tile_normal_map = false;
+      bool specular_lighting = false;
+
+      float3 specular_color;
+   };
 
 private:
    gpu::device& _device;
 
    gpu::unique_resource_handle _blocks_ia_buffer;
+   gpu::unique_resource_handle _blocks_materials_buffer;
 
    gpu::unique_resource_handle _boxes_instance_data;
    uint64 _boxes_instance_data_capacity = 0;
 
    std::vector<uint16> _TEMP_culling_storage;
+
+   std::vector<material> _materials;
 };
 
 }

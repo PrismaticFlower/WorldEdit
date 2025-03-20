@@ -242,6 +242,7 @@
     <ClCompile Include="src\graphics\shaders\grid_overlay_fadePS.cpp" />
     <ClCompile Include="src\world\blocks\find.cpp" />
     <ClCompile Include="src\world\blocks\mesh_geometry.cpp" />
+    <ClCompile Include="src\graphics\shaders\block_normalPS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />

@@ -284,6 +284,7 @@
     <ClCompile Include="src\graphics\shaders\blockVS.cpp" />
     <ClCompile Include="src\graphics\shaders\block_basicPS.cpp" />
     <ClCompile Include="src\graphics\shaders\block_basic_lightingPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\block_normalPS.cpp" />
     <ClCompile Include="src\graphics\shaders\depth_reduce_minmaxCS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_conePS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_coneVS.cpp" />

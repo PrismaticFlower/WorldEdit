@@ -601,8 +601,25 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                                .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
                                .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
-                               .debug_name = "block_basic"sv}),
+                               .debug_name = "block_basic_lighting"sv}),
                            device.direct_queue};
+
+   block_normal = {device.create_graphics_pipeline(
+                      {.root_signature = root_signature_library.block.get(),
+
+                       .vs_bytecode = shader_library["blockVS"sv],
+                       .ps_bytecode = shader_library["block_normalPS"sv],
+
+                       .rasterizer_state = rasterizer_cull_backfacing,
+                       .depth_stencil_state = depth_stencil_readonly_equal,
+                       .input_layout = block_input_layout,
+
+                       .render_target_count = 1,
+                       .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                       .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+
+                       .debug_name = "block_normal"sv}),
+                   device.direct_queue};
 
    block_shadow = {device.create_graphics_pipeline(
                       {.root_signature = root_signature_library.block.get(),

@@ -17,6 +17,7 @@ constexpr uint32 water_cb_register = 7;
 constexpr uint32 thumbnail_camera_cb_register = 8;
 constexpr uint32 grid_overlay_cb_register = 9;
 constexpr uint32 gizmo_shape_cb_register = 10;
+constexpr uint32 block_materials_cb_register = 11;
 
 constexpr uint32 terrain_patch_data_register = 0;
 constexpr uint32 meta_draw_instance_data_register = 1;
@@ -64,6 +65,13 @@ constexpr gpu::root_parameter block_instance_buffer{
 
    .shader_register = block_instance_data_register,
    .visibility = gpu::root_shader_visibility::vertex,
+};
+
+constexpr gpu::root_parameter block_materials_buffer{
+   .type = gpu::root_parameter_type::constant_buffer_view,
+
+   .shader_register = block_materials_cb_register,
+   .visibility = gpu::root_shader_visibility::pixel,
 };
 
 constexpr std::array<gpu::static_sampler_desc, sampler_count> static_samplers =
@@ -211,6 +219,7 @@ const gpu::root_signature_desc block_desc{
          block_instance_buffer,
          frame_constant_buffer,
          lights_constant_buffer,
+         block_materials_buffer,
       },
 
    .samplers = pixel_static_samplers,
