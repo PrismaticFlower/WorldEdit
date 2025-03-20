@@ -9,10 +9,12 @@
 #include "container/slim_bitset.hpp"
 
 #include <array>
+#include <string>
 
 namespace we::world {
 
 constexpr std::size_t max_blocks = 1'048'576;
+constexpr std::size_t max_block_materials = 256;
 constexpr std::size_t reserved_blocks = 2048;
 constexpr pinned_vector_init blocks_init{.max_size = max_blocks,
                                          .initial_capacity = reserved_blocks};
@@ -54,8 +56,24 @@ struct blocks_boxes {
    }
 };
 
+struct block_material {
+   std::string diffuse_map;
+   std::string normal_map;
+   std::string detail_map;
+   std::string env_map;
+
+   std::array<uint8, 2> detail_tiling = {0, 0};
+   bool tile_normal_map = false;
+   bool specular_lighting = false;
+
+   float3 specular_color;
+};
+
 struct blocks {
    blocks_boxes boxes;
+
+   std::array<block_material, max_block_materials> materials;
+   blocks_dirty_range_tracker materials_dirty;
 
    struct next_ids {
       id_generator<block_description_box> boxes;

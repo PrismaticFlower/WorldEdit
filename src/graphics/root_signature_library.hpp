@@ -97,6 +97,7 @@ constexpr uint32 instances_index_srv = 0;
 constexpr uint32 instances_srv = 1;
 constexpr uint32 frame_cbv = 2;
 constexpr uint32 lights_cbv = 3;
+constexpr uint32 materials_cbv = 4;
 }
 
 namespace grid_overlay {

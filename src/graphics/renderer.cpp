@@ -262,7 +262,8 @@ private:
                     _texture_manager};
    water _water{_device, _texture_manager};
    sky _sky;
-   blocks _blocks{_device, _copy_command_list_pool, _dynamic_buffer_allocator};
+   blocks _blocks{_device, _copy_command_list_pool, _dynamic_buffer_allocator,
+                  _texture_manager};
 
    constexpr static std::size_t max_drawn_objects = 2048;
    constexpr static std::size_t objects_constants_buffer_size =
@@ -3981,6 +3982,14 @@ void renderer_impl::update_textures(gpu::copy_command_list& command_list)
       _terrain.process_updated_texture(updated);
       _water.process_updated_texture(updated);
       _ui_texture_manager.process_updated_textures(updated);
+
+      [[likely]] if (_device.supports_write_buffer_immediate()) {
+         _blocks.process_updated_textures(command_list, updated);
+      }
+      else {
+         _blocks.process_updated_textures_copy(_dynamic_buffer_allocator,
+                                               command_list, updated);
+      }
    });
 }
 
