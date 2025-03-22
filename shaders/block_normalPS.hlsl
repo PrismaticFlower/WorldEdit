@@ -5,6 +5,8 @@
 
 struct input_vertex {
    float3 positionWS : POSITIONWS;
+   float3 tangentWS : TANGENTWS;
+   float3 bitangentWS : BITANGENTWS;
    float3 normalWS : NORMALWS;
    float2 texcoords : TEXCOORD;
    nointerpolation uint material_index : MATERIAL;
@@ -12,9 +14,13 @@ struct input_vertex {
    float4 positionSS : SV_Position;
 };
 
+float3 transform_normalWS(const input_vertex input, const float3 normalTS)
+{
+   return normalize(mul(normalTS, float3x3(input.tangentWS, input.bitangentWS, input.normalWS)));
+}
+
 float4 main(input_vertex input) : SV_TARGET
 {
-   const float3 normalWS = normalize(input.normalWS);
    const float3 positionWS = input.positionWS;
    const float2 texcoords = input.texcoords;
    const float3 viewWS = normalize(cb_frame.view_positionWS - positionWS);
@@ -34,6 +40,9 @@ float4 main(input_vertex input) : SV_TARGET
          normal_map_sample = normal_map.Sample(sampler_anisotropic_wrap, texcoords);
       }
    }
+
+   const float3 normalTS = normal_map_sample.xyz * 2.0 - 1.0;
+   const float3 normalWS = transform_normalWS(input, normalTS);
 
    Texture2D diffuse_map = Texture2DHeap[NonUniformResourceIndex(material.diffuse_map_index)];
 
