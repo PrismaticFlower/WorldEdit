@@ -14,22 +14,24 @@ namespace we::graphics {
 namespace {
 
 struct surface_info {
-   uint32 material_index : 8 = 0;
-   uint32 scale : 8 = 0;
-   uint32 rotation : 2 = 0;
-   uint32 : 14;
+   uint32 material_index : 8;
+   uint32 scaleX : 4;
+   uint32 scaleY : 4;
+   uint32 rotation : 2;
+   uint32 offsetX : 13;
+   uint32 offsetY : 13;
 };
 
-static_assert(sizeof(surface_info) == 4);
+static_assert(sizeof(surface_info) == 8);
 
 struct block_instance_description {
    float4x4 world_from_object;
    float3x3 adjugate_world_from_object;
    std::array<surface_info, 6> surfaces;
-   uint32 padding = 0;
+   std::array<uint32, 3> padding;
 };
 
-static_assert(sizeof(block_instance_description) == 128);
+static_assert(sizeof(block_instance_description) == 160);
 
 enum class block_material_flags : uint32 {
    none = 0b0,
@@ -223,10 +225,14 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
          description.world_from_object[3] = {block.position, 1.0f};
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
-            description.surfaces[i] = {.material_index = block.surface_materials[i],
-                                       .scale = block.surface_texture_scale[i],
-                                       .rotation = static_cast<uint32>(
-                                          block.surface_texture_rotation[i])};
+            description.surfaces[i] = {
+               .material_index = block.surface_materials[i],
+               .scaleX = static_cast<uint32>(block.surface_texture_scale[i][0] + 7),
+               .scaleY = static_cast<uint32>(block.surface_texture_scale[i][1] + 7),
+               .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
+               .offsetX = block.surface_texture_offset[i][0],
+               .offsetY = block.surface_texture_offset[i][1],
+            };
          }
 
          std::memcpy(upload_ptr, &description, sizeof(block_instance_description));
