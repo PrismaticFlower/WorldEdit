@@ -27,7 +27,8 @@ struct block_description_box {
    float3 size;
    std::array<uint8, 6> surface_materials = {};
    std::array<block_texture_rotation, 6> surface_texture_rotation = {};
-   std::array<uint8, 6> surface_texture_scale = {1, 1, 1, 1};
+   std::array<std::array<int8, 2>, 6> surface_texture_scale = {};
+   std::array<std::array<uint16, 2>, 6> surface_texture_offset = {};
 };
 
 struct blocks_bbox_soa {

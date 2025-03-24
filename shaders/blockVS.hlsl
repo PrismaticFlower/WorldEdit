@@ -7,16 +7,18 @@ enum texture_rotation { texture_rotation_d0, texture_rotation_d90, texture_rotat
 
 struct surface_info {
    uint material_index : 8; 
-   uint scale : 8; 
+   uint scaleX : 4; 
+   uint scaleY : 4;
    uint rotation : 2;
-   uint : 14;
+   uint offsetX : 13;
+   uint offsetY : 13;
 };
 
 struct block_instance_description {
    float4x4 world_from_object;
    float3x3 adjugate_world_from_object;
    surface_info surfaces[MAX_SURFACES];
-   uint padding;
+   uint3 padding;
 };
 
 StructuredBuffer<uint> instance_index : register(BLOCK_INSTANCE_INDEX_REGISTER);
@@ -61,8 +63,8 @@ output_vertex main(input_vertex input)
    float2 texcoords = input.texcoords;
    
    texcoords = mul(texture_from_world, positionWS).xy;
-   
-#if 0
+   texcoords *= exp2(float2((int)surface.scaleX - 7, (int)surface.scaleY - 7));
+
    if (surface.rotation == texture_rotation_d90) {
       texcoords = float2(-texcoords.y, texcoords.x);
    }
@@ -73,9 +75,7 @@ output_vertex main(input_vertex input)
       texcoords = float2(texcoords.y, -texcoords.x);
    }
 
-
-   texcoords *= surface.scale;
-#endif
+   texcoords += (float2(surface.offsetX, surface.offsetY) * (1.0 / 8192.0));
 
    output.positionWS = positionWS;
    output.tangentWS = tangentWS;
