@@ -60,3 +60,4 @@ END
 #endif    // not APSTUDIO_INVOKED
 
 RES_ID_ROBOTO_REGULAR RES_TYPE_BINARY "..\\..\\fonts\\Roboto-Regular.ttf"
+RES_ID_CURSOR_ROTATE_CW CURSOR "..\\..\\cursors\\rotate_cw.cur"

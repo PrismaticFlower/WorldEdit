@@ -55,6 +55,7 @@
 
 #include <backends/imgui_impl_win32.h>
 #include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 using namespace std::literals;
 
@@ -338,6 +339,9 @@ void world_edit::update_hovered_entity() noexcept
    if (ImGui::GetIO().WantCaptureMouse or _gizmos.want_capture_mouse()) return;
    if (_rotate_camera or _pan_camera) return;
    if (_terrain_edit_tool != terrain_edit_tool::none) return;
+   if (_block_editor_open) {
+      if (_block_editor_context.tool != block_edit_tool::draw) return;
+   }
 
    world::active_entity_types raycast_mask = _world_hit_mask;
 
@@ -614,6 +618,12 @@ void world_edit::update_hovered_entity() noexcept
           _animation_hierarchy_editor_context.pick_object.active);
 
       if (not pick_object_wants_hover) {
+         _interaction_targets.hovered_entity = std::nullopt;
+      }
+   }
+
+   if (_block_editor_open) {
+      if (_block_editor_context.tool == block_edit_tool::draw) {
          _interaction_targets.hovered_entity = std::nullopt;
       }
    }
@@ -3780,6 +3790,8 @@ auto world_edit::get_mouse_cursor() const noexcept -> mouse_cursor
          return mouse_cursor::arrow;
       case block_edit_tool::draw:
          return mouse_cursor::pen;
+      case block_edit_tool::rotate_texture:
+         return mouse_cursor::rotate_cw;
       }
    }
 

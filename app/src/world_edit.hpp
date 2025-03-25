@@ -49,6 +49,8 @@ enum class mouse_cursor {
    app_starting,
    pen,
 
+   rotate_cw,
+
    COUNT
 };
 
@@ -181,7 +183,7 @@ enum class animation_key_type : uint8 { position, rotation };
 
 enum class animation_playback_state : uint8 { stopped, paused, play };
 
-enum class block_edit_tool : uint8 { none, draw };
+enum class block_edit_tool : uint8 { none, draw, rotate_texture };
 
 enum class draw_block_step : uint8 {
    start,
@@ -951,7 +953,7 @@ private:
       block_edit_tool activate_tool = block_edit_tool::none;
       block_edit_tool tool = block_edit_tool::none;
 
-      bool draw_click = false;
+      bool tool_click = false;
 
       struct draw_block {
          draw_block_step step = draw_block_step::start;
