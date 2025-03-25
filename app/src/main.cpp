@@ -1,5 +1,6 @@
 
 #include "container/enum_array.hpp"
+#include "resource.h"
 #include "utility/command_line.hpp"
 #include "world_edit.hpp"
 
@@ -41,6 +42,11 @@ const static we::container::enum_array<HCURSOR, we::mouse_cursor> mouse_cursors 
    LoadCursorW(nullptr, IDC_APPSTARTING),
    [] { // Incase Wine or something similar doesn't have the pen cursor.
       HCURSOR cursor = LoadCursorW(nullptr, WE_IDC_PEN);
+      return cursor ? cursor : LoadCursorW(nullptr, IDC_ARROW);
+   }(),
+   [] {
+      HCURSOR cursor = LoadCursorW(GetModuleHandleW(nullptr),
+                                   MAKEINTRESOURCEW(RES_ID_CURSOR_ROTATE_CW));
       return cursor ? cursor : LoadCursorW(nullptr, IDC_ARROW);
    }(),
 };

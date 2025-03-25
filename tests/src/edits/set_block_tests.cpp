@@ -146,4 +146,103 @@ TEST_CASE("edits set_block_box_metrics no coalesce", "[Edits]")
    REQUIRE(not edit->is_coalescable(*other_edit));
 }
 
+TEST_CASE("edits set_block_box_surface", "[Edits]")
+{
+   world::world world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   world::blocks& blocks = world.blocks;
+
+   blocks.boxes.bbox.min_x.push_back(5.0f);
+   blocks.boxes.bbox.min_y.push_back(5.0f);
+   blocks.boxes.bbox.min_z.push_back(5.0f);
+   blocks.boxes.bbox.max_x.push_back(15.0f);
+   blocks.boxes.bbox.max_y.push_back(15.0f);
+   blocks.boxes.bbox.max_z.push_back(15.0f);
+   blocks.boxes.hidden.push_back(false);
+   blocks.boxes.description.push_back({.rotation = quaternion{0.0f, 1.0f, 0.0f, 0.0f},
+                                       .position = float3{10.0f, 10.0f, 10.0f},
+                                       .size = float3{5.0f, 5.0f, 5.0f}});
+
+   auto edit = make_set_block_box_surface(0, 1, world::block_texture_rotation::d180);
+
+   edit->apply(edit_context);
+
+   CHECK(blocks.boxes.description[0].surface_texture_rotation[1] ==
+         world::block_texture_rotation::d180);
+
+   REQUIRE(blocks.boxes.dirty.size() == 1);
+   CHECK(blocks.boxes.dirty[0] == world::blocks_dirty_range{0, 1});
+
+   blocks.boxes.dirty.clear();
+
+   edit->revert(edit_context);
+
+   CHECK(blocks.boxes.description[0].surface_texture_rotation[1] ==
+         world::block_texture_rotation::d0);
+
+   REQUIRE(blocks.boxes.dirty.size() == 1);
+   CHECK(blocks.boxes.dirty[0] == world::blocks_dirty_range{0, 1});
+}
+
+TEST_CASE("edits set_block_box_surface coalesce", "[Edits]")
+{
+   world::world world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   world::blocks& blocks = world.blocks;
+
+   blocks.boxes.bbox.min_x.push_back(5.0f);
+   blocks.boxes.bbox.min_y.push_back(5.0f);
+   blocks.boxes.bbox.min_z.push_back(5.0f);
+   blocks.boxes.bbox.max_x.push_back(15.0f);
+   blocks.boxes.bbox.max_y.push_back(15.0f);
+   blocks.boxes.bbox.max_z.push_back(15.0f);
+   blocks.boxes.hidden.push_back(false);
+   blocks.boxes.description.push_back({.rotation = quaternion{0.0f, 1.0f, 0.0f, 0.0f},
+                                       .position = float3{10.0f, 10.0f, 10.0f},
+                                       .size = float3{5.0f, 5.0f, 5.0f}});
+
+   auto edit = make_set_block_box_surface(0, 1, world::block_texture_rotation::d180);
+   auto other_edit =
+      make_set_block_box_surface(0, 1, world::block_texture_rotation::d90);
+
+   REQUIRE(edit->is_coalescable(*other_edit));
+
+   edit->coalesce(*other_edit);
+
+   edit->apply(edit_context);
+
+   CHECK(blocks.boxes.description[0].surface_texture_rotation[1] ==
+         world::block_texture_rotation::d90);
+
+   REQUIRE(blocks.boxes.dirty.size() == 1);
+   CHECK(blocks.boxes.dirty[0] == world::blocks_dirty_range{0, 1});
+
+   blocks.boxes.dirty.clear();
+
+   edit->revert(edit_context);
+
+   CHECK(blocks.boxes.description[0].surface_texture_rotation[1] ==
+         world::block_texture_rotation::d0);
+
+   REQUIRE(blocks.boxes.dirty.size() == 1);
+   CHECK(blocks.boxes.dirty[0] == world::blocks_dirty_range{0, 1});
+}
+
+TEST_CASE("edits set_block_box_surface no coalesce", "[Edits]")
+{
+   world::world world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_set_block_box_surface(0, 0, world::block_texture_rotation::d180);
+   auto other_edit =
+      make_set_block_box_surface(0, 1, world::block_texture_rotation::d90);
+
+   REQUIRE(not edit->is_coalescable(*other_edit));
+}
+
 }

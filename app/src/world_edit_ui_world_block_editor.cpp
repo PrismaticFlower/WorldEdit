@@ -10,6 +10,8 @@
 
 #include "utility/srgb_conversion.hpp"
 
+#include "world/blocks/raycast.hpp"
+
 #include <algorithm>
 #include <numbers>
 
@@ -67,6 +69,12 @@ void world_edit::ui_show_block_editor() noexcept
 
       ImGui::SetItemTooltip(
          "Hold Ctrl when drawing blocks to enable snapping to alignment.");
+
+      ImGui::Separator();
+
+      if (ImGui::Button("Rotate Texture", {ImGui::CalcItemWidth(), 0.0f})) {
+         _block_editor_context.activate_tool = block_edit_tool::rotate_texture;
+      }
    }
 
    ImGui::End();
@@ -82,6 +90,10 @@ void world_edit::ui_show_block_editor() noexcept
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Block Editing", "Draw Block")));
 
+      ImGui::Text("Rotate Texture");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Block Editing", "Rotate Texture")));
+
       ImGui::End();
    }
 
@@ -89,15 +101,18 @@ void world_edit::ui_show_block_editor() noexcept
    case block_edit_tool::none: {
    } break;
    case block_edit_tool::draw: {
-      _edit_stack_world.close_last();
-
       _block_editor_context.tool = block_edit_tool::draw;
+      _block_editor_context.tool_click = false;
       _block_editor_context.draw_block = {};
+   } break;
+   case block_edit_tool::rotate_texture: {
+      _block_editor_context.tool_click = false;
+      _block_editor_context.tool = block_edit_tool::rotate_texture;
    } break;
    }
 
    if (_block_editor_context.tool == block_edit_tool::draw) {
-      const bool click = std::exchange(_block_editor_context.draw_click, false);
+      const bool click = std::exchange(_block_editor_context.tool_click, false);
       const bool align = (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
                           ImGui::IsKeyDown(ImGuiKey_RightCtrl)) and
                          not ImGui::GetIO().WantCaptureKeyboard;
@@ -324,6 +339,43 @@ void world_edit::ui_show_block_editor() noexcept
             _edit_stack_world.close_last();
          }
       } break;
+      }
+   }
+   else if (_block_editor_context.tool == block_edit_tool::rotate_texture) {
+      const bool click = std::exchange(_block_editor_context.tool_click, false);
+
+      const graphics::camera_ray rayWS =
+         make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                         {ImGui::GetMainViewport()->Size.x,
+                          ImGui::GetMainViewport()->Size.y});
+
+      if (std::optional<world::raycast_block_result> hit =
+             world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
+          hit) {
+         if (click) {
+            world::block_texture_rotation new_rotation = {};
+
+            switch (_world.blocks.boxes.description[hit->index]
+                       .surface_texture_rotation[hit->surface_index]) {
+            case world::block_texture_rotation::d0:
+               new_rotation = world::block_texture_rotation::d90;
+               break;
+            case world::block_texture_rotation::d90:
+               new_rotation = world::block_texture_rotation::d180;
+               break;
+            case world::block_texture_rotation::d180:
+               new_rotation = world::block_texture_rotation::d270;
+               break;
+            case world::block_texture_rotation::d270:
+               new_rotation = world::block_texture_rotation::d0;
+               break;
+            }
+
+            _edit_stack_world.apply(edits::make_set_block_box_surface(hit->index,
+                                                                      hit->surface_index,
+                                                                      new_rotation),
+                                    _edit_context, {.closed = true});
+         }
       }
    }
 }

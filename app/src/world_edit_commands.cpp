@@ -688,9 +688,12 @@ void world_edit::initialize_commands() noexcept
    _commands.add("blocks.activate_draw"s, [this] {
       _block_editor_context.activate_tool = block_edit_tool::draw;
    });
+   _commands.add("blocks.activate_rotate_texture"s, [this] {
+      _block_editor_context.activate_tool = block_edit_tool::rotate_texture;
+   });
    _commands.add("blocks.deactivate_tool"s,
                  [this] { _block_editor_context.tool = block_edit_tool::none; });
-   _commands.add("blocks.draw_click"s, _block_editor_context.draw_click);
+   _commands.add("blocks.tool_click"s, _block_editor_context.tool_click);
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -1376,21 +1379,24 @@ void world_edit::initialize_hotkeys() noexcept
       .default_hotkeys =
          {
             {"Draw Block", "blocks.activate_draw", {.key = key::d, .modifiers = {.ctrl = true}}},
+            {"Rotate Texture",
+             "blocks.activate_rotate_texture",
+             {.key = key::r, .modifiers = {.ctrl = true}}},
          },
    });
 
-   _hotkeys.add_set({.name = "Block Editing (Draw Block)",
+   _hotkeys.add_set({.name = "Block Editing (Active Tool)",
                      .description = "Active while the block editor is open."s,
                      .activated =
                         [this] {
                            return _block_editor_open and
-                                  _block_editor_context.tool == block_edit_tool::draw;
+                                  _block_editor_context.tool != block_edit_tool::none;
                         },
                      .default_hotkeys =
                         {
-                           {"Click", "blocks.draw_click", {.key = key::mouse1}},
+                           {"Click", "blocks.tool_click", {.key = key::mouse1}},
                            {"Click (Aligned)",
-                            "blocks.draw_click",
+                            "blocks.tool_click",
                             {.key = key::mouse1, .modifiers = {.ctrl = true}}},
                            {"Cancel", "blocks.deactivate_tool", {.key = key::escape}},
                         },
