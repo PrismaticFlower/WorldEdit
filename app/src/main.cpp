@@ -49,6 +49,16 @@ const static we::container::enum_array<HCURSOR, we::mouse_cursor> mouse_cursors 
                                    MAKEINTRESOURCEW(RES_ID_CURSOR_ROTATE_CW));
       return cursor ? cursor : LoadCursorW(nullptr, IDC_ARROW);
    }(),
+   [] {
+      HCURSOR cursor = LoadCursorW(GetModuleHandleW(nullptr),
+                                   MAKEINTRESOURCEW(RES_ID_CURSOR_ENLARGE_TEXTURE));
+      return cursor ? cursor : LoadCursorW(nullptr, IDC_ARROW);
+   }(),
+   [] {
+      HCURSOR cursor = LoadCursorW(GetModuleHandleW(nullptr),
+                                   MAKEINTRESOURCEW(RES_ID_CURSOR_SHRINK_TEXTURE));
+      return cursor ? cursor : LoadCursorW(nullptr, IDC_ARROW);
+   }(),
 };
 
 void static process_mouse_input(we::world_edit& app, const RAWMOUSE& mouse) noexcept

@@ -61,3 +61,5 @@ END
 
 RES_ID_ROBOTO_REGULAR RES_TYPE_BINARY "..\\..\\fonts\\Roboto-Regular.ttf"
 RES_ID_CURSOR_ROTATE_CW CURSOR "..\\..\\cursors\\rotate_cw.cur"
+RES_ID_CURSOR_ENLARGE_TEXTURE CURSOR "..\\..\\cursors\\enlarge_texture.cur"
+RES_ID_CURSOR_SHRINK_TEXTURE CURSOR "..\\..\\cursors\\shrink_texture.cur"

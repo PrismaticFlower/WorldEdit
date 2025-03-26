@@ -3792,6 +3792,11 @@ auto world_edit::get_mouse_cursor() const noexcept -> mouse_cursor
          return mouse_cursor::pen;
       case block_edit_tool::rotate_texture:
          return mouse_cursor::rotate_cw;
+      case block_edit_tool::scale_texture:
+         return (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
+                 ImGui::IsKeyDown(ImGuiKey_RightCtrl))
+                   ? mouse_cursor::shrink_texture
+                   : mouse_cursor::enlarge_texture;
       }
    }
 
