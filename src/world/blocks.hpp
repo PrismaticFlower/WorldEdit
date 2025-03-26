@@ -19,6 +19,9 @@ constexpr std::size_t reserved_blocks = 2048;
 constexpr pinned_vector_init blocks_init{.max_size = max_blocks,
                                          .initial_capacity = reserved_blocks};
 
+constexpr int8 block_min_texture_scale = -7;
+constexpr int8 block_max_texture_scale = 8;
+
 enum class block_texture_rotation : uint8 { d0, d90, d180, d270 };
 
 struct block_description_box {

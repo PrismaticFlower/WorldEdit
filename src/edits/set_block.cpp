@@ -71,24 +71,25 @@ private:
    float3 size;
 };
 
+template<typename T>
 struct set_block_box_surface final : edit<world::edit_context> {
-   set_block_box_surface(const uint32 index, const uint32 surface_index,
-                         const world::block_texture_rotation rotation)
-      : index{index}, surface_index{surface_index}, rotation{rotation}
+   set_block_box_surface(T* value_address, T new_value, const uint32 index,
+                         world::blocks_dirty_range_tracker* dirt_tracker)
+      : value_address{value_address},
+        value{new_value},
+        index{index},
+        dirt_tracker{dirt_tracker}
    {
    }
 
    void apply(world::edit_context& context) noexcept override
    {
-      world::blocks_boxes& blocks = context.world.blocks.boxes;
+      assert(context.is_memory_valid(dirt_tracker));
+      assert(context.is_memory_valid(value_address));
 
-      assert(index < blocks.size());
-      assert(surface_index < blocks.description[index].surface_texture_rotation.size());
+      std::swap(*value_address, value);
 
-      std::swap(blocks.description[index].surface_texture_rotation[surface_index],
-                rotation);
-
-      blocks.dirty.add({index, index + 1});
+      dirt_tracker->add({index, index + 1});
    }
 
    void revert(world::edit_context& context) noexcept override
@@ -103,7 +104,8 @@ struct set_block_box_surface final : edit<world::edit_context> {
 
       if (not other) return false;
 
-      return this->index == other->index and this->surface_index == other->surface_index;
+      return this->value_address == other->value_address and
+             this->dirt_tracker == other->dirt_tracker;
    }
 
    void coalesce(edit& other_unknown) noexcept override
@@ -111,14 +113,14 @@ struct set_block_box_surface final : edit<world::edit_context> {
       set_block_box_surface& other =
          dynamic_cast<set_block_box_surface&>(other_unknown);
 
-      this->rotation = other.rotation;
+      this->value = other.value;
    }
 
 private:
-   const uint32 index = 0;
-   const uint32 surface_index = 0;
-
-   world::block_texture_rotation rotation;
+   T* value_address;
+   T value;
+   const uint32 index;
+   world::blocks_dirty_range_tracker* dirt_tracker;
 };
 
 }
@@ -130,11 +132,24 @@ auto make_set_block_box_metrics(const uint32 index, const quaternion& rotation,
    return std::make_unique<set_block_box_metrics>(index, rotation, position, size);
 }
 
-auto make_set_block_box_surface(const uint32 index, const uint32 surface_index,
-                                const world::block_texture_rotation rotation) noexcept
+auto make_set_block_surface(world::block_texture_rotation* rotation_address,
+                            world::block_texture_rotation new_rotation,
+                            const uint32 index,
+                            world::blocks_dirty_range_tracker* dirt_tracker) noexcept
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<set_block_box_surface>(index, surface_index, rotation);
+   return std::make_unique<set_block_box_surface<world::block_texture_rotation>>(
+      rotation_address, new_rotation, index, dirt_tracker);
+}
+
+auto make_set_block_surface(std::array<int8, 2>* scale_address,
+                            std::array<int8, 2> new_scale, const uint32 index,
+                            world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_block_box_surface<std::array<int8, 2>>>(scale_address,
+                                                                       new_scale, index,
+                                                                       dirt_tracker);
 }
 
 }

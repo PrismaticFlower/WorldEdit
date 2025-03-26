@@ -76,6 +76,23 @@ void world_edit::ui_show_block_editor() noexcept
       if (ImGui::Button("Rotate Texture", {ImGui::CalcItemWidth(), 0.0f})) {
          _block_editor_context.activate_tool = block_edit_tool::rotate_texture;
       }
+
+      if (ImGui::Button("Scale Texture", {ImGui::CalcItemWidth(), 0.0f})) {
+         _block_editor_context.activate_tool = block_edit_tool::scale_texture;
+      }
+
+      if (ImGui::BeginTable("##scale_options", 2, ImGuiTableFlags_SizingStretchSame,
+                            {ImGui::CalcItemWidth(), 0.0f})) {
+         ImGui::TableNextRow();
+
+         ImGui::TableNextColumn();
+         ImGui::Checkbox("Scale U", &_block_editor_config.scale_texture_u);
+
+         ImGui::TableNextColumn();
+         ImGui::Checkbox("Scale V", &_block_editor_config.scale_texture_v);
+
+         ImGui::EndTable();
+      }
    }
 
    ImGui::End();
@@ -95,6 +112,10 @@ void world_edit::ui_show_block_editor() noexcept
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Block Editing", "Rotate Texture")));
 
+      ImGui::Text("Scale Texture");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Block Editing", "Scale Texture")));
+
       ImGui::End();
    }
 
@@ -109,6 +130,10 @@ void world_edit::ui_show_block_editor() noexcept
    case block_edit_tool::rotate_texture: {
       _block_editor_context.tool_click = false;
       _block_editor_context.tool = block_edit_tool::rotate_texture;
+   } break;
+   case block_edit_tool::scale_texture: {
+      _block_editor_context.tool_click = false;
+      _block_editor_context.tool = block_edit_tool::scale_texture;
    } break;
    }
 
@@ -372,10 +397,56 @@ void world_edit::ui_show_block_editor() noexcept
                break;
             }
 
-            _edit_stack_world.apply(edits::make_set_block_box_surface(hit->index,
-                                                                      hit->surface_index,
-                                                                      new_rotation),
-                                    _edit_context, {.closed = true});
+            _edit_stack_world
+               .apply(edits::make_set_block_surface(
+                         &_world.blocks.boxes.description[hit->index]
+                             .surface_texture_rotation[hit->surface_index],
+                         new_rotation, hit->index, &_world.blocks.boxes.dirty),
+                      _edit_context, {.closed = true});
+         }
+
+         world::highlight_surface(_world.blocks.boxes.description[hit->index],
+                                  hit->surface_index, _tool_visualizers);
+      }
+   }
+   else if (_block_editor_context.tool == block_edit_tool::scale_texture) {
+      const bool click = std::exchange(_block_editor_context.tool_click, false);
+      const bool shrink = (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
+                           ImGui::IsKeyDown(ImGuiKey_RightCtrl)) and
+                          not ImGui::GetIO().WantCaptureKeyboard;
+
+      const graphics::camera_ray rayWS =
+         make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                         {ImGui::GetMainViewport()->Size.x,
+                          ImGui::GetMainViewport()->Size.y});
+
+      if (std::optional<world::raycast_block_result> hit =
+             world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
+          hit) {
+         if (click) {
+            std::array<int8, 2> new_scale =
+               _world.blocks.boxes.description[hit->index].surface_texture_scale[hit->surface_index];
+
+            if (shrink) {
+               if (_block_editor_config.scale_texture_u) new_scale[0] += 1;
+               if (_block_editor_config.scale_texture_v) new_scale[1] += 1;
+            }
+            else {
+               if (_block_editor_config.scale_texture_u) new_scale[0] -= 1;
+               if (_block_editor_config.scale_texture_v) new_scale[1] -= 1;
+            }
+
+            new_scale[0] = std::clamp(new_scale[0], world::block_min_texture_scale,
+                                      world::block_max_texture_scale);
+            new_scale[1] = std::clamp(new_scale[1], world::block_min_texture_scale,
+                                      world::block_max_texture_scale);
+
+            _edit_stack_world
+               .apply(edits::make_set_block_surface(
+                         &_world.blocks.boxes.description[hit->index]
+                             .surface_texture_scale[hit->surface_index],
+                         new_scale, hit->index, &_world.blocks.boxes.dirty),
+                      _edit_context, {.closed = true});
          }
 
          world::highlight_surface(_world.blocks.boxes.description[hit->index],

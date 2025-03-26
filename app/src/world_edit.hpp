@@ -183,7 +183,12 @@ enum class animation_key_type : uint8 { position, rotation };
 
 enum class animation_playback_state : uint8 { stopped, paused, play };
 
-enum class block_edit_tool : uint8 { none, draw, rotate_texture };
+enum class block_edit_tool : uint8 {
+   none,
+   draw,
+   rotate_texture,
+   scale_texture
+};
 
 enum class draw_block_step : uint8 {
    start,
@@ -947,6 +952,9 @@ private:
    struct block_editor_config {
       int xz_alignment_exponent = 0;
       int y_alignment_exponent = 0;
+
+      bool scale_texture_u = true;
+      bool scale_texture_v = true;
    } _block_editor_config;
 
    struct block_editor_context {
