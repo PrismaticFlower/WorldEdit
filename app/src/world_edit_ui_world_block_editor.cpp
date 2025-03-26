@@ -139,9 +139,8 @@ void world_edit::ui_show_block_editor() noexcept
 
    if (_block_editor_context.tool == block_edit_tool::draw) {
       const bool click = std::exchange(_block_editor_context.tool_click, false);
-      const bool align = (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
-                          ImGui::IsKeyDown(ImGuiKey_RightCtrl)) and
-                         not ImGui::GetIO().WantCaptureKeyboard;
+      const bool align = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
+                         ImGui::IsKeyDown(ImGuiKey_RightCtrl);
       float3 cursor_positionWS = _cursor_positionWS;
 
       if (_block_editor_context.draw_block.step != draw_block_step::start) {
@@ -411,9 +410,8 @@ void world_edit::ui_show_block_editor() noexcept
    }
    else if (_block_editor_context.tool == block_edit_tool::scale_texture) {
       const bool click = std::exchange(_block_editor_context.tool_click, false);
-      const bool shrink = (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
-                           ImGui::IsKeyDown(ImGuiKey_RightCtrl)) and
-                          not ImGui::GetIO().WantCaptureKeyboard;
+      const bool shrink = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
+                          ImGui::IsKeyDown(ImGuiKey_RightCtrl);
 
       const graphics::camera_ray rayWS =
          make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},

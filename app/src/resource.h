@@ -6,6 +6,8 @@
 
 #define RES_ID_ROBOTO_REGULAR 101
 #define RES_ID_CURSOR_ROTATE_CW 102
+#define RES_ID_CURSOR_ENLARGE_TEXTURE 103
+#define RES_ID_CURSOR_SHRINK_TEXTURE 104
 
 // Next default values for new objects
 //
