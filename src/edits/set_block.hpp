@@ -11,8 +11,15 @@ auto make_set_block_box_metrics(const uint32 index, const quaternion& rotation,
                                 const float3& position, const float3& size) noexcept
    -> std::unique_ptr<edit<world::edit_context>>;
 
-auto make_set_block_box_surface(const uint32 index, const uint32 surface_index,
-                                const world::block_texture_rotation rotation) noexcept
+auto make_set_block_surface(world::block_texture_rotation* rotation_address,
+                            world::block_texture_rotation new_rotation,
+                            const uint32 index,
+                            world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>;
+
+auto make_set_block_surface(std::array<int8, 2>* scale_address,
+                            std::array<int8, 2> new_scale, const uint32 index,
+                            world::blocks_dirty_range_tracker* dirt_tracker) noexcept
    -> std::unique_ptr<edit<world::edit_context>>;
 
 }

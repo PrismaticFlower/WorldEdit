@@ -241,6 +241,9 @@ bool edit_context::is_memory_valid(const void* ptr, std::size_t size) const noex
       address_range::container(world.animations),
       address_range::container(world.animation_groups),
       address_range::container(world.animation_hierarchies),
+
+      address_range::container(world.blocks.boxes.hidden),
+      address_range::container(world.blocks.boxes.description),
    };
 
    std::uintptr_t memory_begin = reinterpret_cast<std::uintptr_t>(ptr);

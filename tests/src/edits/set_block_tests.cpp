@@ -146,7 +146,7 @@ TEST_CASE("edits set_block_box_metrics no coalesce", "[Edits]")
    REQUIRE(not edit->is_coalescable(*other_edit));
 }
 
-TEST_CASE("edits set_block_box_surface", "[Edits]")
+TEST_CASE("edits set_block_surface", "[Edits]")
 {
    world::world world;
    world::interaction_targets interaction_targets;
@@ -165,7 +165,10 @@ TEST_CASE("edits set_block_box_surface", "[Edits]")
                                        .position = float3{10.0f, 10.0f, 10.0f},
                                        .size = float3{5.0f, 5.0f, 5.0f}});
 
-   auto edit = make_set_block_box_surface(0, 1, world::block_texture_rotation::d180);
+   auto edit =
+      make_set_block_surface(&blocks.boxes.description[0].surface_texture_rotation[1],
+                             world::block_texture_rotation::d180, 0,
+                             &blocks.boxes.dirty);
 
    edit->apply(edit_context);
 
@@ -186,7 +189,7 @@ TEST_CASE("edits set_block_box_surface", "[Edits]")
    CHECK(blocks.boxes.dirty[0] == world::blocks_dirty_range{0, 1});
 }
 
-TEST_CASE("edits set_block_box_surface coalesce", "[Edits]")
+TEST_CASE("edits set_block_surface coalesce", "[Edits]")
 {
    world::world world;
    world::interaction_targets interaction_targets;
@@ -205,9 +208,14 @@ TEST_CASE("edits set_block_box_surface coalesce", "[Edits]")
                                        .position = float3{10.0f, 10.0f, 10.0f},
                                        .size = float3{5.0f, 5.0f, 5.0f}});
 
-   auto edit = make_set_block_box_surface(0, 1, world::block_texture_rotation::d180);
+   auto edit =
+      make_set_block_surface(&blocks.boxes.description[0].surface_texture_rotation[1],
+                             world::block_texture_rotation::d180, 0,
+                             &blocks.boxes.dirty);
    auto other_edit =
-      make_set_block_box_surface(0, 1, world::block_texture_rotation::d90);
+      make_set_block_surface(&blocks.boxes.description[0].surface_texture_rotation[1],
+                             world::block_texture_rotation::d90, 0,
+                             &blocks.boxes.dirty);
 
    REQUIRE(edit->is_coalescable(*other_edit));
 
@@ -238,9 +246,19 @@ TEST_CASE("edits set_block_box_surface no coalesce", "[Edits]")
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   auto edit = make_set_block_box_surface(0, 0, world::block_texture_rotation::d180);
+   world::blocks& blocks = world.blocks;
+
+   blocks.boxes.description.push_back({});
+   blocks.boxes.description.push_back({});
+
+   auto edit =
+      make_set_block_surface(&blocks.boxes.description[0].surface_texture_rotation[1],
+                             world::block_texture_rotation::d180, 0,
+                             &blocks.boxes.dirty);
    auto other_edit =
-      make_set_block_box_surface(0, 1, world::block_texture_rotation::d90);
+      make_set_block_surface(&blocks.boxes.description[1].surface_texture_rotation[1],
+                             world::block_texture_rotation::d90, 1,
+                             &blocks.boxes.dirty);
 
    REQUIRE(not edit->is_coalescable(*other_edit));
 }
