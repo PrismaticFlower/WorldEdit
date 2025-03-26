@@ -19,6 +19,13 @@ struct tool_visualizers_line {
    uint32 v1_color;
 };
 
+struct tool_visualizers_triangle {
+   float3 v0;
+   float3 v1;
+   float3 v2;
+   uint32 color;
+};
+
 struct tool_visualizers_shape {
    float4x4 transform;
    float4 color;
@@ -72,6 +79,9 @@ struct tool_visualizers {
 
    void add_mini_grid(const tool_visualizers_mini_grid& grid);
 
+   void add_triangle_additive(const float3& v0, const float3& v1,
+                              const float3& v2, uint32 color);
+
    void clear() noexcept;
 
    auto lines_overlay() const noexcept -> std::span<const tool_visualizers_line>;
@@ -95,6 +105,9 @@ struct tool_visualizers {
 
    auto mini_grids() const noexcept -> std::span<const tool_visualizers_mini_grid>;
 
+   auto triangles_additive() const noexcept
+      -> std::span<const tool_visualizers_triangle>;
+
 private:
    std::vector<tool_visualizers_line> _lines_overlay;
    std::vector<tool_visualizers_line> _lines;
@@ -105,6 +118,7 @@ private:
    std::vector<tool_visualizers_hub_highlight> _hub_highlights;
    std::vector<tool_visualizers_connection_highlight> _connection_highlights;
    std::vector<tool_visualizers_mini_grid> _mini_grids;
+   std::vector<tool_visualizers_triangle> _triangles_additive;
 };
 
 }

@@ -13,6 +13,7 @@ tool_visualizers::tool_visualizers() noexcept
    _hub_highlights.reserve(8);
    _connection_highlights.reserve(8);
    _mini_grids.reserve(8);
+   _triangles_additive.reserve(64);
 }
 
 void tool_visualizers::add_line_overlay(float3 v0, float3 v1, uint32 color)
@@ -71,6 +72,12 @@ void tool_visualizers::add_mini_grid(const tool_visualizers_mini_grid& grid)
    _mini_grids.push_back(grid);
 }
 
+void tool_visualizers::add_triangle_additive(const float3& v0, const float3& v1,
+                                             const float3& v2, uint32 color)
+{
+   _triangles_additive.emplace_back(v0, v1, v2, color);
+}
+
 void tool_visualizers::clear() noexcept
 {
    _lines_overlay.clear();
@@ -82,6 +89,7 @@ void tool_visualizers::clear() noexcept
    _hub_highlights.clear();
    _connection_highlights.clear();
    _mini_grids.clear();
+   _triangles_additive.clear();
 }
 
 auto tool_visualizers::lines_overlay() const noexcept
@@ -135,6 +143,12 @@ auto tool_visualizers::mini_grids() const noexcept
    -> std::span<const tool_visualizers_mini_grid>
 {
    return _mini_grids;
+}
+
+auto tool_visualizers::triangles_additive() const noexcept
+   -> std::span<const tool_visualizers_triangle>
+{
+   return _triangles_additive;
 }
 
 }

@@ -2486,6 +2486,10 @@ void renderer_impl::draw_world_meta_objects(
                                                  utility::pack_srgb_bgra(arrow.color));
    }
 
+   for (const auto& tri : tool_visualizers.triangles_additive()) {
+      _meta_draw_batcher.add_triangle(tri.v0, tri.v1, tri.v2, tri.color);
+   }
+
    for (const gizmo_draw_pixel_line& line : draw_lists.pixel_lines) {
       _meta_draw_batcher.add_line_solid(line.position_start, line.position_end,
                                         line.color);
