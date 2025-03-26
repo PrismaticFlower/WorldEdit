@@ -243,6 +243,7 @@
     <ClCompile Include="src\world\blocks\find.cpp" />
     <ClCompile Include="src\world\blocks\mesh_geometry.cpp" />
     <ClCompile Include="src\graphics\shaders\block_normalPS.cpp" />
+    <ClCompile Include="src\world\blocks\highlight_surface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -542,6 +543,7 @@
     <ClInclude Include="src\world\blocks\raycast.hpp" />
     <ClInclude Include="src\world\blocks\find.hpp" />
     <ClInclude Include="src\world\blocks\mesh_geometry.hpp" />
+    <ClInclude Include="src\world\blocks\highlight_surface.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

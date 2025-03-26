@@ -380,6 +380,7 @@
     <ClCompile Include="src\utility\string_icompare.cpp" />
     <ClCompile Include="src\world\blocks\dirty_range_tracker.cpp" />
     <ClCompile Include="src\world\blocks\find.cpp" />
+    <ClCompile Include="src\world\blocks\highlight_surface.cpp" />
     <ClCompile Include="src\world\blocks\mesh_geometry.cpp" />
     <ClCompile Include="src\world\blocks\raycast.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
@@ -678,6 +679,7 @@
     <ClInclude Include="src\world\animation.hpp" />
     <ClInclude Include="src\world\barrier.hpp" />
     <ClInclude Include="src\world\blocks\find.hpp" />
+    <ClInclude Include="src\world\blocks\highlight_surface.hpp" />
     <ClInclude Include="src\world\blocks\mesh_geometry.hpp" />
     <ClInclude Include="src\world\blocks\raycast.hpp" />
     <ClInclude Include="src\world\boundary.hpp" />

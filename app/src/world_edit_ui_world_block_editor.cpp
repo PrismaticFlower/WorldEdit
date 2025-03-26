@@ -10,6 +10,7 @@
 
 #include "utility/srgb_conversion.hpp"
 
+#include "world/blocks/highlight_surface.hpp"
 #include "world/blocks/raycast.hpp"
 
 #include <algorithm>
@@ -376,6 +377,9 @@ void world_edit::ui_show_block_editor() noexcept
                                                                       new_rotation),
                                     _edit_context, {.closed = true});
          }
+
+         world::highlight_surface(_world.blocks.boxes.description[hit->index],
+                                  hit->surface_index, _tool_visualizers);
       }
    }
 }
