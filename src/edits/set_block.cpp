@@ -76,7 +76,7 @@ struct set_block_box_surface final : edit<world::edit_context> {
    set_block_box_surface(T* value_address, T new_value, const uint32 index,
                          world::blocks_dirty_range_tracker* dirt_tracker)
       : value_address{value_address},
-        value{new_value},
+        value{std::move(new_value)},
         index{index},
         dirt_tracker{dirt_tracker}
    {
@@ -150,6 +150,42 @@ auto make_set_block_surface(std::array<int8, 2>* scale_address,
    return std::make_unique<set_block_box_surface<std::array<int8, 2>>>(scale_address,
                                                                        new_scale, index,
                                                                        dirt_tracker);
+}
+
+auto make_set_block_material(std::string* texture_address,
+                             std::string new_texture, const uint32 index,
+                             world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_block_box_surface<std::string>>(texture_address,
+                                                               std::move(new_texture),
+                                                               index, dirt_tracker);
+}
+
+auto make_set_block_material(std::array<uint8, 2>* tiling_address,
+                             std::array<uint8, 2> new_tiling, const uint32 index,
+                             world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_block_box_surface<std::array<uint8, 2>>>(tiling_address,
+                                                                        new_tiling, index,
+                                                                        dirt_tracker);
+}
+
+auto make_set_block_material(bool* flag_address, bool new_flag, const uint32 index,
+                             world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_block_box_surface<bool>>(flag_address, new_flag,
+                                                        index, dirt_tracker);
+}
+
+auto make_set_block_material(float3* color_address, float3 new_color, const uint32 index,
+                             world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_block_box_surface<float3>>(color_address, new_color,
+                                                          index, dirt_tracker);
 }
 
 }

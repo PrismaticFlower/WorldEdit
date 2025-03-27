@@ -367,6 +367,13 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _block_editor_context = {};
          }
 
+         if (ImGui::MenuItem("Material Editor",
+                             get_display_string(_hotkeys.query_binding("Global", "Show Blocks Material Editor")),
+                             _block_material_editor_open)) {
+            _block_material_editor_open = not _block_material_editor_open;
+            _block_material_editor_context = {};
+         }
+
          ImGui::Separator();
 
          if (ImGui::MenuItem("New Box")) {

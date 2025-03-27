@@ -344,6 +344,8 @@ private:
 
    void ui_show_block_editor() noexcept;
 
+   void ui_show_block_material_editor() noexcept;
+
    void ui_draw_select_box() noexcept;
 
    bool ui_object_class_pick_widget(world::object* object) noexcept;
@@ -529,6 +531,7 @@ private:
    bool _animation_group_editor_open = false;
    bool _animation_hierarchy_editor_open = false;
    bool _block_editor_open = false;
+   bool _block_material_editor_open = false;
    terrain_edit_tool _terrain_edit_tool = terrain_edit_tool::none;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
@@ -976,6 +979,14 @@ private:
          world::block_box_id box_id = world::max_id;
       } draw_block;
    } _block_editor_context;
+
+   struct block_material_editor_config {
+      std::string filter;
+   } _block_material_editor_config;
+
+   struct block_material_editor_context {
+      uint32 selected_index = UINT32_MAX;
+   } _block_material_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;

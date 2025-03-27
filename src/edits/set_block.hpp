@@ -22,4 +22,21 @@ auto make_set_block_surface(std::array<int8, 2>* scale_address,
                             world::blocks_dirty_range_tracker* dirt_tracker) noexcept
    -> std::unique_ptr<edit<world::edit_context>>;
 
+auto make_set_block_material(std::string* texture_address,
+                             std::string new_texture, const uint32 index,
+                             world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>;
+
+auto make_set_block_material(std::array<uint8, 2>* tiling_address,
+                             std::array<uint8, 2> new_tiling, const uint32 index,
+                             world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>;
+
+auto make_set_block_material(bool* flag_address, bool new_flag, const uint32 index,
+                             world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>;
+
+auto make_set_block_material(float3* color_address, float3 new_color, const uint32 index,
+                             world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>;
 }

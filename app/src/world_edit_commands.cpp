@@ -190,6 +190,10 @@ void world_edit::initialize_commands() noexcept
       _block_editor_open = true;
       _block_editor_context = {};
    });
+   _commands.add("show.block_material_editor"s, [this] {
+      _block_material_editor_open = true;
+      _block_material_editor_context = {};
+   });
 
    _commands.add("show.overlay_grid"s, _draw_overlay_grid);
    _commands.add("show.terrain_grid"s, _draw_terrain_grid);
@@ -829,6 +833,9 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show Blocks Editor",
            "show.block_editor",
            {.key = key::f4, .modifiers = {.shift = true}}},
+          {"Show Blocks Material Editor",
+           "show.block_material_editor",
+           {.key = key::f5, .modifiers = {.shift = true}}},
 
           {"Show Floor Grid",
            "show.overlay_grid",
