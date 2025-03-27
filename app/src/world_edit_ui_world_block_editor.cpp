@@ -40,8 +40,6 @@ void world_edit::ui_show_block_editor() noexcept
                                        {std::numeric_limits<float>::max(),
                                         std::numeric_limits<float>::max()});
 
-   bool selection_open = true;
-
    if (ImGui::Begin("Blocks", &_block_editor_open, ImGuiWindowFlags_NoCollapse)) {
       ImGui::SeparatorText("Block Tools");
 
@@ -96,8 +94,6 @@ void world_edit::ui_show_block_editor() noexcept
    }
 
    ImGui::End();
-
-   if (not selection_open) _interaction_targets.selection.clear();
 
    if (_hotkeys_view_show) {
       ImGui::Begin("Hotkeys");
