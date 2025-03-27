@@ -1,6 +1,7 @@
 #include "world_edit.hpp"
 
 #include "edits/add_block.hpp"
+#include "edits/imgui_ext.hpp"
 #include "edits/set_block.hpp"
 
 #include "math/intersectors.hpp"
@@ -9,6 +10,7 @@
 #include "math/vector_funcs.hpp"
 
 #include "utility/srgb_conversion.hpp"
+#include "utility/string_icompare.hpp"
 
 #include "world/blocks/highlight_surface.hpp"
 #include "world/blocks/raycast.hpp"
@@ -16,7 +18,10 @@
 #include <algorithm>
 #include <numbers>
 
+#include "imgui_ext.hpp"
+
 #include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 namespace we {
 
@@ -89,6 +94,291 @@ void world_edit::ui_show_block_editor() noexcept
 
          ImGui::EndTable();
       }
+
+      ImGui::Separator();
+
+      if (ImGui::Button("Paint Material", {ImGui::CalcItemWidth(), 0.0f})) {
+         _block_editor_context.activate_tool = block_edit_tool::paint_material;
+      }
+
+      const std::string& material_name =
+         _world.blocks.materials[_block_editor_config.paint_material_index].name;
+
+      if (ImGui::BeginCombo("Material",
+                            material_name.empty() ? "<unnamed material>"
+                                                  : material_name.c_str(),
+                            ImGuiComboFlags_HeightLargest |
+                               ImGuiComboFlags_NoArrowButton)) {
+         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+         ImGui::InputTextWithHint("##name", "filter e.g. tiles",
+                                  &_block_editor_config.paint_material_filter);
+
+         const float thumbnail_size = 64.0f * _display_scale;
+         const float visible_thumbnails = 12.0f;
+         const ImVec2 text_offset = {thumbnail_size +
+                                        ImGui::GetStyle().ItemSpacing.x,
+                                     floorf((thumbnail_size - ImGui::GetFontSize()) *
+                                            0.5f)};
+         const float button_width = ImGui::GetContentRegionAvail().x;
+         const float button_height =
+            thumbnail_size + ImGui::GetStyle().ItemInnerSpacing.y;
+
+         ImGui::BeginChild("Classes", {0.0f, (thumbnail_size +
+                                              ImGui::GetStyle().ItemSpacing.y) *
+                                                visible_thumbnails});
+
+         for (uint32 material_index = 0;
+              material_index < _world.blocks.materials.size(); ++material_index) {
+            const world::block_material& material =
+               _world.blocks.materials[material_index];
+
+            if (not _block_editor_config.paint_material_filter.empty() and
+                not string::icontains(material.name,
+                                      _block_editor_config.paint_material_filter)) {
+               continue;
+            }
+
+            if (ImGui::IsRectVisible({button_width, button_height})) {
+               ImGui::PushID(material_index);
+
+               const ImVec2 image_cursor_pos = ImGui::GetCursorScreenPos();
+
+               if (ImGui::Selectable("##pick",
+                                     _block_editor_config.paint_material_index == material_index,
+                                     ImGuiSelectableFlags_None,
+                                     {button_width, button_height})) {
+                  _block_editor_config.paint_material_index =
+                     static_cast<uint8>(material_index);
+
+                  ImGui::CloseCurrentPopup();
+               }
+
+               const ImTextureID texture =
+                  _renderer->request_imgui_texture_id(material.diffuse_map,
+                                                      graphics::fallback_imgui_texture::missing_diffuse);
+
+               ImGui::GetWindowDrawList()->AddImage(
+                  texture,
+                  {image_cursor_pos.x + ImGui::GetStyle().ItemInnerSpacing.x,
+                   image_cursor_pos.y + ImGui::GetStyle().ItemInnerSpacing.y},
+                  {image_cursor_pos.x + thumbnail_size,
+                   image_cursor_pos.y + thumbnail_size});
+
+               const ImVec2 next_line_cursor = ImGui::GetCursorPos();
+
+               if (not material.name.empty()) {
+                  const ImVec2 text_cursor_pos = {image_cursor_pos.x +
+                                                     text_offset.x,
+                                                  image_cursor_pos.y +
+                                                     text_offset.y};
+
+                  ImGui::GetWindowDrawList()->AddText(text_cursor_pos,
+                                                      ImGui::GetColorU32(ImGuiCol_Text),
+                                                      material.name.data(),
+                                                      material.name.data() +
+                                                         material.name.size());
+
+                  ImGui::SetItemTooltip(material.name.c_str());
+               }
+
+               ImGui::PopID();
+            }
+            else {
+               ImGui::Dummy({button_width, thumbnail_size});
+            }
+         }
+
+         ImGui::EndChild();
+
+         ImGui::EndCombo();
+      }
+
+      {
+         const uint32 material_index = _block_editor_config.paint_material_index;
+         world::block_material& material = _world.blocks.materials[material_index];
+
+         const float image_width = 20.0f * _display_scale;
+
+         if (ImGui::BeginTable("##material", 2, ImGuiTableFlags_BordersOuter)) {
+            ImGui::TableSetupColumn("Preview", ImGuiTableColumnFlags_WidthFixed,
+                                    image_width);
+            ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_None);
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+
+            ImGui::Dummy({image_width, image_width});
+
+            ImGui::TableNextColumn();
+
+            ImGui::InputText("Name", &material.name, _edit_stack_world, _edit_context);
+
+            ImGui::TableNextRow();
+
+            ImGui::TableNextColumn();
+
+            ImGui::Image(_renderer->request_imgui_texture_id(material.diffuse_map,
+                                                             graphics::fallback_imgui_texture::missing_diffuse),
+                         {image_width, image_width});
+
+            ImGui::TableNextColumn();
+
+            if (absl::InlinedVector<char, 256> diffuse_map{material.diffuse_map.begin(),
+                                                           material.diffuse_map.end()};
+                ImGui::InputText("Diffuse Map", &diffuse_map)) {
+               _edit_stack_world.apply(
+                  edits::make_set_block_material(&material.diffuse_map,
+                                                 std::string{diffuse_map.begin(),
+                                                             diffuse_map.end()},
+                                                 material_index,
+                                                 &_world.blocks.materials_dirty),
+                  _edit_context);
+            }
+
+            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+
+            ImGui::Image(_renderer->request_imgui_texture_id(material.normal_map,
+                                                             graphics::fallback_imgui_texture::missing_diffuse),
+                         {image_width, image_width});
+
+            ImGui::TableNextColumn();
+
+            if (absl::InlinedVector<char, 256> normal_map{material.normal_map.begin(),
+                                                          material.normal_map.end()};
+                ImGui::InputText("Normal Map", &normal_map)) {
+               _edit_stack_world.apply(
+                  edits::make_set_block_material(&material.normal_map,
+                                                 std::string{normal_map.begin(),
+                                                             normal_map.end()},
+                                                 material_index,
+                                                 &_world.blocks.materials_dirty),
+                  _edit_context);
+            }
+
+            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+
+            ImGui::Image(_renderer->request_imgui_texture_id(material.detail_map,
+                                                             graphics::fallback_imgui_texture::missing_diffuse),
+                         {image_width, image_width});
+
+            ImGui::TableNextColumn();
+
+            if (absl::InlinedVector<char, 256> detail_map{material.detail_map.begin(),
+                                                          material.detail_map.end()};
+                ImGui::InputText("Detail Map", &detail_map)) {
+               _edit_stack_world.apply(
+                  edits::make_set_block_material(&material.detail_map,
+                                                 std::string{detail_map.begin(),
+                                                             detail_map.end()},
+                                                 material_index,
+                                                 &_world.blocks.materials_dirty),
+                  _edit_context);
+            }
+
+            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+
+            ImGui::Dummy({image_width, image_width});
+
+            ImGui::TableNextColumn();
+
+            if (absl::InlinedVector<char, 256> env_map{material.env_map.begin(),
+                                                       material.env_map.end()};
+                ImGui::InputText("Env Map", &env_map)) {
+               _edit_stack_world.apply(edits::make_set_block_material(
+                                          &material.env_map,
+                                          std::string{env_map.begin(), env_map.end()},
+                                          material_index, &_world.blocks.materials_dirty),
+                                       _edit_context);
+            }
+
+            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+
+            ImGui::Dummy({image_width, image_width});
+
+            ImGui::TableNextColumn();
+
+            if (std::array<uint8, 2> detail_tiling = material.detail_tiling;
+                ImGui::DragScalarN("Detail Tiling", ImGuiDataType_U8,
+                                   detail_tiling.data(), 2)) {
+               _edit_stack_world
+                  .apply(edits::make_set_block_material(&material.detail_tiling,
+                                                        detail_tiling, material_index,
+                                                        &_world.blocks.materials_dirty),
+                         _edit_context);
+            }
+
+            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+
+            ImGui::Dummy({image_width, image_width});
+
+            ImGui::TableNextColumn();
+
+            if (bool tile_normal_map = material.tile_normal_map;
+                ImGui::Checkbox("Tile Normal Map", &tile_normal_map)) {
+               _edit_stack_world.apply(
+                  edits::make_set_block_material(&material.tile_normal_map,
+                                                 tile_normal_map, material_index,
+                                                 &_world.blocks.materials_dirty),
+                  _edit_context, {.closed = true});
+            }
+
+            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+
+            ImGui::Dummy({image_width, image_width});
+
+            ImGui::TableNextColumn();
+
+            if (bool specular_lighting = material.specular_lighting;
+                ImGui::Checkbox("Specular Lighting", &specular_lighting)) {
+               _edit_stack_world.apply(
+                  edits::make_set_block_material(&material.specular_lighting,
+                                                 specular_lighting, material_index,
+                                                 &_world.blocks.materials_dirty),
+                  _edit_context, {.closed = true});
+            }
+
+            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+
+            ImGui::Dummy({image_width, image_width});
+
+            ImGui::TableNextColumn();
+
+            if (float3 specular_color = material.specular_color;
+                ImGui::ColorEdit3("Specular Lighting", &specular_color.x)) {
+               _edit_stack_world
+                  .apply(edits::make_set_block_material(&material.specular_color,
+                                                        specular_color, material_index,
+                                                        &_world.blocks.materials_dirty),
+                         _edit_context);
+            }
+
+            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+            ImGui::EndTable();
+         }
+      }
    }
 
    ImGui::End();
@@ -101,6 +391,10 @@ void world_edit::ui_show_block_editor() noexcept
       ImGui::Text("Draw Block");
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Block Editing", "Draw Block")));
+
+      ImGui::Text("Paint Material");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Block Editing", "Paint Material")));
 
       ImGui::Text("Rotate Texture");
       ImGui::BulletText(get_display_string(
@@ -128,6 +422,10 @@ void world_edit::ui_show_block_editor() noexcept
    case block_edit_tool::scale_texture: {
       _block_editor_context.tool_click = false;
       _block_editor_context.tool = block_edit_tool::scale_texture;
+   } break;
+   case block_edit_tool::paint_material: {
+      _block_editor_context.tool_click = false;
+      _block_editor_context.tool = block_edit_tool::paint_material;
    } break;
    }
 
@@ -439,6 +737,31 @@ void world_edit::ui_show_block_editor() noexcept
                              .surface_texture_scale[hit->surface_index],
                          new_scale, hit->index, &_world.blocks.boxes.dirty),
                       _edit_context, {.closed = true});
+         }
+
+         world::highlight_surface(_world.blocks.boxes.description[hit->index],
+                                  hit->surface_index, _tool_visualizers);
+      }
+   }
+   else if (_block_editor_context.tool == block_edit_tool::paint_material) {
+      const bool click = std::exchange(_block_editor_context.tool_click, false);
+
+      const graphics::camera_ray rayWS =
+         make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                         {ImGui::GetMainViewport()->Size.x,
+                          ImGui::GetMainViewport()->Size.y});
+
+      if (std::optional<world::raycast_block_result> hit =
+             world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
+          hit) {
+         if (click) {
+            _edit_stack_world.apply(edits::make_set_block_surface(
+                                       &_world.blocks.boxes
+                                           .description[hit->index]
+                                           .surface_materials[hit->surface_index],
+                                       _block_editor_config.paint_material_index,
+                                       hit->index, &_world.blocks.boxes.dirty),
+                                    _edit_context, {.closed = true});
          }
 
          world::highlight_surface(_world.blocks.boxes.description[hit->index],

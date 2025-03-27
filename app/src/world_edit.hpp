@@ -189,7 +189,8 @@ enum class block_edit_tool : uint8 {
    none,
    draw,
    rotate_texture,
-   scale_texture
+   scale_texture,
+   paint_material
 };
 
 enum class draw_block_step : uint8 {
@@ -960,6 +961,9 @@ private:
 
       bool scale_texture_u = true;
       bool scale_texture_v = true;
+
+      uint8 paint_material_index = 0;
+      std::string paint_material_filter;
    } _block_editor_config;
 
    struct block_editor_context {
