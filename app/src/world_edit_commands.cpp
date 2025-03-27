@@ -695,6 +695,9 @@ void world_edit::initialize_commands() noexcept
    _commands.add("blocks.activate_rotate_texture"s, [this] {
       _block_editor_context.activate_tool = block_edit_tool::rotate_texture;
    });
+   _commands.add("blocks.activate_scale_texture"s, [this] {
+      _block_editor_context.activate_tool = block_edit_tool::scale_texture;
+   });
    _commands.add("blocks.activate_paint_material"s, [this] {
       _block_editor_context.activate_tool = block_edit_tool::paint_material;
    });
@@ -1392,6 +1395,9 @@ void world_edit::initialize_hotkeys() noexcept
             {"Rotate Texture",
              "blocks.activate_rotate_texture",
              {.key = key::r, .modifiers = {.ctrl = true}}},
+            {"Scale Texture",
+             "blocks.activate_scale_texture",
+             {.key = key::e, .modifiers = {.ctrl = true}}},
             {"Paint Material",
              "blocks.activate_paint_material",
              {.key = key::q, .modifiers = {.ctrl = true}}},
