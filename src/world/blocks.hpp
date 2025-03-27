@@ -61,6 +61,8 @@ struct blocks_boxes {
 };
 
 struct block_material {
+   std::string name;
+
    std::string diffuse_map;
    std::string normal_map;
    std::string detail_map;

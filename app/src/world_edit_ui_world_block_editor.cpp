@@ -18,8 +18,6 @@
 
 #include <imgui.h>
 
-using namespace std::literals;
-
 namespace we {
 
 namespace {
