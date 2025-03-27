@@ -72,7 +72,7 @@ struct block_material {
    bool tile_normal_map = false;
    bool specular_lighting = false;
 
-   float3 specular_color;
+   float3 specular_color = {1.0f, 1.0f, 1.0f};
 };
 
 struct blocks {
