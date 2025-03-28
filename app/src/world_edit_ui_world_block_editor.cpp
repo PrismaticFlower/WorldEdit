@@ -571,12 +571,20 @@ void world_edit::ui_show_block_editor() noexcept
 
             const float3 position = (draw_block_start + draw_block_width) / 2.0f;
 
-            _edit_stack_world.apply(
-               edits::make_add_block(world::block_description_box{.rotation = rotation,
-                                                                  .position = position,
-                                                                  .size = size},
-                                     id),
-               _edit_context);
+            const uint8 material_index = _block_editor_config.paint_material_index;
+
+            _edit_stack_world
+               .apply(edits::make_add_block(
+                         world::block_description_box{
+                            .rotation = rotation,
+                            .position = position,
+                            .size = size,
+                            .surface_materials = {material_index, material_index,
+                                                  material_index, material_index,
+                                                  material_index, material_index},
+                         },
+                         id),
+                      _edit_context);
          }
       } break;
       case draw_block_step::box_height: {
