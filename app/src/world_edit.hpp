@@ -52,6 +52,7 @@ enum class mouse_cursor {
    rotate_cw,
    enlarge_texture,
    shrink_texture,
+   paintbrush,
 
    COUNT
 };

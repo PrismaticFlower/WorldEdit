@@ -3797,6 +3797,8 @@ auto world_edit::get_mouse_cursor() const noexcept -> mouse_cursor
                  ImGui::IsKeyDown(ImGuiKey_RightCtrl))
                    ? mouse_cursor::shrink_texture
                    : mouse_cursor::enlarge_texture;
+      case block_edit_tool::paint_material:
+         return mouse_cursor::paintbrush;
       }
    }
 
