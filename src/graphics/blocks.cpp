@@ -285,8 +285,9 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
                                                            : float3{1.0f, 1.0f, 1.0f},
          };
 
-         std::memcpy(upload_ptr + material_index * sizeof(block_material),
-                     &constants, sizeof(block_material));
+         std::memcpy(upload_ptr, &constants, sizeof(block_material));
+
+         upload_ptr += sizeof(block_material);
       }
 
       command_list.copy_buffer_region(_blocks_materials_buffer.get(),
