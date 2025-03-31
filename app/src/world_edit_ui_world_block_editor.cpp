@@ -31,6 +31,22 @@ constexpr std::array<const char*, 13> alignment_names =
    {"0.0625", "0.125", "0.25", "0.5",  "1.0",   "2.0",  "4.0",
     "8.0",    "16.0",  "32.0", "64.0", "128.0", "256.0"};
 
+auto texture_mode_name(world::block_texture_mode mode) noexcept -> const char*
+{
+   // clang-format off
+   switch (mode) {
+   case world::block_texture_mode::tangent_space_xyz: return "Tangent Space XYZ";
+   case world::block_texture_mode::world_space_auto:  return "World Space Auto";
+   case world::block_texture_mode::world_space_zy:    return "World Space ZY";
+   case world::block_texture_mode::world_space_xz:    return "World Space XZ";
+   case world::block_texture_mode::world_space_xy:    return "World Space XY";
+   case world::block_texture_mode::unwrapped:         return "Unwrapped";
+   }
+   // clang-format on
+
+   return "<unknown>";
+}
+
 }
 
 void world_edit::ui_show_block_editor() noexcept
@@ -71,6 +87,33 @@ void world_edit::ui_show_block_editor() noexcept
 
       ImGui::SetItemTooltip(
          "Hold Ctrl when drawing blocks to enable snapping to alignment.");
+
+      ImGui::Separator();
+
+      if (ImGui::Button("Set Texture Mode", {ImGui::CalcItemWidth(), 0.0f})) {
+         _block_editor_context.activate_tool = block_edit_tool::set_texture_mode;
+      }
+
+      if (ImGui::BeginCombo("Texture Mode",
+                            texture_mode_name(_block_editor_config.texture_mode))) {
+         for (world::block_texture_mode mode : {
+                 world::block_texture_mode::tangent_space_xyz,
+                 world::block_texture_mode::world_space_auto,
+
+                 world::block_texture_mode::world_space_zy,
+                 world::block_texture_mode::world_space_xz,
+                 world::block_texture_mode::world_space_xy,
+
+                 world::block_texture_mode::unwrapped,
+              }) {
+            if (ImGui::Selectable(texture_mode_name(mode),
+                                  _block_editor_config.texture_mode == mode)) {
+               _block_editor_config.texture_mode = mode;
+            }
+         }
+
+         ImGui::EndCombo();
+      }
 
       ImGui::Separator();
 
@@ -396,6 +439,10 @@ void world_edit::ui_show_block_editor() noexcept
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Block Editing", "Paint Material")));
 
+      ImGui::Text("Set Texture Mode");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Block Editing", "Set Texture Mode")));
+
       ImGui::Text("Rotate Texture");
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Block Editing", "Rotate Texture")));
@@ -426,6 +473,10 @@ void world_edit::ui_show_block_editor() noexcept
    case block_edit_tool::paint_material: {
       _block_editor_context.tool_click = false;
       _block_editor_context.tool = block_edit_tool::paint_material;
+   } break;
+   case block_edit_tool::set_texture_mode: {
+      _block_editor_context.tool_click = false;
+      _block_editor_context.tool = block_edit_tool::set_texture_mode;
    } break;
    }
 
@@ -768,6 +819,31 @@ void world_edit::ui_show_block_editor() noexcept
                                            .description[hit->index]
                                            .surface_materials[hit->surface_index],
                                        _block_editor_config.paint_material_index,
+                                       hit->index, &_world.blocks.boxes.dirty),
+                                    _edit_context, {.closed = true});
+         }
+
+         world::highlight_surface(_world.blocks.boxes.description[hit->index],
+                                  hit->surface_index, _tool_visualizers);
+      }
+   }
+   else if (_block_editor_context.tool == block_edit_tool::set_texture_mode) {
+      const bool click = std::exchange(_block_editor_context.tool_click, false);
+
+      const graphics::camera_ray rayWS =
+         make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                         {ImGui::GetMainViewport()->Size.x,
+                          ImGui::GetMainViewport()->Size.y});
+
+      if (std::optional<world::raycast_block_result> hit =
+             world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
+          hit) {
+         if (click) {
+            _edit_stack_world.apply(edits::make_set_block_surface(
+                                       &_world.blocks.boxes
+                                           .description[hit->index]
+                                           .surface_texture_mode[hit->surface_index],
+                                       _block_editor_config.texture_mode,
                                        hit->index, &_world.blocks.boxes.dirty),
                                     _edit_context, {.closed = true});
          }

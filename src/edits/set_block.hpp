@@ -16,6 +16,11 @@ auto make_set_block_surface(uint8* material_index_address,
                             world::blocks_dirty_range_tracker* dirt_tracker) noexcept
    -> std::unique_ptr<edit<world::edit_context>>;
 
+auto make_set_block_surface(world::block_texture_mode* mode_address,
+                            world::block_texture_mode new_mode, const uint32 index,
+                            world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 auto make_set_block_surface(world::block_texture_rotation* rotation_address,
                             world::block_texture_rotation new_rotation,
                             const uint32 index,
