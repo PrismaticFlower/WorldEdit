@@ -249,6 +249,7 @@ void world_edit::update()
       }
 
       _world.terrain.untracked_clear_dirty_rects();
+      _world.blocks.boxes.dirty.clear();
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
