@@ -191,7 +191,8 @@ enum class block_edit_tool : uint8 {
    draw,
    rotate_texture,
    scale_texture,
-   paint_material
+   paint_material,
+   set_texture_mode,
 };
 
 enum class draw_block_step : uint8 {
@@ -962,6 +963,8 @@ private:
 
       bool scale_texture_u = true;
       bool scale_texture_v = true;
+
+      world::block_texture_mode texture_mode = {};
 
       uint8 paint_material_index = 0;
       std::string paint_material_filter;

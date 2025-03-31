@@ -701,6 +701,9 @@ void world_edit::initialize_commands() noexcept
    _commands.add("blocks.activate_paint_material"s, [this] {
       _block_editor_context.activate_tool = block_edit_tool::paint_material;
    });
+   _commands.add("blocks.activate_set_texture_mode"s, [this] {
+      _block_editor_context.activate_tool = block_edit_tool::set_texture_mode;
+   });
    _commands.add("blocks.deactivate_tool"s,
                  [this] { _block_editor_context.tool = block_edit_tool::none; });
    _commands.add("blocks.tool_click"s, _block_editor_context.tool_click);
@@ -1401,6 +1404,9 @@ void world_edit::initialize_hotkeys() noexcept
             {"Paint Material",
              "blocks.activate_paint_material",
              {.key = key::q, .modifiers = {.ctrl = true}}},
+            {"Set Texture Mode",
+             "blocks.activate_set_texture_mode",
+             {.key = key::t, .modifiers = {.ctrl = true}}},
          },
    });
 

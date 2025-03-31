@@ -22,6 +22,18 @@ constexpr pinned_vector_init blocks_init{.max_size = max_blocks,
 constexpr int8 block_min_texture_scale = -7;
 constexpr int8 block_max_texture_scale = 8;
 
+enum class block_texture_mode : uint8 {
+   tangent_space_xyz,
+
+   world_space_auto,
+
+   world_space_zy,
+   world_space_xz,
+   world_space_xy,
+
+   unwrapped,
+};
+
 enum class block_texture_rotation : uint8 { d0, d90, d180, d270 };
 
 struct block_description_box {
@@ -29,6 +41,7 @@ struct block_description_box {
    float3 position;
    float3 size;
    std::array<uint8, 6> surface_materials = {};
+   std::array<block_texture_mode, 6> surface_texture_mode = {};
    std::array<block_texture_rotation, 6> surface_texture_rotation = {};
    std::array<std::array<int8, 2>, 6> surface_texture_scale = {};
    std::array<std::array<uint16, 2>, 6> surface_texture_offset = {};

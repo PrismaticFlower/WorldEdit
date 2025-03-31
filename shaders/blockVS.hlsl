@@ -3,10 +3,22 @@
 
 #define MAX_SURFACES 6
 
+enum texture_mode  {
+   texture_mode_tangent_space_xyz,
+
+   texture_mode_world_space_auto,
+
+   texture_mode_world_space_zy,
+   texture_mode_world_space_xz,
+   texture_mode_world_space_xy,
+
+   texture_mode_unwrapped
+};
 enum texture_rotation { texture_rotation_d0, texture_rotation_d90, texture_rotation_d180, texture_rotation_d270 };
 
 struct surface_info {
    uint material_index : 8; 
+   uint texture_mode : 3;
    uint scaleX : 4; 
    uint scaleY : 4;
    uint rotation : 2;
@@ -60,9 +72,39 @@ output_vertex main(input_vertex input)
 
    const float3x3 texture_from_world = {tangentWS, bitangentWS, normalWS};
 
-   float2 texcoords = input.texcoords;
+   float2 texcoords;
    
-   texcoords = mul(texture_from_world, positionWS).xy;
+   switch (surface.texture_mode) {
+   case texture_mode_tangent_space_xyz:
+      texcoords = mul(texture_from_world, positionWS).xy;
+      break;
+   case texture_mode_world_space_auto: {
+      const float3 normal_absWS = abs(normalWS);
+
+      if (normal_absWS.x < normal_absWS.y && normal_absWS.z < normal_absWS.y) {
+         texcoords = positionWS.xz;
+      }
+      else if (normal_absWS.x < normal_absWS.z) {
+         texcoords = positionWS.xy;
+      }
+      else {
+         texcoords = positionWS.zy;
+      }
+   } break;
+   case texture_mode_world_space_zy:
+      texcoords = positionWS.zy;
+      break;
+   case texture_mode_world_space_xz:
+      texcoords = positionWS.xz;
+      break;
+   case texture_mode_world_space_xy:
+      texcoords = positionWS.xy;
+      break;
+   case texture_mode_unwrapped:
+      texcoords = input.texcoords;
+      break;
+   };
+
    texcoords *= exp2(float2((int)surface.scaleX - 7, (int)surface.scaleY - 7));
 
    if (surface.rotation == texture_rotation_d90) {

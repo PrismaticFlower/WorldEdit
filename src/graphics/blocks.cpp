@@ -15,6 +15,7 @@ namespace {
 
 struct surface_info {
    uint32 material_index : 8;
+   uint32 texture_mode : 3;
    uint32 scaleX : 4;
    uint32 scaleY : 4;
    uint32 rotation : 2;
@@ -227,6 +228,7 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
                .material_index = block.surface_materials[i],
+               .texture_mode = static_cast<uint32>(block.surface_texture_mode[i]),
                .scaleX = static_cast<uint32>(block.surface_texture_scale[i][0] + 7),
                .scaleY = static_cast<uint32>(block.surface_texture_scale[i][1] + 7),
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),

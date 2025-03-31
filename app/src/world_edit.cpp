@@ -3800,6 +3800,8 @@ auto world_edit::get_mouse_cursor() const noexcept -> mouse_cursor
                    : mouse_cursor::enlarge_texture;
       case block_edit_tool::paint_material:
          return mouse_cursor::paintbrush;
+      case block_edit_tool::set_texture_mode:
+         return mouse_cursor::cross;
       }
    }
 
