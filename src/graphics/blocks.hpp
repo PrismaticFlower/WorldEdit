@@ -63,7 +63,8 @@ struct blocks {
          std::shared_ptr<const world_texture> texture;
          std::shared_ptr<const world_texture_load_token> load_token;
 
-         void update(const std::string_view new_name, texture_manager& texture_manager);
+         void update(const std::string_view new_name, texture_manager& texture_manager,
+                     const std::shared_ptr<const world_texture>& default_texture);
       };
 
       texture diffuse_map;

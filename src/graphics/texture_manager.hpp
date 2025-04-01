@@ -94,23 +94,27 @@ struct texture_manager {
 
    /// @brief Texture with a color value of 0.75, 0.75, 0.75, 1.0.
    /// @return The texture.
-   auto null_diffuse_map() const noexcept -> std::shared_ptr<const world_texture>;
+   auto null_diffuse_map() const noexcept
+      -> const std::shared_ptr<const world_texture>&;
 
    /// @brief Texture with a color value of 0.5, 0.5, 1.0, 1.0.
    /// @return The texture.
-   auto null_normal_map() const noexcept -> std::shared_ptr<const world_texture>;
+   auto null_normal_map() const noexcept
+      -> const std::shared_ptr<const world_texture>&;
 
    /// @brief Texture with a color value of 0.5, 0.5, 0.5, 1.0.
    /// @return The texture.
-   auto null_detail_map() const noexcept -> std::shared_ptr<const world_texture>;
+   auto null_detail_map() const noexcept
+      -> const std::shared_ptr<const world_texture>&;
 
    /// @brief Cube texture with a color value of 0.0, 0.0, 0.0, 1.0.
    /// @return The texture.
-   auto null_cube_map() const noexcept -> std::shared_ptr<const world_texture>;
+   auto null_cube_map() const noexcept -> const std::shared_ptr<const world_texture>&;
 
    /// @brief Texture with a color value of 1.0, 1.0, 1.0, 1.0.
    /// @return The texture.
-   auto null_color_map() const noexcept -> std::shared_ptr<const world_texture>;
+   auto null_color_map() const noexcept
+      -> const std::shared_ptr<const world_texture>&;
 
    /// @brief Allows processing updated textures through a callback.
    /// @param callback The callback to invoke with a reference to the updated textures. The reference is only safe to use until the callback returns.

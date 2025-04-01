@@ -262,10 +262,14 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
             blocks.materials[material_index];
          material& material = _materials[material_index];
 
-         material.diffuse_map.update(world_material.diffuse_map, texture_manager);
-         material.normal_map.update(world_material.normal_map, texture_manager);
-         material.detail_map.update(world_material.detail_map, texture_manager);
-         material.env_map.update(world_material.env_map, texture_manager);
+         material.diffuse_map.update(world_material.diffuse_map, texture_manager,
+                                     texture_manager.null_diffuse_map());
+         material.normal_map.update(world_material.normal_map, texture_manager,
+                                    texture_manager.null_normal_map());
+         material.detail_map.update(world_material.detail_map, texture_manager,
+                                    texture_manager.null_detail_map());
+         material.env_map.update(world_material.env_map, texture_manager,
+                                 texture_manager.null_cube_map());
 
          material.detail_tiling = world_material.detail_tiling;
          material.tile_normal_map = world_material.tile_normal_map;
@@ -505,8 +509,10 @@ void blocks::process_updated_textures_copy(dynamic_buffer_allocator& allocator,
       }
    }
 }
+
 void blocks::material::texture::update(const std::string_view new_name,
-                                       texture_manager& texture_manager)
+                                       texture_manager& texture_manager,
+                                       const std::shared_ptr<const world_texture>& default_texture)
 {
    if (string::iequals(name, new_name)) return;
 
@@ -515,7 +521,7 @@ void blocks::material::texture::update(const std::string_view new_name,
    load_token = nullptr;
 
    if (not texture) {
-      texture = texture_manager.null_diffuse_map();
+      texture = default_texture;
       load_token = texture_manager.acquire_load_token(name);
    }
 }
