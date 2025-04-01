@@ -12,6 +12,7 @@
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 
+#include "world/blocks/find.hpp"
 #include "world/blocks/highlight_surface.hpp"
 #include "world/blocks/raycast.hpp"
 
@@ -136,6 +137,10 @@ void world_edit::ui_show_block_editor() noexcept
          ImGui::Checkbox("Scale V", &_block_editor_config.scale_texture_v);
 
          ImGui::EndTable();
+      }
+
+      if (ImGui::Button("Offset Texture", {ImGui::CalcItemWidth(), 0.0f})) {
+         _block_editor_context.activate_tool = block_edit_tool::offset_texture;
       }
 
       ImGui::Separator();
@@ -477,6 +482,11 @@ void world_edit::ui_show_block_editor() noexcept
    case block_edit_tool::set_texture_mode: {
       _block_editor_context.tool_click = false;
       _block_editor_context.tool = block_edit_tool::set_texture_mode;
+   } break;
+   case block_edit_tool::offset_texture: {
+      _block_editor_context.tool_click = false;
+      _block_editor_context.tool = block_edit_tool::offset_texture;
+      _block_editor_context.offset_texture = {};
    } break;
    }
 
@@ -850,6 +860,81 @@ void world_edit::ui_show_block_editor() noexcept
 
          world::highlight_surface(_world.blocks.boxes.description[hit->index],
                                   hit->surface_index, _tool_visualizers);
+      }
+   }
+   else if (_block_editor_context.tool == block_edit_tool::offset_texture) {
+      const bool click = std::exchange(_block_editor_context.tool_click, false);
+
+      if (not ImGui::GetIO().WantCaptureMouse) {
+         const graphics::camera_ray rayWS =
+            make_camera_ray(_camera,
+                            {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                            {ImGui::GetMainViewport()->Size.x,
+                             ImGui::GetMainViewport()->Size.y});
+
+         if (std::optional<world::raycast_block_result> hit =
+                world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
+             hit) {
+            if (click) {
+               _block_editor_context.offset_texture.box_id =
+                  _world.blocks.boxes.ids[hit->index];
+               _block_editor_context.offset_texture.surface_index = hit->surface_index;
+            }
+
+            world::highlight_surface(_world.blocks.boxes.description[hit->index],
+                                     hit->surface_index, _tool_visualizers);
+         }
+         else if (click) {
+            _block_editor_context.offset_texture.box_id = world::max_id;
+            _block_editor_context.offset_texture.surface_index = 0;
+         }
+      }
+
+      if (std::optional<uint32> selected_index =
+             world::find_block(_world.blocks.boxes,
+                               _block_editor_context.offset_texture.box_id);
+          selected_index) {
+         ImGui::SetNextWindowPos(ImGui::GetMousePos(), ImGuiCond_Appearing);
+
+         if (ImGui::Begin("Blocks Texture Offset", nullptr,
+                          ImGuiWindowFlags_NoDecoration |
+                             ImGuiWindowFlags_AlwaysAutoResize)) {
+            const std::array<std::uint16_t, 2>& offset =
+               _world.blocks.boxes.description[*selected_index]
+                  .surface_texture_offset[_block_editor_context.offset_texture.surface_index];
+
+            float u = offset[0] / 8192.0f;
+            float v = offset[1] / 8192.0f;
+
+            ImGui::BeginGroup();
+
+            ImGui::DragFloat("U Normalized Offset", &u, 1.0f / 128.0f, 0.0f,
+                             1.0f, nullptr,
+                             ImGuiSliderFlags_AlwaysClamp |
+                                ImGuiSliderFlags_NoRoundToFormat);
+
+            ImGui::DragFloat("V Normalized Offset", &v, 1.0f / 128.0f, 0.0f,
+                             1.0f, nullptr,
+                             ImGuiSliderFlags_AlwaysClamp |
+                                ImGuiSliderFlags_NoRoundToFormat);
+
+            ImGui::EndGroup();
+
+            if (ImGui::IsItemEdited()) {
+               _edit_stack_world
+                  .apply(edits::make_set_block_surface(
+                            &_world.blocks.boxes.description[*selected_index].surface_texture_offset
+                                [_block_editor_context.offset_texture.surface_index],
+                            std::array{static_cast<uint16>(u * 8192.0f),
+                                       static_cast<uint16>(v * 8192.0f)},
+                            *selected_index, &_world.blocks.boxes.dirty),
+                         _edit_context);
+            }
+
+            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+         }
+
+         ImGui::End();
       }
    }
 }
