@@ -49,7 +49,7 @@ using updated_textures_map =
    absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>>;
 
 struct null_texture_desc {
-   std::shared_ptr<world_texture>& output;
+   std::shared_ptr<const world_texture>& output;
    uint32 color;
    DXGI_FORMAT format;
    world_texture_dimension dimension = world_texture_dimension::_2d;
@@ -222,27 +222,28 @@ struct texture_manager::impl {
       return token;
    }
 
-   auto null_diffuse_map() const noexcept -> std::shared_ptr<const world_texture>
+   auto null_diffuse_map() const noexcept
+      -> const std::shared_ptr<const world_texture>&
    {
       return _null_diffuse_map;
    }
 
-   auto null_normal_map() const noexcept -> std::shared_ptr<const world_texture>
+   auto null_normal_map() const noexcept -> const std::shared_ptr<const world_texture>&
    {
       return _null_normal_map;
    }
 
-   auto null_detail_map() const noexcept -> std::shared_ptr<const world_texture>
+   auto null_detail_map() const noexcept -> const std::shared_ptr<const world_texture>&
    {
       return _null_detail_map;
    }
 
-   auto null_cube_map() const noexcept -> std::shared_ptr<const world_texture>
+   auto null_cube_map() const noexcept -> const std::shared_ptr<const world_texture>&
    {
       return _null_cube_map;
    }
 
-   auto null_color_map() const noexcept -> std::shared_ptr<const world_texture>
+   auto null_color_map() const noexcept -> const std::shared_ptr<const world_texture>&
    {
       return _null_color_map;
    }
@@ -505,11 +506,11 @@ private:
 
    std::shared_ptr<async::thread_pool> _thread_pool;
 
-   std::shared_ptr<world_texture> _null_diffuse_map;
-   std::shared_ptr<world_texture> _null_normal_map;
-   std::shared_ptr<world_texture> _null_detail_map;
-   std::shared_ptr<world_texture> _null_cube_map;
-   std::shared_ptr<world_texture> _null_color_map;
+   std::shared_ptr<const world_texture> _null_diffuse_map;
+   std::shared_ptr<const world_texture> _null_normal_map;
+   std::shared_ptr<const world_texture> _null_detail_map;
+   std::shared_ptr<const world_texture> _null_cube_map;
+   std::shared_ptr<const world_texture> _null_color_map;
 
    output_stream& _error_output;
 
@@ -607,31 +608,31 @@ auto texture_manager::acquire_load_token(const lowercase_string& name) noexcept
 }
 
 auto texture_manager::null_diffuse_map() const noexcept
-   -> std::shared_ptr<const world_texture>
+   -> const std::shared_ptr<const world_texture>&
 {
    return _impl->null_diffuse_map();
 }
 
 auto texture_manager::null_normal_map() const noexcept
-   -> std::shared_ptr<const world_texture>
+   -> const std::shared_ptr<const world_texture>&
 {
    return _impl->null_normal_map();
 }
 
 auto texture_manager::null_detail_map() const noexcept
-   -> std::shared_ptr<const world_texture>
+   -> const std::shared_ptr<const world_texture>&
 {
    return _impl->null_detail_map();
 }
 
 auto texture_manager::null_cube_map() const noexcept
-   -> std::shared_ptr<const world_texture>
+   -> const std::shared_ptr<const world_texture>&
 {
    return _impl->null_cube_map();
 }
 
 auto texture_manager::null_color_map() const noexcept
-   -> std::shared_ptr<const world_texture>
+   -> const std::shared_ptr<const world_texture>&
 {
    return _impl->null_color_map();
 }
