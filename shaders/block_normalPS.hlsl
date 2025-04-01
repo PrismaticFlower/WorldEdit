@@ -27,23 +27,6 @@ float4 main(input_vertex input) : SV_TARGET
 
    block_material material = block_materials[input.material_index];
 
-   float4 normal_map_sample = float4(0.5, 0.5, 1.0, 1.0);
-
-   if (material.flags & block_material_has_normal_map) {
-      Texture2D normal_map = Texture2DHeap[NonUniformResourceIndex(material.normal_map_index)];
-
-      if (material.flags & block_material_tile_normal_map) {
-         normal_map_sample =
-            normal_map.Sample(sampler_anisotropic_wrap, texcoords * material.detail_scale);
-      }
-      else {
-         normal_map_sample = normal_map.Sample(sampler_anisotropic_wrap, texcoords);
-      }
-   }
-
-   const float3 normalTS = normal_map_sample.xyz * 2.0 - 1.0;
-   const float3 normalWS = transform_normalWS(input, normalTS);
-
    Texture2D diffuse_map = Texture2DHeap[NonUniformResourceIndex(material.diffuse_map_index)];
 
    float4 diffuse_color = diffuse_map.Sample(sampler_anisotropic_wrap, texcoords);
@@ -54,16 +37,31 @@ float4 main(input_vertex input) : SV_TARGET
       diffuse_color.rgb *=
          (detail_map.Sample(sampler_anisotropic_wrap, texcoords * material.detail_scale).rgb * 2.0);
    }
-
-
-   float specular_visibility = 1.0;
+   
+   float specular_visibility = diffuse_color.a;
+   float3 normalWS;
 
    if (material.flags & block_material_has_normal_map) {
-      specular_visibility = diffuse_color.a;
-   }
-   else {
+      Texture2D normal_map = Texture2DHeap[NonUniformResourceIndex(material.normal_map_index)];
+
+      float4 normal_map_sample;
+
+      if (material.flags & block_material_tile_normal_map) {
+         normal_map_sample =
+            normal_map.Sample(sampler_anisotropic_wrap, texcoords * material.detail_scale);
+      }
+      else {
+         normal_map_sample = normal_map.Sample(sampler_anisotropic_wrap, texcoords);
+      }
+
+      const float3 normalTS = normal_map_sample.xyz * 2.0 - 1.0;
+      normalWS = transform_normalWS(input, normalTS);
       specular_visibility = normal_map_sample.a;
    }
+   else {
+      normalWS = input.normalWS;
+   }
+
 
    calculate_light_inputs lighting_inputs;
 
