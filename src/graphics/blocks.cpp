@@ -222,7 +222,7 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
 
          description.world_from_object = rotation * scale;
          description.adjugate_world_from_object =
-            float3x3(description.world_from_object);
+            adjugate(description.world_from_object);
          description.world_from_object[3] = {block.position, 1.0f};
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
