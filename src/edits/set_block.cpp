@@ -171,6 +171,17 @@ auto make_set_block_surface(std::array<int8, 2>* scale_address,
                                                                        dirt_tracker);
 }
 
+auto make_set_block_surface(std::array<std::uint16_t, 2>* offset_address,
+                            std::array<std::uint16_t, 2> new_offset, const uint32 index,
+                            world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_block_box_surface<std::array<uint16_t, 2>>>(offset_address,
+                                                                           new_offset,
+                                                                           index,
+                                                                           dirt_tracker);
+}
+
 auto make_set_block_material(std::string* texture_address,
                              std::string new_texture, const uint32 index,
                              world::blocks_dirty_range_tracker* dirt_tracker) noexcept

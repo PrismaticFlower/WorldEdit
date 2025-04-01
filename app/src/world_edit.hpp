@@ -193,6 +193,7 @@ enum class block_edit_tool : uint8 {
    scale_texture,
    paint_material,
    set_texture_mode,
+   offset_texture,
 };
 
 enum class draw_block_step : uint8 {
@@ -986,6 +987,11 @@ private:
          uint32 index = 0;
          world::block_box_id box_id = world::max_id;
       } draw_block;
+
+      struct offset_texture {
+         world::block_box_id box_id = world::max_id;
+         uint32 surface_index = 0;
+      } offset_texture;
    } _block_editor_context;
 
    struct block_material_editor_config {
