@@ -704,6 +704,9 @@ void world_edit::initialize_commands() noexcept
    _commands.add("blocks.activate_set_texture_mode"s, [this] {
       _block_editor_context.activate_tool = block_edit_tool::set_texture_mode;
    });
+   _commands.add("blocks.activate_offset_texture"s, [this] {
+      _block_editor_context.activate_tool = block_edit_tool::offset_texture;
+   });
    _commands.add("blocks.deactivate_tool"s,
                  [this] { _block_editor_context.tool = block_edit_tool::none; });
    _commands.add("blocks.tool_click"s, _block_editor_context.tool_click);
@@ -1407,6 +1410,9 @@ void world_edit::initialize_hotkeys() noexcept
             {"Set Texture Mode",
              "blocks.activate_set_texture_mode",
              {.key = key::t, .modifiers = {.ctrl = true}}},
+            {"Offset Texture",
+             "blocks.activate_offset_texture",
+             {.key = key::o, .modifiers = {.ctrl = true}}},
          },
    });
 

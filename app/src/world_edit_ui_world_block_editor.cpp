@@ -456,6 +456,10 @@ void world_edit::ui_show_block_editor() noexcept
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Block Editing", "Scale Texture")));
 
+      ImGui::Text("Offset Texture");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Block Editing", "Offset Texture")));
+
       ImGui::End();
    }
 
