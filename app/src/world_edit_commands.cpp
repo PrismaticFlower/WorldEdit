@@ -1429,6 +1429,9 @@ void world_edit::initialize_hotkeys() noexcept
                            {"Click (Aligned)",
                             "blocks.tool_click",
                             {.key = key::mouse1, .modifiers = {.ctrl = true}}},
+                           {"Click (Snapped)",
+                            "blocks.tool_click",
+                            {.key = key::mouse1, .modifiers = {.shift = true}}},
                            {"Cancel", "blocks.deactivate_tool", {.key = key::escape}},
                         },
 

@@ -383,6 +383,7 @@
     <ClCompile Include="src\world\blocks\highlight_surface.cpp" />
     <ClCompile Include="src\world\blocks\mesh_geometry.cpp" />
     <ClCompile Include="src\world\blocks\raycast.cpp" />
+    <ClCompile Include="src\world\blocks\snapping.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
     <ClCompile Include="src\world\io\load.cpp" />
     <ClCompile Include="src\world\io\load_effects.cpp" />
@@ -682,6 +683,7 @@
     <ClInclude Include="src\world\blocks\highlight_surface.hpp" />
     <ClInclude Include="src\world\blocks\mesh_geometry.hpp" />
     <ClInclude Include="src\world\blocks\raycast.hpp" />
+    <ClInclude Include="src\world\blocks\snapping.hpp" />
     <ClInclude Include="src\world\boundary.hpp" />
     <ClInclude Include="src\world\effects.hpp" />
     <ClInclude Include="src\world\entity_group.hpp" />
