@@ -91,6 +91,10 @@ void world_edit::ui_show_block_editor() noexcept
 
       ImGui::Separator();
 
+      if (ImGui::Button("Resize Block", {ImGui::CalcItemWidth(), 0.0f})) {
+         _block_editor_context.activate_tool = block_edit_tool::resize_block;
+      }
+
       if (ImGui::Button("Set Texture Mode", {ImGui::CalcItemWidth(), 0.0f})) {
          _block_editor_context.activate_tool = block_edit_tool::set_texture_mode;
       }
@@ -440,6 +444,10 @@ void world_edit::ui_show_block_editor() noexcept
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Block Editing", "Draw Block")));
 
+      ImGui::Text("Resize Block");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Block Editing", "Resize Block")));
+
       ImGui::Text("Paint Material");
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Block Editing", "Paint Material")));
@@ -491,6 +499,11 @@ void world_edit::ui_show_block_editor() noexcept
       _block_editor_context.tool_click = false;
       _block_editor_context.tool = block_edit_tool::offset_texture;
       _block_editor_context.offset_texture = {};
+   } break;
+   case block_edit_tool::resize_block: {
+      _block_editor_context.tool_click = false;
+      _block_editor_context.tool = block_edit_tool::resize_block;
+      _block_editor_context.resize_block = {};
    } break;
    }
 
@@ -939,6 +952,50 @@ void world_edit::ui_show_block_editor() noexcept
          }
 
          ImGui::End();
+      }
+   }
+   else if (_block_editor_context.tool == block_edit_tool::resize_block) {
+      const bool click = std::exchange(_block_editor_context.tool_click, false);
+
+      const graphics::camera_ray rayWS =
+         make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                         {ImGui::GetMainViewport()->Size.x,
+                          ImGui::GetMainViewport()->Size.y});
+
+      if (std::optional<world::raycast_block_result> hit =
+             world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
+          hit) {
+         if (click) {
+            _block_editor_context.resize_block.box_id =
+               _world.blocks.boxes.ids[hit->index];
+         }
+      }
+      else if (click) {
+         _block_editor_context.resize_block.box_id = world::max_id;
+      }
+
+      if (std::optional<uint32> selected_index =
+             world::find_block(_world.blocks.boxes,
+                               _block_editor_context.resize_block.box_id);
+          selected_index) {
+         const world::block_description_box& box =
+            _world.blocks.boxes.description[*selected_index];
+
+         float3 size = box.size;
+         float3 positionWS = box.position;
+
+         if (_gizmos.gizmo_size({.name = "Resize Block",
+                                 .instance = *selected_index,
+                                 .alignment = _editor_grid_size,
+                                 .gizmo_rotation = box.rotation},
+                                positionWS, size)) {
+            _edit_stack_world.apply(edits::make_set_block_box_metrics(*selected_index,
+                                                                      box.rotation,
+                                                                      positionWS, size),
+                                    _edit_context);
+         }
+
+         if (_gizmos.can_close_last_edit()) _edit_stack_world.close_last();
       }
    }
 }
