@@ -15,6 +15,7 @@
 #include "world/blocks/find.hpp"
 #include "world/blocks/highlight_surface.hpp"
 #include "world/blocks/raycast.hpp"
+#include "world/blocks/snapping.hpp"
 
 #include <algorithm>
 #include <numbers>
@@ -86,8 +87,9 @@ void world_edit::ui_show_block_editor() noexcept
 
       ImGui::EndGroup();
 
-      ImGui::SetItemTooltip(
-         "Hold Ctrl when drawing blocks to enable snapping to alignment.");
+      ImGui::SetItemTooltip("Hold Ctrl when drawing blocks to enable snapping "
+                            "to alignment. Hold Shift to enable snapping to "
+                            "block points within half of XZ alignment.");
 
       ImGui::Separator();
 
@@ -511,6 +513,7 @@ void world_edit::ui_show_block_editor() noexcept
       const bool click = std::exchange(_block_editor_context.tool_click, false);
       const bool align = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
                          ImGui::IsKeyDown(ImGuiKey_RightCtrl);
+      const bool snap = ImGui::IsKeyDown(ImGuiMod_Shift);
       float3 cursor_positionWS = _cursor_positionWS;
 
       if (_block_editor_context.draw_block.step != draw_block_step::start) {
@@ -536,14 +539,27 @@ void world_edit::ui_show_block_editor() noexcept
          {std::exp2f(static_cast<float>(_block_editor_config.xz_alignment_exponent)),
           std::exp2f(static_cast<float>(_block_editor_config.y_alignment_exponent)),
           std::exp2f(static_cast<float>(_block_editor_config.xz_alignment_exponent))};
-      const float3 aligned_cursorWS =
-         align ? round(cursor_positionWS / alignment) * alignment : cursor_positionWS;
+
+      if (align) {
+         cursor_positionWS = round(cursor_positionWS / alignment) * alignment;
+      }
+
+      if (snap) {
+         cursor_positionWS =
+            world::get_snapped_position(cursor_positionWS, _world.blocks,
+                                        alignment.x * 0.5f, _tool_visualizers,
+                                        {
+                                           .snapped = _settings.graphics.snapping_snapped_color,
+                                           .corner = _settings.graphics.snapping_corner_color,
+                                           .edge = _settings.graphics.snapping_edge_color,
+                                        });
+      }
 
       const uint32 line_color =
          utility::pack_srgb_bgra({_settings.graphics.creation_color, 1.0f});
 
       const world::tool_visualizers_mini_grid xz_grid_desc = {
-         .positionWS = aligned_cursorWS,
+         .positionWS = cursor_positionWS,
          .size = alignment.x,
          .divisions = 3.0f,
          .color = float3{1.0f, 1.0f, 1.0f},
@@ -552,15 +568,19 @@ void world_edit::ui_show_block_editor() noexcept
       switch (_block_editor_context.draw_block.step) {
       case draw_block_step::start: {
          if (align) {
-            _tool_visualizers.add_line(aligned_cursorWS - float3{alignment.x, 0.0f, 0.0f},
-                                       aligned_cursorWS + float3{alignment.x, 0.0f, 0.0f},
+            _tool_visualizers.add_line(cursor_positionWS -
+                                          float3{alignment.x, 0.0f, 0.0f},
+                                       cursor_positionWS +
+                                          float3{alignment.x, 0.0f, 0.0f},
                                        line_color);
-            _tool_visualizers.add_line(aligned_cursorWS - float3{0.0f, alignment.y, 0.0f},
-                                       aligned_cursorWS + float3{0.0f, alignment.y, 0.0f},
+            _tool_visualizers.add_line(cursor_positionWS -
+                                          float3{0.0f, alignment.y, 0.0f},
+                                       cursor_positionWS +
+                                          float3{0.0f, alignment.y, 0.0f},
                                        line_color);
-            _tool_visualizers.add_line(aligned_cursorWS -
+            _tool_visualizers.add_line(cursor_positionWS -
                                           float3{0.0f, 0.0f, alignment.z},
-                                       aligned_cursorWS +
+                                       cursor_positionWS +
                                           float3{0.0f, 0.0f, alignment.z},
                                        line_color);
          }
@@ -568,18 +588,18 @@ void world_edit::ui_show_block_editor() noexcept
          _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
-            _block_editor_context.draw_block.height = aligned_cursorWS.y;
-            _block_editor_context.draw_block.start = aligned_cursorWS;
+            _block_editor_context.draw_block.height = cursor_positionWS.y;
+            _block_editor_context.draw_block.start = cursor_positionWS;
             _block_editor_context.draw_block.step = draw_block_step::box_depth;
          }
       } break;
       case draw_block_step::box_depth: {
          _tool_visualizers.add_line_overlay(_block_editor_context.draw_block.start,
-                                            aligned_cursorWS, line_color);
+                                            cursor_positionWS, line_color);
          _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
-            _block_editor_context.draw_block.depth = aligned_cursorWS;
+            _block_editor_context.draw_block.depth = cursor_positionWS;
             _block_editor_context.draw_block.step = draw_block_step::box_width;
          }
 
@@ -589,7 +609,7 @@ void world_edit::ui_show_block_editor() noexcept
          const float3 draw_block_depth = _block_editor_context.draw_block.depth;
 
          const float3 cursor_direction =
-            normalize(aligned_cursorWS - draw_block_depth);
+            normalize(cursor_positionWS - draw_block_depth);
 
          const float3 extend_normal =
             normalize(float3{draw_block_depth.z, 0.0f, draw_block_depth.x} -
@@ -612,7 +632,7 @@ void world_edit::ui_show_block_editor() noexcept
 
          const float cursor_distance =
             std::fabs((inv_rotation * draw_block_depth).x -
-                      (inv_rotation * aligned_cursorWS).x);
+                      (inv_rotation * cursor_positionWS).x);
 
          const float3 draw_block_width =
             draw_block_depth + extend_normal * cursor_distance * normal_sign;
@@ -696,7 +716,7 @@ void world_edit::ui_show_block_editor() noexcept
                             {ImGui::GetMainViewport()->Size.x,
                              ImGui::GetMainViewport()->Size.y});
 
-         float3 cursor_position = aligned_cursorWS;
+         float3 cursor_position = cursor_positionWS;
 
          if (float hit = 0.0f;
              intersect_aabb(inv_rotation * ray.origin,
@@ -704,7 +724,7 @@ void world_edit::ui_show_block_editor() noexcept
                             {.min = {block_min.x, draw_block_start.y, block_min.z},
                              .max = {block_max.x, FLT_MAX, block_max.z}},
                             FLT_MAX, hit) and
-             hit < distance(_camera.position(), aligned_cursorWS)) {
+             hit < distance(_camera.position(), cursor_positionWS)) {
             cursor_position = ray.origin + hit * ray.direction;
          }
 
