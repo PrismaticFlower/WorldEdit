@@ -3715,6 +3715,8 @@ auto world_edit::get_mouse_cursor() const noexcept -> mouse_cursor
       }
    }
 
+   if (_gizmos.want_capture_mouse()) return mouse_cursor::arrow;
+
    if (_interaction_targets.creation_entity.holds_entity()) {
       if (_interaction_targets.creation_entity.is<world::planning_hub>()) {
          return mouse_cursor::pen;

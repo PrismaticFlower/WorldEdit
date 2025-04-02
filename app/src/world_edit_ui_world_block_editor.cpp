@@ -962,16 +962,35 @@ void world_edit::ui_show_block_editor() noexcept
                          {ImGui::GetMainViewport()->Size.x,
                           ImGui::GetMainViewport()->Size.y});
 
-      if (std::optional<world::raycast_block_result> hit =
-             world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
-          hit) {
-         if (click) {
-            _block_editor_context.resize_block.box_id =
-               _world.blocks.boxes.ids[hit->index];
+      if (not _gizmos.want_capture_mouse()) {
+         if (std::optional<world::raycast_block_result> hit =
+                world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
+             hit) {
+            if (click) {
+               _block_editor_context.resize_block.box_id =
+                  _world.blocks.boxes.ids[hit->index];
+            }
+
+            const world::block_description_box& box =
+               _world.blocks.boxes.description[hit->index];
+
+            const float4x4 scale = {
+               {box.size.x, 0.0f, 0.0f, 0.0f},
+               {0.0f, box.size.y, 0.0f, 0.0f},
+               {0.0f, 0.0f, box.size.z, 0.0f},
+               {0.0f, 0.0f, 0.0f, 1.0f},
+            };
+            const float4x4 rotation = to_matrix(box.rotation);
+
+            float4x4 world_from_object = rotation * scale;
+            world_from_object[3] = {box.position, 1.0f};
+
+            _tool_visualizers.add_box_additive(world_from_object,
+                                               {1.0f, 1.0f, 1.0f, 0.125f});
          }
-      }
-      else if (click) {
-         _block_editor_context.resize_block.box_id = world::max_id;
+         else if (click) {
+            _block_editor_context.resize_block.box_id = world::max_id;
+         }
       }
 
       if (std::optional<uint32> selected_index =
