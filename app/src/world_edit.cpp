@@ -3804,6 +3804,8 @@ auto world_edit::get_mouse_cursor() const noexcept -> mouse_cursor
          return mouse_cursor::cross;
       case block_edit_tool::offset_texture:
          return mouse_cursor::size_all;
+      case block_edit_tool::resize_block:
+         return mouse_cursor::cross;
       }
    }
 
