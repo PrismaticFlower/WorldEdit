@@ -2490,6 +2490,10 @@ void renderer_impl::draw_world_meta_objects(
       _meta_draw_batcher.add_triangle(tri.v0, tri.v1, tri.v2, tri.color);
    }
 
+   for (const auto& box : tool_visualizers.boxes_additive()) {
+      _meta_draw_batcher.add_box(box.transform, box.color);
+   }
+
    for (const gizmo_draw_pixel_line& line : draw_lists.pixel_lines) {
       _meta_draw_batcher.add_line_solid(line.position_start, line.position_end,
                                         line.color);

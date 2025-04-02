@@ -82,6 +82,8 @@ struct tool_visualizers {
    void add_triangle_additive(const float3& v0, const float3& v1,
                               const float3& v2, uint32 color);
 
+   void add_box_additive(const float4x4& transform, const float4& color);
+
    void clear() noexcept;
 
    auto lines_overlay() const noexcept -> std::span<const tool_visualizers_line>;
@@ -108,6 +110,8 @@ struct tool_visualizers {
    auto triangles_additive() const noexcept
       -> std::span<const tool_visualizers_triangle>;
 
+   auto boxes_additive() const noexcept -> std::span<const tool_visualizers_shape>;
+
 private:
    std::vector<tool_visualizers_line> _lines_overlay;
    std::vector<tool_visualizers_line> _lines;
@@ -119,6 +123,7 @@ private:
    std::vector<tool_visualizers_connection_highlight> _connection_highlights;
    std::vector<tool_visualizers_mini_grid> _mini_grids;
    std::vector<tool_visualizers_triangle> _triangles_additive;
+   std::vector<tool_visualizers_shape> _boxes_additive;
 };
 
 }
