@@ -516,22 +516,24 @@ void world_edit::ui_show_block_editor() noexcept
       const bool snap = ImGui::IsKeyDown(ImGuiMod_Shift);
       float3 cursor_positionWS = _cursor_positionWS;
 
-      if (_block_editor_context.draw_block.step != draw_block_step::start) {
-         if (cursor_positionWS.y < _block_editor_context.draw_block.height) {
-            const graphics::camera_ray rayWS =
-               make_camera_ray(_camera,
-                               {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
-                               {ImGui::GetMainViewport()->Size.x,
-                                ImGui::GetMainViewport()->Size.y});
+      if (_block_editor_context.draw_block.height_plane) {
+         const graphics::camera_ray rayWS =
+            make_camera_ray(_camera,
+                            {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                            {ImGui::GetMainViewport()->Size.x,
+                             ImGui::GetMainViewport()->Size.y});
 
-            const float4 draw_planeWS =
-               make_plane_from_point({0.0f, _block_editor_context.draw_block.height, 0.0f},
-                                     float3{0.0f, 1.0f, 0.0f});
+         const float4 draw_planeWS =
+            make_plane_from_point({0.0f, *_block_editor_context.draw_block.height_plane,
+                                   0.0f},
+                                  float3{0.0f, 1.0f, 0.0f});
 
-            if (float hit = intersect_plane(rayWS.origin, rayWS.direction, draw_planeWS);
-                hit > 0.0f) {
-               cursor_positionWS = rayWS.origin + rayWS.direction * hit;
-            }
+         if (float hit = intersect_plane(rayWS.origin, rayWS.direction, draw_planeWS);
+             hit > 0.0f) {
+            cursor_positionWS = rayWS.origin + rayWS.direction * hit;
+         }
+         else {
+            cursor_positionWS.y = *_block_editor_context.draw_block.height_plane;
          }
       }
 
@@ -588,25 +590,32 @@ void world_edit::ui_show_block_editor() noexcept
          _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
-            _block_editor_context.draw_block.height = cursor_positionWS.y;
-            _block_editor_context.draw_block.start = cursor_positionWS;
+            _block_editor_context.draw_block.height_plane = cursor_positionWS.y;
+            _block_editor_context.draw_block.box.start = cursor_positionWS;
             _block_editor_context.draw_block.step = draw_block_step::box_depth;
          }
       } break;
       case draw_block_step::box_depth: {
-         _tool_visualizers.add_line_overlay(_block_editor_context.draw_block.start,
-                                            cursor_positionWS, line_color);
+         _tool_visualizers
+            .add_line_overlay(_block_editor_context.draw_block.box.start,
+                              {cursor_positionWS.x,
+                               _block_editor_context.draw_block.box.start.y,
+                               cursor_positionWS.z},
+                              line_color);
          _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
-            _block_editor_context.draw_block.depth = cursor_positionWS;
+            _block_editor_context.draw_block.box.depth_x = cursor_positionWS.x;
+            _block_editor_context.draw_block.box.depth_z = cursor_positionWS.z;
             _block_editor_context.draw_block.step = draw_block_step::box_width;
          }
 
       } break;
       case draw_block_step::box_width: {
-         const float3 draw_block_start = _block_editor_context.draw_block.start;
-         const float3 draw_block_depth = _block_editor_context.draw_block.depth;
+         const float3 draw_block_start = _block_editor_context.draw_block.box.start;
+         const float3 draw_block_depth = {_block_editor_context.draw_block.box.depth_x,
+                                          draw_block_start.y,
+                                          _block_editor_context.draw_block.box.depth_z};
 
          const float3 cursor_direction =
             normalize(cursor_positionWS - draw_block_depth);
@@ -646,8 +655,10 @@ void world_edit::ui_show_block_editor() noexcept
          if (click) {
             const world::block_box_id id = _world.blocks.next_id.boxes.aquire();
 
-            _block_editor_context.draw_block.width = draw_block_width;
-            _block_editor_context.draw_block.rotation_angle = rotation_angle;
+            _block_editor_context.draw_block.height_plane = std::nullopt;
+            _block_editor_context.draw_block.box.width_x = draw_block_width.x;
+            _block_editor_context.draw_block.box.width_z = draw_block_width.z;
+            _block_editor_context.draw_block.box.rotation = rotation;
             _block_editor_context.draw_block.step = draw_block_step::box_height;
             _block_editor_context.draw_block.index =
                static_cast<uint32>(_world.blocks.boxes.size());
@@ -686,14 +697,15 @@ void world_edit::ui_show_block_editor() noexcept
          }
       } break;
       case draw_block_step::box_height: {
-         const float3 draw_block_start = _block_editor_context.draw_block.start;
-         const float3 draw_block_depth = _block_editor_context.draw_block.depth;
-         const float3 draw_block_width = _block_editor_context.draw_block.width;
-         const float draw_block_rotation_angle =
-            _block_editor_context.draw_block.rotation_angle;
+         const float3 draw_block_start = _block_editor_context.draw_block.box.start;
+         const float3 draw_block_depth = {_block_editor_context.draw_block.box.depth_x,
+                                          draw_block_start.y,
+                                          _block_editor_context.draw_block.box.depth_z};
+         const float3 draw_block_width = {_block_editor_context.draw_block.box.width_x,
+                                          draw_block_start.y,
+                                          _block_editor_context.draw_block.box.width_z};
 
-         const quaternion rotation =
-            make_quat_from_euler({0.0f, draw_block_rotation_angle, 0.0f});
+         const quaternion rotation = _block_editor_context.draw_block.box.rotation;
          const quaternion inv_rotation = conjugate(rotation);
 
          const std::array<float3, 2> cornersWS{draw_block_start, draw_block_width};
@@ -721,25 +733,23 @@ void world_edit::ui_show_block_editor() noexcept
          if (float hit = 0.0f;
              intersect_aabb(inv_rotation * ray.origin,
                             1.0f / (inv_rotation * ray.direction),
-                            {.min = {block_min.x, draw_block_start.y, block_min.z},
+                            {.min = {block_min.x, -FLT_MAX, block_min.z},
                              .max = {block_max.x, FLT_MAX, block_max.z}},
                             FLT_MAX, hit) and
              hit < distance(_camera.position(), cursor_positionWS)) {
             cursor_position = ray.origin + hit * ray.direction;
          }
 
-         const float unaligned_box_height =
-            std::max(cursor_position.y - draw_block_width.y, 0.0f);
+         const float unaligned_box_height = cursor_position.y - draw_block_start.y;
          const float box_height =
             align ? std::round(unaligned_box_height / alignment.y) * alignment.y
                   : unaligned_box_height;
-         const float3 draw_block_height =
-            draw_block_width + float3{0.0f, box_height, 0.0f};
 
-         const float3 position = (draw_block_start + draw_block_height) / 2.0f;
-
-         const float3 size = float3{std::fabs(block_max.x - block_min.x), box_height,
-                                    std::fabs(block_max.z - block_min.z)} /
+         const float3 position = {(draw_block_start.x + draw_block_width.x) / 2.0f,
+                                  draw_block_start.y + (box_height / 2.0f),
+                                  (draw_block_start.z + draw_block_width.z) / 2.0f};
+         const float3 size = abs(float3{block_max.x - block_min.x, box_height,
+                                        block_max.z - block_min.z}) /
                              2.0f;
 
          if (const uint32 index = _block_editor_context.draw_block.index;
