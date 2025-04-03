@@ -980,11 +980,17 @@ private:
 
       struct draw_block {
          draw_block_step step = draw_block_step::start;
-         float height = 0.0f;
-         float3 start;
-         float3 depth;
-         float3 width;
-         float rotation_angle = 0.0f;
+         std::optional<float> height_plane = std::nullopt;
+
+         struct box {
+            float3 start;
+            float depth_x = 0.0f;
+            float depth_z = 0.0f;
+            float width_x = 0.0f;
+            float width_z = 0.0f;
+            quaternion rotation;
+         } box;
+
          uint32 index = 0;
          world::block_box_id box_id = world::max_id;
       } draw_block;
