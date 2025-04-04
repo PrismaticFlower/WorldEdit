@@ -996,12 +996,12 @@ private:
       } draw_block;
 
       struct offset_texture {
-         world::block_box_id box_id = world::max_id;
+         world::block_id block_id = world::block_id::none;
          uint32 surface_index = 0;
       } offset_texture;
 
       struct resize_block {
-         world::block_box_id box_id = world::max_id;
+         world::block_id block_id = world::block_id::none;
       } resize_block;
    } _block_editor_context;
 

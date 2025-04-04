@@ -5,7 +5,8 @@
 
 namespace we::world {
 
-void highlight_surface(const block_description_box& box, const uint32 surface_index,
+void highlight_surface(const blocks& blocks, const block_type type,
+                       const uint32 block_index, const uint32 surface_index,
                        tool_visualizers& visualizers) noexcept;
 
 }

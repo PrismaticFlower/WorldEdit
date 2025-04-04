@@ -3345,22 +3345,27 @@ void renderer_impl::draw_interaction_targets(
 
          if (measurement) draw_entity(*measurement, color);
       }
-      else if (target.is<world::block_box_id>()) {
+      else if (target.is<world::block_id>()) {
          const std::optional<uint32> block_index =
-            find_block(world.blocks.boxes, target.get<world::block_box_id>());
+            find_block(world.blocks, target.get<world::block_id>());
 
          if (block_index) {
-            const world::block_description_box& block =
-               world.blocks.boxes.description[*block_index];
+            switch (target.get<world::block_id>().type()) {
+            case world::block_type::box: {
 
-            float4x4 transform = to_matrix(block.rotation) *
-                                 float4x4{{block.size.x, 0.0f, 0.0f, 0.0f},
-                                          {0.0f, block.size.y, 0.0f, 0.0f},
-                                          {0.0f, 0.0f, block.size.z, 0.0f},
-                                          {0.0f, 0.0f, 0.0f, 1.0f}};
-            transform[3] = {block.position, 1.0f};
+               const world::block_description_box& block =
+                  world.blocks.boxes.description[*block_index];
 
-            _meta_draw_batcher.add_box_wireframe(transform, color);
+               float4x4 transform = to_matrix(block.rotation) *
+                                    float4x4{{block.size.x, 0.0f, 0.0f, 0.0f},
+                                             {0.0f, block.size.y, 0.0f, 0.0f},
+                                             {0.0f, 0.0f, block.size.z, 0.0f},
+                                             {0.0f, 0.0f, 0.0f, 1.0f}};
+               transform[3] = {block.position, 1.0f};
+
+               _meta_draw_batcher.add_box_wireframe(transform, color);
+            } break;
+            }
          }
       }
    };
