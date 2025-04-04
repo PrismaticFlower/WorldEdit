@@ -1,6 +1,11 @@
 #include "find.hpp"
 
+#pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+#pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
+
 namespace we::world {
+
+namespace {
 
 auto find_block(const blocks_boxes& boxes, const block_box_id id)
    -> std::optional<uint32>
@@ -14,6 +19,18 @@ auto find_block(const blocks_boxes& boxes, const block_box_id id)
    }
 
    return std::nullopt;
+}
+
+}
+
+auto find_block(const blocks& blocks, const block_id id) -> std::optional<uint32>
+{
+   switch (id.type()) {
+   case block_type::box:
+      return find_block(blocks.boxes, id.get_box());
+   }
+
+   std::unreachable();
 }
 
 }

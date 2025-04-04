@@ -12,7 +12,9 @@
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 
+#include "world/blocks/accessors.hpp"
 #include "world/blocks/find.hpp"
+#include "world/blocks/highlight_block.hpp"
 #include "world/blocks/highlight_surface.hpp"
 #include "world/blocks/raycast.hpp"
 #include "world/blocks/snapping.hpp"
@@ -24,6 +26,9 @@
 
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
+
+#pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+#pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
 
 namespace we {
 
@@ -783,7 +788,7 @@ void world_edit::ui_show_block_editor() noexcept
                           ImGui::GetMainViewport()->Size.y});
 
       if (std::optional<world::raycast_block_result> hit =
-             world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
+             world::raycast(rayWS.origin, rayWS.direction, _world.blocks);
           hit) {
          if (click) {
             world::block_texture_rotation new_rotation = {};
@@ -812,7 +817,7 @@ void world_edit::ui_show_block_editor() noexcept
                       _edit_context, {.closed = true});
          }
 
-         world::highlight_surface(_world.blocks.boxes.description[hit->index],
+         world::highlight_surface(_world.blocks, hit->id.type(), hit->index,
                                   hit->surface_index, _tool_visualizers);
       }
    }
@@ -827,11 +832,13 @@ void world_edit::ui_show_block_editor() noexcept
                           ImGui::GetMainViewport()->Size.y});
 
       if (std::optional<world::raycast_block_result> hit =
-             world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
+             world::raycast(rayWS.origin, rayWS.direction, _world.blocks);
           hit) {
          if (click) {
             std::array<int8, 2> new_scale =
-               _world.blocks.boxes.description[hit->index].surface_texture_scale[hit->surface_index];
+               world::get_block_surface_texture_scale(_world.blocks,
+                                                      world::block_type::box,
+                                                      hit->index, hit->surface_index);
 
             if (shrink) {
                if (_block_editor_config.scale_texture_u) new_scale[0] += 1;
@@ -847,15 +854,17 @@ void world_edit::ui_show_block_editor() noexcept
             new_scale[1] = std::clamp(new_scale[1], world::block_min_texture_scale,
                                       world::block_max_texture_scale);
 
-            _edit_stack_world
-               .apply(edits::make_set_block_surface(
-                         &_world.blocks.boxes.description[hit->index]
-                             .surface_texture_scale[hit->surface_index],
-                         new_scale, hit->index, &_world.blocks.boxes.dirty),
-                      _edit_context, {.closed = true});
+            _edit_stack_world.apply(
+               edits::make_set_block_surface(
+                  &world::get_block_surface_texture_scale(_world.blocks,
+                                                          world::block_type::box,
+                                                          hit->index, hit->surface_index),
+                  new_scale, hit->index,
+                  &world::get_dirty_tracker(_world.blocks, world::block_type::box)),
+               _edit_context, {.closed = true});
          }
 
-         world::highlight_surface(_world.blocks.boxes.description[hit->index],
+         world::highlight_surface(_world.blocks, hit->id.type(), hit->index,
                                   hit->surface_index, _tool_visualizers);
       }
    }
@@ -868,19 +877,19 @@ void world_edit::ui_show_block_editor() noexcept
                           ImGui::GetMainViewport()->Size.y});
 
       if (std::optional<world::raycast_block_result> hit =
-             world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
+             world::raycast(rayWS.origin, rayWS.direction, _world.blocks);
           hit) {
          if (click) {
-            _edit_stack_world.apply(edits::make_set_block_surface(
-                                       &_world.blocks.boxes
-                                           .description[hit->index]
-                                           .surface_materials[hit->surface_index],
-                                       _block_editor_config.paint_material_index,
-                                       hit->index, &_world.blocks.boxes.dirty),
-                                    _edit_context, {.closed = true});
+            _edit_stack_world.apply(
+               edits::make_set_block_surface(
+                  &world::get_block_surface_material(_world.blocks, hit->id.type(),
+                                                     hit->index, hit->surface_index),
+                  _block_editor_config.paint_material_index, hit->index,
+                  &world::get_dirty_tracker(_world.blocks, hit->id.type())),
+               _edit_context, {.closed = true});
          }
 
-         world::highlight_surface(_world.blocks.boxes.description[hit->index],
+         world::highlight_surface(_world.blocks, hit->id.type(), hit->index,
                                   hit->surface_index, _tool_visualizers);
       }
    }
@@ -893,19 +902,19 @@ void world_edit::ui_show_block_editor() noexcept
                           ImGui::GetMainViewport()->Size.y});
 
       if (std::optional<world::raycast_block_result> hit =
-             world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
+             world::raycast(rayWS.origin, rayWS.direction, _world.blocks);
           hit) {
          if (click) {
-            _edit_stack_world.apply(edits::make_set_block_surface(
-                                       &_world.blocks.boxes
-                                           .description[hit->index]
-                                           .surface_texture_mode[hit->surface_index],
-                                       _block_editor_config.texture_mode,
-                                       hit->index, &_world.blocks.boxes.dirty),
-                                    _edit_context, {.closed = true});
+            _edit_stack_world.apply(
+               edits::make_set_block_surface(
+                  &world::get_block_surface_texture_mode(_world.blocks, hit->id.type(),
+                                                         hit->index, hit->surface_index),
+                  _block_editor_config.texture_mode, hit->index,
+                  &world::get_dirty_tracker(_world.blocks, hit->id.type())),
+               _edit_context, {.closed = true});
          }
 
-         world::highlight_surface(_world.blocks.boxes.description[hit->index],
+         world::highlight_surface(_world.blocks, hit->id.type(), hit->index,
                                   hit->surface_index, _tool_visualizers);
       }
    }
@@ -920,38 +929,37 @@ void world_edit::ui_show_block_editor() noexcept
                              ImGui::GetMainViewport()->Size.y});
 
          if (std::optional<world::raycast_block_result> hit =
-                world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
+                world::raycast(rayWS.origin, rayWS.direction, _world.blocks);
              hit) {
             if (click) {
-               _block_editor_context.offset_texture.box_id =
-                  _world.blocks.boxes.ids[hit->index];
+               _block_editor_context.offset_texture.block_id = hit->id;
                _block_editor_context.offset_texture.surface_index = hit->surface_index;
             }
 
-            world::highlight_surface(_world.blocks.boxes.description[hit->index],
+            world::highlight_surface(_world.blocks, hit->id.type(), hit->index,
                                      hit->surface_index, _tool_visualizers);
          }
          else if (click) {
-            _block_editor_context.offset_texture.box_id = world::max_id;
+            _block_editor_context.offset_texture.block_id = world::block_id::none;
             _block_editor_context.offset_texture.surface_index = 0;
          }
       }
 
       if (std::optional<uint32> selected_index =
-             world::find_block(_world.blocks.boxes,
-                               _block_editor_context.offset_texture.box_id);
+             world::find_block(_world.blocks,
+                               _block_editor_context.offset_texture.block_id);
           selected_index) {
          ImGui::SetNextWindowPos(ImGui::GetMousePos(), ImGuiCond_Appearing);
 
          if (ImGui::Begin("Blocks Texture Offset", nullptr,
                           ImGuiWindowFlags_NoDecoration |
                              ImGuiWindowFlags_AlwaysAutoResize)) {
-            const std::array<std::uint16_t, 2>& offset =
-               _world.blocks.boxes.description[*selected_index]
-                  .surface_texture_offset[_block_editor_context.offset_texture.surface_index];
+            std::array<std::uint16_t, 2>& texture_offset = world::get_block_surface_texture_offset(
+               _world.blocks, _block_editor_context.offset_texture.block_id.type(),
+               *selected_index, _block_editor_context.offset_texture.surface_index);
 
-            float u = offset[0] / 8192.0f;
-            float v = offset[1] / 8192.0f;
+            float u = texture_offset[0] / 8192.0f;
+            float v = texture_offset[1] / 8192.0f;
 
             ImGui::BeginGroup();
 
@@ -968,14 +976,16 @@ void world_edit::ui_show_block_editor() noexcept
             ImGui::EndGroup();
 
             if (ImGui::IsItemEdited()) {
-               _edit_stack_world
-                  .apply(edits::make_set_block_surface(
-                            &_world.blocks.boxes.description[*selected_index].surface_texture_offset
-                                [_block_editor_context.offset_texture.surface_index],
-                            std::array{static_cast<uint16>(u * 8192.0f),
-                                       static_cast<uint16>(v * 8192.0f)},
-                            *selected_index, &_world.blocks.boxes.dirty),
-                         _edit_context);
+               _edit_stack_world.apply(
+                  edits::make_set_block_surface(
+                     &texture_offset,
+                     std::array{static_cast<uint16>(u * 8192.0f),
+                                static_cast<uint16>(v * 8192.0f)},
+                     *selected_index,
+                     &world::get_dirty_tracker(_world.blocks,
+                                               _block_editor_context
+                                                  .offset_texture.block_id.type())),
+                  _edit_context);
             }
 
             if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
@@ -994,54 +1004,40 @@ void world_edit::ui_show_block_editor() noexcept
 
       if (not _gizmos.want_capture_mouse()) {
          if (std::optional<world::raycast_block_result> hit =
-                world::raycast(rayWS.origin, rayWS.direction, _world.blocks.boxes);
+                world::raycast(rayWS.origin, rayWS.direction, _world.blocks);
              hit) {
-            if (click) {
-               _block_editor_context.resize_block.box_id =
-                  _world.blocks.boxes.ids[hit->index];
-            }
+            if (click) _block_editor_context.resize_block.block_id = hit->id;
 
-            const world::block_description_box& box =
-               _world.blocks.boxes.description[hit->index];
-
-            const float4x4 scale = {
-               {box.size.x, 0.0f, 0.0f, 0.0f},
-               {0.0f, box.size.y, 0.0f, 0.0f},
-               {0.0f, 0.0f, box.size.z, 0.0f},
-               {0.0f, 0.0f, 0.0f, 1.0f},
-            };
-            const float4x4 rotation = to_matrix(box.rotation);
-
-            float4x4 world_from_object = rotation * scale;
-            world_from_object[3] = {box.position, 1.0f};
-
-            _tool_visualizers.add_box_additive(world_from_object,
-                                               {1.0f, 1.0f, 1.0f, 0.125f});
+            world::highlight_block(_world.blocks, hit->id.type(), hit->index,
+                                   _tool_visualizers);
          }
          else if (click) {
-            _block_editor_context.resize_block.box_id = world::max_id;
+            _block_editor_context.resize_block.block_id = world::block_id::none;
          }
       }
 
       if (std::optional<uint32> selected_index =
-             world::find_block(_world.blocks.boxes,
-                               _block_editor_context.resize_block.box_id);
+             world::find_block(_world.blocks, _block_editor_context.resize_block.block_id);
           selected_index) {
-         const world::block_description_box& box =
-            _world.blocks.boxes.description[*selected_index];
+         switch (_block_editor_context.resize_block.block_id.type()) {
+         case world::block_type::box: {
+            const world::block_description_box& box =
+               _world.blocks.boxes.description[*selected_index];
 
-         float3 size = box.size;
-         float3 positionWS = box.position;
+            float3 size = box.size;
+            float3 positionWS = box.position;
 
-         if (_gizmos.gizmo_size({.name = "Resize Block",
-                                 .instance = *selected_index,
-                                 .alignment = _editor_grid_size,
-                                 .gizmo_rotation = box.rotation},
-                                positionWS, size)) {
-            _edit_stack_world.apply(edits::make_set_block_box_metrics(*selected_index,
-                                                                      box.rotation,
-                                                                      positionWS, size),
-                                    _edit_context);
+            if (_gizmos.gizmo_size({.name = "Resize Block (Box)",
+                                    .instance = *selected_index,
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation = box.rotation},
+                                   positionWS, size)) {
+               _edit_stack_world.apply(edits::make_set_block_box_metrics(*selected_index,
+                                                                         box.rotation, positionWS,
+                                                                         size),
+                                       _edit_context);
+            }
+         } break;
          }
 
          if (_gizmos.can_close_last_edit()) _edit_stack_world.close_last();

@@ -7,10 +7,19 @@
 
 namespace we::world {
 
+namespace {
+
+struct raycast_block_result_local {
+   float distance = 0.0f;
+   uint32 index = 0;
+   uint32 surface_index = 0;
+};
+
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
-             const blocks_boxes& boxes) noexcept -> std::optional<raycast_block_result>
+             const blocks_boxes& boxes, const float max_distance) noexcept
+   -> std::optional<raycast_block_result_local>
 {
-   float closest = FLT_MAX;
+   float closest = max_distance;
    uint32 closest_index = UINT32_MAX;
 
    for (uint32 box_index = 0; box_index < boxes.size(); ++box_index) {
@@ -64,10 +73,41 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
       }
 
       if (surface_index != UINT32_MAX) {
-         return raycast_block_result{.distance = closest,
-                                     .index = closest_index,
-                                     .surface_index = surface_index};
+         return raycast_block_result_local{.distance = closest,
+                                           .index = closest_index,
+                                           .surface_index = surface_index};
       }
+   }
+
+   return std::nullopt;
+}
+
+}
+
+auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
+             const blocks& blocks) noexcept -> std::optional<raycast_block_result>
+{
+   float closest = FLT_MAX;
+   block_id closest_id = {};
+   uint32 closest_index = UINT32_MAX;
+   uint32 closest_surface_index = UINT32_MAX;
+
+   if (std::optional<raycast_block_result_local> hit =
+          raycast(ray_originWS, ray_directionWS, blocks.boxes, closest);
+       hit) {
+      closest = hit->distance;
+      closest_id = blocks.boxes.ids[hit->index];
+      closest_index = hit->index;
+      closest_surface_index = hit->surface_index;
+   }
+
+   if (closest_index != UINT32_MAX) {
+      return raycast_block_result{
+         .distance = closest,
+         .id = closest_id,
+         .index = closest_index,
+         .surface_index = closest_surface_index,
+      };
    }
 
    return std::nullopt;

@@ -24,7 +24,7 @@ enum class active_entity {
    planning_connection,
    boundary,
    measurement,
-   block_box,
+   block,
    entity_group,
 };
 
@@ -125,9 +125,9 @@ struct interaction_target {
          _storage.measurement = id;
          _active = detail::active_entity::measurement;
       }
-      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, block_box_id>) {
-         _storage.block_box = id;
-         _active = detail::active_entity::block_box;
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, block_id>) {
+         _storage.block = id;
+         _active = detail::active_entity::block;
       }
       else {
          static_assert(not std::is_same_v<std::remove_cvref_t<T>, T>,
@@ -152,7 +152,7 @@ struct interaction_target {
       else if constexpr (std::is_same_v<T, planning_connection_id>) return _active == detail::active_entity::planning_connection;
       else if constexpr (std::is_same_v<T, boundary_id>) return _active == detail::active_entity::boundary;
       else if constexpr (std::is_same_v<T, measurement_id>) return _active == detail::active_entity::measurement;
-      else if constexpr (std::is_same_v<T, block_box_id>) return _active == detail::active_entity::block_box;
+      else if constexpr (std::is_same_v<T, block_id>) return _active == detail::active_entity::block;
       else static_assert(not std::is_same_v<T, T>, "T is not an entity ID type");
 
       // clang-format on
@@ -180,7 +180,7 @@ struct interaction_target {
       else if constexpr (std::is_same_v<std::remove_cvref_t<T>, planning_connection_id>) { if (self._active != detail::active_entity::planning_connection) std::terminate(); return self._storage.planning_connection; }
       else if constexpr (std::is_same_v<std::remove_cvref_t<T>, boundary_id>) { if (self._active != detail::active_entity::boundary) std::terminate(); return self._storage.boundary; }
       else if constexpr (std::is_same_v<std::remove_cvref_t<T>, measurement_id>) { if (self._active != detail::active_entity::measurement) std::terminate(); return self._storage.measurement; }
-      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, block_box_id>) { if (self._active != detail::active_entity::block_box) std::terminate(); return self._storage.block_box; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, block_id>) { if (self._active != detail::active_entity::block) std::terminate(); return self._storage.block; }
       else static_assert(not std::is_same_v<std::remove_cvref_t<T>, T>, "T is not an entity ID type");
 
       // clang-format on
@@ -208,7 +208,7 @@ private:
       planning_connection_id planning_connection;
       boundary_id boundary;
       measurement_id measurement;
-      block_box_id block_box;
+      block_id block;
    } _storage;
 };
 

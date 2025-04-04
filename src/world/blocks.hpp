@@ -101,4 +101,30 @@ struct blocks {
 
 using block_box_id = id<block_description_box>;
 
+enum class block_type {
+   box,
+};
+
+struct block_id {
+   block_id() = default;
+
+   block_id(block_box_id id) noexcept;
+
+   bool is_box() const noexcept;
+
+   auto get_box() const noexcept -> block_box_id;
+
+   auto type() const noexcept -> block_type;
+
+   /// @brief Special sentinal value with type box and an id of UINT32_MAX.
+   static block_id none;
+
+private:
+   block_type id_type = block_type::box;
+
+   union {
+      block_box_id box = block_box_id{0xffffffffu};
+   } id;
+};
+
 }
