@@ -248,6 +248,7 @@
     <ClCompile Include="src\world\blocks.cpp" />
     <ClCompile Include="src\world\blocks\accessors.cpp" />
     <ClCompile Include="src\world\blocks\highlight_block.cpp" />
+    <ClCompile Include="src\world\io\save_blocks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -551,6 +552,7 @@
     <ClInclude Include="src\world\blocks\snapping.hpp" />
     <ClInclude Include="src\world\blocks\accessors.hpp" />
     <ClInclude Include="src\world\blocks\highlight_block.hpp" />
+    <ClInclude Include="src\world\io\save_blocks.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

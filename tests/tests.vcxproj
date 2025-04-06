@@ -304,6 +304,7 @@
     <ClCompile Include="src\world\interaction_context_tests.cpp" />
     <ClCompile Include="src\world\io\load_effects_tests.cpp" />
     <ClCompile Include="src\world\io\load_entity_group_tests.cpp" />
+    <ClCompile Include="src\world\io\save_blocks_tests.cpp" />
     <ClCompile Include="src\world\io\save_effects_tests.cpp" />
     <ClCompile Include="src\world\io\save_entity_group_tests.cpp" />
     <ClCompile Include="src\world\object_class_library_tests.cpp" />
