@@ -186,10 +186,10 @@ auto load_blocks(const io::path& path, output_stream& output) -> blocks
          else if (iequals(key_node.key, "Materials")) {
             load_materials(key_node, blocks, output);
          }
-
-         output.write("Loaded {} (time taken {:f}ms)\n", path.string_view(),
-                      load_timer.elapsed_ms());
       }
+
+      output.write("Loaded {} (time taken {:f}ms)\n", path.string_view(),
+                   load_timer.elapsed_ms());
 
       blocks.untracked_fill_dirty_ranges();
 
