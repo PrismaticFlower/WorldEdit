@@ -86,6 +86,8 @@ struct block_material {
    bool specular_lighting = false;
 
    float3 specular_color = {1.0f, 1.0f, 1.0f};
+
+   bool operator==(const block_material&) const noexcept = default;
 };
 
 struct blocks {
