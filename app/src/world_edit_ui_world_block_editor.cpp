@@ -687,18 +687,28 @@ void world_edit::ui_show_block_editor() noexcept
 
             const uint8 material_index = _block_editor_config.paint_material_index;
 
-            _edit_stack_world
-               .apply(edits::make_add_block(
-                         world::block_description_box{
-                            .rotation = rotation,
-                            .position = position,
-                            .size = size,
-                            .surface_materials = {material_index, material_index,
-                                                  material_index, material_index,
-                                                  material_index, material_index},
-                         },
-                         id),
-                      _edit_context);
+            if (_world.blocks.boxes.size() < world::max_blocks) {
+               _edit_stack_world
+                  .apply(edits::make_add_block(
+                            world::block_description_box{
+                               .rotation = rotation,
+                               .position = position,
+                               .size = size,
+                               .surface_materials = {material_index, material_index,
+                                                     material_index, material_index,
+                                                     material_index, material_index},
+                            },
+                            id),
+                         _edit_context);
+            }
+            else {
+               MessageBoxA(_window,
+                           fmt::format("Max Boxes ({}) Reached", world::max_blocks)
+                              .c_str(),
+                           "Limit Reached", MB_OK);
+
+               _block_editor_context.tool = block_edit_tool::none;
+            }
          }
       } break;
       case draw_block_step::box_height: {
