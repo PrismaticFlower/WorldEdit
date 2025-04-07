@@ -21,6 +21,7 @@ constexpr pinned_vector_init blocks_init{.max_size = max_blocks,
 
 constexpr int8 block_min_texture_scale = -7;
 constexpr int8 block_max_texture_scale = 8;
+constexpr uint16 block_max_texture_offset = 8191;
 
 enum class block_texture_mode : uint8 {
    tangent_space_xyz,
@@ -67,10 +68,9 @@ struct blocks_boxes {
 
    blocks_dirty_range_tracker dirty;
 
-   auto size() const noexcept -> std::size_t
-   {
-      return bbox.min_x.size();
-   }
+   void reserve(const std::size_t size) noexcept;
+
+   auto size() const noexcept -> std::size_t;
 };
 
 struct block_material {
@@ -97,6 +97,8 @@ struct blocks {
    struct next_ids {
       id_generator<block_description_box> boxes;
    } next_id;
+
+   void mark_all_drirty() noexcept;
 };
 
 using block_box_id = id<block_description_box>;

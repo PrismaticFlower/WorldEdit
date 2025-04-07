@@ -1,0 +1,147 @@
+#include "load_blocks.hpp"
+#include "load_failure.hpp"
+
+#include "assets/config/io.hpp"
+
+#include "io/error.hpp"
+#include "io/read_file.hpp"
+
+#include "math/bounding_box.hpp"
+#include "math/vector_funcs.hpp"
+
+#include "utility/stopwatch.hpp"
+#include "utility/string_icompare.hpp"
+#include "utility/string_ops.hpp"
+
+namespace we::world {
+
+using string::iequals;
+
+namespace {
+
+void load_boxes(assets::config::node& node, blocks& blocks_out) noexcept
+{
+   for (const auto& key_node : node) {
+      if (not iequals(key_node.key, "Box")) continue;
+
+      block_description_box box;
+
+      for (const auto& prop : key_node) {
+         if (iequals(prop.key, "Rotation")) {
+            box.rotation = {prop.values.get<float>(0), prop.values.get<float>(1),
+                            prop.values.get<float>(2), prop.values.get<float>(3)};
+         }
+         else if (iequals(prop.key, "Position")) {
+            box.position = {prop.values.get<float>(0), prop.values.get<float>(1),
+                            prop.values.get<float>(2)};
+         }
+         else if (iequals(prop.key, "Size")) {
+            box.size = {prop.values.get<float>(0), prop.values.get<float>(1),
+                        prop.values.get<float>(2)};
+         }
+         else if (iequals(prop.key, "SurfaceMaterials")) {
+            for (uint32 i = 0; i < box.surface_materials.size(); ++i) {
+               box.surface_materials[i] = prop.values.get<uint8>(i);
+            }
+         }
+         else if (iequals(prop.key, "SurfaceTextureMode")) {
+            for (uint32 i = 0; i < box.surface_texture_mode.size(); ++i) {
+               const uint8 texture_mode = prop.values.get<uint8>(i);
+
+               switch (texture_mode) {
+               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
+               case static_cast<uint8>(block_texture_mode::world_space_auto):
+               case static_cast<uint8>(block_texture_mode::world_space_zy):
+               case static_cast<uint8>(block_texture_mode::world_space_xz):
+               case static_cast<uint8>(block_texture_mode::world_space_xy):
+               case static_cast<uint8>(block_texture_mode::unwrapped):
+                  box.surface_texture_mode[i] = block_texture_mode{texture_mode};
+                  break;
+               }
+            }
+         }
+         else if (iequals(prop.key, "SurfaceTextureRotation")) {
+            for (uint32 i = 0; i < box.surface_texture_rotation.size(); ++i) {
+               const uint8 rotation = prop.values.get<uint8>(i);
+
+               switch (rotation) {
+               case static_cast<uint8>(block_texture_rotation::d0):
+               case static_cast<uint8>(block_texture_rotation::d90):
+               case static_cast<uint8>(block_texture_rotation::d180):
+               case static_cast<uint8>(block_texture_rotation::d270):
+                  box.surface_texture_rotation[i] = block_texture_rotation{rotation};
+                  break;
+               }
+            }
+         }
+         else if (iequals(prop.key, "SurfaceTextureScale")) {
+            for (uint32 i = 0; i < box.surface_texture_scale.size(); ++i) {
+               box.surface_texture_scale[i] =
+                  {std::clamp(prop.values.get<int8>(i * 2 + 0),
+                              block_min_texture_scale, block_max_texture_scale),
+                   std::clamp(prop.values.get<int8>(i * 2 + 1),
+                              block_min_texture_scale, block_max_texture_scale)};
+            }
+         }
+         else if (iequals(prop.key, "SurfaceTextureOffset")) {
+            for (uint32 i = 0; i < box.surface_texture_offset.size(); ++i) {
+               box.surface_texture_offset[i] =
+                  {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
+                   std::min(prop.values.get<uint16>(i * 2 + 1), block_max_texture_offset)};
+            }
+         }
+      }
+
+      const math::bounding_box bbox =
+         box.rotation * math::bounding_box{.min = -box.size, .max = box.size} +
+         box.position;
+
+      blocks_out.boxes.bbox.min_x.push_back(bbox.min.x);
+      blocks_out.boxes.bbox.min_y.push_back(bbox.min.y);
+      blocks_out.boxes.bbox.min_z.push_back(bbox.min.z);
+      blocks_out.boxes.bbox.max_x.push_back(bbox.max.x);
+      blocks_out.boxes.bbox.max_y.push_back(bbox.max.y);
+      blocks_out.boxes.bbox.max_z.push_back(bbox.max.z);
+      blocks_out.boxes.hidden.push_back(false);
+      blocks_out.boxes.description.push_back(box);
+      blocks_out.boxes.ids.push_back(blocks_out.next_id.boxes.aquire());
+   }
+}
+
+}
+
+auto load_blocks(const io::path& path, output_stream& output) -> blocks
+{
+   try {
+      utility::stopwatch load_timer;
+
+      blocks blocks;
+
+      for (auto& key_node :
+           assets::config::read_config(io::read_file_to_string(path))) {
+         if (iequals(key_node.key, "Boxes")) {
+            const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
+
+            blocks.boxes.reserve(box_reservation);
+
+            load_boxes(key_node, blocks);
+         }
+
+         output.write("Loaded {} (time taken {:f}ms)\n", path.string_view(),
+                      load_timer.elapsed_ms());
+      }
+
+      blocks.mark_all_drirty();
+
+      return blocks;
+   }
+   catch (io::error& e) {
+      output.write("Error while loading blocks:\n   Blocks: {}\n   "
+                   "Message: \n{}\n",
+                   path.string_view(), string::indent(2, e.what()));
+
+      throw load_failure{e.what()};
+   }
+}
+
+}
