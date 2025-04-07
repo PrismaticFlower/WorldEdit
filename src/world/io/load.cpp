@@ -1,12 +1,17 @@
 
 #include "load.hpp"
+#include "load_blocks.hpp"
+#include "load_effects.hpp"
+#include "load_failure.hpp"
+
 #include "assets/config/io.hpp"
 #include "assets/req/io.hpp"
 #include "assets/terrain/terrain_io.hpp"
+
 #include "io/read_file.hpp"
-#include "load_effects.hpp"
-#include "load_failure.hpp"
+
 #include "math/vector_funcs.hpp"
+
 #include "utility/stopwatch.hpp"
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
@@ -1504,6 +1509,11 @@ auto load_world(const io::path& path, output_stream& output) -> world
 
             throw load_failure{message};
          }
+      }
+
+      if (const auto blk_path = io::compose_path(world_dir, world.name, ".blk"sv);
+          io::exists(blk_path)) {
+         world.blocks = load_blocks(blk_path, output);
       }
    }
    catch (load_failure& failure) {

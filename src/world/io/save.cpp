@@ -1,17 +1,22 @@
 
 #include "save.hpp"
-#include "assets/req/io.hpp"
-#include "math/vector_funcs.hpp"
+#include "save_blocks.hpp"
 #include "save_effects.hpp"
+
+#include "assets/req/io.hpp"
+#include "assets/terrain/terrain_io.hpp"
+
+#include "io/output_file.hpp"
+
+#include "math/vector_funcs.hpp"
+
 #include "utility/string_icompare.hpp"
+
 #include "world/utility/boundary_nodes.hpp"
 
 #include <cctype>
 #include <cstddef>
 #include <numeric>
-
-#include "assets/terrain/terrain_io.hpp"
-#include "io/output_file.hpp"
 
 using namespace std::literals;
 
@@ -900,5 +905,7 @@ void save_world(const io::path& path, const world& world,
    if (flags.save_effects) {
       save_effects(make_path_with_new_extension(path, ".fx"sv), world.effects);
    }
+
+   save_blocks(make_path_with_new_extension(path, ".blk"sv), world.blocks);
 }
 }
