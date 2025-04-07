@@ -47,6 +47,10 @@ TEST_CASE("world save blocks (boxes)", "[World][IO]")
    }
 }
 
+Materials()
+{
+}
+
 )";
 
    blocks blocks{
@@ -201,11 +205,85 @@ TEST_CASE("world save blocks (boxes)", "[World][IO]")
          },
    };
 
-   (void)io::create_directory("temp/world");
+   (void)io::create_directory("temp/blocks");
 
-   save_blocks("temp/world/test.blk", blocks);
+   save_blocks("temp/blocks/test.blk", blocks);
 
-   const auto written_blk = io::read_file_to_string("temp/world/test.blk");
+   const auto written_blk = io::read_file_to_string("temp/blocks/test.blk");
+
+   CHECK(written_blk == expected_blk);
+}
+
+TEST_CASE("world save blocks (materials)", "[World][IO]")
+{
+   const std::string_view expected_blk = R"(Materials()
+{
+   Material(0)
+   {
+      Name("rocks");
+      DiffuseMap("rocks_diffuse");
+      NormalMap("rocks_normal");
+      DetailMap("rocks_detail");
+      EnvMap("skycube");
+      DetailTiling(4, 4);
+      TileNormalMap(0);
+      SpecularLighting(1);
+      SpecularColor(0.5, 0.5, 0.5);
+   }
+   Material(2)
+   {
+      Name("snow");
+      DiffuseMap("snow_diffuse");
+      NormalMap("snow_detail_normal");
+      DetailMap("snow_detail");
+      EnvMap("skycube");
+      DetailTiling(3, 3);
+      TileNormalMap(1);
+      SpecularLighting(1);
+      SpecularColor(0.75, 0.75, 0.75);
+   }
+}
+
+)";
+
+   blocks blocks;
+
+   blocks.materials[0] = {
+      .name = "rocks",
+
+      .diffuse_map = "rocks_diffuse",
+      .normal_map = "rocks_normal",
+      .detail_map = "rocks_detail",
+      .env_map = "skycube",
+
+      .detail_tiling = {4, 4},
+      .tile_normal_map = false,
+      .specular_lighting = true,
+
+      .specular_color = {0.5f, 0.5f, 0.5f},
+   };
+
+   blocks.materials[2] = {
+      .name = "snow",
+
+      .diffuse_map = "snow_diffuse",
+      .normal_map = "snow_detail_normal",
+      .detail_map = "snow_detail",
+      .env_map = "skycube",
+
+      .detail_tiling = {3, 3},
+      .tile_normal_map = true,
+      .specular_lighting = true,
+
+      .specular_color = {0.75f, 0.75f, 0.75f},
+   };
+
+   (void)io::create_directory("temp/blocks");
+
+   save_blocks("temp/blocks/test_materials.blk", blocks);
+
+   const auto written_blk =
+      io::read_file_to_string("temp/blocks/test_materials.blk");
 
    CHECK(written_blk == expected_blk);
 }

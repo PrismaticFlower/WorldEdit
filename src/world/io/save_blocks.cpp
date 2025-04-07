@@ -18,6 +18,8 @@ namespace {
 
 void save_boxes(io::output_file& out, const blocks_boxes& boxes) noexcept
 {
+   if (boxes.size() == 0) return;
+
    out.write_ln("Boxes({})", boxes.size());
    out.write_ln("{");
 
@@ -67,6 +69,38 @@ void save_boxes(io::output_file& out, const blocks_boxes& boxes) noexcept
    out.write_ln("}\n");
 }
 
+void save_materials(io::output_file& out, const blocks& blocks) noexcept
+{
+   const block_material empty_material;
+
+   out.write_ln("Materials()");
+   out.write_ln("{");
+
+   for (uint32 material_index = 0; material_index < blocks.materials.size();
+        ++material_index) {
+      const block_material& material = blocks.materials[material_index];
+
+      if (material == empty_material) continue;
+
+      out.write_ln("   Material({})", material_index);
+      out.write_ln("   {");
+      out.write_ln("      Name(\"{}\");", material.name);
+      out.write_ln("      DiffuseMap(\"{}\");", material.diffuse_map);
+      out.write_ln("      NormalMap(\"{}\");", material.normal_map);
+      out.write_ln("      DetailMap(\"{}\");", material.detail_map);
+      out.write_ln("      EnvMap(\"{}\");", material.env_map);
+      out.write_ln("      DetailTiling({}, {});", material.detail_tiling[0],
+                   material.detail_tiling[1]);
+      out.write_ln("      TileNormalMap({:d});", material.tile_normal_map);
+      out.write_ln("      SpecularLighting({:d});", material.specular_lighting);
+      out.write_ln("      SpecularColor({}, {}, {});", material.specular_color.x,
+                   material.specular_color.y, material.specular_color.z);
+      out.write_ln("   }");
+   }
+
+   out.write_ln("}\n");
+}
+
 }
 
 void save_blocks(const io::path& path, const blocks& blocks)
@@ -74,6 +108,7 @@ void save_blocks(const io::path& path, const blocks& blocks)
    io::output_file out{path};
 
    save_boxes(out, blocks.boxes);
+   save_materials(out, blocks);
 }
 
 }
