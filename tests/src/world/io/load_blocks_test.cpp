@@ -2,6 +2,8 @@
 
 #include "world/io/load_blocks.hpp"
 
+#include <span>
+
 namespace we::world::tests {
 
 namespace {
@@ -189,6 +191,48 @@ TEST_CASE("world load blocks (boxes)", "[World][IO]")
 
    REQUIRE(boxes.dirty.size() == 1);
    CHECK(boxes.dirty[0] == blocks_dirty_range{0, 3});
+}
+
+TEST_CASE("world load blocks (materials)", "[World][IO]")
+{
+   null_output_stream output;
+
+   const blocks blocks = load_blocks("data/blocks/materials.blk", output);
+
+   REQUIRE(blocks.materials.size() == max_block_materials);
+
+   const std::span<const block_material> materials = blocks.materials;
+
+   CHECK(materials[0].name == "rocks");
+   CHECK(materials[0].diffuse_map == "rocks_diffuse");
+   CHECK(materials[0].normal_map == "rocks_normal");
+   CHECK(materials[0].detail_map == "rocks_detail");
+   CHECK(materials[0].env_map == "skycube");
+   CHECK(materials[0].detail_tiling == std::array<uint8, 2>{4, 4});
+   CHECK(not materials[0].tile_normal_map);
+   CHECK(materials[0].specular_lighting);
+   CHECK(materials[0].specular_color == float3{0.5f, 0.5f, 0.5f});
+
+   const block_material empty_material;
+
+   CHECK(materials[1] == empty_material);
+
+   CHECK(materials[2].name == "snow");
+   CHECK(materials[2].diffuse_map == "snow_diffuse");
+   CHECK(materials[2].normal_map == "snow_detail_normal");
+   CHECK(materials[2].detail_map == "snow_detail");
+   CHECK(materials[2].env_map == "skycube");
+   CHECK(materials[2].detail_tiling == std::array<uint8, 2>{3, 3});
+   CHECK(materials[2].tile_normal_map);
+   CHECK(materials[2].specular_lighting);
+   CHECK(materials[2].specular_color == float3{0.75f, 0.75f, 0.75f});
+
+   for (uint32 i = 3; i < max_block_materials; ++i) {
+      CHECK(materials[i] == empty_material);
+   }
+
+   REQUIRE(blocks.materials_dirty.size() == 1);
+   CHECK(blocks.materials_dirty[0] == blocks_dirty_range{0, max_block_materials});
 }
 
 }

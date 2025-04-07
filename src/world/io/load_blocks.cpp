@@ -108,6 +108,56 @@ void load_boxes(assets::config::node& node, blocks& blocks_out) noexcept
    }
 }
 
+void load_materials(assets::config::node& node, blocks& blocks_out,
+                    output_stream& output) noexcept
+{
+   for (const auto& key_node : node) {
+      if (not iequals(key_node.key, "Material")) continue;
+
+      const uint32 material_index = key_node.values.get<uint32>(0);
+
+      if (material_index >= max_block_materials) {
+         output.write("Block material index '{}' is out of supported range. "
+                      "Max index is '{}'. Skipping material.\n",
+                      material_index, max_block_materials - 1);
+      }
+
+      block_material& material = blocks_out.materials[material_index];
+
+      for (const auto& prop : key_node) {
+         if (iequals(prop.key, "Name")) {
+            material.name = prop.values.get<std::string>(0);
+         }
+         else if (iequals(prop.key, "DiffuseMap")) {
+            material.diffuse_map = prop.values.get<std::string>(0);
+         }
+         else if (iequals(prop.key, "NormalMap")) {
+            material.normal_map = prop.values.get<std::string>(0);
+         }
+         else if (iequals(prop.key, "DetailMap")) {
+            material.detail_map = prop.values.get<std::string>(0);
+         }
+         else if (iequals(prop.key, "EnvMap")) {
+            material.env_map = prop.values.get<std::string>(0);
+         }
+         else if (iequals(prop.key, "DetailTiling")) {
+            material.detail_tiling = {prop.values.get<uint8>(0),
+                                      prop.values.get<uint8>(1)};
+         }
+         else if (iequals(prop.key, "TileNormalMap")) {
+            material.tile_normal_map = prop.values.get<uint8>(0) != 0;
+         }
+         else if (iequals(prop.key, "SpecularLighting")) {
+            material.specular_lighting = prop.values.get<uint8>(0) != 0;
+         }
+         else if (iequals(prop.key, "SpecularColor")) {
+            material.specular_color = {prop.values.get<float>(0),
+                                       prop.values.get<float>(1),
+                                       prop.values.get<float>(2)};
+         }
+      }
+   }
+}
 }
 
 auto load_blocks(const io::path& path, output_stream& output) -> blocks
@@ -125,6 +175,9 @@ auto load_blocks(const io::path& path, output_stream& output) -> blocks
             blocks.boxes.reserve(box_reservation);
 
             load_boxes(key_node, blocks);
+         }
+         else if (iequals(key_node.key, "Materials")) {
+            load_materials(key_node, blocks, output);
          }
 
          output.write("Loaded {} (time taken {:f}ms)\n", path.string_view(),

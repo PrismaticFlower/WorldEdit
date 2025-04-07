@@ -1,0 +1,28 @@
+Materials()
+{
+   Material(0)
+   {
+      Name("rocks");
+      DiffuseMap("rocks_diffuse");
+      NormalMap("rocks_normal");
+      DetailMap("rocks_detail");
+      EnvMap("skycube");
+      DetailTiling(4, 4);
+      TileNormalMap(0);
+      SpecularLighting(1);
+      SpecularColor(0.5, 0.5, 0.5);
+   }
+   Material(2)
+   {
+      Name("snow");
+      DiffuseMap("snow_diffuse");
+      NormalMap("snow_detail_normal");
+      DetailMap("snow_detail");
+      EnvMap("skycube");
+      DetailTiling(3, 3);
+      TileNormalMap(1);
+      SpecularLighting(1);
+      SpecularColor(0.75, 0.75, 0.75);
+   }
+}
+
