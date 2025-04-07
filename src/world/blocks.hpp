@@ -91,7 +91,7 @@ struct block_material {
 struct blocks {
    blocks_boxes boxes;
 
-   std::array<block_material, max_block_materials> materials;
+   pinned_vector<block_material> materials = get_blank_materials();
    blocks_dirty_range_tracker materials_dirty;
 
    struct next_ids {
@@ -99,6 +99,8 @@ struct blocks {
    } next_id;
 
    void mark_all_drirty() noexcept;
+
+   static auto get_blank_materials() noexcept -> pinned_vector<block_material>;
 };
 
 using block_box_id = id<block_description_box>;

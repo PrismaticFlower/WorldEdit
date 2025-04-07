@@ -31,6 +31,16 @@ void blocks::mark_all_drirty() noexcept
    materials_dirty.add({0, static_cast<uint32>(materials.size())});
 }
 
+auto blocks::get_blank_materials() noexcept -> pinned_vector<block_material>
+{
+   pinned_vector<block_material> materials{
+      {.max_size = max_block_materials, .initial_capacity = max_block_materials}};
+
+   materials.resize(max_block_materials, {});
+
+   return materials;
+}
+
 block_id::block_id(block_box_id id) noexcept
    : id_type{block_type::box}, id{.box = id}
 {
