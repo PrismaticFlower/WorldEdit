@@ -131,7 +131,7 @@ auto load_blocks(const io::path& path, output_stream& output) -> blocks
                       load_timer.elapsed_ms());
       }
 
-      blocks.mark_all_drirty();
+      blocks.untracked_fill_dirty_ranges();
 
       return blocks;
    }

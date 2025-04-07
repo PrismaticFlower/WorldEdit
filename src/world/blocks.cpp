@@ -22,13 +22,19 @@ auto blocks_boxes::size() const noexcept -> std::size_t
    return bbox.min_x.size();
 }
 
-void blocks::mark_all_drirty() noexcept
+void blocks::untracked_fill_dirty_ranges() noexcept
 {
    if (boxes.size() != 0) {
       boxes.dirty.add({0, static_cast<uint32>(boxes.size())});
    }
 
    materials_dirty.add({0, static_cast<uint32>(materials.size())});
+}
+
+void blocks::untracked_clear_dirty_ranges() noexcept
+{
+   boxes.dirty.clear();
+   materials_dirty.clear();
 }
 
 auto blocks::get_blank_materials() noexcept -> pinned_vector<block_material>

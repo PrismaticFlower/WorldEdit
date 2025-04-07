@@ -98,7 +98,9 @@ struct blocks {
       id_generator<block_description_box> boxes;
    } next_id;
 
-   void mark_all_drirty() noexcept;
+   void untracked_fill_dirty_ranges() noexcept;
+
+   void untracked_clear_dirty_ranges() noexcept;
 
    static auto get_blank_materials() noexcept -> pinned_vector<block_material>;
 };

@@ -249,7 +249,7 @@ void world_edit::update()
       }
 
       _world.terrain.untracked_clear_dirty_rects();
-      _world.blocks.boxes.dirty.clear();
+      _world.blocks.untracked_clear_dirty_ranges();
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
@@ -299,6 +299,7 @@ void world_edit::recreate_renderer() noexcept
    _stream->write("GPU Device was removed and has been recreated.\n");
 
    _world.terrain.untracked_fill_dirty_rects();
+   _world.blocks.untracked_fill_dirty_ranges();
 }
 
 void world_edit::update_window_text() noexcept
