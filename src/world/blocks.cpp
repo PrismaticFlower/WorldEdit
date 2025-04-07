@@ -4,6 +4,33 @@
 
 namespace we::world {
 
+void blocks_boxes::reserve(const std::size_t size) noexcept
+{
+   bbox.min_x.reserve(size);
+   bbox.min_y.reserve(size);
+   bbox.min_z.reserve(size);
+   bbox.max_x.reserve(size);
+   bbox.max_y.reserve(size);
+   bbox.max_z.reserve(size);
+   hidden.reserve(size);
+   description.reserve(size);
+   ids.reserve(size);
+}
+
+auto blocks_boxes::size() const noexcept -> std::size_t
+{
+   return bbox.min_x.size();
+}
+
+void blocks::mark_all_drirty() noexcept
+{
+   if (boxes.size() != 0) {
+      boxes.dirty.add({0, static_cast<uint32>(boxes.size())});
+   }
+
+   materials_dirty.add({0, static_cast<uint32>(materials.size())});
+}
+
 block_id::block_id(block_box_id id) noexcept
    : id_type{block_type::box}, id{.box = id}
 {
