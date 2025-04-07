@@ -19,10 +19,17 @@ using string::iequals;
 
 namespace {
 
-void load_boxes(assets::config::node& node, blocks& blocks_out) noexcept
+void load_boxes(assets::config::node& node, blocks& blocks_out)
 {
    for (const auto& key_node : node) {
       if (not iequals(key_node.key, "Box")) continue;
+
+      if (blocks_out.boxes.size() == max_blocks) {
+         throw load_failure{fmt::format(
+            "Too many blocks (of type box) for WorldEdit to handle. \n   "
+            "Max Supported Count: {}\n",
+            max_blocks)};
+      }
 
       block_description_box box;
 
