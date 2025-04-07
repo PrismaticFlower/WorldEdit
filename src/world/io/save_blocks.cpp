@@ -23,7 +23,7 @@ void save_boxes(io::output_file& out, const blocks_boxes& boxes) noexcept
 
    for (const block_description_box& box : boxes.description) {
 
-      out.write_ln("   Box()", boxes.size());
+      out.write_ln("   Box()");
       out.write_ln("   {");
 
       out.write_ln("      Rotation({}, {}, {}, {});", box.rotation.w,
