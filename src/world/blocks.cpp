@@ -83,6 +83,11 @@ auto block_id::type() const noexcept -> block_type
    return id_type;
 }
 
+bool block_id::operator==(const block_box_id box_id) const noexcept
+{
+   return id_type == block_type::box and box_id == id.box;
+}
+
 block_id block_id::none = {};
 
 }

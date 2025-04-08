@@ -27,7 +27,8 @@ void draw_point(tool_visualizers& visualizers, const float3& point,
 }
 
 auto get_snapped_position(const float3 positionWS, const blocks& blocks,
-                          const float snap_radius, tool_visualizers& visualizers,
+                          const float snap_radius, block_id filter_id,
+                          tool_visualizers& visualizers,
                           const blocks_snapping_visualizer_colors& colors) noexcept -> float3
 {
    float3 closest_pointWS;
@@ -35,6 +36,7 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
 
    for (uint32 box_index = 0; box_index < blocks.boxes.size(); ++box_index) {
       if (blocks.boxes.hidden[box_index]) continue;
+      if (blocks.boxes.ids[box_index] == filter_id) continue;
 
       const math::bounding_box bboxWS = {
          .min =
