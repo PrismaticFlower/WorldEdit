@@ -19,7 +19,21 @@ void blocks_boxes::reserve(const std::size_t size) noexcept
 
 auto blocks_boxes::size() const noexcept -> std::size_t
 {
+   assert(is_balanced());
+
    return bbox.min_x.size();
+}
+
+bool blocks_boxes::is_balanced() const noexcept
+{
+   return bbox.min_x.size() == bbox.min_y.size() and
+          bbox.min_x.size() == bbox.min_z.size() and
+          bbox.min_x.size() == bbox.max_x.size() and
+          bbox.min_x.size() == bbox.max_y.size() and
+          bbox.min_x.size() == bbox.max_z.size() and
+          bbox.min_x.size() == hidden.size() and
+          bbox.min_x.size() == description.size() and
+          bbox.min_x.size() == ids.size();
 }
 
 void blocks::untracked_fill_dirty_ranges() noexcept

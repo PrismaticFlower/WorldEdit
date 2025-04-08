@@ -1,4 +1,7 @@
 #include "interaction_context.hpp"
+
+#include "blocks/find.hpp"
+
 #include "utility/world_utilities.hpp"
 
 namespace we::world {
@@ -371,6 +374,9 @@ bool is_valid(const interaction_target entity, const world& world) noexcept
    }
    if (entity.is<measurement_id>()) {
       return find_entity(world.measurements, entity.get<measurement_id>()) != nullptr;
+   }
+   if (entity.is<block_id>()) {
+      return find_block(world.blocks, entity.get<block_id>()).has_value();
    }
 
    return false;

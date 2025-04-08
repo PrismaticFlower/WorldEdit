@@ -1,0 +1,151 @@
+#include "pch.h"
+
+#include "edits/add_block.hpp"
+#include "edits/delete_block.hpp"
+#include "world/world.hpp"
+
+namespace we::edits::tests {
+
+TEST_CASE("edits delete_block (box)", "[Edits]")
+{
+   world::world world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   world::blocks& blocks = world.blocks;
+
+   const world::block_box_id id0 = blocks.next_id.boxes.aquire();
+   const world::block_box_id id1 = blocks.next_id.boxes.aquire();
+   const world::block_box_id id2 = blocks.next_id.boxes.aquire();
+   const world::block_box_id id3 = blocks.next_id.boxes.aquire();
+
+   make_add_block({.rotation = quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+                   .position = float3{0.0f, 0.0f, 0.0f},
+                   .size = float3{1.0f, 1.0f, 1.0f}},
+                  id0)
+      ->apply(edit_context);
+   make_add_block({.rotation = quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+                   .position = float3{0.0f, 0.0f, 0.0f},
+                   .size = float3{2.0f, 2.0f, 2.0f}},
+                  id1)
+      ->apply(edit_context);
+   make_add_block({.rotation = quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+                   .position = float3{0.0f, 0.0f, 0.0f},
+                   .size = float3{3.0f, 3.0f, 3.0f}},
+                  id2)
+      ->apply(edit_context);
+   make_add_block({.rotation = quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+                   .position = float3{0.0f, 0.0f, 0.0f},
+                   .size = float3{4.0f, 4.0f, 4.0f}},
+                  id3)
+      ->apply(edit_context);
+
+   blocks.boxes.hidden[1] = true;
+   blocks.boxes.dirty.clear();
+
+   auto edit = make_delete_block(world::block_type::box, 1);
+
+   edit->apply(edit_context);
+
+   REQUIRE(blocks.boxes.size() == 3);
+   CHECK(blocks.boxes.is_balanced());
+
+   CHECK(blocks.boxes.bbox.min_x[0] == -1.0f);
+   CHECK(blocks.boxes.bbox.min_y[0] == -1.0f);
+   CHECK(blocks.boxes.bbox.min_z[0] == -1.0f);
+   CHECK(blocks.boxes.bbox.max_x[0] == 1.0f);
+   CHECK(blocks.boxes.bbox.max_y[0] == 1.0f);
+   CHECK(blocks.boxes.bbox.max_z[0] == 1.0f);
+   CHECK(not blocks.boxes.hidden[0]);
+   CHECK(blocks.boxes.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[0].position == float3{0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[0].size == float3{1.0f, 1.0f, 1.0f});
+   CHECK(blocks.boxes.ids[0] == id0);
+
+   CHECK(blocks.boxes.bbox.min_x[1] == -3.0f);
+   CHECK(blocks.boxes.bbox.min_y[1] == -3.0f);
+   CHECK(blocks.boxes.bbox.min_z[1] == -3.0f);
+   CHECK(blocks.boxes.bbox.max_x[1] == 3.0f);
+   CHECK(blocks.boxes.bbox.max_y[1] == 3.0f);
+   CHECK(blocks.boxes.bbox.max_z[1] == 3.0f);
+   CHECK(not blocks.boxes.hidden[1]);
+   CHECK(blocks.boxes.description[1].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[1].position == float3{0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[1].size == float3{3.0f, 3.0f, 3.0f});
+   CHECK(blocks.boxes.ids[1] == id2);
+
+   CHECK(blocks.boxes.bbox.min_x[2] == -4.0f);
+   CHECK(blocks.boxes.bbox.min_y[2] == -4.0f);
+   CHECK(blocks.boxes.bbox.min_z[2] == -4.0f);
+   CHECK(blocks.boxes.bbox.max_x[2] == 4.0f);
+   CHECK(blocks.boxes.bbox.max_y[2] == 4.0f);
+   CHECK(blocks.boxes.bbox.max_z[2] == 4.0f);
+   CHECK(not blocks.boxes.hidden[2]);
+   CHECK(blocks.boxes.description[2].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[2].position == float3{0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[2].size == float3{4.0f, 4.0f, 4.0f});
+   CHECK(blocks.boxes.ids[2] == id3);
+
+   REQUIRE(blocks.boxes.dirty.size() == 1);
+   CHECK(blocks.boxes.dirty[0] == world::blocks_dirty_range{1, 3});
+
+   blocks.boxes.dirty.clear();
+
+   edit->revert(edit_context);
+
+   REQUIRE(blocks.boxes.size() == 4);
+   CHECK(blocks.boxes.is_balanced());
+
+   CHECK(blocks.boxes.bbox.min_x[0] == -1.0f);
+   CHECK(blocks.boxes.bbox.min_y[0] == -1.0f);
+   CHECK(blocks.boxes.bbox.min_z[0] == -1.0f);
+   CHECK(blocks.boxes.bbox.max_x[0] == 1.0f);
+   CHECK(blocks.boxes.bbox.max_y[0] == 1.0f);
+   CHECK(blocks.boxes.bbox.max_z[0] == 1.0f);
+   CHECK(not blocks.boxes.hidden[0]);
+   CHECK(blocks.boxes.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[0].position == float3{0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[0].size == float3{1.0f, 1.0f, 1.0f});
+   CHECK(blocks.boxes.ids[0] == id0);
+
+   CHECK(blocks.boxes.bbox.min_x[1] == -2.0f);
+   CHECK(blocks.boxes.bbox.min_y[1] == -2.0f);
+   CHECK(blocks.boxes.bbox.min_z[1] == -2.0f);
+   CHECK(blocks.boxes.bbox.max_x[1] == 2.0f);
+   CHECK(blocks.boxes.bbox.max_y[1] == 2.0f);
+   CHECK(blocks.boxes.bbox.max_z[1] == 2.0f);
+   CHECK(blocks.boxes.hidden[1]);
+   CHECK(blocks.boxes.description[1].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[1].position == float3{0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[1].size == float3{2.0f, 2.0f, 2.0f});
+   CHECK(blocks.boxes.ids[1] == id1);
+
+   CHECK(blocks.boxes.bbox.min_x[2] == -3.0f);
+   CHECK(blocks.boxes.bbox.min_y[2] == -3.0f);
+   CHECK(blocks.boxes.bbox.min_z[2] == -3.0f);
+   CHECK(blocks.boxes.bbox.max_x[2] == 3.0f);
+   CHECK(blocks.boxes.bbox.max_y[2] == 3.0f);
+   CHECK(blocks.boxes.bbox.max_z[2] == 3.0f);
+   CHECK(not blocks.boxes.hidden[2]);
+   CHECK(blocks.boxes.description[2].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[2].position == float3{0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[2].size == float3{3.0f, 3.0f, 3.0f});
+   CHECK(blocks.boxes.ids[2] == id2);
+
+   CHECK(blocks.boxes.bbox.min_x[3] == -4.0f);
+   CHECK(blocks.boxes.bbox.min_y[3] == -4.0f);
+   CHECK(blocks.boxes.bbox.min_z[3] == -4.0f);
+   CHECK(blocks.boxes.bbox.max_x[3] == 4.0f);
+   CHECK(blocks.boxes.bbox.max_y[3] == 4.0f);
+   CHECK(blocks.boxes.bbox.max_z[3] == 4.0f);
+   CHECK(not blocks.boxes.hidden[3]);
+   CHECK(blocks.boxes.description[3].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[3].position == float3{0.0f, 0.0f, 0.0f});
+   CHECK(blocks.boxes.description[3].size == float3{4.0f, 4.0f, 4.0f});
+   CHECK(blocks.boxes.ids[3] == id3);
+
+   REQUIRE(blocks.boxes.dirty.size() == 1);
+   CHECK(blocks.boxes.dirty[0] == world::blocks_dirty_range{1, 4});
+}
+
+}

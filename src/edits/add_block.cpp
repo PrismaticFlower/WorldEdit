@@ -7,18 +7,6 @@ namespace we::edits {
 
 namespace {
 
-bool is_balanced(const world::blocks_boxes& blocks) noexcept
-{
-   return blocks.bbox.min_x.size() == blocks.bbox.min_y.size() and
-          blocks.bbox.min_x.size() == blocks.bbox.min_z.size() and
-          blocks.bbox.min_x.size() == blocks.bbox.max_x.size() and
-          blocks.bbox.min_x.size() == blocks.bbox.max_y.size() and
-          blocks.bbox.min_x.size() == blocks.bbox.max_z.size() and
-          blocks.bbox.min_x.size() == blocks.hidden.size() and
-          blocks.bbox.min_x.size() == blocks.description.size() and
-          blocks.bbox.min_x.size() == blocks.ids.size();
-}
-
 struct add_block final : edit<world::edit_context> {
    add_block(world::block_description_box box, world::block_box_id id)
       : box{box}, id{id}
@@ -49,7 +37,7 @@ struct add_block final : edit<world::edit_context> {
 
       blocks.dirty.add({block_index, block_index + 1});
 
-      assert(is_balanced(blocks));
+      assert(blocks.is_balanced());
    }
 
    void revert(world::edit_context& context) noexcept override
@@ -72,7 +60,7 @@ struct add_block final : edit<world::edit_context> {
 
       blocks.dirty.remove_index(block_index);
 
-      assert(is_balanced(blocks));
+      assert(blocks.is_balanced());
    }
 
    bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override

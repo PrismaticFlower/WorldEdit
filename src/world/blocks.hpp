@@ -71,6 +71,8 @@ struct blocks_boxes {
    void reserve(const std::size_t size) noexcept;
 
    auto size() const noexcept -> std::size_t;
+
+   bool is_balanced() const noexcept;
 };
 
 struct block_material {

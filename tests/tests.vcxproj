@@ -252,6 +252,7 @@
     <ClCompile Include="src\edits\delete_animation_key_tests.cpp" />
     <ClCompile Include="src\edits\delete_animation_tests.cpp" />
     <ClCompile Include="src\edits\delete_animation_hierarchy_tests.cpp" />
+    <ClCompile Include="src\edits\delete_block_tests.cpp" />
     <ClCompile Include="src\edits\delete_branch_weight_tests.cpp" />
     <ClCompile Include="src\edits\delete_entity_tests.cpp" />
     <ClCompile Include="src\edits\delete_game_mode_tests.cpp" />
