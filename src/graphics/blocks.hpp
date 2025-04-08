@@ -88,7 +88,7 @@ private:
    gpu::unique_resource_handle _boxes_instance_data;
    uint64 _boxes_instance_data_capacity = 0;
 
-   std::vector<uint16> _TEMP_culling_storage;
+   std::vector<uint32> _TEMP_culling_storage;
 
    std::vector<material> _materials;
 };

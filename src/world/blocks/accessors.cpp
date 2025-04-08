@@ -31,6 +31,19 @@ auto get_dirty_tracker(blocks& blocks, const block_type type) noexcept
    std::unreachable();
 }
 
+auto get_block_hidden(blocks& blocks, const block_type type,
+                      const uint32 block_index) noexcept -> bool&
+{
+   assert(valid_index(blocks, type, block_index));
+
+   switch (type) {
+   case block_type::box:
+      return blocks.boxes.hidden[block_index];
+   }
+
+   std::unreachable();
+}
+
 auto get_block_surface_material(blocks& blocks, const block_type type,
                                 const uint32 block_index,
                                 const uint32 surface_index) noexcept -> uint8&

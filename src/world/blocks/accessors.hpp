@@ -7,6 +7,9 @@ namespace we::world {
 auto get_dirty_tracker(blocks& blocks, const block_type type) noexcept
    -> blocks_dirty_range_tracker&;
 
+auto get_block_hidden(blocks& blocks, const block_type type,
+                      const uint32 block_index) noexcept -> bool&;
+
 auto get_block_surface_material(blocks& blocks, const block_type type,
                                 const uint32 block_index,
                                 const uint32 surface_index) noexcept -> uint8&;
