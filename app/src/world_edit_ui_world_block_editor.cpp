@@ -552,14 +552,14 @@ void world_edit::ui_show_block_editor() noexcept
       }
 
       if (snap) {
-         cursor_positionWS =
-            world::get_snapped_position(cursor_positionWS, _world.blocks,
-                                        alignment.x * 0.5f, _tool_visualizers,
-                                        {
-                                           .snapped = _settings.graphics.snapping_snapped_color,
-                                           .corner = _settings.graphics.snapping_corner_color,
-                                           .edge = _settings.graphics.snapping_edge_color,
-                                        });
+         cursor_positionWS = world::get_snapped_position(
+            cursor_positionWS, _world.blocks, alignment.x * 0.5f,
+            _block_editor_context.draw_block.block_id, _tool_visualizers,
+            {
+               .snapped = _settings.graphics.snapping_snapped_color,
+               .corner = _settings.graphics.snapping_corner_color,
+               .edge = _settings.graphics.snapping_edge_color,
+            });
       }
 
       const uint32 line_color =
@@ -667,7 +667,7 @@ void world_edit::ui_show_block_editor() noexcept
             _block_editor_context.draw_block.step = draw_block_step::box_height;
             _block_editor_context.draw_block.index =
                static_cast<uint32>(_world.blocks.boxes.size());
-            _block_editor_context.draw_block.box_id = id;
+            _block_editor_context.draw_block.block_id = id;
 
             const std::array<float3, 2> cornersWS{draw_block_start, draw_block_width};
             std::array<float3, 2> cornersOS{};
@@ -769,7 +769,7 @@ void world_edit::ui_show_block_editor() noexcept
 
          if (const uint32 index = _block_editor_context.draw_block.index;
              index < _world.blocks.boxes.size() and
-             _world.blocks.boxes.ids[index] == _block_editor_context.draw_block.box_id) {
+             _world.blocks.boxes.ids[index] == _block_editor_context.draw_block.block_id) {
             _edit_stack_world.apply(edits::make_set_block_box_metrics(index, rotation,
                                                                       position, size),
                                     _edit_context, {.transparent = true});

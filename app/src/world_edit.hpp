@@ -992,7 +992,7 @@ private:
          } box;
 
          uint32 index = 0;
-         world::block_box_id box_id = world::max_id;
+         world::block_id block_id = world::block_id::none;
       } draw_block;
 
       struct offset_texture {
