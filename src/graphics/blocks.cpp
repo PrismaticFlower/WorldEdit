@@ -310,9 +310,11 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
 {
    view view;
 
-   _TEMP_culling_storage.clear();
+   if (_TEMP_culling_storage.size() < blocks.boxes.size()) {
+      _TEMP_culling_storage.resize(blocks.boxes.size());
+   }
 
-   _TEMP_culling_storage.reserve(blocks.boxes.size());
+   uint32 visible_count = 0;
 
    if (draw == blocks_draw::shadow) {
       cull_objects_shadow_cascade_avx2(view_frustum, blocks.boxes.bbox.min_x,
@@ -320,19 +322,22 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                        blocks.boxes.bbox.min_z,
                                        blocks.boxes.bbox.max_x,
                                        blocks.boxes.bbox.max_y,
-                                       blocks.boxes.bbox.max_z, _TEMP_culling_storage);
+                                       blocks.boxes.bbox.max_z, blocks.boxes.hidden,
+                                       visible_count, _TEMP_culling_storage);
    }
    else {
-      cull_objects_avx2(view_frustum, blocks.boxes.bbox.min_x,
-                        blocks.boxes.bbox.min_y, blocks.boxes.bbox.min_z,
-                        blocks.boxes.bbox.max_x, blocks.boxes.bbox.max_y,
-                        blocks.boxes.bbox.max_z, _TEMP_culling_storage);
+      cull_objects_avx2(view_frustum, blocks.boxes.bbox.min_x, blocks.boxes.bbox.min_y,
+                        blocks.boxes.bbox.min_z, blocks.boxes.bbox.max_x,
+                        blocks.boxes.bbox.max_y, blocks.boxes.bbox.max_z,
+                        blocks.boxes.hidden, visible_count, _TEMP_culling_storage);
    }
 
-   if (not _TEMP_culling_storage.empty()) {
+   if (visible_count > 0) {
       const dynamic_buffer_allocator::allocation& instance_index_allocation =
-         dynamic_buffer_allocator.allocate(_TEMP_culling_storage.size() *
-                                           sizeof(uint32));
+         dynamic_buffer_allocator.allocate(visible_count * sizeof(uint32));
+
+      std::memcpy(instance_index_allocation.cpu_address,
+                  _TEMP_culling_storage.data(), visible_count * sizeof(uint32));
 
       volatile uint32* next_instance =
          reinterpret_cast<uint32*>(instance_index_allocation.cpu_address);
@@ -343,7 +348,7 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
          next_instance += 1;
       }
 
-      view.box_instances_count = static_cast<uint32>(_TEMP_culling_storage.size());
+      view.box_instances_count = visible_count;
       view.box_instances = instance_index_allocation.gpu_address;
    }
 

@@ -32,6 +32,7 @@
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 
+#include "world/blocks/accessors.hpp"
 #include "world/blocks/find.hpp"
 #include "world/blocks/raycast.hpp"
 #include "world/io/load.hpp"
@@ -2888,6 +2889,23 @@ void world_edit::toggle_hide_selection() noexcept
             if (measurement->hidden) new_selection.add(measurement->id);
          }
       }
+      else if (selected.is<world::block_id>()) {
+         const std::optional<uint32> block_index =
+            world::find_block(_world.blocks, selected.get<world::block_id>());
+
+         if (block_index) {
+            bool& block_hidden =
+               world::get_block_hidden(_world.blocks,
+                                       selected.get<world::block_id>().type(),
+                                       *block_index);
+
+            bundle.push_back(edits::make_set_value(&block_hidden, not block_hidden));
+
+            if (block_hidden) {
+               new_selection.add(selected.get<world::block_id>());
+            }
+         }
+      }
    }
 
    if (bundle.size() == 1) {
@@ -3308,6 +3326,14 @@ void world_edit::unhide_all() noexcept
       }
    };
 
+   const auto unhide_blocks = [&](pinned_vector<bool>& blocks_hidden) {
+      for (bool& hidden : blocks_hidden) {
+         if (hidden) {
+            bundle.push_back(edits::make_set_value(&hidden, false));
+         }
+      }
+   };
+
    unhide_entities(_world.objects);
    unhide_entities(_world.lights);
    unhide_entities(_world.paths);
@@ -3320,6 +3346,8 @@ void world_edit::unhide_all() noexcept
    unhide_entities(_world.planning_connections);
    unhide_entities(_world.boundaries);
    unhide_entities(_world.measurements);
+
+   unhide_blocks(_world.blocks.boxes.hidden);
 
    if (bundle.size() == 1) {
       _edit_stack_world.apply(std::move(bundle.back()), _edit_context,
