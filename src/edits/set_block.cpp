@@ -82,7 +82,7 @@ struct set_block_box_surface final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) noexcept override
+   void apply([[maybe_unused]] world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(dirt_tracker));
       assert(context.is_memory_valid(value_address));
