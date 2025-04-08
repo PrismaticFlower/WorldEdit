@@ -127,6 +127,7 @@
     <ClCompile Include="src\edits\set_block_tests.cpp" />
     <ClCompile Include="src\world\io\save_blocks_tests.cpp" />
     <ClCompile Include="src\world\io\load_blocks_test.cpp" />
+    <ClCompile Include="src\edits\delete_block_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

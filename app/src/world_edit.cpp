@@ -10,6 +10,7 @@
 #include "edits/add_sector_object.hpp"
 #include "edits/bundle.hpp"
 #include "edits/creation_entity_set.hpp"
+#include "edits/delete_block.hpp"
 #include "edits/delete_entity.hpp"
 #include "edits/insert_entity.hpp"
 #include "edits/insert_node.hpp"
@@ -31,6 +32,7 @@
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 
+#include "world/blocks/find.hpp"
 #include "world/blocks/raycast.hpp"
 #include "world/io/load.hpp"
 #include "world/io/load_entity_group.hpp"
@@ -2581,6 +2583,16 @@ void world_edit::delete_selected() noexcept
          _edit_stack_world.apply(edits::make_delete_entity(selected.get<world::measurement_id>(),
                                                            _world),
                                  _edit_context, {.transparent = transparent_edit});
+      }
+      else if (selected.is<world::block_id>()) {
+         if (const std::optional<uint32> index =
+                world::find_block(_world.blocks, selected.get<world::block_id>());
+             index) {
+            _edit_stack_world
+               .apply(edits::make_delete_block(selected.get<world::block_id>().type(),
+                                               *index),
+                      _edit_context, {.transparent = transparent_edit});
+         }
       }
 
       _interaction_targets.selection.remove(selected);
