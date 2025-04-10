@@ -1,8 +1,12 @@
 #include "selection_bbox.hpp"
+#include "world_utilities.hpp"
+
+#include "../blocks/bounding_box.hpp"
+#include "../blocks/find.hpp"
 #include "../object_class.hpp"
+
 #include "math/matrix_funcs.hpp"
 #include "math/vector_funcs.hpp"
-#include "world_utilities.hpp"
 
 namespace we::world {
 
@@ -268,6 +272,16 @@ auto selection_bbox_for_camera(const world& world,
             selection_bbox = math::integrate(selection_bbox, measurement->end);
          }
       }
+      else if (selected.is<block_id>()) {
+         const block_id id = selected.get<block_id>();
+         const std::optional<uint32> block_index = find_block(world.blocks, id);
+
+         if (block_index) {
+            selection_bbox =
+               math::combine(selection_bbox,
+                             get_bounding_box(world.blocks, id.type(), *block_index));
+         }
+      }
    }
 
    return selection_bbox;
@@ -527,6 +541,20 @@ auto selection_metrics_for_move(const world& world,
             centreWS += measurement->start;
             centreWS += measurement->end;
             point_count += 2.0f;
+         }
+      }
+      else if (selected.is<block_id>()) {
+         const block_id id = selected.get<block_id>();
+         const std::optional<uint32> block_index = find_block(world.blocks, id);
+
+         if (block_index) {
+            const math::bounding_box block_bbox =
+               get_bounding_box(world.blocks, id.type(), *block_index);
+
+            selection_bbox = math::combine(selection_bbox, block_bbox);
+
+            centreWS += (block_bbox.min + block_bbox.max) * 0.5f;
+            point_count += 1.0f;
          }
       }
    }
