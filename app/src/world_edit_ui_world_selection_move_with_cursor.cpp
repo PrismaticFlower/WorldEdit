@@ -1,11 +1,17 @@
 #include "world_edit.hpp"
 
-#include "edits/bundle.hpp"
-#include "edits/set_value.hpp"
 #include "imgui_ext.hpp"
+
+#include "edits/bundle.hpp"
+#include "edits/set_block.hpp"
+#include "edits/set_value.hpp"
+
 #include "math/bounding_box.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
+
+#include "world/blocks/find.hpp"
+#include "world/blocks/raycast.hpp"
 #include "world/utility/raycast.hpp"
 #include "world/utility/raycast_terrain.hpp"
 #include "world/utility/selection_bbox.hpp"
@@ -34,6 +40,14 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
       const auto filter_entity = [&](const auto& entity) noexcept {
          for (const auto& selected : _interaction_targets.selection) {
             if (world::selected_entity{entity.id} == selected) return false;
+         }
+
+         return true;
+      };
+
+      const auto filter_block = [&](const world::block_id id) noexcept {
+         for (const auto& selected : _interaction_targets.selection) {
+            if (id == selected) return false;
          }
 
          return true;
@@ -169,6 +183,16 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
          }
       }
 
+      if (raycast_mask.blocks) {
+         if (std::optional<world::raycast_block_result> hit =
+                world::raycast(ray.origin, ray.direction, _world_layers_hit_mask,
+                               _world.blocks, filter_block);
+             hit) {
+            cursor_distance = std::min(cursor_distance, hit->distance);
+         }
+         /* Raycast Blocks */
+      }
+
       if (cursor_distance == std::numeric_limits<float>::max()) {
          if (float hit = -(dot(ray.origin, float3{0.0f, 1.0f, 0.0f}) - _editor_floor_height) /
                          dot(ray.direction, float3{0.0f, 1.0f, 0.0f});
@@ -246,14 +270,18 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
       const bool lock_y = _selection_cursor_move_lock_y_axis;
       const bool lock_z = _selection_cursor_move_lock_z_axis;
 
+      const auto create_new_position = [&](const float3& position) {
+         float3 new_position = position - selection_centreWS + cursor_positionWS;
+
+         if (lock_x) new_position.x = position.x;
+         if (lock_y) new_position.y = position.y;
+         if (lock_z) new_position.z = position.z;
+
+         return new_position;
+      };
+
       const auto update_position = [&](float3* position) {
-         assert(position);
-
-         float3 new_position = *position - selection_centreWS + cursor_positionWS;
-
-         if (lock_x) new_position.x = position->x;
-         if (lock_y) new_position.y = position->y;
-         if (lock_z) new_position.z = position->z;
+         const float3 new_position = create_new_position(*position);
 
          bundled_edits.push_back(edits::make_set_value(position, new_position));
       };
@@ -379,6 +407,25 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                update_position(&measurement->end);
             }
          }
+         else if (selected.is<world::block_id>()) {
+            const world::block_id block_id = selected.get<world::block_id>();
+            const std::optional<uint32> block_index =
+               world::find_block(_world.blocks, block_id);
+
+            if (block_index) {
+               switch (block_id.type()) {
+               case world::block_type::box: {
+                  const world::block_description_box& box =
+                     _world.blocks.boxes.description[*block_index];
+
+                  bundled_edits.push_back(
+                     edits::make_set_block_box_metrics(*block_index, box.rotation,
+                                                       create_new_position(box.position),
+                                                       box.size));
+               } break;
+               }
+            }
+         }
       }
 
       if (bundled_edits.size() == 1) {
@@ -477,6 +524,10 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
 
       if (bool hit = cursor_mask.terrain; ImGui::Checkbox("Terrain", &hit)) {
          cursor_mask.terrain = hit;
+      }
+
+      if (bool hit = cursor_mask.blocks; ImGui::Checkbox("Blocks", &hit)) {
+         cursor_mask.blocks = hit;
       }
 
       ImGui::SeparatorText("Locked Position");
@@ -701,6 +752,24 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                   edits::make_set_value(&measurement->end,
                                         (rotation * (measurement->end - centreWS)) +
                                            centreWS));
+            }
+         }
+         else if (selected.is<world::block_id>()) {
+            const world::block_id block_id = selected.get<world::block_id>();
+            const std::optional<uint32> block_index =
+               world::find_block(_world.blocks, block_id);
+
+            if (block_index) {
+               switch (block_id.type()) {
+               case world::block_type::box: {
+                  const world::block_description_box& box =
+                     _world.blocks.boxes.description[*block_index];
+
+                  bundled_edits.push_back(edits::make_set_block_box_metrics(
+                     *block_index, rotation * box.rotation,
+                     (rotation * (box.position - centreWS)) + centreWS, box.size));
+               } break;
+               }
             }
          }
       }

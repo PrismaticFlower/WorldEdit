@@ -17,7 +17,8 @@ struct raycast_block_result_local {
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
              const active_layers active_layers, const blocks_boxes& boxes,
-             const float max_distance) noexcept
+             const float max_distance,
+             function_ptr<bool(const block_id id) noexcept> filter) noexcept
    -> std::optional<raycast_block_result_local>
 {
    float closest = max_distance;
@@ -38,6 +39,8 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
 
       if (const float hit = boxIntersection(ray_originLS, ray_directionLS, box.size);
           hit >= 0.0f and hit < closest) {
+         if (filter and not filter(boxes.ids[box_index])) continue;
+
          closest = hit;
          closest_index = box_index;
       }
@@ -87,7 +90,8 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
 }
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
-             const active_layers active_layers, const blocks& blocks) noexcept
+             const active_layers active_layers, const blocks& blocks,
+             function_ptr<bool(const block_id id) noexcept> filter) noexcept
    -> std::optional<raycast_block_result>
 {
    float closest = FLT_MAX;
@@ -96,7 +100,8 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
    uint32 closest_surface_index = UINT32_MAX;
 
    if (std::optional<raycast_block_result_local> hit =
-          raycast(ray_originWS, ray_directionWS, active_layers, blocks.boxes, closest);
+          raycast(ray_originWS, ray_directionWS, active_layers, blocks.boxes,
+                  closest, filter);
        hit) {
       closest = hit->distance;
       closest_id = blocks.boxes.ids[hit->index];
