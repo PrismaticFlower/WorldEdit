@@ -451,7 +451,7 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
 void world_edit::ui_show_create_menu_items() noexcept
 {
-   const int16 creation_layer =
+   const int8 creation_layer =
       _last_created_entities.last_layer < std::ssize(_world.layer_descriptions)
          ? _last_created_entities.last_layer
          : 0;

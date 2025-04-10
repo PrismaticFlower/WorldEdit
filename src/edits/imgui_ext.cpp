@@ -354,7 +354,7 @@ bool InputTextAutoComplete(
    return changed;
 }
 
-bool LayerPick(const char* label, we::int16* layer,
+bool LayerPick(const char* label, we::int8* layer,
                we::edits::stack<we::world::edit_context>& edit_stack,
                we::world::edit_context& context) noexcept
 {
@@ -369,7 +369,7 @@ bool LayerPick(const char* label, we::int16* layer,
           return context.world.layer_descriptions[*layer].name.c_str();
        }())) {
 
-      for (we::int16 i = 0; i < std::ssize(context.world.layer_descriptions); ++i) {
+      for (we::int8 i = 0; i < std::ssize(context.world.layer_descriptions); ++i) {
          if (ImGui::Selectable(context.world.layer_descriptions[i].name.c_str())) {
             edit_stack.apply(edits::make_set_value(layer, i), context,
                              {.closed = true});

@@ -11,6 +11,8 @@
 #include "edits/set_value.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/string_icompare.hpp"
+#include "world/blocks/accessors.hpp"
+#include "world/blocks/find.hpp"
 #include "world/utility/grounding.hpp"
 #include "world/utility/hintnode_traits.hpp"
 #include "world/utility/object_properties.hpp"
@@ -1898,6 +1900,47 @@ void world_edit::ui_show_world_selection_editor() noexcept
                               _edit_context, 0.25f);
             ImGui::LabelText("Length", "%.2fm",
                              distance(measurement->start, measurement->end));
+         }
+         else if (selected.is<world::block_id>()) {
+            const world::block_id block_id = selected.get<world::block_id>();
+            const std::optional<uint32> block_index =
+               world::find_block(_world.blocks, block_id);
+
+            if (not block_index) {
+               ImGui::PopID();
+
+               continue;
+            }
+
+            if (is_multi_select) {
+               bool keep_selected = true;
+
+               if (not ImGui::CollapsingHeader("Block", &keep_selected,
+                                               ImGuiTreeNodeFlags_DefaultOpen) and
+                   keep_selected) {
+                  ImGui::PopID();
+
+                  continue;
+               }
+               else if (not keep_selected) {
+                  _interaction_targets.selection.remove(block_id);
+
+                  selected_index -= 1;
+                  id_offset += 1;
+
+                  ImGui::PopID();
+
+                  continue;
+               }
+            }
+            else {
+               ImGui::SeparatorText("Block");
+            }
+
+            ImGui::LayerPick("Layer",
+                             &world::get_block_layer(_world.blocks,
+                                                     block_id.type(), *block_index),
+                             _edit_stack_world, _edit_context);
          }
 
          ImGui::PopID();

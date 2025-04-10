@@ -117,7 +117,7 @@ bool InputTextAutoComplete(
    we::world::edit_context& context,
    we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback) noexcept;
 
-bool LayerPick(const char* label, we::int16* layer,
+bool LayerPick(const char* label, we::int8* layer,
                we::edits::stack<we::world::edit_context>& edit_stack,
                we::world::edit_context& context) noexcept;
 

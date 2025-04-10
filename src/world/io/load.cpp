@@ -63,7 +63,7 @@ void check_space(std::string_view name, pinned_vector<T>& vec)
 }
 
 auto read_layer_index(const assets::config::node& node,
-                      const layer_remap& layer_remap) -> int16
+                      const layer_remap& layer_remap) -> int8
 {
    if (const auto layer_it = node.find("Layer"sv); layer_it != node.cend()) {
       return layer_remap[layer_it->values.get<int>(0)];
@@ -332,7 +332,7 @@ void load_objects(const io::path& path, const std::string_view layer_name,
 }
 
 void load_lights(const io::path& path, const std::string_view layer_name,
-                 output_stream& output, world& world_out, const int16 layer)
+                 output_stream& output, world& world_out, const int8 layer)
 {
    using namespace assets;
 
@@ -1027,7 +1027,7 @@ void load_boundaries(const io::path& filepath, output_stream& output, world& wor
 }
 
 void load_hintnodes(const io::path& filepath, const std::string_view layer_name,
-                    output_stream& output, world& world_out, const int16 layer)
+                    output_stream& output, world& world_out, const int8 layer)
 {
    using namespace assets;
 
@@ -1256,7 +1256,7 @@ void load_measurements(const io::path& filepath, output_stream& output, world& w
 
 void load_layer(const io::path& world_dir, const std::string_view layer_name,
                 const std::string_view world_ext, output_stream& output,
-                world& world_out, const layer_remap& layer_remap, const int16 layer)
+                world& world_out, const layer_remap& layer_remap, const int8 layer)
 {
    load_objects(io::compose_path(world_dir, layer_name, world_ext), layer_name,
                 output, world_out, layer_remap);
@@ -1481,7 +1481,7 @@ auto load_world(const io::path& path, output_stream& output) -> world
          auto layer = world.layer_descriptions[i];
 
          load_layer(world_dir, fmt::format("{}_{}", world.name, layer.name),
-                    ".lyr"sv, output, world, layer_remap, static_cast<int16>(i));
+                    ".lyr"sv, output, world, layer_remap, static_cast<int8>(i));
       }
 
       convert_light_regions(world);
