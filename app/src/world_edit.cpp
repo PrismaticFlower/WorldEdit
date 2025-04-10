@@ -15,6 +15,7 @@
 #include "edits/insert_entity.hpp"
 #include "edits/insert_node.hpp"
 #include "edits/insert_point.hpp"
+#include "edits/set_block.hpp"
 #include "edits/set_class_name.hpp"
 #include "edits/set_terrain_area.hpp"
 #include "edits/set_value.hpp"
@@ -2738,6 +2739,31 @@ void world_edit::align_selection(const float alignment) noexcept
                edits::make_set_value(&measurement->end,
                                      round(measurement->end / alignment) * alignment));
          }
+      }
+      else if (selected.is<world::block_id>()) {
+         _Pragma("warning(push)");
+         _Pragma("warning(default : 4061)"); // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+         _Pragma("warning(default : 4062)"); // enumerator 'identifier' in switch of enum 'enumeration' is not handled
+
+         const world::block_id block_id = selected.get<world::block_id>();
+         const std::optional<uint32> block_index =
+            world::find_block(_world.blocks, block_id);
+
+         if (block_index) {
+            switch (block_id.type()) {
+            case world::block_type::box: {
+               const world::block_description_box& box =
+                  _world.blocks.boxes.description[*block_index];
+
+               bundle.push_back(
+                  edits::make_set_block_box_metrics(*block_index, box.rotation,
+                                                    align_position(box.position),
+                                                    box.size));
+            } break;
+            }
+         }
+
+         _Pragma("warning(pop)");
       }
    }
 
