@@ -103,7 +103,7 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
             closest_distance = corner_distance;
          }
 
-         draw_point(visualizers, midpointWS, colors.corner);
+         draw_point(visualizers, midpointWS, colors.edge);
       }
    }
 
