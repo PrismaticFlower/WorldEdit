@@ -1,11 +1,18 @@
 #include "world_edit.hpp"
 
+#include "edits/set_block.hpp"
 #include "edits/set_value.hpp"
+
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
+
+#include "world/blocks/find.hpp"
 #include "world/utility/world_utilities.hpp"
 
 #include <imgui.h>
+
+#pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+#pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
 
 namespace we {
 
@@ -21,9 +28,10 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
    bool resizable_entity = false;
 
    if (ImGui::Begin("Resize Entity", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
-      ImGui::TextWrapped("Resize any selected entities. Only lights, regions, "
-                         "portals, barriers, AI planning hubs and boundaries "
-                         "support resizing.");
+      ImGui::TextWrapped(
+         "Resize any selected entities. Only lights, regions, "
+         "portals, barriers, AI planning hubs, boundaries and blocks"
+         "support resizing.");
 
       for (const world::selected_entity& selected : _interaction_targets.selection) {
          if (selected.is<world::light_id>()) {
@@ -32,6 +40,8 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
 
             if (light and light->light_type != world::light_type::directional) {
                switch (light->light_type) {
+               case world::light_type::directional:
+                  break;
                case world::light_type::point: {
                   float3 new_position = light->position;
                   float3 new_size = {light->range, light->range, light->range};
@@ -403,6 +413,44 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
 
                resizable_entity = true;
             }
+         }
+         else if (selected.is<world::block_id>()) {
+            const world::block_id block_id = selected.get<world::block_id>();
+            const std::optional<uint32> block_index =
+               world::find_block(_world.blocks, block_id);
+
+            if (block_index) {
+               switch (block_id.type()) {
+               case world::block_type::box: {
+                  const world::block_description_box& box =
+                     _world.blocks.boxes.description[*block_index];
+
+                  float3 new_position = box.position;
+                  float3 new_size = box.size;
+
+                  if (_gizmos.gizmo_size(
+                         {
+                            .name = "Block Box Size",
+                            .instance = static_cast<int64>(
+                               _world.blocks.boxes.ids[*block_index]),
+                            .alignment = _editor_grid_size,
+                            .gizmo_rotation = box.rotation,
+                         },
+                         new_position, new_size)) {
+                     _edit_stack_world.apply(edits::make_set_block_box_metrics(
+                                                *block_index, box.rotation,
+                                                new_position, new_size),
+                                             _edit_context);
+                  }
+
+               } break;
+               }
+            }
+
+            if (_gizmos.can_close_last_edit()) {
+               _edit_stack_world.close_last();
+            }
+            resizable_entity = true;
          }
       }
    }
