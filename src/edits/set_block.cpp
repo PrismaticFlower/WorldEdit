@@ -1,7 +1,6 @@
 #include "set_block.hpp"
 
-#include "math/bounding_box.hpp"
-#include "math/vector_funcs.hpp"
+#include "world/blocks/bounding_box.hpp"
 
 namespace we::edits {
 
@@ -12,7 +11,6 @@ struct set_block_box_metrics final : edit<world::edit_context> {
                          const float3& position, const float3& size)
       : index{index}, rotation{rotation}, position{position}, size{size}
    {
-      bbox = rotation * math::bounding_box{.min = -size, .max = size} + position;
    }
 
    void apply(world::edit_context& context) noexcept override
@@ -21,17 +19,18 @@ struct set_block_box_metrics final : edit<world::edit_context> {
 
       assert(index < blocks.size());
 
-      std::swap(blocks.bbox.min_x[index], bbox.min.x);
-      std::swap(blocks.bbox.min_y[index], bbox.min.y);
-      std::swap(blocks.bbox.min_z[index], bbox.min.z);
-
-      std::swap(blocks.bbox.max_x[index], bbox.max.x);
-      std::swap(blocks.bbox.max_y[index], bbox.max.y);
-      std::swap(blocks.bbox.max_z[index], bbox.max.z);
-
       std::swap(blocks.description[index].rotation, rotation);
       std::swap(blocks.description[index].position, position);
       std::swap(blocks.description[index].size, size);
+
+      const math::bounding_box bbox = get_bounding_box(blocks.description[index]);
+
+      blocks.bbox.min_x[index] = bbox.min.x;
+      blocks.bbox.min_y[index] = bbox.min.y;
+      blocks.bbox.min_z[index] = bbox.min.z;
+      blocks.bbox.max_x[index] = bbox.max.x;
+      blocks.bbox.max_y[index] = bbox.max.y;
+      blocks.bbox.max_z[index] = bbox.max.z;
 
       blocks.dirty.add({index, index + 1});
    }
@@ -56,7 +55,6 @@ struct set_block_box_metrics final : edit<world::edit_context> {
       set_block_box_metrics& other =
          dynamic_cast<set_block_box_metrics&>(other_unknown);
 
-      this->bbox = other.bbox;
       this->rotation = other.rotation;
       this->position = other.position;
       this->size = other.size;
@@ -65,7 +63,6 @@ struct set_block_box_metrics final : edit<world::edit_context> {
 private:
    const uint32 index = 0;
 
-   math::bounding_box bbox;
    quaternion rotation;
    float3 position;
    float3 size;

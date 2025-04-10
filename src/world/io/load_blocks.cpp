@@ -1,6 +1,8 @@
 #include "load_blocks.hpp"
 #include "load_failure.hpp"
 
+#include "../blocks/bounding_box.hpp"
+
 #include "assets/config/io.hpp"
 
 #include "io/error.hpp"
@@ -104,9 +106,7 @@ void load_boxes(assets::config::node& node, const layer_remap& layer_remap,
          }
       }
 
-      const math::bounding_box bbox =
-         box.rotation * math::bounding_box{.min = -box.size, .max = box.size} +
-         box.position;
+      const math::bounding_box bbox = get_bounding_box(box);
 
       blocks_out.boxes.bbox.min_x.push_back(bbox.min.x);
       blocks_out.boxes.bbox.min_y.push_back(bbox.min.y);
