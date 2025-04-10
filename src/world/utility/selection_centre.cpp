@@ -1,7 +1,11 @@
 #include "selection_centre.hpp"
-#include "../object_class.hpp"
-#include "math/vector_funcs.hpp"
 #include "world_utilities.hpp"
+
+#include "../blocks/bounding_box.hpp"
+#include "../blocks/find.hpp"
+#include "../object_class.hpp"
+
+#include "math/vector_funcs.hpp"
 
 namespace we::world {
 
@@ -122,6 +126,18 @@ auto selection_centre_for_rotate_around(const world& world,
             selection_centre += measurement->start;
             selection_centre += measurement->end;
             selection_axis_count += {2.0f, 2.0f, 2.0f};
+         }
+      }
+      else if (selected.is<block_id>()) {
+         const block_id id = selected.get<block_id>();
+         const std::optional<uint32> block_index = find_block(world.blocks, id);
+
+         if (block_index) {
+            const math::bounding_box bbox =
+               get_bounding_box(world.blocks, id.type(), *block_index);
+
+            selection_centre += (bbox.min + bbox.max) / 2.0f;
+            selection_axis_count += {1.0f, 1.0f, 1.0f};
          }
       }
    }
@@ -271,6 +287,18 @@ auto selection_centre_for_env_map(const world& world,
             selection_centre += measurement->start;
             selection_centre += measurement->end;
             selection_axis_count += {2.0f, 2.0f, 2.0f};
+         }
+      }
+      else if (selected.is<block_id>()) {
+         const block_id id = selected.get<block_id>();
+         const std::optional<uint32> block_index = find_block(world.blocks, id);
+
+         if (block_index) {
+            const math::bounding_box bbox =
+               get_bounding_box(world.blocks, id.type(), *block_index);
+
+            selection_centre += (bbox.min + bbox.max) / 2.0f;
+            selection_axis_count += {1.0f, 1.0f, 1.0f};
          }
       }
    }

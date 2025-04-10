@@ -1,10 +1,15 @@
 #include "world_edit.hpp"
 
+#include "imgui_ext.hpp"
+
 #include "edits/bundle.hpp"
 #include "edits/set_value.hpp"
-#include "imgui_ext.hpp"
+
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
+
+#include "world/blocks/accessors.hpp"
+#include "world/blocks/find.hpp"
 #include "world/utility/world_utilities.hpp"
 
 namespace we {
