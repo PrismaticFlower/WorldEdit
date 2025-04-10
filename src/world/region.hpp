@@ -11,7 +11,7 @@ enum class region_shape { box = 0, sphere = 1, cylinder = 2 };
 
 struct region {
    std::string name;
-   int16 layer = 0;
+   int8 layer = 0;
    bool hidden = false;
 
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};

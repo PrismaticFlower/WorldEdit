@@ -578,7 +578,7 @@ private:
       world::planning_connection_id last_planning_connection = world::max_id;
       world::boundary_id last_boundary = world::max_id;
 
-      int16 last_layer = 0;
+      int8 last_layer = 0;
 
       container::ring_set<lowercase_string, 8> last_used_object_classes;
    } _last_created_entities;
@@ -1027,7 +1027,7 @@ private:
    world::sector_id _move_sector_point_id = {};
    uint32 _move_sector_point_index = 0;
    world::light_id _rotate_light_region_id = {};
-   int16 _selection_set_layer = 0;
+   int8 _selection_set_layer = 0;
    bool _selection_cursor_move_ground_with_bbox = true;
    bool _selection_cursor_move_align_cursor = false;
    bool _selection_cursor_move_snap_cursor = false;
