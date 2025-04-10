@@ -381,6 +381,7 @@
     <ClCompile Include="src\utility\string_icompare.cpp" />
     <ClCompile Include="src\world\blocks.cpp" />
     <ClCompile Include="src\world\blocks\accessors.cpp" />
+    <ClCompile Include="src\world\blocks\bounding_box.cpp" />
     <ClCompile Include="src\world\blocks\dirty_range_tracker.cpp" />
     <ClCompile Include="src\world\blocks\find.cpp" />
     <ClCompile Include="src\world\blocks\highlight_block.cpp" />
@@ -389,6 +390,7 @@
     <ClCompile Include="src\world\blocks\raycast.cpp" />
     <ClCompile Include="src\world\blocks\snapping.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
+    <ClCompile Include="src\world\io\layer_remap.cpp" />
     <ClCompile Include="src\world\io\load.cpp" />
     <ClCompile Include="src\world\io\load_blocks.cpp" />
     <ClCompile Include="src\world\io\load_effects.cpp" />
@@ -687,6 +689,7 @@
     <ClInclude Include="src\world\animation.hpp" />
     <ClInclude Include="src\world\barrier.hpp" />
     <ClInclude Include="src\world\blocks\accessors.hpp" />
+    <ClInclude Include="src\world\blocks\bounding_box.hpp" />
     <ClInclude Include="src\world\blocks\find.hpp" />
     <ClInclude Include="src\world\blocks\highlight_block.hpp" />
     <ClInclude Include="src\world\blocks\highlight_surface.hpp" />
@@ -699,6 +702,7 @@
     <ClInclude Include="src\world\id.hpp" />
     <ClInclude Include="src\world\game_mode_description.hpp" />
     <ClInclude Include="src\world\hintnode.hpp" />
+    <ClInclude Include="src\world\io\layer_remap.hpp" />
     <ClInclude Include="src\world\io\load.hpp" />
     <ClInclude Include="src\world\io\load_blocks.hpp" />
     <ClInclude Include="src\world\io\load_effects.hpp" />

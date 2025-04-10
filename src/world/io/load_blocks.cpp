@@ -19,7 +19,8 @@ using string::iequals;
 
 namespace {
 
-void load_boxes(assets::config::node& node, blocks& blocks_out)
+void load_boxes(assets::config::node& node, const layer_remap& layer_remap,
+                blocks& blocks_out)
 {
    for (const auto& key_node : node) {
       if (not iequals(key_node.key, "Box")) continue;
@@ -32,6 +33,7 @@ void load_boxes(assets::config::node& node, blocks& blocks_out)
       }
 
       block_description_box box;
+      int8 layer = 0;
 
       for (const auto& prop : key_node) {
          if (iequals(prop.key, "Rotation")) {
@@ -97,6 +99,9 @@ void load_boxes(assets::config::node& node, blocks& blocks_out)
                    std::min(prop.values.get<uint16>(i * 2 + 1), block_max_texture_offset)};
             }
          }
+         else if (iequals(prop.key, "Layer")) {
+            layer = layer_remap[prop.values.get<int>(0)];
+         }
       }
 
       const math::bounding_box bbox =
@@ -110,6 +115,7 @@ void load_boxes(assets::config::node& node, blocks& blocks_out)
       blocks_out.boxes.bbox.max_y.push_back(bbox.max.y);
       blocks_out.boxes.bbox.max_z.push_back(bbox.max.z);
       blocks_out.boxes.hidden.push_back(false);
+      blocks_out.boxes.layer.push_back(layer);
       blocks_out.boxes.description.push_back(box);
       blocks_out.boxes.ids.push_back(blocks_out.next_id.boxes.aquire());
    }
@@ -167,7 +173,8 @@ void load_materials(assets::config::node& node, blocks& blocks_out,
 }
 }
 
-auto load_blocks(const io::path& path, output_stream& output) -> blocks
+auto load_blocks(const io::path& path, const layer_remap& layer_remap,
+                 output_stream& output) -> blocks
 {
    try {
       utility::stopwatch load_timer;
@@ -181,7 +188,7 @@ auto load_blocks(const io::path& path, output_stream& output) -> blocks
 
             blocks.boxes.reserve(box_reservation);
 
-            load_boxes(key_node, blocks);
+            load_boxes(key_node, layer_remap, blocks);
          }
          else if (iequals(key_node.key, "Materials")) {
             load_materials(key_node, blocks, output);

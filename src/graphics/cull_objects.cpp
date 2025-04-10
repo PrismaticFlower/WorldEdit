@@ -201,7 +201,9 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
                        std::span<const float> bbox_min_z,
                        std::span<const float> bbox_max_x,
                        std::span<const float> bbox_max_y,
-                       std::span<const float> bbox_max_z, std::span<const bool> hidden,
+                       std::span<const float> bbox_max_z,
+                       std::span<const bool> hidden, std::span<const int8> layers,
+                       const world::active_layers active_layers,
                        uint32& out_count, std::span<uint32> out_list) noexcept
 {
    assert(bbox_min_x.size() == bbox_min_y.size());
@@ -210,6 +212,7 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
    assert(bbox_min_x.size() == bbox_max_y.size());
    assert(bbox_min_x.size() == bbox_max_z.size());
    assert(bbox_min_x.size() == hidden.size());
+   assert(bbox_min_x.size() == layers.size());
    assert(bbox_min_x.size() <= out_list.size());
 
    out_count = 0;
@@ -269,21 +272,21 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
 
       // clang-format off
 
-      if (not hidden[i * avx_width + 0] and inside_mask & 0b1) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 0);
-      if (not hidden[i * avx_width + 1] and inside_mask & 0b10) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 1);
-      if (not hidden[i * avx_width + 2] and inside_mask & 0b100) out_list[out_count++] = (static_cast<uint32>(i * avx_width) + 2);
-      if (not hidden[i * avx_width + 3] and inside_mask & 0b1000) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 3);
-      if (not hidden[i * avx_width + 4] and inside_mask & 0b10000) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 4);
-      if (not hidden[i * avx_width + 5] and inside_mask & 0b100000) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 5);
-      if (not hidden[i * avx_width + 6] and inside_mask & 0b1000000) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 6);
-      if (not hidden[i * avx_width + 7] and inside_mask & 0b10000000) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 7);
+      if (inside_mask & 0b1        and active_layers[layers[i * avx_width + 0]] and not hidden[i * avx_width + 0]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 0);
+      if (inside_mask & 0b10       and active_layers[layers[i * avx_width + 1]] and not hidden[i * avx_width + 1]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 1);
+      if (inside_mask & 0b100      and active_layers[layers[i * avx_width + 2]] and not hidden[i * avx_width + 2]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 2);
+      if (inside_mask & 0b1000     and active_layers[layers[i * avx_width + 3]] and not hidden[i * avx_width + 3]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 3);
+      if (inside_mask & 0b10000    and active_layers[layers[i * avx_width + 4]] and not hidden[i * avx_width + 4]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 4);
+      if (inside_mask & 0b100000   and active_layers[layers[i * avx_width + 5]] and not hidden[i * avx_width + 5]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 5);
+      if (inside_mask & 0b1000000  and active_layers[layers[i * avx_width + 6]] and not hidden[i * avx_width + 6]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 6);
+      if (inside_mask & 0b10000000 and active_layers[layers[i * avx_width + 7]] and not hidden[i * avx_width + 7]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 7);
 
       // clang-format on
    }
 
    for (std::size_t i = bbox_min_x.size() - scalar_iterations;
         i < bbox_min_x.size(); ++i) {
-      if (hidden[i] or
+      if (not active_layers[layers[i]] or hidden[i] or
           not intersects(frustum, {{bbox_min_x[i], bbox_min_y[i], bbox_min_z[i]},
                                    {bbox_max_x[i], bbox_max_y[i], bbox_max_z[i]}})) {
          continue;
@@ -378,6 +381,7 @@ void cull_objects_shadow_cascade_avx2(
    std::span<const float> bbox_min_y, std::span<const float> bbox_min_z,
    std::span<const float> bbox_max_x, std::span<const float> bbox_max_y,
    std::span<const float> bbox_max_z, std::span<const bool> hidden,
+   std::span<const int8> layers, const world::active_layers active_layers,
    uint32& out_count, std::span<uint32> out_list) noexcept
 {
    assert(bbox_min_x.size() == bbox_min_y.size());
@@ -385,6 +389,9 @@ void cull_objects_shadow_cascade_avx2(
    assert(bbox_min_x.size() == bbox_max_x.size());
    assert(bbox_min_x.size() == bbox_max_y.size());
    assert(bbox_min_x.size() == bbox_max_z.size());
+   assert(bbox_min_x.size() == hidden.size());
+   assert(bbox_min_x.size() == layers.size());
+   assert(bbox_min_x.size() <= out_list.size());
 
    out_count = 0;
 
@@ -416,21 +423,21 @@ void cull_objects_shadow_cascade_avx2(
 
       // clang-format off
 
-      if (not hidden[i + 0] and inside_mask & 0b1) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 0);
-      if (not hidden[i + 1] and inside_mask & 0b10) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 1);
-      if (not hidden[i + 2] and inside_mask & 0b100) out_list[out_count++] = (static_cast<uint32>(i * avx_width) + 2);
-      if (not hidden[i + 3] and inside_mask & 0b1000) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 3);
-      if (not hidden[i + 4] and inside_mask & 0b10000) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 4);
-      if (not hidden[i + 5] and inside_mask & 0b100000) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 5);
-      if (not hidden[i + 6] and inside_mask & 0b1000000) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 6);
-      if (not hidden[i + 7] and inside_mask & 0b10000000) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 7);
+      if (inside_mask & 0b1        and active_layers[layers[i * avx_width + 0]] and not hidden[i * avx_width + 0]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 0);
+      if (inside_mask & 0b10       and active_layers[layers[i * avx_width + 1]] and not hidden[i * avx_width + 1]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 1);
+      if (inside_mask & 0b100      and active_layers[layers[i * avx_width + 2]] and not hidden[i * avx_width + 2]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 2);
+      if (inside_mask & 0b1000     and active_layers[layers[i * avx_width + 3]] and not hidden[i * avx_width + 3]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 3);
+      if (inside_mask & 0b10000    and active_layers[layers[i * avx_width + 4]] and not hidden[i * avx_width + 4]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 4);
+      if (inside_mask & 0b100000   and active_layers[layers[i * avx_width + 5]] and not hidden[i * avx_width + 5]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 5);
+      if (inside_mask & 0b1000000  and active_layers[layers[i * avx_width + 6]] and not hidden[i * avx_width + 6]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 6);
+      if (inside_mask & 0b10000000 and active_layers[layers[i * avx_width + 7]] and not hidden[i * avx_width + 7]) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 7);
 
       // clang-format on
    }
 
    for (std::size_t i = bbox_min_x.size() - scalar_iterations;
         i < bbox_min_x.size(); ++i) {
-      if (hidden[i] or
+      if (not active_layers[layers[i]] or hidden[i] or
           not intersects(frustum, {{bbox_min_x[i], bbox_min_y[i], bbox_min_z[i]},
                                    {bbox_max_x[i], bbox_max_y[i], bbox_max_z[i]}})) {
          continue;

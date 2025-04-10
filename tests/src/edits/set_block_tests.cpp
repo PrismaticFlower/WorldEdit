@@ -22,9 +22,11 @@ TEST_CASE("edits set_block_box_metrics", "[Edits]")
    blocks.boxes.bbox.max_y.push_back(15.0f);
    blocks.boxes.bbox.max_z.push_back(15.0f);
    blocks.boxes.hidden.push_back(false);
+   blocks.boxes.layer.push_back(0);
    blocks.boxes.description.push_back({.rotation = quaternion{0.0f, 1.0f, 0.0f, 0.0f},
                                        .position = float3{10.0f, 10.0f, 10.0f},
                                        .size = float3{5.0f, 5.0f, 5.0f}});
+   blocks.boxes.ids.push_back(world::block_box_id{});
 
    auto edit = make_set_block_box_metrics(0, quaternion{1.0f, 0.0f, 0.0f, 0.0f},
                                           float3{2.0f, 2.0f, 2.0f},
@@ -39,6 +41,7 @@ TEST_CASE("edits set_block_box_metrics", "[Edits]")
    CHECK(blocks.boxes.bbox.max_y[0] == 5.0f);
    CHECK(blocks.boxes.bbox.max_z[0] == 5.0f);
    CHECK(not blocks.boxes.hidden[0]);
+   CHECK(blocks.boxes.layer[0] == 0);
    CHECK(blocks.boxes.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
    CHECK(blocks.boxes.description[0].position == float3{2.0f, 2.0f, 2.0f});
    CHECK(blocks.boxes.description[0].size == float3{3.0f, 3.0f, 3.0f});
@@ -57,6 +60,7 @@ TEST_CASE("edits set_block_box_metrics", "[Edits]")
    CHECK(blocks.boxes.bbox.max_y[0] == 15.0f);
    CHECK(blocks.boxes.bbox.max_z[0] == 15.0f);
    CHECK(not blocks.boxes.hidden[0]);
+   CHECK(blocks.boxes.layer[0] == 0);
    CHECK(blocks.boxes.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
    CHECK(blocks.boxes.description[0].position == float3{10.0f, 10.0f, 10.0f});
    CHECK(blocks.boxes.description[0].size == float3{5.0f, 5.0f, 5.0f});
@@ -80,9 +84,11 @@ TEST_CASE("edits set_block_box_metrics coalesce", "[Edits]")
    blocks.boxes.bbox.max_y.push_back(15.0f);
    blocks.boxes.bbox.max_z.push_back(15.0f);
    blocks.boxes.hidden.push_back(false);
+   blocks.boxes.layer.push_back(0);
    blocks.boxes.description.push_back({.rotation = quaternion{0.0f, 1.0f, 0.0f, 0.0f},
                                        .position = float3{10.0f, 10.0f, 10.0f},
                                        .size = float3{5.0f, 5.0f, 5.0f}});
+   blocks.boxes.ids.push_back(world::block_box_id{});
 
    auto edit = make_set_block_box_metrics(0, quaternion{0.0f, 1.0f, 0.0f, 0.0f},
                                           float3{4.0f, 2.0f, 2.0f},
@@ -104,6 +110,7 @@ TEST_CASE("edits set_block_box_metrics coalesce", "[Edits]")
    CHECK(blocks.boxes.bbox.max_y[0] == 5.0f);
    CHECK(blocks.boxes.bbox.max_z[0] == 5.0f);
    CHECK(not blocks.boxes.hidden[0]);
+   CHECK(blocks.boxes.layer[0] == 0);
    CHECK(blocks.boxes.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
    CHECK(blocks.boxes.description[0].position == float3{2.0f, 2.0f, 2.0f});
    CHECK(blocks.boxes.description[0].size == float3{3.0f, 3.0f, 3.0f});
@@ -122,6 +129,7 @@ TEST_CASE("edits set_block_box_metrics coalesce", "[Edits]")
    CHECK(blocks.boxes.bbox.max_y[0] == 15.0f);
    CHECK(blocks.boxes.bbox.max_z[0] == 15.0f);
    CHECK(not blocks.boxes.hidden[0]);
+   CHECK(blocks.boxes.layer[0] == 0);
    CHECK(blocks.boxes.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
    CHECK(blocks.boxes.description[0].position == float3{10.0f, 10.0f, 10.0f});
    CHECK(blocks.boxes.description[0].size == float3{5.0f, 5.0f, 5.0f});
@@ -161,9 +169,11 @@ TEST_CASE("edits set_block_surface", "[Edits]")
    blocks.boxes.bbox.max_y.push_back(15.0f);
    blocks.boxes.bbox.max_z.push_back(15.0f);
    blocks.boxes.hidden.push_back(false);
+   blocks.boxes.layer.push_back(0);
    blocks.boxes.description.push_back({.rotation = quaternion{0.0f, 1.0f, 0.0f, 0.0f},
                                        .position = float3{10.0f, 10.0f, 10.0f},
                                        .size = float3{5.0f, 5.0f, 5.0f}});
+   blocks.boxes.ids.push_back(world::block_box_id{});
 
    auto edit =
       make_set_block_surface(&blocks.boxes.description[0].surface_texture_rotation[1],
@@ -204,9 +214,11 @@ TEST_CASE("edits set_block_surface coalesce", "[Edits]")
    blocks.boxes.bbox.max_y.push_back(15.0f);
    blocks.boxes.bbox.max_z.push_back(15.0f);
    blocks.boxes.hidden.push_back(false);
+   blocks.boxes.layer.push_back(0);
    blocks.boxes.description.push_back({.rotation = quaternion{0.0f, 1.0f, 0.0f, 0.0f},
                                        .position = float3{10.0f, 10.0f, 10.0f},
                                        .size = float3{5.0f, 5.0f, 5.0f}});
+   blocks.boxes.ids.push_back(world::block_box_id{});
 
    auto edit =
       make_set_block_surface(&blocks.boxes.description[0].surface_texture_rotation[1],

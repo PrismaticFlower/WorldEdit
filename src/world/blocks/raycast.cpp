@@ -16,13 +16,15 @@ struct raycast_block_result_local {
 };
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
-             const blocks_boxes& boxes, const float max_distance) noexcept
+             const active_layers active_layers, const blocks_boxes& boxes,
+             const float max_distance) noexcept
    -> std::optional<raycast_block_result_local>
 {
    float closest = max_distance;
    uint32 closest_index = UINT32_MAX;
 
    for (uint32 box_index = 0; box_index < boxes.size(); ++box_index) {
+      if (not active_layers[boxes.layer[box_index]]) continue;
       if (boxes.hidden[box_index]) continue;
 
       const block_description_box& box = boxes.description[box_index];
@@ -85,7 +87,8 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
 }
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
-             const blocks& blocks) noexcept -> std::optional<raycast_block_result>
+             const active_layers active_layers, const blocks& blocks) noexcept
+   -> std::optional<raycast_block_result>
 {
    float closest = FLT_MAX;
    block_id closest_id = {};
@@ -93,7 +96,7 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
    uint32 closest_surface_index = UINT32_MAX;
 
    if (std::optional<raycast_block_result_local> hit =
-          raycast(ray_originWS, ray_directionWS, blocks.boxes, closest);
+          raycast(ray_originWS, ray_directionWS, active_layers, blocks.boxes, closest);
        hit) {
       closest = hit->distance;
       closest_id = blocks.boxes.ids[hit->index];

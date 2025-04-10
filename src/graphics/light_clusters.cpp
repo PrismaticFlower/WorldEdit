@@ -364,13 +364,12 @@ void light_clusters::update_descriptors()
    _tiling_inputs_cbv = _device.get_gpu_virtual_address(_tiling_inputs.get());
 }
 
-void light_clusters::prepare_lights(const camera& view_camera,
-                                    const frustum& view_frustum,
-                                    const world::world& world,
-                                    const world::light* optional_placement_light,
-                                    const std::array<float, 2> scene_depth_min_max,
-                                    blocks& blocks, gpu::copy_command_list& command_list,
-                                    dynamic_buffer_allocator& dynamic_buffer_allocator)
+void light_clusters::prepare_lights(
+   const camera& view_camera, const frustum& view_frustum,
+   const world::world& world, const world::light* optional_placement_light,
+   const std::array<float, 2> scene_depth_min_max, blocks& blocks,
+   const world::active_layers active_layers, gpu::copy_command_list& command_list,
+   dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    static_assert((sizeof(_tiles_start_value) / sizeof(uint32)) == tile_light_words);
 
@@ -630,7 +629,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
             blocks.prepare_view(blocks_draw::shadow, world.blocks,
                                 frustum{_sun_shadow_cascades[cascade_index].world_from_projection(),
                                         1.0f, 0.0f},
-                                dynamic_buffer_allocator);
+                                active_layers, dynamic_buffer_allocator);
       }
    }
    else {

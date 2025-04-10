@@ -32,8 +32,11 @@ bool is_unique_id(std::size_t index, const auto& ids)
 TEST_CASE("world load blocks (boxes)", "[World][IO]")
 {
    null_output_stream output;
+   layer_remap layer_remap;
 
-   const blocks blocks = load_blocks("data/blocks/boxes.blk", output);
+   layer_remap.set(2, 2);
+
+   const blocks blocks = load_blocks("data/blocks/boxes.blk", layer_remap, output);
 
    REQUIRE(blocks.boxes.size() == 3);
 
@@ -46,6 +49,7 @@ TEST_CASE("world load blocks (boxes)", "[World][IO]")
    CHECK(boxes.bbox.max_y[0] == 8.5f);
    CHECK(boxes.bbox.max_z[0] == 6.0f);
    CHECK(boxes.hidden[0] == false);
+   CHECK(boxes.layer[0] == 2);
    CHECK(boxes.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
    CHECK(boxes.description[0].position == float3{8.5f, 4.5f, 2.0f});
    CHECK(boxes.description[0].size == float3{4.0f, 4.0f, 4.0f});
@@ -196,8 +200,9 @@ TEST_CASE("world load blocks (boxes)", "[World][IO]")
 TEST_CASE("world load blocks (materials)", "[World][IO]")
 {
    null_output_stream output;
+   layer_remap layer_remap;
 
-   const blocks blocks = load_blocks("data/blocks/materials.blk", output);
+   const blocks blocks = load_blocks("data/blocks/materials.blk", layer_remap, output);
 
    REQUIRE(blocks.materials.size() == max_block_materials);
 

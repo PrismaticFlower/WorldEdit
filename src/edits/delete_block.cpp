@@ -26,10 +26,12 @@ struct delete_block_box final : edit<world::edit_context> {
       blocks.bbox.max_z.erase(blocks.bbox.max_z.begin() + block_index);
 
       hidden = blocks.hidden[block_index];
+      layer = blocks.layer[block_index];
       box = blocks.description[block_index];
       id = blocks.ids[block_index];
 
       blocks.hidden.erase(blocks.hidden.begin() + block_index);
+      blocks.layer.erase(blocks.layer.begin() + block_index);
       blocks.description.erase(blocks.description.begin() + block_index);
       blocks.ids.erase(blocks.ids.begin() + block_index);
 
@@ -59,6 +61,7 @@ struct delete_block_box final : edit<world::edit_context> {
       blocks.bbox.max_z.insert(blocks.bbox.max_z.begin() + block_index, bbox.max.z);
 
       blocks.hidden.insert(blocks.hidden.begin() + block_index, hidden);
+      blocks.layer.insert(blocks.layer.begin() + block_index, layer);
       blocks.description.insert(blocks.description.begin() + block_index, box);
       blocks.ids.insert(blocks.ids.begin() + block_index, id);
 
@@ -78,6 +81,7 @@ private:
    uint32 block_index;
 
    bool hidden = false;
+   int8 layer = 0;
    world::block_description_box box;
    world::block_box_id id = {};
 };

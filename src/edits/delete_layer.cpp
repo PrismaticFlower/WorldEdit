@@ -2,6 +2,8 @@
 #include "utility/string_icompare.hpp"
 #include "world/object_class_library.hpp"
 
+#include "world/blocks/bounding_box.hpp"
+
 #include <vector>
 
 #include <fmt/core.h>
@@ -21,6 +23,10 @@ struct remap_entry_game_mode {
 };
 
 struct remap_entry_common_layer {
+   int index = 0;
+};
+
+struct remap_entry_block {
    int index = 0;
 };
 
@@ -48,6 +54,15 @@ struct delete_entry_req_game_mode {
    std::string entry;
 };
 
+struct delete_entry_block {
+   uint32 index = 0;
+
+   bool hidden = false;
+   int8 layer = 0;
+   world::block_description_box description;
+   world::id<world::block_description_box> id;
+};
+
 struct delete_layer_data {
    int index;
    world::layer_description layer;
@@ -60,6 +75,8 @@ struct delete_layer_data {
    std::vector<remap_entry_game_mode> remap_game_modes;
    std::vector<remap_entry_common_layer> remap_common_layers;
 
+   std::vector<remap_entry_block> remap_blocks_boxes;
+
    std::vector<delete_entry<world::object>> delete_objects;
    std::vector<delete_entry<world::light>> delete_lights;
    std::vector<delete_entry<world::path>> delete_paths;
@@ -69,6 +86,8 @@ struct delete_layer_data {
    std::vector<delete_entry_game_mode> delete_game_mode_entries;
    std::vector<delete_entry_req_game_mode> delete_game_mode_requirements;
    std::vector<int> delete_common_layers;
+
+   std::vector<delete_entry_block> delete_blocks_boxes;
 };
 
 template<typename T>
@@ -144,6 +163,27 @@ auto make_common_layers_remap_entries(int layer_index,
    return entries;
 }
 
+auto make_block_remap_entries(int layer_index, const std::span<const int8> block_layers)
+   -> std::vector<remap_entry_block>
+{
+   std::size_t count = 0;
+
+   for (const int8 block_layer : block_layers) {
+      if (block_layer > layer_index) count += 1;
+   }
+
+   std::vector<remap_entry_block> entries;
+   entries.reserve(count);
+
+   for (int i = 0; i < block_layers.size(); ++i) {
+      if (block_layers[i] > layer_index) {
+         entries.emplace_back(i);
+      }
+   }
+
+   return entries;
+}
+
 template<typename T>
 void apply_remap_entries(pinned_vector<T>& entities,
                          std::span<const remap_entry<std::type_identity_t<T>>> entries)
@@ -184,6 +224,18 @@ void revert_remap_entries(std::vector<int>& common_layers,
                           std::span<const remap_entry_common_layer> entries)
 {
    for (const auto& [index] : entries) common_layers[index] += 1;
+}
+
+void apply_remap_entries(std::span<int8> block_layers,
+                         std::span<const remap_entry_block> entries)
+{
+   for (const auto& [index] : entries) block_layers[index] -= 1;
+}
+
+void revert_remap_entries(std::span<int8> block_layers,
+                          std::span<const remap_entry_block> entries)
+{
+   for (const auto& [index] : entries) block_layers[index] += 1;
 }
 
 template<typename T>
@@ -343,6 +395,37 @@ auto makee_common_layers_delete_entries(const int layer_index,
    return entries;
 }
 
+auto make_delete_entries(int layer_index, const world::blocks_boxes& blocks)
+   -> std::vector<delete_entry_block>
+{
+   std::size_t count = 0;
+
+   for (const int8 block_layer : blocks.layer) {
+      if (block_layer == layer_index) count += 1;
+   }
+
+   std::vector<delete_entry_block> entries;
+   entries.reserve(count);
+
+   uint32 delete_offset = 0;
+
+   for (uint32 i = 0; i < blocks.size(); ++i) {
+      if (blocks.layer[i] == layer_index) {
+         entries.push_back({
+            .index = i - delete_offset,
+            .hidden = blocks.hidden[i],
+            .layer = blocks.layer[i],
+            .description = blocks.description[i],
+            .id = blocks.ids[i],
+         });
+
+         delete_offset += 1;
+      }
+   }
+
+   return entries;
+}
+
 template<typename T>
 void apply_delete_entries(pinned_vector<T>& entities,
                           std::span<const delete_entry<std::type_identity_t<T>>> entries)
@@ -467,6 +550,52 @@ void revert_delete_entries(std::vector<int>& common_layers, int layer_index,
    }
 }
 
+void apply_delete_entries(world::blocks_boxes& boxes,
+                          std::span<const delete_entry_block> entries)
+{
+   for (const delete_entry_block& entry : entries) {
+      boxes.bbox.min_x.erase(boxes.bbox.min_x.begin() + entry.index);
+      boxes.bbox.min_y.erase(boxes.bbox.min_y.begin() + entry.index);
+      boxes.bbox.min_z.erase(boxes.bbox.min_z.begin() + entry.index);
+      boxes.bbox.max_x.erase(boxes.bbox.max_x.begin() + entry.index);
+      boxes.bbox.max_y.erase(boxes.bbox.max_y.begin() + entry.index);
+      boxes.bbox.max_z.erase(boxes.bbox.max_z.begin() + entry.index);
+
+      boxes.hidden.erase(boxes.hidden.begin() + entry.index);
+      boxes.layer.erase(boxes.layer.begin() + entry.index);
+      boxes.description.erase(boxes.description.begin() + entry.index);
+      boxes.ids.erase(boxes.ids.begin() + entry.index);
+
+      boxes.dirty.remove_index(entry.index);
+      boxes.dirty.add({entry.index, static_cast<uint32>(boxes.size())});
+   }
+}
+
+void revert_delete_entries(world::blocks_boxes& boxes,
+                           std::span<const delete_entry_block> entries)
+{
+   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
+      const delete_entry_block& entry = entries[i];
+
+      const math::bounding_box bbox = get_bounding_box(entry.description);
+
+      boxes.bbox.min_x.insert(boxes.bbox.min_x.begin() + entry.index, bbox.min.x);
+      boxes.bbox.min_y.insert(boxes.bbox.min_y.begin() + entry.index, bbox.min.y);
+      boxes.bbox.min_z.insert(boxes.bbox.min_z.begin() + entry.index, bbox.min.z);
+      boxes.bbox.max_x.insert(boxes.bbox.max_x.begin() + entry.index, bbox.max.x);
+      boxes.bbox.max_y.insert(boxes.bbox.max_y.begin() + entry.index, bbox.max.y);
+      boxes.bbox.max_z.insert(boxes.bbox.max_z.begin() + entry.index, bbox.max.z);
+
+      boxes.hidden.insert(boxes.hidden.begin() + entry.index, entry.hidden);
+      boxes.layer.insert(boxes.layer.begin() + entry.index, entry.layer);
+      boxes.description.insert(boxes.description.begin() + entry.index,
+                               entry.description);
+      boxes.ids.insert(boxes.ids.begin() + entry.index, entry.id);
+
+      boxes.dirty.add({entry.index, static_cast<uint32>(boxes.size())});
+   }
+}
+
 struct delete_layer final : edit<world::edit_context> {
    delete_layer(delete_layer_data data, world::object_class_library& object_class_library)
       : _data{std::move(data)}, _object_class_library{object_class_library}
@@ -487,6 +616,7 @@ struct delete_layer final : edit<world::edit_context> {
       apply_remap_entries(world.hintnodes, _data.remap_hintnodes);
       apply_remap_entries(world.game_modes, _data.remap_game_modes);
       apply_remap_entries(world.common_layers, _data.remap_common_layers);
+      apply_remap_entries(world.blocks.boxes.layer, _data.remap_blocks_boxes);
 
       apply_delete_entries(world.objects, _data.delete_objects, _object_class_library);
       apply_delete_entries(world.lights, _data.delete_lights);
@@ -497,6 +627,7 @@ struct delete_layer final : edit<world::edit_context> {
       apply_delete_entries(world.game_modes, _data.delete_game_mode_entries);
       apply_delete_entries(world.game_modes, _data.delete_game_mode_requirements);
       apply_delete_entries(world.common_layers, _data.delete_common_layers);
+      apply_delete_entries(world.blocks.boxes, _data.delete_blocks_boxes);
    }
 
    void revert(world::edit_context& context) noexcept override
@@ -517,6 +648,7 @@ struct delete_layer final : edit<world::edit_context> {
                             _data.index);
       revert_delete_entries(world.game_modes, _data.delete_game_mode_requirements);
       revert_delete_entries(world.common_layers, _data.index, _data.delete_common_layers);
+      revert_delete_entries(world.blocks.boxes, _data.delete_blocks_boxes);
 
       revert_remap_entries(world.objects, _data.remap_objects);
       revert_remap_entries(world.lights, _data.remap_lights);
@@ -525,6 +657,7 @@ struct delete_layer final : edit<world::edit_context> {
       revert_remap_entries(world.hintnodes, _data.remap_hintnodes);
       revert_remap_entries(world.game_modes, _data.remap_game_modes);
       revert_remap_entries(world.common_layers, _data.remap_common_layers);
+      revert_remap_entries(world.blocks.boxes.layer, _data.remap_blocks_boxes);
    }
 
    bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
@@ -562,6 +695,9 @@ auto make_delete_layer(int layer_index, const world::world& world,
          .remap_common_layers =
             make_common_layers_remap_entries(layer_index, world.common_layers),
 
+         .remap_blocks_boxes =
+            make_block_remap_entries(layer_index, world.blocks.boxes.layer),
+
          .delete_objects = make_delete_entries(layer_index, world.objects),
          .delete_lights = make_delete_entries(layer_index, world.lights),
          .delete_paths = make_delete_entries(layer_index, world.paths),
@@ -575,6 +711,8 @@ auto make_delete_layer(int layer_index, const world::world& world,
             makee_game_mode_requirements_delete_entries(file_name, world.game_modes),
          .delete_common_layers =
             makee_common_layers_delete_entries(layer_index, world.common_layers),
+
+         .delete_blocks_boxes = make_delete_entries(layer_index, world.blocks.boxes),
       },
       object_class_library);
 }

@@ -10,6 +10,8 @@
 #include "root_signature_library.hpp"
 #include "texture_manager.hpp"
 #include "types.hpp"
+
+#include "world/active_elements.hpp"
 #include "world/world.hpp"
 
 #include <vector>
@@ -34,6 +36,7 @@ struct blocks {
 
    auto prepare_view(blocks_draw draw, const world::blocks& blocks,
                      const frustum& view_frustum,
+                     const world::active_layers active_layers,
                      dynamic_buffer_allocator& dynamic_buffer_allocator) -> view;
 
    void draw(blocks_draw draw, const view& view,

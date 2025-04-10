@@ -1,5 +1,6 @@
 
 #include "load.hpp"
+#include "layer_remap.hpp"
 #include "load_blocks.hpp"
 #include "load_effects.hpp"
 #include "load_failure.hpp"
@@ -33,8 +34,6 @@ namespace {
 // This can provide more clues as to when something went wrong with loading but also makes it 50x to 100x slower.
 constexpr bool verbose_output = false;
 
-using layer_remap = absl::flat_hash_map<int, int16>;
-
 void throw_layer_load_failure(std::string_view type, const io::path& filepath,
                               std::exception& e)
 {
@@ -63,7 +62,8 @@ void check_space(std::string_view name, pinned_vector<T>& vec)
    }
 }
 
-auto read_layer_index(const assets::config::node& node, layer_remap& layer_remap) -> int16
+auto read_layer_index(const assets::config::node& node,
+                      const layer_remap& layer_remap) -> int16
 {
    if (const auto layer_it = node.find("Layer"sv); layer_it != node.cend()) {
       return layer_remap[layer_it->values.get<int>(0)];
@@ -188,7 +188,6 @@ auto load_layer_index(const io::path& path, output_stream& output, world& world_
       }
 
       layer_remap layer_remap;
-      layer_remap.reserve(8);
 
       world_out.layer_descriptions.reserve(8);
       world_out.layer_descriptions.push_back({.name = "[Base]"s});
@@ -199,8 +198,28 @@ auto load_layer_index(const io::path& path, output_stream& output, world& world_
                continue;
             }
 
-            layer_remap[key_node.values.get<int>(1)] =
-               static_cast<int16>(world_out.layer_descriptions.size());
+            if (world_out.layer_descriptions.size() == max_layers) {
+               throw load_failure{
+                  fmt::format("Failed to load layer index.\n   "
+                              "   Message:\n      Too many layers! Max "
+                              "Supported Layers: {}\n",
+                              max_layers)};
+            }
+
+            const int index = key_node.values.get<int>(1);
+
+            if (index < 0 or index >= max_layers) {
+               throw load_failure{
+                  fmt::format("Failed to load layer index.\n   "
+                              "   Message:\n      Layer {} has unsupported "
+                              "index: {}. Max Supported Index: {}\n",
+                              key_node.values.get<std::string_view>(0), index,
+                              max_layers - 1)};
+            }
+
+            layer_remap.set(index,
+                            static_cast<int8>(world_out.layer_descriptions.size()));
+
             world_out.layer_descriptions.push_back(
                {.name = key_node.values.get<std::string>(0)});
 
@@ -259,7 +278,7 @@ auto load_layer_index(const io::path& path, output_stream& output, world& world_
 }
 
 void load_objects(const io::path& path, const std::string_view layer_name,
-                  output_stream& output, world& world_out, layer_remap& layer_remap)
+                  output_stream& output, world& world_out, const layer_remap& layer_remap)
 {
    using namespace assets;
 
@@ -462,7 +481,7 @@ void load_lights(const io::path& path, const std::string_view layer_name,
 }
 
 void load_paths(const io::path& filepath, const std::string_view layer_name,
-                output_stream& output, world& world_out, layer_remap& layer_remap)
+                output_stream& output, world& world_out, const layer_remap& layer_remap)
 {
    using namespace assets;
 
@@ -562,7 +581,7 @@ void load_paths(const io::path& filepath, const std::string_view layer_name,
 }
 
 void load_regions(const io::path& filepath, const std::string_view layer_name,
-                  output_stream& output, world& world_out, layer_remap& layer_remap)
+                  output_stream& output, world& world_out, const layer_remap& layer_remap)
 {
    using namespace assets;
 
@@ -1237,7 +1256,7 @@ void load_measurements(const io::path& filepath, output_stream& output, world& w
 
 void load_layer(const io::path& world_dir, const std::string_view layer_name,
                 const std::string_view world_ext, output_stream& output,
-                world& world_out, layer_remap& layer_remap, const int16 layer)
+                world& world_out, const layer_remap& layer_remap, const int16 layer)
 {
    load_objects(io::compose_path(world_dir, layer_name, world_ext), layer_name,
                 output, world_out, layer_remap);
@@ -1452,7 +1471,7 @@ auto load_world(const io::path& path, output_stream& output) -> world
    const io::path world_dir = path.parent_path();
 
    try {
-      auto layer_remap =
+      const layer_remap layer_remap =
          load_layer_index(io::compose_path(world_dir, world.name, ".ldx"sv),
                           output, world);
 
@@ -1513,7 +1532,7 @@ auto load_world(const io::path& path, output_stream& output) -> world
 
       if (const auto blk_path = io::compose_path(world_dir, world.name, ".blk"sv);
           io::exists(blk_path)) {
-         world.blocks = load_blocks(blk_path, output);
+         world.blocks = load_blocks(blk_path, layer_remap, output);
       }
    }
    catch (load_failure& failure) {

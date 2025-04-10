@@ -62,6 +62,8 @@ struct blocks_boxes {
 
    pinned_vector<bool> hidden = blocks_init;
 
+   pinned_vector<int8> layer = blocks_init;
+
    pinned_vector<block_description_box> description = blocks_init;
 
    pinned_vector<id<block_description_box>> ids = blocks_init;

@@ -8,8 +8,8 @@ namespace we::edits {
 namespace {
 
 struct add_block final : edit<world::edit_context> {
-   add_block(world::block_description_box box, world::block_box_id id)
-      : box{box}, id{id}
+   add_block(world::block_description_box box, int8 layer, world::block_box_id id)
+      : box{box}, layer{layer}, id{id}
    {
    }
 
@@ -32,6 +32,7 @@ struct add_block final : edit<world::edit_context> {
       blocks.bbox.max_z.push_back(bbox.max.z);
 
       blocks.hidden.push_back(false);
+      blocks.layer.push_back(layer);
       blocks.description.push_back(box);
       blocks.ids.push_back(id);
 
@@ -53,6 +54,7 @@ struct add_block final : edit<world::edit_context> {
       blocks.bbox.max_z.pop_back();
 
       blocks.hidden.pop_back();
+      blocks.layer.pop_back();
       blocks.description.pop_back();
       blocks.ids.pop_back();
 
@@ -72,15 +74,16 @@ struct add_block final : edit<world::edit_context> {
 
 private:
    world::block_description_box box;
+   int8 layer;
    world::block_box_id id;
 };
 
 }
 
-auto make_add_block(world::block_description_box box, world::block_box_id id)
+auto make_add_block(world::block_description_box box, int8 layer, world::block_box_id id)
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<add_block>(box, id);
+   return std::make_unique<add_block>(box, layer, id);
 }
 
 }
