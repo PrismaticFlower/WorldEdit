@@ -3,6 +3,9 @@
 #include "edits/bundle.hpp"
 #include "edits/set_value.hpp"
 
+#include "world/blocks/accessors.hpp"
+#include "world/blocks/find.hpp"
+
 #include <imgui.h>
 
 namespace we {
@@ -80,6 +83,21 @@ void world_edit::ui_show_world_selection_set_layer() noexcept
                if (hintnode and hintnode->layer != _selection_set_layer) {
                   bundled_edits.push_back(
                      edits::make_set_value(&hintnode->layer, _selection_set_layer));
+               }
+            }
+            else if (selected.is<world::block_id>()) {
+               const world::block_id block_id = selected.get<world::block_id>();
+               const std::optional<uint32> block_index =
+                  world::find_block(_world.blocks, block_id);
+
+               if (block_index) {
+                  int8& block_layer =
+                     world::get_block_layer(_world.blocks, block_id.type(), *block_index);
+
+                  if (block_layer != _selection_set_layer) {
+                     bundled_edits.push_back(
+                        edits::make_set_value(&block_layer, _selection_set_layer));
+                  }
                }
             }
          }
