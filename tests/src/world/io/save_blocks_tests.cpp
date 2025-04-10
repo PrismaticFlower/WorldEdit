@@ -22,6 +22,7 @@ TEST_CASE("world save blocks (boxes)", "[World][IO]")
       SurfaceTextureRotation(2, 2, 2, 2, 2, 2);
       SurfaceTextureScale(0, 0, -1, -2, 0, 0, 0, 0, 0, 0, 0, 0);
       SurfaceTextureOffset(0, 0, 0, 0, 0, 0, 0, 0, 256, 256, 0, 0);
+      Layer(2);
    }
    Box()
    {
@@ -66,6 +67,7 @@ Materials()
                   .max_z = {world::blocks_init, std::initializer_list{1.0f, 1.0f, 1.0f}},
                },
             .hidden = {world::blocks_init, std::initializer_list{true, true, true}},
+            .layer = {world::blocks_init, std::initializer_list<int8>{2, 0, 0}},
             .description =
                {
                   world::blocks_init,

@@ -16,6 +16,7 @@
 
 #include "math/frustum.hpp"
 
+#include "world/active_elements.hpp"
 #include "world/object_class.hpp"
 #include "world/world.hpp"
 
@@ -36,7 +37,8 @@ public:
                        const world::world& world,
                        const world::light* optional_placement_light,
                        const std::array<float, 2> scene_depth_min_max,
-                       blocks& blocks, gpu::copy_command_list& command_list,
+                       blocks& blocks, const world::active_layers active_layers,
+                       gpu::copy_command_list& command_list,
                        dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void tile_lights(root_signature_library& root_signatures, pipeline_library& pipelines,

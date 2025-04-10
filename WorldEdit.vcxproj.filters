@@ -251,6 +251,8 @@
     <ClCompile Include="src\world\io\save_blocks.cpp" />
     <ClCompile Include="src\world\io\load_blocks.cpp" />
     <ClCompile Include="src\edits\delete_block.cpp" />
+    <ClCompile Include="src\world\io\layer_remap.cpp" />
+    <ClCompile Include="src\world\blocks\bounding_box.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -557,6 +559,8 @@
     <ClInclude Include="src\world\io\save_blocks.hpp" />
     <ClInclude Include="src\world\io\load_blocks.hpp" />
     <ClInclude Include="src\edits\delete_block.hpp" />
+    <ClInclude Include="src\world\io\layer_remap.hpp" />
+    <ClInclude Include="src\world\blocks\bounding_box.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

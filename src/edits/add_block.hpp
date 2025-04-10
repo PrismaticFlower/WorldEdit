@@ -7,7 +7,7 @@
 
 namespace we::edits {
 
-auto make_add_block(world::block_description_box box, world::block_box_id id)
+auto make_add_block(world::block_description_box box, int8 layer, world::block_box_id id)
    -> std::unique_ptr<edit<world::edit_context>>;
 
 }

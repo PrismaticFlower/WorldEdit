@@ -963,6 +963,8 @@ private:
       int xz_alignment_exponent = 0;
       int y_alignment_exponent = 0;
 
+      int8 new_block_layer = 0;
+
       bool scale_texture_u = true;
       bool scale_texture_v = true;
 

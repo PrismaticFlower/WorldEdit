@@ -1,6 +1,7 @@
 #include "snapping.hpp"
 #include "mesh_geometry.hpp"
 
+#include "math/bounding_box.hpp"
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
@@ -28,6 +29,7 @@ void draw_point(tool_visualizers& visualizers, const float3& point,
 
 auto get_snapped_position(const float3 positionWS, const blocks& blocks,
                           const float snap_radius, block_id filter_id,
+                          const active_layers active_layers,
                           tool_visualizers& visualizers,
                           const blocks_snapping_visualizer_colors& colors) noexcept -> float3
 {
@@ -35,6 +37,7 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
    float closest_distance = FLT_MAX;
 
    for (uint32 box_index = 0; box_index < blocks.boxes.size(); ++box_index) {
+      if (not active_layers[blocks.boxes.layer[box_index]]) continue;
       if (blocks.boxes.hidden[box_index]) continue;
       if (blocks.boxes.ids[box_index] == filter_id) continue;
 

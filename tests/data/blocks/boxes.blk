@@ -10,6 +10,7 @@ Boxes(3)
       SurfaceTextureRotation(2, 2, 2, 2, 2, 2);
       SurfaceTextureScale(0, 0, -1, -2, 0, 0, 0, 0, 0, 0, 0, 0);
       SurfaceTextureOffset(0, 0, 0, 0, 0, 0, 0, 0, 256, 256, 0, 0);
+      Layer(2);
    }
    Box()
    {

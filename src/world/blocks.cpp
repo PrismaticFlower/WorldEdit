@@ -13,6 +13,7 @@ void blocks_boxes::reserve(const std::size_t size) noexcept
    bbox.max_y.reserve(size);
    bbox.max_z.reserve(size);
    hidden.reserve(size);
+   layer.reserve(size);
    description.reserve(size);
    ids.reserve(size);
 }
@@ -32,6 +33,7 @@ bool blocks_boxes::is_balanced() const noexcept
           bbox.min_x.size() == bbox.max_y.size() and
           bbox.min_x.size() == bbox.max_z.size() and
           bbox.min_x.size() == hidden.size() and
+          bbox.min_x.size() == layer.size() and //
           bbox.min_x.size() == description.size() and
           bbox.min_x.size() == ids.size();
 }

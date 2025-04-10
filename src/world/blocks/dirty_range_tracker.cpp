@@ -27,6 +27,8 @@ bool is_valid(const blocks_dirty_range range) noexcept
 
 void blocks_dirty_range_tracker::add(const blocks_dirty_range range) noexcept
 {
+   if (range.begin == range.end) return;
+
    assert(is_valid(range));
 
    for (std::size_t i = 0; i < _ranges.size(); ++i) {

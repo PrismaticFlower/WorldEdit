@@ -23,7 +23,9 @@ void save_boxes(io::output_file& out, const blocks_boxes& boxes) noexcept
    out.write_ln("Boxes({})", boxes.size());
    out.write_ln("{");
 
-   for (const block_description_box& box : boxes.description) {
+   for (uint32 box_index = 0; box_index < boxes.size(); ++box_index) {
+      const block_description_box& box = boxes.description[box_index];
+      const int8 box_layer = boxes.layer[box_index];
 
       out.write_ln("   Box()");
       out.write_ln("   {");
@@ -63,6 +65,7 @@ void save_boxes(io::output_file& out, const blocks_boxes& boxes) noexcept
          box.surface_texture_offset[3][0], box.surface_texture_offset[3][1],
          box.surface_texture_offset[4][0], box.surface_texture_offset[4][1],
          box.surface_texture_offset[5][0], box.surface_texture_offset[5][1]);
+      if (box_layer != 0) out.write_ln("      Layer({});", box_layer);
       out.write_ln("   }");
    }
 

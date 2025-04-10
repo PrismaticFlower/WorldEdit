@@ -1,6 +1,8 @@
 #pragma once
 
-#include "../utility/snapping.hpp"
+#include "../active_elements.hpp"
+#include "../blocks.hpp"
+#include "../tool_visualizers.hpp"
 
 #include <optional>
 
@@ -14,6 +16,7 @@ struct blocks_snapping_visualizer_colors {
 
 auto get_snapped_position(const float3 positionWS, const blocks& blocks,
                           const float snap_radius, block_id filter_id,
+                          const active_layers active_layers,
                           tool_visualizers& visualizers,
                           const blocks_snapping_visualizer_colors& colors) noexcept
    -> float3;

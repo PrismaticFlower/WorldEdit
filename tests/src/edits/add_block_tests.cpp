@@ -18,7 +18,7 @@ TEST_CASE("edits add_block box", "[Edits]")
    auto edit = make_add_block({.rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                                .position = {10.0f, 10.0f, 10.0f},
                                .size = {5.0f, 5.0f, 5.0f}},
-                              id);
+                              2, id);
 
    edit->apply(edit_context);
 
@@ -33,6 +33,7 @@ TEST_CASE("edits add_block box", "[Edits]")
    REQUIRE(blocks.boxes.bbox.max_y.size() == 1);
    REQUIRE(blocks.boxes.bbox.max_z.size() == 1);
    REQUIRE(blocks.boxes.hidden.size() == 1);
+   REQUIRE(blocks.boxes.layer.size() == 1);
    REQUIRE(blocks.boxes.description.size() == 1);
    REQUIRE(blocks.boxes.ids.size() == 1);
 
@@ -43,6 +44,7 @@ TEST_CASE("edits add_block box", "[Edits]")
    CHECK(blocks.boxes.bbox.max_y[0] == 15.0f);
    CHECK(blocks.boxes.bbox.max_z[0] == 15.0f);
    CHECK(not blocks.boxes.hidden[0]);
+   CHECK(blocks.boxes.layer[0] == 2);
    CHECK(blocks.boxes.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
    CHECK(blocks.boxes.description[0].position == float3{10.0f, 10.0f, 10.0f});
    CHECK(blocks.boxes.description[0].size == float3{5.0f, 5.0f, 5.0f});
@@ -62,6 +64,7 @@ TEST_CASE("edits add_block box", "[Edits]")
    REQUIRE(blocks.boxes.bbox.max_y.size() == 0);
    REQUIRE(blocks.boxes.bbox.max_z.size() == 0);
    REQUIRE(blocks.boxes.hidden.size() == 0);
+   REQUIRE(blocks.boxes.layer.size() == 0);
    REQUIRE(blocks.boxes.description.size() == 0);
    REQUIRE(blocks.boxes.ids.size() == 0);
 

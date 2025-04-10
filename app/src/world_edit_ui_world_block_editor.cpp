@@ -90,11 +90,33 @@ void world_edit::ui_show_block_editor() noexcept
                        alignment_names[_block_editor_config.y_alignment_exponent + 4],
                        ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoInput);
 
+      _block_editor_config.new_block_layer =
+         std::clamp(_block_editor_config.new_block_layer, int8{0},
+                    static_cast<int8>(_world.layer_descriptions.size()));
+
       ImGui::EndGroup();
 
       ImGui::SetItemTooltip("Hold Ctrl when drawing blocks to enable snapping "
                             "to alignment. Hold Shift to enable snapping to "
                             "block points within half of XZ alignment.");
+
+      if (ImGui::BeginCombo("Draw Layer",
+                            _world
+                               .layer_descriptions[_block_editor_config.new_block_layer]
+                               .name.c_str())) {
+         for (int8 i = 0; i < std::ssize(_world.layer_descriptions); ++i) {
+            if (ImGui::Selectable(_world.layer_descriptions[i].name.c_str(),
+                                  _block_editor_config.new_block_layer == i)) {
+               _block_editor_config.new_block_layer = i;
+            }
+         }
+
+         ImGui::EndCombo();
+      }
+
+      ImGui::SetItemTooltip(
+         "Layers for blocks are just for in the editor. Ingame all "
+         "blocks are effectively in the base layer.");
 
       ImGui::Separator();
 
@@ -552,14 +574,16 @@ void world_edit::ui_show_block_editor() noexcept
       }
 
       if (snap) {
-         cursor_positionWS = world::get_snapped_position(
-            cursor_positionWS, _world.blocks, alignment.x * 0.5f,
-            _block_editor_context.draw_block.block_id, _tool_visualizers,
-            {
-               .snapped = _settings.graphics.snapping_snapped_color,
-               .corner = _settings.graphics.snapping_corner_color,
-               .edge = _settings.graphics.snapping_edge_color,
-            });
+         cursor_positionWS =
+            world::get_snapped_position(cursor_positionWS, _world.blocks,
+                                        alignment.x * 0.5f,
+                                        _block_editor_context.draw_block.block_id,
+                                        _world_layers_hit_mask, _tool_visualizers,
+                                        {
+                                           .snapped = _settings.graphics.snapping_snapped_color,
+                                           .corner = _settings.graphics.snapping_corner_color,
+                                           .edge = _settings.graphics.snapping_edge_color,
+                                        });
       }
 
       const uint32 line_color =
@@ -698,7 +722,7 @@ void world_edit::ui_show_block_editor() noexcept
                                                      material_index, material_index,
                                                      material_index, material_index},
                             },
-                            id),
+                            _block_editor_config.new_block_layer, id),
                          _edit_context);
             }
             else {
@@ -798,7 +822,8 @@ void world_edit::ui_show_block_editor() noexcept
                           ImGui::GetMainViewport()->Size.y});
 
       if (std::optional<world::raycast_block_result> hit =
-             world::raycast(rayWS.origin, rayWS.direction, _world.blocks);
+             world::raycast(rayWS.origin, rayWS.direction,
+                            _world_layers_hit_mask, _world.blocks);
           hit) {
          if (click) {
             world::block_texture_rotation new_rotation = {};
@@ -842,7 +867,8 @@ void world_edit::ui_show_block_editor() noexcept
                           ImGui::GetMainViewport()->Size.y});
 
       if (std::optional<world::raycast_block_result> hit =
-             world::raycast(rayWS.origin, rayWS.direction, _world.blocks);
+             world::raycast(rayWS.origin, rayWS.direction,
+                            _world_layers_hit_mask, _world.blocks);
           hit) {
          if (click) {
             std::array<int8, 2> new_scale =
@@ -887,7 +913,8 @@ void world_edit::ui_show_block_editor() noexcept
                           ImGui::GetMainViewport()->Size.y});
 
       if (std::optional<world::raycast_block_result> hit =
-             world::raycast(rayWS.origin, rayWS.direction, _world.blocks);
+             world::raycast(rayWS.origin, rayWS.direction,
+                            _world_layers_hit_mask, _world.blocks);
           hit) {
          if (click) {
             _edit_stack_world.apply(
@@ -912,7 +939,8 @@ void world_edit::ui_show_block_editor() noexcept
                           ImGui::GetMainViewport()->Size.y});
 
       if (std::optional<world::raycast_block_result> hit =
-             world::raycast(rayWS.origin, rayWS.direction, _world.blocks);
+             world::raycast(rayWS.origin, rayWS.direction,
+                            _world_layers_hit_mask, _world.blocks);
           hit) {
          if (click) {
             _edit_stack_world.apply(
@@ -939,7 +967,8 @@ void world_edit::ui_show_block_editor() noexcept
                              ImGui::GetMainViewport()->Size.y});
 
          if (std::optional<world::raycast_block_result> hit =
-                world::raycast(rayWS.origin, rayWS.direction, _world.blocks);
+                world::raycast(rayWS.origin, rayWS.direction,
+                               _world_layers_hit_mask, _world.blocks);
              hit) {
             if (click) {
                _block_editor_context.offset_texture.block_id = hit->id;
@@ -1014,7 +1043,8 @@ void world_edit::ui_show_block_editor() noexcept
 
       if (not _gizmos.want_capture_mouse()) {
          if (std::optional<world::raycast_block_result> hit =
-                world::raycast(rayWS.origin, rayWS.direction, _world.blocks);
+                world::raycast(rayWS.origin, rayWS.direction,
+                               _world_layers_hit_mask, _world.blocks);
              hit) {
             if (click) _block_editor_context.resize_block.block_id = hit->id;
 

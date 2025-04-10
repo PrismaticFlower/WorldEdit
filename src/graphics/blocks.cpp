@@ -306,6 +306,7 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
 
 auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                           const frustum& view_frustum,
+                          const world::active_layers active_layers,
                           dynamic_buffer_allocator& dynamic_buffer_allocator) -> view
 {
    view view;
@@ -323,13 +324,15 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                        blocks.boxes.bbox.max_x,
                                        blocks.boxes.bbox.max_y,
                                        blocks.boxes.bbox.max_z, blocks.boxes.hidden,
+                                       blocks.boxes.layer, active_layers,
                                        visible_count, _TEMP_culling_storage);
    }
    else {
       cull_objects_avx2(view_frustum, blocks.boxes.bbox.min_x, blocks.boxes.bbox.min_y,
                         blocks.boxes.bbox.min_z, blocks.boxes.bbox.max_x,
                         blocks.boxes.bbox.max_y, blocks.boxes.bbox.max_z,
-                        blocks.boxes.hidden, visible_count, _TEMP_culling_storage);
+                        blocks.boxes.hidden, blocks.boxes.layer, active_layers,
+                        visible_count, _TEMP_culling_storage);
    }
 
    if (visible_count > 0) {

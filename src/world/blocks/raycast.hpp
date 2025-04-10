@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../active_elements.hpp"
 #include "../blocks.hpp"
 
 #include <optional>
@@ -14,5 +15,6 @@ struct raycast_block_result {
 };
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
-             const blocks& blocks) noexcept -> std::optional<raycast_block_result>;
+             const active_layers active_layers, const blocks& blocks) noexcept
+   -> std::optional<raycast_block_result>;
 }
