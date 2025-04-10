@@ -1,7 +1,6 @@
 #include "add_block.hpp"
 
-#include "math/bounding_box.hpp"
-#include "math/vector_funcs.hpp"
+#include "world/blocks/bounding_box.hpp"
 
 namespace we::edits {
 
@@ -17,9 +16,7 @@ struct add_block final : edit<world::edit_context> {
    {
       world::blocks_boxes& blocks = context.world.blocks.boxes;
 
-      const math::bounding_box bbox =
-         box.rotation * math::bounding_box{.min = -box.size, .max = box.size} +
-         box.position;
+      const math::bounding_box bbox = get_bounding_box(box);
 
       const uint32 block_index = static_cast<uint32>(blocks.size());
 

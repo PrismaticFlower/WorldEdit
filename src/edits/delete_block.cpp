@@ -1,7 +1,6 @@
 #include "delete_block.hpp"
 
-#include "math/bounding_box.hpp"
-#include "math/vector_funcs.hpp"
+#include "world/blocks/bounding_box.hpp"
 
 #pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
 #pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
@@ -48,9 +47,7 @@ struct delete_block_box final : edit<world::edit_context> {
    {
       world::blocks_boxes& blocks = context.world.blocks.boxes;
 
-      const math::bounding_box bbox =
-         box.rotation * math::bounding_box{.min = -box.size, .max = box.size} +
-         box.position;
+      const math::bounding_box bbox = get_bounding_box(box);
 
       blocks.bbox.min_x.insert(blocks.bbox.min_x.begin() + block_index, bbox.min.x);
       blocks.bbox.min_y.insert(blocks.bbox.min_y.begin() + block_index, bbox.min.y);
