@@ -1,12 +1,20 @@
 #include "world_edit.hpp"
 
-#include "edits/bundle.hpp"
-#include "edits/set_value.hpp"
 #include "imgui_ext.hpp"
+
+#include "edits/bundle.hpp"
+#include "edits/set_block.hpp"
+#include "edits/set_value.hpp"
+
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
+#include "world/blocks/find.hpp"
+
 #include <numbers>
+
+#pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+#pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
 
 namespace we {
 
@@ -239,6 +247,24 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                      edits::make_set_value(&measurement->end,
                                            (rotation * (measurement->end - centre)) +
                                               centre));
+               }
+            }
+            else if (selected.is<world::block_id>()) {
+               const world::block_id block_id = selected.get<world::block_id>();
+               const std::optional<uint32> block_index =
+                  world::find_block(_world.blocks, block_id);
+
+               if (block_index) {
+                  switch (block_id.type()) {
+                  case world::block_type::box: {
+                     const world::block_description_box& box =
+                        _world.blocks.boxes.description[*block_index];
+
+                     bundled_edits.push_back(edits::make_set_block_box_metrics(
+                        *block_index, rotation * box.rotation,
+                        (rotation * (box.position - centre)) + centre, box.size));
+                  } break;
+                  }
                }
             }
          }
