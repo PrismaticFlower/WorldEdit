@@ -35,10 +35,7 @@ struct delete_block_box final : edit<world::edit_context> {
       blocks.ids.erase(blocks.ids.begin() + block_index);
 
       blocks.dirty.remove_index(block_index);
-
-      if (block_index != static_cast<uint32>(blocks.size())) {
-         blocks.dirty.add({block_index, static_cast<uint32>(blocks.size())});
-      }
+      blocks.dirty.add({block_index, static_cast<uint32>(blocks.size())});
 
       assert(blocks.is_balanced());
    }
