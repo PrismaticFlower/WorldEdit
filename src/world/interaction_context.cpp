@@ -436,6 +436,9 @@ bool operator==(const interaction_target& l, const interaction_target& r) noexce
    if (l._active == detail::active_entity::path) {
       return l._storage.path == r._storage.path;
    }
+   else if (l._active == detail::active_entity::block) {
+      return l._storage.block == r._storage.block;
+   }
    else {
       return memcmp(&l._storage, &r._storage, sizeof(object_id)) == 0;
    }

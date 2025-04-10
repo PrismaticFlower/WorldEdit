@@ -85,6 +85,12 @@ auto block_id::type() const noexcept -> block_type
    return id_type;
 }
 
+bool block_id::operator==(const block_id& other) const noexcept
+{
+   return this->id_type == other.id_type and
+          (memcmp(&this->id, &other.id, sizeof(id)) == 0);
+}
+
 bool block_id::operator==(const block_box_id box_id) const noexcept
 {
    return id_type == block_type::box and box_id == id.box;
