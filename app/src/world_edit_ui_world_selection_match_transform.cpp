@@ -1,11 +1,20 @@
 #include "world_edit.hpp"
 
-#include "edits/bundle.hpp"
-#include "edits/set_value.hpp"
 #include "imgui_ext.hpp"
+
+#include "edits/bundle.hpp"
+#include "edits/set_block.hpp"
+#include "edits/set_value.hpp"
+
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
+
+#include "world/blocks/bounding_box.hpp"
+#include "world/blocks/find.hpp"
 #include "world/utility/world_utilities.hpp"
+
+#pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+#pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
 
 namespace we {
 
@@ -23,9 +32,9 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
       ImGui::Checkbox("Match Rotation",
                       &_selection_match_transform_config.match_rotation);
 
-      ImGui::SetItemTooltip(
-         "Only Objects, Lights, Path Nodes, Regions, Portals and Hintnodes can "
-         "have their rotation matched.");
+      ImGui::SetItemTooltip("Only Objects, Lights, Path Nodes, Regions, "
+                            "Portals, Hintnodes and some Block types can "
+                            "have their rotation matched.");
 
       ImGui::Checkbox("Match Position",
                       &_selection_match_transform_config.match_position);
@@ -171,6 +180,24 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
             if (measurement) {
                new_position = (measurement->start + measurement->end) * 0.5f;
                hovered_has_rotation = false;
+            }
+         }
+         else if (hovered.is<world::block_id>()) {
+            const world::block_id block_id = hovered.get<world::block_id>();
+            const std::optional<uint32> block_index =
+               world::find_block(_world.blocks, block_id);
+
+            if (block_index) {
+               const math::bounding_box bbox =
+                  world::get_bounding_box(_world.blocks, block_id.type(), *block_index);
+
+               new_position = (bbox.min + bbox.max) * 0.5f;
+
+               switch (block_id.type()) {
+               case world::block_type::box: {
+                  new_rotation = _world.blocks.boxes.description[*block_index].rotation;
+               } break;
+               }
             }
          }
 
@@ -365,6 +392,24 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
                                                     &measurement->end,
                                                     measurement->end - old_centre +
                                                        new_position));
+                  }
+               }
+            }
+            else if (selected.is<world::block_id>()) {
+               const world::block_id block_id = selected.get<world::block_id>();
+               const std::optional<uint32> block_index =
+                  world::find_block(_world.blocks, block_id);
+
+               if (block_index) {
+                  switch (block_id.type()) {
+                  case world::block_type::box: {
+                     const world::block_description_box& box =
+                        _world.blocks.boxes.description[*block_index];
+
+                     bundled_edits.push_back(
+                        edits::make_set_block_box_metrics(*block_index, new_rotation,
+                                                          new_position, box.size));
+                  } break;
                   }
                }
             }
