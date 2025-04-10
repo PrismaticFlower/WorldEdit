@@ -1,13 +1,22 @@
 #include "world_edit.hpp"
 
-#include "edits/bundle.hpp"
-#include "edits/set_value.hpp"
 #include "imgui_ext.hpp"
+
+#include "edits/bundle.hpp"
+#include "edits/set_block.hpp"
+#include "edits/set_value.hpp"
+
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
+
+#include "world/blocks/bounding_box.hpp"
+#include "world/blocks/find.hpp"
 #include "world/utility/world_utilities.hpp"
 
 #include <numbers>
+
+#pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+#pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
 
 namespace we {
 
@@ -126,6 +135,26 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                selection_centre += measurement->start;
                selection_centre += measurement->end;
                selection_axis_count += {2.0f, 2.0f, 2.0f};
+            }
+         }
+         else if (selected.is<world::block_id>()) {
+            const world::block_id block_id = selected.get<world::block_id>();
+            const std::optional<uint32> block_index =
+               world::find_block(_world.blocks, block_id);
+
+            if (block_index) {
+               const math::bounding_box bbox =
+                  world::get_bounding_box(_world.blocks, block_id.type(), *block_index);
+
+               selection_centre += (bbox.min + bbox.max) * 0.5f;
+               selection_axis_count += {1.0f, 1.0f, 1.0f};
+
+               switch (block_id.type()) {
+               case world::block_type::box: {
+                  gizmo_rotation =
+                     _world.blocks.boxes.description[*block_index].rotation;
+               } break;
+               }
             }
          }
       }
@@ -306,6 +335,27 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                      edits::make_set_value(&measurement->end,
                                            (rotation * (measurement->end - centre)) +
                                               centre));
+               }
+            }
+            else if (selected.is<world::block_id>()) {
+               const world::block_id block_id = selected.get<world::block_id>();
+               const std::optional<uint32> block_index =
+                  world::find_block(_world.blocks, block_id);
+
+               if (block_index) {
+                  switch (block_id.type()) {
+                  case world::block_type::box: {
+                     const world::block_description_box& box =
+                        _world.blocks.boxes.description[*block_index];
+
+                     bundled_edits.push_back(
+                        edits::make_set_block_box_metrics(*block_index,
+                                                          local_space
+                                                             ? box.rotation * rotation
+                                                             : rotation * box.rotation,
+                                                          box.position, box.size));
+                  } break;
+                  }
                }
             }
          }
