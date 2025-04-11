@@ -1,7 +1,7 @@
 #include "raycast.hpp"
 #include "mesh_geometry.hpp"
 
-#include "math/iq_intersectors.hpp"
+#include "math/intersectors.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
@@ -32,13 +32,11 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
 
       const quaternion local_from_world = conjugate(box.rotation);
 
-      const float3 positionLS = local_from_world * -box.position;
-
-      const float3 ray_originLS = local_from_world * ray_originWS + positionLS;
+      const float3 ray_originLS = local_from_world * (ray_originWS - box.position);
       const float3 ray_directionLS = normalize(local_from_world * ray_directionWS);
 
-      if (const float hit = boxIntersection(ray_originLS, ray_directionLS, box.size);
-          hit >= 0.0f and hit < closest) {
+      if (float hit; intersect_aabb(ray_originLS, 1.0f / ray_directionLS,
+                                    {-box.size, box.size}, closest, hit)) {
          if (filter and not filter(boxes.ids[box_index])) continue;
 
          closest = hit;
@@ -68,12 +66,11 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
          const float3 pos1WS = world_from_object * block_cube_vertices[tri[1]].position;
          const float3 pos2WS = world_from_object * block_cube_vertices[tri[2]].position;
 
-         const float3 hit =
-            triIntersect(ray_originWS, ray_directionWS, pos0WS, pos1WS, pos2WS);
-
-         if (hit.x >= 0.0f and hit.x < closest_surface) {
+         if (float hit; intersect_tri(ray_originWS, ray_directionWS, pos0WS,
+                                      pos1WS, pos2WS, hit) and
+                        hit < closest_surface) {
             surface_index = block_cube_vertices[tri[0]].surface_index;
-            closest_surface = hit.x;
+            closest_surface = hit;
          }
       }
 
