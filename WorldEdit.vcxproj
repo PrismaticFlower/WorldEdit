@@ -383,7 +383,9 @@
     <ClCompile Include="src\world\blocks\accessors.cpp" />
     <ClCompile Include="src\world\blocks\bounding_box.cpp" />
     <ClCompile Include="src\world\blocks\dirty_range_tracker.cpp" />
+    <ClCompile Include="src\world\blocks\drag_select.cpp" />
     <ClCompile Include="src\world\blocks\find.cpp" />
+    <ClCompile Include="src\world\blocks\grounding.cpp" />
     <ClCompile Include="src\world\blocks\highlight_block.cpp" />
     <ClCompile Include="src\world\blocks\highlight_surface.cpp" />
     <ClCompile Include="src\world\blocks\mesh_geometry.cpp" />
@@ -690,7 +692,9 @@
     <ClInclude Include="src\world\barrier.hpp" />
     <ClInclude Include="src\world\blocks\accessors.hpp" />
     <ClInclude Include="src\world\blocks\bounding_box.hpp" />
+    <ClInclude Include="src\world\blocks\drag_select.hpp" />
     <ClInclude Include="src\world\blocks\find.hpp" />
+    <ClInclude Include="src\world\blocks\grounding.hpp" />
     <ClInclude Include="src\world\blocks\highlight_block.hpp" />
     <ClInclude Include="src\world\blocks\highlight_surface.hpp" />
     <ClInclude Include="src\world\blocks\mesh_geometry.hpp" />
