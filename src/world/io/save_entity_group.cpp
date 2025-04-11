@@ -470,6 +470,87 @@ void save_entity_group_impl(File& file, const entity_group& group)
 
       file.write_ln("}\n");
    }
+
+   if (not group.blocks.boxes.empty()) {
+      file.write_ln("BlocksBoxes({})", group.blocks.boxes.size());
+      file.write_ln("{");
+
+      for (const block_description_box& box : group.blocks.boxes) {
+         file.write_ln("   Box()");
+         file.write_ln("   {");
+
+         file.write_ln("      Rotation({}, {}, {}, {});", box.rotation.w,
+                       box.rotation.x, box.rotation.y, box.rotation.z);
+         file.write_ln("      Position({}, {}, {});", box.position.x,
+                       box.position.y, box.position.z);
+         file.write_ln("      Size({}, {}, {});", box.size.x, box.size.y,
+                       box.size.z);
+         file.write_ln("      SurfaceMaterials({}, {}, {}, {}, {}, {});",
+                       box.surface_materials[0], box.surface_materials[1],
+                       box.surface_materials[2], box.surface_materials[3],
+                       box.surface_materials[4], box.surface_materials[5]);
+         file.write_ln("      SurfaceTextureMode({}, {}, {}, {}, {}, {});",
+                       std::to_underlying(box.surface_texture_mode[0]),
+                       std::to_underlying(box.surface_texture_mode[1]),
+                       std::to_underlying(box.surface_texture_mode[2]),
+                       std::to_underlying(box.surface_texture_mode[3]),
+                       std::to_underlying(box.surface_texture_mode[4]),
+                       std::to_underlying(box.surface_texture_mode[5]));
+         file.write_ln("      SurfaceTextureRotation({}, {}, {}, {}, {}, {});",
+                       std::to_underlying(box.surface_texture_rotation[0]),
+                       std::to_underlying(box.surface_texture_rotation[1]),
+                       std::to_underlying(box.surface_texture_rotation[2]),
+                       std::to_underlying(box.surface_texture_rotation[3]),
+                       std::to_underlying(box.surface_texture_rotation[4]),
+                       std::to_underlying(box.surface_texture_rotation[5]));
+         file.write_ln(
+            "      SurfaceTextureScale({}, {}, {}, {}, {}, {}, {}, {}, {}, "
+            "{}, {}, {});",
+            box.surface_texture_scale[0][0], box.surface_texture_scale[0][1],
+            box.surface_texture_scale[1][0], box.surface_texture_scale[1][1],
+            box.surface_texture_scale[2][0], box.surface_texture_scale[2][1],
+            box.surface_texture_scale[3][0], box.surface_texture_scale[3][1],
+            box.surface_texture_scale[4][0], box.surface_texture_scale[4][1],
+            box.surface_texture_scale[5][0], box.surface_texture_scale[5][1]);
+         file.write_ln(
+            "      SurfaceTextureOffset({}, {}, {}, {}, {}, {}, {}, {}, {}, "
+            "{}, {}, {});",
+            box.surface_texture_offset[0][0], box.surface_texture_offset[0][1],
+            box.surface_texture_offset[1][0], box.surface_texture_offset[1][1],
+            box.surface_texture_offset[2][0], box.surface_texture_offset[2][1],
+            box.surface_texture_offset[3][0], box.surface_texture_offset[3][1],
+            box.surface_texture_offset[4][0], box.surface_texture_offset[4][1],
+            box.surface_texture_offset[5][0], box.surface_texture_offset[5][1]);
+         file.write_ln("   }");
+      }
+
+      file.write_ln("}\n");
+   }
+
+   if (not group.blocks.materials.empty()) {
+      file.write_ln("BlocksMaterials({})", group.blocks.materials.size());
+      file.write_ln("{");
+
+      for (const block_material& material : group.blocks.materials) {
+         file.write_ln("   Material()");
+         file.write_ln("   {");
+         file.write_ln("      Name(\"{}\");", material.name);
+         file.write_ln("      DiffuseMap(\"{}\");", material.diffuse_map);
+         file.write_ln("      NormalMap(\"{}\");", material.normal_map);
+         file.write_ln("      DetailMap(\"{}\");", material.detail_map);
+         file.write_ln("      EnvMap(\"{}\");", material.env_map);
+         file.write_ln("      DetailTiling({}, {});", material.detail_tiling[0],
+                       material.detail_tiling[1]);
+         file.write_ln("      TileNormalMap({:d});", material.tile_normal_map);
+         file.write_ln("      SpecularLighting({:d});", material.specular_lighting);
+         file.write_ln("      SpecularColor({}, {}, {});",
+                       material.specular_color.x, material.specular_color.y,
+                       material.specular_color.z);
+         file.write_ln("   }");
+      }
+
+      file.write_ln("}\n");
+   }
 }
 
 }

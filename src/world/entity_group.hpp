@@ -1,6 +1,7 @@
 #pragma once
 
 #include "barrier.hpp"
+#include "blocks.hpp"
 #include "boundary.hpp"
 #include "hintnode.hpp"
 #include "light.hpp"
@@ -35,6 +36,13 @@ struct entity_group {
    std::vector<planning_connection> planning_connections;
    std::vector<boundary> boundaries;
    std::vector<measurement> measurements;
+
+   struct blocks {
+      std::vector<block_description_box> boxes;
+      std::vector<block_material> materials;
+
+      bool operator==(const blocks&) const noexcept = default;
+   } blocks;
 
    bool operator==(const entity_group&) const noexcept = default;
 };

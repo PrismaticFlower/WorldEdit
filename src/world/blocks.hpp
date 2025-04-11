@@ -46,6 +46,8 @@ struct block_description_box {
    std::array<block_texture_rotation, 6> surface_texture_rotation = {};
    std::array<std::array<int8, 2>, 6> surface_texture_scale = {};
    std::array<std::array<uint16, 2>, 6> surface_texture_offset = {};
+
+   bool operator==(const block_description_box&) const noexcept = default;
 };
 
 struct blocks_bbox_soa {

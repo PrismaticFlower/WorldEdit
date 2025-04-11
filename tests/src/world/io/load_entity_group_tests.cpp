@@ -394,4 +394,168 @@ TEST_CASE("world entity group loading (measurements)", "[World][IO]")
    CHECK(group.measurements[0].end == float3{2.0f, 0.0f, -1.0f});
 }
 
+TEST_CASE("world entity group loading (blocks, boxes)", "[World][IO]")
+{
+   null_output_stream out;
+   const entity_group group =
+      load_entity_group("data/entity_groups/test_blocks_boxes.eng", out);
+
+   REQUIRE(group.blocks.boxes.size() == 3);
+
+   CHECK(group.blocks.boxes[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
+   CHECK(group.blocks.boxes[0].position == float3{8.5f, 4.5f, 2.0f});
+   CHECK(group.blocks.boxes[0].size == float3{4.0f, 4.0f, 4.0f});
+   CHECK(group.blocks.boxes[0].surface_materials ==
+         std::array<uint8, 6>{0, 1, 0, 0, 0, 0});
+   CHECK(group.blocks.boxes[0].surface_texture_mode ==
+         std::array<block_texture_mode, 6>{
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+         });
+   CHECK(group.blocks.boxes[0].surface_texture_rotation ==
+         std::array<block_texture_rotation, 6>{
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+         });
+   CHECK(group.blocks.boxes[0].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 6>{
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{-1, -2},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+         });
+   CHECK(group.blocks.boxes[0].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 6>{
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{256, 256},
+            std::array<uint16, 2>{0, 0},
+         });
+
+   CHECK(group.blocks.boxes[1].rotation == quaternion{0.707106f, 0.0f, 0.707106f, 0.0f});
+   CHECK(group.blocks.boxes[1].position == float3{10.0f, 16.0f, 12.0f});
+   CHECK(group.blocks.boxes[1].size == float3{8.0f, 4.0f, 8.0f});
+   CHECK(group.blocks.boxes[1].surface_materials ==
+         std::array<uint8, 6>{1, 1, 1, 1, 1, 1});
+   CHECK(group.blocks.boxes[1].surface_texture_mode ==
+         std::array<block_texture_mode, 6>{
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::unwrapped,
+            block_texture_mode::world_space_zy,
+         });
+   CHECK(group.blocks.boxes[1].surface_texture_rotation ==
+         std::array<block_texture_rotation, 6>{
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+         });
+   CHECK(group.blocks.boxes[1].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 6>{
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{-2, -2},
+         });
+   CHECK(group.blocks.boxes[1].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 6>{
+            std::array<uint16, 2>{1024, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+         });
+
+   CHECK(group.blocks.boxes[2].rotation == quaternion{0.0f, 0.0f, 0.0f, 1.0f});
+   CHECK(group.blocks.boxes[2].position == float3{6.0f, 6.0f, 6.0f});
+   CHECK(group.blocks.boxes[2].size == float3{5.0f, 5.0f, 5.0f});
+   CHECK(group.blocks.boxes[2].surface_materials ==
+         std::array<uint8, 6>{0, 0, 0, 0, 0, 0});
+   CHECK(group.blocks.boxes[2].surface_texture_mode ==
+         std::array<block_texture_mode, 6>{
+            block_texture_mode::tangent_space_xyz,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xy,
+            block_texture_mode::unwrapped,
+         });
+   CHECK(group.blocks.boxes[2].surface_texture_rotation ==
+         std::array<block_texture_rotation, 6>{
+            block_texture_rotation::d0,
+            block_texture_rotation::d90,
+            block_texture_rotation::d180,
+            block_texture_rotation::d270,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+         });
+   CHECK(group.blocks.boxes[2].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 6>{
+            std::array<int8, 2>{-7, -6},
+            std::array<int8, 2>{-5, -4},
+            std::array<int8, 2>{-3, -2},
+            std::array<int8, 2>{-1, 0},
+            std::array<int8, 2>{1, 2},
+            std::array<int8, 2>{3, 4},
+         });
+   CHECK(group.blocks.boxes[2].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 6>{
+            std::array<uint16, 2>{0, 1},
+            std::array<uint16, 2>{2, 3},
+            std::array<uint16, 2>{4, 5},
+            std::array<uint16, 2>{6, 7},
+            std::array<uint16, 2>{8, 9},
+            std::array<uint16, 2>{10, 11},
+         });
+}
+
+TEST_CASE("world entity group loading (blocks, materials)", "[World][IO]")
+{
+   null_output_stream out;
+   const entity_group group =
+      load_entity_group("data/entity_groups/test_blocks_materials.eng", out);
+
+   REQUIRE(group.blocks.materials.size() == 2);
+
+   CHECK(group.blocks.materials[0].name == "rocks");
+   CHECK(group.blocks.materials[0].diffuse_map == "rocks_diffuse");
+   CHECK(group.blocks.materials[0].normal_map == "rocks_normal");
+   CHECK(group.blocks.materials[0].detail_map == "rocks_detail");
+   CHECK(group.blocks.materials[0].env_map == "skycube");
+   CHECK(group.blocks.materials[0].detail_tiling == std::array<uint8, 2>{4, 4});
+   CHECK(not group.blocks.materials[0].tile_normal_map);
+   CHECK(group.blocks.materials[0].specular_lighting);
+   CHECK(group.blocks.materials[0].specular_color == float3{0.5f, 0.5f, 0.5f});
+
+   CHECK(group.blocks.materials[1].name == "snow");
+   CHECK(group.blocks.materials[1].diffuse_map == "snow_diffuse");
+   CHECK(group.blocks.materials[1].normal_map == "snow_detail_normal");
+   CHECK(group.blocks.materials[1].detail_map == "snow_detail");
+   CHECK(group.blocks.materials[1].env_map == "skycube");
+   CHECK(group.blocks.materials[1].detail_tiling == std::array<uint8, 2>{3, 3});
+   CHECK(group.blocks.materials[1].tile_normal_map);
+   CHECK(group.blocks.materials[1].specular_lighting);
+   CHECK(group.blocks.materials[1].specular_color == float3{0.75f, 0.75f, 0.75f});
+}
+
 }
