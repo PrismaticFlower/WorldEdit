@@ -1,8 +1,11 @@
 #include "grounding.hpp"
-#include "../object_class.hpp"
-#include "math/vector_funcs.hpp"
 #include "raycast.hpp"
 #include "raycast_terrain.hpp"
+
+#include "../blocks/raycast.hpp"
+#include "../object_class.hpp"
+
+#include "math/vector_funcs.hpp"
 
 namespace we::world {
 
@@ -31,6 +34,14 @@ auto ground_bbox(const float3 position, const math::bounding_box bbox,
       }
    }
 
+   if (std::optional<raycast_block_result> hit =
+          raycast(ray_origin, {0.0f, -1.0f, 0.0f}, active_layers, world.blocks);
+       hit) {
+      if (hit->distance < hit_distance) {
+         hit_distance = hit->distance;
+      }
+   }
+
    if (auto hit = raycast(ray_origin, {0.0f, -1.0f, 0.0f}, world.terrain); hit) {
       if (*hit < hit_distance) hit_distance = *hit;
    }
@@ -40,6 +51,14 @@ auto ground_bbox(const float3 position, const math::bounding_box bbox,
       if (std::optional<raycast_result<object>> hit =
              raycast(ray_origin, {0.0f, 1.0f, 0.0f}, active_layers,
                      world.objects, object_classes, raycast_filter);
+          hit) {
+         if (hit->distance < hit_distance) {
+            hit_distance = hit->distance;
+         }
+      }
+
+      if (std::optional<raycast_block_result> hit =
+             raycast(ray_origin, {0.0f, 1.0f, 0.0f}, active_layers, world.blocks);
           hit) {
          if (hit->distance < hit_distance) {
             hit_distance = hit->distance;
@@ -205,6 +224,14 @@ auto ground_point(const float3 point, const world& world,
    if (std::optional<raycast_result<object>> hit =
           raycast(ray_origin, {0.0f, -1.0f, 0.0f}, active_layers, world.objects,
                   object_classes);
+       hit) {
+      if (hit->distance < hit_distance) {
+         hit_distance = hit->distance;
+      }
+   }
+
+   if (std::optional<raycast_block_result> hit =
+          raycast(ray_origin, {0.0f, -1.0f, 0.0f}, active_layers, world.blocks);
        hit) {
       if (hit->distance < hit_distance) {
          hit_distance = hit->distance;
