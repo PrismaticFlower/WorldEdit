@@ -604,6 +604,127 @@ auto read_measurement(const assets::config::node& node) -> measurement
    return measurement;
 }
 
+void read_blocks_boxes(const assets::config::node& node, entity_group& group_out)
+{
+   for (const auto& key_node : node) {
+      if (not string::iequals(key_node.key, "Box")) continue;
+
+      block_description_box box;
+
+      for (const auto& prop : key_node) {
+         if (string::iequals(prop.key, "Rotation")) {
+            box.rotation = {prop.values.get<float>(0), prop.values.get<float>(1),
+                            prop.values.get<float>(2), prop.values.get<float>(3)};
+         }
+         else if (string::iequals(prop.key, "Position")) {
+            box.position = {prop.values.get<float>(0), prop.values.get<float>(1),
+                            prop.values.get<float>(2)};
+         }
+         else if (string::iequals(prop.key, "Size")) {
+            box.size = {prop.values.get<float>(0), prop.values.get<float>(1),
+                        prop.values.get<float>(2)};
+         }
+         else if (string::iequals(prop.key, "SurfaceMaterials")) {
+            for (uint32 i = 0; i < box.surface_materials.size(); ++i) {
+               box.surface_materials[i] = prop.values.get<uint8>(i);
+            }
+         }
+         else if (string::iequals(prop.key, "SurfaceTextureMode")) {
+            for (uint32 i = 0; i < box.surface_texture_mode.size(); ++i) {
+               const uint8 texture_mode = prop.values.get<uint8>(i);
+
+               switch (texture_mode) {
+               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
+               case static_cast<uint8>(block_texture_mode::world_space_auto):
+               case static_cast<uint8>(block_texture_mode::world_space_zy):
+               case static_cast<uint8>(block_texture_mode::world_space_xz):
+               case static_cast<uint8>(block_texture_mode::world_space_xy):
+               case static_cast<uint8>(block_texture_mode::unwrapped):
+                  box.surface_texture_mode[i] = block_texture_mode{texture_mode};
+                  break;
+               }
+            }
+         }
+         else if (string::iequals(prop.key, "SurfaceTextureRotation")) {
+            for (uint32 i = 0; i < box.surface_texture_rotation.size(); ++i) {
+               const uint8 rotation = prop.values.get<uint8>(i);
+
+               switch (rotation) {
+               case static_cast<uint8>(block_texture_rotation::d0):
+               case static_cast<uint8>(block_texture_rotation::d90):
+               case static_cast<uint8>(block_texture_rotation::d180):
+               case static_cast<uint8>(block_texture_rotation::d270):
+                  box.surface_texture_rotation[i] = block_texture_rotation{rotation};
+                  break;
+               }
+            }
+         }
+         else if (string::iequals(prop.key, "SurfaceTextureScale")) {
+            for (uint32 i = 0; i < box.surface_texture_scale.size(); ++i) {
+               box.surface_texture_scale[i] =
+                  {std::clamp(prop.values.get<int8>(i * 2 + 0),
+                              block_min_texture_scale, block_max_texture_scale),
+                   std::clamp(prop.values.get<int8>(i * 2 + 1),
+                              block_min_texture_scale, block_max_texture_scale)};
+            }
+         }
+         else if (string::iequals(prop.key, "SurfaceTextureOffset")) {
+            for (uint32 i = 0; i < box.surface_texture_offset.size(); ++i) {
+               box.surface_texture_offset[i] =
+                  {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
+                   std::min(prop.values.get<uint16>(i * 2 + 1), block_max_texture_offset)};
+            }
+         }
+      }
+
+      group_out.blocks.boxes.push_back(box);
+   }
+}
+
+void read_blocks_materials(const assets::config::node& node, entity_group& group_out)
+{
+   for (const auto& key_node : node) {
+      if (not string::iequals(key_node.key, "Material")) continue;
+
+      block_material material;
+
+      for (const auto& prop : key_node) {
+         if (string::iequals(prop.key, "Name")) {
+            material.name = prop.values.get<std::string>(0);
+         }
+         else if (string::iequals(prop.key, "DiffuseMap")) {
+            material.diffuse_map = prop.values.get<std::string>(0);
+         }
+         else if (string::iequals(prop.key, "NormalMap")) {
+            material.normal_map = prop.values.get<std::string>(0);
+         }
+         else if (string::iequals(prop.key, "DetailMap")) {
+            material.detail_map = prop.values.get<std::string>(0);
+         }
+         else if (string::iequals(prop.key, "EnvMap")) {
+            material.env_map = prop.values.get<std::string>(0);
+         }
+         else if (string::iequals(prop.key, "DetailTiling")) {
+            material.detail_tiling = {prop.values.get<uint8>(0),
+                                      prop.values.get<uint8>(1)};
+         }
+         else if (string::iequals(prop.key, "TileNormalMap")) {
+            material.tile_normal_map = prop.values.get<uint8>(0) != 0;
+         }
+         else if (string::iequals(prop.key, "SpecularLighting")) {
+            material.specular_lighting = prop.values.get<uint8>(0) != 0;
+         }
+         else if (string::iequals(prop.key, "SpecularColor")) {
+            material.specular_color = {prop.values.get<float>(0),
+                                       prop.values.get<float>(1),
+                                       prop.values.get<float>(2)};
+         }
+      }
+
+      group_out.blocks.materials.push_back(std::move(material));
+   }
+}
+
 auto link_connections(std::vector<unlinked_connection> unlinked_connections,
                       const std::vector<planning_hub>& hubs,
                       output_stream& output) -> std::vector<planning_connection>
@@ -766,6 +887,26 @@ void add_branch_weights(const std::vector<unlinked_branch_weight>& unlinked_bran
    }
 }
 
+void clamp_block_material_indices(entity_group& group_out, output_stream& output) noexcept
+{
+   const std::size_t max_material = group_out.blocks.materials.size();
+
+   for (uint32 block_index = 0; block_index < group_out.blocks.boxes.size();
+        ++block_index) {
+      block_description_box& box = group_out.blocks.boxes[block_index];
+
+      for (uint8& material : box.surface_materials) {
+         if (material >= max_material) {
+            output.write("Warning! Box block '{}' has out of range material "
+                         "index. Setting to zero.\n",
+                         block_index);
+
+            material = 0;
+         }
+      }
+   }
+}
+
 }
 
 auto load_entity_group_from_string(const std::string_view entity_group_data,
@@ -815,12 +956,24 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
          else if (string::iequals(key_node.key, "Measurement"sv)) {
             group.measurements.emplace_back(read_measurement(key_node));
          }
+         else if (string::iequals(key_node.key, "BlocksBoxes"sv)) {
+            group.blocks.boxes.reserve(key_node.values.get<uint32>(0));
+
+            read_blocks_boxes(key_node, group);
+         }
+         else if (string::iequals(key_node.key, "BlocksMaterials"sv)) {
+            group.blocks.materials.reserve(key_node.values.get<uint32>(0));
+
+            read_blocks_materials(key_node, group);
+         }
       }
 
       group.planning_connections = link_connections(std::move(unlinked_connections),
                                                     group.planning_hubs, output);
 
       add_branch_weights(branch_weights, group, output);
+
+      clamp_block_material_indices(group, output);
 
       output.write("Loaded entity group (time taken {:f}ms)\n",
                    load_timer.elapsed_ms());
