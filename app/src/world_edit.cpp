@@ -35,6 +35,7 @@
 
 #include "world/blocks/accessors.hpp"
 #include "world/blocks/find.hpp"
+#include "world/blocks/grounding.hpp"
 #include "world/blocks/raycast.hpp"
 #include "world/io/load.hpp"
 #include "world/io/load_entity_group.hpp"
@@ -3088,6 +3089,35 @@ void world_edit::ground_selection() noexcept
                   edits::make_set_value(&hub->position, *grounded_position));
             }
          }
+      }
+      else if (selected.is<world::block_id>()) {
+         _Pragma("warning(push)");
+         _Pragma("warning(default : 4061)"); // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+         _Pragma("warning(default : 4062)"); // enumerator 'identifier' in switch of enum 'enumeration' is not handled
+
+         const world::block_id block_id = selected.get<world::block_id>();
+         const std::optional<uint32> block_index =
+            world::find_block(_world.blocks, block_id);
+
+         if (block_index) {
+            if (const std::optional<float3> grounded_position =
+                   world::ground_block(block_id, *block_index, _world,
+                                       _object_classes, _world_layers_hit_mask);
+                grounded_position) {
+               switch (block_id.type()) {
+               case world::block_type::box: {
+                  const world::block_description_box& box =
+                     _world.blocks.boxes.description[*block_index];
+
+                  bundle.push_back(
+                     edits::make_set_block_box_metrics(*block_index, box.rotation,
+                                                       *grounded_position, box.size));
+               } break;
+               }
+            }
+         }
+
+         _Pragma("warning(pop)");
       }
    }
 
