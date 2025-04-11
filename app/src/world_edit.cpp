@@ -34,6 +34,7 @@
 #include "utility/string_ops.hpp"
 
 #include "world/blocks/accessors.hpp"
+#include "world/blocks/drag_select.hpp"
 #include "world/blocks/find.hpp"
 #include "world/blocks/grounding.hpp"
 #include "world/blocks/raycast.hpp"
@@ -1269,6 +1270,14 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                }
             }
          }
+      }
+
+      if (_world_hit_mask.blocks) {
+         world::drag_select(_world.blocks, frustumWS,
+                            method == select_method::remove
+                               ? world::block_drag_select_op::remove
+                               : world::block_drag_select_op::add,
+                            _interaction_targets.selection);
       }
    }
    else {
