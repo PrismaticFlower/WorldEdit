@@ -79,6 +79,7 @@ TEST_CASE("world interaction_target", "[World]")
    check_type(planning_connection_id{10});
    check_type(boundary_id{11});
    check_type(measurement_id{12});
+   check_type(block_id{block_box_id{13}});
 
    interaction_target other_target;
 
@@ -89,8 +90,8 @@ TEST_CASE("world interaction_target", "[World]")
    CHECK(target.holds_entity_id());
 
    CHECK(other_target.holds_entity_id());
-   CHECK(other_target.is<measurement_id>());
-   CHECK(other_target.get<measurement_id>() == measurement_id{12});
+   CHECK(other_target.is<block_id>());
+   CHECK(other_target.get<block_id>() == block_id{block_box_id{13}});
 }
 
 TEST_CASE("world creation_entity", "[World]")
@@ -348,5 +349,4 @@ TEST_CASE("world path_id_node_mask node_mask operator&", "[World][ID]")
 
    CHECK(mask == make_test_node_mask(false, true, false, false));
 }
-
 }
