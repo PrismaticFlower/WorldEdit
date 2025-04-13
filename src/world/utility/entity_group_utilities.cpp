@@ -1,10 +1,17 @@
 #include "entity_group_utilities.hpp"
-#include "../object_class.hpp"
 #include "world_utilities.hpp"
+
+#include "../blocks/bounding_box.hpp"
+#include "../blocks/find.hpp"
+#include "../object_class.hpp"
 
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
+
 #include "utility/string_icompare.hpp"
+
+#pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+#pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
 
 namespace we::world {
 
@@ -65,6 +72,26 @@ auto get_placed_entity_name_impl(std::string_view name, std::span<const T> world
    }
 
    return name;
+}
+
+void fill_entity_group_block_materials(entity_group& group, const world& world) noexcept
+{
+   group.blocks.materials.reserve(max_block_materials);
+
+   std::array<std::optional<uint8>, max_block_materials> materials_remap;
+
+   for (block_description_box& box : group.blocks.boxes) {
+      for (uint8& material : box.surface_materials) {
+         if (not materials_remap[material]) {
+            materials_remap[material] =
+               static_cast<uint8>(group.blocks.materials.size());
+
+            group.blocks.materials.push_back(world.blocks.materials[material]);
+         }
+
+         material = *materials_remap[material];
+      }
+   }
 }
 
 }
@@ -224,6 +251,10 @@ auto entity_group_metrics(const entity_group& group,
       group_bbox = math::integrate(group_bbox, measurement.end);
    }
 
+   for (const block_description_box& box : group.blocks.boxes) {
+      group_bbox = math::combine(group_bbox, get_bounding_box(box));
+   }
+
    return {.ground_distance = ground_distance, .visual_bbox = group_bbox};
 }
 
@@ -292,6 +323,11 @@ void centre_entity_group(entity_group& group) noexcept
       count += 2.0f;
    }
 
+   for (const block_description_box& box : group.blocks.boxes) {
+      position = box.position;
+      count += 1.0f;
+   }
+
    const float3 centre = position / count;
 
    for (object& object : group.objects) {
@@ -344,6 +380,10 @@ void centre_entity_group(entity_group& group) noexcept
    for (measurement& measurement : group.measurements) {
       measurement.start -= centre;
       measurement.end -= centre;
+   }
+
+   for (block_description_box& box : group.blocks.boxes) {
+      box.position -= centre;
    }
 }
 
@@ -496,6 +536,18 @@ auto make_entity_group_from_selection(const world& world,
 
          if (measurement) group.measurements.push_back(*measurement);
       }
+      else if (selected.is<block_id>()) {
+         const block_id id = selected.get<block_id>();
+         const std::optional<uint32> block_index = find_block(world.blocks, id);
+
+         if (block_index) {
+            switch (id.type()) {
+            case block_type::box: {
+               group.blocks.boxes.push_back(world.blocks.boxes.description[*block_index]);
+            } break;
+            }
+         }
+      }
    }
 
    group.planning_hubs.reserve(unlinked_hubs.size());
@@ -591,6 +643,8 @@ auto make_entity_group_from_selection(const world& world,
       }
    }
 
+   fill_entity_group_block_materials(group, world);
+
    return group;
 }
 
@@ -619,6 +673,14 @@ auto make_entity_group_from_layer(const world& world, const int32 layer) noexcep
       if (hintnode.layer == layer) group.hintnodes.push_back(hintnode);
    }
 
+   for (uint32 block_index = 0; block_index < world.blocks.boxes.size(); ++block_index) {
+      if (world.blocks.boxes.layer[block_index] == layer) {
+         group.blocks.boxes.push_back(world.blocks.boxes.description[block_index]);
+      }
+   }
+
+   fill_entity_group_block_materials(group, world);
+
    return group;
 }
 
@@ -638,6 +700,14 @@ auto make_entity_group_from_world(const world& world) noexcept -> entity_group
                                world.planning_connections.end()},
       .boundaries = {world.boundaries.begin(), world.boundaries.end()},
       .measurements = {world.measurements.begin(), world.measurements.end()},
+
+      .blocks =
+         {
+            .boxes = {world.blocks.boxes.description.begin(),
+                      world.blocks.boxes.description.end()},
+
+            .materials = {world.blocks.materials.begin(), world.blocks.materials.end()},
+         },
    };
 }
 
@@ -657,8 +727,8 @@ bool is_entity_group_empty(const entity_group& group) noexcept
    empty &= group.planning_connections.empty();
    empty &= group.boundaries.empty();
    empty &= group.measurements.empty();
+   empty &= group.blocks.boxes.empty();
 
    return empty;
 }
-
 }
