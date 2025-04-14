@@ -342,15 +342,6 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
       std::memcpy(instance_index_allocation.cpu_address,
                   _TEMP_culling_storage.data(), visible_count * sizeof(uint32));
 
-      volatile uint32* next_instance =
-         reinterpret_cast<uint32*>(instance_index_allocation.cpu_address);
-
-      for (const uint32 index : _TEMP_culling_storage) {
-         *next_instance = index;
-
-         next_instance += 1;
-      }
-
       view.box_instances_count = visible_count;
       view.box_instances = instance_index_allocation.gpu_address;
    }
