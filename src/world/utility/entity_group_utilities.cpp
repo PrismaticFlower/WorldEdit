@@ -324,7 +324,7 @@ void centre_entity_group(entity_group& group) noexcept
    }
 
    for (const block_description_box& box : group.blocks.boxes) {
-      position = box.position;
+      position += box.position;
       count += 1.0f;
    }
 
