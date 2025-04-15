@@ -252,8 +252,13 @@ auto entity_group_metrics(const entity_group& group,
    }
 
    for (const block_description_box& box : group.blocks.boxes) {
+      const math::bounding_box bboxGS = get_bounding_box(box);
+
       group_bbox = math::combine(group_bbox, get_bounding_box(box));
+      ground_distance = std::min(ground_distance, bboxGS.min.y);
    }
+
+   if (ground_distance == FLT_MAX) ground_distance = 0.0f;
 
    return {.ground_distance = ground_distance, .visual_bbox = group_bbox};
 }
