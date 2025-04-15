@@ -423,8 +423,12 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
             : nullptr,
          {scene_depth_min_max.x, scene_depth_min_max.y}, _blocks, active_layers,
          _pre_render_command_list, _dynamic_buffer_allocator);
-      _blocks.update(world.blocks, _pre_render_command_list,
-                     _dynamic_buffer_allocator, _texture_manager);
+      _blocks.update(world.blocks,
+                     interaction_targets.creation_entity.is<world::entity_group>()
+                        ? &interaction_targets.creation_entity.get<world::entity_group>()
+                        : nullptr,
+                     _pre_render_command_list, _dynamic_buffer_allocator,
+                     _texture_manager);
 
       if (active_entity_types.blocks) {
          blocks_view =

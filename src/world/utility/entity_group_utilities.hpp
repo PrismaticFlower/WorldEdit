@@ -82,4 +82,9 @@ auto make_entity_group_from_world(const world& world) noexcept -> entity_group;
 /// @return True if empty, false otherwise.
 bool is_entity_group_empty(const entity_group& group) noexcept;
 
+/// @brief Check if an entity_group's blocks are empty.
+/// @param group The group.
+/// @return True if empty, false otherwise.
+bool is_entity_group_blocks_empty(const entity_group& group) noexcept;
+
 }

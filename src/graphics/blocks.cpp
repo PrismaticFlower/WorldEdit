@@ -1,7 +1,9 @@
 #include "blocks.hpp"
 #include "cull_objects.hpp"
 
+#include "world/blocks/bounding_box.hpp"
 #include "world/blocks/mesh_geometry.hpp"
+#include "world/utility/entity_group_utilities.hpp"
 
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
@@ -173,7 +175,8 @@ blocks::blocks(gpu::device& device, copy_command_list_pool& copy_command_list_po
    }
 }
 
-void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command_list,
+void blocks::update(const world::blocks& blocks, const world::entity_group* entity_group,
+                    gpu::copy_command_list& command_list,
                     dynamic_buffer_allocator& dynamic_buffer_allocator,
                     texture_manager& texture_manager)
 {
@@ -302,6 +305,19 @@ void blocks::update(const world::blocks& blocks, gpu::copy_command_list& command
                                       upload_allocation.offset,
                                       range_size * sizeof(block_material));
    }
+
+   [[unlikely]] if (entity_group and
+                    not world::is_entity_group_blocks_empty(*entity_group)) {
+      if (not _dynamic_blocks) {
+         _dynamic_blocks = std::make_unique<dynamic_blocks>();
+      }
+
+      _dynamic_blocks->update(*entity_group, _device, command_list,
+                              dynamic_buffer_allocator, texture_manager);
+   }
+   else if (_dynamic_blocks) {
+      _dynamic_blocks = nullptr;
+   }
 }
 
 auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
@@ -346,6 +362,45 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
       view.box_instances = instance_index_allocation.gpu_address;
    }
 
+   [[unlikely]] if (_dynamic_blocks) {
+      if (_TEMP_culling_storage.size() < _dynamic_blocks->boxes_bbox.size()) {
+         _TEMP_culling_storage.resize(_dynamic_blocks->boxes_bbox.size());
+      }
+
+      visible_count = 0;
+
+      if (draw == blocks_draw::shadow) {
+         cull_objects_shadow_cascade_avx2(view_frustum,
+                                          _dynamic_blocks->boxes_bbox.min_x,
+                                          _dynamic_blocks->boxes_bbox.min_y,
+                                          _dynamic_blocks->boxes_bbox.min_z,
+                                          _dynamic_blocks->boxes_bbox.max_x,
+                                          _dynamic_blocks->boxes_bbox.max_y,
+                                          _dynamic_blocks->boxes_bbox.max_z,
+                                          visible_count, _TEMP_culling_storage);
+      }
+      else {
+         cull_objects_avx2(view_frustum, _dynamic_blocks->boxes_bbox.min_x,
+                           _dynamic_blocks->boxes_bbox.min_y,
+                           _dynamic_blocks->boxes_bbox.min_z,
+                           _dynamic_blocks->boxes_bbox.max_x,
+                           _dynamic_blocks->boxes_bbox.max_y,
+                           _dynamic_blocks->boxes_bbox.max_z, visible_count,
+                           _TEMP_culling_storage);
+      }
+
+      if (visible_count > 0) {
+         const dynamic_buffer_allocator::allocation& instance_index_allocation =
+            dynamic_buffer_allocator.allocate(visible_count * sizeof(uint32));
+
+         std::memcpy(instance_index_allocation.cpu_address,
+                     _TEMP_culling_storage.data(), visible_count * sizeof(uint32));
+
+         view.dynamic_box_instances_count = visible_count;
+         view.dynamic_box_instances = instance_index_allocation.gpu_address;
+      }
+   }
+
    return view;
 }
 
@@ -388,6 +443,12 @@ void blocks::draw(blocks_draw draw, const view& view,
 
       command_list.draw_indexed_instanced(sizeof(blocks_ia_buffer::cube_indices) / 2,
                                           view.box_instances_count, 0, 0, 0);
+   }
+
+   [[unlikely]] if (_dynamic_blocks) {
+      _dynamic_blocks->draw(view,
+                            _device.get_gpu_virtual_address(_blocks_ia_buffer.get()),
+                            _device, command_list);
    }
 }
 
@@ -442,7 +503,12 @@ void blocks::process_updated_textures(gpu::copy_command_list& command_list,
                                              material.env_map.texture->srv_srgb.index);
       }
    }
+
+   [[unlikely]] if (_dynamic_blocks) {
+      _dynamic_blocks->process_updated_textures(updated);
+   }
 }
+
 void blocks::process_updated_textures_copy(dynamic_buffer_allocator& allocator,
                                            gpu::copy_command_list& command_list,
                                            const updated_textures& updated)
@@ -507,6 +573,252 @@ void blocks::process_updated_textures_copy(dynamic_buffer_allocator& allocator,
                                          sizeof(block_material));
       }
    }
+
+   [[unlikely]] if (_dynamic_blocks) {
+      _dynamic_blocks->process_updated_textures(updated);
+   }
+}
+
+void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
+                                    gpu::device& device,
+                                    gpu::copy_command_list& command_list,
+                                    dynamic_buffer_allocator& dynamic_buffer_allocator,
+                                    texture_manager& texture_manager)
+{
+   auto& blocks = entity_group.blocks;
+
+   if (not blocks.boxes.empty()) {
+      if (boxes_instance_data_capacity < blocks.boxes.size()) {
+         boxes_instance_data_capacity = blocks.boxes.size();
+         boxes_instance_data = {
+            device.create_buffer({.size = boxes_instance_data_capacity *
+                                          sizeof(block_instance_description),
+                                  .debug_name = "World Dynamic Blocks (Boxes)"},
+                                 gpu::heap_type::default_),
+            device.direct_queue};
+      }
+
+      boxes_bbox.clear();
+      boxes_bbox.reserve(blocks.boxes.size());
+
+      const dynamic_buffer_allocator::allocation& upload_allocation =
+         dynamic_buffer_allocator.allocate(blocks.boxes.size() *
+                                           sizeof(block_instance_description));
+      std::byte* upload_ptr = upload_allocation.cpu_address;
+
+      for (uint32 block_index = 0; block_index < blocks.boxes.size(); ++block_index) {
+         const world::block_description_box& block = blocks.boxes[block_index];
+
+         const quaternion block_rotation = entity_group.rotation * block.rotation;
+         const float3 block_positionWS =
+            entity_group.rotation * block.position + entity_group.position;
+
+         const float4x4 scale = {
+            {block.size.x, 0.0f, 0.0f, 0.0f},
+            {0.0f, block.size.y, 0.0f, 0.0f},
+            {0.0f, 0.0f, block.size.z, 0.0f},
+            {0.0f, 0.0f, 0.0f, 1.0f},
+         };
+         const float4x4 rotation = to_matrix(block_rotation);
+
+         block_instance_description description;
+
+         description.world_from_object = rotation * scale;
+         description.adjugate_world_from_object =
+            adjugate(description.world_from_object);
+         description.world_from_object[3] = {block_positionWS, 1.0f};
+
+         for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
+            description.surfaces[i] = {
+               .material_index = block.surface_materials[i],
+               .texture_mode = static_cast<uint32>(block.surface_texture_mode[i]),
+               .scaleX = static_cast<uint32>(block.surface_texture_scale[i][0] + 7),
+               .scaleY = static_cast<uint32>(block.surface_texture_scale[i][1] + 7),
+               .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
+               .offsetX = block.surface_texture_offset[i][0],
+               .offsetY = block.surface_texture_offset[i][1],
+            };
+         }
+
+         std::memcpy(upload_ptr, &description, sizeof(block_instance_description));
+
+         upload_ptr += sizeof(block_instance_description);
+
+         boxes_bbox.push_back(entity_group.rotation * world::get_bounding_box(block) +
+                              entity_group.position);
+      }
+
+      command_list.copy_buffer_region(boxes_instance_data.get(), 0,
+                                      upload_allocation.resource,
+                                      upload_allocation.offset,
+                                      blocks.boxes.size() *
+                                         sizeof(block_instance_description));
+   }
+
+   if (not blocks.materials.empty()) {
+      if (not materials_buffer) {
+         materials_buffer =
+            {device.create_buffer({.size = sizeof(block_material) * world::max_block_materials,
+                                   .debug_name = "Dynamic Blocks Materials"},
+                                  gpu::heap_type::default_),
+             device.direct_queue};
+
+         for (material& material : materials) {
+            material.diffuse_map.texture = texture_manager.null_diffuse_map();
+            material.normal_map.texture = texture_manager.null_normal_map();
+            material.detail_map.texture = texture_manager.null_detail_map();
+            material.env_map.texture = texture_manager.null_cube_map();
+         }
+      }
+
+      const std::size_t material_count =
+         std::min(blocks.materials.size(), world::max_block_materials);
+
+      const dynamic_buffer_allocator::allocation& upload_allocation =
+         dynamic_buffer_allocator.allocate(material_count * sizeof(block_material));
+      std::byte* upload_ptr = upload_allocation.cpu_address;
+
+      for (uint32 material_index = 0; material_index < material_count; ++material_index) {
+         const world::block_material& world_material =
+            blocks.materials[material_index];
+         material& material = materials[material_index];
+
+         material.diffuse_map.update(world_material.diffuse_map, texture_manager,
+                                     texture_manager.null_diffuse_map());
+         material.normal_map.update(world_material.normal_map, texture_manager,
+                                    texture_manager.null_normal_map());
+         material.detail_map.update(world_material.detail_map, texture_manager,
+                                    texture_manager.null_detail_map());
+         material.env_map.update(world_material.env_map, texture_manager,
+                                 texture_manager.null_cube_map());
+
+         material.detail_tiling = world_material.detail_tiling;
+         material.tile_normal_map = world_material.tile_normal_map;
+         material.specular_lighting = world_material.specular_lighting;
+
+         material.specular_color = world_material.specular_color;
+
+         const block_material constants{
+            .flags = material_flags(material),
+            .diffuse_map_index = material.diffuse_map.texture->srv_srgb.index,
+            .normal_map_index = material.normal_map.texture->srv.index,
+            .detail_map_index = material.detail_map.texture->srv.index,
+            .specular_color = material.specular_lighting ? material.specular_color
+                                                         : float3{0.0f, 0.0f, 0.0f},
+            .env_map_index = material.env_map.texture->srv_srgb.index,
+            .detail_scale = {std::max(material.detail_tiling[0], uint8{1}) * 1.0f,
+                             std::max(material.detail_tiling[1], uint8{1}) * 1.0f},
+            .env_color = not material.env_map.name.empty() ? material.specular_color
+                                                           : float3{1.0f, 1.0f, 1.0f},
+         };
+
+         std::memcpy(upload_ptr, &constants, sizeof(block_material));
+
+         upload_ptr += sizeof(block_material);
+      }
+
+      command_list.copy_buffer_region(materials_buffer.get(), 0,
+                                      upload_allocation.resource,
+                                      upload_allocation.offset,
+                                      material_count * sizeof(block_material));
+   }
+}
+
+void blocks::dynamic_blocks::draw(const view& view,
+                                  gpu_virtual_address blocks_ia_buffer_address,
+                                  gpu::device& device,
+                                  gpu::graphics_command_list& command_list) const
+{
+   command_list.set_graphics_cbv(rs::block::materials_cbv,
+                                 device.get_gpu_virtual_address(materials_buffer.get()));
+
+   if (view.dynamic_box_instances_count > 0) {
+      command_list.set_graphics_srv(rs::block::instances_index_srv,
+                                    view.dynamic_box_instances);
+      command_list.set_graphics_srv(rs::block::instances_srv,
+                                    device.get_gpu_virtual_address(
+                                       boxes_instance_data.get()));
+
+      command_list.ia_set_index_buffer({
+         .buffer_location =
+            blocks_ia_buffer_address + offsetof(blocks_ia_buffer, cube_indices),
+         .size_in_bytes = sizeof(blocks_ia_buffer::cube_indices),
+      });
+      command_list.ia_set_vertex_buffers(
+         0, gpu::vertex_buffer_view{
+               .buffer_location = blocks_ia_buffer_address +
+                                  offsetof(blocks_ia_buffer, cube_vertices),
+               .size_in_bytes = sizeof(blocks_ia_buffer::cube_vertices),
+               .stride_in_bytes = sizeof(world::block_vertex),
+            });
+
+      command_list.draw_indexed_instanced(sizeof(blocks_ia_buffer::cube_indices) / 2,
+                                          view.dynamic_box_instances_count, 0, 0, 0);
+   }
+}
+
+void blocks::dynamic_blocks::process_updated_textures(const updated_textures& updated)
+{
+   for (material& material : materials) {
+      if (auto new_texture = updated.check(material.diffuse_map.name);
+          new_texture and new_texture->dimension == world_texture_dimension::_2d) {
+         material.diffuse_map.texture = std::move(new_texture);
+         material.diffuse_map.load_token = nullptr;
+      }
+
+      if (auto new_texture = updated.check(material.normal_map.name);
+          new_texture and new_texture->dimension == world_texture_dimension::_2d) {
+         material.normal_map.texture = std::move(new_texture);
+         material.normal_map.load_token = nullptr;
+      }
+
+      if (auto new_texture = updated.check(material.detail_map.name);
+          new_texture and new_texture->dimension == world_texture_dimension::_2d) {
+         material.detail_map.texture = std::move(new_texture);
+         material.detail_map.load_token = nullptr;
+      }
+
+      if (auto new_texture = updated.check(material.env_map.name);
+          new_texture and new_texture->dimension == world_texture_dimension::cube) {
+         material.env_map.texture = std::move(new_texture);
+         material.env_map.load_token = nullptr;
+      }
+   }
+}
+
+auto blocks::dynamic_blocks::bbox_soa::size() const noexcept -> std::size_t
+{
+   return min_x.size();
+}
+
+void blocks::dynamic_blocks::bbox_soa::push_back(const math::bounding_box& bbox) noexcept
+{
+   min_x.push_back(bbox.min.x);
+   min_y.push_back(bbox.min.y);
+   min_z.push_back(bbox.min.z);
+   max_x.push_back(bbox.max.x);
+   max_y.push_back(bbox.max.y);
+   max_z.push_back(bbox.max.z);
+}
+
+void blocks::dynamic_blocks::bbox_soa::reserve(std::size_t size) noexcept
+{
+   min_x.reserve(size);
+   min_y.reserve(size);
+   min_z.reserve(size);
+   max_x.reserve(size);
+   max_y.reserve(size);
+   max_z.reserve(size);
+}
+
+void blocks::dynamic_blocks::bbox_soa::clear() noexcept
+{
+   min_x.clear();
+   min_y.clear();
+   min_z.clear();
+   max_x.clear();
+   max_y.clear();
+   max_z.clear();
 }
 
 void blocks::material::texture::update(const std::string_view new_name,
@@ -524,5 +836,4 @@ void blocks::material::texture::update(const std::string_view new_name,
       load_token = texture_manager.acquire_load_token(name);
    }
 }
-
 }
