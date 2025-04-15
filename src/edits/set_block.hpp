@@ -54,4 +54,10 @@ auto make_set_block_material(bool* flag_address, bool new_flag, const uint32 ind
 auto make_set_block_material(float3* color_address, float3 new_color, const uint32 index,
                              world::blocks_dirty_range_tracker* dirt_tracker) noexcept
    -> std::unique_ptr<edit<world::edit_context>>;
+
+auto make_set_block_material(world::block_material* material_address,
+                             world::block_material new_material, const uint32 index,
+                             world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 }

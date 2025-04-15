@@ -1889,6 +1889,11 @@ void world_edit::place_creation_entity() noexcept
 
          return;
       }
+      else if (_world.blocks.boxes.size() + group.blocks.boxes.size() > world::max_blocks) {
+         report_limit_reached("Max blocks (boxes, {}) Reached", world::max_blocks);
+
+         return;
+      }
 
       const uint32 object_base_index = static_cast<uint32>(_world.objects.size());
       const uint32 path_base_index = static_cast<uint32>(_world.paths.size());
@@ -2127,6 +2132,58 @@ void world_edit::place_creation_entity() noexcept
                                  _edit_context,
                                  {.transparent =
                                      std::exchange(is_transparent_edit, true)});
+      }
+
+      std::array<std::optional<uint8>, world::max_block_materials> block_material_remap;
+
+      for (uint32 material_index = 0;
+           material_index <
+           std::min(group.blocks.materials.size(), world::max_block_materials);
+           ++material_index) {
+         if (std::optional<uint8> equivalent_material =
+                world::find_block_equivalent_material(_world.blocks,
+                                                      group.blocks.materials[material_index]);
+             equivalent_material) {
+            block_material_remap[material_index] = *equivalent_material;
+
+            continue;
+         }
+
+         if (std::optional<uint8> empty_material =
+                world::find_block_empty_material(_world.blocks);
+             empty_material) {
+            block_material_remap[material_index] = *empty_material;
+
+            _edit_stack_world.apply(
+               edits::make_set_block_material(&_world.blocks.materials[*empty_material],
+                                              group.blocks.materials[material_index],
+                                              *empty_material,
+                                              &_world.blocks.materials_dirty),
+               _edit_context,
+               {.transparent = std::exchange(is_transparent_edit, true)});
+         }
+      }
+
+      for (const world::block_description_box& box : group.blocks.boxes) {
+         world::block_description_box new_box = box;
+
+         new_box.rotation = group.rotation * new_box.rotation;
+         new_box.position = group.rotation * new_box.position + group.position;
+
+         for (uint8& material : new_box.surface_materials) {
+            if (block_material_remap[material]) {
+               material = *block_material_remap[material];
+            }
+            else {
+               material = 0;
+            }
+         }
+
+         _edit_stack_world
+            .apply(edits::make_add_block(new_box, group.layer,
+                                         _world.blocks.next_id.boxes.aquire()),
+                   _edit_context,
+                   {.transparent = std::exchange(is_transparent_edit, true)});
       }
 
       for (uint32 object_index = object_base_index;

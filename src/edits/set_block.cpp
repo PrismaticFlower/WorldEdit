@@ -215,4 +215,13 @@ auto make_set_block_material(float3* color_address, float3 new_color, const uint
                                                           index, dirt_tracker);
 }
 
+auto make_set_block_material(world::block_material* material_address,
+                             world::block_material new_material, const uint32 index,
+                             world::blocks_dirty_range_tracker* dirt_tracker) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_block_box_surface<world::block_material>>(
+      material_address, std::move(new_material), index, dirt_tracker);
+}
+
 }
