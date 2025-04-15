@@ -11,9 +11,13 @@
 #include "texture_manager.hpp"
 #include "types.hpp"
 
-#include "world/active_elements.hpp"
-#include "world/world.hpp"
+#include "allocators/aligned_allocator.hpp"
 
+#include "world/active_elements.hpp"
+#include "world/blocks.hpp"
+#include "world/entity_group.hpp"
+
+#include <memory>
 #include <vector>
 
 namespace we::graphics {
@@ -24,13 +28,17 @@ struct blocks {
    struct view {
       uint32 box_instances_count = 0;
       gpu_virtual_address box_instances = 0;
+
+      uint32 dynamic_box_instances_count = 0;
+      gpu_virtual_address dynamic_box_instances = 0;
    };
 
    blocks(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
           dynamic_buffer_allocator& dynamic_buffer_allocator,
           texture_manager& texture_manager);
 
-   void update(const world::blocks& blocks, gpu::copy_command_list& command_list,
+   void update(const world::blocks& blocks, const world::entity_group* entity_group,
+               gpu::copy_command_list& command_list,
                dynamic_buffer_allocator& dynamic_buffer_allocator,
                texture_manager& texture_manager);
 
@@ -94,6 +102,48 @@ private:
    std::vector<uint32> _TEMP_culling_storage;
 
    std::vector<material> _materials;
+
+   struct dynamic_blocks {
+      struct bbox_soa {
+         using float_soa_vector = std::vector<float, aligned_allocator<float, 32>>;
+
+         float_soa_vector min_x;
+         float_soa_vector min_y;
+         float_soa_vector min_z;
+         float_soa_vector max_x;
+         float_soa_vector max_y;
+         float_soa_vector max_z;
+
+         auto size() const noexcept -> std::size_t;
+
+         void push_back(const math::bounding_box& bbox) noexcept;
+
+         void reserve(std::size_t size) noexcept;
+
+         void clear() noexcept;
+      };
+
+      gpu::unique_resource_handle materials_buffer;
+
+      gpu::unique_resource_handle boxes_instance_data;
+      uint64 boxes_instance_data_capacity = 0;
+
+      bbox_soa boxes_bbox;
+
+      std::array<material, world::max_block_materials> materials;
+
+      void update(const world::entity_group& entity_group, gpu::device& device,
+                  gpu::copy_command_list& command_list,
+                  dynamic_buffer_allocator& dynamic_buffer_allocator,
+                  texture_manager& texture_manager);
+
+      void draw(const view& view, gpu_virtual_address blocks_ia_buffer_address,
+                gpu::device& device, gpu::graphics_command_list& command_list) const;
+
+      void process_updated_textures(const updated_textures& updated);
+   };
+
+   std::unique_ptr<dynamic_blocks> _dynamic_blocks;
 };
 
 }

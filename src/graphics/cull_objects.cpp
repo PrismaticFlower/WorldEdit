@@ -296,6 +296,101 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
    }
 }
 
+void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x,
+                       std::span<const float> bbox_min_y,
+                       std::span<const float> bbox_min_z,
+                       std::span<const float> bbox_max_x,
+                       std::span<const float> bbox_max_y,
+                       std::span<const float> bbox_max_z, uint32& out_count,
+                       std::span<uint32> out_list) noexcept
+{
+   assert(bbox_min_x.size() == bbox_min_y.size());
+   assert(bbox_min_x.size() == bbox_min_z.size());
+   assert(bbox_min_x.size() == bbox_max_x.size());
+   assert(bbox_min_x.size() == bbox_max_y.size());
+   assert(bbox_min_x.size() == bbox_max_z.size());
+   assert(bbox_min_x.size() <= out_list.size());
+
+   out_count = 0;
+
+   const std::size_t simd_iterations = bbox_min_x.size() / avx_width;
+   const std::size_t scalar_iterations = bbox_min_x.size() % avx_width;
+
+   for (std::size_t i = 0; i < simd_iterations; ++i) {
+      int inside_mask = 0xff;
+
+      for (const auto& plane : frustum.planes) {
+         const __m256 plane_x = _mm256_broadcast_ss(&plane.x);
+         const __m256 plane_y = _mm256_broadcast_ss(&plane.y);
+         const __m256 plane_z = _mm256_broadcast_ss(&plane.z);
+         const __m256 plane_w = _mm256_broadcast_ss(&plane.w);
+
+         const __m256 outside =
+            outside_plane(plane_x, plane_y, plane_z, plane_w,
+                          _mm256_load_ps(&bbox_min_x[i * avx_width]),
+                          _mm256_load_ps(&bbox_min_y[i * avx_width]),
+                          _mm256_load_ps(&bbox_min_z[i * avx_width]),
+                          _mm256_load_ps(&bbox_max_x[i * avx_width]),
+                          _mm256_load_ps(&bbox_max_y[i * avx_width]),
+                          _mm256_load_ps(&bbox_max_z[i * avx_width]));
+
+         inside_mask &= ~_mm256_movemask_ps(outside);
+      }
+
+      if (not inside_mask) continue;
+
+      const __m256 outside_x =
+         outside_corners(frustum, &float3::x,
+                         _mm256_load_ps(&bbox_min_x[i * avx_width]),
+                         _mm256_load_ps(&bbox_max_x[i * avx_width]));
+
+      inside_mask &= ~_mm256_movemask_ps(outside_x);
+
+      if (not inside_mask) continue;
+
+      const __m256 outside_y =
+         outside_corners(frustum, &float3::y,
+                         _mm256_load_ps(&bbox_min_y[i * avx_width]),
+                         _mm256_load_ps(&bbox_max_y[i * avx_width]));
+
+      inside_mask &= ~_mm256_movemask_ps(outside_y);
+
+      if (not inside_mask) continue;
+
+      const __m256 outside_z =
+         outside_corners(frustum, &float3::z,
+                         _mm256_load_ps(&bbox_min_z[i * avx_width]),
+                         _mm256_load_ps(&bbox_max_z[i * avx_width]));
+
+      inside_mask &= ~_mm256_movemask_ps(outside_z);
+
+      if (not inside_mask) continue;
+
+      // clang-format off
+
+      if (inside_mask & 0b1       ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 0);
+      if (inside_mask & 0b10      ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 1);
+      if (inside_mask & 0b100     ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 2);
+      if (inside_mask & 0b1000    ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 3);
+      if (inside_mask & 0b10000   ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 4);
+      if (inside_mask & 0b100000  ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 5);
+      if (inside_mask & 0b1000000 ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 6);
+      if (inside_mask & 0b10000000) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 7);
+
+      // clang-format on
+   }
+
+   for (std::size_t i = bbox_min_x.size() - scalar_iterations;
+        i < bbox_min_x.size(); ++i) {
+      if (not intersects(frustum, {{bbox_min_x[i], bbox_min_y[i], bbox_min_z[i]},
+                                   {bbox_max_x[i], bbox_max_y[i], bbox_max_z[i]}})) {
+         continue;
+      }
+
+      out_list[out_count++] = static_cast<uint32>(i);
+   }
+}
+
 void cull_objects_shadow_cascade_scalar(const frustum& frustum,
                                         std::span<const math::bounding_box> bbox,
                                         std::vector<uint16>& out_list) noexcept
@@ -447,4 +542,69 @@ void cull_objects_shadow_cascade_avx2(
    }
 }
 
+void cull_objects_shadow_cascade_avx2(
+   const frustum& frustum, std::span<const float> bbox_min_x,
+   std::span<const float> bbox_min_y, std::span<const float> bbox_min_z,
+   std::span<const float> bbox_max_x, std::span<const float> bbox_max_y,
+   std::span<const float> bbox_max_z, uint32& out_count, std::span<uint32> out_list) noexcept
+{
+   assert(bbox_min_x.size() == bbox_min_y.size());
+   assert(bbox_min_x.size() == bbox_min_z.size());
+   assert(bbox_min_x.size() == bbox_max_x.size());
+   assert(bbox_min_x.size() == bbox_max_y.size());
+   assert(bbox_min_x.size() == bbox_max_z.size());
+   assert(bbox_min_x.size() <= out_list.size());
+
+   out_count = 0;
+
+   const std::size_t simd_iterations = bbox_min_x.size() / avx_width;
+   const std::size_t scalar_iterations = bbox_min_x.size() % avx_width;
+
+   for (std::size_t i = 0; i < simd_iterations; ++i) {
+      int inside_mask = 0xff;
+
+      for (const auto& plane : frustum.planes | drop(1)) {
+         const __m256 plane_x = _mm256_broadcast_ss(&plane.x);
+         const __m256 plane_y = _mm256_broadcast_ss(&plane.y);
+         const __m256 plane_z = _mm256_broadcast_ss(&plane.z);
+         const __m256 plane_w = _mm256_broadcast_ss(&plane.w);
+
+         const __m256 outside =
+            outside_plane(plane_x, plane_y, plane_z, plane_w,
+                          _mm256_load_ps(&bbox_min_x[i * avx_width]),
+                          _mm256_load_ps(&bbox_min_y[i * avx_width]),
+                          _mm256_load_ps(&bbox_min_z[i * avx_width]),
+                          _mm256_load_ps(&bbox_max_x[i * avx_width]),
+                          _mm256_load_ps(&bbox_max_y[i * avx_width]),
+                          _mm256_load_ps(&bbox_max_z[i * avx_width]));
+
+         inside_mask &= ~_mm256_movemask_ps(outside);
+      }
+
+      if (not inside_mask) continue;
+
+      // clang-format off
+
+      if (inside_mask & 0b1       ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 0);
+      if (inside_mask & 0b10      ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 1);
+      if (inside_mask & 0b100     ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 2);
+      if (inside_mask & 0b1000    ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 3);
+      if (inside_mask & 0b10000   ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 4);
+      if (inside_mask & 0b100000  ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 5);
+      if (inside_mask & 0b1000000 ) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 6);
+      if (inside_mask & 0b10000000) out_list[out_count++] = static_cast<uint32>((i * avx_width) + 7);
+
+      // clang-format on
+   }
+
+   for (std::size_t i = bbox_min_x.size() - scalar_iterations;
+        i < bbox_min_x.size(); ++i) {
+      if (not intersects(frustum, {{bbox_min_x[i], bbox_min_y[i], bbox_min_z[i]},
+                                   {bbox_max_x[i], bbox_max_y[i], bbox_max_z[i]}})) {
+         continue;
+      }
+
+      out_list[out_count++] = static_cast<uint32>(i);
+   }
+}
 }

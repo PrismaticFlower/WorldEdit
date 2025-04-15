@@ -731,4 +731,14 @@ bool is_entity_group_empty(const entity_group& group) noexcept
 
    return empty;
 }
+
+bool is_entity_group_blocks_empty(const entity_group& group) noexcept
+{
+   bool empty = true;
+
+   empty &= group.blocks.boxes.empty();
+
+   return empty;
+}
+
 }
