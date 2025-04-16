@@ -74,7 +74,7 @@ auto get_placed_entity_name_impl(std::string_view name, std::span<const T> world
    return name;
 }
 
-void fill_entity_group_block_materials(entity_group& group, const world& world) noexcept
+void fill_entity_group_block_materials(entity_group& group, const blocks& blocks) noexcept
 {
    group.blocks.materials.reserve(max_block_materials);
 
@@ -86,7 +86,7 @@ void fill_entity_group_block_materials(entity_group& group, const world& world) 
             materials_remap[material] =
                static_cast<uint8>(group.blocks.materials.size());
 
-            group.blocks.materials.push_back(world.blocks.materials[material]);
+            group.blocks.materials.push_back(blocks.materials[material]);
          }
 
          material = *materials_remap[material];
@@ -648,7 +648,28 @@ auto make_entity_group_from_selection(const world& world,
       }
    }
 
-   fill_entity_group_block_materials(group, world);
+   fill_entity_group_block_materials(group, world.blocks);
+
+   return group;
+}
+
+auto make_entity_group_from_block_id(const blocks& blocks, const block_id id) noexcept
+   -> entity_group
+{
+   const std::optional<uint32> block_index = find_block(blocks, id);
+
+   if (not block_index) return {};
+
+   entity_group group;
+
+   switch (id.type()) {
+   case block_type::box: {
+      group.blocks.boxes.push_back(blocks.boxes.description[*block_index]);
+   } break;
+   }
+
+   fill_entity_group_block_materials(group, blocks);
+   centre_entity_group(group);
 
    return group;
 }
@@ -684,7 +705,7 @@ auto make_entity_group_from_layer(const world& world, const int32 layer) noexcep
       }
    }
 
-   fill_entity_group_block_materials(group, world);
+   fill_entity_group_block_materials(group, world.blocks);
 
    return group;
 }

@@ -65,6 +65,13 @@ auto get_placed_entity_name(std::string_view name, std::span<const sector> world
 auto make_entity_group_from_selection(const world& world, const selection& selection) noexcept
    -> entity_group;
 
+/// @brief Make an entity_group from a block_id.
+/// @param blocks The world blocks.
+/// @param selection The selection.
+/// @return The entity group.
+auto make_entity_group_from_block_id(const blocks& blocks, const block_id id) noexcept
+   -> entity_group;
+
 /// @brief Make an entity_group that includes all entities from a layer.
 /// @param world The world.
 /// @param layer The index of the layer.

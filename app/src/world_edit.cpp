@@ -3396,6 +3396,13 @@ void world_edit::new_entity_from_selection() noexcept
                                                               _object_classes),
                               _edit_context);
    }
+   else if (selected.is<world::block_id>()) {
+      _edit_stack_world.apply(edits::make_creation_entity_set(
+                                 world::make_entity_group_from_block_id(
+                                    _world.blocks, selected.get<world::block_id>()),
+                                 _object_classes),
+                              _edit_context);
+   }
 
    _entity_creation_context = {};
 
