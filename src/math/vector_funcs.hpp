@@ -693,6 +693,21 @@ inline auto normalize(const float4& v) noexcept -> float4
    return v / length(v);
 }
 
+inline auto lerp(const float2& a, const float2& b, const float s) noexcept -> float2
+{
+   return (1.0f - s) * a + s * b;
+}
+
+inline auto lerp(const float3& a, const float3& b, const float s) noexcept -> float3
+{
+   return (1.0f - s) * a + s * b;
+}
+
+inline auto lerp(const float4& a, const float4& b, const float s) noexcept -> float4
+{
+   return (1.0f - s) * a + s * b;
+}
+
 constexpr auto cross(const float3& a, const float3& b) noexcept -> float3
 {
    return {a.y * b.z - b.y * a.z, //

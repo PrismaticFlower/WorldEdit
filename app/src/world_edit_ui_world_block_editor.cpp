@@ -100,6 +100,12 @@ void world_edit::ui_show_block_editor() noexcept
                             "to alignment. Hold Shift to enable snapping to "
                             "block points within half of XZ alignment.");
 
+      ImGui::SliderInt("Snapping Edge Points", &_block_editor_config.snap_edge_points,
+                       1, 16, nullptr, ImGuiSliderFlags_AlwaysClamp);
+
+      ImGui::SetItemTooltip(
+         "How many snapping points to create along block edges.");
+
       if (ImGui::BeginCombo("Draw Layer",
                             _world
                                .layer_descriptions[_block_editor_config.new_block_layer]
@@ -574,16 +580,20 @@ void world_edit::ui_show_block_editor() noexcept
       }
 
       if (snap) {
-         cursor_positionWS =
-            world::get_snapped_position(cursor_positionWS, _world.blocks,
-                                        alignment.x * 0.5f,
-                                        _block_editor_context.draw_block.block_id,
-                                        _world_layers_hit_mask, _tool_visualizers,
-                                        {
-                                           .snapped = _settings.graphics.snapping_snapped_color,
-                                           .corner = _settings.graphics.snapping_corner_color,
-                                           .edge = _settings.graphics.snapping_edge_color,
-                                        });
+         cursor_positionWS = world::get_snapped_position(
+            cursor_positionWS, _world.blocks,
+            {
+               .snap_radius = alignment.x * 0.5f,
+               .edge_snap_points = _block_editor_config.snap_edge_points,
+               .filter_id = _block_editor_context.draw_block.block_id,
+               .active_layers = _world_layers_hit_mask,
+            },
+            _tool_visualizers,
+            {
+               .snapped = _settings.graphics.snapping_snapped_color,
+               .corner = _settings.graphics.snapping_corner_color,
+               .edge = _settings.graphics.snapping_edge_color,
+            });
       }
 
       const uint32 line_color =
