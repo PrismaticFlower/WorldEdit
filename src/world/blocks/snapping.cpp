@@ -28,18 +28,20 @@ void draw_point(tool_visualizers& visualizers, const float3& point,
 }
 
 auto get_snapped_position(const float3 positionWS, const blocks& blocks,
-                          const float snap_radius, block_id filter_id,
-                          const active_layers active_layers,
+                          const blocks_snapping_config& config,
                           tool_visualizers& visualizers,
                           const blocks_snapping_visualizer_colors& colors) noexcept -> float3
 {
    float3 closest_pointWS;
    float closest_distance = FLT_MAX;
 
+   const int edge_point_count = config.edge_snap_points + 1;
+   const float flt_edge_point_count = static_cast<float>(edge_point_count);
+
    for (uint32 box_index = 0; box_index < blocks.boxes.size(); ++box_index) {
-      if (not active_layers[blocks.boxes.layer[box_index]]) continue;
+      if (not config.active_layers[blocks.boxes.layer[box_index]]) continue;
       if (blocks.boxes.hidden[box_index]) continue;
-      if (blocks.boxes.ids[box_index] == filter_id) continue;
+      if (blocks.boxes.ids[box_index] == config.filter_id) continue;
 
       const math::bounding_box bboxWS = {
          .min =
@@ -67,7 +69,7 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
          max(distances, float3{0.0f, 0.0f, 0.0f}) +
          std::min(std::max(std::max(distances.x, distances.y), distances.z), 0.0f));
 
-      if (box_distance > snap_radius) continue;
+      if (box_distance > config.snap_radius) continue;
 
       const block_description_box& box = blocks.boxes.description[box_index];
 
@@ -82,8 +84,13 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       float4x4 world_from_object = rotation * scale;
       world_from_object[3] = {box.position, 1.0f};
 
-      for (const block_vertex& vertex : block_cube_vertices) {
-         const float3 vertex_positionWS = world_from_object * vertex.position;
+      std::array<float3, 8> verticesWS;
+
+      for (std::size_t i = 0; i < block_cube_points.size(); ++i) {
+         verticesWS[i] = world_from_object * block_cube_points[i];
+      }
+
+      for (const float3& vertex_positionWS : verticesWS) {
          const float corner_distance = distance(positionWS, vertex_positionWS);
 
          if (corner_distance < closest_distance) {
@@ -94,22 +101,25 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
          draw_point(visualizers, vertex_positionWS, colors.corner);
       }
 
-      for (const float3& midpointOS : block_cube_edge_midpoints) {
-         const float3 midpointWS = world_from_object * midpointOS;
-         const float corner_distance = distance(positionWS, midpointWS);
+      for (const auto& [i0, i1] : block_cube_edges) {
+         for (int i = 1; i < edge_point_count; ++i) {
+            const float3 pointWS =
+               lerp(verticesWS[i0], verticesWS[i1], i / flt_edge_point_count);
+            const float point_distance = distance(positionWS, pointWS);
 
-         if (corner_distance < closest_distance) {
-            closest_pointWS = midpointWS;
-            closest_distance = corner_distance;
+            if (point_distance < closest_distance) {
+               closest_pointWS = pointWS;
+               closest_distance = point_distance;
+            }
+
+            draw_point(visualizers, pointWS, colors.edge);
          }
-
-         draw_point(visualizers, midpointWS, colors.edge);
       }
    }
 
    float3 new_positionWS;
 
-   if (closest_distance > 0.0f and closest_distance <= snap_radius) {
+   if (closest_distance > 0.0f and closest_distance <= config.snap_radius) {
       const float3 snap_directionWS = normalize(closest_pointWS - positionWS);
 
       new_positionWS = positionWS + snap_directionWS * closest_distance;
@@ -118,7 +128,7 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       new_positionWS = positionWS;
    }
 
-   if (closest_distance <= snap_radius) {
+   if (closest_distance <= config.snap_radius) {
       visualizers.add_octahedron(
          float4x4{
             float4{visualizer_size * 2.0f, 0.0f, 0.0f, 0.0f},

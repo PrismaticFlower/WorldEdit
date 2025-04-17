@@ -962,6 +962,7 @@ private:
    struct block_editor_config {
       int xz_alignment_exponent = 0;
       int y_alignment_exponent = 0;
+      int snap_edge_points = 3;
 
       int8 new_block_layer = 0;
 
