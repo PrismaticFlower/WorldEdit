@@ -65,9 +65,9 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       const float3 positionAS = positionWS - box_centreOS;
       const float3 distances = abs(positionAS) - box_size;
 
-      const float box_distance = length(
-         max(distances, float3{0.0f, 0.0f, 0.0f}) +
-         std::min(std::max(std::max(distances.x, distances.y), distances.z), 0.0f));
+      const float box_distance =
+         length(max(distances, float3{0.0f, 0.0f, 0.0f})) +
+         std::min(std::max(std::max(distances.x, distances.y), distances.z), 0.0f);
 
       if (box_distance > config.snap_radius) continue;
 
