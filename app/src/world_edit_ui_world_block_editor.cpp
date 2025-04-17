@@ -101,7 +101,7 @@ void world_edit::ui_show_block_editor() noexcept
                             "block points within half of XZ alignment.");
 
       ImGui::SliderInt("Snapping Edge Points", &_block_editor_config.snap_edge_points,
-                       1, 16, nullptr, ImGuiSliderFlags_AlwaysClamp);
+                       1, 17, nullptr, ImGuiSliderFlags_AlwaysClamp);
 
       ImGui::SetItemTooltip(
          "How many snapping points to create along block edges.");
