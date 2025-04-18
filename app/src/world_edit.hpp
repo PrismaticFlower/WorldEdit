@@ -983,6 +983,7 @@ private:
       block_edit_tool tool = block_edit_tool::none;
 
       bool tool_click = false;
+      bool tool_ctrl_click = false;
 
       struct draw_block {
          draw_block_step step = draw_block_step::start;

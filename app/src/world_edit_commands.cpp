@@ -716,6 +716,7 @@ void world_edit::initialize_commands() noexcept
    _commands.add("blocks.deactivate_tool"s,
                  [this] { _block_editor_context.tool = block_edit_tool::none; });
    _commands.add("blocks.tool_click"s, _block_editor_context.tool_click);
+   _commands.add("blocks.tool_ctrl_click"s, _block_editor_context.tool_ctrl_click);
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -1439,12 +1440,9 @@ void world_edit::initialize_hotkeys() noexcept
                      .default_hotkeys =
                         {
                            {"Click", "blocks.tool_click", {.key = key::mouse1}},
-                           {"Click (Aligned)",
-                            "blocks.tool_click",
+                           {"Click (Control)",
+                            "blocks.tool_ctrl_click",
                             {.key = key::mouse1, .modifiers = {.ctrl = true}}},
-                           {"Click (Snapped)",
-                            "blocks.tool_click",
-                            {.key = key::mouse1, .modifiers = {.shift = true}}},
                            {"Cancel", "blocks.deactivate_tool", {.key = key::escape}},
                         },
 
