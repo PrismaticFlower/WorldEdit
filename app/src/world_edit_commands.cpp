@@ -710,6 +710,9 @@ void world_edit::initialize_commands() noexcept
    _commands.add("blocks.activate_resize_block"s, [this] {
       _block_editor_context.activate_tool = block_edit_tool::resize_block;
    });
+   _commands.add("blocks.cursor_toggle_alignment"s,
+                 _block_editor_config.enable_alignment);
+   _commands.add("blocks.cursor_toggle_snapping"s, _block_editor_config.enable_snapping);
    _commands.add("blocks.deactivate_tool"s,
                  [this] { _block_editor_context.tool = block_edit_tool::none; });
    _commands.add("blocks.tool_click"s, _block_editor_context.tool_click);
@@ -1419,6 +1422,10 @@ void world_edit::initialize_hotkeys() noexcept
             {"Resize Block",
              "blocks.activate_resize_block",
              {.key = key::f, .modifiers = {.ctrl = true}}},
+            {"Toggle Cursor Alignment", "blocks.cursor_toggle_alignment", {.key = key::g}},
+            {"Toggle Cursor Snapping",
+             "blocks.cursor_toggle_snapping",
+             {.key = key::s, .modifiers = {.alt = true}}},
          },
    });
 

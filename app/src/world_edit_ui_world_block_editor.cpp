@@ -73,7 +73,11 @@ void world_edit::ui_show_block_editor() noexcept
          _block_editor_context.activate_tool = block_edit_tool::draw;
       }
 
-      ImGui::BeginGroup();
+      ImGui::Checkbox("Enable Alignment", &_block_editor_config.enable_alignment);
+      ImGui::SameLine();
+      ImGui::Checkbox("Enable Snapping", &_block_editor_config.enable_snapping);
+
+      ImGui::BeginDisabled(not _block_editor_config.enable_alignment);
 
       _block_editor_config.xz_alignment_exponent =
          std::clamp(_block_editor_config.xz_alignment_exponent, -4, 8);
@@ -85,26 +89,30 @@ void world_edit::ui_show_block_editor() noexcept
                        alignment_names[_block_editor_config.xz_alignment_exponent + 4],
                        ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoInput);
 
+      ImGui::SetItemTooltip("Alignment Along the XZ-Axes when drawing.");
+
       ImGui::SliderInt("Draw Y Alignment",
                        &_block_editor_config.y_alignment_exponent, -4, 8,
                        alignment_names[_block_editor_config.y_alignment_exponent + 4],
                        ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoInput);
 
-      _block_editor_config.new_block_layer =
-         std::clamp(_block_editor_config.new_block_layer, int8{0},
-                    static_cast<int8>(_world.layer_descriptions.size()));
+      ImGui::SetItemTooltip("Alignment Along the Y-Axis when drawing.");
 
-      ImGui::EndGroup();
+      ImGui::EndDisabled();
 
-      ImGui::SetItemTooltip("Hold Ctrl when drawing blocks to enable snapping "
-                            "to alignment. Hold Shift to enable snapping to "
-                            "block points within half of XZ alignment.");
+      ImGui::BeginDisabled(not _block_editor_config.enable_snapping);
 
       ImGui::SliderInt("Snapping Edge Points", &_block_editor_config.snap_edge_points,
                        1, 17, nullptr, ImGuiSliderFlags_AlwaysClamp);
 
       ImGui::SetItemTooltip(
          "How many snapping points to create along block edges.");
+
+      ImGui::EndDisabled();
+
+      _block_editor_config.new_block_layer =
+         std::clamp(_block_editor_config.new_block_layer, int8{0},
+                    static_cast<int8>(_world.layer_descriptions.size()));
 
       if (ImGui::BeginCombo("Draw Layer",
                             _world
@@ -503,6 +511,17 @@ void world_edit::ui_show_block_editor() noexcept
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Block Editing", "Offset Texture")));
 
+      if (_block_editor_context.tool == block_edit_tool::draw) {
+         ImGui::Text("Toggle Cursor Alignment");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Block Editing",
+                                   "Toggle Cursor Alignment")));
+
+         ImGui::Text("Toggle Cursor Snapping");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Block Editing", "Toggle Cursor Snapping")));
+      }
+
       ImGui::End();
    }
 
@@ -544,9 +563,8 @@ void world_edit::ui_show_block_editor() noexcept
 
    if (_block_editor_context.tool == block_edit_tool::draw) {
       const bool click = std::exchange(_block_editor_context.tool_click, false);
-      const bool align = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
-                         ImGui::IsKeyDown(ImGuiKey_RightCtrl);
-      const bool snap = ImGui::IsKeyDown(ImGuiMod_Shift);
+      const bool align = _block_editor_config.enable_alignment;
+      const bool snap = _block_editor_config.enable_snapping;
       float3 cursor_positionWS = _cursor_positionWS;
 
       if (_block_editor_context.draw_block.height_plane) {

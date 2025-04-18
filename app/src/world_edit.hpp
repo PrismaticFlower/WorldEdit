@@ -964,6 +964,9 @@ private:
       int y_alignment_exponent = 0;
       int snap_edge_points = 3;
 
+      bool enable_alignment = true;
+      bool enable_snapping = true;
+
       int8 new_block_layer = 0;
 
       bool scale_texture_u = true;
