@@ -531,31 +531,38 @@ void world_edit::ui_show_block_editor() noexcept
    case block_edit_tool::draw: {
       _block_editor_context.tool = block_edit_tool::draw;
       _block_editor_context.tool_click = false;
+      _block_editor_context.tool_ctrl_click = false;
       _block_editor_context.draw_block = {};
    } break;
    case block_edit_tool::rotate_texture: {
       _block_editor_context.tool_click = false;
+      _block_editor_context.tool_ctrl_click = false;
       _block_editor_context.tool = block_edit_tool::rotate_texture;
    } break;
    case block_edit_tool::scale_texture: {
       _block_editor_context.tool_click = false;
+      _block_editor_context.tool_ctrl_click = false;
       _block_editor_context.tool = block_edit_tool::scale_texture;
    } break;
    case block_edit_tool::paint_material: {
       _block_editor_context.tool_click = false;
+      _block_editor_context.tool_ctrl_click = false;
       _block_editor_context.tool = block_edit_tool::paint_material;
    } break;
    case block_edit_tool::set_texture_mode: {
       _block_editor_context.tool_click = false;
+      _block_editor_context.tool_ctrl_click = false;
       _block_editor_context.tool = block_edit_tool::set_texture_mode;
    } break;
    case block_edit_tool::offset_texture: {
       _block_editor_context.tool_click = false;
+      _block_editor_context.tool_ctrl_click = false;
       _block_editor_context.tool = block_edit_tool::offset_texture;
       _block_editor_context.offset_texture = {};
    } break;
    case block_edit_tool::resize_block: {
       _block_editor_context.tool_click = false;
+      _block_editor_context.tool_ctrl_click = false;
       _block_editor_context.tool = block_edit_tool::resize_block;
       _block_editor_context.resize_block = {};
    } break;
@@ -885,9 +892,10 @@ void world_edit::ui_show_block_editor() noexcept
       }
    }
    else if (_block_editor_context.tool == block_edit_tool::scale_texture) {
-      const bool click = std::exchange(_block_editor_context.tool_click, false);
-      const bool shrink = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
-                          ImGui::IsKeyDown(ImGuiKey_RightCtrl);
+      const bool click_enlarge =
+         std::exchange(_block_editor_context.tool_click, false);
+      const bool click_shrink =
+         std::exchange(_block_editor_context.tool_ctrl_click, false);
 
       const graphics::camera_ray rayWS =
          make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
@@ -898,13 +906,13 @@ void world_edit::ui_show_block_editor() noexcept
              world::raycast(rayWS.origin, rayWS.direction,
                             _world_layers_hit_mask, _world.blocks);
           hit) {
-         if (click) {
+         if (click_enlarge or click_shrink) {
             std::array<int8, 2> new_scale =
                world::get_block_surface_texture_scale(_world.blocks,
                                                       world::block_type::box,
                                                       hit->index, hit->surface_index);
 
-            if (shrink) {
+            if (click_shrink) {
                if (_block_editor_config.scale_texture_u) new_scale[0] += 1;
                if (_block_editor_config.scale_texture_v) new_scale[1] += 1;
             }
