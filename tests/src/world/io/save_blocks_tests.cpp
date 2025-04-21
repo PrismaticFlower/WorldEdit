@@ -231,6 +231,7 @@ TEST_CASE("world save blocks (materials)", "[World][IO]")
       TileNormalMap(0);
       SpecularLighting(1);
       SpecularColor(0.5, 0.5, 0.5);
+      FoleyFXGroup(0);
    }
    Material(2)
    {
@@ -243,6 +244,7 @@ TEST_CASE("world save blocks (materials)", "[World][IO]")
       TileNormalMap(1);
       SpecularLighting(1);
       SpecularColor(0.75, 0.75, 0.75);
+      FoleyFXGroup(4);
    }
 }
 
@@ -278,6 +280,8 @@ TEST_CASE("world save blocks (materials)", "[World][IO]")
       .specular_lighting = true,
 
       .specular_color = {0.75f, 0.75f, 0.75f},
+
+      .foley_group = block_foley_group::snow,
    };
 
    (void)io::create_directory("temp/blocks");

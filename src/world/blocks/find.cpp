@@ -51,7 +51,7 @@ auto find_block_equivalent_material(const blocks& blocks, const block_material& 
       if (other.detail_tiling != material.detail_tiling) continue;
       if (other.tile_normal_map != material.tile_normal_map) continue;
       if (other.specular_lighting != material.specular_lighting) continue;
-      if (other.specular_lighting != material.specular_lighting) continue;
+      if (other.foley_group != material.foley_group) continue;
 
       return static_cast<uint8>(material_index);
    }

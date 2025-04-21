@@ -546,6 +546,8 @@ void save_entity_group_impl(File& file, const entity_group& group)
          file.write_ln("      SpecularColor({}, {}, {});",
                        material.specular_color.x, material.specular_color.y,
                        material.specular_color.z);
+         file.write_ln("      FoleyFXGroup({});",
+                       std::to_underlying(material.foley_group));
          file.write_ln("   }");
       }
 

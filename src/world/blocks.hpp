@@ -37,6 +37,17 @@ enum class block_texture_mode : uint8 {
 
 enum class block_texture_rotation : uint8 { d0, d90, d180, d270 };
 
+enum class block_foley_group : uint8 {
+   stone,
+   dirt,
+   grass,
+   metal,
+   snow,
+   terrain,
+   water,
+   wood,
+};
+
 struct block_description_box {
    quaternion rotation;
    float3 position;
@@ -92,6 +103,8 @@ struct block_material {
    bool specular_lighting = false;
 
    float3 specular_color = {1.0f, 1.0f, 1.0f};
+
+   block_foley_group foley_group = block_foley_group::stone;
 
    bool operator==(const block_material&) const noexcept = default;
 };

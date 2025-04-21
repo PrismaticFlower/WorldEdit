@@ -23,6 +23,7 @@ Materials()
       TileNormalMap(1);
       SpecularLighting(1);
       SpecularColor(0.75, 0.75, 0.75);
+      FoleyFXGroup(4);
    }
 }
 

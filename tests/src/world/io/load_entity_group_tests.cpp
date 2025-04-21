@@ -546,6 +546,7 @@ TEST_CASE("world entity group loading (blocks, materials)", "[World][IO]")
    CHECK(not group.blocks.materials[0].tile_normal_map);
    CHECK(group.blocks.materials[0].specular_lighting);
    CHECK(group.blocks.materials[0].specular_color == float3{0.5f, 0.5f, 0.5f});
+   CHECK(group.blocks.materials[0].foley_group == block_foley_group::stone);
 
    CHECK(group.blocks.materials[1].name == "snow");
    CHECK(group.blocks.materials[1].diffuse_map == "snow_diffuse");
@@ -556,6 +557,7 @@ TEST_CASE("world entity group loading (blocks, materials)", "[World][IO]")
    CHECK(group.blocks.materials[1].tile_normal_map);
    CHECK(group.blocks.materials[1].specular_lighting);
    CHECK(group.blocks.materials[1].specular_color == float3{0.75f, 0.75f, 0.75f});
+   CHECK(group.blocks.materials[1].foley_group == block_foley_group::snow);
 }
 
 }
