@@ -14,6 +14,11 @@ auto format_as(block_texture_rotation rotation) noexcept -> uint8
    return fmt::underlying(rotation);
 }
 
+auto format_as(block_foley_group group) noexcept -> uint8
+{
+   return fmt::underlying(group);
+}
+
 namespace {
 
 void save_boxes(io::output_file& out, const blocks_boxes& boxes) noexcept
@@ -98,6 +103,7 @@ void save_materials(io::output_file& out, const blocks& blocks) noexcept
       out.write_ln("      SpecularLighting({:d});", material.specular_lighting);
       out.write_ln("      SpecularColor({}, {}, {});", material.specular_color.x,
                    material.specular_color.y, material.specular_color.z);
+      out.write_ln("      FoleyFXGroup({});", material.foley_group);
       out.write_ln("   }");
    }
 

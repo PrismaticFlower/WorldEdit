@@ -1004,6 +1004,7 @@ TEST_CASE("world save entity group (blocks, materials)", "[World][IO]")
       TileNormalMap(0);
       SpecularLighting(1);
       SpecularColor(0.5, 0.5, 0.5);
+      FoleyFXGroup(0);
    }
    Material()
    {
@@ -1016,6 +1017,7 @@ TEST_CASE("world save entity group (blocks, materials)", "[World][IO]")
       TileNormalMap(1);
       SpecularLighting(1);
       SpecularColor(0.75, 0.75, 0.75);
+      FoleyFXGroup(4);
    }
 }
 
@@ -1054,6 +1056,8 @@ TEST_CASE("world save entity group (blocks, materials)", "[World][IO]")
                      .specular_lighting = true,
 
                      .specular_color = {0.75f, 0.75f, 0.75f},
+
+                     .foley_group = block_foley_group::snow,
                   },
 
                },

@@ -217,6 +217,7 @@ TEST_CASE("world load blocks (materials)", "[World][IO]")
    CHECK(not materials[0].tile_normal_map);
    CHECK(materials[0].specular_lighting);
    CHECK(materials[0].specular_color == float3{0.5f, 0.5f, 0.5f});
+   CHECK(materials[0].foley_group == block_foley_group::stone);
 
    const block_material empty_material;
 
@@ -231,6 +232,7 @@ TEST_CASE("world load blocks (materials)", "[World][IO]")
    CHECK(materials[2].tile_normal_map);
    CHECK(materials[2].specular_lighting);
    CHECK(materials[2].specular_color == float3{0.75f, 0.75f, 0.75f});
+   CHECK(materials[2].foley_group == block_foley_group::snow);
 
    for (uint32 i = 3; i < max_block_materials; ++i) {
       CHECK(materials[i] == empty_material);

@@ -719,6 +719,22 @@ void read_blocks_materials(const assets::config::node& node, entity_group& group
                                        prop.values.get<float>(1),
                                        prop.values.get<float>(2)};
          }
+         else if (string::iequals(prop.key, "FoleyFXGroup")) {
+            const uint8 foley_group = prop.values.get<uint8>(0);
+
+            switch (foley_group) {
+            case static_cast<uint8>(block_foley_group::stone):
+            case static_cast<uint8>(block_foley_group::dirt):
+            case static_cast<uint8>(block_foley_group::grass):
+            case static_cast<uint8>(block_foley_group::metal):
+            case static_cast<uint8>(block_foley_group::snow):
+            case static_cast<uint8>(block_foley_group::terrain):
+            case static_cast<uint8>(block_foley_group::water):
+            case static_cast<uint8>(block_foley_group::wood):
+               material.foley_group = block_foley_group{foley_group};
+               break;
+            }
+         }
       }
 
       group_out.blocks.materials.push_back(std::move(material));
