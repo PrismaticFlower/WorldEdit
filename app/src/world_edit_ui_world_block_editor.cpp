@@ -54,6 +54,24 @@ auto texture_mode_name(world::block_texture_mode mode) noexcept -> const char*
    return "<unknown>";
 }
 
+auto foley_group_name(world::block_foley_group group) noexcept -> const char*
+{
+   // clang-format off
+   switch (group) {
+   case world::block_foley_group::stone:   return "Stone";
+   case world::block_foley_group::dirt:    return "Dirt";
+   case world::block_foley_group::grass:   return "Grass";
+   case world::block_foley_group::metal:   return "Metal";
+   case world::block_foley_group::snow:    return "Snow";
+   case world::block_foley_group::terrain: return "Terrain";
+   case world::block_foley_group::water:   return "Water";
+   case world::block_foley_group::wood:    return "Wood";
+   }
+   // clang-format on
+
+   return "<unknown>";
+}
+
 }
 
 void world_edit::ui_show_block_editor() noexcept
@@ -470,6 +488,39 @@ void world_edit::ui_show_block_editor() noexcept
             }
 
             if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+
+            ImGui::Dummy({image_width, image_width});
+
+            ImGui::TableNextColumn();
+
+            if (ImGui::BeginCombo("Foley FX Group",
+                                  foley_group_name(material.foley_group))) {
+               for (world::block_foley_group group : {
+                       world::block_foley_group::stone,
+                       world::block_foley_group::dirt,
+                       world::block_foley_group::grass,
+                       world::block_foley_group::metal,
+                       world::block_foley_group::snow,
+                       world::block_foley_group::terrain,
+                       world::block_foley_group::water,
+                       world::block_foley_group::wood,
+                    }) {
+                  if (ImGui::Selectable(foley_group_name(group),
+                                        material.foley_group == group)) {
+                     _edit_stack_world.apply(edits::make_set_value(&material.foley_group,
+                                                                   group),
+                                             _edit_context, {.closed = true});
+                  }
+               }
+
+               ImGui::EndCombo();
+            }
+
+            ImGui::SetItemTooltip("Not all foley groups may be availible, "
+                                  "depending on the sound .lvl your map uses.");
 
             ImGui::EndTable();
          }
