@@ -21,6 +21,8 @@ enum class output_open_mode {
    append
 };
 
+enum class file_write_offset : uint64 {};
+
 /// @brief A simple class for writing out to a file using a nice API.
 class output_file {
 public:
@@ -80,6 +82,14 @@ public:
 
    /// @brief Flush buffered writes to the OS.
    void flush() noexcept;
+
+   /// @brief Get the current file write offset (file pointer in Win32 API).
+   /// @return The file write offset.
+   auto get_write_offset() const noexcept -> file_write_offset;
+
+   /// @brief Set the file write offset.
+   /// @param new_offset The new file write offset.
+   void set_write_offset(file_write_offset new_offset) noexcept;
 
    // clang-format off
 private:

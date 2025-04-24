@@ -255,6 +255,11 @@
     <ClCompile Include="src\world\blocks\bounding_box.cpp" />
     <ClCompile Include="src\world\blocks\grounding.cpp" />
     <ClCompile Include="src\world\blocks\drag_select.cpp" />
+    <ClCompile Include="src\world\io\save_blocks_meshes.cpp" />
+    <ClCompile Include="src\world\blocks\export\mesh_clusters.cpp" />
+    <ClCompile Include="src\world\blocks\export\mesh_scenes.cpp" />
+    <ClCompile Include="src\assets\msh\scene_io_save.cpp" />
+    <ClCompile Include="src\ucfb\writer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -565,6 +570,12 @@
     <ClInclude Include="src\world\blocks\bounding_box.hpp" />
     <ClInclude Include="src\world\blocks\grounding.hpp" />
     <ClInclude Include="src\world\blocks\drag_select.hpp" />
+    <ClInclude Include="src\world\io\save_blocks_meshes.hpp" />
+    <ClInclude Include="src\world\blocks\export\mesh.hpp" />
+    <ClInclude Include="src\world\blocks\export\mesh_clusters.hpp" />
+    <ClInclude Include="src\world\blocks\export\mesh_scenes.hpp" />
+    <ClInclude Include="src\ucfb\writer.hpp" />
+    <ClInclude Include="src\ucfb\chunk_id.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
