@@ -15,4 +15,6 @@ auto read_scene(const io::path& path) -> scene;
 
 auto read_scene_options(const io::path& path) -> options;
 
+void save_scene(const io::path& path, const scene& scene);
+
 }

@@ -148,6 +148,27 @@ void output_file::write_impl(const void* data, std::int64_t size) noexcept
    _used_buffer_bytes += size;
 }
 
+auto output_file::get_write_offset() const noexcept -> file_write_offset
+{
+   const LARGE_INTEGER distance_to_move{.QuadPart = 0};
+   LARGE_INTEGER new_file_pointer{.QuadPart = 0};
+
+   SetFilePointerEx(_file.get(), distance_to_move, &new_file_pointer, FILE_CURRENT);
+
+   return file_write_offset{
+      static_cast<uint64>(new_file_pointer.QuadPart + _used_buffer_bytes)};
+}
+
+void output_file::set_write_offset(file_write_offset new_offset) noexcept
+{
+   flush();
+
+   const LARGE_INTEGER distance_to_move{.QuadPart = static_cast<int64>(new_offset)};
+   LARGE_INTEGER new_file_pointer{.QuadPart = 0};
+
+   SetFilePointerEx(_file.get(), distance_to_move, &new_file_pointer, FILE_BEGIN);
+}
+
 void output_file::flush() noexcept
 {
    if (_used_buffer_bytes <= 0) return;
