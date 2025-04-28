@@ -617,4 +617,42 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(is_unique_id(0, world.animation_hierarchies));
    }
 }
+
+TEST_CASE("world loading blocks req strip", "[World][IO]")
+{
+   null_output_stream out;
+   const auto world = load_world("data/world_blocks/test.wld"sv, out);
+
+   CHECK(world.name == "test"sv);
+
+   REQUIRE(world.requirements.size() == 7);
+
+   CHECK(world.requirements[0].file_type == "path"sv);
+   REQUIRE(world.requirements[0].entries.size() == 1);
+   CHECK(world.requirements[0].entries[0] == "test"sv);
+
+   CHECK(world.requirements[1].file_type == "congraph"sv);
+   REQUIRE(world.requirements[1].entries.size() == 1);
+   CHECK(world.requirements[1].entries[0] == "test"sv);
+
+   CHECK(world.requirements[2].file_type == "envfx"sv);
+   REQUIRE(world.requirements[2].entries.size() == 1);
+   CHECK(world.requirements[2].entries[0] == "test"sv);
+
+   // Check that loading removed the reference to test_WE_blocks
+   CHECK(world.requirements[3].file_type == "world"sv);
+   REQUIRE(world.requirements[3].entries.size() == 1);
+   CHECK(world.requirements[3].entries[0] == "test"sv);
+
+   CHECK(world.requirements[4].file_type == "prop"sv);
+   REQUIRE(world.requirements[4].entries.size() == 1);
+   CHECK(world.requirements[4].entries[0] == "test"sv);
+
+   CHECK(world.requirements[5].file_type == "povs"sv);
+   REQUIRE(world.requirements[5].entries.size() == 1);
+   CHECK(world.requirements[5].entries[0] == "test"sv);
+
+   CHECK(world.requirements[6].file_type == "lvl"sv);
+   REQUIRE(world.requirements[6].entries.size() == 0);
+}
 }

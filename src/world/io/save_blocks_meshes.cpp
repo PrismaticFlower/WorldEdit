@@ -83,11 +83,9 @@ auto evaluate_texcorrds(const float3& positionWS, const float3& normalWS,
    } break;
    case block_texture_rotation::d90: {
       texcoords = {-texcoords.y, texcoords.x};
-
    } break;
    case block_texture_rotation::d180: {
       texcoords = -texcoords;
-
    } break;
    case block_texture_rotation::d270: {
       texcoords = {texcoords.y, -texcoords.x};
@@ -120,11 +118,12 @@ auto foley_name(const block_foley_group group) noexcept -> const char*
 
 }
 
-void save_blocks_meshes(const io::path& output_directory,
+auto save_blocks_meshes(const io::path& output_directory,
                         const std::string_view world_name, const blocks& blocks)
+   -> std::size_t
 {
    if (not io::exists(output_directory) and not io::create_directory(output_directory)) {
-      // Sad sad cry times
+      throw std::runtime_error{"Unable to create directory to save blocks."};
    }
 
    std::vector<block_world_triangle> triangle_list;
@@ -197,6 +196,8 @@ void save_blocks_meshes(const io::path& output_directory,
       odf.write_ln("GeometryName = \"{}\"", mesh_name);
       odf.write_ln("FoleyFXGroup = \"{}_foley\"", foley_name(scene.foley_group));
    }
+
+   return scenes.size();
 }
 
 }

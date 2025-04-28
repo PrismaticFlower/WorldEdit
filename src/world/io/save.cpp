@@ -1,6 +1,7 @@
 
 #include "save.hpp"
 #include "save_blocks.hpp"
+#include "save_blocks_meshes.hpp"
 #include "save_effects.hpp"
 
 #include "assets/req/io.hpp"
@@ -833,8 +834,22 @@ void save_requirements(const io::path& world_dir, const std::string_view world_n
                        const world& world, const save_flags flags)
 {
    if (not world.requirements.empty()) {
-      assets::req::save(io::compose_path(world_dir, world_name, ".req"),
-                        world.requirements);
+      if (world.blocks.empty()) {
+         assets::req::save(io::compose_path(world_dir, world_name, ".req"),
+                           world.requirements);
+      }
+      else {
+         std::vector<requirement_list> requirements = world.requirements;
+
+         for (requirement_list& list : requirements) {
+            if (string::iequals(list.file_type, "world") and
+                list.platform == assets::req::platform::all) {
+               list.entries.push_back(fmt::format("{}_{}", world_name, "WE_blocks"));
+            }
+         }
+
+         assets::req::save(io::compose_path(world_dir, world_name, ".req"), requirements);
+      }
    }
 
    if (not flags.save_gamemodes) return;
@@ -847,6 +862,41 @@ void save_requirements(const io::path& world_dir, const std::string_view world_n
                                                      game_mode.name),
                                          ".mrq"),
                         game_mode.requirements);
+   }
+}
+
+void save_blocks_layer(const std::string_view world_dir,
+                       const std::string_view world_name, const world& world,
+                       sequence_numbers& sequence_numbers)
+{
+   save_blocks(io::compose_path(world_dir, world_name, ".blk"sv), world.blocks);
+
+   if (world.blocks.empty()) return;
+
+   const std::size_t object_count =
+      save_blocks_meshes(io::compose_path(world_dir, "blocks"), world_name,
+                         world.blocks);
+
+   io::output_file file{
+      io::compose_path(world_dir, fmt::format("{}_{}", world_name, "WE_blocks"),
+                       ".lyr"sv)};
+
+   file.write_ln("Version(3);");
+   file.write_ln("SaveType(0);\n");
+
+   for (std::size_t object_index = 0; object_index < object_count; ++object_index) {
+      const int sequence_number = sequence_numbers.objects++;
+
+      file.write_ln("Object(\"\", \"WE_{}_blocks{}\", {})", world_name,
+                    object_index, sequence_number);
+      file.write_ln("{");
+
+      file.write_ln("\tChildRotation(0.000000, 0.000000, 1.000000, 0.000000);");
+      file.write_ln("\tChildPosition(0.000000, 0.000000, 0.000000);");
+      file.write_ln("\tTeam(0);");
+      file.write_ln("\tNetworkId(-1);");
+
+      file.write_ln("}\n");
    }
 }
 
@@ -900,12 +950,13 @@ void save_world(const io::path& path, const world& world,
 
    save_terrain(make_path_with_new_extension(path, ".ter"sv), world.terrain,
                 terrain_cuts);
+
    save_requirements(world_dir, world_name, world, flags);
 
    if (flags.save_effects) {
       save_effects(make_path_with_new_extension(path, ".fx"sv), world.effects);
    }
 
-   save_blocks(make_path_with_new_extension(path, ".blk"sv), world.blocks);
+   save_blocks_layer(world_dir, world_name, world, sequence_numbers);
 }
 }

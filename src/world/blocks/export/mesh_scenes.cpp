@@ -94,10 +94,10 @@ auto make_material(const block_material& material) noexcept -> assets::msh::mate
    }
    else if (not material.normal_map.empty()) {
       if (material.tile_normal_map) {
-         msh_material.rendertype = rendertype::normalmap_tiled_envmapped;
+         msh_material.rendertype = rendertype::normalmap_tiled;
       }
       else {
-         msh_material.rendertype = rendertype::normalmap_envmapped;
+         msh_material.rendertype = rendertype::normalmap;
       }
    }
 

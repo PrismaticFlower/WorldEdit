@@ -1,8 +1,11 @@
 
 #include "pch.h"
 
+#include "edits/add_block.hpp"
+
 #include "io/output_file.hpp"
 #include "io/read_file.hpp"
+
 #include "world/io/save.hpp"
 
 #include <fmt/core.h>
@@ -1726,5 +1729,97 @@ TEST_CASE("world saving no effects", "[World][IO]")
    save_world("temp/world/test_no_effects.wld", world, {}, {.save_effects = false});
 
    CHECK(not io::exists("temp/world/test_no_effects.fx"));
+}
+
+TEST_CASE("world saving blocks req and layer", "[World][IO]")
+{
+   (void)io::create_directory("temp/world_blocks");
+
+   world world{
+      .name = "test_blocks",
+      .requirements =
+         {
+            {.file_type = "path", .entries = {"test_blocks"}},
+            {.file_type = "congraph", .entries = {"test_blocks"}},
+            {.file_type = "envfx", .entries = {"test_blocks"}},
+            {.file_type = "world", .entries = {"test_blocks"}},
+            {.file_type = "prop", .entries = {"test_blocks"}},
+            {.file_type = "povs", .entries = {"test_blocks"}},
+            {.file_type = "lvl", .entries = {}},
+         },
+
+      .layer_descriptions = {{.name = "[Base]"}},
+   };
+   creation_entity creation_entity;
+   edit_context edit_context{.world = world, .creation_entity = creation_entity};
+
+   edits::make_add_block({.size = {4.0f, 4.0f, 4.0f}}, 0,
+                         world.blocks.next_id.boxes.aquire())
+      ->apply(edit_context);
+
+   save_world("temp/world_blocks/test_blocks.wld", world, {}, {});
+
+   constexpr auto expected_blocks_req = R"(ucft
+{
+	REQN
+	{
+		"path"
+		"test_blocks"
+	}
+	REQN
+	{
+		"congraph"
+		"test_blocks"
+	}
+	REQN
+	{
+		"envfx"
+		"test_blocks"
+	}
+	REQN
+	{
+		"world"
+		"test_blocks"
+		"test_blocks_WE_blocks"
+	}
+	REQN
+	{
+		"prop"
+		"test_blocks"
+	}
+	REQN
+	{
+		"povs"
+		"test_blocks"
+	}
+	REQN
+	{
+		"lvl"
+	}
+}
+)"sv;
+
+   const auto written_req =
+      io::read_file_to_string("temp/world_blocks/test_blocks.req");
+
+   CHECK(written_req == expected_blocks_req);
+
+   constexpr auto expected_blocks_lyr = R"(Version(3);
+SaveType(0);
+
+Object("", "WE_test_blocks_blocks0", 0)
+{
+	ChildRotation(0.000000, 0.000000, 1.000000, 0.000000);
+	ChildPosition(0.000000, 0.000000, 0.000000);
+	Team(0);
+	NetworkId(-1);
+}
+
+)"sv;
+
+   const auto written_lyr =
+      io::read_file_to_string("temp/world_blocks/test_blocks_WE_blocks.lyr");
+
+   CHECK(written_lyr == expected_blocks_lyr);
 }
 }
