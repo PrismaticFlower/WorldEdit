@@ -1460,6 +1460,24 @@ void ensure_common_game_mode(world& world) noexcept
    }
 }
 
+void strip_blocks_layer_reference(world& world) noexcept
+{
+   const std::string blocks_layer_name = fmt::format("{}_{}", world.name, "WE_blocks");
+
+   for (requirement_list& list : world.requirements) {
+      if (string::iequals(list.file_type, "world") and
+          list.platform == assets::req::platform::all) {
+         for (std::size_t index = 0; index < list.entries.size(); ++index) {
+            if (string::iequals(list.entries[index], blocks_layer_name)) {
+               list.entries.erase(list.entries.begin() + index);
+
+               return;
+            }
+         }
+      }
+   }
+}
+
 }
 
 auto load_world(const io::path& path, output_stream& output) -> world
@@ -1534,6 +1552,8 @@ auto load_world(const io::path& path, output_stream& output) -> world
           io::exists(blk_path)) {
          world.blocks = load_blocks(blk_path, layer_remap, output);
       }
+
+      strip_blocks_layer_reference(world);
    }
    catch (load_failure& failure) {
       output

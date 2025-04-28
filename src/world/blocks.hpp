@@ -119,6 +119,8 @@ struct blocks {
       id_generator<block_description_box> boxes;
    } next_id;
 
+   bool empty() const noexcept;
+
    void untracked_fill_dirty_ranges() noexcept;
 
    void untracked_clear_dirty_ranges() noexcept;

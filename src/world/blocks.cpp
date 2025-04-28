@@ -38,6 +38,11 @@ bool blocks_boxes::is_balanced() const noexcept
           bbox.min_x.size() == ids.size();
 }
 
+bool blocks::empty() const noexcept
+{
+   return boxes.size() == 0;
+}
+
 void blocks::untracked_fill_dirty_ranges() noexcept
 {
    if (boxes.size() != 0) {
