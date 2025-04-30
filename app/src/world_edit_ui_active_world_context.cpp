@@ -13,6 +13,9 @@ void world_edit::ui_show_world_active_context() noexcept
                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                    ImGuiWindowFlags_NoMove);
 
+   ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,
+                       {ImGui::GetStyle().FramePadding.x, 2.0f * _display_scale});
+
    ImGui::SeparatorText("Active Layers");
    ImGui::BeginChild("Active Layers", ImVec2{0.0f, 208.0f * _display_scale});
 
@@ -281,10 +284,27 @@ void world_edit::ui_show_world_active_context() noexcept
          if (hit) _world_draw_mask.terrain = true;
       }
 
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("Blocks");
+
+      ImGui::TableNextColumn();
+      if (bool draw = _world_draw_mask.blocks; ImGui::Checkbox("Show##Blocks", &draw)) {
+         _world_draw_mask.blocks = draw;
+         if (not draw) _world_hit_mask.blocks = false;
+      }
+
+      ImGui::TableNextColumn();
+      if (bool hit = _world_hit_mask.blocks; ImGui::Checkbox("Select##Blocks", &hit)) {
+         _world_hit_mask.blocks = hit;
+         if (hit) _world_draw_mask.blocks = true;
+      }
+
       ImGui::EndTable();
    }
 
    ImGui::EndChild();
+
+   ImGui::PopStyleVar();
 
    ImGui::SeparatorText("Floor");
    ImGui::DragFloat("Height", &_editor_floor_height, 1.0f,
