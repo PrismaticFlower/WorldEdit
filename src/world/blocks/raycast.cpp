@@ -36,7 +36,8 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
       const float3 ray_directionLS = normalize(local_from_world * ray_directionWS);
 
       if (float hit; intersect_aabb(ray_originLS, 1.0f / ray_directionLS,
-                                    {-box.size, box.size}, closest, hit)) {
+                                    {-box.size, box.size}, closest, hit) and
+                     hit >= 0.0f) {
          if (filter and not filter(boxes.ids[box_index])) continue;
 
          closest = hit;
