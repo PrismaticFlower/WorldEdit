@@ -368,7 +368,9 @@ void light_clusters::prepare_lights(
    const camera& view_camera, const frustum& view_frustum,
    const world::world& world, const world::light* optional_placement_light,
    const std::array<float, 2> scene_depth_min_max, blocks& blocks,
-   const world::active_layers active_layers, gpu::copy_command_list& command_list,
+   const world::active_layers active_layers,
+   const world::active_entity_types active_entity_types,
+   gpu::copy_command_list& command_list,
    dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    static_assert((sizeof(_tiles_start_value) / sizeof(uint32)) == tile_light_words);
@@ -623,7 +625,7 @@ void light_clusters::prepare_lights(
       _sphere_light_proxies_srv = upload_buffer.gpu_address;
    }
 
-   if (_has_sun_shadows) {
+   if (_has_sun_shadows and active_entity_types.blocks) {
       for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
          _sun_shadow_blocks_view[cascade_index] =
             blocks.prepare_view(blocks_draw::shadow, world.blocks,
