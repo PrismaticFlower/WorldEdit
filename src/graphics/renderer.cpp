@@ -416,13 +416,14 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                       _dynamic_buffer_allocator, _texture_manager, settings);
       _water.update(world, _pre_render_command_list, _dynamic_buffer_allocator,
                     _texture_manager);
-      _light_clusters.prepare_lights(
-         camera, view_frustum, world,
-         interaction_targets.creation_entity.is<world::light>()
-            ? &interaction_targets.creation_entity.get<world::light>()
-            : nullptr,
-         {scene_depth_min_max.x, scene_depth_min_max.y}, _blocks, active_layers,
-         _pre_render_command_list, _dynamic_buffer_allocator);
+      _light_clusters
+         .prepare_lights(camera, view_frustum, world,
+                         interaction_targets.creation_entity.is<world::light>()
+                            ? &interaction_targets.creation_entity.get<world::light>()
+                            : nullptr,
+                         {scene_depth_min_max.x, scene_depth_min_max.y},
+                         _blocks, active_layers, active_entity_types,
+                         _pre_render_command_list, _dynamic_buffer_allocator);
       _blocks.update(world.blocks,
                      interaction_targets.creation_entity.is<world::entity_group>()
                         ? &interaction_targets.creation_entity.get<world::entity_group>()
@@ -947,7 +948,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
 
          _light_clusters.prepare_lights(camera, view_frustum, world, nullptr,
                                         {shadow_min_depth, shadow_max_depth}, _blocks,
-                                        active_layers, pre_render_command_list,
+                                        active_layers, {}, pre_render_command_list,
                                         _dynamic_buffer_allocator);
 
          pre_render_command_list.close();

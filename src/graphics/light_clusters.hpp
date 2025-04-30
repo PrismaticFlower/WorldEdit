@@ -38,6 +38,7 @@ public:
                        const world::light* optional_placement_light,
                        const std::array<float, 2> scene_depth_min_max,
                        blocks& blocks, const world::active_layers active_layers,
+                       const world::active_entity_types active_entity_types,
                        gpu::copy_command_list& command_list,
                        dynamic_buffer_allocator& dynamic_buffer_allocator);
 
