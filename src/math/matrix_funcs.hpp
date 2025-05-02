@@ -26,6 +26,13 @@ constexpr auto operator*(const float4x4& a, const float4x4& b) noexcept -> float
            {a[0] * b[3].x + a[1] * b[3].y + a[2] * b[3].z + a[3] * b[3].w}};
 }
 
+constexpr auto transpose(const float3x3& matrix) -> float3x3
+{
+   return {{matrix[0].x, matrix[1].x, matrix[2].x},
+           {matrix[0].y, matrix[1].y, matrix[2].y},
+           {matrix[0].z, matrix[1].z, matrix[2].z}};
+}
+
 constexpr auto transpose(const float4x4& matrix) -> float4x4
 {
    return {{matrix[0].x, matrix[1].x, matrix[2].x, matrix[3].x},
@@ -41,6 +48,18 @@ constexpr auto adjugate(const float4x4& matrix) -> float3x3
    const float3 m2 = float3{matrix[2].x, matrix[2].y, matrix[2].z};
 
    return {cross(m1, m2), cross(m2, m0), cross(m0, m1)};
+}
+
+inline auto orthonormal_basis(float3 normal) noexcept -> float3x3
+{
+   float sign = copysign(1.0f, normal.z);
+   float a = -1.0f / (sign + normal.z);
+   float b = normal.x * normal.y * a;
+
+   float3 b1 = {1.0f + sign * normal.x * normal.x * a, sign * b, -sign * normal.x};
+   float3 b2 = {b, sign + normal.y * normal.y * a, -normal.y};
+
+   return float3x3{b1, b2, normal};
 }
 
 auto inverse(const float4x4& matrix) -> float4x4;

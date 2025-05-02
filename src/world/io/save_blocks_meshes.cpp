@@ -2,6 +2,7 @@
 
 #include "../blocks/export/mesh.hpp"
 #include "../blocks/export/mesh_clusters.hpp"
+#include "../blocks/export/mesh_cull.hpp"
 #include "../blocks/export/mesh_scenes.hpp"
 #include "../blocks/mesh_geometry.hpp"
 
@@ -127,8 +128,12 @@ auto save_blocks_meshes(const io::path& output_directory,
    }
 
    std::vector<block_world_triangle> triangle_list;
+   std::vector<block_world_occluder> occluder_list;
 
-   for (const block_description_box& box : blocks.boxes.description) {
+   for (uint32 block_index = 0; block_index < blocks.boxes.size(); ++block_index) {
+      const block_description_box& box = blocks.boxes.description[block_index];
+      const block_box_id block_id = blocks.boxes.ids[block_index];
+
       const float4x4 scale = {
          {box.size.x, 0.0f, 0.0f, 0.0f},
          {0.0f, box.size.y, 0.0f, 0.0f},
@@ -142,7 +147,7 @@ auto save_blocks_meshes(const io::path& output_directory,
       world_from_object[3] = {box.position, 1.0f};
 
       for (const std::array<uint16, 3>& tri : block_cube_triangles) {
-         block_world_triangle world_triangle;
+         block_world_triangle world_triangle = {.block_id = block_id};
 
          for (std::size_t i = 0; i < tri.size(); ++i) {
             const block_vertex& vertex = block_cube_vertices[tri[i]];
@@ -167,7 +172,31 @@ auto save_blocks_meshes(const io::path& output_directory,
 
          triangle_list.push_back(world_triangle);
       }
+
+      for (const std::array<uint16, 4>& quad : block_cube_occluders) {
+         block_world_occluder occluder = {.block_id = block_id};
+
+         for (std::size_t i = 0; i < quad.size(); ++i) {
+            const block_vertex& vertex = block_cube_vertices[quad[i]];
+
+            occluder.verticesWS[i] = world_from_object * vertex.position;
+         }
+
+         const float3 edge0WS = occluder.verticesWS[1] - occluder.verticesWS[0];
+         const float3 edge1WS = occluder.verticesWS[2] - occluder.verticesWS[0];
+         const float3 e0_cross_e1 = cross(edge0WS, edge1WS);
+
+         const float e0_cross_e1_length = length(e0_cross_e1);
+         const float3 normalWS = e0_cross_e1 / e0_cross_e1_length;
+
+         occluder.area = e0_cross_e1_length;
+         occluder.planeWS = {normalWS, -dot(normalWS, occluder.verticesWS[0])};
+
+         occluder_list.push_back(occluder);
+      }
    }
+
+   triangle_list = cull_hidden_triangles(triangle_list, occluder_list);
 
    const std::vector<std::vector<uint32>> triangle_clusters =
       build_mesh_clusters(triangle_list, min_cluster_triangles, max_cluster_subdivision);

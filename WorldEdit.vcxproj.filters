@@ -260,6 +260,7 @@
     <ClCompile Include="src\world\blocks\export\mesh_scenes.cpp" />
     <ClCompile Include="src\assets\msh\scene_io_save.cpp" />
     <ClCompile Include="src\ucfb\writer.cpp" />
+    <ClCompile Include="src\world\blocks\export\mesh_cull.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -576,6 +577,7 @@
     <ClInclude Include="src\world\blocks\export\mesh_scenes.hpp" />
     <ClInclude Include="src\ucfb\writer.hpp" />
     <ClInclude Include="src\ucfb\chunk_id.hpp" />
+    <ClInclude Include="src\world\blocks\export\mesh_cull.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
