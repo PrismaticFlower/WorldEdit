@@ -15,6 +15,7 @@ struct block_vertex {
 
 extern const std::array<block_vertex, 24> block_cube_vertices;
 extern const std::array<std::array<uint16, 3>, 12> block_cube_triangles;
+extern const std::array<std::array<uint16, 4>, 6> block_cube_occluders;
 extern const std::array<float3, 8> block_cube_points;
 extern const std::array<std::array<uint16, 2>, 12> block_cube_edges;
 

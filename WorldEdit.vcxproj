@@ -387,6 +387,7 @@
     <ClCompile Include="src\world\blocks\dirty_range_tracker.cpp" />
     <ClCompile Include="src\world\blocks\drag_select.cpp" />
     <ClCompile Include="src\world\blocks\export\mesh_clusters.cpp" />
+    <ClCompile Include="src\world\blocks\export\mesh_cull.cpp" />
     <ClCompile Include="src\world\blocks\export\mesh_scenes.cpp" />
     <ClCompile Include="src\world\blocks\find.cpp" />
     <ClCompile Include="src\world\blocks\grounding.cpp" />
@@ -701,6 +702,7 @@
     <ClInclude Include="src\world\blocks\bounding_box.hpp" />
     <ClInclude Include="src\world\blocks\drag_select.hpp" />
     <ClInclude Include="src\world\blocks\export\mesh_clusters.hpp" />
+    <ClInclude Include="src\world\blocks\export\mesh_cull.hpp" />
     <ClInclude Include="src\world\blocks\export\mesh_scenes.hpp" />
     <ClInclude Include="src\world\blocks\find.hpp" />
     <ClInclude Include="src\world\blocks\grounding.hpp" />

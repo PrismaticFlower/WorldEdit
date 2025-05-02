@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../blocks.hpp"
+
 #include "types.hpp"
 
 #include <array>
@@ -27,7 +29,19 @@ struct block_world_vertex {
 };
 
 struct block_world_triangle {
+   block_id block_id;
+
    std::array<block_world_vertex, 3> vertices;
    uint8 material_index = 0;
 };
+
+struct block_world_occluder {
+   block_id block_id;
+
+   std::array<float3, 4> verticesWS;
+
+   float4 planeWS;
+   float area;
+};
+
 }

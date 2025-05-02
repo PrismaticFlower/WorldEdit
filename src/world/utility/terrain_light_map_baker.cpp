@@ -496,18 +496,6 @@ auto calculate_ambient_light(const float3& normalWS, const float3& ambient_groun
    return ambient_ground_color * (1.0f - factor) + ambient_sky_color * factor;
 }
 
-auto get_orthonormal_basis(float3 normal) noexcept -> float3x3
-{
-   float sign = copysign(1.0f, normal.z);
-   float a = -1.0f / (sign + normal.z);
-   float b = normal.x * normal.y * a;
-
-   float3 b1 = {1.0f + sign * normal.x * normal.x * a, sign * b, -sign * normal.x};
-   float3 b2 = {b, sign + normal.y * normal.y * a, -normal.y};
-
-   return float3x3{b1, b2, normal};
-};
-
 }
 
 struct detail::terrain_light_map_baker_impl {
@@ -751,7 +739,7 @@ private:
                                               tri.normalWS[1] * sample_coords[1] +
                                               tri.normalWS[2] * sample_coords[2]);
 
-            const float3x3 world_from_basis = get_orthonormal_basis(normalWS);
+            const float3x3 world_from_basis = orthonormal_basis(normalWS);
 
             float ambient_visibility = 1.0f;
 

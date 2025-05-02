@@ -44,6 +44,20 @@ for triangle in loop_triangles:
 print(f'}}}};')
 print('')
 
+
+
+mesh_quad_loops = [quad.loop_indices for quad in filter(lambda poly: poly.loop_total == 4, me.polygons)]
+mesh_quads = [[index_remap[index] for index in quad] for quad in mesh_quad_loops]
+mesh_quads.sort();
+
+print(f'const std::array<std::array<uint16, 4>, {len(mesh_quads)}> block_{SHAPE_NAME}_occluders = {{{{')
+
+for quad in mesh_quads:
+    print(f'   {{ {quad[3]}, {quad[2]}, {quad[1]}, {quad[0]}  }} ,')
+
+print(f'}}}};')
+print('')
+
 unique_vertices = {v.co.copy().freeze() for v in me.vertices}
 indexed_unique_vertices = {v: i for i, v in enumerate(unique_vertices)}
 
@@ -73,6 +87,7 @@ print('')
 
 print(f'extern const std::array<block_vertex, {len(index_remap)}> block_{SHAPE_NAME}_vertices;')
 print(f'extern const std::array<std::array<uint16, 3>, {len(loop_triangles)}> block_{SHAPE_NAME}_triangles;')
+print(f'extern const std::array<std::array<uint16, 4>, {len(mesh_quads)}> block_{SHAPE_NAME}_occluders;')
 print(f'extern const std::array<float3, {len(unique_vertices)}> block_{SHAPE_NAME}_points;')
 print(f'extern const std::array<std::array<uint16, 2>, {len(unique_edges)}> block_{SHAPE_NAME}_edges;')
 #endif
@@ -123,6 +138,15 @@ const std::array<std::array<uint16, 3>, 12> block_cube_triangles = {{
    {16, 19, 18},
    {20, 22, 21},
    {20, 23, 22},
+}};
+
+const std::array<std::array<uint16, 4>, 6> block_cube_occluders = {{
+   {3, 2, 1, 0},
+   {7, 6, 5, 4},
+   {11, 10, 9, 8},
+   {15, 14, 13, 12},
+   {19, 18, 17, 16},
+   {23, 22, 21, 20},
 }};
 
 const std::array<float3, 8> block_cube_points = {{
