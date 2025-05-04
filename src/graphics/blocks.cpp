@@ -478,9 +478,9 @@ void blocks::process_updated_textures(gpu::copy_command_list& command_list,
          material.normal_map.texture = std::move(new_texture);
          material.normal_map.load_token = nullptr;
 
-         command_list.write_buffer_immediate(
-            material_gpu + offsetof(block_material, normal_map_index),
-            material.normal_map.texture->srv_srgb.index);
+         command_list.write_buffer_immediate(material_gpu + offsetof(block_material,
+                                                                     normal_map_index),
+                                             material.normal_map.texture->srv.index);
       }
 
       if (auto new_texture = updated.check(material.detail_map.name);
@@ -488,9 +488,9 @@ void blocks::process_updated_textures(gpu::copy_command_list& command_list,
          material.detail_map.texture = std::move(new_texture);
          material.detail_map.load_token = nullptr;
 
-         command_list.write_buffer_immediate(
-            material_gpu + offsetof(block_material, detail_map_index),
-            material.detail_map.texture->srv_srgb.index);
+         command_list.write_buffer_immediate(material_gpu + offsetof(block_material,
+                                                                     detail_map_index),
+                                             material.detail_map.texture->srv.index);
       }
 
       if (auto new_texture = updated.check(material.env_map.name);
