@@ -277,4 +277,37 @@ inline float diskIntersect(float3 ro, float3 rd, float3 c, float3 n, float r)
    float3 q = o + rd * t;
    return (dot(q, q) < r * r) ? t : -1.0f;
 }
+
+inline float4 iWedge(float3 ro, float3 rd, float3 s)
+{
+   // intersect plane box
+   float3 m = 1.0 / rd;
+   float3 z = float3(rd.x >= 0.0f ? 1.0f : -1.0f, rd.y >= 0.0f ? 1.0f : -1.0f,
+                     rd.z >= 0.0f ? 1.0f : -1.0f);
+   float3 k = s * z;
+   float3 t1 = (-ro - k) * m;
+   float3 t2 = (-ro + k) * m;
+   float tn = max(max(t1.x, t1.y), t1.z);
+   float tf = min(min(t2.x, t2.y), t2.z);
+   if (tn > tf) return float4(-1.0, -1.0, -1.0, -1.0);
+
+   // boolean with plane
+   float k1 = s.y * ro.x - s.x * ro.y;
+   float k2 = s.x * rd.y - s.y * rd.x;
+   float tp = k1 / k2;
+
+   if (k1 > tn * k2) {
+      float3 n = -step(float3(tn, tn, tn), t1) * z;
+
+      return float4(tn, n.x, n.y, n.z); // box
+   }
+   if (tp > tn && tp < tf) {
+      float3 n = normalize(float3(-s.y, s.x, 0.0));
+
+      return float4(tp, n.x, n.y, n.z); // plane
+   }
+
+   return float4(-1.0, -1.0, -1.0, -1.0);
+}
+
 }

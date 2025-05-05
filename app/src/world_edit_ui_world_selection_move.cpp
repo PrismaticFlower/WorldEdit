@@ -193,6 +193,10 @@ void world_edit::ui_show_world_selection_move() noexcept
                   gizmo_rotation =
                      _world.blocks.boxes.description[*block_index].rotation;
                } break;
+               case world::block_type::ramp: {
+                  gizmo_rotation =
+                     _world.blocks.ramps.description[*block_index].rotation;
+               } break;
                }
             }
          }
@@ -378,6 +382,15 @@ void world_edit::ui_show_world_selection_move() noexcept
                         edits::make_set_block_box_metrics(*block_index, box.rotation,
                                                           box.position + move_delta,
                                                           box.size));
+                  } break;
+                  case world::block_type::ramp: {
+                     const world::block_description_ramp& ramp =
+                        _world.blocks.ramps.description[*block_index];
+
+                     bundled_edits.push_back(
+                        edits::make_set_block_ramp_metrics(*block_index, ramp.rotation,
+                                                           ramp.position + move_delta,
+                                                           ramp.size));
                   } break;
                   }
                }

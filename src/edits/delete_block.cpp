@@ -9,12 +9,18 @@ namespace we::edits {
 
 namespace {
 
-struct delete_block_box final : edit<world::edit_context> {
-   delete_block_box(uint32 block_index) : block_index{block_index} {}
+template<auto type_ptr>
+struct delete_block final : edit<world::edit_context> {
+   using blocks_type =
+      std::remove_cvref_t<decltype(std::declval<world::blocks>().*type_ptr)>;
+   using description_type = decltype(blocks_type::description)::value_type;
+   using id_type = world::id<description_type>;
+
+   delete_block(uint32 block_index) : block_index{block_index} {}
 
    void apply(world::edit_context& context) noexcept override
    {
-      world::blocks_boxes& blocks = context.world.blocks.boxes;
+      blocks_type& blocks = context.world.blocks.*type_ptr;
 
       blocks.bbox.min_x.erase(blocks.bbox.min_x.begin() + block_index);
       blocks.bbox.min_y.erase(blocks.bbox.min_y.begin() + block_index);
@@ -26,7 +32,7 @@ struct delete_block_box final : edit<world::edit_context> {
 
       hidden = blocks.hidden[block_index];
       layer = blocks.layer[block_index];
-      box = blocks.description[block_index];
+      block = blocks.description[block_index];
       id = blocks.ids[block_index];
 
       blocks.hidden.erase(blocks.hidden.begin() + block_index);
@@ -42,9 +48,9 @@ struct delete_block_box final : edit<world::edit_context> {
 
    void revert(world::edit_context& context) noexcept override
    {
-      world::blocks_boxes& blocks = context.world.blocks.boxes;
+      blocks_type& blocks = context.world.blocks.*type_ptr;
 
-      const math::bounding_box bbox = get_bounding_box(box);
+      const math::bounding_box bbox = get_bounding_box(block);
 
       blocks.bbox.min_x.insert(blocks.bbox.min_x.begin() + block_index, bbox.min.x);
       blocks.bbox.min_y.insert(blocks.bbox.min_y.begin() + block_index, bbox.min.y);
@@ -56,7 +62,7 @@ struct delete_block_box final : edit<world::edit_context> {
 
       blocks.hidden.insert(blocks.hidden.begin() + block_index, hidden);
       blocks.layer.insert(blocks.layer.begin() + block_index, layer);
-      blocks.description.insert(blocks.description.begin() + block_index, box);
+      blocks.description.insert(blocks.description.begin() + block_index, block);
       blocks.ids.insert(blocks.ids.begin() + block_index, id);
 
       blocks.dirty.add({block_index, static_cast<uint32>(blocks.size())});
@@ -76,8 +82,8 @@ private:
 
    bool hidden = false;
    int8 layer = 0;
-   world::block_description_box box;
-   world::block_box_id id = {};
+   description_type block;
+   id_type id = {};
 };
 
 }
@@ -87,7 +93,9 @@ auto make_delete_block(world::block_type type, uint32 index)
 {
    switch (type) {
    case world::block_type::box:
-      return std::make_unique<delete_block_box>(index);
+      return std::make_unique<delete_block<&world::blocks::boxes>>(index);
+   case world::block_type::ramp:
+      return std::make_unique<delete_block<&world::blocks::ramps>>(index);
    }
 
    std::unreachable();

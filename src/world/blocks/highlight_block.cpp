@@ -28,6 +28,23 @@ void highlight_block(const blocks& blocks, const block_type type,
 
       visualizers.add_box_additive(world_from_object, {1.0f, 1.0f, 1.0f, 0.125f});
    } break;
+   case block_type::ramp: {
+      const world::block_description_ramp& ramp =
+         blocks.ramps.description[block_index];
+
+      const float4x4 scale = {
+         {ramp.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, ramp.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, ramp.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(ramp.rotation);
+
+      float4x4 world_from_object = rotation * scale;
+      world_from_object[3] = {ramp.position, 1.0f};
+
+      visualizers.add_ramp_additive(world_from_object, {1.0f, 1.0f, 1.0f, 0.125f});
+   } break;
    }
 }
 

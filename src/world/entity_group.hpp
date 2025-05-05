@@ -39,6 +39,7 @@ struct entity_group {
 
    struct blocks {
       std::vector<block_description_box> boxes;
+      std::vector<block_description_ramp> ramps;
       std::vector<block_material> materials;
 
       bool operator==(const blocks&) const noexcept = default;

@@ -26,11 +26,16 @@ enum class blocks_draw { depth_prepass, main, shadow };
 
 struct blocks {
    struct view {
-      uint32 box_instances_count = 0;
-      gpu_virtual_address box_instances = 0;
+      struct instance_list {
+         uint32 count = 0;
+         gpu_virtual_address instances = 0;
+      };
 
-      uint32 dynamic_box_instances_count = 0;
-      gpu_virtual_address dynamic_box_instances = 0;
+      instance_list boxes;
+      instance_list ramps;
+
+      instance_list dynamic_boxes;
+      instance_list dynamic_ramps;
    };
 
    blocks(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
@@ -99,6 +104,9 @@ private:
    gpu::unique_resource_handle _boxes_instance_data;
    uint64 _boxes_instance_data_capacity = 0;
 
+   gpu::unique_resource_handle _ramps_instance_data;
+   uint64 _ramps_instance_data_capacity = 0;
+
    std::vector<uint32> _TEMP_culling_storage;
 
    std::vector<material> _materials;
@@ -128,7 +136,11 @@ private:
       gpu::unique_resource_handle boxes_instance_data;
       uint64 boxes_instance_data_capacity = 0;
 
+      gpu::unique_resource_handle ramps_instance_data;
+      uint64 ramps_instance_data_capacity = 0;
+
       bbox_soa boxes_bbox;
+      bbox_soa ramps_bbox;
 
       std::array<material, world::max_block_materials> materials;
 

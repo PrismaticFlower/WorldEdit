@@ -107,6 +107,11 @@ auto ground_block(const block_id id, const uint32 block_index,
 
       return ground_block(box.position, bbox, id, world, object_classes, active_layers);
    } break;
+   case block_type::ramp: {
+      const block_description_ramp& ramp = world.blocks.ramps.description[block_index];
+
+      return ground_block(ramp.position, bbox, id, world, object_classes, active_layers);
+   } break;
    }
 
    std::unreachable();

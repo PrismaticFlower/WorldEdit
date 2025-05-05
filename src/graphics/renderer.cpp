@@ -2500,6 +2500,10 @@ void renderer_impl::draw_world_meta_objects(
       _meta_draw_batcher.add_box(box.transform, box.color);
    }
 
+   for (const auto& ramp : tool_visualizers.ramps_additive()) {
+      _meta_draw_batcher.add_ramp(ramp.transform, ramp.color);
+   }
+
    for (const gizmo_draw_pixel_line& line : draw_lists.pixel_lines) {
       _meta_draw_batcher.add_line_solid(line.position_start, line.position_end,
                                         line.color);
@@ -3352,6 +3356,10 @@ void renderer_impl::draw_interaction_targets(
          if (measurement) draw_entity(*measurement, color);
       }
       else if (target.is<world::block_id>()) {
+         _Pragma("warning(push)");
+         _Pragma("warning(default : 4061)"); // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+         _Pragma("warning(default : 4062)"); // enumerator 'identifier' in switch of enum 'enumeration' is not handled
+
          const std::optional<uint32> block_index =
             find_block(world.blocks, target.get<world::block_id>());
 
@@ -3371,8 +3379,24 @@ void renderer_impl::draw_interaction_targets(
 
                _meta_draw_batcher.add_box_wireframe(transform, color);
             } break;
+            case world::block_type::ramp: {
+
+               const world::block_description_ramp& block =
+                  world.blocks.ramps.description[*block_index];
+
+               float4x4 transform = to_matrix(block.rotation) *
+                                    float4x4{{block.size.x, 0.0f, 0.0f, 0.0f},
+                                             {0.0f, block.size.y, 0.0f, 0.0f},
+                                             {0.0f, 0.0f, block.size.z, 0.0f},
+                                             {0.0f, 0.0f, 0.0f, 1.0f}};
+               transform[3] = {block.position, 1.0f};
+
+               _meta_draw_batcher.add_ramp_wireframe(transform, color);
+            } break;
             }
          }
+
+         _Pragma("warning(pop)");
       }
    };
 

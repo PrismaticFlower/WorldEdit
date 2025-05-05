@@ -92,6 +92,19 @@ void fill_entity_group_block_materials(entity_group& group, const blocks& blocks
          material = *materials_remap[material];
       }
    }
+
+   for (block_description_ramp& ramp : group.blocks.ramps) {
+      for (uint8& material : ramp.surface_materials) {
+         if (not materials_remap[material]) {
+            materials_remap[material] =
+               static_cast<uint8>(group.blocks.materials.size());
+
+            group.blocks.materials.push_back(blocks.materials[material]);
+         }
+
+         material = *materials_remap[material];
+      }
+   }
 }
 
 }
@@ -258,6 +271,13 @@ auto entity_group_metrics(const entity_group& group,
       ground_distance = std::min(ground_distance, bboxGS.min.y);
    }
 
+   for (const block_description_ramp& ramp : group.blocks.ramps) {
+      const math::bounding_box bboxGS = get_bounding_box(ramp);
+
+      group_bbox = math::combine(group_bbox, get_bounding_box(ramp));
+      ground_distance = std::min(ground_distance, bboxGS.min.y);
+   }
+
    if (ground_distance == FLT_MAX) ground_distance = 0.0f;
 
    return {.ground_distance = ground_distance, .visual_bbox = group_bbox};
@@ -333,6 +353,11 @@ void centre_entity_group(entity_group& group) noexcept
       count += 1.0f;
    }
 
+   for (const block_description_ramp& ramp : group.blocks.ramps) {
+      position += ramp.position;
+      count += 1.0f;
+   }
+
    const float3 centre = position / count;
 
    for (object& object : group.objects) {
@@ -389,6 +414,10 @@ void centre_entity_group(entity_group& group) noexcept
 
    for (block_description_box& box : group.blocks.boxes) {
       box.position -= centre;
+   }
+
+   for (block_description_ramp& ramp : group.blocks.ramps) {
+      ramp.position -= centre;
    }
 }
 
@@ -550,6 +579,9 @@ auto make_entity_group_from_selection(const world& world,
             case block_type::box: {
                group.blocks.boxes.push_back(world.blocks.boxes.description[*block_index]);
             } break;
+            case block_type::ramp: {
+               group.blocks.ramps.push_back(world.blocks.ramps.description[*block_index]);
+            } break;
             }
          }
       }
@@ -666,6 +698,9 @@ auto make_entity_group_from_block_id(const blocks& blocks, const block_id id) no
    case block_type::box: {
       group.blocks.boxes.push_back(blocks.boxes.description[*block_index]);
    } break;
+   case block_type::ramp: {
+      group.blocks.ramps.push_back(blocks.ramps.description[*block_index]);
+   } break;
    }
 
    fill_entity_group_block_materials(group, blocks);
@@ -705,6 +740,12 @@ auto make_entity_group_from_layer(const world& world, const int32 layer) noexcep
       }
    }
 
+   for (uint32 block_index = 0; block_index < world.blocks.ramps.size(); ++block_index) {
+      if (world.blocks.ramps.layer[block_index] == layer) {
+         group.blocks.ramps.push_back(world.blocks.ramps.description[block_index]);
+      }
+   }
+
    fill_entity_group_block_materials(group, world.blocks);
 
    return group;
@@ -731,6 +772,8 @@ auto make_entity_group_from_world(const world& world) noexcept -> entity_group
          {
             .boxes = {world.blocks.boxes.description.begin(),
                       world.blocks.boxes.description.end()},
+            .ramps = {world.blocks.ramps.description.begin(),
+                      world.blocks.ramps.description.end()},
 
             .materials = {world.blocks.materials.begin(), world.blocks.materials.end()},
          },
@@ -754,6 +797,7 @@ bool is_entity_group_empty(const entity_group& group) noexcept
    empty &= group.boundaries.empty();
    empty &= group.measurements.empty();
    empty &= group.blocks.boxes.empty();
+   empty &= group.blocks.ramps.empty();
 
    return empty;
 }
@@ -763,6 +807,7 @@ bool is_entity_group_blocks_empty(const entity_group& group) noexcept
    bool empty = true;
 
    empty &= group.blocks.boxes.empty();
+   empty &= group.blocks.ramps.empty();
 
    return empty;
 }

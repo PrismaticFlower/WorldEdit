@@ -1165,6 +1165,24 @@ void world_edit::ui_show_block_editor() noexcept
                                        _edit_context);
             }
          } break;
+         case world::block_type::ramp: {
+            const world::block_description_ramp& ramp =
+               _world.blocks.ramps.description[*selected_index];
+
+            float3 size = ramp.size;
+            float3 positionWS = ramp.position;
+
+            if (_gizmos.gizmo_size({.name = "Resize Block (Ramp)",
+                                    .instance = *selected_index,
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation = ramp.rotation},
+                                   positionWS, size)) {
+               _edit_stack_world.apply(edits::make_set_block_ramp_metrics(*selected_index,
+                                                                          ramp.rotation, positionWS,
+                                                                          size),
+                                       _edit_context);
+            }
+         } break;
          }
 
          if (_gizmos.can_close_last_edit()) _edit_stack_world.close_last();

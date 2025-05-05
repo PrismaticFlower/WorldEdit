@@ -6,16 +6,20 @@ namespace we::edits {
 
 namespace {
 
-struct set_block_box_metrics final : edit<world::edit_context> {
-   set_block_box_metrics(const uint32 index, const quaternion& rotation,
-                         const float3& position, const float3& size)
+template<auto type_ptr>
+struct set_block_metrics final : edit<world::edit_context> {
+   using blocks_type =
+      std::remove_cvref_t<decltype(std::declval<world::blocks>().*type_ptr)>;
+
+   set_block_metrics(const uint32 index, const quaternion& rotation,
+                     const float3& position, const float3& size)
       : index{index}, rotation{rotation}, position{position}, size{size}
    {
    }
 
    void apply(world::edit_context& context) noexcept override
    {
-      world::blocks_boxes& blocks = context.world.blocks.boxes;
+      blocks_type& blocks = context.world.blocks.*type_ptr;
 
       assert(index < blocks.size());
 
@@ -42,8 +46,8 @@ struct set_block_box_metrics final : edit<world::edit_context> {
 
    bool is_coalescable(const edit& other_unknown) const noexcept override
    {
-      const set_block_box_metrics* other =
-         dynamic_cast<const set_block_box_metrics*>(&other_unknown);
+      const set_block_metrics* other =
+         dynamic_cast<const set_block_metrics*>(&other_unknown);
 
       if (not other) return false;
 
@@ -52,8 +56,7 @@ struct set_block_box_metrics final : edit<world::edit_context> {
 
    void coalesce(edit& other_unknown) noexcept override
    {
-      set_block_box_metrics& other =
-         dynamic_cast<set_block_box_metrics&>(other_unknown);
+      set_block_metrics& other = dynamic_cast<set_block_metrics&>(other_unknown);
 
       this->rotation = other.rotation;
       this->position = other.position;
@@ -126,7 +129,16 @@ auto make_set_block_box_metrics(const uint32 index, const quaternion& rotation,
                                 const float3& position, const float3& size) noexcept
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<set_block_box_metrics>(index, rotation, position, size);
+   return std::make_unique<set_block_metrics<&world::blocks::boxes>>(index, rotation,
+                                                                     position, size);
+}
+
+auto make_set_block_ramp_metrics(const uint32 index, const quaternion& rotation,
+                                 const float3& position, const float3& size) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_block_metrics<&world::blocks::ramps>>(index, rotation,
+                                                                     position, size);
 }
 
 auto make_set_block_surface(uint8* material_index_address,

@@ -264,6 +264,14 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                         *block_index, rotation * box.rotation,
                         (rotation * (box.position - centre)) + centre, box.size));
                   } break;
+                  case world::block_type::ramp: {
+                     const world::block_description_ramp& ramp =
+                        _world.blocks.ramps.description[*block_index];
+
+                     bundled_edits.push_back(edits::make_set_block_ramp_metrics(
+                        *block_index, rotation * ramp.rotation,
+                        (rotation * (ramp.position - centre)) + centre, ramp.size));
+                  } break;
                   }
                }
             }

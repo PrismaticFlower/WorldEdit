@@ -444,6 +444,29 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                   }
 
                } break;
+               case world::block_type::ramp: {
+                  const world::block_description_ramp& ramp =
+                     _world.blocks.ramps.description[*block_index];
+
+                  float3 new_position = ramp.position;
+                  float3 new_size = ramp.size;
+
+                  if (_gizmos.gizmo_size(
+                         {
+                            .name = "Block Ramp Size",
+                            .instance = static_cast<int64>(
+                               _world.blocks.ramps.ids[*block_index]),
+                            .alignment = _editor_grid_size,
+                            .gizmo_rotation = ramp.rotation,
+                         },
+                         new_position, new_size)) {
+                     _edit_stack_world.apply(edits::make_set_block_ramp_metrics(
+                                                *block_index, ramp.rotation,
+                                                new_position, new_size),
+                                             _edit_context);
+                  }
+
+               } break;
                }
             }
 
