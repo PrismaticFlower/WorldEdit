@@ -117,6 +117,85 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
    }
 
+   for (uint32 ramp_index = 0; ramp_index < blocks.ramps.size(); ++ramp_index) {
+      if (not config.active_layers[blocks.ramps.layer[ramp_index]]) continue;
+      if (blocks.ramps.hidden[ramp_index]) continue;
+      if (blocks.ramps.ids[ramp_index] == config.filter_id) continue;
+
+      const math::bounding_box bboxWS = {
+         .min =
+            {
+               blocks.ramps.bbox.min_x[ramp_index],
+               blocks.ramps.bbox.min_y[ramp_index],
+               blocks.ramps.bbox.min_z[ramp_index],
+            },
+
+         .max =
+            {
+               blocks.ramps.bbox.max_x[ramp_index],
+               blocks.ramps.bbox.max_y[ramp_index],
+               blocks.ramps.bbox.max_z[ramp_index],
+            },
+      };
+
+      const float3 ramp_centreOS = (bboxWS.min + bboxWS.max) * 0.5f;
+      const float3 ramp_size = (bboxWS.max - bboxWS.min) * 0.5f;
+
+      const float3 positionAS = positionWS - ramp_centreOS;
+      const float3 distances = abs(positionAS) - ramp_size;
+
+      const float ramp_distance =
+         length(max(distances, float3{0.0f, 0.0f, 0.0f})) +
+         std::min(std::max(std::max(distances.x, distances.y), distances.z), 0.0f);
+
+      if (ramp_distance > config.snap_radius) continue;
+
+      const block_description_ramp& ramp = blocks.ramps.description[ramp_index];
+
+      const float4x4 scale = {
+         {ramp.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, ramp.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, ramp.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(ramp.rotation);
+
+      float4x4 world_from_object = rotation * scale;
+      world_from_object[3] = {ramp.position, 1.0f};
+
+      std::array<float3, 8> verticesWS;
+
+      for (std::size_t i = 0; i < block_ramp_points.size(); ++i) {
+         verticesWS[i] = world_from_object * block_ramp_points[i];
+      }
+
+      for (const float3& vertex_positionWS : verticesWS) {
+         const float corner_distance = distance(positionWS, vertex_positionWS);
+
+         if (corner_distance < closest_distance) {
+            closest_pointWS = vertex_positionWS;
+            closest_distance = corner_distance;
+         }
+
+         draw_point(visualizers, vertex_positionWS, colors.corner);
+      }
+
+      for (const auto& [i0, i1] : block_ramp_edges) {
+         for (int i = 1; i < edge_point_count; ++i) {
+            const float3 pointWS =
+               lerp(verticesWS[i0], verticesWS[i1], i / flt_edge_point_count);
+            const float point_distance = distance(positionWS, pointWS);
+
+            if (point_distance < closest_distance) {
+               closest_pointWS = pointWS;
+               closest_distance = point_distance;
+            }
+
+            draw_point(visualizers, pointWS, colors.edge);
+         }
+      }
+   }
+
    float3 new_positionWS;
 
    if (closest_distance > 0.0f and closest_distance <= config.snap_radius) {

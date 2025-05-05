@@ -38,9 +38,43 @@ bool blocks_boxes::is_balanced() const noexcept
           bbox.min_x.size() == ids.size();
 }
 
+void blocks_ramps::reserve(const std::size_t size) noexcept
+{
+   bbox.min_x.reserve(size);
+   bbox.min_y.reserve(size);
+   bbox.min_z.reserve(size);
+   bbox.max_x.reserve(size);
+   bbox.max_y.reserve(size);
+   bbox.max_z.reserve(size);
+   hidden.reserve(size);
+   layer.reserve(size);
+   description.reserve(size);
+   ids.reserve(size);
+}
+
+auto blocks_ramps::size() const noexcept -> std::size_t
+{
+   assert(is_balanced());
+
+   return bbox.min_x.size();
+}
+
+bool blocks_ramps::is_balanced() const noexcept
+{
+   return bbox.min_x.size() == bbox.min_y.size() and
+          bbox.min_x.size() == bbox.min_z.size() and
+          bbox.min_x.size() == bbox.max_x.size() and
+          bbox.min_x.size() == bbox.max_y.size() and
+          bbox.min_x.size() == bbox.max_z.size() and
+          bbox.min_x.size() == hidden.size() and
+          bbox.min_x.size() == layer.size() and //
+          bbox.min_x.size() == description.size() and
+          bbox.min_x.size() == ids.size();
+}
+
 bool blocks::empty() const noexcept
 {
-   return boxes.size() == 0;
+   return boxes.size() == 0 and ramps.size() == 0;
 }
 
 void blocks::untracked_fill_dirty_ranges() noexcept
@@ -49,12 +83,17 @@ void blocks::untracked_fill_dirty_ranges() noexcept
       boxes.dirty.add({0, static_cast<uint32>(boxes.size())});
    }
 
+   if (ramps.size() != 0) {
+      ramps.dirty.add({0, static_cast<uint32>(ramps.size())});
+   }
+
    materials_dirty.add({0, static_cast<uint32>(materials.size())});
 }
 
 void blocks::untracked_clear_dirty_ranges() noexcept
 {
    boxes.dirty.clear();
+   ramps.dirty.clear();
    materials_dirty.clear();
 }
 
@@ -73,6 +112,11 @@ block_id::block_id(block_box_id id) noexcept
 {
 }
 
+block_id::block_id(block_ramp_id id) noexcept
+   : id_type{block_type::ramp}, id{.ramp = id}
+{
+}
+
 bool block_id::is_box() const noexcept
 {
    return id_type == block_type::box;
@@ -83,6 +127,18 @@ auto block_id::get_box() const noexcept -> block_box_id
    assert(id_type == block_type::box);
 
    return id.box;
+}
+
+bool block_id::is_ramp() const noexcept
+{
+   return id_type == block_type::ramp;
+}
+
+auto block_id::get_ramp() const noexcept -> block_ramp_id
+{
+   assert(id_type == block_type::ramp);
+
+   return id.ramp;
 }
 
 auto block_id::type() const noexcept -> block_type

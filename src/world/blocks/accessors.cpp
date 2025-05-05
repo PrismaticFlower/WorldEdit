@@ -13,6 +13,8 @@ bool valid_index(const blocks& blocks, const block_type type,
    switch (type) {
    case block_type::box:
       return block_index < blocks.boxes.size();
+   case block_type::ramp:
+      return block_index < blocks.ramps.size();
    }
 
    std::unreachable();
@@ -26,6 +28,8 @@ auto get_dirty_tracker(blocks& blocks, const block_type type) noexcept
    switch (type) {
    case block_type::box:
       return blocks.boxes.dirty;
+   case block_type::ramp:
+      return blocks.ramps.dirty;
    }
 
    std::unreachable();
@@ -39,6 +43,8 @@ auto get_block_hidden(blocks& blocks, const block_type type,
    switch (type) {
    case block_type::box:
       return blocks.boxes.hidden[block_index];
+   case block_type::ramp:
+      return blocks.ramps.hidden[block_index];
    }
 
    std::unreachable();
@@ -50,8 +56,12 @@ auto get_block_layer(blocks& blocks, const block_type type,
    assert(valid_index(blocks, type, block_index));
 
    switch (type) {
-   case block_type::box:
+   case block_type::box: {
       return blocks.boxes.layer[block_index];
+   }
+   case block_type::ramp: {
+      return blocks.ramps.layer[block_index];
+   }
    }
 
    std::unreachable();
@@ -64,11 +74,22 @@ auto get_block_surface_material(blocks& blocks, const block_type type,
    assert(valid_index(blocks, type, block_index));
 
    switch (type) {
-   case block_type::box:
-      std::array<uint8, 6>& surface_materials =
-         blocks.boxes.description[block_index].surface_materials;
+   case block_type::box: {
+      {
+         std::array<uint8, 6>& surface_materials =
+            blocks.boxes.description[block_index].surface_materials;
 
-      return surface_materials[surface_index % surface_materials.size()];
+         return surface_materials[surface_index % surface_materials.size()];
+      }
+   }
+   case block_type::ramp: {
+      {
+         std::array<uint8, 5>& surface_materials =
+            blocks.ramps.description[block_index].surface_materials;
+
+         return surface_materials[surface_index % surface_materials.size()];
+      }
+   }
    }
 
    std::unreachable();
@@ -82,11 +103,18 @@ auto get_block_surface_texture_mode(blocks& blocks, const block_type type,
    assert(valid_index(blocks, type, block_index));
 
    switch (type) {
-   case block_type::box:
+   case block_type::box: {
       std::array<block_texture_mode, 6>& surface_texture_mode =
          blocks.boxes.description[block_index].surface_texture_mode;
 
       return surface_texture_mode[surface_index % surface_texture_mode.size()];
+   }
+   case block_type::ramp: {
+      std::array<block_texture_mode, 5>& surface_texture_mode =
+         blocks.ramps.description[block_index].surface_texture_mode;
+
+      return surface_texture_mode[surface_index % surface_texture_mode.size()];
+   }
    }
 
    std::unreachable();
@@ -100,11 +128,18 @@ auto get_block_surface_texture_rotation(blocks& blocks, const block_type type,
    assert(valid_index(blocks, type, block_index));
 
    switch (type) {
-   case block_type::box:
+   case block_type::box: {
       std::array<block_texture_rotation, 6>& surface_texture_rotation =
          blocks.boxes.description[block_index].surface_texture_rotation;
 
       return surface_texture_rotation[surface_index % surface_texture_rotation.size()];
+   }
+   case block_type::ramp: {
+      std::array<block_texture_rotation, 5>& surface_texture_rotation =
+         blocks.ramps.description[block_index].surface_texture_rotation;
+
+      return surface_texture_rotation[surface_index % surface_texture_rotation.size()];
+   }
    }
 
    std::unreachable();
@@ -118,11 +153,18 @@ auto get_block_surface_texture_scale(blocks& blocks, const block_type type,
    assert(valid_index(blocks, type, block_index));
 
    switch (type) {
-   case block_type::box:
+   case block_type::box: {
       std::array<std::array<int8, 2>, 6>& surface_texture_scale =
          blocks.boxes.description[block_index].surface_texture_scale;
 
       return surface_texture_scale[surface_index % surface_texture_scale.size()];
+   }
+   case block_type::ramp: {
+      std::array<std::array<int8, 2>, 5>& surface_texture_scale =
+         blocks.ramps.description[block_index].surface_texture_scale;
+
+      return surface_texture_scale[surface_index % surface_texture_scale.size()];
+   }
    }
 
    std::unreachable();
@@ -136,11 +178,18 @@ auto get_block_surface_texture_offset(blocks& blocks, const block_type type,
    assert(valid_index(blocks, type, block_index));
 
    switch (type) {
-   case block_type::box:
+   case block_type::box: {
       std::array<std::array<uint16, 2>, 6>& surface_texture_offset =
          blocks.boxes.description[block_index].surface_texture_offset;
 
       return surface_texture_offset[surface_index % surface_texture_offset.size()];
+   }
+   case block_type::ramp: {
+      std::array<std::array<uint16, 2>, 5>& surface_texture_offset =
+         blocks.ramps.description[block_index].surface_texture_offset;
+
+      return surface_texture_offset[surface_index % surface_texture_offset.size()];
+   }
    }
 
    std::unreachable();

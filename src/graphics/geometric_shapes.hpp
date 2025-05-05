@@ -49,6 +49,11 @@ public:
       return _cone;
    }
 
+   auto ramp() const noexcept -> const geometric_shape&
+   {
+      return _ramp;
+   }
+
 private:
    void init_gpu_buffer(gpu::device& device,
                         copy_command_list_pool& copy_command_list_pool);
@@ -63,6 +68,7 @@ private:
    geometric_shape _octahedron;
    geometric_shape _hint_hexahedron;
    geometric_shape _cone;
+   geometric_shape _ramp;
 };
 
 }

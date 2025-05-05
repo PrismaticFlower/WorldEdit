@@ -1894,6 +1894,11 @@ void world_edit::place_creation_entity() noexcept
 
          return;
       }
+      else if (_world.blocks.ramps.size() + group.blocks.ramps.size() > world::max_blocks) {
+         report_limit_reached("Max blocks (ramps, {}) Reached", world::max_blocks);
+
+         return;
+      }
 
       const uint32 object_base_index = static_cast<uint32>(_world.objects.size());
       const uint32 path_base_index = static_cast<uint32>(_world.paths.size());
@@ -2182,6 +2187,28 @@ void world_edit::place_creation_entity() noexcept
          _edit_stack_world
             .apply(edits::make_add_block(new_box, group.layer,
                                          _world.blocks.next_id.boxes.aquire()),
+                   _edit_context,
+                   {.transparent = std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::block_description_ramp& ramp : group.blocks.ramps) {
+         world::block_description_ramp new_ramp = ramp;
+
+         new_ramp.rotation = group.rotation * new_ramp.rotation;
+         new_ramp.position = group.rotation * new_ramp.position + group.position;
+
+         for (uint8& material : new_ramp.surface_materials) {
+            if (block_material_remap[material]) {
+               material = *block_material_remap[material];
+            }
+            else {
+               material = 0;
+            }
+         }
+
+         _edit_stack_world
+            .apply(edits::make_add_block(new_ramp, group.layer,
+                                         _world.blocks.next_id.ramps.aquire()),
                    _edit_context,
                    {.transparent = std::exchange(is_transparent_edit, true)});
       }
@@ -2827,6 +2854,15 @@ void world_edit::align_selection(const float alignment) noexcept
                                                     align_position(box.position),
                                                     box.size));
             } break;
+            case world::block_type::ramp: {
+               const world::block_description_ramp& ramp =
+                  _world.blocks.ramps.description[*block_index];
+
+               bundle.push_back(
+                  edits::make_set_block_ramp_metrics(*block_index, ramp.rotation,
+                                                     align_position(ramp.position),
+                                                     ramp.size));
+            } break;
             }
          }
 
@@ -3178,6 +3214,14 @@ void world_edit::ground_selection() noexcept
                   bundle.push_back(
                      edits::make_set_block_box_metrics(*block_index, box.rotation,
                                                        *grounded_position, box.size));
+               } break;
+               case world::block_type::ramp: {
+                  const world::block_description_ramp& ramp =
+                     _world.blocks.ramps.description[*block_index];
+
+                  bundle.push_back(
+                     edits::make_set_block_ramp_metrics(*block_index, ramp.rotation,
+                                                        *grounded_position, ramp.size));
                } break;
                }
             }

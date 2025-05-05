@@ -72,6 +72,8 @@ struct meta_draw_batcher {
 
    void add_cone(const float4x4& transform, const float4& color);
 
+   void add_ramp(const float4x4& transform, const float4& color);
+
    void add_triangle(const float3& a, const float3& b, const float3& c,
                      const uint32 color);
 
@@ -88,6 +90,8 @@ struct meta_draw_batcher {
    void add_hint_hexahedron_wireframe(const float4x4& transform, const float3& color);
 
    void add_box_wireframe(const float4x4& transform, const float3& color);
+
+   void add_ramp_wireframe(const float4x4& transform, const float3& color);
 
    void add_sphere_wireframe(const float3& position, const float radius,
                              const float3& color);
@@ -121,6 +125,7 @@ private:
    std::vector<meta_draw_sphere> _spheres;
    std::vector<meta_draw_object> _cylinders;
    std::vector<meta_draw_object> _cones;
+   std::vector<meta_draw_object> _ramps;
    std::vector<meta_draw_vertex> _triangles;
    std::vector<meta_draw_line> _lines_solid;
 
@@ -130,6 +135,7 @@ private:
    std::vector<meta_draw_sphere> _spheres_wireframe;
    std::vector<meta_draw_object> _cylinders_wireframe;
    std::vector<meta_draw_object> _cones_wireframe;
+   std::vector<meta_draw_object> _ramps_wireframe;
    std::vector<meta_draw_vertex> _triangles_wireframe;
 
    std::vector<meta_draw_line> _lines_overlay;

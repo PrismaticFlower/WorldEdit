@@ -61,6 +61,19 @@ struct block_description_box {
    bool operator==(const block_description_box&) const noexcept = default;
 };
 
+struct block_description_ramp {
+   quaternion rotation;
+   float3 position;
+   float3 size;
+   std::array<uint8, 5> surface_materials = {};
+   std::array<block_texture_mode, 5> surface_texture_mode = {};
+   std::array<block_texture_rotation, 5> surface_texture_rotation = {};
+   std::array<std::array<int8, 2>, 5> surface_texture_scale = {};
+   std::array<std::array<uint16, 2>, 5> surface_texture_offset = {};
+
+   bool operator==(const block_description_ramp&) const noexcept = default;
+};
+
 struct blocks_bbox_soa {
    pinned_vector<float> min_x = blocks_init;
    pinned_vector<float> min_y = blocks_init;
@@ -80,6 +93,26 @@ struct blocks_boxes {
    pinned_vector<block_description_box> description = blocks_init;
 
    pinned_vector<id<block_description_box>> ids = blocks_init;
+
+   blocks_dirty_range_tracker dirty;
+
+   void reserve(const std::size_t size) noexcept;
+
+   auto size() const noexcept -> std::size_t;
+
+   bool is_balanced() const noexcept;
+};
+
+struct blocks_ramps {
+   blocks_bbox_soa bbox;
+
+   pinned_vector<bool> hidden = blocks_init;
+
+   pinned_vector<int8> layer = blocks_init;
+
+   pinned_vector<block_description_ramp> description = blocks_init;
+
+   pinned_vector<id<block_description_ramp>> ids = blocks_init;
 
    blocks_dirty_range_tracker dirty;
 
@@ -111,12 +144,14 @@ struct block_material {
 
 struct blocks {
    blocks_boxes boxes;
+   blocks_ramps ramps;
 
    pinned_vector<block_material> materials = get_blank_materials();
    blocks_dirty_range_tracker materials_dirty;
 
    struct next_ids {
       id_generator<block_description_box> boxes;
+      id_generator<block_description_ramp> ramps;
    } next_id;
 
    bool empty() const noexcept;
@@ -129,9 +164,11 @@ struct blocks {
 };
 
 using block_box_id = id<block_description_box>;
+using block_ramp_id = id<block_description_ramp>;
 
 enum class block_type {
    box,
+   ramp,
 };
 
 struct block_id {
@@ -139,9 +176,15 @@ struct block_id {
 
    block_id(block_box_id id) noexcept;
 
+   block_id(block_ramp_id id) noexcept;
+
    bool is_box() const noexcept;
 
    auto get_box() const noexcept -> block_box_id;
+
+   bool is_ramp() const noexcept;
+
+   auto get_ramp() const noexcept -> block_ramp_id;
 
    auto type() const noexcept -> block_type;
 
@@ -157,6 +200,7 @@ private:
 
    union {
       block_box_id box = block_box_id{0xffffffffu};
+      block_ramp_id ramp;
    } id;
 };
 

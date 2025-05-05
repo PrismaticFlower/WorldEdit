@@ -8,6 +8,36 @@
 
 namespace we::graphics {
 
+// 0  -> 5
+// 1  -> 2
+// 2  -> 4
+// 3  -> 4
+// 4  -> 0
+// 5  -> 1
+// 6  -> 5
+// 7  -> 1
+// 8  -> 3
+// 9  -> 2
+// 10 -> 5
+// 11 -> 4
+// 12 -> 2
+// 13 -> 3
+// 14 -> 0
+// 15 -> 3
+// 16 -> 1
+// 17 -> 0
+
+const std::array<std::array<uint16, 3>, 8> block_ramp_triangles = {{
+   {5, 4, 2},
+   {4, 1, 0},
+   {4, 5, 1},
+   {1, 2, 3},
+   {1, 5, 2},
+   {4, 3, 2},
+   {4, 0, 3},
+   {3, 0, 1},
+}};
+
 namespace {
 struct geometric_shapes_buffer {
    alignas(gpu::raw_uav_srv_byte_alignment) const std::array<float3, 162> icosphere_vertices{
@@ -450,6 +480,27 @@ struct geometric_shapes_buffer {
        {28, 29, 32}, {29, 30, 32}, {30, 31, 32}, {32, 2, 4},   {16, 18, 24},
        {18, 20, 24}, {20, 22, 24}, {24, 26, 32}, {26, 28, 32}, {32, 4, 8},
        {8, 12, 16},  {32, 8, 24}}};
+
+   alignas(gpu::raw_uav_srv_byte_alignment) const std::array<float3, 6> ramp_vertices = {{
+      {1.0, -1.0, 1.0},
+      {1.0, -1.0, -1.0},
+      {-1.0, 1.0, -1.0},
+      {1.0, 1.0, -1.0},
+      {-1.0, -1.0, 1.0},
+      {-1.0, -1.0, -1.0},
+   }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment)
+      const std::array<std::array<uint16, 3>, 8> ramp_indices = {{
+         {5, 4, 2},
+         {4, 1, 0},
+         {4, 5, 1},
+         {1, 2, 3},
+         {1, 5, 2},
+         {4, 3, 2},
+         {4, 0, 3},
+         {3, 0, 1},
+      }};
 };
 
 constexpr geometric_shapes_buffer shapes_buffer;
@@ -595,6 +646,22 @@ void geometric_shapes::init_shapes(gpu::device& device)
             .buffer_location =
                gpu_address + offsetof(geometric_shapes_buffer, cone_vertices),
             .size_in_bytes = sizeof(geometric_shapes_buffer::cone_vertices),
+            .stride_in_bytes = sizeof(float3),
+         },
+   };
+
+   _ramp = {
+      .index_count = static_cast<uint32>(shapes_buffer.ramp_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location = gpu_address + offsetof(geometric_shapes_buffer, ramp_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::ramp_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, ramp_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::ramp_vertices),
             .stride_in_bytes = sizeof(float3),
          },
    };
