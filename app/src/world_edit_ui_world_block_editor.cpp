@@ -72,6 +72,19 @@ auto foley_group_name(world::block_foley_group group) noexcept -> const char*
    return "<unknown>";
 }
 
+auto block_type_name(world::block_type type) noexcept -> const char*
+{
+
+   // clang-format off
+   switch (type) {
+   case world::block_type::box:  return "Box";
+   case world::block_type::ramp: return "Ramp";
+   }
+   // clang-format on
+
+   std::unreachable();
+}
+
 }
 
 void world_edit::ui_show_block_editor() noexcept
@@ -89,6 +102,20 @@ void world_edit::ui_show_block_editor() noexcept
 
       if (ImGui::Button("Draw Block", {ImGui::CalcItemWidth(), 0.0f})) {
          _block_editor_context.activate_tool = block_edit_tool::draw;
+      }
+
+      if (ImGui::BeginCombo("Draw Shape",
+                            block_type_name(_block_editor_config.draw_type))) {
+         for (const world::block_type type :
+              {world::block_type::box, world::block_type::ramp}) {
+
+            if (ImGui::Selectable(block_type_name(type),
+                                  type == _block_editor_config.draw_type)) {
+               _block_editor_config.draw_type = type;
+            }
+         }
+
+         ImGui::EndCombo();
       }
 
       ImGui::Checkbox("Enable Alignment", &_block_editor_config.enable_alignment);
@@ -706,8 +733,17 @@ void world_edit::ui_show_block_editor() noexcept
 
          if (click) {
             _block_editor_context.draw_block.height_plane = cursor_positionWS.y;
-            _block_editor_context.draw_block.box.start = cursor_positionWS;
-            _block_editor_context.draw_block.step = draw_block_step::box_depth;
+
+            switch (_block_editor_config.draw_type) {
+            case world::block_type::box: {
+               _block_editor_context.draw_block.box.start = cursor_positionWS;
+               _block_editor_context.draw_block.step = draw_block_step::box_depth;
+            } break;
+            case world::block_type::ramp: {
+               _block_editor_context.draw_block.ramp.start = cursor_positionWS;
+               _block_editor_context.draw_block.step = draw_block_step::ramp_width;
+            } break;
+            }
          }
       } break;
       case draw_block_step::box_depth: {
@@ -890,6 +926,189 @@ void world_edit::ui_show_block_editor() noexcept
                                             position +
                                                float3{0.0f, box_height * 0.5f, 0.0f},
                                             line_color);
+
+         if (click) {
+            _block_editor_context.draw_block = {};
+
+            _edit_stack_world.close_last();
+         }
+      } break;
+      case draw_block_step::ramp_width: {
+         _tool_visualizers
+            .add_line_overlay(_block_editor_context.draw_block.ramp.start,
+                              {cursor_positionWS.x,
+                               _block_editor_context.draw_block.ramp.start.y,
+                               cursor_positionWS.z},
+                              line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            _block_editor_context.draw_block.ramp.width_x = cursor_positionWS.x;
+            _block_editor_context.draw_block.ramp.width_z = cursor_positionWS.z;
+            _block_editor_context.draw_block.step = draw_block_step::ramp_length;
+         }
+
+      } break;
+      case draw_block_step::ramp_length: {
+         const float3 draw_block_start = _block_editor_context.draw_block.ramp.start;
+         const float3 draw_block_width = {_block_editor_context.draw_block.ramp.width_x,
+                                          draw_block_start.y,
+                                          _block_editor_context.draw_block.ramp.width_z};
+         const float3 draw_block_edge_midpoint =
+            {(draw_block_start.x + draw_block_width.x) / 2.0f, draw_block_start.y,
+             (draw_block_start.z + draw_block_width.z) / 2.0f};
+
+         const float3 cursor_direction =
+            normalize(cursor_positionWS - draw_block_width);
+
+         const float3 extend_normal =
+            normalize(float3{draw_block_width.z, 0.0f, draw_block_width.x} -
+                      float3{draw_block_start.z, 0.0f, draw_block_start.x}) *
+            float3{-1.0, 0.0f, 1.0};
+
+         const float normal_sign =
+            dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
+
+         const quaternion rotation =
+            look_at_quat(draw_block_edge_midpoint - extend_normal * normal_sign,
+                         draw_block_edge_midpoint);
+         const quaternion inv_rotation = conjugate(rotation);
+
+         const float cursor_distance =
+            std::fabs((inv_rotation * draw_block_width).z -
+                      (inv_rotation * cursor_positionWS).z);
+
+         const float3 draw_block_length =
+            draw_block_width + extend_normal * cursor_distance * normal_sign;
+
+         _tool_visualizers.add_line_overlay(draw_block_start, draw_block_width,
+                                            line_color);
+         _tool_visualizers.add_line_overlay(draw_block_width, draw_block_length,
+                                            line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            const world::block_ramp_id id = _world.blocks.next_id.ramps.aquire();
+
+            _block_editor_context.draw_block.height_plane = std::nullopt;
+            _block_editor_context.draw_block.ramp.length_x = draw_block_length.x;
+            _block_editor_context.draw_block.ramp.length_z = draw_block_length.z;
+            _block_editor_context.draw_block.ramp.rotation = rotation;
+            _block_editor_context.draw_block.step = draw_block_step::ramp_height;
+            _block_editor_context.draw_block.index =
+               static_cast<uint32>(_world.blocks.ramps.size());
+            _block_editor_context.draw_block.block_id = id;
+
+            const std::array<float3, 2> cornersWS{draw_block_start, draw_block_length};
+            std::array<float3, 2> cornersOS{};
+
+            for (std::size_t i = 0; i < cornersOS.size(); ++i) {
+               cornersOS[i] = inv_rotation * cornersWS[i];
+            }
+
+            const float3 block_max = max(cornersOS[0], cornersOS[1]);
+            const float3 block_min = min(cornersOS[0], cornersOS[1]);
+
+            const float3 size = float3{std::fabs(block_max.x - block_min.x), 0.0f,
+                                       std::fabs(block_max.z - block_min.z)} /
+                                2.0f;
+
+            const float3 position = (draw_block_start + draw_block_length) / 2.0f;
+
+            const uint8 material_index = _block_editor_config.paint_material_index;
+
+            if (_world.blocks.ramps.size() < world::max_blocks) {
+               _edit_stack_world.apply(edits::make_add_block(
+                                          world::block_description_ramp{
+                                             .rotation = rotation,
+                                             .position = position,
+                                             .size = size,
+                                             .surface_materials = {material_index, material_index,
+                                                                   material_index, material_index,
+                                                                   material_index},
+                                          },
+                                          _block_editor_config.new_block_layer, id),
+                                       _edit_context);
+            }
+            else {
+               MessageBoxA(_window,
+                           fmt::format("Max Rampes ({}) Reached", world::max_blocks)
+                              .c_str(),
+                           "Limit Reached", MB_OK);
+
+               _block_editor_context.tool = block_edit_tool::none;
+            }
+         }
+      } break;
+      case draw_block_step::ramp_height: {
+         const float3 draw_block_start = _block_editor_context.draw_block.ramp.start;
+         const float3 draw_block_width = {_block_editor_context.draw_block.ramp.width_x,
+                                          draw_block_start.y,
+                                          _block_editor_context.draw_block.ramp.width_z};
+         const float3 draw_block_length = {_block_editor_context.draw_block.ramp.length_x,
+                                           draw_block_start.y,
+                                           _block_editor_context.draw_block.ramp.length_z};
+
+         const quaternion rotation = _block_editor_context.draw_block.ramp.rotation;
+         const quaternion inv_rotation = conjugate(rotation);
+
+         const std::array<float3, 2> cornersWS{draw_block_start, draw_block_length};
+         std::array<float3, 2> cornersOS{};
+
+         for (std::size_t i = 0; i < cornersOS.size(); ++i) {
+            cornersOS[i] = inv_rotation * cornersWS[i];
+         }
+
+         const float3 block_max = max(cornersOS[0], cornersOS[1]);
+         const float3 block_min = min(cornersOS[0], cornersOS[1]);
+
+         const float4 height_plane =
+            make_plane_from_point(draw_block_width,
+                                  normalize(draw_block_width - _camera.position()));
+
+         graphics::camera_ray ray =
+            make_camera_ray(_camera,
+                            {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                            {ImGui::GetMainViewport()->Size.x,
+                             ImGui::GetMainViewport()->Size.y});
+
+         float3 cursor_position = cursor_positionWS;
+
+         if (float hit = 0.0f;
+             intersect_aabb(inv_rotation * ray.origin,
+                            1.0f / (inv_rotation * ray.direction),
+                            {.min = {block_min.x, -FLT_MAX, block_min.z},
+                             .max = {block_max.x, FLT_MAX, block_max.z}},
+                            FLT_MAX, hit) and
+             hit < distance(_camera.position(), cursor_positionWS)) {
+            cursor_position = ray.origin + hit * ray.direction;
+         }
+
+         const float unaligned_ramp_height =
+            cursor_position.y - draw_block_start.y;
+         const float ramp_height =
+            align ? std::round(unaligned_ramp_height / alignment.y) * alignment.y
+                  : unaligned_ramp_height;
+
+         const float3 position = {(draw_block_start.x + draw_block_length.x) / 2.0f,
+                                  draw_block_start.y + (ramp_height / 2.0f),
+                                  (draw_block_start.z + draw_block_length.z) / 2.0f};
+         const float3 size = abs(float3{block_max.x - block_min.x, ramp_height,
+                                        block_max.z - block_min.z}) /
+                             2.0f;
+
+         if (const uint32 index = _block_editor_context.draw_block.index;
+             index < _world.blocks.ramps.size() and
+             _world.blocks.ramps.ids[index] == _block_editor_context.draw_block.block_id) {
+            _edit_stack_world.apply(edits::make_set_block_ramp_metrics(index, rotation,
+                                                                       position, size),
+                                    _edit_context, {.transparent = true});
+         }
+
+         _tool_visualizers
+            .add_line_overlay(position - float3{0.0f, ramp_height * 0.5f, 0.0f},
+                              position + float3{0.0f, ramp_height * 0.5f, 0.0f},
+                              line_color);
 
          if (click) {
             _block_editor_context.draw_block = {};

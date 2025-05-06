@@ -202,6 +202,9 @@ enum class draw_block_step : uint8 {
    box_depth,
    box_width,
    box_height,
+   ramp_width,
+   ramp_length,
+   ramp_height
 };
 
 constexpr float tool_window_start_x = 264.0f;
@@ -964,6 +967,8 @@ private:
       int y_alignment_exponent = 0;
       int snap_edge_points = 3;
 
+      world::block_type draw_type = world::block_type::box;
+
       bool enable_alignment = true;
       bool enable_snapping = true;
 
@@ -997,6 +1002,15 @@ private:
             float width_z = 0.0f;
             quaternion rotation;
          } box;
+
+         struct ramp {
+            float3 start;
+            float width_x = 0.0f;
+            float width_z = 0.0f;
+            float length_x = 0.0f;
+            float length_z = 0.0f;
+            quaternion rotation;
+         } ramp;
 
          uint32 index = 0;
          world::block_id block_id = world::block_id::none;
