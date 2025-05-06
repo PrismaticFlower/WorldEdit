@@ -1049,8 +1049,8 @@ void world_edit::ui_show_block_editor() noexcept
                                            draw_block_start.y,
                                            _block_editor_context.draw_block.ramp.length_z};
 
-         const quaternion rotation = _block_editor_context.draw_block.ramp.rotation;
-         const quaternion inv_rotation = conjugate(rotation);
+         quaternion rotation = _block_editor_context.draw_block.ramp.rotation;
+         quaternion inv_rotation = conjugate(rotation);
 
          const std::array<float3, 2> cornersWS{draw_block_start, draw_block_length};
          std::array<float3, 2> cornersOS{};
@@ -1096,6 +1096,11 @@ void world_edit::ui_show_block_editor() noexcept
          const float3 size = abs(float3{block_max.x - block_min.x, ramp_height,
                                         block_max.z - block_min.z}) /
                              2.0f;
+
+         if (ramp_height < 0.0f) {
+            rotation = normalize(rotation * quaternion{0.0f, 0.0f, 1.0f, 0.0f});
+            inv_rotation = conjugate(rotation);
+         }
 
          if (const uint32 index = _block_editor_context.draw_block.index;
              index < _world.blocks.ramps.size() and
