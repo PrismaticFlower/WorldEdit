@@ -24,13 +24,13 @@ constexpr int8 block_max_texture_scale = 8;
 constexpr uint16 block_max_texture_offset = 8191;
 
 enum class block_texture_mode : uint8 {
-   tangent_space_xyz,
-
    world_space_auto,
 
    world_space_zy,
    world_space_xz,
    world_space_xy,
+
+   tangent_space_xyz,
 
    unwrapped,
 };

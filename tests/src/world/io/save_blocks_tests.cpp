@@ -18,7 +18,7 @@ TEST_CASE("world save blocks (boxes)", "[World][IO]")
       Position(8.5, 4.5, 2);
       Size(4, 4, 4);
       SurfaceMaterials(0, 1, 2, 3, 4, 5);
-      SurfaceTextureMode(1, 1, 1, 1, 1, 1);
+      SurfaceTextureMode(0, 0, 0, 0, 0, 0);
       SurfaceTextureRotation(2, 2, 2, 2, 2, 2);
       SurfaceTextureScale(0, 0, -1, -2, 0, 0, 0, 0, 0, 0, 0, 0);
       SurfaceTextureOffset(0, 0, 0, 0, 0, 0, 0, 0, 256, 256, 0, 0);
@@ -30,7 +30,7 @@ TEST_CASE("world save blocks (boxes)", "[World][IO]")
       Position(10, 16, 12);
       Size(8, 4, 8);
       SurfaceMaterials(2, 2, 2, 2, 2, 2);
-      SurfaceTextureMode(2, 2, 2, 2, 5, 2);
+      SurfaceTextureMode(1, 1, 1, 1, 5, 1);
       SurfaceTextureRotation(1, 1, 1, 1, 1, 1);
       SurfaceTextureScale(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, -2);
       SurfaceTextureOffset(1024, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -41,7 +41,7 @@ TEST_CASE("world save blocks (boxes)", "[World][IO]")
       Position(6, 6, 6);
       Size(5, 5, 5);
       SurfaceMaterials(0, 0, 0, 0, 0, 0);
-      SurfaceTextureMode(3, 3, 3, 3, 3, 3);
+      SurfaceTextureMode(2, 2, 2, 2, 2, 2);
       SurfaceTextureRotation(0, 0, 0, 0, 0, 0);
       SurfaceTextureScale(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
       SurfaceTextureOffset(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -226,7 +226,7 @@ TEST_CASE("world save blocks (ramps)", "[World][IO]")
       Position(8.5, 4.5, 2);
       Size(4, 4, 4);
       SurfaceMaterials(0, 1, 2, 3, 4);
-      SurfaceTextureMode(1, 1, 1, 1, 1);
+      SurfaceTextureMode(0, 0, 0, 0, 0);
       SurfaceTextureRotation(2, 2, 2, 2, 2);
       SurfaceTextureScale(0, 0, -1, -2, 0, 0, 0, 0, 0, 0);
       SurfaceTextureOffset(0, 0, 0, 0, 0, 0, 0, 0, 256, 256);
@@ -238,7 +238,7 @@ TEST_CASE("world save blocks (ramps)", "[World][IO]")
       Position(10, 16, 12);
       Size(8, 4, 8);
       SurfaceMaterials(2, 2, 2, 2, 2);
-      SurfaceTextureMode(2, 2, 2, 2, 5);
+      SurfaceTextureMode(1, 1, 1, 1, 5);
       SurfaceTextureRotation(1, 1, 1, 1, 1);
       SurfaceTextureScale(0, 0, 0, 0, 0, 0, 0, 0, -2, -2);
       SurfaceTextureOffset(1024, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -249,7 +249,7 @@ TEST_CASE("world save blocks (ramps)", "[World][IO]")
       Position(6, 6, 6);
       Size(5, 5, 5);
       SurfaceMaterials(0, 0, 0, 0, 0);
-      SurfaceTextureMode(3, 3, 3, 3, 3);
+      SurfaceTextureMode(2, 2, 2, 2, 2);
       SurfaceTextureRotation(0, 0, 0, 0, 0);
       SurfaceTextureScale(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
       SurfaceTextureOffset(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);

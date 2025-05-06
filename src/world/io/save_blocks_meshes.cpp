@@ -37,19 +37,6 @@ auto evaluate_texcorrds(const float3& positionWS, const float3& normalWS,
    float2 texcoords;
 
    switch (mode) {
-   case block_texture_mode::tangent_space_xyz: {
-      const float3 tangentWS = normalize(world_from_object_adjugate * vertex.tangent);
-      const float3 bitangentWS =
-         normalize(vertex.bitangent_sign * cross(normalWS, tangentWS));
-      const float3x3 texture_from_world = {
-         {tangentWS.x, bitangentWS.x, normalWS.x},
-         {tangentWS.y, bitangentWS.y, normalWS.y},
-         {tangentWS.z, bitangentWS.z, normalWS.z},
-      };
-      const float3 positionTS = texture_from_world * positionWS;
-
-      texcoords = {positionTS.x, positionTS.y};
-   } break;
    case block_texture_mode::world_space_auto: {
       const float3 normal_absWS = abs(normalWS);
 
@@ -72,6 +59,19 @@ auto evaluate_texcorrds(const float3& positionWS, const float3& normalWS,
    case block_texture_mode::world_space_xy:
       texcoords = {positionWS.x, positionWS.y};
       break;
+   case block_texture_mode::tangent_space_xyz: {
+      const float3 tangentWS = normalize(world_from_object_adjugate * vertex.tangent);
+      const float3 bitangentWS =
+         normalize(vertex.bitangent_sign * cross(normalWS, tangentWS));
+      const float3x3 texture_from_world = {
+         {tangentWS.x, bitangentWS.x, normalWS.x},
+         {tangentWS.y, bitangentWS.y, normalWS.y},
+         {tangentWS.z, bitangentWS.z, normalWS.z},
+      };
+      const float3 positionTS = texture_from_world * positionWS;
+
+      texcoords = {positionTS.x, positionTS.y};
+   } break;
    case block_texture_mode::unwrapped:
       texcoords = vertex.texcoords;
       break;

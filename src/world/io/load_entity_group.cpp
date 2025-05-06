@@ -634,11 +634,11 @@ void read_blocks_boxes(const assets::config::node& node, entity_group& group_out
                const uint8 texture_mode = prop.values.get<uint8>(i);
 
                switch (texture_mode) {
-               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
                case static_cast<uint8>(block_texture_mode::world_space_auto):
                case static_cast<uint8>(block_texture_mode::world_space_zy):
                case static_cast<uint8>(block_texture_mode::world_space_xz):
                case static_cast<uint8>(block_texture_mode::world_space_xy):
+               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
                case static_cast<uint8>(block_texture_mode::unwrapped):
                   box.surface_texture_mode[i] = block_texture_mode{texture_mode};
                   break;
@@ -711,11 +711,11 @@ void read_blocks_ramps(const assets::config::node& node, entity_group& group_out
                const uint8 texture_mode = prop.values.get<uint8>(i);
 
                switch (texture_mode) {
-               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
                case static_cast<uint8>(block_texture_mode::world_space_auto):
                case static_cast<uint8>(block_texture_mode::world_space_zy):
                case static_cast<uint8>(block_texture_mode::world_space_xz):
                case static_cast<uint8>(block_texture_mode::world_space_xy):
+               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
                case static_cast<uint8>(block_texture_mode::unwrapped):
                   ramp.surface_texture_mode[i] = block_texture_mode{texture_mode};
                   break;
