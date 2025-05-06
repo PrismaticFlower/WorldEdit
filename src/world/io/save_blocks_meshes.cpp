@@ -99,6 +99,83 @@ auto evaluate_texcorrds(const float3& positionWS, const float3& normalWS,
    return texcoords;
 }
 
+template<typename T>
+void process_blocks(const T& blocks, std::span<const block_vertex> block_vertices,
+                    std::span<const std::array<uint16, 3>> block_triangles,
+                    std::span<const std::array<uint16, 4>> block_occluders,
+                    std::vector<block_world_triangle>& out_triangle_list,
+                    std::vector<block_world_occluder>& out_occluder_list) noexcept
+{
+   using description_type = decltype(T::description)::value_type;
+   using id_type = id<description_type>;
+
+   for (uint32 block_index = 0; block_index < blocks.size(); ++block_index) {
+      const description_type& block = blocks.description[block_index];
+      const id_type block_id = blocks.ids[block_index];
+
+      const float4x4 scale = {
+         {block.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, block.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, block.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(block.rotation);
+
+      float4x4 world_from_object = rotation * scale;
+      float3x3 world_from_object_adjugate = adjugate(world_from_object);
+      world_from_object[3] = {block.position, 1.0f};
+
+      for (const std::array<uint16, 3>& tri : block_triangles) {
+         block_world_triangle world_triangle = {.block_id = block_id};
+
+         for (std::size_t i = 0; i < tri.size(); ++i) {
+            const block_vertex& vertex = block_vertices[tri[i]];
+
+            const float3 positionWS = world_from_object * vertex.position;
+            const float3 normalWS =
+               normalize(world_from_object_adjugate * vertex.normal);
+            const float2 texcoords =
+               evaluate_texcorrds(positionWS, normalWS, vertex,
+                                  world_from_object_adjugate,
+                                  block.surface_texture_mode[vertex.surface_index],
+                                  block.surface_texture_rotation[vertex.surface_index],
+                                  block.surface_texture_scale[vertex.surface_index],
+                                  block.surface_texture_offset[vertex.surface_index]);
+            const uint8 material_index = block.surface_materials[vertex.surface_index];
+
+            world_triangle.vertices[i] = {.positionWS = positionWS,
+                                          .normalWS = normalWS,
+                                          .texcoords = texcoords};
+            world_triangle.material_index = material_index;
+         }
+
+         out_triangle_list.push_back(world_triangle);
+      }
+
+      for (const std::array<uint16, 4>& quad : block_occluders) {
+         block_world_occluder occluder = {.block_id = block_id};
+
+         for (std::size_t i = 0; i < quad.size(); ++i) {
+            const block_vertex& vertex = block_vertices[quad[i]];
+
+            occluder.verticesWS[i] = world_from_object * vertex.position;
+         }
+
+         const float3 edge0WS = occluder.verticesWS[1] - occluder.verticesWS[0];
+         const float3 edge1WS = occluder.verticesWS[2] - occluder.verticesWS[0];
+         const float3 e0_cross_e1 = cross(edge0WS, edge1WS);
+
+         const float e0_cross_e1_length = length(e0_cross_e1);
+         const float3 normalWS = e0_cross_e1 / e0_cross_e1_length;
+
+         occluder.area = e0_cross_e1_length;
+         occluder.planeWS = {normalWS, -dot(normalWS, occluder.verticesWS[0])};
+
+         out_occluder_list.push_back(occluder);
+      }
+   }
+}
+
 auto foley_name(const block_foley_group group) noexcept -> const char*
 {
    // clang-format off
@@ -127,74 +204,26 @@ auto save_blocks_meshes(const io::path& output_directory,
       throw std::runtime_error{"Unable to create directory to save blocks."};
    }
 
+   std::size_t triangle_count = 0;
+
+   triangle_count += blocks.boxes.size() * block_cube_triangles.size();
+   triangle_count += blocks.ramps.size() * block_ramp_triangles.size();
+
+   std::size_t occluder_count = 0;
+
+   triangle_count += blocks.boxes.size() * block_cube_occluders.size();
+   triangle_count += blocks.ramps.size() * block_ramp_occluders.size();
+
    std::vector<block_world_triangle> triangle_list;
    std::vector<block_world_occluder> occluder_list;
 
-   for (uint32 block_index = 0; block_index < blocks.boxes.size(); ++block_index) {
-      const block_description_box& box = blocks.boxes.description[block_index];
-      const block_box_id block_id = blocks.boxes.ids[block_index];
+   triangle_list.reserve(triangle_count);
+   occluder_list.reserve(occluder_count);
 
-      const float4x4 scale = {
-         {box.size.x, 0.0f, 0.0f, 0.0f},
-         {0.0f, box.size.y, 0.0f, 0.0f},
-         {0.0f, 0.0f, box.size.z, 0.0f},
-         {0.0f, 0.0f, 0.0f, 1.0f},
-      };
-      const float4x4 rotation = to_matrix(box.rotation);
-
-      float4x4 world_from_object = rotation * scale;
-      float3x3 world_from_object_adjugate = adjugate(world_from_object);
-      world_from_object[3] = {box.position, 1.0f};
-
-      for (const std::array<uint16, 3>& tri : block_cube_triangles) {
-         block_world_triangle world_triangle = {.block_id = block_id};
-
-         for (std::size_t i = 0; i < tri.size(); ++i) {
-            const block_vertex& vertex = block_cube_vertices[tri[i]];
-
-            const float3 positionWS = world_from_object * vertex.position;
-            const float3 normalWS =
-               normalize(world_from_object_adjugate * vertex.normal);
-            const float2 texcoords =
-               evaluate_texcorrds(positionWS, normalWS, vertex,
-                                  world_from_object_adjugate,
-                                  box.surface_texture_mode[vertex.surface_index],
-                                  box.surface_texture_rotation[vertex.surface_index],
-                                  box.surface_texture_scale[vertex.surface_index],
-                                  box.surface_texture_offset[vertex.surface_index]);
-            const uint8 material_index = box.surface_materials[vertex.surface_index];
-
-            world_triangle.vertices[i] = {.positionWS = positionWS,
-                                          .normalWS = normalWS,
-                                          .texcoords = texcoords};
-            world_triangle.material_index = material_index;
-         }
-
-         triangle_list.push_back(world_triangle);
-      }
-
-      for (const std::array<uint16, 4>& quad : block_cube_occluders) {
-         block_world_occluder occluder = {.block_id = block_id};
-
-         for (std::size_t i = 0; i < quad.size(); ++i) {
-            const block_vertex& vertex = block_cube_vertices[quad[i]];
-
-            occluder.verticesWS[i] = world_from_object * vertex.position;
-         }
-
-         const float3 edge0WS = occluder.verticesWS[1] - occluder.verticesWS[0];
-         const float3 edge1WS = occluder.verticesWS[2] - occluder.verticesWS[0];
-         const float3 e0_cross_e1 = cross(edge0WS, edge1WS);
-
-         const float e0_cross_e1_length = length(e0_cross_e1);
-         const float3 normalWS = e0_cross_e1 / e0_cross_e1_length;
-
-         occluder.area = e0_cross_e1_length;
-         occluder.planeWS = {normalWS, -dot(normalWS, occluder.verticesWS[0])};
-
-         occluder_list.push_back(occluder);
-      }
-   }
+   process_blocks(blocks.boxes, block_cube_vertices, block_cube_triangles,
+                  block_cube_occluders, triangle_list, occluder_list);
+   process_blocks(blocks.ramps, block_ramp_vertices, block_ramp_triangles,
+                  block_ramp_occluders, triangle_list, occluder_list);
 
    triangle_list = cull_hidden_triangles(triangle_list, occluder_list);
 
