@@ -827,14 +827,14 @@ void save_requirements(const io::path& world_dir, const std::string_view world_n
 
    if (not flags.save_gamemodes) return;
 
-   for (std::size_t i = 1; i < world.game_modes.size(); ++i) {
-      if (world.game_modes[i].requirements.empty()) continue;
+   for (const game_mode_description& game_mode : world.game_modes) {
+      if (game_mode.requirements.empty()) continue;
 
       assets::req::save(io::compose_path(world_dir,
                                          fmt::format("{}_{}", world_name,
-                                                     world.game_modes[i].name),
+                                                     game_mode.name),
                                          ".mrq"),
-                        world.game_modes[i].requirements);
+                        game_mode.requirements);
    }
 }
 
