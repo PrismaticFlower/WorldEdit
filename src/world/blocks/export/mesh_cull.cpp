@@ -47,9 +47,10 @@ auto quantize(const float4& planeWS) -> quantized_plane
    const float3 quantized_normalWS =
       min(max(float3{planeWS.x, planeWS.y, planeWS.z} * 32767.0f,
               {-32767.0f, -32767.0f, -32767.0f}),
-          {32767.0f, 32767.0f, 32767.0f});
+          {32767.0f, 32767.0f, 32767.0f}) +
+      0.5f;
    const double quantized_d =
-      std::min(std::max(planeWS.w * 1000.0, -1125899906842624.0), 1125899906842624.0);
+      std::min(std::max(planeWS.w * 1000.0, -1125899906842624.0), 1125899906842624.0) + 0.5;
 
    return {static_cast<int16>(quantized_normalWS.x),
            static_cast<int16>(quantized_normalWS.y),
