@@ -77,6 +77,59 @@ void save_boxes(io::output_file& out, const blocks_boxes& boxes) noexcept
    out.write_ln("}\n");
 }
 
+void save_ramps(io::output_file& out, const blocks_ramps& ramps) noexcept
+{
+   if (ramps.size() == 0) return;
+
+   out.write_ln("Ramps({})", ramps.size());
+   out.write_ln("{");
+
+   for (uint32 box_index = 0; box_index < ramps.size(); ++box_index) {
+      const block_description_ramp& ramp = ramps.description[box_index];
+      const int8 ramp_layer = ramps.layer[box_index];
+
+      out.write_ln("   Ramp()");
+      out.write_ln("   {");
+
+      out.write_ln("      Rotation({}, {}, {}, {});", ramp.rotation.w,
+                   ramp.rotation.x, ramp.rotation.y, ramp.rotation.z);
+      out.write_ln("      Position({}, {}, {});", ramp.position.x,
+                   ramp.position.y, ramp.position.z);
+      out.write_ln("      Size({}, {}, {});", ramp.size.x, ramp.size.y,
+                   ramp.size.z);
+      out.write_ln("      SurfaceMaterials({}, {}, {}, {}, {});",
+                   ramp.surface_materials[0], ramp.surface_materials[1],
+                   ramp.surface_materials[2], ramp.surface_materials[3],
+                   ramp.surface_materials[4]);
+      out.write_ln("      SurfaceTextureMode({}, {}, {}, {}, {});",
+                   ramp.surface_texture_mode[0], ramp.surface_texture_mode[1],
+                   ramp.surface_texture_mode[2], ramp.surface_texture_mode[3],
+                   ramp.surface_texture_mode[4]);
+      out.write_ln("      SurfaceTextureRotation({}, {}, {}, {}, {});",
+                   ramp.surface_texture_rotation[0], ramp.surface_texture_rotation[1],
+                   ramp.surface_texture_rotation[2], ramp.surface_texture_rotation[3],
+                   ramp.surface_texture_rotation[4]);
+      out.write_ln(
+         "      SurfaceTextureScale({}, {}, {}, {}, {}, {}, {}, {}, {}, {});",
+         ramp.surface_texture_scale[0][0], ramp.surface_texture_scale[0][1],
+         ramp.surface_texture_scale[1][0], ramp.surface_texture_scale[1][1],
+         ramp.surface_texture_scale[2][0], ramp.surface_texture_scale[2][1],
+         ramp.surface_texture_scale[3][0], ramp.surface_texture_scale[3][1],
+         ramp.surface_texture_scale[4][0], ramp.surface_texture_scale[4][1]);
+      out.write_ln(
+         "      SurfaceTextureOffset({}, {}, {}, {}, {}, {}, {}, {}, {}, {});",
+         ramp.surface_texture_offset[0][0], ramp.surface_texture_offset[0][1],
+         ramp.surface_texture_offset[1][0], ramp.surface_texture_offset[1][1],
+         ramp.surface_texture_offset[2][0], ramp.surface_texture_offset[2][1],
+         ramp.surface_texture_offset[3][0], ramp.surface_texture_offset[3][1],
+         ramp.surface_texture_offset[4][0], ramp.surface_texture_offset[4][1]);
+      if (ramp_layer != 0) out.write_ln("      Layer({});", ramp_layer);
+      out.write_ln("   }");
+   }
+
+   out.write_ln("}\n");
+}
+
 void save_materials(io::output_file& out, const blocks& blocks) noexcept
 {
    const block_material empty_material;
@@ -117,6 +170,7 @@ void save_blocks(const io::path& path, const blocks& blocks)
    io::output_file out{path};
 
    save_boxes(out, blocks.boxes);
+   save_ramps(out, blocks.ramps);
    save_materials(out, blocks);
 }
 
