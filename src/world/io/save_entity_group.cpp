@@ -527,6 +527,66 @@ void save_entity_group_impl(File& file, const entity_group& group)
       file.write_ln("}\n");
    }
 
+   if (not group.blocks.ramps.empty()) {
+      file.write_ln("BlocksRamps({})", group.blocks.ramps.size());
+      file.write_ln("{");
+
+      for (const block_description_ramp& ramp : group.blocks.ramps) {
+         file.write_ln("   Ramp()");
+         file.write_ln("   {");
+
+         file.write_ln("      Rotation({}, {}, {}, {});", ramp.rotation.w,
+                       ramp.rotation.x, ramp.rotation.y, ramp.rotation.z);
+         file.write_ln("      Position({}, {}, {});", ramp.position.x,
+                       ramp.position.y, ramp.position.z);
+         file.write_ln("      Size({}, {}, {});", ramp.size.x, ramp.size.y,
+                       ramp.size.z);
+         file.write_ln("      SurfaceMaterials({}, {}, {}, {}, {});",
+                       ramp.surface_materials[0], ramp.surface_materials[1],
+                       ramp.surface_materials[2], ramp.surface_materials[3],
+                       ramp.surface_materials[4]);
+         file.write_ln("      SurfaceTextureMode({}, {}, {}, {}, {});",
+                       std::to_underlying(ramp.surface_texture_mode[0]),
+                       std::to_underlying(ramp.surface_texture_mode[1]),
+                       std::to_underlying(ramp.surface_texture_mode[2]),
+                       std::to_underlying(ramp.surface_texture_mode[3]),
+                       std::to_underlying(ramp.surface_texture_mode[4]));
+         file.write_ln("      SurfaceTextureRotation({}, {}, {}, {}, {});",
+                       std::to_underlying(ramp.surface_texture_rotation[0]),
+                       std::to_underlying(ramp.surface_texture_rotation[1]),
+                       std::to_underlying(ramp.surface_texture_rotation[2]),
+                       std::to_underlying(ramp.surface_texture_rotation[3]),
+                       std::to_underlying(ramp.surface_texture_rotation[4]));
+         file.write_ln("      SurfaceTextureScale({}, {}, {}, {}, {}, {}, {}, "
+                       "{}, {}, {});",
+                       ramp.surface_texture_scale[0][0],
+                       ramp.surface_texture_scale[0][1],
+                       ramp.surface_texture_scale[1][0],
+                       ramp.surface_texture_scale[1][1],
+                       ramp.surface_texture_scale[2][0],
+                       ramp.surface_texture_scale[2][1],
+                       ramp.surface_texture_scale[3][0],
+                       ramp.surface_texture_scale[3][1],
+                       ramp.surface_texture_scale[4][0],
+                       ramp.surface_texture_scale[4][1]);
+         file.write_ln("      SurfaceTextureOffset({}, {}, {}, {}, {}, {}, {}, "
+                       "{}, {}, {});",
+                       ramp.surface_texture_offset[0][0],
+                       ramp.surface_texture_offset[0][1],
+                       ramp.surface_texture_offset[1][0],
+                       ramp.surface_texture_offset[1][1],
+                       ramp.surface_texture_offset[2][0],
+                       ramp.surface_texture_offset[2][1],
+                       ramp.surface_texture_offset[3][0],
+                       ramp.surface_texture_offset[3][1],
+                       ramp.surface_texture_offset[4][0],
+                       ramp.surface_texture_offset[4][1]);
+         file.write_ln("   }");
+      }
+
+      file.write_ln("}\n");
+   }
+
    if (not group.blocks.materials.empty()) {
       file.write_ln("BlocksMaterials({})", group.blocks.materials.size());
       file.write_ln("{");

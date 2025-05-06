@@ -681,6 +681,83 @@ void read_blocks_boxes(const assets::config::node& node, entity_group& group_out
    }
 }
 
+void read_blocks_ramps(const assets::config::node& node, entity_group& group_out)
+{
+   for (const auto& key_node : node) {
+      if (not string::iequals(key_node.key, "Ramp")) continue;
+
+      block_description_ramp ramp;
+
+      for (const auto& prop : key_node) {
+         if (string::iequals(prop.key, "Rotation")) {
+            ramp.rotation = {prop.values.get<float>(0), prop.values.get<float>(1),
+                             prop.values.get<float>(2), prop.values.get<float>(3)};
+         }
+         else if (string::iequals(prop.key, "Position")) {
+            ramp.position = {prop.values.get<float>(0), prop.values.get<float>(1),
+                             prop.values.get<float>(2)};
+         }
+         else if (string::iequals(prop.key, "Size")) {
+            ramp.size = {prop.values.get<float>(0), prop.values.get<float>(1),
+                         prop.values.get<float>(2)};
+         }
+         else if (string::iequals(prop.key, "SurfaceMaterials")) {
+            for (uint32 i = 0; i < ramp.surface_materials.size(); ++i) {
+               ramp.surface_materials[i] = prop.values.get<uint8>(i);
+            }
+         }
+         else if (string::iequals(prop.key, "SurfaceTextureMode")) {
+            for (uint32 i = 0; i < ramp.surface_texture_mode.size(); ++i) {
+               const uint8 texture_mode = prop.values.get<uint8>(i);
+
+               switch (texture_mode) {
+               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
+               case static_cast<uint8>(block_texture_mode::world_space_auto):
+               case static_cast<uint8>(block_texture_mode::world_space_zy):
+               case static_cast<uint8>(block_texture_mode::world_space_xz):
+               case static_cast<uint8>(block_texture_mode::world_space_xy):
+               case static_cast<uint8>(block_texture_mode::unwrapped):
+                  ramp.surface_texture_mode[i] = block_texture_mode{texture_mode};
+                  break;
+               }
+            }
+         }
+         else if (string::iequals(prop.key, "SurfaceTextureRotation")) {
+            for (uint32 i = 0; i < ramp.surface_texture_rotation.size(); ++i) {
+               const uint8 rotation = prop.values.get<uint8>(i);
+
+               switch (rotation) {
+               case static_cast<uint8>(block_texture_rotation::d0):
+               case static_cast<uint8>(block_texture_rotation::d90):
+               case static_cast<uint8>(block_texture_rotation::d180):
+               case static_cast<uint8>(block_texture_rotation::d270):
+                  ramp.surface_texture_rotation[i] = block_texture_rotation{rotation};
+                  break;
+               }
+            }
+         }
+         else if (string::iequals(prop.key, "SurfaceTextureScale")) {
+            for (uint32 i = 0; i < ramp.surface_texture_scale.size(); ++i) {
+               ramp.surface_texture_scale[i] =
+                  {std::clamp(prop.values.get<int8>(i * 2 + 0),
+                              block_min_texture_scale, block_max_texture_scale),
+                   std::clamp(prop.values.get<int8>(i * 2 + 1),
+                              block_min_texture_scale, block_max_texture_scale)};
+            }
+         }
+         else if (string::iequals(prop.key, "SurfaceTextureOffset")) {
+            for (uint32 i = 0; i < ramp.surface_texture_offset.size(); ++i) {
+               ramp.surface_texture_offset[i] =
+                  {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
+                   std::min(prop.values.get<uint16>(i * 2 + 1), block_max_texture_offset)};
+            }
+         }
+      }
+
+      group_out.blocks.ramps.push_back(ramp);
+   }
+}
+
 void read_blocks_materials(const assets::config::node& node, entity_group& group_out)
 {
    for (const auto& key_node : node) {
@@ -921,6 +998,21 @@ void clamp_block_material_indices(entity_group& group_out, output_stream& output
          }
       }
    }
+
+   for (uint32 block_index = 0; block_index < group_out.blocks.ramps.size();
+        ++block_index) {
+      block_description_ramp& ramp = group_out.blocks.ramps[block_index];
+
+      for (uint8& material : ramp.surface_materials) {
+         if (material >= max_material) {
+            output.write("Warning! Ramp block '{}' has out of range material "
+                         "index. Setting to zero.\n",
+                         block_index);
+
+            material = 0;
+         }
+      }
+   }
 }
 
 }
@@ -976,6 +1068,11 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
             group.blocks.boxes.reserve(key_node.values.get<uint32>(0));
 
             read_blocks_boxes(key_node, group);
+         }
+         else if (string::iequals(key_node.key, "BlocksRamps"sv)) {
+            group.blocks.ramps.reserve(key_node.values.get<uint32>(0));
+
+            read_blocks_ramps(key_node, group);
          }
          else if (string::iequals(key_node.key, "BlocksMaterials"sv)) {
             group.blocks.materials.reserve(key_node.values.get<uint32>(0));
