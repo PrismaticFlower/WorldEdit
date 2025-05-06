@@ -12,6 +12,27 @@ namespace we::world {
 namespace {
 
 constexpr float min_triangle_area = 0.000001f;
+constexpr double quantized_point_precision = 1000.0;
+
+struct snapped_point {
+   explicit snapped_point(const float3& point) noexcept
+   {
+      x = static_cast<int64>(
+         std::min(std::max(point.x * quantized_point_precision, -1125899906842624.0),
+                  1125899906842624.0) +
+         0.5);
+
+      y = static_cast<int64>(
+         std::min(std::max(point.y * quantized_point_precision, -1125899906842624.0),
+                  1125899906842624.0) +
+         0.5);
+   }
+
+   int64 x = 0;
+   int64 y = 0;
+
+   bool operator==(const snapped_point&) const noexcept = default;
+};
 
 struct quantized_plane {
    int16 a;
@@ -33,7 +54,7 @@ struct quad_occluder {
 
    float area = 0.0f;
 
-   std::array<float3, 4> verticesPS;
+   std::array<snapped_point, 4> verticesPS;
 };
 
 struct plane_occluders {
@@ -50,67 +71,55 @@ auto quantize(const float4& planeWS) -> quantized_plane
           {32767.0f, 32767.0f, 32767.0f}) +
       0.5f;
    const double quantized_d =
-      std::min(std::max(planeWS.w * 1000.0, -1125899906842624.0), 1125899906842624.0) + 0.5;
+      std::min(std::max(planeWS.w * quantized_point_precision, -1125899906842624.0),
+               1125899906842624.0) +
+      0.5;
 
    return {static_cast<int16>(quantized_normalWS.x),
            static_cast<int16>(quantized_normalWS.y),
            static_cast<int16>(quantized_normalWS.z), static_cast<int64>(quantized_d)};
 }
 
-bool line_intersection(const float3& a_start, const float3& a_end,
-                       const float3& b_start, const float3& b_end) noexcept
+bool inside_occluder(const std::array<snapped_point, 4>& occluder,
+                     const snapped_point& point) noexcept
 {
-   const float denominator = (b_end.y - b_start.y) * (a_end.x - a_start.x) -
-                             (b_end.x - b_start.x) * (a_end.y - a_start.y);
-
-   const float a_u = (b_end.x - b_start.x) * (a_start.y - b_start.y) -
-                     (b_end.y - b_start.y) * (a_start.x - b_start.x);
-   const float b_u = (a_end.x - a_start.x) * (a_start.y - b_start.y) -
-                     (a_end.y - a_start.y) * (a_start.x - b_start.x);
-
-   const float a_t = a_u / denominator;
-   const float b_t = b_u / denominator;
-
-   return (a_t >= 0.0f) and (a_t <= 1.0f) and (b_t >= 0.0f) and (b_t <= 1.0f);
-}
-
-bool inside_occluder(const std::array<float3, 4>& occluder,
-                     const float3& occluder_min, const float3& point) noexcept
-{
-   int intersections = 0;
-
-   const float3 point_start = occluder_min - 1.0f;
+   bool positive = false;
+   bool negative = false;
 
    for (std::size_t i = 0; i < occluder.size(); ++i) {
-      const float3 sector_start = occluder[i];
-      const float3 sector_end = occluder[(i + 1) % occluder.size()];
+      const snapped_point& e0 = occluder[i];
+      const snapped_point& e1 = occluder[(i + 1) % occluder.size()];
 
-      if (line_intersection(sector_start, sector_end, point_start, point)) {
-         intersections += 1;
-      }
+      const int64 d =
+         (point.x - e0.x) * (e1.y - e0.y) - (point.y - e0.y) * (e1.x - e0.x);
+
+      if (d == 0) return true;
+
+      if (d > 0) positive = true;
+      if (d < 0) negative = true;
+
+      if (positive and negative) return false;
    }
 
-   return (intersections % 2) == 1;
+   return true;
 }
 
-bool is_occluded(const std::array<float3, 3>& trianglePS,
-                 const std::array<float3, 4>& occluderPS) noexcept
+bool is_occluded(const std::array<snapped_point, 3>& trianglePS,
+                 const std::array<snapped_point, 4>& occluderPS) noexcept
 {
    int matching_vertices = 0;
 
-   for (const float3& tri_pointPS : trianglePS) {
-      for (const float3& occluder_pointPS : trianglePS) {
-         matching_vertices += (tri_pointPS.x == occluder_pointPS.x) &
-                              (tri_pointPS.y == occluder_pointPS.y);
+   for (const snapped_point& tri_pointPS : trianglePS) {
+      for (const snapped_point& occluder_pointPS : occluderPS) {
+         matching_vertices += tri_pointPS == occluder_pointPS;
       }
    }
 
    if (matching_vertices >= 3) return true;
 
-   const float3 occluder_minPS =
-      min(min(min(occluderPS[0], occluderPS[1]), occluderPS[2]), occluderPS[2]);
-
-   return inside_occluder(occluderPS, trianglePS[0], occluder_minPS);
+   return inside_occluder(occluderPS, trianglePS[0]) and
+          inside_occluder(occluderPS, trianglePS[1]) and
+          inside_occluder(occluderPS, trianglePS[2]);
 }
 
 }
@@ -148,10 +157,14 @@ auto cull_hidden_triangles(std::span<const block_world_triangle> triangles,
          {.block_id = occluders[index].block_id,
           .area = occluders[index].area,
           .verticesPS = {
-             plane_occluders.plane_from_world * occluders[index].verticesWS[0],
-             plane_occluders.plane_from_world * occluders[index].verticesWS[1],
-             plane_occluders.plane_from_world * occluders[index].verticesWS[2],
-             plane_occluders.plane_from_world * occluders[index].verticesWS[3],
+             snapped_point{plane_occluders.plane_from_world *
+                           occluders[index].verticesWS[0]},
+             snapped_point{plane_occluders.plane_from_world *
+                           occluders[index].verticesWS[1]},
+             snapped_point{plane_occluders.plane_from_world *
+                           occluders[index].verticesWS[2]},
+             snapped_point{plane_occluders.plane_from_world *
+                           occluders[index].verticesWS[3]},
           }});
    }
 
@@ -188,10 +201,13 @@ auto cull_hidden_triangles(std::span<const block_world_triangle> triangles,
       if (occluder_candidates_it != occluders_map.end()) {
          plane_occluders& occluder_candidates = occluder_candidates_it->second;
 
-         std::array<float3, 3> trianglePS = {
-            occluder_candidates.plane_from_world * triangle.vertices[2].positionWS,
-            occluder_candidates.plane_from_world * triangle.vertices[1].positionWS,
-            occluder_candidates.plane_from_world * triangle.vertices[0].positionWS,
+         std::array<snapped_point, 3> trianglePS = {
+            snapped_point{occluder_candidates.plane_from_world *
+                          triangle.vertices[2].positionWS},
+            snapped_point{occluder_candidates.plane_from_world *
+                          triangle.vertices[1].positionWS},
+            snapped_point{occluder_candidates.plane_from_world *
+                          triangle.vertices[0].positionWS},
          };
 
          for (auto candidate_it =
