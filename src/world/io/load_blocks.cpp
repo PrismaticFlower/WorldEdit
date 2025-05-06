@@ -60,11 +60,11 @@ void load_boxes(assets::config::node& node, const layer_remap& layer_remap,
                const uint8 texture_mode = prop.values.get<uint8>(i);
 
                switch (texture_mode) {
-               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
                case static_cast<uint8>(block_texture_mode::world_space_auto):
                case static_cast<uint8>(block_texture_mode::world_space_zy):
                case static_cast<uint8>(block_texture_mode::world_space_xz):
                case static_cast<uint8>(block_texture_mode::world_space_xy):
+               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
                case static_cast<uint8>(block_texture_mode::unwrapped):
                   box.surface_texture_mode[i] = block_texture_mode{texture_mode};
                   break;
@@ -160,11 +160,11 @@ void load_ramps(assets::config::node& node, const layer_remap& layer_remap,
                const uint8 texture_mode = prop.values.get<uint8>(i);
 
                switch (texture_mode) {
-               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
                case static_cast<uint8>(block_texture_mode::world_space_auto):
                case static_cast<uint8>(block_texture_mode::world_space_zy):
                case static_cast<uint8>(block_texture_mode::world_space_xz):
                case static_cast<uint8>(block_texture_mode::world_space_xy):
+               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
                case static_cast<uint8>(block_texture_mode::unwrapped):
                   ramp.surface_texture_mode[i] = block_texture_mode{texture_mode};
                   break;

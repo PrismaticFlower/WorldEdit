@@ -4,13 +4,13 @@
 #define MAX_SURFACES 6
 
 enum texture_mode  {
-   texture_mode_tangent_space_xyz,
-
    texture_mode_world_space_auto,
 
    texture_mode_world_space_zy,
    texture_mode_world_space_xz,
    texture_mode_world_space_xy,
+
+   texture_mode_tangent_space_xyz,
 
    texture_mode_unwrapped
 };
@@ -75,9 +75,6 @@ output_vertex main(input_vertex input)
    float2 texcoords;
    
    switch (surface.texture_mode) {
-   case texture_mode_tangent_space_xyz:
-      texcoords = mul(texture_from_world, positionWS).xy;
-      break;
    case texture_mode_world_space_auto: {
       const float3 normal_absWS = abs(normalWS);
 
@@ -99,6 +96,9 @@ output_vertex main(input_vertex input)
       break;
    case texture_mode_world_space_xy:
       texcoords = positionWS.xy;
+      break;
+   case texture_mode_tangent_space_xyz:
+      texcoords = mul(texture_from_world, positionWS).xy;
       break;
    case texture_mode_unwrapped:
       texcoords = input.texcoords;

@@ -57,12 +57,12 @@ TEST_CASE("world load blocks (boxes)", "[World][IO]")
          std::array<uint8, 6>{0, 1, 2, 3, 4, 5});
    CHECK(boxes.description[0].surface_texture_mode ==
          std::array<block_texture_mode, 6>{
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
          });
    CHECK(boxes.description[0].surface_texture_rotation ==
          std::array<block_texture_rotation, 6>{
@@ -107,12 +107,12 @@ TEST_CASE("world load blocks (boxes)", "[World][IO]")
          std::array<uint8, 6>{2, 2, 2, 2, 2, 2});
    CHECK(boxes.description[1].surface_texture_mode ==
          std::array<block_texture_mode, 6>{
-            block_texture_mode::world_space_zy,
-            block_texture_mode::world_space_zy,
-            block_texture_mode::world_space_zy,
-            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
             block_texture_mode::unwrapped,
-            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_xz,
          });
    CHECK(boxes.description[1].surface_texture_rotation ==
          std::array<block_texture_rotation, 6>{
@@ -157,11 +157,11 @@ TEST_CASE("world load blocks (boxes)", "[World][IO]")
          std::array<uint8, 6>{0, 0, 0, 0, 0, 0});
    CHECK(boxes.description[2].surface_texture_mode ==
          std::array<block_texture_mode, 6>{
-            block_texture_mode::tangent_space_xyz,
             block_texture_mode::world_space_auto,
             block_texture_mode::world_space_zy,
             block_texture_mode::world_space_xz,
             block_texture_mode::world_space_xy,
+            block_texture_mode::tangent_space_xyz,
             block_texture_mode::unwrapped,
          });
    CHECK(boxes.description[2].surface_texture_rotation ==
@@ -224,11 +224,11 @@ TEST_CASE("world load blocks (ramps)", "[World][IO]")
    CHECK(ramps.description[0].surface_materials == std::array<uint8, 5>{0, 1, 2, 3, 4});
    CHECK(ramps.description[0].surface_texture_mode ==
          std::array<block_texture_mode, 5>{
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
          });
    CHECK(ramps.description[0].surface_texture_rotation ==
          std::array<block_texture_rotation, 5>{
@@ -269,10 +269,10 @@ TEST_CASE("world load blocks (ramps)", "[World][IO]")
    CHECK(ramps.description[1].surface_materials == std::array<uint8, 5>{2, 2, 2, 2, 2});
    CHECK(ramps.description[1].surface_texture_mode ==
          std::array<block_texture_mode, 5>{
-            block_texture_mode::world_space_zy,
-            block_texture_mode::world_space_zy,
-            block_texture_mode::world_space_zy,
-            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
             block_texture_mode::unwrapped,
          });
    CHECK(ramps.description[1].surface_texture_rotation ==
@@ -314,11 +314,11 @@ TEST_CASE("world load blocks (ramps)", "[World][IO]")
    CHECK(ramps.description[2].surface_materials == std::array<uint8, 5>{0, 0, 0, 0, 0});
    CHECK(ramps.description[2].surface_texture_mode ==
          std::array<block_texture_mode, 5>{
-            block_texture_mode::tangent_space_xyz,
             block_texture_mode::world_space_auto,
             block_texture_mode::world_space_zy,
             block_texture_mode::world_space_xz,
             block_texture_mode::world_space_xy,
+            block_texture_mode::tangent_space_xyz,
          });
    CHECK(ramps.description[2].surface_texture_rotation ==
          std::array<block_texture_rotation, 5>{

@@ -409,12 +409,12 @@ TEST_CASE("world entity group loading (blocks, boxes)", "[World][IO]")
          std::array<uint8, 6>{0, 1, 0, 0, 0, 0});
    CHECK(group.blocks.boxes[0].surface_texture_mode ==
          std::array<block_texture_mode, 6>{
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
          });
    CHECK(group.blocks.boxes[0].surface_texture_rotation ==
          std::array<block_texture_rotation, 6>{
@@ -451,12 +451,12 @@ TEST_CASE("world entity group loading (blocks, boxes)", "[World][IO]")
          std::array<uint8, 6>{1, 1, 1, 1, 1, 1});
    CHECK(group.blocks.boxes[1].surface_texture_mode ==
          std::array<block_texture_mode, 6>{
-            block_texture_mode::world_space_zy,
-            block_texture_mode::world_space_zy,
-            block_texture_mode::world_space_zy,
-            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
             block_texture_mode::unwrapped,
-            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_xz,
          });
    CHECK(group.blocks.boxes[1].surface_texture_rotation ==
          std::array<block_texture_rotation, 6>{
@@ -493,11 +493,11 @@ TEST_CASE("world entity group loading (blocks, boxes)", "[World][IO]")
          std::array<uint8, 6>{0, 0, 0, 0, 0, 0});
    CHECK(group.blocks.boxes[2].surface_texture_mode ==
          std::array<block_texture_mode, 6>{
-            block_texture_mode::tangent_space_xyz,
             block_texture_mode::world_space_auto,
             block_texture_mode::world_space_zy,
             block_texture_mode::world_space_xz,
             block_texture_mode::world_space_xy,
+            block_texture_mode::tangent_space_xyz,
             block_texture_mode::unwrapped,
          });
    CHECK(group.blocks.boxes[2].surface_texture_rotation ==
@@ -544,11 +544,11 @@ TEST_CASE("world entity group loading (blocks, ramps)", "[World][IO]")
          std::array<uint8, 5>{0, 1, 0, 0, 0});
    CHECK(group.blocks.ramps[0].surface_texture_mode ==
          std::array<block_texture_mode, 5>{
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
-            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
          });
    CHECK(group.blocks.ramps[0].surface_texture_rotation ==
          std::array<block_texture_rotation, 5>{
@@ -582,10 +582,10 @@ TEST_CASE("world entity group loading (blocks, ramps)", "[World][IO]")
          std::array<uint8, 5>{1, 1, 1, 1, 1});
    CHECK(group.blocks.ramps[1].surface_texture_mode ==
          std::array<block_texture_mode, 5>{
-            block_texture_mode::world_space_zy,
-            block_texture_mode::world_space_zy,
-            block_texture_mode::world_space_zy,
-            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
             block_texture_mode::unwrapped,
          });
    CHECK(group.blocks.ramps[1].surface_texture_rotation ==
@@ -620,11 +620,11 @@ TEST_CASE("world entity group loading (blocks, ramps)", "[World][IO]")
          std::array<uint8, 5>{0, 0, 0, 0, 0});
    CHECK(group.blocks.ramps[2].surface_texture_mode ==
          std::array<block_texture_mode, 5>{
-            block_texture_mode::tangent_space_xyz,
             block_texture_mode::world_space_auto,
             block_texture_mode::world_space_zy,
             block_texture_mode::world_space_xz,
             block_texture_mode::world_space_xy,
+            block_texture_mode::tangent_space_xyz,
          });
    CHECK(group.blocks.ramps[2].surface_texture_rotation ==
          std::array<block_texture_rotation, 5>{
