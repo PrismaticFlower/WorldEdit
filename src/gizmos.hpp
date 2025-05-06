@@ -148,6 +148,6 @@ struct gizmos {
 private:
    struct impl;
 
-   implementation_storage<impl, 512> impl;
+   implementation_storage<impl, 520> impl;
 };
 }
