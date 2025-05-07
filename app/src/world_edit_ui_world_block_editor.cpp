@@ -1137,10 +1137,12 @@ void world_edit::ui_show_block_editor() noexcept
                             _world_layers_hit_mask, _world.blocks);
           hit) {
          if (click) {
-            world::block_texture_rotation new_rotation = {};
+            world::block_texture_rotation new_rotation =
+               world::get_block_surface_texture_rotation(_world.blocks,
+                                                         hit->id.type(), hit->index,
+                                                         hit->surface_index);
 
-            switch (_world.blocks.boxes.description[hit->index]
-                       .surface_texture_rotation[hit->surface_index]) {
+            switch (new_rotation) {
             case world::block_texture_rotation::d0:
                new_rotation = world::block_texture_rotation::d90;
                break;
@@ -1155,12 +1157,14 @@ void world_edit::ui_show_block_editor() noexcept
                break;
             }
 
-            _edit_stack_world
-               .apply(edits::make_set_block_surface(
-                         &_world.blocks.boxes.description[hit->index]
-                             .surface_texture_rotation[hit->surface_index],
-                         new_rotation, hit->index, &_world.blocks.boxes.dirty),
-                      _edit_context, {.closed = true});
+            _edit_stack_world.apply(
+               edits::make_set_block_surface(
+                  &world::get_block_surface_texture_rotation(_world.blocks,
+                                                             hit->id.type(), hit->index,
+                                                             hit->surface_index),
+                  new_rotation, hit->index,
+                  &world::get_dirty_tracker(_world.blocks, hit->id.type())),
+               _edit_context, {.closed = true});
          }
 
          world::highlight_surface(_world.blocks, hit->id.type(), hit->index,
@@ -1185,8 +1189,8 @@ void world_edit::ui_show_block_editor() noexcept
          if (click_enlarge or click_shrink) {
             std::array<int8, 2> new_scale =
                world::get_block_surface_texture_scale(_world.blocks,
-                                                      world::block_type::box,
-                                                      hit->index, hit->surface_index);
+                                                      hit->id.type(), hit->index,
+                                                      hit->surface_index);
 
             if (click_shrink) {
                if (_block_editor_config.scale_texture_u) new_scale[0] += 1;
@@ -1205,10 +1209,10 @@ void world_edit::ui_show_block_editor() noexcept
             _edit_stack_world.apply(
                edits::make_set_block_surface(
                   &world::get_block_surface_texture_scale(_world.blocks,
-                                                          world::block_type::box,
-                                                          hit->index, hit->surface_index),
+                                                          hit->id.type(), hit->index,
+                                                          hit->surface_index),
                   new_scale, hit->index,
-                  &world::get_dirty_tracker(_world.blocks, world::block_type::box)),
+                  &world::get_dirty_tracker(_world.blocks, hit->id.type())),
                _edit_context, {.closed = true});
          }
 
