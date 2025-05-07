@@ -4,8 +4,6 @@
 
 struct input_vertex {
    float3 positionWS : POSITIONWS;
-   float3 tangentWS : TANGENTWS;
-   float3 bitangentWS : BITANGENTWS;
    float3 normalWS : NORMALWS;
    float2 texcoords : TEXCOORD;
    nointerpolation uint material_index : MATERIAL;
