@@ -5,8 +5,6 @@
 
 struct input_vertex {
    float3 positionWS : POSITIONWS;
-   float3 tangentWS : TANGENTWS;
-   float3 bitangentWS : BITANGENTWS;
    float3 normalWS : NORMALWS;
    float2 texcoords : TEXCOORD;
    nointerpolation uint material_index : MATERIAL;
@@ -14,9 +12,32 @@ struct input_vertex {
    float4 positionSS : SV_Position;
 };
 
+// Followup: Normal Mapping Without Precomputed Tangents - Christian Schüler
+// http://www.thetenthplanet.de/archives/1180
+float3x3 cotangent_frame(const input_vertex input)
+{
+   const float3 normalWS = normalize(input.normalWS);
+
+   const float3 dp1 = ddx(input.positionWS);
+   const float3 dp2 = ddy(input.positionWS);
+
+   const float2 duv1 = ddx(input.texcoords);
+   const float2 duv2 = ddy(input.texcoords);
+
+   const float3 dp2perp = cross(dp2, normalWS);
+   const float3 dp1perp = cross(normalWS, dp1);
+
+   const float3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+   const float3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+
+   const float inv_max = rsqrt(max(dot(T, T), dot(B, B)));
+
+   return float3x3(T * inv_max, B * inv_max, normalWS);
+}
+
 float3 transform_normalWS(const input_vertex input, const float3 normalTS)
 {
-   return normalize(mul(normalTS, float3x3(input.tangentWS, input.bitangentWS, input.normalWS)));
+   return normalize(mul(normalTS, cotangent_frame(input)));
 }
 
 float4 main(input_vertex input) : SV_TARGET
@@ -59,9 +80,8 @@ float4 main(input_vertex input) : SV_TARGET
       specular_visibility = normal_map_sample.a;
    }
    else {
-      normalWS = input.normalWS;
+      normalWS = normalize(input.normalWS);
    }
-
 
    calculate_light_inputs lighting_inputs;
 

@@ -48,8 +48,6 @@ struct input_vertex {
 
 struct output_vertex {
    float3 positionWS : POSITIONWS;
-   float3 tangentWS : TANGENTWS;
-   float3 bitangentWS : BITANGENTWS;
    float3 normalWS : NORMALWS;
    float2 texcoords : TEXCOORD;
    nointerpolation uint material_index : MATERIAL;
@@ -64,13 +62,8 @@ output_vertex main(input_vertex input)
    output_vertex output;
 
    const float3 positionWS = mul(instance.world_from_object, float4(input.positionOS, 1.0)).xyz;
-   const float3 tangentWS = normalize(mul(instance.adjugate_world_from_object, input.tangentOS));
    const float3 normalWS = normalize(mul(instance.adjugate_world_from_object, input.normalOS));
    const float4 positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
-
-   const float3 bitangentWS = normalize(input.bitangent_sign * cross(normalWS, tangentWS));
-
-   const float3x3 texture_from_world = {tangentWS, bitangentWS, normalWS};
 
    float2 texcoords;
    
@@ -97,9 +90,14 @@ output_vertex main(input_vertex input)
    case texture_mode_world_space_xy:
       texcoords = positionWS.xy;
       break;
-   case texture_mode_tangent_space_xyz:
+   case texture_mode_tangent_space_xyz: {
+      const float3 tangentWS = normalize(mul(instance.adjugate_world_from_object, input.tangentOS));
+      const float3 bitangentWS = normalize(input.bitangent_sign * cross(normalWS, tangentWS));
+
+      const float3x3 texture_from_world = {tangentWS, bitangentWS, normalWS};
+
       texcoords = mul(texture_from_world, positionWS).xy;
-      break;
+   } break;
    case texture_mode_unwrapped:
       texcoords = input.texcoords;
       break;
@@ -120,8 +118,6 @@ output_vertex main(input_vertex input)
    texcoords += (float2(surface.offsetX, surface.offsetY) * (1.0 / 8192.0));
 
    output.positionWS = positionWS;
-   output.tangentWS = tangentWS;
-   output.bitangentWS = bitangentWS;
    output.normalWS = normalWS;
    output.texcoords = texcoords;
    output.material_index = surface.material_index;
