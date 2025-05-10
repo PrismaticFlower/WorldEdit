@@ -644,6 +644,85 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                        .debug_name = "block_shadow"sv}),
                    device.direct_queue};
 
+   block_quad_depth_prepass = {device.create_graphics_pipeline(
+                                  {.root_signature =
+                                      root_signature_library.block.get(),
+
+                                   .vs_bytecode = shader_library["block_quadVS"sv],
+
+                                   .rasterizer_state = rasterizer_cull_backfacing,
+                                   .depth_stencil_state = depth_stencil_enabled,
+
+                                   .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+
+                                   .debug_name = "block_quad_depth_prepass"sv}),
+                               device.direct_queue};
+
+   block_quad_basic = {device.create_graphics_pipeline(
+                          {.root_signature = root_signature_library.block.get(),
+
+                           .vs_bytecode = shader_library["block_quadVS"sv],
+                           .ps_bytecode = shader_library["block_basicPS"sv],
+
+                           .rasterizer_state = rasterizer_cull_backfacing,
+                           .depth_stencil_state = depth_stencil_readonly_equal,
+
+                           .render_target_count = 1,
+                           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+
+                           .debug_name = "block_quad_basic"sv}),
+                       device.direct_queue};
+
+   block_quad_basic_lighting =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.block.get(),
+
+           .vs_bytecode = shader_library["block_quadVS"sv],
+           .ps_bytecode = shader_library["block_basic_lightingPS"sv],
+
+           .rasterizer_state = rasterizer_cull_backfacing,
+           .depth_stencil_state = depth_stencil_readonly_equal,
+
+           .render_target_count = 1,
+           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+
+           .debug_name = "block_quad_basic_lighting"sv}),
+       device.direct_queue};
+
+   block_quad_normal = {device.create_graphics_pipeline(
+                           {.root_signature = root_signature_library.block.get(),
+
+                            .vs_bytecode = shader_library["block_quadVS"sv],
+                            .ps_bytecode = shader_library["block_normalPS"sv],
+
+                            .rasterizer_state = rasterizer_cull_backfacing,
+                            .depth_stencil_state = depth_stencil_readonly_equal,
+
+                            .render_target_count = 1,
+                            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+
+                            .debug_name = "block_quad_normal"sv}),
+                        device.direct_queue};
+
+   block_quad_shadow = {device.create_graphics_pipeline(
+                           {.root_signature = root_signature_library.block.get(),
+
+                            .vs_bytecode = shader_library["block_quadVS"sv],
+
+                            .rasterizer_state = {.cull_mode = gpu::cull_mode::back,
+                                                 .depth_clip_enabled = false},
+                            .depth_stencil_state = {.depth_test_enabled = true,
+                                                    .depth_test_func =
+                                                       gpu::comparison_func::less_equal},
+
+                            .dsv_format = DXGI_FORMAT_D32_FLOAT,
+
+                            .debug_name = "block_quad_shadow"sv}),
+                        device.direct_queue};
+
    grid_overlay = {device.create_graphics_pipeline(
                       {.root_signature = root_signature_library.grid_overlay.get(),
 

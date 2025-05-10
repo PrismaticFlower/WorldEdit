@@ -33,9 +33,11 @@ struct blocks {
 
       instance_list boxes;
       instance_list ramps;
+      instance_list quads;
 
       instance_list dynamic_boxes;
       instance_list dynamic_ramps;
+      instance_list dynamic_quads;
    };
 
    blocks(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
@@ -107,6 +109,9 @@ private:
    gpu::unique_resource_handle _ramps_instance_data;
    uint64 _ramps_instance_data_capacity = 0;
 
+   gpu::unique_resource_handle _quads_instance_data;
+   uint64 _quads_instance_data_capacity = 0;
+
    std::vector<uint32> _TEMP_culling_storage;
 
    std::vector<material> _materials;
@@ -139,8 +144,12 @@ private:
       gpu::unique_resource_handle ramps_instance_data;
       uint64 ramps_instance_data_capacity = 0;
 
+      gpu::unique_resource_handle quads_instance_data;
+      uint64 quads_instance_data_capacity = 0;
+
       bbox_soa boxes_bbox;
       bbox_soa ramps_bbox;
+      bbox_soa quads_bbox;
 
       std::array<material, world::max_block_materials> materials;
 
@@ -148,9 +157,6 @@ private:
                   gpu::copy_command_list& command_list,
                   dynamic_buffer_allocator& dynamic_buffer_allocator,
                   texture_manager& texture_manager);
-
-      void draw(const view& view, gpu_virtual_address blocks_ia_buffer_address,
-                gpu::device& device, gpu::graphics_command_list& command_list) const;
 
       void process_updated_textures(const updated_textures& updated);
    };

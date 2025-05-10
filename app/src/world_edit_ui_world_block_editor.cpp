@@ -13,6 +13,7 @@
 #include "utility/string_icompare.hpp"
 
 #include "world/blocks/accessors.hpp"
+#include "world/blocks/bounding_box.hpp"
 #include "world/blocks/find.hpp"
 #include "world/blocks/highlight_block.hpp"
 #include "world/blocks/highlight_surface.hpp"
@@ -79,6 +80,7 @@ auto block_type_name(world::block_type type) noexcept -> const char*
    switch (type) {
    case world::block_type::box:  return "Box";
    case world::block_type::ramp: return "Ramp";
+   case world::block_type::quad: return "Quad";
    }
    // clang-format on
 
@@ -107,7 +109,8 @@ void world_edit::ui_show_block_editor() noexcept
       if (ImGui::BeginCombo("Draw Shape",
                             block_type_name(_block_editor_config.draw_type))) {
          for (const world::block_type type :
-              {world::block_type::box, world::block_type::ramp}) {
+              {world::block_type::box, world::block_type::ramp,
+               world::block_type::quad}) {
 
             if (ImGui::Selectable(block_type_name(type),
                                   type == _block_editor_config.draw_type)) {
@@ -744,6 +747,11 @@ void world_edit::ui_show_block_editor() noexcept
                _block_editor_context.draw_block.ramp.start = cursor_positionWS;
                _block_editor_context.draw_block.step = draw_block_step::ramp_width;
             } break;
+            case world::block_type::quad: {
+               _block_editor_context.draw_block.height_plane = std::nullopt;
+               _block_editor_context.draw_block.quad.vertices[0] = cursor_positionWS;
+               _block_editor_context.draw_block.step = draw_block_step::quad_v1;
+            } break;
             }
          }
       } break;
@@ -1122,6 +1130,91 @@ void world_edit::ui_show_block_editor() noexcept
             _edit_stack_world.close_last();
          }
       } break;
+      case draw_block_step::quad_v1: {
+         _tool_visualizers
+            .add_line_overlay(_block_editor_context.draw_block.quad.vertices[0],
+                              cursor_positionWS, line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            _block_editor_context.draw_block.quad.vertices[1] = cursor_positionWS;
+            _block_editor_context.draw_block.step = draw_block_step::quad_v2;
+         }
+
+      } break;
+      case draw_block_step::quad_v2: {
+         _tool_visualizers
+            .add_line_overlay(_block_editor_context.draw_block.quad.vertices[0],
+                              _block_editor_context.draw_block.quad.vertices[1],
+                              line_color);
+         _tool_visualizers
+            .add_line_overlay(_block_editor_context.draw_block.quad.vertices[1],
+                              cursor_positionWS, line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            _block_editor_context.draw_block.quad.vertices[2] = cursor_positionWS;
+            _block_editor_context.draw_block.step = draw_block_step::quad_v3;
+         }
+
+      } break;
+      case draw_block_step::quad_v3: {
+         _tool_visualizers
+            .add_line_overlay(_block_editor_context.draw_block.quad.vertices[0],
+                              _block_editor_context.draw_block.quad.vertices[1],
+                              line_color);
+         _tool_visualizers
+            .add_line_overlay(_block_editor_context.draw_block.quad.vertices[1],
+                              _block_editor_context.draw_block.quad.vertices[2],
+                              line_color);
+         _tool_visualizers
+            .add_line_overlay(_block_editor_context.draw_block.quad.vertices[2],
+                              cursor_positionWS, line_color);
+         _tool_visualizers
+            .add_line_overlay(cursor_positionWS,
+                              _block_editor_context.draw_block.quad.vertices[0],
+                              line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            std::array<float3, 4> vertices = {
+               _block_editor_context.draw_block.quad.vertices[0],
+               _block_editor_context.draw_block.quad.vertices[1],
+               _block_editor_context.draw_block.quad.vertices[2],
+               cursor_positionWS,
+            };
+
+            // Orientate vertices quad to face towards the camera.
+            if (dot(normalize(cross(vertices[1] - vertices[0], vertices[2] - vertices[0])),
+                    _camera.forward()) > 0.0f) {
+               vertices = {
+                  vertices[3],
+                  vertices[2],
+                  vertices[1],
+                  vertices[0],
+               };
+            }
+
+            world::block_quad_split quad_split =
+               distance(vertices[0], vertices[2]) > distance(vertices[1], vertices[3])
+                  ? world::block_quad_split::regular
+                  : world::block_quad_split::alternate;
+
+            _edit_stack_world
+               .apply(edits::make_add_block(
+                         world::block_description_quad{
+                            .vertices = vertices,
+                            .quad_split = quad_split,
+                            .surface_materials = {_block_editor_config.paint_material_index},
+                         },
+                         _block_editor_config.new_block_layer,
+                         _world.blocks.next_id.quads.aquire()),
+                      _edit_context);
+
+            _block_editor_context.draw_block.step = draw_block_step::start;
+         }
+
+      } break;
       }
    }
    else if (_block_editor_context.tool == block_edit_tool::rotate_texture) {
@@ -1411,6 +1504,38 @@ void world_edit::ui_show_block_editor() noexcept
                                                                           size),
                                        _edit_context);
             }
+         } break;
+         case world::block_type::quad: {
+            const world::block_description_quad& quad =
+               _world.blocks.quads.description[*selected_index];
+
+            const math::bounding_box bbox = world::get_bounding_box(quad);
+
+            const float3 start_position = (bbox.min + bbox.max) * 0.5f;
+            const float3 start_size = (bbox.max - bbox.min) * 0.5f;
+
+            float3 new_position = (bbox.min + bbox.max) * 0.5f;
+            float3 new_size = (bbox.max - bbox.min) * 0.5f;
+
+            if (_gizmos.gizmo_size(
+                   {
+                      .name = "Resize Block (Quad)",
+                      .instance = static_cast<int64>(_world.blocks.quads.ids[*selected_index]),
+                      .alignment = _editor_grid_size,
+                   },
+                   new_position, new_size)) {
+               const float3 scale = new_size / start_size;
+
+               _edit_stack_world.apply(
+                  edits::make_set_block_quad_metrics(
+                     *selected_index,
+                     {((quad.vertices[0] - start_position) * scale) + new_position,
+                      ((quad.vertices[1] - start_position) * scale) + new_position,
+                      ((quad.vertices[2] - start_position) * scale) + new_position,
+                      ((quad.vertices[3] - start_position) * scale) + new_position}),
+                  _edit_context);
+            }
+
          } break;
          }
 

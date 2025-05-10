@@ -25,4 +25,7 @@ extern const std::array<std::array<uint16, 4>, 3> block_ramp_occluders;
 extern const std::array<float3, 6> block_ramp_points;
 extern const std::array<std::array<uint16, 2>, 9> block_ramp_edges;
 
+extern const std::array<std::array<uint16, 3>, 2> block_quad_triangles;
+extern const std::array<std::array<uint16, 3>, 2> block_quad_alternate_triangles;
+
 };

@@ -71,6 +71,61 @@ private:
    float3 size;
 };
 
+struct set_block_quad_metrics final : edit<world::edit_context> {
+   set_block_quad_metrics(const uint32 index, const std::array<float3, 4>& vertices)
+      : index{index}, vertices{vertices}
+   {
+   }
+
+   void apply(world::edit_context& context) noexcept override
+   {
+      world::blocks_quads& blocks = context.world.blocks.quads;
+
+      assert(index < blocks.size());
+
+      std::swap(blocks.description[index].vertices, vertices);
+
+      const math::bounding_box bbox = get_bounding_box(blocks.description[index]);
+
+      blocks.bbox.min_x[index] = bbox.min.x;
+      blocks.bbox.min_y[index] = bbox.min.y;
+      blocks.bbox.min_z[index] = bbox.min.z;
+      blocks.bbox.max_x[index] = bbox.max.x;
+      blocks.bbox.max_y[index] = bbox.max.y;
+      blocks.bbox.max_z[index] = bbox.max.z;
+
+      blocks.dirty.add({index, index + 1});
+   }
+
+   void revert(world::edit_context& context) noexcept override
+   {
+      apply(context);
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const set_block_quad_metrics* other =
+         dynamic_cast<const set_block_quad_metrics*>(&other_unknown);
+
+      if (not other) return false;
+
+      return this->index == other->index;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_block_quad_metrics& other =
+         dynamic_cast<set_block_quad_metrics&>(other_unknown);
+
+      this->vertices = other.vertices;
+   }
+
+private:
+   const uint32 index = 0;
+
+   std::array<float3, 4> vertices;
+};
+
 template<typename T>
 struct set_block_box_surface final : edit<world::edit_context> {
    set_block_box_surface(T* value_address, T new_value, const uint32 index,
@@ -139,6 +194,13 @@ auto make_set_block_ramp_metrics(const uint32 index, const quaternion& rotation,
 {
    return std::make_unique<set_block_metrics<&world::blocks::ramps>>(index, rotation,
                                                                      position, size);
+}
+
+auto make_set_block_quad_metrics(const uint32 index,
+                                 const std::array<float3, 4>& vertices) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_block_quad_metrics>(index, vertices);
 }
 
 auto make_set_block_surface(uint8* material_index_address,

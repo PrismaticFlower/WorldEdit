@@ -112,6 +112,10 @@ auto ground_block(const block_id id, const uint32 block_index,
 
       return ground_block(ramp.position, bbox, id, world, object_classes, active_layers);
    } break;
+   case block_type::quad: {
+      return ground_block((bbox.min + bbox.max) / 2.0f, bbox, id, world,
+                          object_classes, active_layers);
+   } break;
    }
 
    std::unreachable();

@@ -1,4 +1,5 @@
 #include "highlight_block.hpp"
+#include "mesh_geometry.hpp"
 
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
@@ -44,6 +45,17 @@ void highlight_block(const blocks& blocks, const block_type type,
       world_from_object[3] = {ramp.position, 1.0f};
 
       visualizers.add_ramp_additive(world_from_object, {1.0f, 1.0f, 1.0f, 0.125f});
+   } break;
+   case block_type::quad: {
+      const world::block_description_quad& quad =
+         blocks.quads.description[block_index];
+
+      for (const auto& [i0, i1, i2] : quad.quad_split == block_quad_split::regular
+                                         ? block_quad_triangles
+                                         : block_quad_alternate_triangles) {
+         visualizers.add_triangle_additive(quad.vertices[i0], quad.vertices[i1],
+                                           quad.vertices[i2], 0x20'ff'ff'ffu);
+      }
    } break;
    }
 }

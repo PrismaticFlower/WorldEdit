@@ -272,6 +272,17 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                         *block_index, rotation * ramp.rotation,
                         (rotation * (ramp.position - centre)) + centre, ramp.size));
                   } break;
+                  case world::block_type::quad: {
+                     const world::block_description_quad& quad =
+                        _world.blocks.quads.description[*block_index];
+
+                     bundled_edits.push_back(edits::make_set_block_quad_metrics(
+                        *block_index,
+                        {(rotation * (quad.vertices[0] - centre)) + centre,
+                         (rotation * (quad.vertices[1] - centre)) + centre,
+                         (rotation * (quad.vertices[2] - centre)) + centre,
+                         (rotation * (quad.vertices[3] - centre)) + centre}));
+                  } break;
                   }
                }
             }

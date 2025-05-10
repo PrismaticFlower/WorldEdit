@@ -86,6 +86,12 @@ struct pipeline_library {
    gpu::unique_pipeline_handle block_normal;
    gpu::unique_pipeline_handle block_shadow;
 
+   gpu::unique_pipeline_handle block_quad_depth_prepass;
+   gpu::unique_pipeline_handle block_quad_basic;
+   gpu::unique_pipeline_handle block_quad_basic_lighting;
+   gpu::unique_pipeline_handle block_quad_normal;
+   gpu::unique_pipeline_handle block_quad_shadow;
+
    gpu::unique_pipeline_handle terrain_depth_prepass;
    gpu::unique_pipeline_handle terrain_basic;
    gpu::unique_pipeline_handle terrain_lighting;

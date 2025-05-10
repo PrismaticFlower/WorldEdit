@@ -269,4 +269,14 @@ const std::array<std::array<uint16, 2>, 9> block_ramp_edges = {{
    {5, 2},
 }};
 
+const std::array<std::array<uint16, 3>, 2> block_quad_triangles = {{
+   {0, 1, 2},
+   {0, 2, 3},
+}};
+
+const std::array<std::array<uint16, 3>, 2> block_quad_alternate_triangles = {{
+   {0, 1, 3},
+   {1, 2, 3},
+}};
+
 }

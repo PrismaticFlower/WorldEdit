@@ -72,6 +72,17 @@ void highlight_surface(const blocks& blocks, const block_type type,
       highlight_surface_generic(world_from_object, block_ramp_triangles,
                                 block_ramp_vertices, surface_index, visualizers);
    } break;
+   case block_type::quad: {
+      const world::block_description_quad& quad =
+         blocks.quads.description[block_index];
+
+      for (const auto& [i0, i1, i2] : quad.quad_split == block_quad_split::regular
+                                         ? block_quad_triangles
+                                         : block_quad_alternate_triangles) {
+         visualizers.add_triangle_additive(quad.vertices[i0], quad.vertices[i1],
+                                           quad.vertices[i2], 0x20'ff'ff'ffu);
+      }
+   } break;
    }
 }
 

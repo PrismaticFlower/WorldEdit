@@ -36,7 +36,8 @@ sky_meshPS
 waterVS
 waterPS
 
-blockVS
+blockVS .entrypoint = main .file = blockVS.hlsl
+block_quadVS .entrypoint = main_quad .file = blockVS.hlsl
 block_basicPS
 block_basic_lightingPS
 block_normalPS
