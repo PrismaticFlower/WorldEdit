@@ -350,6 +350,114 @@ TEST_CASE("world load blocks (ramps)", "[World][IO]")
    CHECK(ramps.dirty[0] == blocks_dirty_range{0, 3});
 }
 
+TEST_CASE("world load blocks (quads)", "[World][IO]")
+{
+   null_output_stream output;
+   layer_remap layer_remap;
+
+   layer_remap.set(2, 2);
+
+   const blocks blocks = load_blocks("data/blocks/quads.blk", layer_remap, output);
+
+   REQUIRE(blocks.quads.size() == 3);
+
+   const blocks_quads& quads = blocks.quads;
+
+   CHECK(quads.bbox.min_x[0] == 0.0f);
+   CHECK(quads.bbox.min_y[0] == 0.0f);
+   CHECK(quads.bbox.min_z[0] == 0.0f);
+   CHECK(quads.bbox.max_x[0] == 1.0f);
+   CHECK(quads.bbox.max_y[0] == 0.0f);
+   CHECK(quads.bbox.max_z[0] == 1.0f);
+   CHECK(quads.hidden[0] == false);
+   CHECK(quads.layer[0] == 2);
+   CHECK(quads.description[0].vertices[0] == float3{0.0f, 0.0f, 0.0f});
+   CHECK(quads.description[0].vertices[1] == float3{1.0f, 0.0f, 0.0f});
+   CHECK(quads.description[0].vertices[2] == float3{1.0f, 0.0f, 1.0f});
+   CHECK(quads.description[0].vertices[3] == float3{0.0f, 0.0f, 1.0f});
+   CHECK(quads.description[0].surface_materials == std::array<uint8, 1>{0});
+   CHECK(quads.description[0].surface_texture_mode ==
+         std::array<block_texture_mode, 1>{
+            block_texture_mode::world_space_auto,
+         });
+   CHECK(quads.description[0].surface_texture_rotation ==
+         std::array<block_texture_rotation, 1>{
+            block_texture_rotation::d180,
+         });
+   CHECK(quads.description[0].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 1>{
+            std::array<int8, 2>{-1, -2},
+         });
+   CHECK(quads.description[0].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 1>{
+            std::array<uint16, 2>{256, 256},
+         });
+   CHECK(is_unique_id(0, quads.ids));
+
+   CHECK(quads.bbox.min_x[1] == 0.0f);
+   CHECK(quads.bbox.min_y[1] == 0.0f);
+   CHECK(quads.bbox.min_z[1] == 0.0f);
+   CHECK(quads.bbox.max_x[1] == 1.5f);
+   CHECK(quads.bbox.max_y[1] == 0.0f);
+   CHECK(quads.bbox.max_z[1] == 1.5f);
+   CHECK(quads.hidden[1] == false);
+   CHECK(quads.description[1].vertices[0] == float3{0.0f, 0.0f, 0.0f});
+   CHECK(quads.description[1].vertices[1] == float3{1.5f, 0.0f, 0.0f});
+   CHECK(quads.description[1].vertices[2] == float3{1.0f, 0.0f, 1.0f});
+   CHECK(quads.description[1].vertices[3] == float3{0.0f, 0.0f, 1.5f});
+   CHECK(quads.description[1].surface_materials == std::array<uint8, 1>{2});
+   CHECK(quads.description[1].surface_texture_mode ==
+         std::array<block_texture_mode, 1>{
+            block_texture_mode::world_space_zy,
+         });
+   CHECK(quads.description[1].surface_texture_rotation ==
+         std::array<block_texture_rotation, 1>{
+            block_texture_rotation::d90,
+         });
+   CHECK(quads.description[1].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 1>{
+            std::array<int8, 2>{0, 0},
+         });
+   CHECK(quads.description[1].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 1>{
+            std::array<uint16, 2>{1024, 0},
+         });
+   CHECK(is_unique_id(1, quads.ids));
+
+   CHECK(quads.bbox.min_x[2] == 0.0f);
+   CHECK(quads.bbox.min_y[2] == 0.0f);
+   CHECK(quads.bbox.min_z[2] == 0.0f);
+   CHECK(quads.bbox.max_x[2] == 8.0f);
+   CHECK(quads.bbox.max_y[2] == 0.0f);
+   CHECK(quads.bbox.max_z[2] == 8.0f);
+   CHECK(quads.hidden[2] == false);
+   CHECK(quads.description[2].vertices[0] == float3{0.0f, 0.0f, 0.0f});
+   CHECK(quads.description[2].vertices[1] == float3{8.0f, 0.0f, 0.0f});
+   CHECK(quads.description[2].vertices[2] == float3{8.0f, 0.0f, 8.0f});
+   CHECK(quads.description[2].vertices[3] == float3{0.0f, 0.0f, 8.0f});
+   CHECK(quads.description[2].surface_materials == std::array<uint8, 1>{0});
+   CHECK(quads.description[2].surface_texture_mode ==
+         std::array<block_texture_mode, 1>{
+            block_texture_mode::world_space_xz,
+         });
+   CHECK(quads.description[2].surface_texture_rotation ==
+         std::array<block_texture_rotation, 1>{
+            block_texture_rotation::d0,
+         });
+   CHECK(quads.description[2].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 1>{
+            std::array<int8, 2>{0, 0},
+         });
+   CHECK(quads.description[2].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 1>{
+            std::array<uint16, 2>{0, 0},
+         });
+   CHECK(is_unique_id(2, quads.ids));
+
+   REQUIRE(quads.dirty.size() == 1);
+   CHECK(quads.dirty[0] == blocks_dirty_range{0, 3});
+}
+
 TEST_CASE("world load blocks (materials)", "[World][IO]")
 {
    null_output_stream output;
