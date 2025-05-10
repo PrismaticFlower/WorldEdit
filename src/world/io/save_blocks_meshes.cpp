@@ -176,6 +176,43 @@ void process_blocks(const T& blocks, std::span<const block_vertex> block_vertice
    }
 }
 
+void process_blocks(const blocks_quads& blocks,
+                    std::vector<block_world_triangle>& out_triangle_list) noexcept
+{
+   for (uint32 block_index = 0; block_index < blocks.size(); ++block_index) {
+      const block_description_quad& block = blocks.description[block_index];
+      const block_quad_id block_id = blocks.ids[block_index];
+
+      for (const std::array<uint16, 3>& tri : block.quad_split == block_quad_split::regular
+                                                 ? block_quad_triangles
+                                                 : block_quad_alternate_triangles) {
+         const float3 normalWS =
+            normalize(cross(block.vertices[tri[1]] - block.vertices[tri[0]],
+                            block.vertices[tri[2]] - block.vertices[tri[0]]));
+
+         block_world_triangle world_triangle = {.block_id = block_id};
+
+         for (std::size_t i = 0; i < tri.size(); ++i) {
+            const float3 positionWS = block.vertices[tri[i]];
+            const float2 texcoords =
+               evaluate_texcorrds(positionWS, normalWS, {}, float3x3{},
+                                  block.surface_texture_mode[0],
+                                  block.surface_texture_rotation[0],
+                                  block.surface_texture_scale[0],
+                                  block.surface_texture_offset[0]);
+            const uint8 material_index = block.surface_materials[0];
+
+            world_triangle.vertices[i] = {.positionWS = positionWS,
+                                          .normalWS = normalWS,
+                                          .texcoords = texcoords};
+            world_triangle.material_index = material_index;
+         }
+
+         out_triangle_list.push_back(world_triangle);
+      }
+   }
+}
+
 auto foley_name(const block_foley_group group) noexcept -> const char*
 {
    // clang-format off
@@ -208,6 +245,7 @@ auto save_blocks_meshes(const io::path& output_directory,
 
    triangle_count += blocks.boxes.size() * block_cube_triangles.size();
    triangle_count += blocks.ramps.size() * block_ramp_triangles.size();
+   triangle_count += blocks.quads.size() * block_quad_triangles.size();
 
    std::size_t occluder_count = 0;
 
@@ -224,6 +262,7 @@ auto save_blocks_meshes(const io::path& output_directory,
                   block_cube_occluders, triangle_list, occluder_list);
    process_blocks(blocks.ramps, block_ramp_vertices, block_ramp_triangles,
                   block_ramp_occluders, triangle_list, occluder_list);
+   process_blocks(blocks.quads, triangle_list);
 
    triangle_list = cull_hidden_triangles(triangle_list, occluder_list);
 
