@@ -80,7 +80,7 @@ auto block_type_name(world::block_type type) noexcept -> const char*
    switch (type) {
    case world::block_type::box:  return "Box";
    case world::block_type::ramp: return "Ramp";
-   case world::block_type::quad: return "Quad";
+   case world::block_type::quad: return "Quadrilateral";
    }
    // clang-format on
 
