@@ -1163,6 +1163,151 @@ TEST_CASE("world save entity group (blocks, ramps)", "[World][IO]")
    CHECK(written_eng == expected_eng);
 }
 
+TEST_CASE("world save entity group (blocks, quads)", "[World][IO]")
+{
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_blocks_quads.eng";
+
+   const std::string_view expected_eng =
+      R"(BlocksQuads(3)
+{
+   Quad()
+   {
+      Vertex0(0, 0, 0);
+      Vertex1(1, 0, 0);
+      Vertex2(1, 0, 1);
+      Vertex3(0, 0, 1);
+      SurfaceMaterials(0);
+      SurfaceTextureMode(0);
+      SurfaceTextureRotation(2);
+      SurfaceTextureScale(-1, -2);
+      SurfaceTextureOffset(256, 256);
+   }
+   Quad()
+   {
+      Vertex0(0, 0, 0);
+      Vertex1(1.5, 0, 0);
+      Vertex2(1, 0, 1);
+      Vertex3(0, 0, 1.5);
+      SurfaceMaterials(2);
+      SurfaceTextureMode(1);
+      SurfaceTextureRotation(1);
+      SurfaceTextureScale(0, 0);
+      SurfaceTextureOffset(1024, 0);
+   }
+   Quad()
+   {
+      Vertex0(0, 0, 0);
+      Vertex1(8, 0, 0);
+      Vertex2(8, 0, 8);
+      Vertex3(0, 0, 8);
+      SurfaceMaterials(0);
+      SurfaceTextureMode(2);
+      SurfaceTextureRotation(0);
+      SurfaceTextureScale(0, 0);
+      SurfaceTextureOffset(0, 0);
+   }
+}
+
+)";
+
+   world::entity_group
+      group =
+         {
+            .blocks =
+               {
+                  .quads =
+                     {
+                        world::block_description_quad{
+                           .vertices =
+                              {
+                                 float3{0.0f, 0.0f, 0.0f},
+                                 float3{1.0f, 0.0f, 0.0f},
+                                 float3{1.0f, 0.0f, 1.0f},
+                                 float3{0.0f, 0.0f, 1.0f},
+                              },
+                           .surface_materials = {0},
+                           .surface_texture_mode =
+                              {
+                                 block_texture_mode::world_space_auto,
+                              },
+                           .surface_texture_rotation =
+                              {
+                                 block_texture_rotation::d180,
+                              },
+                           .surface_texture_scale =
+                              {
+                                 std::array<int8, 2>{-1, -2},
+                              },
+                           .surface_texture_offset =
+                              {
+                                 std::array<uint16, 2>{256, 256},
+                              },
+                        },
+                        world::block_description_quad{
+                           .vertices =
+                              {
+                                 float3{0.0f, 0.0f, 0.0f},
+                                 float3{1.5f, 0.0f, 0.0f},
+                                 float3{1.0f, 0.0f, 1.0f},
+                                 float3{0.0f, 0.0f, 1.5f},
+                              },
+                           .surface_materials = {2},
+                           .surface_texture_mode =
+                              {
+                                 block_texture_mode::world_space_zy,
+                              },
+                           .surface_texture_rotation =
+                              {
+                                 block_texture_rotation::d90,
+                              },
+                           .surface_texture_scale =
+                              {
+                                 std::array<int8, 2>{0, 0},
+                              },
+                           .surface_texture_offset =
+                              {
+                                 std::array<uint16, 2>{1024, 0},
+                              },
+                        },
+                        world::block_description_quad{
+                           .vertices =
+                              {
+                                 float3{0.0f, 0.0f, 0.0f},
+                                 float3{8.0f, 0.0f, 0.0f},
+                                 float3{8.0f, 0.0f, 8.0f},
+                                 float3{0.0f, 0.0f, 8.0f},
+                              },
+                           .surface_materials = {0},
+                           .surface_texture_mode =
+                              {
+                                 block_texture_mode::world_space_xz,
+                              },
+                           .surface_texture_rotation =
+                              {
+                                 block_texture_rotation::d0,
+                              },
+                           .surface_texture_scale =
+                              {
+                                 std::array<int8, 2>{0, 0},
+                              },
+                           .surface_texture_offset =
+                              {
+                                 std::array<uint16, 2>{0, 0},
+                              },
+                        },
+                     },
+
+               },
+         };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
 TEST_CASE("world save entity group (blocks, materials)", "[World][IO]")
 {
    (void)io::create_directory("temp/entity_groups");

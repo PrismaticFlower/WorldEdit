@@ -413,6 +413,170 @@ Materials()
    CHECK(written_blk == expected_blk);
 }
 
+TEST_CASE("world save blocks (quads)", "[World][IO]")
+{
+   const std::string_view expected_blk = R"(Quads(3)
+{
+   Quad()
+   {
+      Vertex0(0, 0, 0);
+      Vertex1(1, 0, 0);
+      Vertex2(1, 0, 1);
+      Vertex3(0, 0, 1);
+      SurfaceMaterials(0);
+      SurfaceTextureMode(0);
+      SurfaceTextureRotation(2);
+      SurfaceTextureScale(-1, -2);
+      SurfaceTextureOffset(256, 256);
+      Layer(2);
+   }
+   Quad()
+   {
+      Vertex0(0, 0, 0);
+      Vertex1(1.5, 0, 0);
+      Vertex2(1, 0, 1);
+      Vertex3(0, 0, 1.5);
+      SurfaceMaterials(2);
+      SurfaceTextureMode(1);
+      SurfaceTextureRotation(1);
+      SurfaceTextureScale(0, 0);
+      SurfaceTextureOffset(1024, 0);
+   }
+   Quad()
+   {
+      Vertex0(0, 0, 0);
+      Vertex1(8, 0, 0);
+      Vertex2(8, 0, 8);
+      Vertex3(0, 0, 8);
+      SurfaceMaterials(0);
+      SurfaceTextureMode(2);
+      SurfaceTextureRotation(0);
+      SurfaceTextureScale(0, 0);
+      SurfaceTextureOffset(0, 0);
+   }
+}
+
+Materials()
+{
+}
+
+)";
+
+   blocks blocks{
+      .quads =
+         {
+            .bbox =
+               {
+                  .min_x = {world::blocks_init, std::initializer_list{-1.0f, -1.0f, -1.0f}},
+                  .min_y = {world::blocks_init, std::initializer_list{-1.0f, -1.0f, -1.0f}},
+                  .min_z = {world::blocks_init, std::initializer_list{-1.0f, -1.0f, -1.0f}},
+                  .max_x = {world::blocks_init, std::initializer_list{1.0f, 1.0f, 1.0f}},
+                  .max_y = {world::blocks_init, std::initializer_list{1.0f, 1.0f, 1.0f}},
+                  .max_z = {world::blocks_init, std::initializer_list{1.0f, 1.0f, 1.0f}},
+               },
+            .hidden = {world::blocks_init, std::initializer_list{true, true, true}},
+            .layer = {world::blocks_init, std::initializer_list<int8>{2, 0, 0}},
+            .description =
+               {
+                  world::blocks_init,
+                  std::initializer_list{
+                     world::block_description_quad{
+                        .vertices =
+                           {
+                              float3{0.0f, 0.0f, 0.0f},
+                              float3{1.0f, 0.0f, 0.0f},
+                              float3{1.0f, 0.0f, 1.0f},
+                              float3{0.0f, 0.0f, 1.0f},
+                           },
+                        .surface_materials = {0},
+                        .surface_texture_mode =
+                           {
+                              block_texture_mode::world_space_auto,
+                           },
+                        .surface_texture_rotation =
+                           {
+                              block_texture_rotation::d180,
+                           },
+                        .surface_texture_scale =
+                           {
+                              std::array<int8, 2>{-1, -2},
+                           },
+                        .surface_texture_offset =
+                           {
+                              std::array<uint16, 2>{256, 256},
+                           },
+                     },
+                     world::block_description_quad{
+                        .vertices =
+                           {
+                              float3{0.0f, 0.0f, 0.0f},
+                              float3{1.5f, 0.0f, 0.0f},
+                              float3{1.0f, 0.0f, 1.0f},
+                              float3{0.0f, 0.0f, 1.5f},
+                           },
+                        .surface_materials = {2},
+                        .surface_texture_mode =
+                           {
+                              block_texture_mode::world_space_zy,
+                           },
+                        .surface_texture_rotation =
+                           {
+                              block_texture_rotation::d90,
+                           },
+                        .surface_texture_scale =
+                           {
+                              std::array<int8, 2>{0, 0},
+                           },
+                        .surface_texture_offset =
+                           {
+                              std::array<uint16, 2>{1024, 0},
+                           },
+                     },
+                     world::block_description_quad{
+                        .vertices =
+                           {
+                              float3{0.0f, 0.0f, 0.0f},
+                              float3{8.0f, 0.0f, 0.0f},
+                              float3{8.0f, 0.0f, 8.0f},
+                              float3{0.0f, 0.0f, 8.0f},
+                           },
+                        .surface_materials = {0},
+                        .surface_texture_mode =
+                           {
+                              block_texture_mode::world_space_xz,
+                           },
+                        .surface_texture_rotation =
+                           {
+                              block_texture_rotation::d0,
+                           },
+                        .surface_texture_scale =
+                           {
+                              std::array<int8, 2>{0, 0},
+                           },
+                        .surface_texture_offset =
+                           {
+                              std::array<uint16, 2>{0, 0},
+                           },
+                     },
+                  },
+               },
+            .ids = {world::blocks_init,
+                    std::initializer_list{block_quad_id{0}, block_quad_id{1},
+                                          block_quad_id{2}}},
+
+         },
+   };
+
+   (void)io::create_directory("temp/blocks");
+
+   save_blocks("temp/blocks/test_quads.blk", blocks);
+
+   const auto written_blk =
+      io::read_file_to_string("temp/blocks/test_quads.blk");
+
+   CHECK(written_blk == expected_blk);
+}
+
 TEST_CASE("world save blocks (materials)", "[World][IO]")
 {
    const std::string_view expected_blk = R"(Materials()
@@ -490,5 +654,4 @@ TEST_CASE("world save blocks (materials)", "[World][IO]")
 
    CHECK(written_blk == expected_blk);
 }
-
 }

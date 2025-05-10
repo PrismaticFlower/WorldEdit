@@ -652,6 +652,81 @@ TEST_CASE("world entity group loading (blocks, ramps)", "[World][IO]")
          });
 }
 
+TEST_CASE("world entity group loading (blocks, quads)", "[World][IO]")
+{
+   null_output_stream out;
+   const entity_group group =
+      load_entity_group("data/entity_groups/test_blocks_quads.eng", out);
+
+   REQUIRE(group.blocks.quads.size() == 3);
+
+   CHECK(group.blocks.quads[0].vertices[0] == float3{0.0f, 0.0f, 0.0f});
+   CHECK(group.blocks.quads[0].vertices[1] == float3{1.0f, 0.0f, 0.0f});
+   CHECK(group.blocks.quads[0].vertices[2] == float3{1.0f, 0.0f, 1.0f});
+   CHECK(group.blocks.quads[0].vertices[3] == float3{0.0f, 0.0f, 1.0f});
+   CHECK(group.blocks.quads[0].surface_materials == std::array<uint8, 1>{0});
+   CHECK(group.blocks.quads[0].surface_texture_mode ==
+         std::array<block_texture_mode, 1>{
+            block_texture_mode::world_space_auto,
+         });
+   CHECK(group.blocks.quads[0].surface_texture_rotation ==
+         std::array<block_texture_rotation, 1>{
+            block_texture_rotation::d180,
+         });
+   CHECK(group.blocks.quads[0].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 1>{
+            std::array<int8, 2>{-1, -2},
+         });
+   CHECK(group.blocks.quads[0].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 1>{
+            std::array<uint16, 2>{256, 256},
+         });
+
+   CHECK(group.blocks.quads[1].vertices[0] == float3{0.0f, 0.0f, 0.0f});
+   CHECK(group.blocks.quads[1].vertices[1] == float3{1.5f, 0.0f, 0.0f});
+   CHECK(group.blocks.quads[1].vertices[2] == float3{1.0f, 0.0f, 1.0f});
+   CHECK(group.blocks.quads[1].vertices[3] == float3{0.0f, 0.0f, 1.5f});
+   CHECK(group.blocks.quads[1].surface_materials == std::array<uint8, 1>{2});
+   CHECK(group.blocks.quads[1].surface_texture_mode ==
+         std::array<block_texture_mode, 1>{
+            block_texture_mode::world_space_zy,
+         });
+   CHECK(group.blocks.quads[1].surface_texture_rotation ==
+         std::array<block_texture_rotation, 1>{
+            block_texture_rotation::d90,
+         });
+   CHECK(group.blocks.quads[1].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 1>{
+            std::array<int8, 2>{0, 0},
+         });
+   CHECK(group.blocks.quads[1].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 1>{
+            std::array<uint16, 2>{1024, 0},
+         });
+
+   CHECK(group.blocks.quads[2].vertices[0] == float3{0.0f, 0.0f, 0.0f});
+   CHECK(group.blocks.quads[2].vertices[1] == float3{8.0f, 0.0f, 0.0f});
+   CHECK(group.blocks.quads[2].vertices[2] == float3{8.0f, 0.0f, 8.0f});
+   CHECK(group.blocks.quads[2].vertices[3] == float3{0.0f, 0.0f, 8.0f});
+   CHECK(group.blocks.quads[2].surface_materials == std::array<uint8, 1>{0});
+   CHECK(group.blocks.quads[2].surface_texture_mode ==
+         std::array<block_texture_mode, 1>{
+            block_texture_mode::world_space_xz,
+         });
+   CHECK(group.blocks.quads[2].surface_texture_rotation ==
+         std::array<block_texture_rotation, 1>{
+            block_texture_rotation::d0,
+         });
+   CHECK(group.blocks.quads[2].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 1>{
+            std::array<int8, 2>{0, 0},
+         });
+   CHECK(group.blocks.quads[2].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 1>{
+            std::array<uint16, 2>{0, 0},
+         });
+}
+
 TEST_CASE("world entity group loading (blocks, materials)", "[World][IO]")
 {
    null_output_stream out;

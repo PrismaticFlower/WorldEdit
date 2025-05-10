@@ -587,6 +587,39 @@ void save_entity_group_impl(File& file, const entity_group& group)
       file.write_ln("}\n");
    }
 
+   if (not group.blocks.quads.empty()) {
+      file.write_ln("BlocksQuads({})", group.blocks.quads.size());
+      file.write_ln("{");
+
+      for (const block_description_quad& quad : group.blocks.quads) {
+         file.write_ln("   Quad()");
+         file.write_ln("   {");
+
+         file.write_ln("      Vertex0({}, {}, {});", quad.vertices[0].x,
+                       quad.vertices[0].y, quad.vertices[0].z);
+         file.write_ln("      Vertex1({}, {}, {});", quad.vertices[1].x,
+                       quad.vertices[1].y, quad.vertices[1].z);
+         file.write_ln("      Vertex2({}, {}, {});", quad.vertices[2].x,
+                       quad.vertices[2].y, quad.vertices[2].z);
+         file.write_ln("      Vertex3({}, {}, {});", quad.vertices[3].x,
+                       quad.vertices[3].y, quad.vertices[3].z);
+         file.write_ln("      SurfaceMaterials({});", quad.surface_materials[0]);
+         file.write_ln("      SurfaceTextureMode({});",
+                       std::to_underlying(quad.surface_texture_mode[0]));
+         file.write_ln("      SurfaceTextureRotation({});",
+                       std::to_underlying(quad.surface_texture_rotation[0]));
+         file.write_ln("      SurfaceTextureScale({}, {});",
+                       quad.surface_texture_scale[0][0],
+                       quad.surface_texture_scale[0][1]);
+         file.write_ln("      SurfaceTextureOffset({}, {});",
+                       quad.surface_texture_offset[0][0],
+                       quad.surface_texture_offset[0][1]);
+         file.write_ln("   }");
+      }
+
+      file.write_ln("}\n");
+   }
+
    if (not group.blocks.materials.empty()) {
       file.write_ln("BlocksMaterials({})", group.blocks.materials.size());
       file.write_ln("{");

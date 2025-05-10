@@ -130,6 +130,45 @@ void save_ramps(io::output_file& out, const blocks_ramps& ramps) noexcept
    out.write_ln("}\n");
 }
 
+void save_quads(io::output_file& out, const blocks_quads& quads) noexcept
+{
+   if (quads.size() == 0) return;
+
+   out.write_ln("Quads({})", quads.size());
+   out.write_ln("{");
+
+   for (uint32 box_index = 0; box_index < quads.size(); ++box_index) {
+      const block_description_quad& quad = quads.description[box_index];
+      const int8 quad_layer = quads.layer[box_index];
+
+      out.write_ln("   Quad()");
+      out.write_ln("   {");
+
+      out.write_ln("      Vertex0({}, {}, {});", quad.vertices[0].x,
+                   quad.vertices[0].y, quad.vertices[0].z);
+      out.write_ln("      Vertex1({}, {}, {});", quad.vertices[1].x,
+                   quad.vertices[1].y, quad.vertices[1].z);
+      out.write_ln("      Vertex2({}, {}, {});", quad.vertices[2].x,
+                   quad.vertices[2].y, quad.vertices[2].z);
+      out.write_ln("      Vertex3({}, {}, {});", quad.vertices[3].x,
+                   quad.vertices[3].y, quad.vertices[3].z);
+      out.write_ln("      SurfaceMaterials({});", quad.surface_materials[0]);
+      out.write_ln("      SurfaceTextureMode({});", quad.surface_texture_mode[0]);
+      out.write_ln("      SurfaceTextureRotation({});",
+                   quad.surface_texture_rotation[0]);
+      out.write_ln("      SurfaceTextureScale({}, {});",
+                   quad.surface_texture_scale[0][0],
+                   quad.surface_texture_scale[0][1]);
+      out.write_ln("      SurfaceTextureOffset({}, {});",
+                   quad.surface_texture_offset[0][0],
+                   quad.surface_texture_offset[0][1]);
+      if (quad_layer != 0) out.write_ln("      Layer({});", quad_layer);
+      out.write_ln("   }");
+   }
+
+   out.write_ln("}\n");
+}
+
 void save_materials(io::output_file& out, const blocks& blocks) noexcept
 {
    const block_material empty_material;
@@ -171,6 +210,7 @@ void save_blocks(const io::path& path, const blocks& blocks)
 
    save_boxes(out, blocks.boxes);
    save_ramps(out, blocks.ramps);
+   save_quads(out, blocks.quads);
    save_materials(out, blocks);
 }
 

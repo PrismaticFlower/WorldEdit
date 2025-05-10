@@ -221,6 +221,110 @@ void load_ramps(assets::config::node& node, const layer_remap& layer_remap,
    }
 }
 
+void load_quads(assets::config::node& node, const layer_remap& layer_remap,
+                blocks& blocks_out)
+{
+   for (const auto& key_node : node) {
+      if (not iequals(key_node.key, "Quad")) continue;
+
+      if (blocks_out.quads.size() == max_blocks) {
+         throw load_failure{fmt::format(
+            "Too many blocks (of type quad) for WorldEdit to handle. \n   "
+            "Max Supported Count: {}\n",
+            max_blocks)};
+      }
+
+      block_description_quad quad;
+      int8 layer = 0;
+
+      for (const auto& prop : key_node) {
+         if (iequals(prop.key, "Vertex0")) {
+            quad.vertices[0] = {prop.values.get<float>(0), prop.values.get<float>(1),
+                                prop.values.get<float>(2)};
+         }
+         else if (iequals(prop.key, "Vertex1")) {
+            quad.vertices[1] = {prop.values.get<float>(0), prop.values.get<float>(1),
+                                prop.values.get<float>(2)};
+         }
+         else if (iequals(prop.key, "Vertex2")) {
+            quad.vertices[2] = {prop.values.get<float>(0), prop.values.get<float>(1),
+                                prop.values.get<float>(2)};
+         }
+         else if (iequals(prop.key, "Vertex3")) {
+            quad.vertices[3] = {prop.values.get<float>(0), prop.values.get<float>(1),
+                                prop.values.get<float>(2)};
+         }
+         else if (iequals(prop.key, "SurfaceMaterials")) {
+            for (uint32 i = 0; i < quad.surface_materials.size(); ++i) {
+               quad.surface_materials[i] = prop.values.get<uint8>(i);
+            }
+         }
+         else if (iequals(prop.key, "SurfaceTextureMode")) {
+            for (uint32 i = 0; i < quad.surface_texture_mode.size(); ++i) {
+               const uint8 texture_mode = prop.values.get<uint8>(i);
+
+               switch (texture_mode) {
+               case static_cast<uint8>(block_texture_mode::world_space_auto):
+               case static_cast<uint8>(block_texture_mode::world_space_zy):
+               case static_cast<uint8>(block_texture_mode::world_space_xz):
+               case static_cast<uint8>(block_texture_mode::world_space_xy):
+               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
+               case static_cast<uint8>(block_texture_mode::unwrapped):
+                  quad.surface_texture_mode[i] = block_texture_mode{texture_mode};
+                  break;
+               }
+            }
+         }
+         else if (iequals(prop.key, "SurfaceTextureRotation")) {
+            for (uint32 i = 0; i < quad.surface_texture_rotation.size(); ++i) {
+               const uint8 rotation = prop.values.get<uint8>(i);
+
+               switch (rotation) {
+               case static_cast<uint8>(block_texture_rotation::d0):
+               case static_cast<uint8>(block_texture_rotation::d90):
+               case static_cast<uint8>(block_texture_rotation::d180):
+               case static_cast<uint8>(block_texture_rotation::d270):
+                  quad.surface_texture_rotation[i] = block_texture_rotation{rotation};
+                  break;
+               }
+            }
+         }
+         else if (iequals(prop.key, "SurfaceTextureScale")) {
+            for (uint32 i = 0; i < quad.surface_texture_scale.size(); ++i) {
+               quad.surface_texture_scale[i] =
+                  {std::clamp(prop.values.get<int8>(i * 2 + 0),
+                              block_min_texture_scale, block_max_texture_scale),
+                   std::clamp(prop.values.get<int8>(i * 2 + 1),
+                              block_min_texture_scale, block_max_texture_scale)};
+            }
+         }
+         else if (iequals(prop.key, "SurfaceTextureOffset")) {
+            for (uint32 i = 0; i < quad.surface_texture_offset.size(); ++i) {
+               quad.surface_texture_offset[i] =
+                  {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
+                   std::min(prop.values.get<uint16>(i * 2 + 1), block_max_texture_offset)};
+            }
+         }
+         else if (iequals(prop.key, "Layer")) {
+            layer = layer_remap[prop.values.get<int>(0)];
+         }
+      }
+
+      const math::bounding_box bbox = get_bounding_box(quad);
+
+      blocks_out.quads.bbox.min_x.push_back(bbox.min.x);
+      blocks_out.quads.bbox.min_y.push_back(bbox.min.y);
+      blocks_out.quads.bbox.min_z.push_back(bbox.min.z);
+      blocks_out.quads.bbox.max_x.push_back(bbox.max.x);
+      blocks_out.quads.bbox.max_y.push_back(bbox.max.y);
+      blocks_out.quads.bbox.max_z.push_back(bbox.max.z);
+      blocks_out.quads.hidden.push_back(false);
+      blocks_out.quads.layer.push_back(layer);
+      blocks_out.quads.description.push_back(quad);
+      blocks_out.quads.ids.push_back(blocks_out.next_id.quads.aquire());
+   }
+}
+
 void load_materials(assets::config::node& node, blocks& blocks_out,
                     output_stream& output) noexcept
 {
@@ -312,6 +416,13 @@ auto load_blocks(const io::path& path, const layer_remap& layer_remap,
             blocks.ramps.reserve(box_reservation);
 
             load_ramps(key_node, layer_remap, blocks);
+         }
+         else if (iequals(key_node.key, "Quads")) {
+            const std::size_t quad_reservation = key_node.values.get<std::size_t>(0);
+
+            blocks.quads.reserve(quad_reservation);
+
+            load_quads(key_node, layer_remap, blocks);
          }
          else if (iequals(key_node.key, "Materials")) {
             load_materials(key_node, blocks, output);
