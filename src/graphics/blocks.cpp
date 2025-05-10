@@ -23,6 +23,7 @@ struct surface_info {
    uint32 rotation : 2;
    uint32 offsetX : 13;
    uint32 offsetY : 13;
+   uint32 quad_split : 1;
 };
 
 static_assert(sizeof(surface_info) == 8);
@@ -35,6 +36,14 @@ struct block_instance_description {
 };
 
 static_assert(sizeof(block_instance_description) == 160);
+
+struct block_quad_description {
+   std::array<float3, 4> positionWS;
+   std::array<float3, 2> normalWS;
+   surface_info surface;
+};
+
+static_assert(sizeof(block_quad_description) == 80);
 
 enum class block_material_flags : uint32 {
    none = 0b0,
@@ -80,6 +89,21 @@ auto select_pipeline(const blocks_draw draw, pipeline_library& pipelines) -> gpu
       return pipelines.block_normal.get();
    case blocks_draw::shadow:
       return pipelines.block_shadow.get();
+   }
+
+   std::unreachable();
+}
+
+auto select_pipeline_quads(const blocks_draw draw, pipeline_library& pipelines)
+   -> gpu::pipeline_handle
+{
+   switch (draw) {
+   case blocks_draw::depth_prepass:
+      return pipelines.block_quad_depth_prepass.get();
+   case blocks_draw::main:
+      return pipelines.block_quad_normal.get();
+   case blocks_draw::shadow:
+      return pipelines.block_quad_shadow.get();
    }
 
    std::unreachable();
@@ -306,6 +330,27 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
       }
    }
 
+   if (_quads_instance_data_capacity < blocks.quads.size()) {
+      const gpu::unique_resource_handle old_quads_instance_data =
+         std::move(_quads_instance_data);
+      const uint64 old_quads_instance_data_capacity = _quads_instance_data_capacity;
+
+      _quads_instance_data_capacity = blocks.quads.size() * 16180 / 10000;
+      _quads_instance_data =
+         {_device.create_buffer({.size = _quads_instance_data_capacity *
+                                         sizeof(block_quad_description),
+                                 .debug_name = "World blocks (Quads)"},
+                                gpu::heap_type::default_),
+          _device.direct_queue};
+
+      if (old_quads_instance_data_capacity != 0) {
+         command_list.copy_buffer_region(_quads_instance_data.get(), 0,
+                                         old_quads_instance_data.get(), 0,
+                                         old_quads_instance_data_capacity *
+                                            sizeof(block_quad_description));
+      }
+   }
+
    for (const world::blocks_dirty_range& range : blocks.boxes.dirty) {
       const uint32 range_size = range.end - range.begin;
 
@@ -408,6 +453,60 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                                       range_size * sizeof(block_instance_description));
    }
 
+   for (const world::blocks_dirty_range& range : blocks.quads.dirty) {
+      const uint32 range_size = range.end - range.begin;
+
+      const dynamic_buffer_allocator::allocation& upload_allocation =
+         dynamic_buffer_allocator.allocate(range_size *
+                                           sizeof(block_instance_description));
+      std::byte* upload_ptr = upload_allocation.cpu_address;
+
+      for (uint32 block_index = range.begin; block_index < range.end; ++block_index) {
+         const world::block_description_quad& block =
+            blocks.quads.description[block_index];
+
+         block_quad_description description;
+
+         description.positionWS = block.vertices;
+         description.surface = {
+            .material_index = block.surface_materials[0],
+            .texture_mode = static_cast<uint32>(block.surface_texture_mode[0]),
+            .scaleX = static_cast<uint32>(block.surface_texture_scale[0][0] + 7),
+            .scaleY = static_cast<uint32>(block.surface_texture_scale[0][1] + 7),
+            .rotation = static_cast<uint32>(block.surface_texture_rotation[0]),
+            .offsetX = block.surface_texture_offset[0][0],
+            .offsetY = block.surface_texture_offset[0][1],
+            .quad_split = static_cast<uint32>(block.quad_split),
+         };
+
+         const std::array<std::array<uint16, 3>, 2>& quad_triangles =
+            block.quad_split == world::block_quad_split::regular
+               ? world::block_quad_triangles
+               : world::block_quad_alternate_triangles;
+
+         description.normalWS[0] =
+            normalize(cross(description.positionWS[quad_triangles[0][1]] -
+                               description.positionWS[quad_triangles[0][0]],
+                            description.positionWS[quad_triangles[0][2]] -
+                               description.positionWS[quad_triangles[0][0]]));
+         description.normalWS[1] =
+            normalize(cross(description.positionWS[quad_triangles[1][1]] -
+                               description.positionWS[quad_triangles[1][0]],
+                            description.positionWS[quad_triangles[1][2]] -
+                               description.positionWS[quad_triangles[1][0]]));
+
+         std::memcpy(upload_ptr, &description, sizeof(block_quad_description));
+
+         upload_ptr += sizeof(block_quad_description);
+      }
+
+      command_list.copy_buffer_region(_quads_instance_data.get(),
+                                      range.begin * sizeof(block_quad_description),
+                                      upload_allocation.resource,
+                                      upload_allocation.offset,
+                                      range_size * sizeof(block_quad_description));
+   }
+
    for (const world::blocks_dirty_range& range : blocks.materials_dirty) {
       const uint32 range_size = range.end - range.begin;
 
@@ -497,6 +596,13 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                              blocks.ramps.bbox.max_z, blocks.ramps.hidden,
                              blocks.ramps.layer, active_layers,
                              _TEMP_culling_storage, dynamic_buffer_allocator);
+   view.quads =
+      prepare_instances_view(draw, view_frustum, blocks.quads.bbox.min_x,
+                             blocks.quads.bbox.min_y, blocks.quads.bbox.min_z,
+                             blocks.quads.bbox.max_x, blocks.quads.bbox.max_y,
+                             blocks.quads.bbox.max_z, blocks.quads.hidden,
+                             blocks.quads.layer, active_layers,
+                             _TEMP_culling_storage, dynamic_buffer_allocator);
 
    [[unlikely]] if (_dynamic_blocks) {
       view.dynamic_boxes =
@@ -515,6 +621,15 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                 _dynamic_blocks->ramps_bbox.max_x,
                                 _dynamic_blocks->ramps_bbox.max_y,
                                 _dynamic_blocks->ramps_bbox.max_z,
+                                _TEMP_culling_storage, dynamic_buffer_allocator);
+
+      view.dynamic_quads =
+         prepare_instances_view(draw, view_frustum, _dynamic_blocks->quads_bbox.min_x,
+                                _dynamic_blocks->quads_bbox.min_y,
+                                _dynamic_blocks->quads_bbox.min_z,
+                                _dynamic_blocks->quads_bbox.max_x,
+                                _dynamic_blocks->quads_bbox.max_y,
+                                _dynamic_blocks->quads_bbox.max_z,
                                 _TEMP_culling_storage, dynamic_buffer_allocator);
    }
 
@@ -583,10 +698,81 @@ void blocks::draw(blocks_draw draw, const view& view,
                                           view.ramps.count, 0, 0, 0);
    }
 
+   if (view.quads.count > 0) {
+      command_list.set_pipeline_state(select_pipeline_quads(draw, pipelines));
+
+      command_list.set_graphics_srv(rs::block::instances_index_srv, view.quads.instances);
+      command_list.set_graphics_srv(rs::block::instances_srv,
+                                    _device.get_gpu_virtual_address(
+                                       _quads_instance_data.get()));
+
+      command_list.draw_instanced(view.quads.count * 6, 1, 0, 0);
+   }
+
    [[unlikely]] if (_dynamic_blocks) {
-      _dynamic_blocks->draw(view,
-                            _device.get_gpu_virtual_address(_blocks_ia_buffer.get()),
-                            _device, command_list);
+      if (view.quads.count > 0) {
+         command_list.set_pipeline_state(select_pipeline(draw, pipelines));
+      }
+
+      command_list.set_graphics_cbv(rs::block::materials_cbv,
+                                    _device.get_gpu_virtual_address(
+                                       _dynamic_blocks->materials_buffer.get()));
+
+      if (view.dynamic_boxes.count > 0) {
+         command_list.set_graphics_srv(rs::block::instances_index_srv,
+                                       view.dynamic_boxes.instances);
+         command_list.set_graphics_srv(rs::block::instances_srv,
+                                       _device.get_gpu_virtual_address(
+                                          _dynamic_blocks->boxes_instance_data.get()));
+
+         command_list.ia_set_index_buffer({
+            .buffer_location = ia_address + offsetof(blocks_ia_buffer, cube_indices),
+            .size_in_bytes = sizeof(blocks_ia_buffer::cube_indices),
+         });
+         command_list.ia_set_vertex_buffers(
+            0, gpu::vertex_buffer_view{
+                  .buffer_location = ia_address + offsetof(blocks_ia_buffer, cube_vertices),
+                  .size_in_bytes = sizeof(blocks_ia_buffer::cube_vertices),
+                  .stride_in_bytes = sizeof(world::block_vertex),
+               });
+
+         command_list.draw_indexed_instanced(sizeof(blocks_ia_buffer::cube_indices) / 2,
+                                             view.dynamic_boxes.count, 0, 0, 0);
+      }
+
+      if (view.dynamic_ramps.count > 0) {
+         command_list.set_graphics_srv(rs::block::instances_index_srv,
+                                       view.dynamic_ramps.instances);
+         command_list.set_graphics_srv(rs::block::instances_srv,
+                                       _device.get_gpu_virtual_address(
+                                          _dynamic_blocks->ramps_instance_data.get()));
+
+         command_list.ia_set_index_buffer({
+            .buffer_location = ia_address + offsetof(blocks_ia_buffer, ramp_indices),
+            .size_in_bytes = sizeof(blocks_ia_buffer::ramp_indices),
+         });
+         command_list.ia_set_vertex_buffers(
+            0, gpu::vertex_buffer_view{
+                  .buffer_location = ia_address + offsetof(blocks_ia_buffer, ramp_vertices),
+                  .size_in_bytes = sizeof(blocks_ia_buffer::ramp_vertices),
+                  .stride_in_bytes = sizeof(world::block_vertex),
+               });
+
+         command_list.draw_indexed_instanced(sizeof(blocks_ia_buffer::ramp_indices) / 2,
+                                             view.dynamic_ramps.count, 0, 0, 0);
+      }
+
+      if (view.dynamic_quads.count > 0) {
+         command_list.set_pipeline_state(select_pipeline_quads(draw, pipelines));
+
+         command_list.set_graphics_srv(rs::block::instances_index_srv,
+                                       view.dynamic_quads.instances);
+         command_list.set_graphics_srv(rs::block::instances_srv,
+                                       _device.get_gpu_virtual_address(
+                                          _dynamic_blocks->quads_instance_data.get()));
+
+         command_list.draw_instanced(view.dynamic_quads.count * 6, 1, 0, 0);
+      }
    }
 }
 
@@ -861,6 +1047,73 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                                          sizeof(block_instance_description));
    }
 
+   if (not blocks.quads.empty()) {
+      if (quads_instance_data_capacity < blocks.quads.size()) {
+         quads_instance_data_capacity = blocks.quads.size();
+         quads_instance_data = {
+            device.create_buffer({.size = quads_instance_data_capacity *
+                                          sizeof(block_instance_description),
+                                  .debug_name = "World Dynamic Blocks (Quads)"},
+                                 gpu::heap_type::default_),
+            device.direct_queue};
+      }
+
+      quads_bbox.clear();
+      quads_bbox.reserve(blocks.quads.size());
+
+      const dynamic_buffer_allocator::allocation& upload_allocation =
+         dynamic_buffer_allocator.allocate(blocks.quads.size() *
+                                           sizeof(block_instance_description));
+      std::byte* upload_ptr = upload_allocation.cpu_address;
+
+      for (uint32 block_index = 0; block_index < blocks.quads.size(); ++block_index) {
+         const world::block_description_quad& block = blocks.quads[block_index];
+
+         block_quad_description description;
+
+         description.positionWS = {
+            entity_group.rotation * block.vertices[0] + entity_group.position,
+            entity_group.rotation * block.vertices[1] + entity_group.position,
+            entity_group.rotation * block.vertices[2] + entity_group.position,
+            entity_group.rotation * block.vertices[3] + entity_group.position,
+         };
+         description.surface = {
+            .material_index = block.surface_materials[0],
+            .texture_mode = static_cast<uint32>(block.surface_texture_mode[0]),
+            .scaleX = static_cast<uint32>(block.surface_texture_scale[0][0] + 7),
+            .scaleY = static_cast<uint32>(block.surface_texture_scale[0][1] + 7),
+            .rotation = static_cast<uint32>(block.surface_texture_rotation[0]),
+            .offsetX = block.surface_texture_offset[0][0],
+            .offsetY = block.surface_texture_offset[0][1],
+            .quad_split = static_cast<uint32>(block.quad_split),
+         };
+
+         description.normalWS[0] = normalize(
+            cross(description.positionWS[world::block_quad_triangles[0][1]] -
+                     description.positionWS[world::block_quad_triangles[0][0]],
+                  description.positionWS[world::block_quad_triangles[0][2]] -
+                     description.positionWS[world::block_quad_triangles[0][0]]));
+         description.normalWS[1] = normalize(
+            cross(description.positionWS[world::block_quad_triangles[1][1]] -
+                     description.positionWS[world::block_quad_triangles[1][0]],
+                  description.positionWS[world::block_quad_triangles[1][2]] -
+                     description.positionWS[world::block_quad_triangles[1][0]]));
+
+         std::memcpy(upload_ptr, &description, sizeof(block_instance_description));
+
+         upload_ptr += sizeof(block_instance_description);
+
+         quads_bbox.push_back(entity_group.rotation * world::get_bounding_box(block) +
+                              entity_group.position);
+      }
+
+      command_list.copy_buffer_region(quads_instance_data.get(), 0,
+                                      upload_allocation.resource,
+                                      upload_allocation.offset,
+                                      blocks.quads.size() *
+                                         sizeof(block_instance_description));
+   }
+
    if (not blocks.materials.empty()) {
       if (not materials_buffer) {
          materials_buffer =
@@ -927,63 +1180,6 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                                       upload_allocation.resource,
                                       upload_allocation.offset,
                                       material_count * sizeof(block_material));
-   }
-}
-
-void blocks::dynamic_blocks::draw(const view& view,
-                                  gpu_virtual_address blocks_ia_buffer_address,
-                                  gpu::device& device,
-                                  gpu::graphics_command_list& command_list) const
-{
-   command_list.set_graphics_cbv(rs::block::materials_cbv,
-                                 device.get_gpu_virtual_address(materials_buffer.get()));
-
-   if (view.dynamic_boxes.count > 0) {
-      command_list.set_graphics_srv(rs::block::instances_index_srv,
-                                    view.dynamic_boxes.instances);
-      command_list.set_graphics_srv(rs::block::instances_srv,
-                                    device.get_gpu_virtual_address(
-                                       boxes_instance_data.get()));
-
-      command_list.ia_set_index_buffer({
-         .buffer_location =
-            blocks_ia_buffer_address + offsetof(blocks_ia_buffer, cube_indices),
-         .size_in_bytes = sizeof(blocks_ia_buffer::cube_indices),
-      });
-      command_list.ia_set_vertex_buffers(
-         0, gpu::vertex_buffer_view{
-               .buffer_location = blocks_ia_buffer_address +
-                                  offsetof(blocks_ia_buffer, cube_vertices),
-               .size_in_bytes = sizeof(blocks_ia_buffer::cube_vertices),
-               .stride_in_bytes = sizeof(world::block_vertex),
-            });
-
-      command_list.draw_indexed_instanced(sizeof(blocks_ia_buffer::cube_indices) / 2,
-                                          view.dynamic_boxes.count, 0, 0, 0);
-   }
-
-   if (view.dynamic_ramps.count > 0) {
-      command_list.set_graphics_srv(rs::block::instances_index_srv,
-                                    view.dynamic_ramps.instances);
-      command_list.set_graphics_srv(rs::block::instances_srv,
-                                    device.get_gpu_virtual_address(
-                                       ramps_instance_data.get()));
-
-      command_list.ia_set_index_buffer({
-         .buffer_location =
-            blocks_ia_buffer_address + offsetof(blocks_ia_buffer, ramp_indices),
-         .size_in_bytes = sizeof(blocks_ia_buffer::ramp_indices),
-      });
-      command_list.ia_set_vertex_buffers(
-         0, gpu::vertex_buffer_view{
-               .buffer_location = blocks_ia_buffer_address +
-                                  offsetof(blocks_ia_buffer, ramp_vertices),
-               .size_in_bytes = sizeof(blocks_ia_buffer::ramp_vertices),
-               .stride_in_bytes = sizeof(world::block_vertex),
-            });
-
-      command_list.draw_indexed_instanced(sizeof(blocks_ia_buffer::ramp_indices) / 2,
-                                          view.dynamic_ramps.count, 0, 0, 0);
    }
 }
 

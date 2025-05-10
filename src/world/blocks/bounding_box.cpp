@@ -27,6 +27,16 @@ auto get_bounding_box(const block_description_ramp& ramp) noexcept -> math::boun
    return get_bounding_box(ramp.rotation, ramp.position, ramp.size);
 }
 
+auto get_bounding_box(const block_description_quad& quad) noexcept -> math::bounding_box
+{
+   return {
+      .min = min(min(min(quad.vertices[0], quad.vertices[1]), quad.vertices[2]),
+                 quad.vertices[3]),
+      .max = max(max(max(quad.vertices[0], quad.vertices[1]), quad.vertices[2]),
+                 quad.vertices[3]),
+   };
+}
+
 auto get_bounding_box(const blocks& blocks, const block_type type,
                       const uint32 block_index) noexcept -> math::bounding_box
 {
@@ -36,6 +46,9 @@ auto get_bounding_box(const blocks& blocks, const block_type type,
    } break;
    case world::block_type::ramp: {
       return get_bounding_box(blocks.ramps.description[block_index]);
+   } break;
+   case world::block_type::quad: {
+      return get_bounding_box(blocks.quads.description[block_index]);
    } break;
    }
 

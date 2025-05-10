@@ -166,6 +166,45 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
    return std::nullopt;
 }
 
+auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
+             const active_layers active_layers, const blocks_quads& quads,
+             const float max_distance,
+             function_ptr<bool(const block_id id) noexcept> filter) noexcept
+   -> std::optional<raycast_block_result_local>
+{
+   float closest = max_distance;
+   uint32 closest_index = UINT32_MAX;
+
+   for (uint32 box_index = 0; box_index < quads.size(); ++box_index) {
+      if (not active_layers[quads.layer[box_index]]) continue;
+      if (quads.hidden[box_index]) continue;
+
+      const block_description_quad& quad = quads.description[box_index];
+
+      for (const std::array<uint16, 3>& tri : quad.quad_split == block_quad_split::regular
+                                                 ? block_quad_triangles
+                                                 : block_quad_alternate_triangles) {
+         if (float hit;
+             intersect_tri(ray_originWS, ray_directionWS, quad.vertices[tri[0]],
+                           quad.vertices[tri[1]], quad.vertices[tri[2]], hit) and
+             hit < closest) {
+            if (filter and not filter(quads.ids[box_index])) continue;
+
+            closest = hit;
+            closest_index = box_index;
+         }
+      }
+   }
+
+   if (closest_index != UINT32_MAX) {
+      return raycast_block_result_local{.distance = closest,
+                                        .index = closest_index,
+                                        .surface_index = 0};
+   }
+
+   return std::nullopt;
+}
+
 }
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
@@ -194,6 +233,16 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
        hit) {
       closest = hit->distance;
       closest_id = blocks.ramps.ids[hit->index];
+      closest_index = hit->index;
+      closest_surface_index = hit->surface_index;
+   }
+
+   if (std::optional<raycast_block_result_local> hit =
+          raycast(ray_originWS, ray_directionWS, active_layers, blocks.quads,
+                  closest, filter);
+       hit) {
+      closest = hit->distance;
+      closest_id = blocks.quads.ids[hit->index];
       closest_index = hit->index;
       closest_surface_index = hit->surface_index;
    }

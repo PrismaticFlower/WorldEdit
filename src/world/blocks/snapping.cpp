@@ -196,6 +196,73 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
    }
 
+   for (uint32 quad_index = 0; quad_index < blocks.quads.size(); ++quad_index) {
+      if (not config.active_layers[blocks.quads.layer[quad_index]]) continue;
+      if (blocks.quads.hidden[quad_index]) continue;
+      if (blocks.quads.ids[quad_index] == config.filter_id) continue;
+
+      const math::bounding_box bboxWS = {
+         .min =
+            {
+               blocks.quads.bbox.min_x[quad_index],
+               blocks.quads.bbox.min_y[quad_index],
+               blocks.quads.bbox.min_z[quad_index],
+            },
+
+         .max =
+            {
+               blocks.quads.bbox.max_x[quad_index],
+               blocks.quads.bbox.max_y[quad_index],
+               blocks.quads.bbox.max_z[quad_index],
+            },
+      };
+
+      const float3 quad_centreOS = (bboxWS.min + bboxWS.max) * 0.5f;
+      const float3 quad_size = (bboxWS.max - bboxWS.min) * 0.5f;
+
+      const float3 positionAS = positionWS - quad_centreOS;
+      const float3 distances = abs(positionAS) - quad_size;
+
+      const float quad_distance =
+         length(max(distances, float3{0.0f, 0.0f, 0.0f})) +
+         std::min(std::max(std::max(distances.x, distances.y), distances.z), 0.0f);
+
+      if (quad_distance > config.snap_radius) continue;
+
+      const block_description_quad& quad = blocks.quads.description[quad_index];
+
+      for (const float3& vertex_positionWS : quad.vertices) {
+         const float corner_distance = distance(positionWS, vertex_positionWS);
+
+         if (corner_distance < closest_distance) {
+            closest_pointWS = vertex_positionWS;
+            closest_distance = corner_distance;
+         }
+
+         draw_point(visualizers, vertex_positionWS, colors.corner);
+      }
+
+      for (const auto& [i0, i1] : std::initializer_list{
+              std::array<int8, 2>{0, 1},
+              std::array<int8, 2>{1, 2},
+              std::array<int8, 2>{2, 3},
+              std::array<int8, 2>{3, 0},
+           }) {
+         for (int i = 1; i < edge_point_count; ++i) {
+            const float3 pointWS =
+               lerp(quad.vertices[i0], quad.vertices[i1], i / flt_edge_point_count);
+            const float point_distance = distance(positionWS, pointWS);
+
+            if (point_distance < closest_distance) {
+               closest_pointWS = pointWS;
+               closest_distance = point_distance;
+            }
+
+            draw_point(visualizers, pointWS, colors.edge);
+         }
+      }
+   }
+
    float3 new_positionWS;
 
    if (closest_distance > 0.0f and closest_distance <= config.snap_radius) {

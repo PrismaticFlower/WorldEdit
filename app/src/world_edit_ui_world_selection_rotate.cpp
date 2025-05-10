@@ -158,6 +158,8 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                   gizmo_rotation =
                      _world.blocks.ramps.description[*block_index].rotation;
                } break;
+               case world::block_type::quad: {
+               } break;
                }
             }
          }
@@ -369,6 +371,21 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                                                               ? ramp.rotation * rotation
                                                               : rotation * ramp.rotation,
                                                            ramp.position, ramp.size));
+                  } break;
+                  case world::block_type::quad: {
+                     const world::block_description_quad& quad =
+                        _world.blocks.quads.description[*block_index];
+
+                     const float3 centre = (quad.vertices[0] + quad.vertices[1] +
+                                            quad.vertices[2] + quad.vertices[3]) /
+                                           4.0f;
+
+                     bundled_edits.push_back(edits::make_set_block_quad_metrics(
+                        *block_index,
+                        {(rotation * (quad.vertices[0] - centre)) + centre,
+                         (rotation * (quad.vertices[1] - centre)) + centre,
+                         (rotation * (quad.vertices[2] - centre)) + centre,
+                         (rotation * (quad.vertices[3] - centre)) + centre}));
                   } break;
                   }
                }

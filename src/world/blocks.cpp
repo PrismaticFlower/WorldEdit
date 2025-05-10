@@ -72,9 +72,43 @@ bool blocks_ramps::is_balanced() const noexcept
           bbox.min_x.size() == ids.size();
 }
 
+void blocks_quads::reserve(const std::size_t size) noexcept
+{
+   bbox.min_x.reserve(size);
+   bbox.min_y.reserve(size);
+   bbox.min_z.reserve(size);
+   bbox.max_x.reserve(size);
+   bbox.max_y.reserve(size);
+   bbox.max_z.reserve(size);
+   hidden.reserve(size);
+   layer.reserve(size);
+   description.reserve(size);
+   ids.reserve(size);
+}
+
+auto blocks_quads::size() const noexcept -> std::size_t
+{
+   assert(is_balanced());
+
+   return bbox.min_x.size();
+}
+
+bool blocks_quads::is_balanced() const noexcept
+{
+   return bbox.min_x.size() == bbox.min_y.size() and
+          bbox.min_x.size() == bbox.min_z.size() and
+          bbox.min_x.size() == bbox.max_x.size() and
+          bbox.min_x.size() == bbox.max_y.size() and
+          bbox.min_x.size() == bbox.max_z.size() and
+          bbox.min_x.size() == hidden.size() and
+          bbox.min_x.size() == layer.size() and //
+          bbox.min_x.size() == description.size() and
+          bbox.min_x.size() == ids.size();
+}
+
 bool blocks::empty() const noexcept
 {
-   return boxes.size() == 0 and ramps.size() == 0;
+   return boxes.size() == 0 and ramps.size() == 0 and quads.size() == 0;
 }
 
 void blocks::untracked_fill_dirty_ranges() noexcept
@@ -87,6 +121,10 @@ void blocks::untracked_fill_dirty_ranges() noexcept
       ramps.dirty.add({0, static_cast<uint32>(ramps.size())});
    }
 
+   if (quads.size() != 0) {
+      quads.dirty.add({0, static_cast<uint32>(quads.size())});
+   }
+
    materials_dirty.add({0, static_cast<uint32>(materials.size())});
 }
 
@@ -94,6 +132,7 @@ void blocks::untracked_clear_dirty_ranges() noexcept
 {
    boxes.dirty.clear();
    ramps.dirty.clear();
+   quads.dirty.clear();
    materials_dirty.clear();
 }
 
@@ -114,6 +153,11 @@ block_id::block_id(block_box_id id) noexcept
 
 block_id::block_id(block_ramp_id id) noexcept
    : id_type{block_type::ramp}, id{.ramp = id}
+{
+}
+
+block_id::block_id(block_quad_id id) noexcept
+   : id_type{block_type::quad}, id{.quad = id}
 {
 }
 
@@ -139,6 +183,18 @@ auto block_id::get_ramp() const noexcept -> block_ramp_id
    assert(id_type == block_type::ramp);
 
    return id.ramp;
+}
+
+bool block_id::is_quad() const noexcept
+{
+   return id_type == block_type::quad;
+}
+
+auto block_id::get_quad() const noexcept -> block_quad_id
+{
+   assert(id_type == block_type::quad);
+
+   return id.quad;
 }
 
 auto block_id::type() const noexcept -> block_type

@@ -29,6 +29,7 @@ auto sky_meshPS() noexcept -> shader_def;
 auto waterVS() noexcept -> shader_def;
 auto waterPS() noexcept -> shader_def;
 auto blockVS() noexcept -> shader_def;
+auto block_quadVS() noexcept -> shader_def;
 auto block_basicPS() noexcept -> shader_def;
 auto block_basic_lightingPS() noexcept -> shader_def;
 auto block_normalPS() noexcept -> shader_def;
@@ -105,6 +106,7 @@ shaders::sky_meshPS(),
 shaders::waterVS(),
 shaders::waterPS(),
 shaders::blockVS(),
+shaders::block_quadVS(),
 shaders::block_basicPS(),
 shaders::block_basic_lightingPS(),
 shaders::block_normalPS(),

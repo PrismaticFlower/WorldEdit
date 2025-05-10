@@ -14,4 +14,8 @@ auto make_add_block(world::block_description_ramp ramp, int8 layer,
                     world::block_ramp_id id)
    -> std::unique_ptr<edit<world::edit_context>>;
 
+auto make_add_block(world::block_description_quad quad, int8 layer,
+                    world::block_quad_id id)
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 }

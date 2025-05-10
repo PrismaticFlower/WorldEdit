@@ -200,6 +200,8 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
                case world::block_type::ramp: {
                   new_rotation = _world.blocks.ramps.description[*block_index].rotation;
                } break;
+               case world::block_type::quad: {
+               } break;
                }
             }
          }
@@ -420,6 +422,20 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
                      bundled_edits.push_back(
                         edits::make_set_block_ramp_metrics(*block_index, new_rotation,
                                                            new_position, ramp.size));
+                  } break;
+                  case world::block_type::quad: {
+                     const world::block_description_quad& quad =
+                        _world.blocks.quads.description[*block_index];
+
+                     const float3 centre = (quad.vertices[0] + quad.vertices[1] +
+                                            quad.vertices[2] + quad.vertices[3]) /
+                                           4.0f;
+
+                     bundled_edits.push_back(edits::make_set_block_quad_metrics(
+                        *block_index, {quad.vertices[0] - centre + new_position,
+                                       quad.vertices[1] - centre + new_position,
+                                       quad.vertices[2] - centre + new_position,
+                                       quad.vertices[3] - centre + new_position}));
                   } break;
                   }
                }

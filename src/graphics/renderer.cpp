@@ -3380,7 +3380,6 @@ void renderer_impl::draw_interaction_targets(
                _meta_draw_batcher.add_box_wireframe(transform, color);
             } break;
             case world::block_type::ramp: {
-
                const world::block_description_ramp& block =
                   world.blocks.ramps.description[*block_index];
 
@@ -3392,6 +3391,22 @@ void renderer_impl::draw_interaction_targets(
                transform[3] = {block.position, 1.0f};
 
                _meta_draw_batcher.add_ramp_wireframe(transform, color);
+            } break;
+            case world::block_type::quad: {
+               const uint32 color_packed =
+                  utility::pack_srgb_bgra(float4{color, 1.0f});
+
+               const world::block_description_quad& block =
+                  world.blocks.quads.description[*block_index];
+
+               _meta_draw_batcher.add_line_solid(block.vertices[0],
+                                                 block.vertices[1], color_packed);
+               _meta_draw_batcher.add_line_solid(block.vertices[1],
+                                                 block.vertices[2], color_packed);
+               _meta_draw_batcher.add_line_solid(block.vertices[2],
+                                                 block.vertices[3], color_packed);
+               _meta_draw_batcher.add_line_solid(block.vertices[3],
+                                                 block.vertices[0], color_packed);
             } break;
             }
          }

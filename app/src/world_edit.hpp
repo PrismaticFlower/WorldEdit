@@ -204,7 +204,10 @@ enum class draw_block_step : uint8 {
    box_height,
    ramp_width,
    ramp_length,
-   ramp_height
+   ramp_height,
+   quad_v1,
+   quad_v2,
+   quad_v3,
 };
 
 constexpr float tool_window_start_x = 264.0f;
@@ -1011,6 +1014,10 @@ private:
             float length_z = 0.0f;
             quaternion rotation;
          } ramp;
+
+         struct quad {
+            std::array<float3, 3> vertices;
+         } quad;
 
          uint32 index = 0;
          world::block_id block_id = world::block_id::none;

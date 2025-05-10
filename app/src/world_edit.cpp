@@ -34,6 +34,7 @@
 #include "utility/string_ops.hpp"
 
 #include "world/blocks/accessors.hpp"
+#include "world/blocks/bounding_box.hpp"
 #include "world/blocks/drag_select.hpp"
 #include "world/blocks/find.hpp"
 #include "world/blocks/grounding.hpp"
@@ -2863,6 +2864,18 @@ void world_edit::align_selection(const float alignment) noexcept
                                                      align_position(ramp.position),
                                                      ramp.size));
             } break;
+            case world::block_type::quad: {
+               const world::block_description_quad& quad =
+                  _world.blocks.quads.description[*block_index];
+
+               bundle.push_back(edits::make_set_block_quad_metrics(
+                  *block_index, {
+                                   align_position(quad.vertices[0]),
+                                   align_position(quad.vertices[1]),
+                                   align_position(quad.vertices[2]),
+                                   align_position(quad.vertices[3]),
+                                }));
+            } break;
             }
          }
 
@@ -3222,6 +3235,23 @@ void world_edit::ground_selection() noexcept
                   bundle.push_back(
                      edits::make_set_block_ramp_metrics(*block_index, ramp.rotation,
                                                         *grounded_position, ramp.size));
+               } break;
+               case world::block_type::quad: {
+                  const world::block_description_quad& quad =
+                     _world.blocks.quads.description[*block_index];
+
+                  const math::bounding_box bbox = world::get_bounding_box(quad);
+
+                  const float3 quad_centreWS = (bbox.min + bbox.max) / 2.0f;
+
+                  bundle.push_back(edits::make_set_block_quad_metrics(
+                     *block_index,
+                     {
+                        quad.vertices[0] - quad_centreWS + *grounded_position,
+                        quad.vertices[1] - quad_centreWS + *grounded_position,
+                        quad.vertices[2] - quad_centreWS + *grounded_position,
+                        quad.vertices[3] - quad_centreWS + *grounded_position,
+                     }));
                } break;
                }
             }

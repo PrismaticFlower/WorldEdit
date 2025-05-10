@@ -261,6 +261,7 @@
     <ClCompile Include="src\assets\msh\scene_io_save.cpp" />
     <ClCompile Include="src\ucfb\writer.cpp" />
     <ClCompile Include="src\world\blocks\export\mesh_cull.cpp" />
+    <ClCompile Include="src\graphics\shaders\block_quadVS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />

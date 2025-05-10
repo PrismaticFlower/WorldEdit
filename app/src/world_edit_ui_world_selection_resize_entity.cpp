@@ -6,6 +6,7 @@
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
+#include "world/blocks/bounding_box.hpp"
 #include "world/blocks/find.hpp"
 #include "world/utility/world_utilities.hpp"
 
@@ -464,6 +465,39 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                                                 *block_index, ramp.rotation,
                                                 new_position, new_size),
                                              _edit_context);
+                  }
+
+               } break;
+               case world::block_type::quad: {
+                  const world::block_description_quad& quad =
+                     _world.blocks.quads.description[*block_index];
+
+                  const math::bounding_box bbox = world::get_bounding_box(quad);
+
+                  const float3 start_position = (bbox.min + bbox.max) * 0.5f;
+                  const float3 start_size = (bbox.max - bbox.min) * 0.5f;
+
+                  float3 new_position = (bbox.min + bbox.max) * 0.5f;
+                  float3 new_size = (bbox.max - bbox.min) * 0.5f;
+
+                  if (_gizmos.gizmo_size(
+                         {
+                            .name = "Block Quad Size",
+                            .instance = static_cast<int64>(
+                               _world.blocks.quads.ids[*block_index]),
+                            .alignment = _editor_grid_size,
+                         },
+                         new_position, new_size)) {
+                     const float3 scale = new_size / start_size;
+
+                     _edit_stack_world.apply(
+                        edits::make_set_block_quad_metrics(
+                           *block_index,
+                           {((quad.vertices[0] - start_position) * scale) + new_position,
+                            ((quad.vertices[1] - start_position) * scale) + new_position,
+                            ((quad.vertices[2] - start_position) * scale) + new_position,
+                            ((quad.vertices[3] - start_position) * scale) + new_position}),
+                        _edit_context);
                   }
 
                } break;
