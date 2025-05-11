@@ -29,7 +29,7 @@ struct surface_info {
 };
 
 struct block_instance_description {
-   float4x4 world_from_object;
+   float3x4 world_from_object;
    float3x3 adjugate_world_from_object;
    surface_info surfaces[MAX_SURFACES];
    uint3 padding;

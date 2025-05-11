@@ -29,13 +29,13 @@ struct surface_info {
 static_assert(sizeof(surface_info) == 8);
 
 struct block_instance_description {
-   float4x4 world_from_object;
+   std::array<float3, 4> world_from_object;
    float3x3 adjugate_world_from_object;
    std::array<surface_info, 6> surfaces;
    std::array<uint32, 3> padding;
 };
 
-static_assert(sizeof(block_instance_description) == 160);
+static_assert(sizeof(block_instance_description) == 144);
 
 struct block_quad_description {
    std::array<float3, 4> positionWS;
@@ -370,13 +370,21 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
             {0.0f, 0.0f, 0.0f, 1.0f},
          };
          const float4x4 rotation = to_matrix(block.rotation);
+         const float4x4 world_from_object = rotation * scale;
 
          block_instance_description description;
 
-         description.world_from_object = rotation * scale;
-         description.adjugate_world_from_object =
-            adjugate(description.world_from_object);
-         description.world_from_object[3] = {block.position, 1.0f};
+         description.adjugate_world_from_object = adjugate(world_from_object);
+         description.world_from_object[0] = {world_from_object[0].x,
+                                             world_from_object[0].y,
+                                             world_from_object[0].z};
+         description.world_from_object[1] = {world_from_object[1].x,
+                                             world_from_object[1].y,
+                                             world_from_object[1].z};
+         description.world_from_object[2] = {world_from_object[2].x,
+                                             world_from_object[2].y,
+                                             world_from_object[2].z};
+         description.world_from_object[3] = block.position;
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
@@ -421,13 +429,21 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
             {0.0f, 0.0f, 0.0f, 1.0f},
          };
          const float4x4 rotation = to_matrix(block.rotation);
+         const float4x4 world_from_object = rotation * scale;
 
          block_instance_description description;
 
-         description.world_from_object = rotation * scale;
-         description.adjugate_world_from_object =
-            adjugate(description.world_from_object);
-         description.world_from_object[3] = {block.position, 1.0f};
+         description.adjugate_world_from_object = adjugate(world_from_object);
+         description.world_from_object[0] = {world_from_object[0].x,
+                                             world_from_object[0].y,
+                                             world_from_object[0].z};
+         description.world_from_object[1] = {world_from_object[1].x,
+                                             world_from_object[1].y,
+                                             world_from_object[1].z};
+         description.world_from_object[2] = {world_from_object[2].x,
+                                             world_from_object[2].y,
+                                             world_from_object[2].z};
+         description.world_from_object[3] = block.position;
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
@@ -944,13 +960,21 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
             {0.0f, 0.0f, 0.0f, 1.0f},
          };
          const float4x4 rotation = to_matrix(block_rotation);
+         const float4x4 world_from_object = rotation * scale;
 
          block_instance_description description;
 
-         description.world_from_object = rotation * scale;
-         description.adjugate_world_from_object =
-            adjugate(description.world_from_object);
-         description.world_from_object[3] = {block_positionWS, 1.0f};
+         description.adjugate_world_from_object = adjugate(world_from_object);
+         description.world_from_object[0] = {world_from_object[0].x,
+                                             world_from_object[0].y,
+                                             world_from_object[0].z};
+         description.world_from_object[1] = {world_from_object[1].x,
+                                             world_from_object[1].y,
+                                             world_from_object[1].z};
+         description.world_from_object[2] = {world_from_object[2].x,
+                                             world_from_object[2].y,
+                                             world_from_object[2].z};
+         description.world_from_object[3] = block.position;
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
@@ -1012,13 +1036,21 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
             {0.0f, 0.0f, 0.0f, 1.0f},
          };
          const float4x4 rotation = to_matrix(block_rotation);
+         const float4x4 world_from_object = rotation * scale;
 
          block_instance_description description;
 
-         description.world_from_object = rotation * scale;
-         description.adjugate_world_from_object =
-            adjugate(description.world_from_object);
-         description.world_from_object[3] = {block_positionWS, 1.0f};
+         description.adjugate_world_from_object = adjugate(world_from_object);
+         description.world_from_object[0] = {world_from_object[0].x,
+                                             world_from_object[0].y,
+                                             world_from_object[0].z};
+         description.world_from_object[1] = {world_from_object[1].x,
+                                             world_from_object[1].y,
+                                             world_from_object[1].z};
+         description.world_from_object[2] = {world_from_object[2].x,
+                                             world_from_object[2].y,
+                                             world_from_object[2].z};
+         description.world_from_object[3] = block.position;
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
