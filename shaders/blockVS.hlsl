@@ -162,8 +162,6 @@ output_vertex main_quad(uint invocation_id : SV_VertexID)
    } break;
    }
 
-enum quad_split { quad_split_regular, quad_split_alternate };
-
    const float3 positionWS = quad.positionWS[vertex_id];
    const float3 normalWS = quad.normalWS[tri_id];
    const float4 positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
