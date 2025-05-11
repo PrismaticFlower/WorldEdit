@@ -41,6 +41,24 @@ struct unlinked_connection {
    int8 dynamic_group = 0;
 };
 
+auto read_block_texture_mode(const uint8 mode) noexcept -> block_texture_mode
+{
+   switch (mode) {
+   case static_cast<uint8>(block_texture_mode::world_space_auto):
+   case static_cast<uint8>(block_texture_mode::world_space_zy):
+   case static_cast<uint8>(block_texture_mode::world_space_xz):
+   case static_cast<uint8>(block_texture_mode::world_space_xy):
+   case static_cast<uint8>(block_texture_mode::local_space_auto):
+   case static_cast<uint8>(block_texture_mode::local_space_zy):
+   case static_cast<uint8>(block_texture_mode::local_space_xz):
+   case static_cast<uint8>(block_texture_mode::local_space_xy):
+   case static_cast<uint8>(block_texture_mode::unwrapped):
+      return block_texture_mode{mode};
+   }
+
+   return {};
+}
+
 auto read_rotation(const assets::config::node& node) -> quaternion
 {
    quaternion rotation{node.values.get<float>(0), node.values.get<float>(1),
@@ -631,18 +649,8 @@ void read_blocks_boxes(const assets::config::node& node, entity_group& group_out
          }
          else if (string::iequals(prop.key, "SurfaceTextureMode")) {
             for (uint32 i = 0; i < box.surface_texture_mode.size(); ++i) {
-               const uint8 texture_mode = prop.values.get<uint8>(i);
-
-               switch (texture_mode) {
-               case static_cast<uint8>(block_texture_mode::world_space_auto):
-               case static_cast<uint8>(block_texture_mode::world_space_zy):
-               case static_cast<uint8>(block_texture_mode::world_space_xz):
-               case static_cast<uint8>(block_texture_mode::world_space_xy):
-               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
-               case static_cast<uint8>(block_texture_mode::unwrapped):
-                  box.surface_texture_mode[i] = block_texture_mode{texture_mode};
-                  break;
-               }
+               box.surface_texture_mode[i] =
+                  read_block_texture_mode(prop.values.get<uint8>(i));
             }
          }
          else if (string::iequals(prop.key, "SurfaceTextureRotation")) {
@@ -708,18 +716,8 @@ void read_blocks_ramps(const assets::config::node& node, entity_group& group_out
          }
          else if (string::iequals(prop.key, "SurfaceTextureMode")) {
             for (uint32 i = 0; i < ramp.surface_texture_mode.size(); ++i) {
-               const uint8 texture_mode = prop.values.get<uint8>(i);
-
-               switch (texture_mode) {
-               case static_cast<uint8>(block_texture_mode::world_space_auto):
-               case static_cast<uint8>(block_texture_mode::world_space_zy):
-               case static_cast<uint8>(block_texture_mode::world_space_xz):
-               case static_cast<uint8>(block_texture_mode::world_space_xy):
-               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
-               case static_cast<uint8>(block_texture_mode::unwrapped):
-                  ramp.surface_texture_mode[i] = block_texture_mode{texture_mode};
-                  break;
-               }
+               ramp.surface_texture_mode[i] =
+                  read_block_texture_mode(prop.values.get<uint8>(i));
             }
          }
          else if (string::iequals(prop.key, "SurfaceTextureRotation")) {
@@ -799,18 +797,8 @@ void read_blocks_quads(const assets::config::node& node, entity_group& group_out
          }
          else if (string::iequals(prop.key, "SurfaceTextureMode")) {
             for (uint32 i = 0; i < quad.surface_texture_mode.size(); ++i) {
-               const uint8 texture_mode = prop.values.get<uint8>(i);
-
-               switch (texture_mode) {
-               case static_cast<uint8>(block_texture_mode::world_space_auto):
-               case static_cast<uint8>(block_texture_mode::world_space_zy):
-               case static_cast<uint8>(block_texture_mode::world_space_xz):
-               case static_cast<uint8>(block_texture_mode::world_space_xy):
-               case static_cast<uint8>(block_texture_mode::tangent_space_xyz):
-               case static_cast<uint8>(block_texture_mode::unwrapped):
-                  quad.surface_texture_mode[i] = block_texture_mode{texture_mode};
-                  break;
-               }
+               quad.surface_texture_mode[i] =
+                  read_block_texture_mode(prop.values.get<uint8>(i));
             }
          }
          else if (string::iequals(prop.key, "SurfaceTextureRotation")) {

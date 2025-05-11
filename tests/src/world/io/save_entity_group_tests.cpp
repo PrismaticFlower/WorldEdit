@@ -900,7 +900,7 @@ TEST_CASE("world save entity group (blocks, boxes)", "[World][IO]")
                                  block_texture_mode::world_space_zy,
                                  block_texture_mode::world_space_zy,
                                  block_texture_mode::world_space_zy,
-                                 block_texture_mode::unwrapped,
+                                 block_texture_mode::local_space_zy,
                                  block_texture_mode::world_space_zy,
                               },
                            .surface_texture_rotation =
@@ -1086,7 +1086,7 @@ TEST_CASE("world save entity group (blocks, ramps)", "[World][IO]")
                                  block_texture_mode::world_space_zy,
                                  block_texture_mode::world_space_zy,
                                  block_texture_mode::world_space_zy,
-                                 block_texture_mode::unwrapped,
+                                 block_texture_mode::local_space_zy,
                               },
                            .surface_texture_rotation =
                               {

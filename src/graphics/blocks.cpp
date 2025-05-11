@@ -17,7 +17,7 @@ namespace {
 
 struct surface_info {
    uint32 material_index : 8;
-   uint32 texture_mode : 3;
+   uint32 texture_mode : 4;
    uint32 scaleX : 4;
    uint32 scaleY : 4;
    uint32 rotation : 2;
@@ -32,7 +32,7 @@ struct block_instance_description {
    std::array<float3, 4> world_from_object;
    float3x3 adjugate_world_from_object;
    std::array<surface_info, 6> surfaces;
-   std::array<uint32, 3> padding;
+   float3 object_from_world_xyz;
 };
 
 static_assert(sizeof(block_instance_description) == 144);
@@ -386,6 +386,12 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                                              world_from_object[2].z};
          description.world_from_object[3] = block.position;
 
+         const quaternion object_from_world = conjugate(block.rotation);
+
+         description.object_from_world_xyz = {object_from_world.x,
+                                              object_from_world.y,
+                                              object_from_world.z};
+
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
                .material_index = block.surface_materials[i],
@@ -444,6 +450,12 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                                              world_from_object[2].y,
                                              world_from_object[2].z};
          description.world_from_object[3] = block.position;
+
+         const quaternion object_from_world = conjugate(block.rotation);
+
+         description.object_from_world_xyz = {object_from_world.x,
+                                              object_from_world.y,
+                                              object_from_world.z};
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
@@ -976,6 +988,12 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                                              world_from_object[2].z};
          description.world_from_object[3] = block.position;
 
+         const quaternion object_from_world = conjugate(block.rotation);
+
+         description.object_from_world_xyz = {object_from_world.x,
+                                              object_from_world.y,
+                                              object_from_world.z};
+
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
                .material_index = block.surface_materials[i],
@@ -1051,6 +1069,12 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                                              world_from_object[2].y,
                                              world_from_object[2].z};
          description.world_from_object[3] = block.position;
+
+         const quaternion object_from_world = conjugate(block.rotation);
+
+         description.object_from_world_xyz = {object_from_world.x,
+                                              object_from_world.y,
+                                              object_from_world.z};
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
