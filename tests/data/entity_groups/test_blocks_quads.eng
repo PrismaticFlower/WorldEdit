@@ -6,6 +6,7 @@ BlocksQuads(3)
       Vertex1(1, 0, 0);
       Vertex2(1, 0, 1);
       Vertex3(0, 0, 1);
+      QuadSplit(0);
       SurfaceMaterials(0);
       SurfaceTextureMode(0);
       SurfaceTextureRotation(2);
@@ -18,6 +19,7 @@ BlocksQuads(3)
       Vertex1(1.5, 0, 0);
       Vertex2(1, 0, 1);
       Vertex3(0, 0, 1.5);
+      QuadSplit(1);
       SurfaceMaterials(2);
       SurfaceTextureMode(1);
       SurfaceTextureRotation(1);
@@ -30,6 +32,7 @@ BlocksQuads(3)
       Vertex1(8, 0, 0);
       Vertex2(8, 0, 8);
       Vertex3(0, 0, 8);
+      QuadSplit(0);
       SurfaceMaterials(0);
       SurfaceTextureMode(2);
       SurfaceTextureRotation(0);

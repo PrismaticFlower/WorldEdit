@@ -603,6 +603,7 @@ void save_entity_group_impl(File& file, const entity_group& group)
                        quad.vertices[2].y, quad.vertices[2].z);
          file.write_ln("      Vertex3({}, {}, {});", quad.vertices[3].x,
                        quad.vertices[3].y, quad.vertices[3].z);
+         file.write_ln("      QuadSplit({});", std::to_underlying(quad.quad_split));
          file.write_ln("      SurfaceMaterials({});", quad.surface_materials[0]);
          file.write_ln("      SurfaceTextureMode({});",
                        std::to_underlying(quad.surface_texture_mode[0]));

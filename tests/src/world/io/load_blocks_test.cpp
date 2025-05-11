@@ -375,6 +375,7 @@ TEST_CASE("world load blocks (quads)", "[World][IO]")
    CHECK(quads.description[0].vertices[1] == float3{1.0f, 0.0f, 0.0f});
    CHECK(quads.description[0].vertices[2] == float3{1.0f, 0.0f, 1.0f});
    CHECK(quads.description[0].vertices[3] == float3{0.0f, 0.0f, 1.0f});
+   CHECK(quads.description[0].quad_split == block_quad_split::regular);
    CHECK(quads.description[0].surface_materials == std::array<uint8, 1>{0});
    CHECK(quads.description[0].surface_texture_mode ==
          std::array<block_texture_mode, 1>{
@@ -405,6 +406,7 @@ TEST_CASE("world load blocks (quads)", "[World][IO]")
    CHECK(quads.description[1].vertices[1] == float3{1.5f, 0.0f, 0.0f});
    CHECK(quads.description[1].vertices[2] == float3{1.0f, 0.0f, 1.0f});
    CHECK(quads.description[1].vertices[3] == float3{0.0f, 0.0f, 1.5f});
+   CHECK(quads.description[1].quad_split == block_quad_split::alternate);
    CHECK(quads.description[1].surface_materials == std::array<uint8, 1>{2});
    CHECK(quads.description[1].surface_texture_mode ==
          std::array<block_texture_mode, 1>{
@@ -435,6 +437,7 @@ TEST_CASE("world load blocks (quads)", "[World][IO]")
    CHECK(quads.description[2].vertices[1] == float3{8.0f, 0.0f, 0.0f});
    CHECK(quads.description[2].vertices[2] == float3{8.0f, 0.0f, 8.0f});
    CHECK(quads.description[2].vertices[3] == float3{0.0f, 0.0f, 8.0f});
+   CHECK(quads.description[2].quad_split == block_quad_split::regular);
    CHECK(quads.description[2].surface_materials == std::array<uint8, 1>{0});
    CHECK(quads.description[2].surface_texture_mode ==
          std::array<block_texture_mode, 1>{
