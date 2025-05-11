@@ -378,6 +378,11 @@ void centre_entity_group(entity_group& group) noexcept
       count += 1.0f;
    }
 
+   for (const block_description_quad& quad : group.blocks.quads) {
+      for (const float3& v : quad.vertices) position += v;
+      count += 4.0f;
+   }
+
    const float3 centre = position / count;
 
    for (object& object : group.objects) {
@@ -439,6 +444,10 @@ void centre_entity_group(entity_group& group) noexcept
    for (block_description_ramp& ramp : group.blocks.ramps) {
       ramp.position -= centre;
    }
+
+   for (block_description_quad& quad : group.blocks.quads) {
+      for (float3& v : quad.vertices) v -= centre;
+}
 }
 
 auto get_placed_entity_name(std::string_view name, std::span<const object> world_objects,
