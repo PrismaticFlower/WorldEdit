@@ -27,5 +27,6 @@ extern const std::array<std::array<uint16, 2>, 9> block_ramp_edges;
 
 extern const std::array<std::array<uint16, 3>, 2> block_quad_triangles;
 extern const std::array<std::array<uint16, 3>, 2> block_quad_alternate_triangles;
+extern const std::array<float2, 4> block_quad_vertex_texcoords;
 
 };

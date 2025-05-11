@@ -125,7 +125,7 @@ Materials()
                               block_texture_mode::world_space_zy,
                               block_texture_mode::world_space_zy,
                               block_texture_mode::world_space_zy,
-                              block_texture_mode::unwrapped,
+                              block_texture_mode::local_space_zy,
                               block_texture_mode::world_space_zy,
                            },
                         .surface_texture_rotation =
@@ -329,7 +329,7 @@ Materials()
                               block_texture_mode::world_space_zy,
                               block_texture_mode::world_space_zy,
                               block_texture_mode::world_space_zy,
-                              block_texture_mode::unwrapped,
+                              block_texture_mode::local_space_zy,
                            },
                         .surface_texture_rotation =
                            {

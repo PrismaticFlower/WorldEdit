@@ -1,5 +1,6 @@
 #include "bindings.hlsli"
 #include "frame_constants.hlsli"
+#include "quaternion.hlsli"
 
 #define MAX_SURFACES 6
 
@@ -10,7 +11,11 @@ enum texture_mode {
    texture_mode_world_space_xz,
    texture_mode_world_space_xy,
 
-   texture_mode_tangent_space_xyz,
+   texture_mode_local_space_auto,
+
+   texture_mode_local_space_zy,
+   texture_mode_local_space_xz,
+   texture_mode_local_space_xy,
 
    texture_mode_unwrapped
 };
@@ -19,7 +24,7 @@ enum quad_split { quad_split_regular, quad_split_alternate };
 
 struct surface_info {
    uint material_index : 8; 
-   uint texture_mode : 3;
+   uint texture_mode : 4;
    uint scaleX : 4; 
    uint scaleY : 4;
    uint rotation : 2;
@@ -32,7 +37,7 @@ struct block_instance_description {
    float3x4 world_from_object;
    float3x3 adjugate_world_from_object;
    surface_info surfaces[MAX_SURFACES];
-   uint3 padding;
+   float3 object_from_world_xyz;
 };
 
 struct block_quad_description {
@@ -99,13 +104,43 @@ output_vertex main(input_vertex input)
    case texture_mode_world_space_xy:
       texcoords = positionWS.xy;
       break;
-   case texture_mode_tangent_space_xyz: {
-      const float3 tangentWS = normalize(mul(instance.adjugate_world_from_object, input.tangentOS));
-      const float3 bitangentWS = normalize(input.bitangent_sign * cross(normalWS, tangentWS));
+   case texture_mode_local_space_auto:
+   case texture_mode_local_space_zy:
+   case texture_mode_local_space_xz:
+   case texture_mode_local_space_xy: {      
+      quaternion object_from_world;
 
-      const float3x3 texture_from_world = {tangentWS, bitangentWS, normalWS};
+      object_from_world.w = sqrt(1.0 - saturate(dot(instance.object_from_world_xyz, instance.object_from_world_xyz)));
+      object_from_world.x = instance.object_from_world_xyz.x;
+      object_from_world.y = instance.object_from_world_xyz.y;
+      object_from_world.z = instance.object_from_world_xyz.z;
 
-      texcoords = mul(texture_from_world, positionWS).xy;
+      const float3 positionOS = mul(object_from_world, positionWS);
+
+      switch (surface.texture_mode) {
+      case texture_mode_local_space_auto: {
+         const float3 normal_absOS = abs(mul(object_from_world, normalWS));
+
+         if (normal_absOS.x < normal_absOS.y && normal_absOS.z < normal_absOS.y) {
+            texcoords = positionOS.xz;
+         }
+         else if (normal_absOS.x < normal_absOS.z) {
+            texcoords = positionOS.xy;
+         }
+         else {
+            texcoords = positionOS.zy;
+         }
+      } break;
+      case texture_mode_local_space_zy: 
+         texcoords = positionOS.zy;
+         break;
+      case texture_mode_local_space_xz:
+         texcoords = positionOS.xz;
+         break;
+      case texture_mode_local_space_xy:
+         texcoords = positionOS.xy;
+         break;
+      };
    } break;
    case texture_mode_unwrapped:
       texcoords = input.texcoords;
@@ -169,7 +204,8 @@ output_vertex main_quad(uint invocation_id : SV_VertexID)
    float2 texcoords;
    
    switch (surface.texture_mode) {
-   case texture_mode_world_space_auto: {
+   case texture_mode_world_space_auto:
+   case texture_mode_local_space_auto: {
       const float3 normal_absWS = abs(normalWS);
 
       if (normal_absWS.x < normal_absWS.y && normal_absWS.z < normal_absWS.y) {
@@ -183,15 +219,17 @@ output_vertex main_quad(uint invocation_id : SV_VertexID)
       }
    } break;
    case texture_mode_world_space_zy:
+   case texture_mode_local_space_zy:
       texcoords = positionWS.zy;
       break;
    case texture_mode_world_space_xz:
+   case texture_mode_local_space_xz:
       texcoords = positionWS.xz;
       break;
    case texture_mode_world_space_xy:
+   case texture_mode_local_space_xy:
       texcoords = positionWS.xy;
       break;
-   case texture_mode_tangent_space_xyz:
    case texture_mode_unwrapped: {
       switch (vertex_id) {
          case 0:

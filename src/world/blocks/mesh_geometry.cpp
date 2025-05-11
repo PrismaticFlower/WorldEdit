@@ -279,4 +279,11 @@ const std::array<std::array<uint16, 3>, 2> block_quad_alternate_triangles = {{
    {1, 2, 3},
 }};
 
+const std::array<float2, 4> block_quad_vertex_texcoords = {{
+   {0.0f, 0.0f},
+   {1.0f, 0.0f},
+   {1.0f, 1.0f},
+   {0.0f, 1.0f},
+}};
+
 }

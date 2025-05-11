@@ -30,7 +30,11 @@ enum class block_texture_mode : uint8 {
    world_space_xz,
    world_space_xy,
 
-   tangent_space_xyz,
+   local_space_auto,
+
+   local_space_zy,
+   local_space_xz,
+   local_space_xy,
 
    unwrapped,
 };

@@ -47,7 +47,10 @@ auto texture_mode_name(world::block_texture_mode mode) noexcept -> const char*
    case world::block_texture_mode::world_space_zy:    return "World Space ZY";
    case world::block_texture_mode::world_space_xz:    return "World Space XZ";
    case world::block_texture_mode::world_space_xy:    return "World Space XY";
-   case world::block_texture_mode::tangent_space_xyz: return "Tangent Space XYZ";
+   case world::block_texture_mode::local_space_auto:  return "Local Space Auto";
+   case world::block_texture_mode::local_space_zy:    return "Local Space ZY";
+   case world::block_texture_mode::local_space_xz:    return "Local Space XZ";
+   case world::block_texture_mode::local_space_xy:    return "Local Space XY";
    case world::block_texture_mode::unwrapped:         return "Unwrapped";
    }
    // clang-format on
@@ -191,7 +194,8 @@ void world_edit::ui_show_block_editor() noexcept
       }
 
       if (ImGui::BeginCombo("Texture Mode",
-                            texture_mode_name(_block_editor_config.texture_mode))) {
+                            texture_mode_name(_block_editor_config.texture_mode),
+                            ImGuiComboFlags_HeightLarge)) {
          for (world::block_texture_mode mode : {
                  world::block_texture_mode::world_space_auto,
 
@@ -199,7 +203,11 @@ void world_edit::ui_show_block_editor() noexcept
                  world::block_texture_mode::world_space_xz,
                  world::block_texture_mode::world_space_xy,
 
-                 world::block_texture_mode::tangent_space_xyz,
+                 world::block_texture_mode::local_space_auto,
+
+                 world::block_texture_mode::local_space_zy,
+                 world::block_texture_mode::local_space_xz,
+                 world::block_texture_mode::local_space_xy,
 
                  world::block_texture_mode::unwrapped,
               }) {
