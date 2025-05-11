@@ -52,8 +52,6 @@ StructuredBuffer<block_quad_description> quad_descs : register(BLOCK_INSTANCE_DA
 
 struct input_vertex {
    float3 positionOS : POSITION;
-   float3 tangentOS : TANGENT;
-   float bitangent_sign : BITANGENT_SIGN;
    float3 normalOS : NORMAL;
    float2 texcoords : TEXCOORD;
    uint surface_index : SURFACE;
