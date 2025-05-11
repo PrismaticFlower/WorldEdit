@@ -423,6 +423,7 @@ TEST_CASE("world save blocks (quads)", "[World][IO]")
       Vertex1(1, 0, 0);
       Vertex2(1, 0, 1);
       Vertex3(0, 0, 1);
+      QuadSplit(0);
       SurfaceMaterials(0);
       SurfaceTextureMode(0);
       SurfaceTextureRotation(2);
@@ -436,6 +437,7 @@ TEST_CASE("world save blocks (quads)", "[World][IO]")
       Vertex1(1.5, 0, 0);
       Vertex2(1, 0, 1);
       Vertex3(0, 0, 1.5);
+      QuadSplit(1);
       SurfaceMaterials(2);
       SurfaceTextureMode(1);
       SurfaceTextureRotation(1);
@@ -448,6 +450,7 @@ TEST_CASE("world save blocks (quads)", "[World][IO]")
       Vertex1(8, 0, 0);
       Vertex2(8, 0, 8);
       Vertex3(0, 0, 8);
+      QuadSplit(0);
       SurfaceMaterials(0);
       SurfaceTextureMode(2);
       SurfaceTextureRotation(0);
@@ -488,6 +491,7 @@ Materials()
                               float3{1.0f, 0.0f, 1.0f},
                               float3{0.0f, 0.0f, 1.0f},
                            },
+                        .quad_split = world::block_quad_split::regular,
                         .surface_materials = {0},
                         .surface_texture_mode =
                            {
@@ -514,6 +518,7 @@ Materials()
                               float3{1.0f, 0.0f, 1.0f},
                               float3{0.0f, 0.0f, 1.5f},
                            },
+                        .quad_split = world::block_quad_split::alternate,
                         .surface_materials = {2},
                         .surface_texture_mode =
                            {
@@ -540,6 +545,7 @@ Materials()
                               float3{8.0f, 0.0f, 8.0f},
                               float3{0.0f, 0.0f, 8.0f},
                            },
+                        .quad_split = world::block_quad_split::regular,
                         .surface_materials = {0},
                         .surface_texture_mode =
                            {

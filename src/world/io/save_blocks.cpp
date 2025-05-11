@@ -14,6 +14,11 @@ auto format_as(block_texture_rotation rotation) noexcept -> uint8
    return fmt::underlying(rotation);
 }
 
+auto format_as(block_quad_split quad_split) noexcept -> uint8
+{
+   return fmt::underlying(quad_split);
+}
+
 auto format_as(block_foley_group group) noexcept -> uint8
 {
    return fmt::underlying(group);
@@ -152,6 +157,7 @@ void save_quads(io::output_file& out, const blocks_quads& quads) noexcept
                    quad.vertices[2].y, quad.vertices[2].z);
       out.write_ln("      Vertex3({}, {}, {});", quad.vertices[3].x,
                    quad.vertices[3].y, quad.vertices[3].z);
+      out.write_ln("      QuadSplit({});", quad.quad_split);
       out.write_ln("      SurfaceMaterials({});", quad.surface_materials[0]);
       out.write_ln("      SurfaceTextureMode({});", quad.surface_texture_mode[0]);
       out.write_ln("      SurfaceTextureRotation({});",

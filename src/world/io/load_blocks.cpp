@@ -254,6 +254,16 @@ void load_quads(assets::config::node& node, const layer_remap& layer_remap,
             quad.vertices[3] = {prop.values.get<float>(0), prop.values.get<float>(1),
                                 prop.values.get<float>(2)};
          }
+         else if (iequals(prop.key, "QuadSplit")) {
+            const uint8 quad_split = prop.values.get<uint8>(0);
+
+            switch (quad_split) {
+            case static_cast<uint8>(block_quad_split::regular):
+            case static_cast<uint8>(block_quad_split::alternate):
+               quad.quad_split = block_quad_split{quad_split};
+               break;
+            }
+         }
          else if (iequals(prop.key, "SurfaceMaterials")) {
             for (uint32 i = 0; i < quad.surface_materials.size(); ++i) {
                quad.surface_materials[i] = prop.values.get<uint8>(i);

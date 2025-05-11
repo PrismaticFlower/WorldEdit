@@ -664,6 +664,7 @@ TEST_CASE("world entity group loading (blocks, quads)", "[World][IO]")
    CHECK(group.blocks.quads[0].vertices[1] == float3{1.0f, 0.0f, 0.0f});
    CHECK(group.blocks.quads[0].vertices[2] == float3{1.0f, 0.0f, 1.0f});
    CHECK(group.blocks.quads[0].vertices[3] == float3{0.0f, 0.0f, 1.0f});
+   CHECK(group.blocks.quads[0].quad_split == block_quad_split::regular);
    CHECK(group.blocks.quads[0].surface_materials == std::array<uint8, 1>{0});
    CHECK(group.blocks.quads[0].surface_texture_mode ==
          std::array<block_texture_mode, 1>{
@@ -686,6 +687,7 @@ TEST_CASE("world entity group loading (blocks, quads)", "[World][IO]")
    CHECK(group.blocks.quads[1].vertices[1] == float3{1.5f, 0.0f, 0.0f});
    CHECK(group.blocks.quads[1].vertices[2] == float3{1.0f, 0.0f, 1.0f});
    CHECK(group.blocks.quads[1].vertices[3] == float3{0.0f, 0.0f, 1.5f});
+   CHECK(group.blocks.quads[1].quad_split == block_quad_split::alternate);
    CHECK(group.blocks.quads[1].surface_materials == std::array<uint8, 1>{2});
    CHECK(group.blocks.quads[1].surface_texture_mode ==
          std::array<block_texture_mode, 1>{
@@ -708,6 +710,7 @@ TEST_CASE("world entity group loading (blocks, quads)", "[World][IO]")
    CHECK(group.blocks.quads[2].vertices[1] == float3{8.0f, 0.0f, 0.0f});
    CHECK(group.blocks.quads[2].vertices[2] == float3{8.0f, 0.0f, 8.0f});
    CHECK(group.blocks.quads[2].vertices[3] == float3{0.0f, 0.0f, 8.0f});
+   CHECK(group.blocks.quads[2].quad_split == block_quad_split::regular);
    CHECK(group.blocks.quads[2].surface_materials == std::array<uint8, 1>{0});
    CHECK(group.blocks.quads[2].surface_texture_mode ==
          std::array<block_texture_mode, 1>{
