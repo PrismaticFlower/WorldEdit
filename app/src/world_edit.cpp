@@ -1900,6 +1900,11 @@ void world_edit::place_creation_entity() noexcept
 
          return;
       }
+      else if (_world.blocks.quads.size() + group.blocks.quads.size() > world::max_blocks) {
+         report_limit_reached("Max blocks (quads, {}) Reached", world::max_blocks);
+
+         return;
+      }
 
       const uint32 object_base_index = static_cast<uint32>(_world.objects.size());
       const uint32 path_base_index = static_cast<uint32>(_world.paths.size());
@@ -2210,6 +2215,32 @@ void world_edit::place_creation_entity() noexcept
          _edit_stack_world
             .apply(edits::make_add_block(new_ramp, group.layer,
                                          _world.blocks.next_id.ramps.aquire()),
+                   _edit_context,
+                   {.transparent = std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::block_description_quad& quad : group.blocks.quads) {
+         world::block_description_quad new_quad = quad;
+
+         new_quad.vertices = {
+            group.rotation * quad.vertices[0] + group.position,
+            group.rotation * quad.vertices[1] + group.position,
+            group.rotation * quad.vertices[2] + group.position,
+            group.rotation * quad.vertices[3] + group.position,
+         };
+
+         for (uint8& material : new_quad.surface_materials) {
+            if (block_material_remap[material]) {
+               material = *block_material_remap[material];
+            }
+            else {
+               material = 0;
+            }
+         }
+
+         _edit_stack_world
+            .apply(edits::make_add_block(new_quad, group.layer,
+                                         _world.blocks.next_id.quads.aquire()),
                    _edit_context,
                    {.transparent = std::exchange(is_transparent_edit, true)});
       }
