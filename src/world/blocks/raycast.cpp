@@ -205,6 +205,72 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
    return std::nullopt;
 }
 
+auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
+             const active_layers active_layers,
+             const blocks_cylinders& cylinders, const float max_distance,
+             function_ptr<bool(const block_id id) noexcept> filter) noexcept
+   -> std::optional<raycast_block_result_local>
+{
+   float closest = max_distance;
+   uint32 closest_index = UINT32_MAX;
+   uint32 surface_index = UINT32_MAX;
+
+   for (uint32 cylinder_index = 0; cylinder_index < cylinders.size(); ++cylinder_index) {
+      if (not active_layers[cylinders.layer[cylinder_index]]) continue;
+      if (cylinders.hidden[cylinder_index]) continue;
+
+      const block_description_cylinder& cylinder =
+         cylinders.description[cylinder_index];
+
+      const quaternion local_from_world = conjugate(cylinder.rotation);
+
+      const float3 ray_originLS =
+         local_from_world * (ray_originWS - cylinder.position);
+      const float3 ray_directionLS = normalize(local_from_world * ray_directionWS);
+
+      if (float hit; intersect_aabb(ray_originLS, 1.0f / ray_directionLS,
+                                    {-cylinder.size, cylinder.size}, closest, hit) and
+                     hit >= 0.0f) {
+         if (filter and not filter(cylinders.ids[cylinder_index])) continue;
+
+         const float4x4 scale = {
+            {cylinder.size.x, 0.0f, 0.0f, 0.0f},
+            {0.0f, cylinder.size.y, 0.0f, 0.0f},
+            {0.0f, 0.0f, cylinder.size.z, 0.0f},
+            {0.0f, 0.0f, 0.0f, 1.0f},
+         };
+         const float4x4 rotation = to_matrix(cylinder.rotation);
+
+         float4x4 world_from_object = rotation * scale;
+         world_from_object[3] = {cylinder.position, 1.0f};
+
+         for (const std::array<uint16, 3>& tri : block_cylinder_triangles) {
+            const float3 pos0WS =
+               world_from_object * block_cylinder_vertices[tri[0]].position;
+            const float3 pos1WS =
+               world_from_object * block_cylinder_vertices[tri[1]].position;
+            const float3 pos2WS =
+               world_from_object * block_cylinder_vertices[tri[2]].position;
+
+            if (intersect_tri(ray_originWS, ray_directionWS, pos0WS, pos1WS, pos2WS, hit) and
+                hit < closest) {
+               closest = hit;
+               closest_index = cylinder_index;
+               surface_index = block_cylinder_vertices[tri[0]].surface_index;
+            }
+         }
+      }
+   }
+
+   if (closest_index != UINT32_MAX) {
+      return raycast_block_result_local{.distance = closest,
+                                        .index = closest_index,
+                                        .surface_index = surface_index};
+   }
+
+   return std::nullopt;
+}
+
 }
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
@@ -243,6 +309,16 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
        hit) {
       closest = hit->distance;
       closest_id = blocks.quads.ids[hit->index];
+      closest_index = hit->index;
+      closest_surface_index = hit->surface_index;
+   }
+
+   if (std::optional<raycast_block_result_local> hit =
+          raycast(ray_originWS, ray_directionWS, active_layers,
+                  blocks.cylinders, closest, filter);
+       hit) {
+      closest = hit->distance;
+      closest_id = blocks.cylinders.ids[hit->index];
       closest_index = hit->index;
       closest_surface_index = hit->surface_index;
    }

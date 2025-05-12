@@ -23,6 +23,12 @@ extern const std::array<std::array<uint16, 4>, 3> block_ramp_occluders;
 extern const std::array<float3, 6> block_ramp_points;
 extern const std::array<std::array<uint16, 2>, 9> block_ramp_edges;
 
+extern const std::array<block_vertex, 192> block_cylinder_vertices;
+extern const std::array<std::array<uint16, 3>, 124> block_cylinder_triangles;
+extern const std::array<std::array<uint16, 4>, 32> block_cylinder_occluders;
+extern const std::array<float3, 64> block_cylinder_points;
+extern const std::array<std::array<uint16, 2>, 96> block_cylinder_edges;
+
 extern const std::array<std::array<uint16, 3>, 2> block_quad_triangles;
 extern const std::array<std::array<uint16, 3>, 2> block_quad_alternate_triangles;
 extern const std::array<float2, 4> block_quad_vertex_texcoords;

@@ -263,6 +263,88 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
    }
 
+   for (uint32 cylinder_index = 0; cylinder_index < blocks.cylinders.size();
+        ++cylinder_index) {
+      if (not config.active_layers[blocks.cylinders.layer[cylinder_index]])
+         continue;
+      if (blocks.cylinders.hidden[cylinder_index]) continue;
+      if (blocks.cylinders.ids[cylinder_index] == config.filter_id) continue;
+
+      const math::bounding_box bboxWS = {
+         .min =
+            {
+               blocks.cylinders.bbox.min_x[cylinder_index],
+               blocks.cylinders.bbox.min_y[cylinder_index],
+               blocks.cylinders.bbox.min_z[cylinder_index],
+            },
+
+         .max =
+            {
+               blocks.cylinders.bbox.max_x[cylinder_index],
+               blocks.cylinders.bbox.max_y[cylinder_index],
+               blocks.cylinders.bbox.max_z[cylinder_index],
+            },
+      };
+
+      const float3 cylinder_centreOS = (bboxWS.min + bboxWS.max) * 0.5f;
+      const float3 cylinder_size = (bboxWS.max - bboxWS.min) * 0.5f;
+
+      const float3 positionAS = positionWS - cylinder_centreOS;
+      const float3 distances = abs(positionAS) - cylinder_size;
+
+      const float cylinder_distance =
+         length(max(distances, float3{0.0f, 0.0f, 0.0f})) +
+         std::min(std::max(std::max(distances.x, distances.y), distances.z), 0.0f);
+
+      if (cylinder_distance > config.snap_radius) continue;
+
+      const block_description_cylinder& cylinder =
+         blocks.cylinders.description[cylinder_index];
+
+      const float4x4 scale = {
+         {cylinder.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, cylinder.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, cylinder.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(cylinder.rotation);
+
+      float4x4 world_from_object = rotation * scale;
+      world_from_object[3] = {cylinder.position, 1.0f};
+
+      std::array<float3, 64> verticesWS;
+
+      for (std::size_t i = 0; i < block_cylinder_points.size(); ++i) {
+         verticesWS[i] = world_from_object * block_cylinder_points[i];
+      }
+
+      for (const float3& vertex_positionWS : verticesWS) {
+         const float corner_distance = distance(positionWS, vertex_positionWS);
+
+         if (corner_distance < closest_distance) {
+            closest_pointWS = vertex_positionWS;
+            closest_distance = corner_distance;
+         }
+
+         draw_point(visualizers, vertex_positionWS, colors.corner);
+      }
+
+      for (const auto& [i0, i1] : block_cylinder_edges) {
+         for (int i = 1; i < edge_point_count; ++i) {
+            const float3 pointWS =
+               lerp(verticesWS[i0], verticesWS[i1], i / flt_edge_point_count);
+            const float point_distance = distance(positionWS, pointWS);
+
+            if (point_distance < closest_distance) {
+               closest_pointWS = pointWS;
+               closest_distance = point_distance;
+            }
+
+            draw_point(visualizers, pointWS, colors.edge);
+         }
+      }
+   }
+
    float3 new_positionWS;
 
    if (closest_distance > 0.0f and closest_distance <= config.snap_radius) {

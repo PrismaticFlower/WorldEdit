@@ -298,6 +298,13 @@ auto entity_group_metrics(const entity_group& group,
       ground_distance = std::min(ground_distance, bboxGS.min.y);
    }
 
+   for (const block_description_cylinder& cylinder : group.blocks.cylinders) {
+      const math::bounding_box bboxGS = get_bounding_box(cylinder);
+
+      group_bbox = math::combine(group_bbox, get_bounding_box(cylinder));
+      ground_distance = std::min(ground_distance, bboxGS.min.y);
+   }
+
    if (ground_distance == FLT_MAX) ground_distance = 0.0f;
 
    return {.ground_distance = ground_distance, .visual_bbox = group_bbox};
@@ -383,6 +390,11 @@ void centre_entity_group(entity_group& group) noexcept
       count += 4.0f;
    }
 
+   for (const block_description_cylinder& cylinder : group.blocks.cylinders) {
+      position += cylinder.position;
+      count += 1.0f;
+   }
+
    const float3 centre = position / count;
 
    for (object& object : group.objects) {
@@ -447,7 +459,11 @@ void centre_entity_group(entity_group& group) noexcept
 
    for (block_description_quad& quad : group.blocks.quads) {
       for (float3& v : quad.vertices) v -= centre;
-}
+   }
+
+   for (block_description_cylinder& cylinder : group.blocks.cylinders) {
+      cylinder.position -= centre;
+   }
 }
 
 auto get_placed_entity_name(std::string_view name, std::span<const object> world_objects,
@@ -614,6 +630,10 @@ auto make_entity_group_from_selection(const world& world,
             case block_type::quad: {
                group.blocks.quads.push_back(world.blocks.quads.description[*block_index]);
             } break;
+            case block_type::cylinder: {
+               group.blocks.cylinders.push_back(
+                  world.blocks.cylinders.description[*block_index]);
+            } break;
             }
          }
       }
@@ -736,6 +756,9 @@ auto make_entity_group_from_block_id(const blocks& blocks, const block_id id) no
    case block_type::quad: {
       group.blocks.quads.push_back(blocks.quads.description[*block_index]);
    } break;
+   case block_type::cylinder: {
+      group.blocks.cylinders.push_back(blocks.cylinders.description[*block_index]);
+   } break;
    }
 
    fill_entity_group_block_materials(group, blocks);
@@ -787,6 +810,14 @@ auto make_entity_group_from_layer(const world& world, const int32 layer) noexcep
       }
    }
 
+   for (uint32 block_index = 0; block_index < world.blocks.cylinders.size();
+        ++block_index) {
+      if (world.blocks.cylinders.layer[block_index] == layer) {
+         group.blocks.cylinders.push_back(
+            world.blocks.cylinders.description[block_index]);
+      }
+   }
+
    fill_entity_group_block_materials(group, world.blocks);
 
    return group;
@@ -817,6 +848,8 @@ auto make_entity_group_from_world(const world& world) noexcept -> entity_group
                       world.blocks.ramps.description.end()},
             .quads = {world.blocks.quads.description.begin(),
                       world.blocks.quads.description.end()},
+            .cylinders = {world.blocks.cylinders.description.begin(),
+                          world.blocks.cylinders.description.end()},
 
             .materials = {world.blocks.materials.begin(), world.blocks.materials.end()},
          },
@@ -839,9 +872,7 @@ bool is_entity_group_empty(const entity_group& group) noexcept
    empty &= group.planning_connections.empty();
    empty &= group.boundaries.empty();
    empty &= group.measurements.empty();
-   empty &= group.blocks.boxes.empty();
-   empty &= group.blocks.ramps.empty();
-   empty &= group.blocks.quads.empty();
+   empty &= is_entity_group_blocks_empty(group);
 
    return empty;
 }
@@ -853,6 +884,7 @@ bool is_entity_group_blocks_empty(const entity_group& group) noexcept
    empty &= group.blocks.boxes.empty();
    empty &= group.blocks.ramps.empty();
    empty &= group.blocks.quads.empty();
+   empty &= group.blocks.cylinders.empty();
 
    return empty;
 }

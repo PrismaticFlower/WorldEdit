@@ -16,6 +16,7 @@ tool_visualizers::tool_visualizers() noexcept
    _triangles_additive.reserve(64);
    _boxes_additive.reserve(8);
    _ramps_additive.reserve(8);
+   _cylinders_additive.reserve(8);
 }
 
 void tool_visualizers::add_line_overlay(float3 v0, float3 v1, uint32 color)
@@ -90,6 +91,12 @@ void tool_visualizers::add_ramp_additive(const float4x4& transform, const float4
    _ramps_additive.emplace_back(transform, color);
 }
 
+void tool_visualizers::add_cylinder_additive(const float4x4& transform,
+                                             const float4& color)
+{
+   _cylinders_additive.emplace_back(transform, color);
+}
+
 void tool_visualizers::clear() noexcept
 {
    _lines_overlay.clear();
@@ -104,6 +111,7 @@ void tool_visualizers::clear() noexcept
    _triangles_additive.clear();
    _boxes_additive.clear();
    _ramps_additive.clear();
+   _cylinders_additive.clear();
 }
 
 auto tool_visualizers::lines_overlay() const noexcept
@@ -175,5 +183,11 @@ auto tool_visualizers::ramps_additive() const noexcept
    -> std::span<const tool_visualizers_shape>
 {
    return _ramps_additive;
+}
+
+auto tool_visualizers::cylinders_additive() const noexcept
+   -> std::span<const tool_visualizers_shape>
+{
+   return _cylinders_additive;
 }
 }

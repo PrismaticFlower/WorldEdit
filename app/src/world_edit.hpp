@@ -208,6 +208,8 @@ enum class draw_block_step : uint8 {
    quad_v1,
    quad_v2,
    quad_v3,
+   cylinder_radius,
+   cylinder_height,
 };
 
 constexpr float tool_window_start_x = 264.0f;
@@ -1018,6 +1020,11 @@ private:
          struct quad {
             std::array<float3, 3> vertices;
          } quad;
+
+         struct cylinder {
+            float3 start;
+            float radius;
+         } cylinder;
 
          uint32 index = 0;
          world::block_id block_id = world::block_id::none;

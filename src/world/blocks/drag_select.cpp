@@ -67,6 +67,27 @@ void drag_select(const blocks& blocks, const frustum& frustumWS,
          }
       }
    }
+
+   for (uint32 block_index = 0; block_index < blocks.cylinders.size(); ++block_index) {
+      if (intersects(frustumWS, {.min =
+                                    {
+                                       blocks.cylinders.bbox.min_x[block_index],
+                                       blocks.cylinders.bbox.min_y[block_index],
+                                       blocks.cylinders.bbox.min_z[block_index],
+                                    },
+                                 .max = {
+                                    blocks.cylinders.bbox.max_x[block_index],
+                                    blocks.cylinders.bbox.max_y[block_index],
+                                    blocks.cylinders.bbox.max_z[block_index],
+                                 }})) {
+         if (op == block_drag_select_op::add) {
+            selection.add(block_id{blocks.cylinders.ids[block_index]});
+         }
+         else if (op == block_drag_select_op::remove) {
+            selection.remove(block_id{blocks.cylinders.ids[block_index]});
+         }
+      }
+   }
 }
 
 }

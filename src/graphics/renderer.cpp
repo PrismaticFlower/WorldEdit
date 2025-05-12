@@ -2504,6 +2504,10 @@ void renderer_impl::draw_world_meta_objects(
       _meta_draw_batcher.add_ramp(ramp.transform, ramp.color);
    }
 
+   for (const auto& cylinder : tool_visualizers.cylinders_additive()) {
+      _meta_draw_batcher.add_cylinder(cylinder.transform, cylinder.color);
+   }
+
    for (const gizmo_draw_pixel_line& line : draw_lists.pixel_lines) {
       _meta_draw_batcher.add_line_solid(line.position_start, line.position_end,
                                         line.color);
@@ -3407,6 +3411,19 @@ void renderer_impl::draw_interaction_targets(
                                                  block.vertices[3], color_packed);
                _meta_draw_batcher.add_line_solid(block.vertices[3],
                                                  block.vertices[0], color_packed);
+            } break;
+            case world::block_type::cylinder: {
+               const world::block_description_cylinder& block =
+                  world.blocks.cylinders.description[*block_index];
+
+               float4x4 transform = to_matrix(block.rotation) *
+                                    float4x4{{block.size.x, 0.0f, 0.0f, 0.0f},
+                                             {0.0f, block.size.y, 0.0f, 0.0f},
+                                             {0.0f, 0.0f, block.size.z, 0.0f},
+                                             {0.0f, 0.0f, 0.0f, 1.0f}};
+               transform[3] = {block.position, 1.0f};
+
+               _meta_draw_batcher.add_cylinder_wireframe(transform, color);
             } break;
             }
          }
