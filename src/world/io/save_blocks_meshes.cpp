@@ -275,8 +275,8 @@ auto save_blocks_meshes(const io::path& output_directory,
 
    std::size_t occluder_count = 0;
 
-   triangle_count += blocks.boxes.size() * block_cube_occluders.size();
-   triangle_count += blocks.ramps.size() * block_ramp_occluders.size();
+   occluder_count += blocks.boxes.size() * block_cube_occluders.size();
+   occluder_count += blocks.ramps.size() * block_ramp_occluders.size();
 
    std::vector<block_world_triangle> triangle_list;
    std::vector<block_world_occluder> occluder_list;
