@@ -272,11 +272,13 @@ auto save_blocks_meshes(const io::path& output_directory,
    triangle_count += blocks.boxes.size() * block_cube_triangles.size();
    triangle_count += blocks.ramps.size() * block_ramp_triangles.size();
    triangle_count += blocks.quads.size() * block_quad_triangles.size();
+   triangle_count += blocks.cylinders.size() * block_cylinder_triangles.size();
 
    std::size_t occluder_count = 0;
 
    occluder_count += blocks.boxes.size() * block_cube_occluders.size();
    occluder_count += blocks.ramps.size() * block_ramp_occluders.size();
+   occluder_count += blocks.cylinders.size() * block_cylinder_occluders.size();
 
    std::vector<block_world_triangle> triangle_list;
    std::vector<block_world_occluder> occluder_list;
@@ -289,6 +291,8 @@ auto save_blocks_meshes(const io::path& output_directory,
    process_blocks(blocks.ramps, block_ramp_vertices, block_ramp_triangles,
                   block_ramp_occluders, triangle_list, occluder_list);
    process_blocks(blocks.quads, triangle_list);
+   process_blocks(blocks.cylinders, block_cylinder_vertices, block_cylinder_triangles,
+                  block_cylinder_occluders, triangle_list, occluder_list);
 
    triangle_list = cull_hidden_triangles(triangle_list, occluder_list);
 
