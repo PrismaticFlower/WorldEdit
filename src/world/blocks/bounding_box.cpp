@@ -37,6 +37,12 @@ auto get_bounding_box(const block_description_quad& quad) noexcept -> math::boun
    };
 }
 
+auto get_bounding_box(const block_description_cylinder& cylinder) noexcept
+   -> math::bounding_box
+{
+   return get_bounding_box(cylinder.rotation, cylinder.position, cylinder.size);
+}
+
 auto get_bounding_box(const blocks& blocks, const block_type type,
                       const uint32 block_index) noexcept -> math::bounding_box
 {
@@ -49,6 +55,9 @@ auto get_bounding_box(const blocks& blocks, const block_type type,
    } break;
    case world::block_type::quad: {
       return get_bounding_box(blocks.quads.description[block_index]);
+   } break;
+   case world::block_type::cylinder: {
+      return get_bounding_box(blocks.cylinders.description[block_index]);
    } break;
    }
 

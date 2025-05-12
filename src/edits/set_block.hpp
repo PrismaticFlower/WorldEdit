@@ -15,6 +15,10 @@ auto make_set_block_ramp_metrics(const uint32 index, const quaternion& rotation,
                                  const float3& position, const float3& size) noexcept
    -> std::unique_ptr<edit<world::edit_context>>;
 
+auto make_set_block_cylinder_metrics(const uint32 index, const quaternion& rotation,
+                                     const float3& position, const float3& size) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 auto make_set_block_quad_metrics(const uint32 index,
                                  const std::array<float3, 4>& vertices) noexcept
    -> std::unique_ptr<edit<world::edit_context>>;

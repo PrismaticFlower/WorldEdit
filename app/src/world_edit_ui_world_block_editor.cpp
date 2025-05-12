@@ -5,6 +5,7 @@
 #include "edits/set_block.hpp"
 
 #include "math/intersectors.hpp"
+#include "math/iq_intersectors.hpp"
 #include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
@@ -84,6 +85,7 @@ auto block_type_name(world::block_type type) noexcept -> const char*
    case world::block_type::box:  return "Box";
    case world::block_type::ramp: return "Ramp";
    case world::block_type::quad: return "Quadrilateral";
+   case world::block_type::cylinder: return "Cylinder";
    }
    // clang-format on
 
@@ -113,7 +115,7 @@ void world_edit::ui_show_block_editor() noexcept
                             block_type_name(_block_editor_config.draw_type))) {
          for (const world::block_type type :
               {world::block_type::box, world::block_type::ramp,
-               world::block_type::quad}) {
+               world::block_type::quad, world::block_type::cylinder}) {
 
             if (ImGui::Selectable(block_type_name(type),
                                   type == _block_editor_config.draw_type)) {
@@ -760,6 +762,41 @@ void world_edit::ui_show_block_editor() noexcept
                _block_editor_context.draw_block.quad.vertices[0] = cursor_positionWS;
                _block_editor_context.draw_block.step = draw_block_step::quad_v1;
             } break;
+            case world::block_type::cylinder: {
+               const uint8 material_index = _block_editor_config.paint_material_index;
+               const world::block_cylinder_id id =
+                  _world.blocks.next_id.cylinders.aquire();
+
+               _block_editor_context.draw_block.index =
+                  static_cast<uint32>(_world.blocks.cylinders.size());
+               _block_editor_context.draw_block.block_id = id;
+
+               _block_editor_context.draw_block.cylinder.start = cursor_positionWS;
+               _block_editor_context.draw_block.step = draw_block_step::cylinder_radius;
+
+               if (_world.blocks.cylinders.size() < world::max_blocks) {
+                  _edit_stack_world.apply(
+                     edits::make_add_block(
+                        world::block_description_cylinder{
+                           .position = cursor_positionWS,
+                           .size = {1.0f, 0.0f, 1.0f},
+                           .surface_materials = {material_index, material_index, material_index},
+                           .surface_texture_mode = {world::block_texture_mode::world_space_auto,
+                                                    world::block_texture_mode::world_space_auto,
+                                                    world::block_texture_mode::unwrapped}},
+                        _block_editor_config.new_block_layer, id),
+                     _edit_context);
+               }
+               else {
+                  MessageBoxA(_window,
+                              fmt::format("Max Cylinders ({}) Reached", world::max_blocks)
+                                 .c_str(),
+                              "Limit Reached", MB_OK);
+
+                  _block_editor_context.tool = block_edit_tool::none;
+               }
+
+            } break;
             }
          }
       } break;
@@ -1223,6 +1260,88 @@ void world_edit::ui_show_block_editor() noexcept
          }
 
       } break;
+      case draw_block_step::cylinder_radius: {
+         const float3 draw_block_start =
+            _block_editor_context.draw_block.cylinder.start;
+
+         _tool_visualizers.add_line_overlay(draw_block_start,
+                                            {cursor_positionWS.x,
+                                             draw_block_start.y,
+                                             cursor_positionWS.z},
+                                            line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         const float radius =
+            distance(float2{draw_block_start.x, draw_block_start.z},
+                     float2{cursor_positionWS.x, cursor_positionWS.z});
+
+         if (const uint32 index = _block_editor_context.draw_block.index;
+             index < _world.blocks.cylinders.size() and
+             _world.blocks.cylinders.ids[index] ==
+                _block_editor_context.draw_block.block_id) {
+            _edit_stack_world
+               .apply(edits::make_set_block_cylinder_metrics(index, {}, draw_block_start,
+                                                             {radius, 0.0f, radius}),
+                      _edit_context, {.transparent = true});
+         }
+
+         if (click) {
+            _block_editor_context.draw_block.height_plane = std::nullopt;
+            _block_editor_context.draw_block.cylinder.radius = radius;
+            _block_editor_context.draw_block.step = draw_block_step::cylinder_height;
+         }
+      } break;
+      case draw_block_step::cylinder_height: {
+         const float3 draw_block_start =
+            _block_editor_context.draw_block.cylinder.start;
+         const float radius = _block_editor_context.draw_block.cylinder.radius;
+
+         graphics::camera_ray rayWS =
+            make_camera_ray(_camera,
+                            {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                            {ImGui::GetMainViewport()->Size.x,
+                             ImGui::GetMainViewport()->Size.y});
+
+         float3 cursor_position = cursor_positionWS;
+
+         if (float hit = iCylinderInfinite(rayWS.origin, rayWS.direction, draw_block_start,
+                                           float3{0.0f, 1.0f, 0.0f}, radius)
+                            .x;
+             hit >= 0.0f and hit < distance(_camera.position(), cursor_positionWS)) {
+            cursor_position = rayWS.origin + hit * rayWS.direction;
+         }
+
+         const float unaligned_cylinder_height =
+            cursor_position.y - draw_block_start.y;
+         const float cylinder_height =
+            align
+               ? std::round(unaligned_cylinder_height / alignment.y) * alignment.y
+               : unaligned_cylinder_height;
+
+         const float3 position = {draw_block_start.x,
+                                  draw_block_start.y + (cylinder_height / 2.0f),
+                                  draw_block_start.z};
+         const float3 size = abs(float3{radius, cylinder_height / 2.0f, radius});
+
+         if (const uint32 index = _block_editor_context.draw_block.index;
+             index < _world.blocks.cylinders.size() and
+             _world.blocks.cylinders.ids[index] ==
+                _block_editor_context.draw_block.block_id) {
+            _edit_stack_world.apply(edits::make_set_block_cylinder_metrics(index, {}, position,
+                                                                           size),
+                                    _edit_context, {.transparent = true});
+         }
+
+         _tool_visualizers.add_line_overlay(
+            position - float3{0.0f, cylinder_height * 0.5f, 0.0f},
+            position + float3{0.0f, cylinder_height * 0.5f, 0.0f}, line_color);
+
+         if (click) {
+            _block_editor_context.draw_block = {};
+
+            _edit_stack_world.close_last();
+         }
+      } break;
       }
    }
    else if (_block_editor_context.tool == block_edit_tool::rotate_texture) {
@@ -1544,6 +1663,25 @@ void world_edit::ui_show_block_editor() noexcept
                   _edit_context);
             }
 
+         } break;
+         case world::block_type::cylinder: {
+            const world::block_description_cylinder& cylinder =
+               _world.blocks.cylinders.description[*selected_index];
+
+            float3 size = cylinder.size;
+            float3 positionWS = cylinder.position;
+
+            if (_gizmos.gizmo_size({.name = "Resize Block (Cylinder)",
+                                    .instance = *selected_index,
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation = cylinder.rotation},
+                                   positionWS, size)) {
+               _edit_stack_world
+                  .apply(edits::make_set_block_cylinder_metrics(*selected_index,
+                                                                cylinder.rotation,
+                                                                positionWS, size),
+                         _edit_context);
+            }
          } break;
          }
 

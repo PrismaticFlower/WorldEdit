@@ -34,10 +34,12 @@ struct blocks {
       instance_list boxes;
       instance_list ramps;
       instance_list quads;
+      instance_list cylinders;
 
       instance_list dynamic_boxes;
       instance_list dynamic_ramps;
       instance_list dynamic_quads;
+      instance_list dynamic_cylinders;
    };
 
    blocks(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
@@ -112,6 +114,9 @@ private:
    gpu::unique_resource_handle _quads_instance_data;
    uint64 _quads_instance_data_capacity = 0;
 
+   gpu::unique_resource_handle _cylinders_instance_data;
+   uint64 _cylinders_instance_data_capacity = 0;
+
    std::vector<uint32> _TEMP_culling_storage;
 
    std::vector<material> _materials;
@@ -147,9 +152,13 @@ private:
       gpu::unique_resource_handle quads_instance_data;
       uint64 quads_instance_data_capacity = 0;
 
+      gpu::unique_resource_handle cylinders_instance_data;
+      uint64 cylinders_instance_data_capacity = 0;
+
       bbox_soa boxes_bbox;
       bbox_soa ramps_bbox;
       bbox_soa quads_bbox;
+      bbox_soa cylinders_bbox;
 
       std::array<material, world::max_block_materials> materials;
 

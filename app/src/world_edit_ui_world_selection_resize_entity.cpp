@@ -501,6 +501,29 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                   }
 
                } break;
+               case world::block_type::cylinder: {
+                  const world::block_description_cylinder& cylinder =
+                     _world.blocks.cylinders.description[*block_index];
+
+                  float3 new_position = cylinder.position;
+                  float3 new_size = cylinder.size;
+
+                  if (_gizmos.gizmo_size(
+                         {
+                            .name = "Block Cylinder Size",
+                            .instance = static_cast<int64>(
+                               _world.blocks.cylinders.ids[*block_index]),
+                            .alignment = _editor_grid_size,
+                            .gizmo_rotation = cylinder.rotation,
+                         },
+                         new_position, new_size)) {
+                     _edit_stack_world.apply(edits::make_set_block_cylinder_metrics(
+                                                *block_index, cylinder.rotation,
+                                                new_position, new_size),
+                                             _edit_context);
+                  }
+
+               } break;
                }
             }
 

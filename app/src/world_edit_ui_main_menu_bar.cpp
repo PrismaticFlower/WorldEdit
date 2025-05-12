@@ -376,21 +376,27 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          ImGui::Separator();
 
-         if (ImGui::MenuItem("New Box")) {
+         if (ImGui::MenuItem("Draw Box")) {
             _block_editor_open = true;
             _block_editor_config.draw_type = world::block_type::box;
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 
-         if (ImGui::MenuItem("New Ramp")) {
+         if (ImGui::MenuItem("Draw Ramp")) {
             _block_editor_open = true;
             _block_editor_config.draw_type = world::block_type::ramp;
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 
-         if (ImGui::MenuItem("New Quadrilateral")) {
+         if (ImGui::MenuItem("Draw Quadrilateral")) {
             _block_editor_open = true;
             _block_editor_config.draw_type = world::block_type::quad;
+            _block_editor_context = {.activate_tool = block_edit_tool::draw};
+         }
+
+         if (ImGui::MenuItem("Draw Cylinder")) {
+            _block_editor_open = true;
+            _block_editor_config.draw_type = world::block_type::cylinder;
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 
