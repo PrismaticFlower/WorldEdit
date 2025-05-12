@@ -175,6 +175,57 @@ void save_quads(io::output_file& out, const blocks_quads& quads) noexcept
    out.write_ln("}\n");
 }
 
+void save_cylinders(io::output_file& out, const blocks_cylinders& cylinders) noexcept
+{
+   if (cylinders.size() == 0) return;
+
+   out.write_ln("Cylinders({})", cylinders.size());
+   out.write_ln("{");
+
+   for (uint32 box_index = 0; box_index < cylinders.size(); ++box_index) {
+      const block_description_cylinder& cylinder = cylinders.description[box_index];
+      const int8 cylinder_layer = cylinders.layer[box_index];
+
+      out.write_ln("   Cylinder()");
+      out.write_ln("   {");
+
+      out.write_ln("      Rotation({}, {}, {}, {});", cylinder.rotation.w,
+                   cylinder.rotation.x, cylinder.rotation.y, cylinder.rotation.z);
+      out.write_ln("      Position({}, {}, {});", cylinder.position.x,
+                   cylinder.position.y, cylinder.position.z);
+      out.write_ln("      Size({}, {}, {});", cylinder.size.x, cylinder.size.y,
+                   cylinder.size.z);
+      out.write_ln("      SurfaceMaterials({}, {}, {});",
+                   cylinder.surface_materials[0], cylinder.surface_materials[1],
+                   cylinder.surface_materials[2]);
+      out.write_ln("      SurfaceTextureMode({}, {}, {});",
+                   cylinder.surface_texture_mode[0], cylinder.surface_texture_mode[1],
+                   cylinder.surface_texture_mode[2]);
+      out.write_ln("      SurfaceTextureRotation({}, {}, {});",
+                   cylinder.surface_texture_rotation[0],
+                   cylinder.surface_texture_rotation[1],
+                   cylinder.surface_texture_rotation[2]);
+      out.write_ln("      SurfaceTextureScale({}, {}, {}, {}, {}, {});",
+                   cylinder.surface_texture_scale[0][0],
+                   cylinder.surface_texture_scale[0][1],
+                   cylinder.surface_texture_scale[1][0],
+                   cylinder.surface_texture_scale[1][1],
+                   cylinder.surface_texture_scale[2][0],
+                   cylinder.surface_texture_scale[2][1]);
+      out.write_ln("      SurfaceTextureOffset({}, {}, {}, {}, {}, {});",
+                   cylinder.surface_texture_offset[0][0],
+                   cylinder.surface_texture_offset[0][1],
+                   cylinder.surface_texture_offset[1][0],
+                   cylinder.surface_texture_offset[1][1],
+                   cylinder.surface_texture_offset[2][0],
+                   cylinder.surface_texture_offset[2][1]);
+      if (cylinder_layer != 0) out.write_ln("      Layer({});", cylinder_layer);
+      out.write_ln("   }");
+   }
+
+   out.write_ln("}\n");
+}
+
 void save_materials(io::output_file& out, const blocks& blocks) noexcept
 {
    const block_material empty_material;
@@ -216,6 +267,7 @@ void save_blocks(const io::path& path, const blocks& blocks)
 
    save_boxes(out, blocks.boxes);
    save_ramps(out, blocks.ramps);
+   save_cylinders(out, blocks.cylinders);
    save_quads(out, blocks.quads);
    save_materials(out, blocks);
 }

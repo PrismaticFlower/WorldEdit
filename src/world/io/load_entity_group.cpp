@@ -837,6 +837,77 @@ void read_blocks_quads(const assets::config::node& node, entity_group& group_out
    }
 }
 
+void read_blocks_cylinders(const assets::config::node& node, entity_group& group_out)
+{
+   for (const auto& key_node : node) {
+      if (not string::iequals(key_node.key, "Cylinder")) continue;
+
+      block_description_cylinder cylinder;
+
+      for (const auto& prop : key_node) {
+         if (string::iequals(prop.key, "Rotation")) {
+            cylinder.rotation = {prop.values.get<float>(0),
+                                 prop.values.get<float>(1),
+                                 prop.values.get<float>(2),
+                                 prop.values.get<float>(3)};
+         }
+         else if (string::iequals(prop.key, "Position")) {
+            cylinder.position = {prop.values.get<float>(0),
+                                 prop.values.get<float>(1),
+                                 prop.values.get<float>(2)};
+         }
+         else if (string::iequals(prop.key, "Size")) {
+            cylinder.size = {prop.values.get<float>(0), prop.values.get<float>(1),
+                             prop.values.get<float>(2)};
+         }
+         else if (string::iequals(prop.key, "SurfaceMaterials")) {
+            for (uint32 i = 0; i < cylinder.surface_materials.size(); ++i) {
+               cylinder.surface_materials[i] = prop.values.get<uint8>(i);
+            }
+         }
+         else if (string::iequals(prop.key, "SurfaceTextureMode")) {
+            for (uint32 i = 0; i < cylinder.surface_texture_mode.size(); ++i) {
+               cylinder.surface_texture_mode[i] =
+                  read_block_texture_mode(prop.values.get<uint8>(i));
+            }
+         }
+         else if (string::iequals(prop.key, "SurfaceTextureRotation")) {
+            for (uint32 i = 0; i < cylinder.surface_texture_rotation.size(); ++i) {
+               const uint8 rotation = prop.values.get<uint8>(i);
+
+               switch (rotation) {
+               case static_cast<uint8>(block_texture_rotation::d0):
+               case static_cast<uint8>(block_texture_rotation::d90):
+               case static_cast<uint8>(block_texture_rotation::d180):
+               case static_cast<uint8>(block_texture_rotation::d270):
+                  cylinder.surface_texture_rotation[i] =
+                     block_texture_rotation{rotation};
+                  break;
+               }
+            }
+         }
+         else if (string::iequals(prop.key, "SurfaceTextureScale")) {
+            for (uint32 i = 0; i < cylinder.surface_texture_scale.size(); ++i) {
+               cylinder.surface_texture_scale[i] =
+                  {std::clamp(prop.values.get<int8>(i * 2 + 0),
+                              block_min_texture_scale, block_max_texture_scale),
+                   std::clamp(prop.values.get<int8>(i * 2 + 1),
+                              block_min_texture_scale, block_max_texture_scale)};
+            }
+         }
+         else if (string::iequals(prop.key, "SurfaceTextureOffset")) {
+            for (uint32 i = 0; i < cylinder.surface_texture_offset.size(); ++i) {
+               cylinder.surface_texture_offset[i] =
+                  {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
+                   std::min(prop.values.get<uint16>(i * 2 + 1), block_max_texture_offset)};
+            }
+         }
+      }
+
+      group_out.blocks.cylinders.push_back(cylinder);
+   }
+}
+
 void read_blocks_materials(const assets::config::node& node, entity_group& group_out)
 {
    for (const auto& key_node : node) {
@@ -1157,6 +1228,11 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
             group.blocks.quads.reserve(key_node.values.get<uint32>(0));
 
             read_blocks_quads(key_node, group);
+         }
+         else if (string::iequals(key_node.key, "BlocksCylinders"sv)) {
+            group.blocks.cylinders.reserve(key_node.values.get<uint32>(0));
+
+            read_blocks_cylinders(key_node, group);
          }
          else if (string::iequals(key_node.key, "BlocksMaterials"sv)) {
             group.blocks.materials.reserve(key_node.values.get<uint32>(0));
