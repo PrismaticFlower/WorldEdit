@@ -118,6 +118,19 @@ void fill_entity_group_block_materials(entity_group& group, const blocks& blocks
          material = *materials_remap[material];
       }
    }
+
+   for (block_description_cylinder& cylinder : group.blocks.cylinders) {
+      for (uint8& material : cylinder.surface_materials) {
+         if (not materials_remap[material]) {
+            materials_remap[material] =
+               static_cast<uint8>(group.blocks.materials.size());
+
+            group.blocks.materials.push_back(blocks.materials[material]);
+         }
+
+         material = *materials_remap[material];
+      }
+   }
 }
 
 }
