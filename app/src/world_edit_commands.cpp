@@ -717,6 +717,15 @@ void world_edit::initialize_commands() noexcept
                  [this] { _block_editor_context.tool = block_edit_tool::none; });
    _commands.add("blocks.tool_click"s, _block_editor_context.tool_click);
    _commands.add("blocks.tool_ctrl_click"s, _block_editor_context.tool_ctrl_click);
+   _commands.add("blocks.draw_plane_x"s, [this] {
+      _block_editor_context.draw_block.toggle_plane = draw_block_cursor_plane::x;
+   });
+   _commands.add("blocks.draw_plane_y"s, [this] {
+      _block_editor_context.draw_block.toggle_plane = draw_block_cursor_plane::y;
+   });
+   _commands.add("blocks.draw_plane_z"s, [this] {
+      _block_editor_context.draw_block.toggle_plane = draw_block_cursor_plane::z;
+   });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -1423,10 +1432,26 @@ void world_edit::initialize_hotkeys() noexcept
             {"Resize Block",
              "blocks.activate_resize_block",
              {.key = key::f, .modifiers = {.ctrl = true}}},
+         },
+   });
+
+   _hotkeys.add_set({
+      .name = "Block Editing (Drawing)",
+      .description = "Active while the block editor is open."s,
+      .activated =
+         [this] {
+            return _block_editor_open and
+                   _block_editor_context.tool == block_edit_tool::draw;
+         },
+      .default_hotkeys =
+         {
             {"Toggle Cursor Alignment", "blocks.cursor_toggle_alignment", {.key = key::g}},
             {"Toggle Cursor Snapping",
              "blocks.cursor_toggle_snapping",
              {.key = key::s, .modifiers = {.alt = true}}},
+            {"Toggle X Draw Plane", "blocks.draw_plane_x", {.key = key::z}},
+            {"Toggle Y Draw Plane", "blocks.draw_plane_y", {.key = key::x}},
+            {"Toggle Z Draw Plane", "blocks.draw_plane_z", {.key = key::c}},
          },
    });
 

@@ -40,6 +40,10 @@ constexpr std::array<const char*, 13> alignment_names =
    {"0.0625", "0.125", "0.25", "0.5",  "1.0",   "2.0",  "4.0",
     "8.0",    "16.0",  "32.0", "64.0", "128.0", "256.0"};
 
+constexpr uint32 cursor_plane_axis_color_x = 0x7f'e5'40'40;
+constexpr uint32 cursor_plane_axis_color_y = 0x7f'40'60'e5;
+constexpr uint32 cursor_plane_axis_color_z = 0x7f'30'e5'30;
+
 auto texture_mode_name(world::block_texture_mode mode) noexcept -> const char*
 {
    // clang-format off
@@ -573,45 +577,64 @@ void world_edit::ui_show_block_editor() noexcept
    if (_hotkeys_view_show) {
       ImGui::Begin("Hotkeys");
 
-      ImGui::SeparatorText("Block Editing");
-
-      ImGui::Text("Draw Block");
-      ImGui::BulletText(get_display_string(
-         _hotkeys.query_binding("Block Editing", "Draw Block")));
-
-      ImGui::Text("Resize Block");
-      ImGui::BulletText(get_display_string(
-         _hotkeys.query_binding("Block Editing", "Resize Block")));
-
-      ImGui::Text("Paint Material");
-      ImGui::BulletText(get_display_string(
-         _hotkeys.query_binding("Block Editing", "Paint Material")));
-
-      ImGui::Text("Set Texture Mode");
-      ImGui::BulletText(get_display_string(
-         _hotkeys.query_binding("Block Editing", "Set Texture Mode")));
-
-      ImGui::Text("Rotate Texture");
-      ImGui::BulletText(get_display_string(
-         _hotkeys.query_binding("Block Editing", "Rotate Texture")));
-
-      ImGui::Text("Scale Texture");
-      ImGui::BulletText(get_display_string(
-         _hotkeys.query_binding("Block Editing", "Scale Texture")));
-
-      ImGui::Text("Offset Texture");
-      ImGui::BulletText(get_display_string(
-         _hotkeys.query_binding("Block Editing", "Offset Texture")));
-
       if (_block_editor_context.tool == block_edit_tool::draw) {
+         ImGui::SeparatorText("Block Drawing");
+
          ImGui::Text("Toggle Cursor Alignment");
          ImGui::BulletText(get_display_string(
-            _hotkeys.query_binding("Block Editing",
+            _hotkeys.query_binding("Block Editing (Drawing)",
                                    "Toggle Cursor Alignment")));
 
          ImGui::Text("Toggle Cursor Snapping");
          ImGui::BulletText(get_display_string(
-            _hotkeys.query_binding("Block Editing", "Toggle Cursor Snapping")));
+            _hotkeys.query_binding("Block Editing (Drawing)",
+                                   "Toggle Cursor Snapping")));
+
+         ImGui::Text("Toggle X Draw Plane");
+         ImGui::BulletText(
+            get_display_string(_hotkeys.query_binding("Block Editing (Drawing)",
+                                                      "Toggle X Draw Plane")));
+
+         ImGui::Text("Toggle Y Draw Plane");
+         ImGui::BulletText(
+            get_display_string(_hotkeys.query_binding("Block Editing (Drawing)",
+                                                      "Toggle Y Draw Plane")));
+
+         ImGui::Text("Toggle Z Draw Plane");
+         ImGui::BulletText(
+            get_display_string(_hotkeys.query_binding("Block Editing (Drawing)",
+                                                      "Toggle Z Draw Plane")));
+      }
+      else {
+         ImGui::SeparatorText("Block Editing");
+
+         ImGui::Text("Draw Block");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Block Editing", "Draw Block")));
+
+         ImGui::Text("Resize Block");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Block Editing", "Resize Block")));
+
+         ImGui::Text("Paint Material");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Block Editing", "Paint Material")));
+
+         ImGui::Text("Set Texture Mode");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Block Editing", "Set Texture Mode")));
+
+         ImGui::Text("Rotate Texture");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Block Editing", "Rotate Texture")));
+
+         ImGui::Text("Scale Texture");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Block Editing", "Scale Texture")));
+
+         ImGui::Text("Offset Texture");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Block Editing", "Offset Texture")));
       }
 
       ImGui::End();
@@ -711,6 +734,125 @@ void world_edit::ui_show_block_editor() noexcept
                .corner = _settings.graphics.snapping_corner_color,
                .edge = _settings.graphics.snapping_edge_color,
             });
+      }
+
+      if (_block_editor_context.draw_block.cursor_plane !=
+          draw_block_cursor_plane::none) {
+         const graphics::camera_ray rayWS =
+            make_camera_ray(_camera,
+                            {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                            {ImGui::GetMainViewport()->Size.x,
+                             ImGui::GetMainViewport()->Size.y});
+
+         uint32 axis_color = 0x30'ff'ff'ff;
+         float3 plane_axisWS;
+
+         switch (_block_editor_context.draw_block.cursor_plane) {
+         case draw_block_cursor_plane::none:
+            break;
+         case draw_block_cursor_plane::x:
+            axis_color = cursor_plane_axis_color_x;
+            plane_axisWS = float3{1.0f, 0.0f, 0.0f};
+            break;
+         case draw_block_cursor_plane::y:
+            axis_color = cursor_plane_axis_color_y;
+            plane_axisWS = float3{0.0f, 1.0f, 0.0f};
+            break;
+         case draw_block_cursor_plane::z:
+            axis_color = cursor_plane_axis_color_z;
+            plane_axisWS = float3{0.0f, 0.0f, 1.0f};
+            break;
+         }
+
+         const float3 plane_positionWS =
+            _block_editor_context.draw_block.cursor_plane_positionWS;
+         const float3 eye_directionWS = plane_positionWS - _camera.position();
+         const float3 plane_tangentWS = cross(plane_axisWS, eye_directionWS);
+         const float3 plane_normalWS =
+            normalize(cross(plane_axisWS, plane_tangentWS));
+
+         const float4 planeWS =
+            make_plane_from_point(plane_positionWS, plane_normalWS);
+
+         if (float hit = intersect_plane(rayWS.origin, rayWS.direction, planeWS);
+             hit > 0.0f) {
+            float3 hit_positionWS = rayWS.origin + rayWS.direction * hit;
+
+            if (align) {
+               hit_positionWS = round(hit_positionWS / alignment) * alignment;
+            }
+
+            switch (_block_editor_context.draw_block.cursor_plane) {
+            case draw_block_cursor_plane::none:
+               break;
+            case draw_block_cursor_plane::x:
+               cursor_positionWS = {hit_positionWS.x, plane_positionWS.y,
+                                    plane_positionWS.z};
+               break;
+            case draw_block_cursor_plane::y:
+               cursor_positionWS = {plane_positionWS.x, hit_positionWS.y,
+                                    plane_positionWS.z};
+               break;
+            case draw_block_cursor_plane::z:
+               cursor_positionWS = {plane_positionWS.x, plane_positionWS.y,
+                                    hit_positionWS.z};
+               break;
+            }
+
+            _tool_visualizers.add_line(cursor_positionWS, plane_positionWS,
+                                       0xff'ff'ff'ff);
+         }
+
+         _tool_visualizers.add_line(cursor_positionWS - plane_axisWS * _camera.far_clip(),
+                                    cursor_positionWS + plane_axisWS * _camera.far_clip(),
+                                    axis_color);
+      }
+
+      switch (_block_editor_context.draw_block.toggle_plane) {
+      case draw_block_cursor_plane::none:
+         break;
+      case draw_block_cursor_plane::x: {
+         if (_block_editor_context.draw_block.cursor_plane ==
+             draw_block_cursor_plane::x) {
+            _block_editor_context.draw_block.cursor_plane =
+               draw_block_cursor_plane::none;
+         }
+         else {
+            _block_editor_context.draw_block.cursor_plane =
+               draw_block_cursor_plane::x;
+            _block_editor_context.draw_block.toggle_plane =
+               draw_block_cursor_plane::none;
+            _block_editor_context.draw_block.cursor_plane_positionWS = cursor_positionWS;
+         }
+      } break;
+      case draw_block_cursor_plane::y: {
+         if (_block_editor_context.draw_block.cursor_plane ==
+             draw_block_cursor_plane::y) {
+            _block_editor_context.draw_block.cursor_plane =
+               draw_block_cursor_plane::none;
+         }
+         else {
+            _block_editor_context.draw_block.cursor_plane =
+               draw_block_cursor_plane::y;
+            _block_editor_context.draw_block.toggle_plane =
+               draw_block_cursor_plane::none;
+            _block_editor_context.draw_block.cursor_plane_positionWS = cursor_positionWS;
+         }
+      } break;
+      case draw_block_cursor_plane::z: {
+         if (_block_editor_context.draw_block.cursor_plane ==
+             draw_block_cursor_plane::z) {
+            _block_editor_context.draw_block.cursor_plane =
+               draw_block_cursor_plane::none;
+         }
+         else {
+            _block_editor_context.draw_block.cursor_plane =
+               draw_block_cursor_plane::z;
+            _block_editor_context.draw_block.toggle_plane =
+               draw_block_cursor_plane::none;
+            _block_editor_context.draw_block.cursor_plane_positionWS = cursor_positionWS;
+         }
+      } break;
       }
 
       const uint32 line_color =
@@ -1689,5 +1831,4 @@ void world_edit::ui_show_block_editor() noexcept
       }
    }
 }
-
 }
