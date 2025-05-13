@@ -3423,7 +3423,7 @@ void renderer_impl::draw_interaction_targets(
                                              {0.0f, 0.0f, 0.0f, 1.0f}};
                transform[3] = {block.position, 1.0f};
 
-               _meta_draw_batcher.add_cylinder_wireframe(transform, color);
+               _meta_draw_batcher.add_alt_cylinder_wireframe(transform, color);
             } break;
             }
          }
