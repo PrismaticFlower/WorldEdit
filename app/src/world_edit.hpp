@@ -212,6 +212,8 @@ enum class draw_block_step : uint8 {
    cylinder_height,
 };
 
+enum class draw_block_cursor_plane : uint8 { none, x, y, z };
+
 constexpr float tool_window_start_x = 264.0f;
 
 class world_edit {
@@ -998,6 +1000,10 @@ private:
       struct draw_block {
          draw_block_step step = draw_block_step::start;
          std::optional<float> height_plane = std::nullopt;
+
+         draw_block_cursor_plane toggle_plane = draw_block_cursor_plane::none;
+         draw_block_cursor_plane cursor_plane = draw_block_cursor_plane::none;
+         float3 cursor_plane_positionWS;
 
          struct box {
             float3 start;
