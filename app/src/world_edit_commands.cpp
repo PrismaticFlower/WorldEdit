@@ -726,6 +726,8 @@ void world_edit::initialize_commands() noexcept
    _commands.add("blocks.draw_plane_z"s, [this] {
       _block_editor_context.draw_block.toggle_plane = draw_block_cursor_plane::z;
    });
+   _commands.add("blocks.show_quick_tools"s,
+                 [this] { ImGui::OpenPopup("Block Quick Tools"); });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -1432,6 +1434,7 @@ void world_edit::initialize_hotkeys() noexcept
             {"Resize Block",
              "blocks.activate_resize_block",
              {.key = key::f, .modifiers = {.ctrl = true}}},
+            {"Show Quick Tools", "blocks.show_quick_tools", {.key = key::space}},
          },
    });
 

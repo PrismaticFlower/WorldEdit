@@ -640,6 +640,30 @@ void world_edit::ui_show_block_editor() noexcept
       ImGui::End();
    }
 
+   if (ImGui::BeginPopup("Block Quick Tools", ImGuiWindowFlags_NoTitleBar)) {
+      if (ImGui::MenuItem("Draw Box")) {
+         _block_editor_config.draw_type = world::block_type::box;
+         _block_editor_context = {.activate_tool = block_edit_tool::draw};
+      }
+
+      if (ImGui::MenuItem("Draw Ramp")) {
+         _block_editor_config.draw_type = world::block_type::ramp;
+         _block_editor_context = {.activate_tool = block_edit_tool::draw};
+      }
+
+      if (ImGui::MenuItem("Draw Quadrilateral")) {
+         _block_editor_config.draw_type = world::block_type::quad;
+         _block_editor_context = {.activate_tool = block_edit_tool::draw};
+      }
+
+      if (ImGui::MenuItem("Draw Cylinder")) {
+         _block_editor_config.draw_type = world::block_type::cylinder;
+         _block_editor_context = {.activate_tool = block_edit_tool::draw};
+      }
+
+      ImGui::EndPopup();
+   }
+
    switch (std::exchange(_block_editor_context.activate_tool, block_edit_tool::none)) {
    case block_edit_tool::none: {
    } break;
