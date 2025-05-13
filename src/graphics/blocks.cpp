@@ -1140,7 +1140,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
          description.world_from_object[2] = {world_from_object[2].x,
                                              world_from_object[2].y,
                                              world_from_object[2].z};
-         description.world_from_object[3] = block.position;
+         description.world_from_object[3] = block_positionWS;
 
          const quaternion object_from_world = conjugate(block.rotation);
 
@@ -1222,7 +1222,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
          description.world_from_object[2] = {world_from_object[2].x,
                                              world_from_object[2].y,
                                              world_from_object[2].z};
-         description.world_from_object[3] = block.position;
+         description.world_from_object[3] = block_positionWS;
 
          const quaternion object_from_world = conjugate(block.rotation);
 
@@ -1373,7 +1373,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
          description.world_from_object[2] = {world_from_object[2].x,
                                              world_from_object[2].y,
                                              world_from_object[2].z};
-         description.world_from_object[3] = block.position;
+         description.world_from_object[3] = block_positionWS;
 
          const quaternion object_from_world = conjugate(block.rotation);
 
@@ -1408,22 +1408,23 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                                          sizeof(block_instance_description));
    }
 
-   if (not blocks.materials.empty()) {
-      if (not materials_buffer) {
-         materials_buffer =
-            {device.create_buffer({.size = sizeof(block_material) * world::max_block_materials,
-                                   .debug_name = "Dynamic Blocks Materials"},
-                                  gpu::heap_type::default_),
-             device.direct_queue};
+   if (not materials_buffer) {
+      materials_buffer = {device.create_buffer({.size = sizeof(block_material) *
+                                                        world::max_block_materials,
+                                                .debug_name =
+                                                   "Dynamic Blocks Materials"},
+                                               gpu::heap_type::default_),
+                          device.direct_queue};
 
-         for (material& material : materials) {
-            material.diffuse_map.texture = texture_manager.null_diffuse_map();
-            material.normal_map.texture = texture_manager.null_normal_map();
-            material.detail_map.texture = texture_manager.null_detail_map();
-            material.env_map.texture = texture_manager.null_cube_map();
-         }
+      for (material& material : materials) {
+         material.diffuse_map.texture = texture_manager.null_diffuse_map();
+         material.normal_map.texture = texture_manager.null_normal_map();
+         material.detail_map.texture = texture_manager.null_detail_map();
+         material.env_map.texture = texture_manager.null_cube_map();
       }
+   }
 
+   if (not blocks.materials.empty()) {
       const std::size_t material_count =
          std::min(blocks.materials.size(), world::max_block_materials);
 
