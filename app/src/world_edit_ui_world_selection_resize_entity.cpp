@@ -472,34 +472,44 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                   const world::block_description_quad& quad =
                      _world.blocks.quads.description[*block_index];
 
-                  const math::bounding_box bbox = world::get_bounding_box(quad);
+                  std::array<float3, 4> new_vertices = quad.vertices;
 
-                  const float3 start_position = (bbox.min + bbox.max) * 0.5f;
-                  const float3 start_size = (bbox.max - bbox.min) * 0.5f;
+                  bool edited = false;
 
-                  float3 new_position = (bbox.min + bbox.max) * 0.5f;
-                  float3 new_size = (bbox.max - bbox.min) * 0.5f;
+                  edited |= _gizmos.gizmo_position(
+                     {
+                        .name = "Block Quad Size, V0",
+                        .instance = static_cast<int64>(_world.blocks.quads.ids[*block_index]),
+                        .alignment = _editor_grid_size,
+                     },
+                     new_vertices[0]);
+                  edited |= _gizmos.gizmo_position(
+                     {
+                        .name = "Block Quad Size, V1",
+                        .instance = static_cast<int64>(_world.blocks.quads.ids[*block_index]),
+                        .alignment = _editor_grid_size,
+                     },
+                     new_vertices[1]);
+                  edited |= _gizmos.gizmo_position(
+                     {
+                        .name = "Block Quad Size, V2",
+                        .instance = static_cast<int64>(_world.blocks.quads.ids[*block_index]),
+                        .alignment = _editor_grid_size,
+                     },
+                     new_vertices[2]);
+                  edited |= _gizmos.gizmo_position(
+                     {
+                        .name = "Block Quad Size, V3",
+                        .instance = static_cast<int64>(_world.blocks.quads.ids[*block_index]),
+                        .alignment = _editor_grid_size,
+                     },
+                     new_vertices[3]);
 
-                  if (_gizmos.gizmo_size(
-                         {
-                            .name = "Block Quad Size",
-                            .instance = static_cast<int64>(
-                               _world.blocks.quads.ids[*block_index]),
-                            .alignment = _editor_grid_size,
-                         },
-                         new_position, new_size)) {
-                     const float3 scale = new_size / start_size;
-
-                     _edit_stack_world.apply(
-                        edits::make_set_block_quad_metrics(
-                           *block_index,
-                           {((quad.vertices[0] - start_position) * scale) + new_position,
-                            ((quad.vertices[1] - start_position) * scale) + new_position,
-                            ((quad.vertices[2] - start_position) * scale) + new_position,
-                            ((quad.vertices[3] - start_position) * scale) + new_position}),
-                        _edit_context);
+                  if (edited) {
+                     _edit_stack_world.apply(edits::make_set_block_quad_metrics(*block_index,
+                                                                                new_vertices),
+                                             _edit_context);
                   }
-
                } break;
                case world::block_type::cylinder: {
                   const world::block_description_cylinder& cylinder =
