@@ -827,15 +827,38 @@ void world_edit::ui_show_block_editor() noexcept
                                        0xff'ff'ff'ff);
          }
 
-         _tool_visualizers.add_line(cursor_positionWS - plane_axisWS * _camera.far_clip(),
-                                    cursor_positionWS + plane_axisWS * _camera.far_clip(),
-                                    axis_color);
+         if (dot(cursor_positionWS, plane_axisWS) < 0.0f) {
+            _tool_visualizers.add_line(cursor_positionWS,
+                                       cursor_positionWS -
+                                          plane_axisWS * _camera.far_clip(),
+                                       axis_color);
+            _tool_visualizers.add_line(plane_positionWS,
+                                       plane_positionWS +
+                                          plane_axisWS * _camera.far_clip(),
+                                       axis_color);
+         }
+         else {
+            _tool_visualizers.add_line(plane_positionWS,
+                                       plane_positionWS -
+                                          plane_axisWS * _camera.far_clip(),
+                                       axis_color);
+            _tool_visualizers.add_line(cursor_positionWS,
+                                       cursor_positionWS +
+                                          plane_axisWS * _camera.far_clip(),
+                                       axis_color);
+         }
+
+         if (click) {
+            _block_editor_context.draw_block.cursor_plane_positionWS = cursor_positionWS;
+         }
       }
 
       switch (_block_editor_context.draw_block.toggle_plane) {
       case draw_block_cursor_plane::none:
          break;
       case draw_block_cursor_plane::x: {
+         _block_editor_context.draw_block.toggle_plane = draw_block_cursor_plane::none;
+
          if (_block_editor_context.draw_block.cursor_plane ==
              draw_block_cursor_plane::x) {
             _block_editor_context.draw_block.cursor_plane =
@@ -844,12 +867,12 @@ void world_edit::ui_show_block_editor() noexcept
          else {
             _block_editor_context.draw_block.cursor_plane =
                draw_block_cursor_plane::x;
-            _block_editor_context.draw_block.toggle_plane =
-               draw_block_cursor_plane::none;
             _block_editor_context.draw_block.cursor_plane_positionWS = cursor_positionWS;
          }
       } break;
       case draw_block_cursor_plane::y: {
+         _block_editor_context.draw_block.toggle_plane = draw_block_cursor_plane::none;
+
          if (_block_editor_context.draw_block.cursor_plane ==
              draw_block_cursor_plane::y) {
             _block_editor_context.draw_block.cursor_plane =
@@ -858,12 +881,12 @@ void world_edit::ui_show_block_editor() noexcept
          else {
             _block_editor_context.draw_block.cursor_plane =
                draw_block_cursor_plane::y;
-            _block_editor_context.draw_block.toggle_plane =
-               draw_block_cursor_plane::none;
             _block_editor_context.draw_block.cursor_plane_positionWS = cursor_positionWS;
          }
       } break;
       case draw_block_cursor_plane::z: {
+         _block_editor_context.draw_block.toggle_plane = draw_block_cursor_plane::none;
+
          if (_block_editor_context.draw_block.cursor_plane ==
              draw_block_cursor_plane::z) {
             _block_editor_context.draw_block.cursor_plane =
@@ -872,8 +895,6 @@ void world_edit::ui_show_block_editor() noexcept
          else {
             _block_editor_context.draw_block.cursor_plane =
                draw_block_cursor_plane::z;
-            _block_editor_context.draw_block.toggle_plane =
-               draw_block_cursor_plane::none;
             _block_editor_context.draw_block.cursor_plane_positionWS = cursor_positionWS;
          }
       } break;
