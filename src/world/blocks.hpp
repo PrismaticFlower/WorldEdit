@@ -153,6 +153,7 @@ struct blocks_ramps {
 
    bool is_balanced() const noexcept;
 };
+
 struct blocks_quads {
    blocks_bbox_soa bbox;
 
