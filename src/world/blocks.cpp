@@ -265,11 +265,6 @@ bool block_id::operator==(const block_id& other) const noexcept
           (memcmp(&this->id, &other.id, sizeof(id)) == 0);
 }
 
-bool block_id::operator==(const block_box_id box_id) const noexcept
-{
-   return id_type == block_type::box and box_id == id.box;
-}
-
 block_id block_id::none = {};
 
 }

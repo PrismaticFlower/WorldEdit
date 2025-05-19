@@ -281,8 +281,6 @@ struct block_id {
 
    bool operator==(const block_id& other) const noexcept;
 
-   bool operator==(const block_box_id box_id) const noexcept;
-
    /// @brief Special sentinal value with type box and an id of UINT32_MAX.
    static block_id none;
 
