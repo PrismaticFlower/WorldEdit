@@ -1276,7 +1276,7 @@ void world_edit::ui_show_block_editor() noexcept
             }
             else {
                MessageBoxA(_window,
-                           fmt::format("Max Rampes ({}) Reached", world::max_blocks)
+                           fmt::format("Max Ramps ({}) Reached", world::max_blocks)
                               .c_str(),
                            "Limit Reached", MB_OK);
 
