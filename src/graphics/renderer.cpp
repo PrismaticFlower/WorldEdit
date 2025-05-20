@@ -3425,6 +3425,21 @@ void renderer_impl::draw_interaction_targets(
 
                _meta_draw_batcher.add_alt_cylinder_wireframe(transform, color);
             } break;
+            case world::block_type::stairway: {
+               const uint32 color_packed =
+                  utility::pack_srgb_bgra(float4{color, 1.0f});
+
+               const world::block_custom_mesh& block =
+                  world.blocks.stairways.mesh[*block_index];
+
+               for (const std::array<uint16, 3>& tri : block.triangles) {
+                  _meta_draw_batcher
+                     .add_triangle_wireframe(block.vertices[tri[0]].position,
+                                             block.vertices[tri[1]].position,
+                                             block.vertices[tri[2]].position,
+                                             color_packed);
+               }
+            } break;
             }
          }
 

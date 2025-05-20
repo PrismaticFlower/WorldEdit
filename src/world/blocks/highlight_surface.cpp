@@ -101,7 +101,18 @@ void highlight_surface(const blocks& blocks, const block_type type,
       highlight_surface_generic(world_from_object, block_cylinder_triangles,
                                 block_cylinder_vertices, surface_index, visualizers);
    } break;
+   case block_type::stairway: {
+      const world::block_custom_mesh& stairway = blocks.stairways.mesh[block_index];
+
+      for (const std::array<uint16, 3>& tri : stairway.triangles) {
+         if (stairway.vertices[tri[0]].surface_index != surface_index) continue;
+
+         visualizers.add_triangle_additive(stairway.vertices[tri[0]].position,
+                                           stairway.vertices[tri[1]].position,
+                                           stairway.vertices[tri[2]].position,
+                                           0x20'ff'ff'ffu);
+      }
+   } break;
    }
 }
-
 }

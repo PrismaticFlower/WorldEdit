@@ -132,4 +132,21 @@ auto unpack_command_allocator_handle(command_allocator_handle command_allocator)
    return std::bit_cast<ID3D12CommandAllocator*>(command_allocator);
 }
 
+auto pack_command_signature_handle(ID3D12CommandSignature* heap) -> command_signature_handle
+{
+   static_assert(std::is_same_v<std::underlying_type_t<command_signature_handle>, std::uintptr_t>,
+                 "command_signature_handle's underlying type is incorrect");
+
+   return std::bit_cast<command_signature_handle>(heap);
+}
+
+auto unpack_command_signature_handle(command_signature_handle heap)
+   -> ID3D12CommandSignature*
+{
+   static_assert(std::is_same_v<std::underlying_type_t<command_signature_handle>, std::uintptr_t>,
+                 "command_signature_handle's underlying type is incorrect");
+
+   return std::bit_cast<ID3D12CommandSignature*>(heap);
+}
+
 }

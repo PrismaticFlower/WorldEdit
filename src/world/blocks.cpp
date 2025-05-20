@@ -140,10 +140,49 @@ bool blocks_cylinders::is_balanced() const noexcept
           bbox.min_x.size() == ids.size();
 }
 
+void blocks_stairways::reserve(const std::size_t size) noexcept
+{
+   bbox.min_x.reserve(size);
+   bbox.min_y.reserve(size);
+   bbox.min_z.reserve(size);
+   bbox.max_x.reserve(size);
+   bbox.max_y.reserve(size);
+   bbox.max_z.reserve(size);
+   hidden.reserve(size);
+   layer.reserve(size);
+   description.reserve(size);
+   mesh.reserve(size);
+   ids.reserve(size);
+}
+
+auto blocks_stairways::size() const noexcept -> std::size_t
+{
+   assert(is_balanced());
+
+   return bbox.min_x.size();
+}
+
+bool blocks_stairways::is_balanced() const noexcept
+{
+   return bbox.min_x.size() == bbox.min_y.size() and
+          bbox.min_x.size() == bbox.min_z.size() and
+          bbox.min_x.size() == bbox.max_x.size() and
+          bbox.min_x.size() == bbox.max_y.size() and
+          bbox.min_x.size() == bbox.max_z.size() and
+          bbox.min_x.size() == hidden.size() and
+          bbox.min_x.size() == layer.size() and //
+          bbox.min_x.size() == description.size() and
+          bbox.min_x.size() == mesh.size() and //
+          bbox.min_x.size() == ids.size();
+}
+
 bool blocks::empty() const noexcept
 {
-   return boxes.size() == 0 and ramps.size() == 0 and quads.size() == 0 and
-          cylinders.size() == 0;
+   return boxes.size() == 0 and     //
+          ramps.size() == 0 and     //
+          quads.size() == 0 and     //
+          cylinders.size() == 0 and //
+          stairways.size() == 0;
 }
 
 void blocks::untracked_fill_dirty_ranges() noexcept
@@ -164,6 +203,10 @@ void blocks::untracked_fill_dirty_ranges() noexcept
       cylinders.dirty.add({0, static_cast<uint32>(cylinders.size())});
    }
 
+   if (stairways.size() != 0) {
+      stairways.dirty.add({0, static_cast<uint32>(stairways.size())});
+   }
+
    materials_dirty.add({0, static_cast<uint32>(materials.size())});
 }
 
@@ -173,6 +216,7 @@ void blocks::untracked_clear_dirty_ranges() noexcept
    ramps.dirty.clear();
    quads.dirty.clear();
    cylinders.dirty.clear();
+   stairways.dirty.clear();
    materials_dirty.clear();
 }
 
@@ -203,6 +247,11 @@ block_id::block_id(block_quad_id id) noexcept
 
 block_id::block_id(block_cylinder_id id) noexcept
    : id_type{block_type::cylinder}, id{.cylinder = id}
+{
+}
+
+block_id::block_id(block_stairway_id id) noexcept
+   : id_type{block_type::stairway}, id{.stairway = id}
 {
 }
 
@@ -252,6 +301,18 @@ auto block_id::get_cylinder() const noexcept -> block_cylinder_id
    assert(id_type == block_type::cylinder);
 
    return id.cylinder;
+}
+
+bool block_id::is_stairway() const noexcept
+{
+   return id_type == block_type::stairway;
+}
+
+auto block_id::get_stairway() const noexcept -> block_stairway_id
+{
+   assert(id_type == block_type::stairway);
+
+   return id.stairway;
 }
 
 auto block_id::type() const noexcept -> block_type

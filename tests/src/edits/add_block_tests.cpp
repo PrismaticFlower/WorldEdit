@@ -70,4 +70,78 @@ TEST_CASE("edits add_block box", "[Edits]")
 
    REQUIRE(blocks.boxes.dirty.size() == 0);
 }
+
+TEST_CASE("edits add_block stairway", "[Edits]")
+{
+   world::world world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   const world::block_stairway_id id = world.blocks.next_id.stairway.aquire();
+
+   auto edit = make_add_block(
+      world::block_description_stairway{
+         .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
+         .position = {10.0f, 10.0f, 10.0f},
+         .size = {5.0f, 5.0f, 5.0f},
+         .step_height = 2.5f,
+         .first_step_offset = -0.1f,
+      },
+      2, id);
+
+   edit->apply(edit_context);
+
+   world::blocks& blocks = world.blocks;
+
+   REQUIRE(blocks.stairways.size() == 1);
+
+   REQUIRE(blocks.stairways.bbox.min_x.size() == 1);
+   REQUIRE(blocks.stairways.bbox.min_y.size() == 1);
+   REQUIRE(blocks.stairways.bbox.min_z.size() == 1);
+   REQUIRE(blocks.stairways.bbox.max_x.size() == 1);
+   REQUIRE(blocks.stairways.bbox.max_y.size() == 1);
+   REQUIRE(blocks.stairways.bbox.max_z.size() == 1);
+   REQUIRE(blocks.stairways.hidden.size() == 1);
+   REQUIRE(blocks.stairways.layer.size() == 1);
+   REQUIRE(blocks.stairways.description.size() == 1);
+   REQUIRE(blocks.stairways.mesh.size() == 1);
+   REQUIRE(blocks.stairways.ids.size() == 1);
+
+   CHECK(blocks.stairways.bbox.min_x[0] == 5.0f);
+   CHECK(blocks.stairways.bbox.min_y[0] == 5.1f);
+   CHECK(blocks.stairways.bbox.min_z[0] == 5.0f);
+   CHECK(blocks.stairways.bbox.max_x[0] == 15.0f);
+   CHECK(blocks.stairways.bbox.max_y[0] == 10.0f);
+   CHECK(blocks.stairways.bbox.max_z[0] == 15.0f);
+   CHECK(not blocks.stairways.hidden[0]);
+   CHECK(blocks.stairways.layer[0] == 2);
+   CHECK(blocks.stairways.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
+   CHECK(blocks.stairways.description[0].position == float3{10.0f, 10.0f, 10.0f});
+   CHECK(blocks.stairways.description[0].size == float3{5.0f, 5.0f, 5.0f});
+   CHECK(blocks.stairways.mesh[0].vertices.size() == 40);
+   CHECK(blocks.stairways.mesh[0].triangles.size() == 20);
+   CHECK(blocks.stairways.ids[0] == id);
+
+   REQUIRE(blocks.stairways.dirty.size() == 1);
+   CHECK(blocks.stairways.dirty[0] == world::blocks_dirty_range{0, 1});
+
+   edit->revert(edit_context);
+
+   REQUIRE(blocks.stairways.size() == 0);
+
+   REQUIRE(blocks.stairways.bbox.min_x.size() == 0);
+   REQUIRE(blocks.stairways.bbox.min_y.size() == 0);
+   REQUIRE(blocks.stairways.bbox.min_z.size() == 0);
+   REQUIRE(blocks.stairways.bbox.max_x.size() == 0);
+   REQUIRE(blocks.stairways.bbox.max_y.size() == 0);
+   REQUIRE(blocks.stairways.bbox.max_z.size() == 0);
+   REQUIRE(blocks.stairways.hidden.size() == 0);
+   REQUIRE(blocks.stairways.layer.size() == 0);
+   REQUIRE(blocks.stairways.description.size() == 0);
+   REQUIRE(blocks.stairways.mesh.size() == 0);
+   REQUIRE(blocks.stairways.ids.size() == 0);
+
+   REQUIRE(blocks.stairways.dirty.size() == 0);
+}
+
 }

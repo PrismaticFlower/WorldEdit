@@ -164,6 +164,10 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                   gizmo_rotation =
                      _world.blocks.cylinders.description[*block_index].rotation;
                } break;
+               case world::block_type::stairway: {
+                  gizmo_rotation =
+                     _world.blocks.stairways.description[*block_index].rotation;
+               } break;
                }
             }
          }
@@ -400,6 +404,17 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                         local_space ? cylinder.rotation * rotation
                                     : rotation * cylinder.rotation,
                         cylinder.position, cylinder.size));
+                  } break;
+                  case world::block_type::stairway: {
+                     const world::block_description_stairway& stairway =
+                        _world.blocks.stairways.description[*block_index];
+
+                     bundled_edits.push_back(edits::make_set_block_stairway_metrics(
+                        *block_index,
+                        local_space ? stairway.rotation * rotation
+                                    : rotation * stairway.rotation,
+                        stairway.position, stairway.size, stairway.step_height,
+                        stairway.first_step_offset));
                   } break;
                   }
                }
