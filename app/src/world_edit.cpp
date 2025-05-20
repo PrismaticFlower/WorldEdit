@@ -55,6 +55,8 @@
 #include "world/utility/terrain_cut.hpp"
 #include "world/utility/world_utilities.hpp"
 
+#include "world/blocks/mesh_generate.hpp"
+
 #include <bit>
 #include <stdexcept>
 #include <type_traits>
@@ -2943,6 +2945,14 @@ void world_edit::align_selection(const float alignment) noexcept
                                                          align_position(cylinder.position),
                                                          cylinder.size));
             } break;
+            case world::block_type::stairway: {
+               const world::block_description_stairway& stairway =
+                  _world.blocks.stairways.description[*block_index];
+
+               bundle.push_back(edits::make_set_block_stairway_metrics(
+                  *block_index, stairway.rotation, align_position(stairway.position),
+                  stairway.size, stairway.step_height, stairway.first_step_offset));
+            } break;
             }
          }
 
@@ -3329,6 +3339,14 @@ void world_edit::ground_selection() noexcept
                                                             cylinder.rotation,
                                                             *grounded_position,
                                                             cylinder.size));
+               } break;
+               case world::block_type::stairway: {
+                  const world::block_description_stairway& stairway =
+                     _world.blocks.stairways.description[*block_index];
+
+                  bundle.push_back(edits::make_set_block_stairway_metrics(
+                     *block_index, stairway.rotation, *grounded_position,
+                     stairway.size, stairway.step_height, stairway.first_step_offset));
                } break;
                }
             }

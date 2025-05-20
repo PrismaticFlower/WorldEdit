@@ -534,6 +534,30 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                   }
 
                } break;
+               case world::block_type::stairway: {
+                  const world::block_description_stairway& stairway =
+                     _world.blocks.stairways.description[*block_index];
+
+                  float3 new_position = stairway.position;
+                  float3 new_size = stairway.size;
+
+                  if (_gizmos.gizmo_size(
+                         {
+                            .name = "Block Stairway Size",
+                            .instance = static_cast<int64>(
+                               _world.blocks.stairways.ids[*block_index]),
+                            .alignment = _editor_grid_size,
+                            .gizmo_rotation = stairway.rotation,
+                         },
+                         new_position, new_size)) {
+                     _edit_stack_world.apply(edits::make_set_block_stairway_metrics(
+                                                *block_index, stairway.rotation,
+                                                new_position, new_size, stairway.step_height,
+                                                stairway.first_step_offset),
+                                             _edit_context);
+                  }
+
+               } break;
                }
             }
 

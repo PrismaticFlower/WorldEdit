@@ -1559,6 +1559,66 @@ auto device::create_swap_chain(const swap_chain_desc& desc) -> swap_chain
    return swap_chain;
 }
 
+auto device::create_command_signature(const command_signature_desc& desc,
+                                      root_signature_handle root_signature)
+   -> command_signature_handle
+{
+   static_assert(sizeof(indirect_argument_desc) == sizeof(D3D12_INDIRECT_ARGUMENT_DESC));
+   static_assert(offsetof(indirect_argument_desc, type) ==
+                 offsetof(D3D12_INDIRECT_ARGUMENT_DESC, Type));
+
+   static_assert(offsetof(indirect_argument_desc, vertex_buffer) ==
+                 offsetof(D3D12_INDIRECT_ARGUMENT_DESC, VertexBuffer));
+   static_assert(
+      std::is_layout_compatible_v<decltype(indirect_argument_desc::vertex_buffer),
+                                  decltype(D3D12_INDIRECT_ARGUMENT_DESC::VertexBuffer)>);
+
+   static_assert(offsetof(indirect_argument_desc, constant) ==
+                 offsetof(D3D12_INDIRECT_ARGUMENT_DESC, Constant));
+   static_assert(
+      std::is_layout_compatible_v<decltype(indirect_argument_desc::constant),
+                                  decltype(D3D12_INDIRECT_ARGUMENT_DESC::Constant)>);
+
+   static_assert(offsetof(indirect_argument_desc, constant_buffer_view) ==
+                 offsetof(D3D12_INDIRECT_ARGUMENT_DESC, ConstantBufferView));
+   static_assert(
+      std::is_layout_compatible_v<decltype(indirect_argument_desc::constant_buffer_view),
+                                  decltype(D3D12_INDIRECT_ARGUMENT_DESC::ConstantBufferView)>);
+
+   static_assert(offsetof(indirect_argument_desc, shader_resource_view) ==
+                 offsetof(D3D12_INDIRECT_ARGUMENT_DESC, ShaderResourceView));
+   static_assert(
+      std::is_layout_compatible_v<decltype(indirect_argument_desc::shader_resource_view),
+                                  decltype(D3D12_INDIRECT_ARGUMENT_DESC::ShaderResourceView)>);
+
+   static_assert(offsetof(indirect_argument_desc, unordered_access_view) ==
+                 offsetof(D3D12_INDIRECT_ARGUMENT_DESC, UnorderedAccessView));
+   static_assert(
+      std::is_layout_compatible_v<decltype(indirect_argument_desc::unordered_access_view),
+                                  decltype(D3D12_INDIRECT_ARGUMENT_DESC::UnorderedAccessView)>);
+
+   static_assert(offsetof(indirect_argument_desc, incrementing_constant) ==
+                 offsetof(D3D12_INDIRECT_ARGUMENT_DESC, IncrementingConstant));
+   static_assert(
+      std::is_layout_compatible_v<decltype(indirect_argument_desc::incrementing_constant),
+                                  decltype(D3D12_INDIRECT_ARGUMENT_DESC::IncrementingConstant)>);
+
+   const D3D12_COMMAND_SIGNATURE_DESC d3d12_desc{
+      .ByteStride = desc.byte_stride,
+      .NumArgumentDescs = static_cast<UINT>(desc.argument_descs.size()),
+      .pArgumentDescs = reinterpret_cast<const D3D12_INDIRECT_ARGUMENT_DESC*>(
+         desc.argument_descs.data()),
+   };
+
+   com_ptr<ID3D12CommandSignature> command_signature;
+
+   throw_if_fail(state->device->CreateCommandSignature(
+      &d3d12_desc, unpack_root_signature_handle(root_signature),
+      IID_PPV_ARGS(command_signature.clear_and_assign())));
+
+   return pack_command_signature_handle(command_signature.release());
+}
+
 void device::release_root_signature(root_signature_handle root_signature)
 {
    unpack_root_signature_handle(root_signature)->Release();
@@ -1594,6 +1654,11 @@ void device::release_depth_stencil_view(dsv_handle depth_stencil_view)
 void device::release_query_heap(query_heap_handle query_heap)
 {
    unpack_query_heap_handle(query_heap)->Release();
+}
+
+void device::release_command_signature(command_signature_handle command_signature)
+{
+   unpack_command_signature_handle(command_signature)->Release();
 }
 
 [[msvc::forceinline]] bool device::supports_enhanced_barriers() const noexcept
@@ -1944,6 +2009,25 @@ void command_queue::release_command_allocator(command_allocator_handle command_a
 
    state->release_queue_device_children.push(sync_value, com_ptr{unpack_command_allocator_handle(
                                                             command_allocator)});
+}
+
+void command_queue::release_command_signature(command_signature_handle command_signature)
+{
+   const uint64 sync_value = [&] {
+      std::scoped_lock lock{state->sync_mutex};
+
+      if (state->work_executed_since_release.exchange(false)) {
+         state->release_last_sync_value = ++state->sync_value;
+
+         state->command_queue->Signal(state->sync_fence.get(),
+                                      state->release_last_sync_value);
+      }
+
+      return state->release_last_sync_value;
+   }();
+
+   state->release_queue_device_children.push(sync_value, com_ptr{unpack_command_signature_handle(
+                                                            command_signature)});
 }
 
 auto command_queue::get_timestamp_frequency() -> uint64

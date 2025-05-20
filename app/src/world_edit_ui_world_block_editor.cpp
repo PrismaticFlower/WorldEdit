@@ -90,6 +90,7 @@ auto block_type_name(world::block_type type) noexcept -> const char*
    case world::block_type::ramp: return "Ramp";
    case world::block_type::quad: return "Quadrilateral";
    case world::block_type::cylinder: return "Cylinder";
+   case world::block_type::stairway: return "Stairs";
    }
    // clang-format on
 
@@ -118,8 +119,8 @@ void world_edit::ui_show_block_editor() noexcept
       if (ImGui::BeginCombo("Draw Shape",
                             block_type_name(_block_editor_config.draw_type))) {
          for (const world::block_type type :
-              {world::block_type::box, world::block_type::ramp,
-               world::block_type::quad, world::block_type::cylinder}) {
+              {world::block_type::box, world::block_type::ramp, world::block_type::quad,
+               world::block_type::cylinder, world::block_type::stairway}) {
 
             if (ImGui::Selectable(block_type_name(type),
                                   type == _block_editor_config.draw_type)) {
@@ -983,6 +984,8 @@ void world_edit::ui_show_block_editor() noexcept
                   _block_editor_context.tool = block_edit_tool::none;
                }
 
+            } break;
+            case world::block_type::stairway: {
             } break;
             }
          }
@@ -1879,6 +1882,25 @@ void world_edit::ui_show_block_editor() noexcept
                                                                 cylinder.rotation,
                                                                 positionWS, size),
                          _edit_context);
+            }
+         } break;
+         case world::block_type::stairway: {
+            const world::block_description_stairway& stairway =
+               _world.blocks.stairways.description[*selected_index];
+
+            float3 size = stairway.size;
+            float3 positionWS = stairway.position;
+
+            if (_gizmos.gizmo_size({.name = "Resize Block (Stairway)",
+                                    .instance = *selected_index,
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation = stairway.rotation},
+                                   positionWS, size)) {
+               _edit_stack_world.apply(edits::make_set_block_stairway_metrics(
+                                          *selected_index, stairway.rotation,
+                                          positionWS, size, stairway.step_height,
+                                          stairway.first_step_offset),
+                                       _edit_context);
             }
          } break;
          }

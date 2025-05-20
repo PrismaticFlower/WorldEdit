@@ -23,6 +23,12 @@ auto make_set_block_quad_metrics(const uint32 index,
                                  const std::array<float3, 4>& vertices) noexcept
    -> std::unique_ptr<edit<world::edit_context>>;
 
+auto make_set_block_stairway_metrics(const uint32 index, const quaternion& rotation,
+                                     const float3& position, const float3& size,
+                                     const float step_height,
+                                     const float first_step_offset) noexcept
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 auto make_set_block_surface(uint8* material_index_address,
                             uint8 new_material_index, const uint32 index,
                             world::blocks_dirty_range_tracker* dirt_tracker) noexcept

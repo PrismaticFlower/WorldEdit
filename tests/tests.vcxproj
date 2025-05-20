@@ -301,6 +301,7 @@
     <ClCompile Include="src\utility\stopwatch_tests.cpp" />
     <ClCompile Include="src\utility\string_icompare_tests.cpp" />
     <ClCompile Include="src\utility\string_ops_tests.cpp" />
+    <ClCompile Include="src\world\blocks\mesh_generate_tests.cpp" />
     <ClCompile Include="src\world\id_tests.cpp" />
     <ClCompile Include="src\world\interaction_context_tests.cpp" />
     <ClCompile Include="src\world\io\load_blocks_test.cpp" />

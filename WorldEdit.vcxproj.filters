@@ -262,6 +262,7 @@
     <ClCompile Include="src\ucfb\writer.cpp" />
     <ClCompile Include="src\world\blocks\export\mesh_cull.cpp" />
     <ClCompile Include="src\graphics\shaders\block_quadVS.cpp" />
+    <ClCompile Include="src\world\blocks\mesh_generate.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -579,6 +580,8 @@
     <ClInclude Include="src\ucfb\writer.hpp" />
     <ClInclude Include="src\ucfb\chunk_id.hpp" />
     <ClInclude Include="src\world\blocks\export\mesh_cull.hpp" />
+    <ClInclude Include="src\world\blocks\mesh_vertex.hpp" />
+    <ClInclude Include="src\world\blocks\mesh_generate.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

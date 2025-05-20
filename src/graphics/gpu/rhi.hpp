@@ -324,6 +324,21 @@ enum class comparison_mode {
    always = 8,
 };
 
+enum class indirect_argument_type {
+   draw = 0,
+   draw_indexed = 1,
+   dispatch = 2,
+   vertex_buffer_view = 3,
+   index_buffer_view = 4,
+   constant = 5,
+   constant_buffer_view = 6,
+   shader_resource_view = 7,
+   unordered_access_view = 8,
+   dispatch_rays = 9,
+   dispatch_mesh = 10,
+   incrementing_constant = 11
+};
+
 struct memory_range {
    std::size_t begin = 0;
    std::size_t end = 0;
@@ -386,6 +401,9 @@ constexpr inline auto null_query_heap_handle = query_heap_handle{0};
 
 enum class command_allocator_handle : std::uintptr_t {};
 constexpr inline auto null_command_allocator_handle = command_allocator_handle{0};
+
+enum class command_signature_handle : std::uintptr_t {};
+constexpr inline auto null_command_signature_handle = command_signature_handle{0};
 
 /// Pipeline Desc Structures ///
 
@@ -803,6 +821,46 @@ struct legacy_resource_uav_barrier {
    resource_handle resource;
 };
 
+/// Execute Indirect Structures ///
+
+struct indirect_argument_desc {
+   indirect_argument_type type;
+
+   union {
+      struct {
+         uint32 slot;
+      } vertex_buffer;
+
+      struct {
+         uint32 root_parameter_index;
+         uint32 dest_offset_in_32bit_values;
+         uint32 num_32bit_values_to_set;
+      } constant;
+
+      struct {
+         uint32 root_parameter_index;
+      } constant_buffer_view;
+
+      struct {
+         uint32 root_parameter_index;
+      } shader_resource_view;
+
+      struct {
+         uint32 root_parameter_index;
+      } unordered_access_view;
+
+      struct {
+         uint32 root_parameter_index;
+         uint32 dest_offset_in_32bit_values;
+      } incrementing_constant;
+   };
+};
+
+struct command_signature_desc {
+   uint32 byte_stride = 0;
+   std::span<const indirect_argument_desc> argument_descs;
+};
+
 /// Command List Structures and Definitions ///
 
 struct command_list_desc {
@@ -1091,6 +1149,8 @@ struct command_queue {
 
    void release_command_allocator(command_allocator_handle command_allocator);
 
+   void release_command_signature(command_signature_handle command_signature);
+
    auto get_timestamp_frequency() -> uint64;
 
 private:
@@ -1293,6 +1353,12 @@ public:
 
    [[nodiscard]] auto create_swap_chain(const swap_chain_desc& desc) -> swap_chain;
 
+   /// Indirect Execution Functions ///
+
+   [[nodiscard]] auto create_command_signature(const command_signature_desc& desc,
+                                               root_signature_handle root_signature)
+      -> command_signature_handle;
+
    /// Unsynced Immediate Release Functions ///
 
    void release_root_signature(root_signature_handle root_signature);
@@ -1308,6 +1374,8 @@ public:
    void release_depth_stencil_view(dsv_handle depth_stencil_view);
 
    void release_query_heap(query_heap_handle query_heap);
+
+   void release_command_signature(command_signature_handle command_signature);
 
    /// Feature Test Functions ///
 

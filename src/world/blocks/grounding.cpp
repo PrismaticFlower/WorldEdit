@@ -123,6 +123,13 @@ auto ground_block(const block_id id, const uint32 block_index,
       return ground_block(cylinder.position, bbox, id, world, object_classes,
                           active_layers);
    } break;
+   case block_type::stairway: {
+      const block_description_stairway& stairway =
+         world.blocks.stairways.description[block_index];
+
+      return ground_block(stairway.position, bbox, id, world, object_classes,
+                          active_layers);
+   } break;
    }
 
    std::unreachable();

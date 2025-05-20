@@ -4,6 +4,7 @@
 #include "types.hpp"
 
 #include "blocks/dirty_range_tracker.hpp"
+#include "blocks/mesh_vertex.hpp"
 
 #include "container/pinned_vector.hpp"
 #include "container/slim_bitset.hpp"
@@ -105,6 +106,35 @@ struct block_description_cylinder {
    bool operator==(const block_description_cylinder&) const noexcept = default;
 };
 
+struct block_description_stairway {
+   quaternion rotation;
+   float3 position;
+   float3 size;
+   float step_height = 0.125f;
+   float first_step_offset = 0.0f;
+
+   std::array<uint8, 6> surface_materials = {};
+   std::array<block_texture_mode, 6> surface_texture_mode = {};
+   std::array<block_texture_rotation, 6> surface_texture_rotation = {};
+   std::array<std::array<int8, 2>, 6> surface_texture_scale = {};
+   std::array<std::array<uint16, 2>, 6> surface_texture_offset = {};
+
+   bool operator==(const block_description_stairway&) const noexcept = default;
+};
+
+struct block_custom_mesh {
+   std::vector<block_vertex> vertices;
+   std::vector<std::array<uint16, 3>> triangles;
+   std::vector<std::array<uint16, 4>> occluders;
+
+   std::vector<float3> collision_vertices;
+   std::vector<std::array<uint16, 3>> collision_triangles;
+   std::vector<std::array<uint16, 4>> collision_occluders;
+
+   std::vector<float3> snap_points;
+   std::vector<std::array<uint16, 2>> snap_edges;
+};
+
 struct blocks_bbox_soa {
    pinned_vector<float> min_x = blocks_init;
    pinned_vector<float> min_y = blocks_init;
@@ -194,6 +224,28 @@ struct blocks_cylinders {
    bool is_balanced() const noexcept;
 };
 
+struct blocks_stairways {
+   blocks_bbox_soa bbox;
+
+   pinned_vector<bool> hidden = blocks_init;
+
+   pinned_vector<int8> layer = blocks_init;
+
+   pinned_vector<block_description_stairway> description = blocks_init;
+
+   pinned_vector<block_custom_mesh> mesh = blocks_init;
+
+   pinned_vector<id<block_description_stairway>> ids = blocks_init;
+
+   blocks_dirty_range_tracker dirty;
+
+   void reserve(const std::size_t size) noexcept;
+
+   auto size() const noexcept -> std::size_t;
+
+   bool is_balanced() const noexcept;
+};
+
 struct block_material {
    std::string name;
 
@@ -218,6 +270,7 @@ struct blocks {
    blocks_ramps ramps;
    blocks_quads quads;
    blocks_cylinders cylinders;
+   blocks_stairways stairways;
 
    pinned_vector<block_material> materials = get_blank_materials();
    blocks_dirty_range_tracker materials_dirty;
@@ -227,6 +280,7 @@ struct blocks {
       id_generator<block_description_ramp> ramps;
       id_generator<block_description_quad> quads;
       id_generator<block_description_cylinder> cylinders;
+      id_generator<block_description_stairway> stairway;
    } next_id;
 
    bool empty() const noexcept;
@@ -242,12 +296,14 @@ using block_box_id = id<block_description_box>;
 using block_ramp_id = id<block_description_ramp>;
 using block_quad_id = id<block_description_quad>;
 using block_cylinder_id = id<block_description_cylinder>;
+using block_stairway_id = id<block_description_stairway>;
 
 enum class block_type {
    box,
    ramp,
    quad,
    cylinder,
+   stairway,
 };
 
 struct block_id {
@@ -260,6 +316,8 @@ struct block_id {
    block_id(block_quad_id id) noexcept;
 
    block_id(block_cylinder_id id) noexcept;
+
+   block_id(block_stairway_id id) noexcept;
 
    bool is_box() const noexcept;
 
@@ -277,6 +335,10 @@ struct block_id {
 
    auto get_cylinder() const noexcept -> block_cylinder_id;
 
+   bool is_stairway() const noexcept;
+
+   auto get_stairway() const noexcept -> block_stairway_id;
+
    auto type() const noexcept -> block_type;
 
    bool operator==(const block_id& other) const noexcept;
@@ -292,6 +354,7 @@ private:
       block_ramp_id ramp;
       block_quad_id quad;
       block_cylinder_id cylinder;
+      block_stairway_id stairway;
    } id;
 };
 

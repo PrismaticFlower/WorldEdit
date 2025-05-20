@@ -330,6 +330,178 @@ TEST_CASE("edits set_block_quad_metrics no coalesce", "[Edits]")
    REQUIRE(not edit->is_coalescable(*other_edit));
 }
 
+TEST_CASE("edits set_block_stairway_metrics", "[Edits]")
+{
+   world::world world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   world::blocks& blocks = world.blocks;
+
+   blocks.stairways.bbox.min_x.push_back(0.0f);
+   blocks.stairways.bbox.min_y.push_back(0.0f);
+   blocks.stairways.bbox.min_z.push_back(0.0f);
+   blocks.stairways.bbox.max_x.push_back(0.0f);
+   blocks.stairways.bbox.max_y.push_back(0.0f);
+   blocks.stairways.bbox.max_z.push_back(0.0f);
+   blocks.stairways.hidden.push_back(false);
+   blocks.stairways.layer.push_back(0);
+   blocks.stairways.description.push_back({
+      .rotation = quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+      .position = {0.0f, 0.0f, 0.0f},
+      .size = {10.0f, 0.5f, 10.0f},
+      .step_height = 0.25f,
+   });
+   blocks.stairways.mesh.push_back({});
+   blocks.stairways.ids.push_back(world::block_stairway_id{});
+
+   auto edit = make_set_block_stairway_metrics(0, {1.0f, 0.0f, 0.0f, 0.0f},
+                                               {0.0f, 0.0f, 0.0f},
+                                               {10.0f, 4.0f, 10.0f}, 0.5f, 0.125f);
+
+   edit->apply(edit_context);
+
+   CHECK(blocks.stairways.bbox.min_x[0] == -10.0f);
+   CHECK(blocks.stairways.bbox.min_y[0] == 0.0f);
+   CHECK(blocks.stairways.bbox.min_z[0] == -10.0f);
+   CHECK(blocks.stairways.bbox.max_x[0] == 10.0f);
+   CHECK(blocks.stairways.bbox.max_y[0] == 4.125f);
+   CHECK(blocks.stairways.bbox.max_z[0] == 10.0f);
+   CHECK(not blocks.stairways.hidden[0]);
+   CHECK(blocks.stairways.layer[0] == 0);
+   CHECK(blocks.stairways.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+   CHECK(blocks.stairways.description[0].position == float3{0.0f, 0.0f, 0.0f});
+   CHECK(blocks.stairways.description[0].size == float3{10.0f, 4.0f, 10.0f});
+   CHECK(blocks.stairways.description[0].step_height == 0.5f);
+   CHECK(blocks.stairways.description[0].first_step_offset == 0.125f);
+   CHECK(blocks.stairways.mesh[0].vertices.size() == 136);
+   CHECK(blocks.stairways.mesh[0].triangles.size() == 68);
+
+   REQUIRE(blocks.stairways.dirty.size() == 1);
+   CHECK(blocks.stairways.dirty[0] == world::blocks_dirty_range{0, 1});
+
+   blocks.stairways.dirty.clear();
+
+   edit->revert(edit_context);
+
+   CHECK(blocks.stairways.bbox.min_x[0] == -10.0f);
+   CHECK(blocks.stairways.bbox.min_y[0] == 0.0f);
+   CHECK(blocks.stairways.bbox.min_z[0] == -10.0f);
+   CHECK(blocks.stairways.bbox.max_x[0] == 10.0f);
+   CHECK(blocks.stairways.bbox.max_y[0] == 0.5f);
+   CHECK(blocks.stairways.bbox.max_z[0] == 10.0f);
+   CHECK(not blocks.stairways.hidden[0]);
+   CHECK(blocks.stairways.layer[0] == 0);
+   CHECK(blocks.stairways.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+   CHECK(blocks.stairways.description[0].position == float3{0.0f, 0.0f, 0.0f});
+   CHECK(blocks.stairways.description[0].size == float3{10.0f, 0.5f, 10.0f});
+   CHECK(blocks.stairways.description[0].step_height == 0.25f);
+   CHECK(blocks.stairways.description[0].first_step_offset == 0.0f);
+   CHECK(blocks.stairways.mesh[0].vertices.size() == 40);
+   CHECK(blocks.stairways.mesh[0].triangles.size() == 20);
+
+   REQUIRE(blocks.stairways.dirty.size() == 1);
+   CHECK(blocks.stairways.dirty[0] == world::blocks_dirty_range{0, 1});
+}
+
+TEST_CASE("edits set_block_stairway_metrics coalesce", "[Edits]")
+{
+   world::world world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   world::blocks& blocks = world.blocks;
+
+   blocks.stairways.bbox.min_x.push_back(0.0f);
+   blocks.stairways.bbox.min_y.push_back(0.0f);
+   blocks.stairways.bbox.min_z.push_back(0.0f);
+   blocks.stairways.bbox.max_x.push_back(0.0f);
+   blocks.stairways.bbox.max_y.push_back(0.0f);
+   blocks.stairways.bbox.max_z.push_back(0.0f);
+   blocks.stairways.hidden.push_back(false);
+   blocks.stairways.layer.push_back(0);
+   blocks.stairways.description.push_back({
+      .rotation = quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+      .position = {0.0f, 0.0f, 0.0f},
+      .size = {10.0f, 0.5f, 10.0f},
+      .step_height = 0.25f,
+   });
+   blocks.stairways.mesh.push_back({});
+   blocks.stairways.ids.push_back(world::block_stairway_id{});
+
+   auto edit = make_set_block_stairway_metrics(0, {0.0f, 1.0f, 0.0f, 0.0f},
+                                               {0.0f, 0.0f, 0.0f},
+                                               {4.0f, 4.0f, 10.0f}, 0.5f, 0.125f);
+
+   auto other_edit =
+      make_set_block_stairway_metrics(0, {1.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f},
+                                      {10.0f, 4.0f, 10.0f}, 0.5f, 0.125f);
+
+   REQUIRE(edit->is_coalescable(*other_edit));
+
+   edit->coalesce(*other_edit);
+
+   edit->apply(edit_context);
+
+   CHECK(blocks.stairways.bbox.min_x[0] == -10.0f);
+   CHECK(blocks.stairways.bbox.min_y[0] == 0.0f);
+   CHECK(blocks.stairways.bbox.min_z[0] == -10.0f);
+   CHECK(blocks.stairways.bbox.max_x[0] == 10.0f);
+   CHECK(blocks.stairways.bbox.max_y[0] == 4.125f);
+   CHECK(blocks.stairways.bbox.max_z[0] == 10.0f);
+   CHECK(not blocks.stairways.hidden[0]);
+   CHECK(blocks.stairways.layer[0] == 0);
+   CHECK(blocks.stairways.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+   CHECK(blocks.stairways.description[0].position == float3{0.0f, 0.0f, 0.0f});
+   CHECK(blocks.stairways.description[0].size == float3{10.0f, 4.0f, 10.0f});
+   CHECK(blocks.stairways.description[0].step_height == 0.5f);
+   CHECK(blocks.stairways.description[0].first_step_offset == 0.125f);
+   CHECK(blocks.stairways.mesh[0].vertices.size() == 136);
+   CHECK(blocks.stairways.mesh[0].triangles.size() == 68);
+
+   REQUIRE(blocks.stairways.dirty.size() == 1);
+   CHECK(blocks.stairways.dirty[0] == world::blocks_dirty_range{0, 1});
+
+   blocks.stairways.dirty.clear();
+
+   edit->revert(edit_context);
+
+   CHECK(blocks.stairways.bbox.min_x[0] == -10.0f);
+   CHECK(blocks.stairways.bbox.min_y[0] == 0.0f);
+   CHECK(blocks.stairways.bbox.min_z[0] == -10.0f);
+   CHECK(blocks.stairways.bbox.max_x[0] == 10.0f);
+   CHECK(blocks.stairways.bbox.max_y[0] == 0.5f);
+   CHECK(blocks.stairways.bbox.max_z[0] == 10.0f);
+   CHECK(not blocks.stairways.hidden[0]);
+   CHECK(blocks.stairways.layer[0] == 0);
+   CHECK(blocks.stairways.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+   CHECK(blocks.stairways.description[0].position == float3{0.0f, 0.0f, 0.0f});
+   CHECK(blocks.stairways.description[0].size == float3{10.0f, 0.5f, 10.0f});
+   CHECK(blocks.stairways.description[0].step_height == 0.25f);
+   CHECK(blocks.stairways.description[0].first_step_offset == 0.0f);
+   CHECK(blocks.stairways.mesh[0].vertices.size() == 40);
+   CHECK(blocks.stairways.mesh[0].triangles.size() == 20);
+
+   REQUIRE(blocks.stairways.dirty.size() == 1);
+   CHECK(blocks.stairways.dirty[0] == world::blocks_dirty_range{0, 1});
+}
+
+TEST_CASE("edits set_block_stairway_metrics no coalesce", "[Edits]")
+{
+   world::world world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_set_block_stairway_metrics(0, {1.0f, 0.0f, 0.0f, 0.0f},
+                                               {0.0f, 0.0f, 0.0f},
+                                               {10.0f, 4.0f, 10.0f}, 0.5f, 0.125f);
+   auto other_edit =
+      make_set_block_stairway_metrics(1, {1.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f},
+                                      {10.0f, 4.0f, 10.0f}, 0.5f, 0.125f);
+
+   REQUIRE(not edit->is_coalescable(*other_edit));
+}
+
 TEST_CASE("edits set_block_surface", "[Edits]")
 {
    world::world world;

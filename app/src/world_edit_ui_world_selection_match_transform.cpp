@@ -206,6 +206,10 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
                   new_rotation =
                      _world.blocks.cylinders.description[*block_index].rotation;
                } break;
+               case world::block_type::stairway: {
+                  new_rotation =
+                     _world.blocks.stairways.description[*block_index].rotation;
+               } break;
                }
             }
          }
@@ -449,6 +453,14 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
                         edits::make_set_block_cylinder_metrics(*block_index,
                                                                new_rotation, new_position,
                                                                cylinder.size));
+                  } break;
+                  case world::block_type::stairway: {
+                     const world::block_description_stairway& stairway =
+                        _world.blocks.stairways.description[*block_index];
+
+                     bundled_edits.push_back(edits::make_set_block_stairway_metrics(
+                        *block_index, new_rotation, new_position, stairway.size,
+                        stairway.step_height, stairway.first_step_offset));
                   } break;
                   }
                }
