@@ -232,7 +232,7 @@ void generate_mesh(const block_description_stairway& stairway, block_custom_mesh
                                        step_base,
                                        step_back,
                                     },
-                                 .normal = {0.0f, 0.0f, 1.0f},
+                                 .normal = {1.0f, 0.0f, 0.0f},
                                  .texcoords = {0.0f, 0.0f},
                                  .surface_index = stairway_surface_pos_x});
          out.vertices.push_back({.position =
@@ -241,7 +241,7 @@ void generate_mesh(const block_description_stairway& stairway, block_custom_mesh
                                        step_top,
                                        step_back,
                                     },
-                                 .normal = {0.0f, 0.0f, 1.0f},
+                                 .normal = {1.0f, 0.0f, 0.0f},
                                  .texcoords = {1.0f, 0.0f},
                                  .surface_index = stairway_surface_pos_x});
          out.vertices.push_back({.position =
@@ -250,7 +250,7 @@ void generate_mesh(const block_description_stairway& stairway, block_custom_mesh
                                        step_top,
                                        half_steps_length,
                                     },
-                                 .normal = {0.0f, 0.0f, 1.0f},
+                                 .normal = {1.0f, 0.0f, 0.0f},
                                  .texcoords = {1.0f, 1.0f},
                                  .surface_index = stairway_surface_pos_x});
          out.vertices.push_back({.position =
@@ -259,7 +259,7 @@ void generate_mesh(const block_description_stairway& stairway, block_custom_mesh
                                        step_base,
                                        half_steps_length,
                                     },
-                                 .normal = {0.0f, 0.0f, 1.0f},
+                                 .normal = {1.0f, 0.0f, 0.0f},
                                  .texcoords = {0.0f, 1.0f},
                                  .surface_index = stairway_surface_pos_x});
 

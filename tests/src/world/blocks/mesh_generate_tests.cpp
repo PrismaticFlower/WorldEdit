@@ -8,7 +8,7 @@ namespace we::world::tests {
 // test after you've validated the mesh generator changes.
 
 #if 0
-world ::block_custom_mesh mesh = world::generate_mesh(description);
+world::block_custom_mesh mesh = world::generate_mesh(description);
 
 std::string output;
 
@@ -172,22 +172,22 @@ TEST_CASE("world blocks generate_mesh stairway", "[World][Blocks]")
    CHECK(mesh.vertices[11].texcoords == float2(0x0p-1022f, 0x1p+0f));
    CHECK(mesh.vertices[11].surface_index == 1);
    CHECK(mesh.vertices[12].position == float3(-0x1.ep+3f, 0x0p-1022f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[12].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[12].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[12].texcoords == float2(0x0p-1022f, 0x0p-1022f));
    CHECK(mesh.vertices[12].surface_index == 0);
    CHECK(mesh.vertices[13].position ==
          float3(-0x1.ep+3f, 0x1.000002p-2f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[13].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[13].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[13].texcoords == float2(0x1p+0f, 0x0p-1022f));
    CHECK(mesh.vertices[13].surface_index == 0);
    CHECK(mesh.vertices[14].position ==
          float3(-0x1.3ffffep+2f, 0x1.000002p-2f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[14].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[14].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[14].texcoords == float2(0x1p+0f, 0x1p+0f));
    CHECK(mesh.vertices[14].surface_index == 0);
    CHECK(mesh.vertices[15].position ==
          float3(-0x1.3ffffep+2f, 0x0p-1022f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[15].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[15].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[15].texcoords == float2(0x0p-1022f, 0x1p+0f));
    CHECK(mesh.vertices[15].surface_index == 0);
    CHECK(mesh.vertices[16].position ==
@@ -252,22 +252,22 @@ TEST_CASE("world blocks generate_mesh stairway", "[World][Blocks]")
    CHECK(mesh.vertices[27].surface_index == 1);
    CHECK(mesh.vertices[28].position ==
          float3(-0x1.9p+3f, 0x1.000002p-2f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[28].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[28].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[28].texcoords == float2(0x0p-1022f, 0x0p-1022f));
    CHECK(mesh.vertices[28].surface_index == 0);
    CHECK(mesh.vertices[29].position ==
          float3(-0x1.9p+3f, 0x1.000002p-1f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[29].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[29].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[29].texcoords == float2(0x1p+0f, 0x0p-1022f));
    CHECK(mesh.vertices[29].surface_index == 0);
    CHECK(mesh.vertices[30].position ==
          float3(-0x1.3ffffep+2f, 0x1.000002p-1f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[30].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[30].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[30].texcoords == float2(0x1p+0f, 0x1p+0f));
    CHECK(mesh.vertices[30].surface_index == 0);
    CHECK(mesh.vertices[31].position ==
          float3(-0x1.3ffffep+2f, 0x1.000002p-2f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[31].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[31].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[31].texcoords == float2(0x0p-1022f, 0x1p+0f));
    CHECK(mesh.vertices[31].surface_index == 0);
    CHECK(mesh.vertices[32].position ==
@@ -332,22 +332,22 @@ TEST_CASE("world blocks generate_mesh stairway", "[World][Blocks]")
    CHECK(mesh.vertices[43].surface_index == 1);
    CHECK(mesh.vertices[44].position ==
          float3(-0x1.4p+3f, 0x1.000002p-1f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[44].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[44].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[44].texcoords == float2(0x0p-1022f, 0x0p-1022f));
    CHECK(mesh.vertices[44].surface_index == 0);
    CHECK(mesh.vertices[45].position ==
          float3(-0x1.4p+3f, 0x1.800004p-1f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[45].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[45].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[45].texcoords == float2(0x1p+0f, 0x0p-1022f));
    CHECK(mesh.vertices[45].surface_index == 0);
    CHECK(mesh.vertices[46].position ==
          float3(-0x1.3ffffep+2f, 0x1.800004p-1f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[46].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[46].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[46].texcoords == float2(0x1p+0f, 0x1p+0f));
    CHECK(mesh.vertices[46].surface_index == 0);
    CHECK(mesh.vertices[47].position ==
          float3(-0x1.3ffffep+2f, 0x1.000002p-1f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[47].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[47].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[47].texcoords == float2(0x0p-1022f, 0x1p+0f));
    CHECK(mesh.vertices[47].surface_index == 0);
    CHECK(mesh.vertices[48].position ==
@@ -412,22 +412,22 @@ TEST_CASE("world blocks generate_mesh stairway", "[World][Blocks]")
    CHECK(mesh.vertices[59].surface_index == 1);
    CHECK(mesh.vertices[60].position ==
          float3(-0x1.ep+2f, 0x1.800004p-1f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[60].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[60].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[60].texcoords == float2(0x0p-1022f, 0x0p-1022f));
    CHECK(mesh.vertices[60].surface_index == 0);
    CHECK(mesh.vertices[61].position ==
          float3(-0x1.ep+2f, 0x1.000002p+0f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[61].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[61].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[61].texcoords == float2(0x1p+0f, 0x0p-1022f));
    CHECK(mesh.vertices[61].surface_index == 0);
    CHECK(mesh.vertices[62].position ==
          float3(-0x1.3ffffep+2f, 0x1.000002p+0f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[62].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[62].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[62].texcoords == float2(0x1p+0f, 0x1p+0f));
    CHECK(mesh.vertices[62].surface_index == 0);
    CHECK(mesh.vertices[63].position ==
          float3(-0x1.3ffffep+2f, 0x1.800004p-1f, -0x1.400002p+2f));
-   CHECK(mesh.vertices[63].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[63].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
    CHECK(mesh.vertices[63].texcoords == float2(0x0p-1022f, 0x1p+0f));
    CHECK(mesh.vertices[63].surface_index == 0);
    CHECK(mesh.vertices[64].position == float3(-0x1.ep+3f, 0x0p-1022f, -0x1.400002p+2f));
