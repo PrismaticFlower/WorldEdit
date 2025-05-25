@@ -2498,6 +2498,32 @@ void copy_command_list::flush_barriers()
                                          aligned_destination_buffer_offset);
 }
 
+void compute_command_list::execute_indirect(command_signature_handle command_signature,
+                                            uint32 command_count,
+                                            resource_handle argument_buffer,
+                                            uint64 argument_buffer_offset)
+{
+   state->command_list->ExecuteIndirect(unpack_command_signature_handle(command_signature),
+                                        command_count,
+                                        unpack_resource_handle(argument_buffer),
+                                        argument_buffer_offset, nullptr, 0);
+}
+
+void compute_command_list::execute_indirect(command_signature_handle command_signature,
+                                            uint32 max_command_count,
+                                            resource_handle argument_buffer,
+                                            uint64 argument_buffer_offset,
+                                            resource_handle count_buffer,
+                                            uint64 count_buffer_offset)
+{
+   state->command_list->ExecuteIndirect(unpack_command_signature_handle(command_signature),
+                                        max_command_count,
+                                        unpack_resource_handle(argument_buffer),
+                                        argument_buffer_offset,
+                                        unpack_resource_handle(count_buffer),
+                                        count_buffer_offset);
+}
+
 [[msvc::forceinline]] void graphics_command_list::draw_instanced(
    const uint32 vertex_count_per_instance, const uint32 instance_count,
    const uint32 start_vertex_location, const uint32 start_instance_location)

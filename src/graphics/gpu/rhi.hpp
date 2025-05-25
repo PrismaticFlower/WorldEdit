@@ -1026,6 +1026,15 @@ struct compute_command_list : copy_command_list {
                                 const resource_handle destination_buffer,
                                 const uint32 aligned_destination_buffer_offset);
 
+   void execute_indirect(command_signature_handle command_signature,
+                         uint32 command_count, resource_handle argument_buffer,
+                         uint64 argument_buffer_offset);
+
+   void execute_indirect(command_signature_handle command_signature,
+                         uint32 max_command_count, resource_handle argument_buffer,
+                         uint64 argument_buffer_offset,
+                         resource_handle count_buffer, uint64 count_buffer_offset);
+
    friend device;
 };
 

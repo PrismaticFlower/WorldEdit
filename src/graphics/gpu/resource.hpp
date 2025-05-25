@@ -138,4 +138,11 @@ using unique_query_heap_handle =
                  },
                  command_queue>;
 
+using unique_command_signature_handle =
+   unique_handle<command_signature_handle, null_command_signature_handle,
+                 [](command_queue& queue, command_signature_handle handle) {
+                    queue.release_command_signature(handle);
+                 },
+                 command_queue>;
+
 }
