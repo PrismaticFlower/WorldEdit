@@ -64,7 +64,7 @@ void init_null_textures(std::span<null_texture_desc> null_textures, gpu::device&
       device.create_buffer({.size = null_textures.size() * gpu::texture_data_placement_alignment,
                             .debug_name = "Texture Manager Upload Buffer"},
                            gpu::heap_type::upload),
-      device.background_copy_queue};
+      device};
 
    // Fill upload buffer.
    {
@@ -94,7 +94,7 @@ void init_null_textures(std::span<null_texture_desc> null_textures, gpu::device&
                                  .array_size = array_size},
                                 gpu::barrier_layout::common,
                                 gpu::legacy_resource_state::common),
-          device.direct_queue};
+          device};
 
       for (uint32 array_index = 0; array_index < array_size; ++array_index) {
          command_list->copy_buffer_to_texture(texture.get(), array_index, 0, 0,
@@ -349,7 +349,7 @@ private:
                              cpu_texture.data(),
                              {.size = cpu_texture.size(),
                               .debug_name = "Texture Manager Upload Buffer"}),
-                          _device.background_copy_queue};
+                          _device};
 
          for (uint32 i = 0; i < cpu_texture.subresource_count(); ++i) {
             const auto& cpu_subresource = cpu_texture.subresource(i);
@@ -367,7 +367,7 @@ private:
       else {
          upload_buffer = {_device.create_buffer({.size = cpu_texture.size(), .debug_name = "Texture Manager Upload Buffer"},
                                                 gpu::heap_type::upload),
-                          _device.background_copy_queue};
+                          _device};
 
          std::byte* const upload_buffer_ptr =
             static_cast<std::byte*>(_device.map(upload_buffer.get(), 0, {}));
@@ -395,7 +395,7 @@ private:
 
       _device.background_copy_queue.execute_command_lists(command_list.get());
       _device.background_copy_queue.wait_for_idle();
-      _device.release_resource(upload_buffer.release());
+      _device.unsynced_release_resource(upload_buffer.release());
    }
 
    /// @brief Creates a texture asynchronously. _shared_mutex must be held before calling this.
@@ -418,7 +418,7 @@ private:
                                             .array_size = data->array_size()},
                                            gpu::barrier_layout::common,
                                            gpu::legacy_resource_state::common),
-                    _device.direct_queue};
+                    _device};
 
                 init_texture(texture.get(), *data);
 
@@ -548,9 +548,9 @@ world_texture::world_texture(gpu::device& device, gpu::unique_resource_handle te
 
 world_texture::~world_texture()
 {
-   _device.direct_queue.release_resource_view(srv);
-   _device.direct_queue.release_resource_view(srv_srgb);
-   _device.direct_queue.release_resource(texture);
+   _device.release_resource_view(srv);
+   _device.release_resource_view(srv_srgb);
+   _device.release_resource(texture);
 }
 
 updated_textures::updated_textures(const void* copied_textures) noexcept

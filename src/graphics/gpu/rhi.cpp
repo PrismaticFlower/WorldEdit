@@ -43,6 +43,18 @@ constexpr uint32 num_dsv_descriptors = 1024;
 
 constexpr uint32 bindless_descriptor_space_start = 10'000;
 
+constexpr std::array command_queue_list = {
+   &device::direct_queue,
+   &device::copy_queue,
+   &device::async_compute_queue,
+   &device::background_copy_queue,
+};
+
+constexpr std::array command_queue_executable_list = {
+   &device::direct_queue,
+   &device::async_compute_queue,
+};
+
 auto create_dxgi_factory(const device_desc& device_desc) -> com_ptr<IDXGIFactory7>
 {
    com_ptr<IDXGIFactory7> factory;
@@ -1621,42 +1633,118 @@ auto device::create_command_signature(const command_signature_desc& desc,
 
 void device::release_root_signature(root_signature_handle root_signature)
 {
+   for (command_queue device::*queue : command_queue_executable_list) {
+      unpack_root_signature_handle(root_signature)->AddRef();
+
+      (this->*queue).release_root_signature(root_signature);
+   }
+
    unpack_root_signature_handle(root_signature)->Release();
 }
 
 void device::release_pipeline(pipeline_handle pipeline)
 {
+   for (command_queue device::*queue : command_queue_executable_list) {
+      unpack_pipeline_handle(pipeline)->AddRef();
+
+      (this->*queue).release_pipeline(pipeline);
+   }
+
    unpack_pipeline_handle(pipeline)->Release();
 }
 
 void device::release_resource(resource_handle resource)
 {
+   for (command_queue device::*queue : command_queue_list) {
+      unpack_resource_handle(resource)->AddRef();
+
+      (this->*queue).release_resource(resource);
+   }
+
    unpack_resource_handle(resource)->Release();
 }
 
 void device::release_resource_view(resource_view resource_view)
 {
-   state->srv_uav_descriptor_heap.allocator.free(resource_view.index);
+   for (command_queue device::*queue : command_queue_executable_list) {
+      state->srv_uav_descriptor_heap.allocator.add_ref(resource_view.index);
+
+      (this->*queue).release_resource_view(resource_view);
+   }
+
+   state->srv_uav_descriptor_heap.allocator.release(resource_view.index);
 }
 
 void device::release_render_target_view(rtv_handle render_target_view)
 {
-   state->rtv_descriptor_heap.allocator.free(
-      state->rtv_descriptor_heap.to_index(unpack_rtv_handle(render_target_view)));
+   direct_queue.release_render_target_view(render_target_view);
 }
 
 void device::release_depth_stencil_view(dsv_handle depth_stencil_view)
 {
-   state->dsv_descriptor_heap.allocator.free(
-      state->dsv_descriptor_heap.to_index(unpack_dsv_handle(depth_stencil_view)));
+   direct_queue.release_depth_stencil_view(depth_stencil_view);
 }
 
 void device::release_query_heap(query_heap_handle query_heap)
 {
+   for (command_queue device::*queue : command_queue_list) {
+      unpack_query_heap_handle(query_heap)->AddRef();
+
+      (this->*queue).release_query_heap(query_heap);
+   }
+
    unpack_query_heap_handle(query_heap)->Release();
 }
 
 void device::release_command_signature(command_signature_handle command_signature)
+{
+   for (command_queue device::*queue : command_queue_executable_list) {
+      unpack_command_signature_handle(command_signature)->AddRef();
+
+      (this->*queue).release_command_signature(command_signature);
+   }
+
+   unpack_command_signature_handle(command_signature)->Release();
+}
+
+void device::unsynced_release_root_signature(root_signature_handle root_signature)
+{
+   unpack_root_signature_handle(root_signature)->Release();
+}
+
+void device::unsynced_release_pipeline(pipeline_handle pipeline)
+{
+   unpack_pipeline_handle(pipeline)->Release();
+}
+
+void device::unsynced_release_resource(resource_handle resource)
+{
+   unpack_resource_handle(resource)->Release();
+}
+
+void device::unsynced_release_resource_view(resource_view resource_view)
+{
+   state->srv_uav_descriptor_heap.allocator.release(resource_view.index);
+}
+
+void device::unsynced_release_render_target_view(rtv_handle render_target_view)
+{
+   state->rtv_descriptor_heap.allocator.release(
+      state->rtv_descriptor_heap.to_index(unpack_rtv_handle(render_target_view)));
+}
+
+void device::unsynced_release_depth_stencil_view(dsv_handle depth_stencil_view)
+{
+   state->dsv_descriptor_heap.allocator.release(
+      state->dsv_descriptor_heap.to_index(unpack_dsv_handle(depth_stencil_view)));
+}
+
+void device::unsynced_release_query_heap(query_heap_handle query_heap)
+{
+   unpack_query_heap_handle(query_heap)->Release();
+}
+
+void device::unsynced_release_command_signature(command_signature_handle command_signature)
 {
    unpack_command_signature_handle(command_signature)->Release();
 }
@@ -1703,7 +1791,7 @@ swap_chain::~swap_chain()
    state->device->wait_for_idle();
 
    for (auto& view : state->buffer_rtvs) {
-      state->rtv_descriptor_heap->allocator.free(
+      state->rtv_descriptor_heap->allocator.release(
          state->rtv_descriptor_heap->to_index(unpack_rtv_handle(view)));
    }
 }
@@ -1746,7 +1834,7 @@ void swap_chain::resize(uint32 new_width, uint32 new_height)
       terminate_if_fail(
          swap_chain.GetBuffer(i, IID_PPV_ARGS(state->buffers[i].clear_and_assign())));
 
-      state->rtv_descriptor_heap->allocator.free(state->rtv_descriptor_heap->to_index(
+      state->rtv_descriptor_heap->allocator.release(state->rtv_descriptor_heap->to_index(
          unpack_rtv_handle(state->buffer_rtvs[i])));
       state->buffer_rtvs[i] = state->device->create_render_target_view(
          pack_resource_handle(state->buffers[i].get()),

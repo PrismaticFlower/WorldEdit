@@ -589,14 +589,14 @@ void geometric_shapes::init_gpu_buffer(gpu::device& device,
                                         .debug_name =
                                            "Geometric Shapes Meshes Buffer"},
                                        gpu::heap_type::default_),
-                  device.direct_queue};
+                  device};
 
    gpu::unique_resource_handle upload_buffer =
       {device.create_buffer({.size = sizeof(shapes_buffer),
                              .debug_name =
                                 "Geometric Shapes Meshes Upload Buffer"},
                             gpu::heap_type::upload),
-       device.background_copy_queue};
+       device};
 
    std::byte* const upload_buffer_ptr =
       static_cast<std::byte*>(device.map(upload_buffer.get(), 0, {0, 0}));

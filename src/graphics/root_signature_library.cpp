@@ -461,42 +461,33 @@ const gpu::root_signature_desc imgui_desc{
 
 root_signature_library::root_signature_library(gpu::device& device)
 {
-   mesh = {device.create_root_signature(mesh_desc), device.direct_queue};
-   terrain = {device.create_root_signature(terrain_desc), device.direct_queue};
-   terrain_cut_mesh = {device.create_root_signature(terrain_cut_mesh_desc),
-                       device.direct_queue};
-   water = {device.create_root_signature(water_desc), device.direct_queue};
-   mesh_shadow = {device.create_root_signature(mesh_shadow_desc), device.direct_queue};
-   mesh_depth_prepass = {device.create_root_signature(mesh_depth_prepass_desc),
-                         device.direct_queue};
-   mesh_wireframe = {device.create_root_signature(mesh_wireframe_desc),
-                     device.direct_queue};
-   sky_mesh = {device.create_root_signature(sky_mesh_desc), device.direct_queue};
-   block = {device.create_root_signature(block_desc), device.direct_queue};
-   grid_overlay = {device.create_root_signature(grid_overlay_desc), device.direct_queue};
-   thumbnail_mesh = {device.create_root_signature(thumbnail_mesh_desc),
-                     device.direct_queue};
+   mesh = {device.create_root_signature(mesh_desc), device};
+   terrain = {device.create_root_signature(terrain_desc), device};
+   terrain_cut_mesh = {device.create_root_signature(terrain_cut_mesh_desc), device};
+   water = {device.create_root_signature(water_desc), device};
+   mesh_shadow = {device.create_root_signature(mesh_shadow_desc), device};
+   mesh_depth_prepass = {device.create_root_signature(mesh_depth_prepass_desc), device};
+   mesh_wireframe = {device.create_root_signature(mesh_wireframe_desc), device};
+   sky_mesh = {device.create_root_signature(sky_mesh_desc), device};
+   block = {device.create_root_signature(block_desc), device};
+   grid_overlay = {device.create_root_signature(grid_overlay_desc), device};
+   thumbnail_mesh = {device.create_root_signature(thumbnail_mesh_desc), device};
    thumbnail_downsample = {device.create_root_signature(thumbnail_downsample_mesh_desc),
-                           device.direct_queue};
-   resample_env_map = {device.create_root_signature(resample_env_map_desc),
-                       device.direct_queue};
-   meta_draw = {device.create_root_signature(meta_draw_desc), device.direct_queue};
+                           device};
+   resample_env_map = {device.create_root_signature(resample_env_map_desc), device};
+   meta_draw = {device.create_root_signature(meta_draw_desc), device};
 
-   ai_overlay_shape = {device.create_root_signature(ai_overlay_shape_desc),
-                       device.direct_queue};
-   ai_overlay_apply = {device.create_root_signature(ai_overlay_apply_desc),
-                       device.direct_queue};
+   ai_overlay_shape = {device.create_root_signature(ai_overlay_shape_desc), device};
+   ai_overlay_apply = {device.create_root_signature(ai_overlay_apply_desc), device};
 
-   gizmo_shape = {device.create_root_signature(gizmo_shape_desc), device.direct_queue};
+   gizmo_shape = {device.create_root_signature(gizmo_shape_desc), device};
 
-   tile_lights_clear = {device.create_root_signature(tile_lights_clear_desc),
-                        device.direct_queue};
-   tile_lights = {device.create_root_signature(tile_lights_desc), device.direct_queue};
+   tile_lights_clear = {device.create_root_signature(tile_lights_clear_desc), device};
+   tile_lights = {device.create_root_signature(tile_lights_desc), device};
 
-   depth_reduce_minmax = {device.create_root_signature(depth_reduce_minmax_desc),
-                          device.direct_queue};
+   depth_reduce_minmax = {device.create_root_signature(depth_reduce_minmax_desc), device};
 
-   imgui = {device.create_root_signature(imgui_desc), device.direct_queue};
+   imgui = {device.create_root_signature(imgui_desc), device};
 }
 
 }

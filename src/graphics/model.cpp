@@ -130,7 +130,7 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
       .buffer = {device.create_buffer({.size = static_cast<uint32>(buffer_size),
                                        .debug_name = "Mesh Data Buffer"},
                                       gpu::heap_type::default_),
-                 device.direct_queue}};
+                 device}};
 
    const gpu_virtual_address gpu_virtual_address =
       device.get_gpu_virtual_address(gpu_buffer.buffer.get());
@@ -237,7 +237,7 @@ void model::init_gpu_buffer(gpu::device& device,
    gpu::unique_resource_handle upload_buffer =
       {device.create_buffer({.size = buffer.size(), .debug_name = "Mesh Upload Buffer"},
                             gpu::heap_type::upload),
-       device.background_copy_queue};
+       device};
 
    std::byte* const upload_buffer_ptr =
       static_cast<std::byte*>(device.map(upload_buffer.get(), 0, {}));

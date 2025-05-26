@@ -8,7 +8,7 @@ namespace we::graphics::gpu {
 
 /// @brief Convenience helper for managing GPU handles. Owns a handle and calls release on it when destroyed.
 /// Care must be taken when destroying unsynchronized handles.
-template<typename H, H null_value, auto releaser, typename queue>
+template<typename H, H null_value, auto releaser>
 struct unique_handle {
    using handle_type = H;
 
@@ -17,12 +17,12 @@ struct unique_handle {
    constexpr ~unique_handle()
    {
       if (_handle != null_value) {
-         releaser(*_queue, _handle);
+         releaser(*_device, _handle);
       }
    }
 
-   constexpr unique_handle(handle_type handle, queue& queue) noexcept
-      : _handle{handle}, _queue{&queue}
+   constexpr unique_handle(handle_type handle, device& device) noexcept
+      : _handle{handle}, _device{&device}
    {
    }
 
@@ -59,7 +59,7 @@ struct unique_handle {
 
    constexpr auto release() noexcept -> handle_type
    {
-      _queue = nullptr;
+      _device = nullptr;
 
       return std::exchange(_handle, null_value);
    }
@@ -69,7 +69,7 @@ struct unique_handle {
       using std::swap;
 
       swap(this->_handle, other._handle);
-      swap(this->_queue, other._queue);
+      swap(this->_device, other._device);
    }
 
    [[nodiscard]] constexpr explicit operator bool() const noexcept
@@ -86,63 +86,49 @@ struct unique_handle {
 
 private:
    handle_type _handle = null_value;
-   queue* _queue = nullptr;
+   device* _device = nullptr;
 };
 
 using unique_resource_handle =
-   unique_handle<resource_handle, null_resource_handle,
-                 [](command_queue& queue, resource_handle handle) {
-                    queue.release_resource(handle);
-                 },
-                 command_queue>;
+   unique_handle<resource_handle, null_resource_handle, [](device& device, resource_handle handle) {
+      device.release_resource(handle);
+   }>;
 
 using unique_rtv_handle =
-   unique_handle<rtv_handle, null_rtv_handle,
-                 [](command_queue& queue, rtv_handle handle) {
-                    queue.release_render_target_view(handle);
-                 },
-                 command_queue>;
+   unique_handle<rtv_handle, null_rtv_handle, [](device& device, rtv_handle handle) {
+      device.release_render_target_view(handle);
+   }>;
 
 using unique_dsv_handle =
-   unique_handle<dsv_handle, null_dsv_handle,
-                 [](command_queue& queue, dsv_handle handle) {
-                    queue.release_depth_stencil_view(handle);
-                 },
-                 command_queue>;
+   unique_handle<dsv_handle, null_dsv_handle, [](device& device, dsv_handle handle) {
+      device.release_depth_stencil_view(handle);
+   }>;
 
 using unique_resource_view =
-   unique_handle<resource_view, invalid_resource_view,
-                 [](command_queue& queue, resource_view handle) {
-                    queue.release_resource_view(handle);
-                 },
-                 command_queue>;
+   unique_handle<resource_view, invalid_resource_view, [](device& device, resource_view handle) {
+      device.release_resource_view(handle);
+   }>;
 
 using unique_root_signature_handle =
    unique_handle<root_signature_handle, null_root_signature_handle,
-                 [](command_queue& queue, root_signature_handle handle) {
-                    queue.release_root_signature(handle);
-                 },
-                 command_queue>;
+                 [](device& device, root_signature_handle handle) {
+                    device.release_root_signature(handle);
+                 }>;
 
 using unique_pipeline_handle =
-   unique_handle<pipeline_handle, null_pipeline_handle,
-                 [](command_queue& queue, pipeline_handle handle) {
-                    queue.release_pipeline(handle);
-                 },
-                 command_queue>;
+   unique_handle<pipeline_handle, null_pipeline_handle, [](device& device, pipeline_handle handle) {
+      device.release_pipeline(handle);
+   }>;
 
 using unique_query_heap_handle =
-   unique_handle<query_heap_handle, null_query_heap_handle,
-                 [](command_queue& queue, query_heap_handle handle) {
-                    queue.release_query_heap(handle);
-                 },
-                 command_queue>;
+   unique_handle<query_heap_handle, null_query_heap_handle, [](device& device, query_heap_handle handle) {
+      device.release_query_heap(handle);
+   }>;
 
 using unique_command_signature_handle =
    unique_handle<command_signature_handle, null_command_signature_handle,
-                 [](command_queue& queue, command_signature_handle handle) {
-                    queue.release_command_signature(handle);
-                 },
-                 command_queue>;
+                 [](device& device, command_signature_handle handle) {
+                    device.release_command_signature(handle);
+                 }>;
 
 }

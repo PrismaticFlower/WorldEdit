@@ -1233,10 +1233,10 @@ private:
                                   .debug_name = "Thumbnails Atlas"},
                                  gpu::barrier_layout::direct_queue_common,
                                  gpu::legacy_resource_state::pixel_shader_resource),
-          _device.direct_queue};
+          _device};
       _atlas_srv = {_device.create_shader_resource_view(_atlas_texture.get(),
                                                         {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB}),
-                    _device.direct_queue};
+                    _device};
 
       _free_items.clear();
       _free_items.reserve(atlas_items_width * atlas_items_height);
@@ -1261,15 +1261,15 @@ private:
                              .debug_name = "Thumbnails Render Target"},
                             gpu::barrier_layout::render_target,
                             gpu::legacy_resource_state::render_target),
-                         _device.direct_queue};
+                         _device};
       _render_rtv = {_device.create_render_target_view(_render_texture.get(),
                                                        {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
                                                         .dimension =
                                                            gpu::rtv_dimension::texture2d}),
-                     _device.direct_queue};
+                     _device};
       _render_srv = {_device.create_shader_resource_view(_render_texture.get(),
                                                          {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB}),
-                     _device.direct_queue};
+                     _device};
 
       _depth_texture = {_device.create_texture(
                            {.dimension = gpu::texture_dimension::t_2d,
@@ -1283,12 +1283,12 @@ private:
                             .debug_name = "Thumbnails Depth Buffer"},
                            gpu::barrier_layout::depth_stencil_write,
                            gpu::legacy_resource_state::depth_write),
-                        _device.direct_queue};
+                        _device};
       _depth_dsv = {_device.create_depth_stencil_view(_depth_texture.get(),
                                                       {.format = DXGI_FORMAT_D16_UNORM,
                                                        .dimension =
                                                           gpu::dsv_dimension::texture2d}),
-                    _device.direct_queue};
+                    _device};
 
       _downsample_texture =
          {_device.create_texture(
@@ -1302,12 +1302,12 @@ private:
               .debug_name = "Thumbnails Downsample Render Target"},
              gpu::barrier_layout::direct_queue_copy_source,
              gpu::legacy_resource_state::copy_source),
-          _device.direct_queue};
+          _device};
       _downsample_rtv = {_device.create_render_target_view(
                             _downsample_texture.get(),
                             {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
                              .dimension = gpu::rtv_dimension::texture2d}),
-                         _device.direct_queue};
+                         _device};
 
       _upload_readback_pitch =
          math::align_up<uint32>(_thumbnail_length * sizeof(uint32),
@@ -1318,7 +1318,7 @@ private:
                                                .debug_name =
                                                   "Thumbnails Upload Buffer"},
                                               gpu::heap_type::upload),
-                        _device.direct_queue};
+                        _device};
 
       std::byte* const upload_mapped_buffer = static_cast<std::byte*>(
          _device.map(_upload_buffer.get(), 0,
@@ -1335,7 +1335,7 @@ private:
                                          gpu::frame_pipeline_length,
                                  .debug_name = "Thumbnails Readback Buffer"},
                                 gpu::heap_type::readback),
-          _device.direct_queue};
+          _device};
 
       const std::byte* const readback_mapped_buffer = static_cast<std::byte*>(
          _device.map(_readback_buffer.get(), 0,

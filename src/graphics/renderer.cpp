@@ -210,7 +210,7 @@ private:
       {_device.create_buffer({.size = sizeof(frame_constant_buffer),
                               .debug_name = "Frame Constant Buffer"},
                              gpu::heap_type::default_),
-       _device.direct_queue};
+       _device};
    gpu_virtual_address _camera_constant_buffer_view =
       _device.get_gpu_virtual_address(_camera_constant_buffer.get());
 
@@ -225,27 +225,27 @@ private:
                                    .depth_stencil = {.depth = 0.0f, .stencil = 0x0}}},
                               gpu::barrier_layout::direct_queue_shader_resource,
                               gpu::legacy_resource_state::all_shader_resource),
-       _device.direct_queue};
+       _device};
    gpu::unique_dsv_handle _depth_stencil_view =
       {_device.create_depth_stencil_view(_depth_stencil_texture.get(),
                                          {.format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
                                           .dimension = gpu::dsv_dimension::texture2d}),
-       _device.direct_queue};
+       _device};
    gpu::unique_resource_view _depth_stencil_srv =
       {_device.create_shader_resource_view(_depth_stencil_texture.get(),
                                            {.format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS}),
-       _device.direct_queue};
+       _device};
    gpu::unique_resource_handle _depth_minmax_buffer =
       {_device.create_buffer({.size = sizeof(float4),
                               .flags = {.allow_unordered_access = true},
                               .debug_name = "Depth Min-Max Buffer"},
                              gpu::heap_type::default_),
-       _device.direct_queue};
+       _device};
    gpu::unique_resource_handle _depth_minmax_readback_buffer =
       {_device.create_buffer({.size = sizeof(float4) * gpu::frame_pipeline_length,
                               .debug_name = "Depth Min-Max Readback Buffer"},
                              gpu::heap_type::readback),
-       _device.direct_queue};
+       _device};
    std::array<const float4*, gpu::frame_pipeline_length> _depth_minmax_readback_buffer_ptrs;
 
    shader_library _shaders{shader_list, _device.supports_shader_model_6_6(),
@@ -275,7 +275,7 @@ private:
       {_device.create_buffer({.size = objects_constants_buffer_size,
                               .debug_name = "Object Constant Buffers"},
                              gpu::heap_type::default_),
-       _device.direct_queue};
+       _device};
 
    world_mesh_list _world_mesh_list;
    world_mesh_render_list _world_mesh_render_list;
@@ -330,7 +330,7 @@ renderer_impl::renderer_impl(const renderer_init& init)
          _device.create_buffer({.size = objects_constants_buffer_size,
                                 .debug_name = "Object Constant Upload Buffers"},
                                gpu::heap_type::upload),
-         _device.direct_queue};
+         _device};
 
       _object_constants_upload_cpu_ptrs[i] = static_cast<std::byte*>(
          _device.map(_object_constants_upload_buffers[i].get(), 0, {}));
@@ -630,16 +630,16 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                      .color = float4{0.0f, 0.0f, 0.0f, 1.0f}},
            .debug_name = "Env Map Super Sample Render Target"},
           gpu::barrier_layout::render_target, gpu::legacy_resource_state::render_target),
-       _device.direct_queue};
+       _device};
    gpu::unique_rtv_handle env_map_super_sample_rtv =
       {_device.create_render_target_view(env_map_super_sample_render_texture.get(),
                                          {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
                                           .dimension = gpu::rtv_dimension::texture2d}),
-       _device.direct_queue};
+       _device};
    gpu::unique_resource_view env_map_super_sample_srv =
       {_device.create_shader_resource_view(env_map_super_sample_render_texture.get(),
                                            {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB}),
-       _device.direct_queue};
+       _device};
 
    gpu::unique_resource_handle env_map_render_texture =
       {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
@@ -654,12 +654,12 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                .debug_name = "Env Map Render Target"},
                               gpu::barrier_layout::render_target,
                               gpu::legacy_resource_state::render_target),
-       _device.direct_queue};
+       _device};
    gpu::unique_resource_view env_map_srv =
       {_device.create_shader_resource_view(env_map_render_texture.get(),
                                            {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
                                             .texture_cube_view = true}),
-       _device.direct_queue};
+       _device};
 
    gpu::unique_resource_handle env_map_resample_render_texture =
       {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
@@ -674,14 +674,14 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                .debug_name = "Env Map Resample Render Target"},
                               gpu::barrier_layout::render_target,
                               gpu::legacy_resource_state::render_target),
-       _device.direct_queue};
+       _device};
    gpu::unique_rtv_handle env_map_resample_rtv =
       {_device.create_render_target_view(env_map_resample_render_texture.get(),
                                          {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
                                           .dimension = gpu::rtv_dimension::texture2d_array,
                                           .texture2d_array = {.first_array_slice = 0,
                                                               .array_size = 6}}),
-       _device.direct_queue};
+       _device};
 
    gpu::unique_resource_handle env_map_depth_stencil_texture =
       {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
@@ -695,21 +695,21 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                .debug_name = "Env Map Depth Stencil Target"},
                               gpu::barrier_layout::depth_stencil_write,
                               gpu::legacy_resource_state::depth_write),
-       _device.direct_queue};
+       _device};
    gpu::unique_dsv_handle env_map_depth_stencil_view =
       {_device.create_depth_stencil_view(env_map_depth_stencil_texture.get(),
                                          {.format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
                                           .dimension = gpu::dsv_dimension::texture2d}),
-       _device.direct_queue};
+       _device};
    gpu::unique_resource_view env_map_depth_stencil_srv =
       {_device.create_shader_resource_view(env_map_depth_stencil_texture.get(),
                                            {.format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS}),
-       _device.direct_queue};
+       _device};
 
    gpu::unique_resource_handle env_map_depth_min_max_readback_buffer =
       {_device.create_buffer({.size = sizeof(float4) * 6, .debug_name = "Env Map Depth Min-Max Readback Buffer"},
                              gpu::heap_type::readback),
-       _device.direct_queue};
+       _device};
 
    const uint32 readback_row_pitch =
       math::align_up<uint32>(params.length * sizeof(uint32),
@@ -720,7 +720,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       {_device.create_buffer({.size = readback_item_pitch * 6,
                               .debug_name = "Env Map Readback Buffer"},
                              gpu::heap_type::readback),
-       _device.direct_queue};
+       _device};
 
    gpu::copy_command_list pre_render_command_list = _device.create_copy_command_list(
       {.debug_name = "Pre-Env Map Render Copy Command List"});
@@ -927,7 +927,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                              .dimension = gpu::rtv_dimension::texture2d_array,
                                              .texture2d_array = {.first_array_slice = i,
                                                                  .array_size = 1}}),
-          _device.direct_queue};
+          _device};
 
       camera camera;
 
@@ -1158,16 +1158,16 @@ void renderer_impl::window_resized(uint16 width, uint16 height)
                                    .depth_stencil = {.depth = 0.0f, .stencil = 0x0}}},
                               gpu::barrier_layout::direct_queue_shader_resource,
                               gpu::legacy_resource_state::all_shader_resource),
-       _device.direct_queue};
+       _device};
    _depth_stencil_view =
       {_device.create_depth_stencil_view(_depth_stencil_texture.get(),
                                          {.format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
                                           .dimension = gpu::dsv_dimension::texture2d}),
-       _device.direct_queue};
+       _device};
    _depth_stencil_srv = {_device.create_shader_resource_view(
                             _depth_stencil_texture.get(),
                             {.format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS}),
-                         _device.direct_queue};
+                         _device};
 
    _light_clusters.update_render_resolution(width, height);
 }

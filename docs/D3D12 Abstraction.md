@@ -26,33 +26,7 @@ GPU objects can broken down into two categories. RAII Objects and Handle Objects
 
 RAII Objects are structs created from `gpu::device` that are not trivial and (typically) have member functions of their own. Currently this is only `gpu::swap_chain`, `gpu::copy_command_list`, `gpu::compute_command_list` and `gpu::graphics_command_list`. It is not expected this list will grow. These objects can be freely destroyed without concern for if the GPU is currently using their contents. If synchronization is needed it will be performed implicitly. For `gpu::swapchain` in particular this cost could be expensive. But swap chains are rarely destroyed and as such it is not expected to be an issue.
 
-Handle Objects on the other hand encompass both the various `gpu::*_handle` handles returned from `gpu::device` create functions and also the `resource_view` struct (which is just a wrapper around a uint32 indexing into the descriptor heap). These objects must be explicitly released. Unlike raw D3D12 where release is called on the object itself the release is queued on a `gpu::command_queue`. The exact time when the object will be freed is unspecified but it is **guaranteed to be after all preceeding work on the queue has completed**.
-
-There is no restriction on what kind of Handle Objects a queue can release. i.e the background copy queue may release pipeline handles.
-
-
-```c++
-   // Release functions from gpu::command_queue
-
-   void release_root_signature(root_signature_handle root_signature);
-
-   void release_pipeline(pipeline_handle pipeline);
-
-   void release_resource(resource_handle resource);
-
-   void release_resource_view(resource_view resource_view);
-
-   void release_render_target_view(rtv_handle render_target_view);
-
-   void release_depth_stencil_view(dsv_handle depth_stencil_view);
-
-   void release_query_heap(query_heap_handle query_heap);
-```
-
-Included in `gpu/resource.hpp` is `gpu::unique_handle`. This provides a smart pointer like interface around a handle and manages it's lifetime using the provided queue at construction time. Managing the lifetime of a `gpu::resource_view` is also supported. In most cases this is what you'll want to use over manually managing object lifetime.
-
-#### Unsynced Lifetime Management
-During optimizing the background texture creation it became apparent that the ability to release a resource immediately could speed things up for cases where you have a natural sync point (Like the `wait_for_idle` at the end of a texture upload.). With that in mind `gpu::device` now has functions to directly release GPU resources and objects. These perform no synchronization and as such must be treated with more care than the queued release functions.
+Handle Objects on the other hand encompass both the various `gpu::*_handle` handles returned from `gpu::device` create functions and also the `resource_view` struct (which is just a wrapper around a uint32 indexing into the descriptor heap). These objects must be explicitly released. Calls to release functions are completed asynchronously and will complete after the GPU has finished all previously submitted work.
 
 ```c++
    // Release functions from gpu::device
@@ -72,6 +46,8 @@ During optimizing the background texture creation it became apparent that the ab
    void release_query_heap(query_heap_handle query_heap);
 ```
 
+Included in `gpu/resource.hpp` is `gpu::unique_handle`. This provides a smart pointer like interface around a handle and manages it's lifetime using the provided device at construction time. Managing the lifetime of a `gpu::resource_view` is also supported. In most cases this is what you'll want to use over manually managing object lifetime.
+
 ```c++
 // List of gpu::unique_handle instantiations
 
@@ -82,6 +58,27 @@ using unique_resource_view = /* ... */;
 using unique_root_signature_handle = /* ... */;
 using unique_pipeline_handle = /* ... */;
 using unique_sampler_heap_handle = /* ... */;
+```
+
+#### Unsynced Lifetime Management
+During optimizing the background texture creation it became apparent that the ability to release a resource immediately could speed things up for cases where you have a natural sync point (Like the `wait_for_idle` at the end of a texture upload.). With that in mind `gpu::device` now has functions to directly release GPU resources and objects. These perform no synchronization and as such must be treated with more care than the queued release functions.
+
+```c++
+   // Release functions from gpu::device
+
+   void unsynced_release_root_signature(root_signature_handle root_signature);
+
+   void unsynced_release_pipeline(pipeline_handle pipeline);
+
+   void unsynced_release_resource(resource_handle resource);
+
+   void unsynced_release_resource_view(resource_view resource_view);
+
+   void unsynced_release_render_target_view(rtv_handle render_target_view);
+
+   void unsynced_release_depth_stencil_view(dsv_handle depth_stencil_view);
+
+   void unsynced_release_query_heap(query_heap_handle query_heap);
 ```
 
 ### Fences

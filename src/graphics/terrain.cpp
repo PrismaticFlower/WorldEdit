@@ -127,14 +127,14 @@ terrain::terrain(gpu::device& device, copy_command_list_pool& copy_command_list_
       {_device.create_buffer({.size = sizeof(terrain_constants),
                               .debug_name = "Terrain Constants Buffer"},
                              gpu::heap_type::default_),
-       _device.direct_queue};
+       _device};
    _terrain_cbv = _device.get_gpu_virtual_address(_terrain_constants_buffer.get());
 
    _index_buffer = {_device.create_buffer({.size = sizeof(terrain_patch_indices),
                                            .debug_name =
                                               "Terrain Patch Indices"},
                                           gpu::heap_type::default_),
-                    device.direct_queue};
+                     device};
 
    pooled_copy_command_list command_list = copy_command_list_pool.aquire_and_reset();
 
@@ -635,11 +635,11 @@ void terrain::create_gpu_textures()
                                           .debug_name = "Terrain Height Map"},
                                          gpu::barrier_layout::common,
                                          gpu::legacy_resource_state::common),
-                  _device.direct_queue};
+                  _device};
 
    _height_map_srv = {_device.create_shader_resource_view(_height_map.get(),
                                                           {.format = DXGI_FORMAT_R16_SNORM}),
-                      _device.direct_queue};
+                      _device};
 
    _texture_weight_maps =
       {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
@@ -650,12 +650,12 @@ void terrain::create_gpu_textures()
                                .debug_name = "Terrain Texture Weight Maps"},
                               gpu::barrier_layout::common,
                               gpu::legacy_resource_state::common),
-       _device.direct_queue};
+       _device};
 
    _texture_weight_maps_srv =
       {_device.create_shader_resource_view(_texture_weight_maps.get(),
                                            {.format = DXGI_FORMAT_R8_UNORM}),
-       _device.direct_queue};
+       _device};
 
    _light_map = {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
                                          .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
@@ -664,11 +664,11 @@ void terrain::create_gpu_textures()
                                          .debug_name = "Terrain Light Map"},
                                         gpu::barrier_layout::common,
                                         gpu::legacy_resource_state::common),
-                 _device.direct_queue};
+                 _device};
 
    _light_map_srv = {_device.create_shader_resource_view(_light_map.get(),
                                                          {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB}),
-                     _device.direct_queue};
+                     _device};
 
    _foliage_map = {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
                                            .format = DXGI_FORMAT_R8_UINT,
@@ -677,11 +677,11 @@ void terrain::create_gpu_textures()
                                            .debug_name = "Terrain Foliage Map"},
                                           gpu::barrier_layout::common,
                                           gpu::legacy_resource_state::common),
-                   _device.direct_queue};
+                   _device};
 
    _foliage_map_srv = {_device.create_shader_resource_view(_foliage_map.get(),
                                                            {.format = DXGI_FORMAT_R8_UINT}),
-                       _device.direct_queue};
+                       _device};
 
    _height_map_upload_row_pitch =
       math::align_up(_terrain_length * uint32{sizeof(uint16)},
@@ -718,7 +718,7 @@ void terrain::create_gpu_textures()
                                             .debug_name =
                                                "Terrain Upload Buffer"},
                                            gpu::heap_type::upload),
-                     _device.direct_queue};
+                     _device};
 
    std::byte* const upload_buffer_ptr =
       static_cast<std::byte*>(_device.map(_upload_buffer.get(), 0, {}));

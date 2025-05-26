@@ -27,7 +27,7 @@ water::water(gpu::device& device, texture_manager& texture_manager)
                                                     .debug_name =
                                                        "Water Constants"},
                                                    gpu::heap_type::default_),
-                             _device.direct_queue},
+                             _device},
      _water_constants_cbv{
         _device.get_gpu_virtual_address(_water_constants_buffer.get())},
      _color_map{texture_manager.null_color_map()}

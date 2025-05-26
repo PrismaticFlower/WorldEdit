@@ -1142,6 +1142,26 @@ struct command_queue {
    /// @brief Wait for all currently submited work to this queue to finish before returning.
    void wait_for_idle();
 
+   auto get_timestamp_frequency() -> uint64;
+
+private:
+   friend device;
+   friend command_list;
+
+   command_queue();
+
+   explicit command_queue(const command_queue_init& init);
+
+   ~command_queue();
+
+   command_queue(const command_queue& other) noexcept = delete;
+
+   auto operator=(const command_queue& other) noexcept -> command_queue& = delete;
+
+   command_queue(command_queue&& other) noexcept = delete;
+
+   auto operator=(command_queue&& other) noexcept -> command_queue& = delete;
+
    void release_root_signature(root_signature_handle root_signature);
 
    void release_pipeline(pipeline_handle pipeline);
@@ -1159,25 +1179,6 @@ struct command_queue {
    void release_command_allocator(command_allocator_handle command_allocator);
 
    void release_command_signature(command_signature_handle command_signature);
-
-   auto get_timestamp_frequency() -> uint64;
-
-private:
-   friend device;
-
-   command_queue();
-
-   explicit command_queue(const command_queue_init& init);
-
-   ~command_queue();
-
-   command_queue(const command_queue& other) noexcept = delete;
-
-   auto operator=(const command_queue& other) noexcept -> command_queue& = delete;
-
-   command_queue(command_queue&& other) noexcept = delete;
-
-   auto operator=(command_queue&& other) noexcept -> command_queue& = delete;
 
    implementation_storage<command_queue_state, 152> state;
 };
@@ -1368,7 +1369,7 @@ public:
                                                root_signature_handle root_signature)
       -> command_signature_handle;
 
-   /// Unsynced Immediate Release Functions ///
+   /// Queued Release Functions ///
 
    void release_root_signature(root_signature_handle root_signature);
 
@@ -1385,6 +1386,24 @@ public:
    void release_query_heap(query_heap_handle query_heap);
 
    void release_command_signature(command_signature_handle command_signature);
+
+   /// Unsynced Immediate Release Functions ///
+
+   void unsynced_release_root_signature(root_signature_handle root_signature);
+
+   void unsynced_release_pipeline(pipeline_handle pipeline);
+
+   void unsynced_release_resource(resource_handle resource);
+
+   void unsynced_release_resource_view(resource_view resource_view);
+
+   void unsynced_release_render_target_view(rtv_handle render_target_view);
+
+   void unsynced_release_depth_stencil_view(dsv_handle depth_stencil_view);
+
+   void unsynced_release_query_heap(query_heap_handle query_heap);
+
+   void unsynced_release_command_signature(command_signature_handle command_signature);
 
    /// Feature Test Functions ///
 

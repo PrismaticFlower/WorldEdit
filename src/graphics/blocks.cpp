@@ -229,13 +229,13 @@ blocks::blocks(gpu::device& device, copy_command_list_pool& copy_command_list_po
                                                .debug_name =
                                                   "Blocks IA Buffer"},
                                               gpu::heap_type::default_),
-                        _device.direct_queue};
+                        _device};
 
    _blocks_materials_buffer =
       {_device.create_buffer({.size = sizeof(block_material) * world::max_block_materials,
                               .debug_name = "Blocks Materials"},
                              gpu::heap_type::default_),
-       _device.direct_queue};
+       _device};
 
    pooled_copy_command_list command_list = copy_command_list_pool.aquire_and_reset();
 
@@ -303,7 +303,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                                          sizeof(block_instance_description),
                                  .debug_name = "World blocks (Boxes)"},
                                 gpu::heap_type::default_),
-          _device.direct_queue};
+          _device};
 
       if (old_boxes_instance_data_capacity != 0) {
          command_list.copy_buffer_region(_boxes_instance_data.get(), 0,
@@ -324,7 +324,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                                          sizeof(block_instance_description),
                                  .debug_name = "World blocks (Ramps)"},
                                 gpu::heap_type::default_),
-          _device.direct_queue};
+          _device};
 
       if (old_ramps_instance_data_capacity != 0) {
          command_list.copy_buffer_region(_ramps_instance_data.get(), 0,
@@ -345,7 +345,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                                          sizeof(block_quad_description),
                                  .debug_name = "World blocks (Quads)"},
                                 gpu::heap_type::default_),
-          _device.direct_queue};
+          _device};
 
       if (old_quads_instance_data_capacity != 0) {
          command_list.copy_buffer_region(_quads_instance_data.get(), 0,
@@ -367,7 +367,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                                          sizeof(block_instance_description),
                                  .debug_name = "World blocks (Cylinders)"},
                                 gpu::heap_type::default_),
-          _device.direct_queue};
+          _device};
 
       if (old_cylinders_instance_data_capacity != 0) {
          command_list.copy_buffer_region(_cylinders_instance_data.get(), 0,
@@ -1101,7 +1101,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                                           sizeof(block_instance_description),
                                   .debug_name = "World Dynamic Blocks (Boxes)"},
                                  gpu::heap_type::default_),
-            device.direct_queue};
+            device};
       }
 
       boxes_bbox.clear();
@@ -1183,7 +1183,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                                           sizeof(block_instance_description),
                                   .debug_name = "World Dynamic Blocks (Ramps)"},
                                  gpu::heap_type::default_),
-            device.direct_queue};
+            device};
       }
 
       ramps_bbox.clear();
@@ -1265,7 +1265,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                                           sizeof(block_instance_description),
                                   .debug_name = "World Dynamic Blocks (Quads)"},
                                  gpu::heap_type::default_),
-            device.direct_queue};
+            device};
       }
 
       quads_bbox.clear();
@@ -1333,7 +1333,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                                    .debug_name =
                                       "World Dynamic Blocks (Cylinders)"},
                                   gpu::heap_type::default_),
-             device.direct_queue};
+             device};
       }
 
       cylinders_bbox.clear();
@@ -1414,7 +1414,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                                                 .debug_name =
                                                    "Dynamic Blocks Materials"},
                                                gpu::heap_type::default_),
-                          device.direct_queue};
+                          device};
 
       for (material& material : materials) {
          material.diffuse_map.texture = texture_manager.null_diffuse_map();
