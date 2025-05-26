@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "freetype2", "freetype2.vcxp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mimalloc", "mimalloc.vcxproj", "{ABB5EAE7-B3E6-432E-B636-333449892EA6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OffsetAllocator", "OffsetAllocator.vcxproj", "{709A9184-9EB2-407A-96F2-DDD9116E40F6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -50,6 +52,12 @@ Global
 		{ABB5EAE7-B3E6-432E-B636-333449892EA6}.Develop|x64.Build.0 = Develop|x64
 		{ABB5EAE7-B3E6-432E-B636-333449892EA6}.Release|x64.ActiveCfg = Release|x64
 		{ABB5EAE7-B3E6-432E-B636-333449892EA6}.Release|x64.Build.0 = Release|x64
+		{709A9184-9EB2-407A-96F2-DDD9116E40F6}.Debug|x64.ActiveCfg = Debug|x64
+		{709A9184-9EB2-407A-96F2-DDD9116E40F6}.Debug|x64.Build.0 = Debug|x64
+		{709A9184-9EB2-407A-96F2-DDD9116E40F6}.Develop|x64.ActiveCfg = Develop|x64
+		{709A9184-9EB2-407A-96F2-DDD9116E40F6}.Develop|x64.Build.0 = Develop|x64
+		{709A9184-9EB2-407A-96F2-DDD9116E40F6}.Release|x64.ActiveCfg = Release|x64
+		{709A9184-9EB2-407A-96F2-DDD9116E40F6}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

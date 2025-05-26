@@ -18,6 +18,7 @@ struct root_signature_library {
    gpu::unique_root_signature_handle water;
    gpu::unique_root_signature_handle sky_mesh;
    gpu::unique_root_signature_handle block;
+   gpu::unique_root_signature_handle block_custom_mesh;
 
    gpu::unique_root_signature_handle grid_overlay;
 
@@ -94,6 +95,14 @@ constexpr uint32 frame_cbv = 2;
 
 namespace block {
 constexpr uint32 instances_index_srv = 0;
+constexpr uint32 instances_srv = 1;
+constexpr uint32 frame_cbv = 2;
+constexpr uint32 lights_cbv = 3;
+constexpr uint32 materials_cbv = 4;
+}
+
+namespace block_custom_mesh {
+constexpr uint32 instance_index = 0;
 constexpr uint32 instances_srv = 1;
 constexpr uint32 frame_cbv = 2;
 constexpr uint32 lights_cbv = 3;

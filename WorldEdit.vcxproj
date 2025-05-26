@@ -90,7 +90,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -131,7 +131,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -174,7 +174,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -209,6 +209,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\allocators\offset_allocator.cpp" />
     <ClCompile Include="src\assets\asset_ref.cpp" />
     <ClCompile Include="src\assets\msh\flat_model_bvh.cpp" />
     <ClCompile Include="src\assets\msh\flat_model_terrain_cut_bvh.cpp" />
@@ -286,6 +287,7 @@
     <ClCompile Include="src\graphics\shaders\blockVS.cpp" />
     <ClCompile Include="src\graphics\shaders\block_basicPS.cpp" />
     <ClCompile Include="src\graphics\shaders\block_basic_lightingPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\block_custom_meshVS.cpp" />
     <ClCompile Include="src\graphics\shaders\block_normalPS.cpp" />
     <ClCompile Include="src\graphics\shaders\block_quadVS.cpp" />
     <ClCompile Include="src\graphics\shaders\depth_reduce_minmaxCS.cpp" />
@@ -482,6 +484,7 @@
     <ClInclude Include="include\world\terrain.hpp" />
     <ClInclude Include="include\world\world.hpp" />
     <ClInclude Include="src\allocators\aligned_allocator.hpp" />
+    <ClInclude Include="src\allocators\offset_allocator.hpp" />
     <ClInclude Include="src\assets\asset_ref.hpp" />
     <ClInclude Include="src\assets\asset_libraries.hpp" />
     <ClInclude Include="src\assets\asset_stable_string.hpp" />
@@ -593,6 +596,7 @@
     <ClInclude Include="src\graphics\gpu\detail\handle_packing.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\release_queue.hpp" />
     <ClInclude Include="src\graphics\gpu\exception.hpp" />
+    <ClInclude Include="src\graphics\gpu\indirect_structures.hpp" />
     <ClInclude Include="src\graphics\gpu\resource.hpp" />
     <ClInclude Include="src\graphics\gpu\rhi.hpp" />
     <ClInclude Include="src\graphics\imgui_renderer.hpp" />

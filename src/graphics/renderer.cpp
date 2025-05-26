@@ -263,7 +263,7 @@ private:
    water _water{_device, _texture_manager};
    sky _sky;
    blocks _blocks{_device, _copy_command_list_pool, _dynamic_buffer_allocator,
-                  _texture_manager};
+                  _texture_manager, _root_signatures};
 
    constexpr static std::size_t max_drawn_objects = 2048;
    constexpr static std::size_t objects_constants_buffer_size =
@@ -412,6 +412,12 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
       const float4 scene_depth_min_max =
          *_depth_minmax_readback_buffer_ptrs[_device.frame_index()];
 
+      _blocks.update(world.blocks,
+                     interaction_targets.creation_entity.is<world::entity_group>()
+                        ? &interaction_targets.creation_entity.get<world::entity_group>()
+                        : nullptr,
+                     _pre_render_command_list, _dynamic_buffer_allocator,
+                     _texture_manager);
       _terrain.update(world.terrain, _pre_render_command_list,
                       _dynamic_buffer_allocator, _texture_manager, settings);
       _water.update(world, _pre_render_command_list, _dynamic_buffer_allocator,
@@ -424,12 +430,6 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                          {scene_depth_min_max.x, scene_depth_min_max.y},
                          _blocks, active_layers, active_entity_types,
                          _pre_render_command_list, _dynamic_buffer_allocator);
-      _blocks.update(world.blocks,
-                     interaction_targets.creation_entity.is<world::entity_group>()
-                        ? &interaction_targets.creation_entity.get<world::entity_group>()
-                        : nullptr,
-                     _pre_render_command_list, _dynamic_buffer_allocator,
-                     _texture_manager);
 
       if (active_entity_types.blocks) {
          blocks_view =

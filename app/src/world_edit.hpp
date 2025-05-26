@@ -210,6 +210,9 @@ enum class draw_block_step : uint8 {
    quad_v3,
    cylinder_radius,
    cylinder_height,
+   stairway_width,
+   stairway_length,
+   stairway_height,
 };
 
 enum class draw_block_cursor_plane : uint8 { none, x, y, z };
@@ -1031,6 +1034,15 @@ private:
             float3 start;
             float radius;
          } cylinder;
+
+         struct stairway {
+            float3 start;
+            float width_x = 0.0f;
+            float width_z = 0.0f;
+            float length_x = 0.0f;
+            float length_z = 0.0f;
+            quaternion rotation;
+         } stairway;
 
          uint32 index = 0;
          world::block_id block_id = world::block_id::none;

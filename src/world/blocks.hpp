@@ -14,7 +14,7 @@
 
 namespace we::world {
 
-constexpr std::size_t max_blocks = 1'048'576;
+constexpr std::size_t max_blocks = 131'072;
 constexpr std::size_t max_block_materials = 256;
 constexpr std::size_t reserved_blocks = 2048;
 constexpr pinned_vector_init blocks_init{.max_size = max_blocks,

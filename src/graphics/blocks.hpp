@@ -12,6 +12,7 @@
 #include "types.hpp"
 
 #include "allocators/aligned_allocator.hpp"
+#include "allocators/offset_allocator.hpp"
 
 #include "world/active_elements.hpp"
 #include "world/blocks.hpp"
@@ -31,10 +32,17 @@ struct blocks {
          gpu_virtual_address instances = 0;
       };
 
+      struct draw_list {
+         uint32 count = 0;
+         gpu::resource_handle draw_buffer = gpu::null_resource_handle;
+         uint64 draw_buffer_offset = 0;
+      };
+
       instance_list boxes;
       instance_list ramps;
       instance_list quads;
       instance_list cylinders;
+      draw_list stairways;
 
       instance_list dynamic_boxes;
       instance_list dynamic_ramps;
@@ -44,7 +52,7 @@ struct blocks {
 
    blocks(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
           dynamic_buffer_allocator& dynamic_buffer_allocator,
-          texture_manager& texture_manager);
+          texture_manager& texture_manager, root_signature_library& root_signatures);
 
    void update(const world::blocks& blocks, const world::entity_group* entity_group,
                gpu::copy_command_list& command_list,
@@ -99,6 +107,16 @@ struct blocks {
       float3 specular_color;
    };
 
+   struct custom_mesh_block {
+      offset_allocator_aligned::allocation ia_allocation;
+
+      uint32 index_count = 0;
+      uint32 vertex_count = 0;
+
+      uint32 start_index_location = 0;
+      int32 base_vertex_location = 0;
+   };
+
 private:
    gpu::device& _device;
 
@@ -116,6 +134,16 @@ private:
 
    gpu::unique_resource_handle _cylinders_instance_data;
    uint64 _cylinders_instance_data_capacity = 0;
+
+   gpu::unique_resource_handle _stairways_instance_data;
+   uint64 _stairways_instance_data_capacity = 0;
+   std::vector<custom_mesh_block> _stairway_meshes;
+
+   gpu::unique_command_signature_handle _custom_mesh_command_signature;
+
+   offset_allocator_aligned _custom_mesh_allocator;
+   gpu::unique_resource_handle _custom_mesh_buffer;
+   uint32 _custom_mesh_buffer_capacity = 0;
 
    std::vector<uint32> _TEMP_culling_storage;
 

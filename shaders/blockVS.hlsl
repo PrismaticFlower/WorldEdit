@@ -46,9 +46,16 @@ struct block_quad_description {
    surface_info surface;
 };
 
+struct block_custom_mesh_instance_description {
+   surface_info surfaces[MAX_SURFACES];
+   float3 object_from_world_xyz;
+   float pad;
+};
+
 StructuredBuffer<uint> instance_index : register(BLOCK_INSTANCE_INDEX_REGISTER);
 StructuredBuffer<block_instance_description> instance_descs : register(BLOCK_INSTANCE_DATA_REGISTER);
 StructuredBuffer<block_quad_description> quad_descs : register(BLOCK_INSTANCE_DATA_REGISTER);
+StructuredBuffer<block_custom_mesh_instance_description> instance_custom_mesh_descs : register(BLOCK_INSTANCE_DATA_REGISTER);
 
 struct input_vertex {
    float3 positionOS : POSITION;
@@ -266,6 +273,113 @@ output_vertex main_quad(uint invocation_id : SV_VertexID)
    output.normalWS = normalWS;
    output.texcoords = texcoords;
    output.material_index = 0;
+   output.positionPS = positionPS;
+
+   return output;
+}
+
+cbuffer CustomMeshInstanceId : register(BLOCK_CUSTOM_MESH_CB_REGISTER)
+{
+   uint instance_id;
+};
+
+output_vertex main_custom_mesh(input_vertex input)
+{
+   block_custom_mesh_instance_description instance = instance_custom_mesh_descs[instance_id];
+   surface_info surface = instance.surfaces[min(input.surface_index, MAX_SURFACES - 1)];
+
+   const float3 positionWS = input.positionOS;
+   const float3 normalWS = input.normalOS;
+   const float4 positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
+
+   float2 texcoords;
+   
+   switch (surface.texture_mode) {
+   case texture_mode_world_space_auto: {
+      const float3 normal_absWS = abs(normalWS);
+
+      if (normal_absWS.x < normal_absWS.y && normal_absWS.z < normal_absWS.y) {
+         texcoords = positionWS.xz;
+      }
+      else if (normal_absWS.x < normal_absWS.z) {
+         texcoords = positionWS.xy;
+      }
+      else {
+         texcoords = positionWS.zy;
+      }
+   } break;
+   case texture_mode_world_space_zy:
+      texcoords = positionWS.zy;
+      break;
+   case texture_mode_world_space_xz:
+      texcoords = positionWS.xz;
+      break;
+   case texture_mode_world_space_xy:
+      texcoords = positionWS.xy;
+      break;
+   case texture_mode_local_space_auto:
+   case texture_mode_local_space_zy:
+   case texture_mode_local_space_xz:
+   case texture_mode_local_space_xy: {      
+      quaternion object_from_world;
+
+      object_from_world.w = sqrt(1.0 - saturate(dot(instance.object_from_world_xyz, instance.object_from_world_xyz)));
+      object_from_world.x = instance.object_from_world_xyz.x;
+      object_from_world.y = instance.object_from_world_xyz.y;
+      object_from_world.z = instance.object_from_world_xyz.z;
+
+      const float3 positionOS = mul(object_from_world, positionWS);
+
+      switch (surface.texture_mode) {
+      case texture_mode_local_space_auto: {
+         const float3 normal_absOS = abs(mul(object_from_world, normalWS));
+
+         if (normal_absOS.x < normal_absOS.y && normal_absOS.z < normal_absOS.y) {
+            texcoords = positionOS.xz;
+         }
+         else if (normal_absOS.x < normal_absOS.z) {
+            texcoords = positionOS.xy;
+         }
+         else {
+            texcoords = positionOS.zy;
+         }
+      } break;
+      case texture_mode_local_space_zy: 
+         texcoords = positionOS.zy;
+         break;
+      case texture_mode_local_space_xz:
+         texcoords = positionOS.xz;
+         break;
+      case texture_mode_local_space_xy:
+         texcoords = positionOS.xy;
+         break;
+      };
+   } break;
+   case texture_mode_unwrapped:
+      texcoords = input.texcoords;
+      break;
+   };
+
+   texcoords *= exp2(float2((int)surface.scaleX - 7, (int)surface.scaleY - 7));
+
+   if (surface.rotation == texture_rotation_d90) {
+      texcoords = float2(-texcoords.y, texcoords.x);
+   }
+   else if (surface.rotation == texture_rotation_d180) {
+      texcoords = -texcoords;
+   }
+   else if (surface.rotation == texture_rotation_d270) {
+      texcoords = float2(texcoords.y, -texcoords.x);
+   }
+
+   texcoords += (float2(surface.offsetX, surface.offsetY) * (1.0 / 8192.0));
+
+   output_vertex output;
+
+   output.positionWS = positionWS;
+   output.normalWS = normalWS;
+   output.texcoords = texcoords;
+   output.material_index = surface.material_index;
    output.positionPS = positionPS;
 
    return output;

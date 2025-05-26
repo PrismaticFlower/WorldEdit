@@ -18,6 +18,7 @@ constexpr uint32 thumbnail_camera_cb_register = 8;
 constexpr uint32 grid_overlay_cb_register = 9;
 constexpr uint32 gizmo_shape_cb_register = 10;
 constexpr uint32 block_materials_cb_register = 11;
+constexpr uint32 block_custom_mesh_cb_register = 12;
 
 constexpr uint32 terrain_patch_data_register = 0;
 constexpr uint32 meta_draw_instance_data_register = 1;
@@ -196,6 +197,7 @@ const gpu::root_signature_desc mesh_depth_prepass_desc{
 
    .debug_name = "mesh_depth_prepass_root_signature",
 };
+
 const gpu::root_signature_desc sky_mesh_desc{
    .parameters =
       {
@@ -227,6 +229,28 @@ const gpu::root_signature_desc block_desc{
    .flags = {.allow_input_assembler_input_layout = true},
 
    .debug_name = "block_root_signature",
+};
+
+const gpu::root_signature_desc block_custom_mesh_desc{
+   .parameters =
+      {
+         gpu::root_parameter{
+            .type = gpu::root_parameter_type::_32bit_constants,
+            .shader_register = block_custom_mesh_cb_register,
+            .values_count = 1,
+            .visibility = gpu::root_shader_visibility::vertex,
+         },
+         block_instance_buffer,
+         frame_constant_buffer,
+         lights_constant_buffer,
+         block_materials_buffer,
+      },
+
+   .samplers = pixel_static_samplers,
+
+   .flags = {.allow_input_assembler_input_layout = true},
+
+   .debug_name = "block_custom_mesh_root_signature",
 };
 
 const gpu::root_signature_desc grid_overlay_desc{
@@ -470,6 +494,7 @@ root_signature_library::root_signature_library(gpu::device& device)
    mesh_wireframe = {device.create_root_signature(mesh_wireframe_desc), device};
    sky_mesh = {device.create_root_signature(sky_mesh_desc), device};
    block = {device.create_root_signature(block_desc), device};
+   block_custom_mesh = {device.create_root_signature(block_custom_mesh_desc), device};
    grid_overlay = {device.create_root_signature(grid_overlay_desc), device};
    thumbnail_mesh = {device.create_root_signature(thumbnail_mesh_desc), device};
    thumbnail_downsample = {device.create_root_signature(thumbnail_downsample_mesh_desc),
