@@ -27,6 +27,7 @@ struct descriptor_allocator {
             const uint32 reused_allocation = _free_descriptors.back();
 
             _free_descriptors.pop_back();
+            _descriptor_references[reused_allocation].store(1, std::memory_order_relaxed);
 
             return reused_allocation;
          }
@@ -40,22 +41,50 @@ struct descriptor_allocator {
                          "A descriptor heap ran out of memory."};
       }
       else {
+         _descriptor_references[new_allocation].store(1, std::memory_order_relaxed);
+
          return static_cast<uint32>(new_allocation);
       }
    }
 
-   /// @brief Free a descriptor allowing it to be reused.
+   /// @brief Release a reference to a descriptor.
    /// @param index The index of the descriptor.
-   void free(const uint32 index)
+   void release(const uint32 index)
    {
-      std::scoped_lock lock{_mutex};
+      if (index >= _heap_size) std::terminate();
 
-      _free_descriptors.push_back(index);
+      const uint32 ref_count =
+         _descriptor_references[index].fetch_sub(1, std::memory_order_relaxed) - 1;
+
+      // Check for double-free/programming error.
+      if (ref_count == UINT32_MAX) std::terminate();
+
+      if (ref_count == 0) {
+         std::scoped_lock lock{_mutex};
+
+         _free_descriptors.push_back(index);
+      }
+   }
+
+   /// @brief Add a reference to an existing descriptor.
+   /// @param index The index of the descriptor.
+   void add_ref(const uint32 index) noexcept
+   {
+      if (index >= _heap_size) std::terminate();
+
+      const uint32 ref_count =
+         _descriptor_references[index].fetch_add(1, std::memory_order_relaxed) + 1;
+
+      // Check for adding a ref to an unallocated descriptor. This would indicate a programming error or corruption.
+      if (ref_count == 1) std::terminate();
    }
 
 private:
    std::atomic_uint64_t _next_descriptor = 0;
    const uint64 _heap_size = 0;
+
+   const std::unique_ptr<std::atomic_uint32_t[]> _descriptor_references =
+      std::make_unique<std::atomic_uint32_t[]>(_heap_size);
 
    std::shared_mutex _mutex;
    std::vector<uint32> _free_descriptors;
@@ -94,7 +123,7 @@ struct unique_descriptor_releaser {
 
    ~unique_descriptor_releaser()
    {
-      if (_allocator) _allocator->free(_index);
+      if (_allocator) _allocator->release(_index);
    }
 
    void swap(unique_descriptor_releaser& other) noexcept

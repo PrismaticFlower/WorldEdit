@@ -31,7 +31,7 @@ dynamic_buffer_allocator::~dynamic_buffer_allocator()
    for (auto& pages : _frame_pages) {
       for (auto& page : pages) {
          if (page.buffer != gpu::null_resource_handle) {
-            _device.direct_queue.release_resource(page.buffer);
+            _device.release_resource(page.buffer);
          }
       }
    }

@@ -165,7 +165,7 @@ void imgui_renderer::recreate_font_atlas(copy_command_list_pool& copy_command_li
       _device.create_buffer({.size = static_cast<uint32>(texture_pitch * height),
                              .debug_name = "dear ImGui Font Atlas Upload"},
                             gpu::heap_type::upload),
-      _device.copy_queue};
+      _device};
 
    std::byte* upload_ptr =
       static_cast<std::byte*>(_device.map(upload_buffer.get(), 0, {0, 0}));
@@ -184,7 +184,7 @@ void imgui_renderer::recreate_font_atlas(copy_command_list_pool& copy_command_li
                                                "dear ImGui Font Atlas"},
                                            gpu::barrier_layout::common,
                                            gpu::legacy_resource_state::common),
-                    _device.direct_queue};
+                    _device};
 
    pooled_copy_command_list command_list = copy_command_list_pool.aquire_and_reset();
 
@@ -211,7 +211,7 @@ void imgui_renderer::recreate_font_atlas(copy_command_list_pool& copy_command_li
                           .component_2 = gpu::shader_component_mapping::force_value_1,
                           .component_3 = gpu::shader_component_mapping::from_memory_component_0,
                        }}),
-                _device.direct_queue};
+                _device};
 
    io.Fonts->SetTexID(std::bit_cast<ImTextureID>(std::uintptr_t{_font_srv.get().index}));
 }
@@ -231,7 +231,7 @@ void imgui_renderer::resize_mesh_buffers(uint32 indices_size, uint32 vertices_si
 
    _mesh_buffer = {_device.create_buffer({.size = buffer_size, .debug_name = "dear ImGui Mesh Buffer"},
                                          gpu::heap_type::upload),
-                   _device.direct_queue};
+                   _device};
 
    for (std::size_t i = 0; i < gpu::frame_pipeline_length; ++i) {
       const std::size_t slice_offset = buffer_slice_size * i;

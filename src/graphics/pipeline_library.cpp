@@ -167,7 +167,7 @@ auto create_material_pipelines(gpu::device& device, const std::string_view name_
                           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                           .debug_name = pipeline_name}),
-                      device.direct_queue};
+                      device};
    }
 
    return pipelines;
@@ -212,7 +212,7 @@ auto create_depth_prepass_pipelines(gpu::device& device, const std::string_view 
               .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
               .debug_name = pipeline_name}),
-          device.direct_queue};
+          device};
    }
 
    return pipelines;
@@ -262,7 +262,7 @@ auto create_shadow_pipelines(gpu::device& device, const std::string_view name_ba
               .dsv_format = DXGI_FORMAT_D32_FLOAT,
 
               .debug_name = pipeline_name}),
-          device.direct_queue};
+          device};
    }
 
    return pipelines;
@@ -309,7 +309,7 @@ auto create_thumbnail_mesh_pipelines(gpu::device& device,
               .dsv_format = DXGI_FORMAT_D16_UNORM,
 
               .debug_name = pipeline_name}),
-          device.direct_queue};
+          device};
    }
 
    return pipelines;
@@ -343,7 +343,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                      .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                      .debug_name = "mesh_basic"sv}),
-                 device.direct_queue};
+                 device};
 
    mesh_basic_lighting = {device.create_graphics_pipeline(
                              {.root_signature = root_signature_library.mesh.get(),
@@ -361,7 +361,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                               .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                               .debug_name = "mesh_basic_lighting"sv}),
-                          device.direct_queue};
+                          device};
 
    mesh_shadow = create_shadow_pipelines(device, "mesh_shadow"sv,
                                          shader_library, root_signature_library);
@@ -400,7 +400,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "mesh_wireframe"sv}),
-       device.direct_queue};
+       device};
 
    mesh_wireframe_doublesided =
       {device.create_graphics_pipeline(
@@ -424,7 +424,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "mesh_wireframe_doublesided"sv}),
-       device.direct_queue};
+       device};
 
    terrain_depth_prepass = {device.create_graphics_pipeline(
                                {.root_signature = root_signature_library.terrain.get(),
@@ -437,7 +437,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                                 .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                                 .debug_name = "terrain_depth_prepass"sv}),
-                            device.direct_queue};
+                            device};
 
    terrain_basic = {device.create_graphics_pipeline(
                        {.root_signature = root_signature_library.terrain.get(),
@@ -453,7 +453,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                         .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                         .debug_name = "terrain_basic"sv}),
-                    device.direct_queue};
+                    device};
 
    terrain_lighting = {device.create_graphics_pipeline(
                           {.root_signature = root_signature_library.terrain.get(),
@@ -469,7 +469,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                            .debug_name = "terrain_lighting"sv}),
-                       device.direct_queue};
+                       device};
 
    terrain_normal = {device.create_graphics_pipeline(
                         {.root_signature = root_signature_library.terrain.get(),
@@ -485,7 +485,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                          .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                          .debug_name = "terrain_normal"sv}),
-                     device.direct_queue};
+                     device};
 
    terrain_grid = {device.create_graphics_pipeline(
                       {.root_signature = root_signature_library.terrain.get(),
@@ -502,7 +502,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                        .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                        .debug_name = "terrain_grid"sv}),
-                   device.direct_queue};
+                   device};
 
    terrain_foliage_map = {device.create_graphics_pipeline(
                              {.root_signature = root_signature_library.terrain.get(),
@@ -519,7 +519,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                               .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                               .debug_name = "terrain_foliage_map"sv}),
-                          device.direct_queue};
+                          device};
 
    water = {device.create_graphics_pipeline(
                {.root_signature = root_signature_library.water.get(),
@@ -536,7 +536,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                 .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                 .debug_name = "water"sv}),
-            device.direct_queue};
+            device};
 
    sky_mesh = {device.create_graphics_pipeline(
                   {.root_signature = root_signature_library.sky_mesh.get(),
@@ -554,7 +554,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                    .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                    .debug_name = "sky_mesh"sv}),
-               device.direct_queue};
+               device};
 
    block_depth_prepass = {device.create_graphics_pipeline(
                              {.root_signature = root_signature_library.block.get(),
@@ -568,7 +568,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                               .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                               .debug_name = "block_depth_prepass"sv}),
-                          device.direct_queue};
+                          device};
 
    block_basic = {device.create_graphics_pipeline(
                      {.root_signature = root_signature_library.block.get(),
@@ -585,7 +585,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                       .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                       .debug_name = "block_basic"sv}),
-                  device.direct_queue};
+                  device};
 
    block_basic_lighting = {device.create_graphics_pipeline(
                               {.root_signature = root_signature_library.block.get(),
@@ -602,7 +602,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                                .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                                .debug_name = "block_basic_lighting"sv}),
-                           device.direct_queue};
+                           device};
 
    block_normal = {device.create_graphics_pipeline(
                       {.root_signature = root_signature_library.block.get(),
@@ -619,7 +619,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                        .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                        .debug_name = "block_normal"sv}),
-                   device.direct_queue};
+                   device};
 
    block_shadow = {device.create_graphics_pipeline(
                       {.root_signature = root_signature_library.block.get(),
@@ -636,7 +636,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                        .dsv_format = DXGI_FORMAT_D32_FLOAT,
 
                        .debug_name = "block_shadow"sv}),
-                   device.direct_queue};
+                   device};
 
    block_quad_depth_prepass = {device.create_graphics_pipeline(
                                   {.root_signature =
@@ -650,7 +650,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                                    .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                                    .debug_name = "block_quad_depth_prepass"sv}),
-                               device.direct_queue};
+                               device};
 
    block_quad_basic = {device.create_graphics_pipeline(
                           {.root_signature = root_signature_library.block.get(),
@@ -666,7 +666,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                            .debug_name = "block_quad_basic"sv}),
-                       device.direct_queue};
+                       device};
 
    block_quad_basic_lighting =
       {device.create_graphics_pipeline(
@@ -683,7 +683,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "block_quad_basic_lighting"sv}),
-       device.direct_queue};
+       device};
 
    block_quad_normal = {device.create_graphics_pipeline(
                            {.root_signature = root_signature_library.block.get(),
@@ -699,7 +699,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                             .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                             .debug_name = "block_quad_normal"sv}),
-                        device.direct_queue};
+                        device};
 
    block_quad_shadow = {device.create_graphics_pipeline(
                            {.root_signature = root_signature_library.block.get(),
@@ -715,7 +715,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                             .dsv_format = DXGI_FORMAT_D32_FLOAT,
 
                             .debug_name = "block_quad_shadow"sv}),
-                        device.direct_queue};
+                        device};
 
    grid_overlay = {device.create_graphics_pipeline(
                       {.root_signature = root_signature_library.grid_overlay.get(),
@@ -732,7 +732,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                        .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                        .debug_name = "grid_overlay"sv}),
-                   device.direct_queue};
+                   device};
 
    grid_overlay_fade = {device.create_graphics_pipeline(
                            {.root_signature =
@@ -750,7 +750,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                             .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                             .debug_name = "grid_overlay"sv}),
-                        device.direct_queue};
+                        device};
 
    terrain_cut_mesh_mark =
       {device.create_graphics_pipeline(
@@ -773,7 +773,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "terrain_cut_mesh_mark"sv}),
-       device.direct_queue};
+       device};
 
    terrain_cut_mesh_clear =
       {device.create_graphics_pipeline(
@@ -798,7 +798,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "terrain_cut_mesh_clear"sv}),
-       device.direct_queue};
+       device};
 
    meta_draw_shape = {device.create_graphics_pipeline(
                          {.root_signature = root_signature_library.meta_draw.get(),
@@ -816,7 +816,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                           .debug_name = "meta_draw_shape"sv}),
-                      device.direct_queue};
+                      device};
 
    meta_draw_shape_outlined =
       {device.create_graphics_pipeline(
@@ -840,7 +840,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "meta_draw_shape_outlined"sv}),
-       device.direct_queue};
+       device};
 
    meta_draw_shape_wireframe =
       {device.create_graphics_pipeline(
@@ -864,7 +864,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "meta_draw_shape_wireframe"sv}),
-       device.direct_queue};
+       device};
 
    meta_draw_sphere = {device.create_graphics_pipeline(
                           {.root_signature = root_signature_library.meta_draw.get(),
@@ -882,7 +882,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                            .debug_name = "meta_draw_sphere"sv}),
-                       device.direct_queue};
+                       device};
 
    meta_draw_sphere_wireframe =
       {device.create_graphics_pipeline(
@@ -906,7 +906,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "meta_draw_sphere_wireframe"sv}),
-       device.direct_queue};
+       device};
 
    meta_draw_line_solid = {device.create_graphics_pipeline(
                               {.root_signature =
@@ -927,7 +927,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                                .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                                .debug_name = "meta_draw_line_solid"sv}),
-                           device.direct_queue};
+                           device};
 
    meta_draw_line_overlay = {device.create_graphics_pipeline(
                                 {.root_signature =
@@ -946,7 +946,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                                  .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                                  .debug_name = "meta_draw_line_overlay"sv}),
-                             device.direct_queue};
+                             device};
 
    meta_draw_triangle = {device.create_graphics_pipeline(
                             {.root_signature = root_signature_library.meta_draw.get(),
@@ -964,7 +964,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                              .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                              .debug_name = "meta_draw_triangle"sv}),
-                         device.direct_queue};
+                         device};
 
    meta_draw_triangle_wireframe =
       {device.create_graphics_pipeline(
@@ -988,7 +988,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "meta_draw_triangle_wireframe"sv}),
-       device.direct_queue};
+       device};
 
    ai_overlay_shape =
       {device.create_graphics_pipeline(
@@ -1011,7 +1011,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "ai_overlay_shape"sv}),
-       device.direct_queue};
+       device};
 
    ai_overlay_apply =
       {device.create_graphics_pipeline(
@@ -1034,7 +1034,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "ai_overlay_apply"sv}),
-       device.direct_queue};
+       device};
 
    thumbnail_downsample =
       {device.create_graphics_pipeline(
@@ -1047,7 +1047,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .rtv_formats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
 
            .debug_name = "thumbnail_downsample"sv}),
-       device.direct_queue};
+       device};
 
    resample_env_map = {device.create_graphics_pipeline(
                           {.root_signature =
@@ -1060,7 +1060,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
 
                            .debug_name = "resample_env_map"sv}),
-                       device.direct_queue};
+                       device};
 
    env_map_downsample = {device.create_graphics_pipeline(
                             {.root_signature =
@@ -1073,7 +1073,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                              .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
 
                              .debug_name = "env_map_downsample"sv}),
-                         device.direct_queue};
+                         device};
 
    tile_lights_clear = {device.create_compute_pipeline(
                            {.root_signature =
@@ -1081,7 +1081,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                             .cs_bytecode = shader_library["tile_lights_clearCS"sv],
 
                             .debug_name = "tile_lights_clear"sv}),
-                        device.direct_queue};
+                        device};
 
    tile_lights_spheres =
       {device.create_graphics_pipeline(
@@ -1099,7 +1099,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .input_layout = meta_draw_input_layout,
 
            .debug_name = "tile_lights_spheres"sv}),
-       device.direct_queue};
+       device};
 
    gizmo_cone = {device.create_graphics_pipeline(
                     {.root_signature = root_signature_library.gizmo_shape.get(),
@@ -1115,7 +1115,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                      .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
 
                      .debug_name = "gizmo_cone"sv}),
-                 device.direct_queue};
+                 device};
 
    gizmo_cone_orthographic =
       {device.create_graphics_pipeline(
@@ -1132,7 +1132,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
 
            .debug_name = "gizmo_cone_orthographic"sv}),
-       device.direct_queue};
+       device};
 
    gizmo_line =
       {device.create_graphics_pipeline(
@@ -1154,7 +1154,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
 
            .debug_name = "gizmo_line"sv}),
-       device.direct_queue};
+       device};
 
    gizmo_quad =
       {device.create_graphics_pipeline(
@@ -1176,7 +1176,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
 
            .debug_name = "gizmo_quad"sv}),
-       device.direct_queue};
+       device};
 
    gizmo_rotation_widget =
       {device.create_graphics_pipeline(
@@ -1193,7 +1193,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
 
            .debug_name = "gizmo_rotation_widget"sv}),
-       device.direct_queue};
+       device};
 
    gizmo_rotation_widget_orthographic =
       {device.create_graphics_pipeline(
@@ -1210,7 +1210,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
 
            .debug_name = "gizmo_rotation_widget_orthographic"sv}),
-       device.direct_queue};
+       device};
 
    depth_reduce_minmax = {device.create_compute_pipeline(
                              {.root_signature =
@@ -1218,7 +1218,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                               .cs_bytecode = shader_library["depth_reduce_minmaxCS"sv],
 
                               .debug_name = "depth_reduce_minmax"sv}),
-                          device.direct_queue};
+                          device};
 
    imgui = {device.create_graphics_pipeline(
                {.root_signature = root_signature_library.imgui.get(),
@@ -1235,6 +1235,6 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                 .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
 
                 .debug_name = "imgui"sv}),
-            device.direct_queue};
+            device};
 }
 }

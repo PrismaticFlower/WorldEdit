@@ -263,19 +263,19 @@ light_clusters::light_clusters(gpu::device& device,
                                            .debug_name =
                                               "Lights Tiling Inputs"},
                                           gpu::heap_type::default_),
-                     device.direct_queue};
+                     device};
 
    _lights_constants = {device.create_buffer({.size = sizeof(light_constants),
                                               .debug_name =
                                                  "Lights Constant Buffer"},
                                              gpu::heap_type::default_),
-                        device.direct_queue};
+                        device};
 
    _lights_region_list =
       {device.create_buffer({.size = sizeof(light_region_description) * max_lights,
                              .debug_name = "Lights Region List"},
                             gpu::heap_type::default_),
-       device.direct_queue};
+       device};
 
    _shadow_map = {device.create_texture(
                      {.dimension = gpu::texture_dimension::t_2d,
@@ -289,7 +289,7 @@ light_clusters::light_clusters(gpu::device& device,
                                                   .depth_stencil = {.depth = 1.0f}}},
                      gpu::barrier_layout::direct_queue_shader_resource,
                      gpu::legacy_resource_state::pixel_shader_resource),
-                  device.direct_queue};
+                  device};
 
    for (uint32 i = 0; i < cascade_count; ++i) {
       _shadow_map_dsv[i] = {device.create_depth_stencil_view(
@@ -299,7 +299,7 @@ light_clusters::light_clusters(gpu::device& device,
 
                                 .texture2d_array = {.first_array_slice = i,
                                                     .array_size = 1}}),
-                            device.direct_queue};
+                            device};
    }
 
    update_render_resolution(render_width, render_height, false);
@@ -326,7 +326,7 @@ void light_clusters::update_render_resolution(uint32 width, uint32 height,
                                            .flags = {.allow_unordered_access = true},
                                            .debug_name = "Lights Tiles"},
                                           gpu::heap_type::default_),
-                    _device.direct_queue};
+                    _device};
 
    _tiles_count = tiles_count;
    _tiles_width = tiles_width;
@@ -347,7 +347,7 @@ void light_clusters::update_descriptors()
                            {.buffer = {.first_element = 0,
                                        .number_elements = _tiles_count,
                                        .structure_byte_stride = sizeof(uint32) * 8}}),
-                        _device.direct_queue};
+                        _device};
 
    _lights_region_list_srv = {_device.create_shader_resource_view(
                                  _lights_region_list.get(),
@@ -355,11 +355,11 @@ void light_clusters::update_descriptors()
                                              .number_elements = max_lights,
                                              .structure_byte_stride =
                                                 sizeof(light_region_description)}}),
-                              _device.direct_queue};
+                              _device};
 
    _shadow_map_srv = {_device.create_shader_resource_view(_shadow_map.get(),
                                                           {.format = DXGI_FORMAT_R32_FLOAT}),
-                      _device.direct_queue};
+                      _device};
 
    _tiling_inputs_cbv = _device.get_gpu_virtual_address(_tiling_inputs.get());
 }
@@ -895,12 +895,12 @@ void light_clusters::init_proxy_geometry(gpu::device& device,
                                                   .debug_name =
                                                      "Light Proxy Indices"},
                                                  gpu::heap_type::default_),
-                            device.direct_queue};
+                            device};
    _sphere_proxy_vertices = {device.create_buffer({.size = sizeof(sphere_proxy_vertices),
                                                    .debug_name =
                                                       "Light Proxy Vertices"},
                                                   gpu::heap_type::default_),
-                             device.direct_queue};
+                             device};
 
    const auto upload_buffer_size =
       sizeof(sphere_proxy_indices) + sizeof(sphere_proxy_vertices);
@@ -909,7 +909,7 @@ void light_clusters::init_proxy_geometry(gpu::device& device,
       {device.create_buffer({.size = upload_buffer_size,
                              .debug_name = "Light Proxy Upload Buffer"},
                             gpu::heap_type::upload),
-       device.background_copy_queue};
+       device};
 
    std::byte* const upload_buffer_ptr =
       static_cast<std::byte*>(device.map(upload_buffer.get(), 0, {}));

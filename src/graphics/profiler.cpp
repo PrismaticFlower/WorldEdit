@@ -25,13 +25,13 @@ struct profiler::impl {
       _sections = std::make_unique<section[]>(max_sections);
 
       _query_heap = {_device.create_timestamp_query_heap(_max_timestamps),
-                     _device.direct_queue};
+                     _device};
       _readback_buffer =
          {_device.create_buffer({.size = _max_timestamps * sizeof(uint64) * gpu::frame_pipeline_length,
                                  .debug_name =
                                     "Profiler Timestamp Readback Buffer"},
                                 gpu::heap_type::readback),
-          _device.direct_queue};
+          _device};
 
       const uint64* const readback_buffer_address =
          static_cast<uint64*>(_device.map(_readback_buffer.get(), 0,
