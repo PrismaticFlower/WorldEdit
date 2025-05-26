@@ -400,6 +400,12 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 
+         if (ImGui::MenuItem("Draw Stairs")) {
+            _block_editor_open = true;
+            _block_editor_config.draw_type = world::block_type::stairway;
+            _block_editor_context = {.activate_tool = block_edit_tool::draw};
+         }
+
          ImGui::EndMenu();
       }
 

@@ -38,6 +38,7 @@ waterPS
 
 blockVS .entrypoint = main .file = blockVS.hlsl
 block_quadVS .entrypoint = main_quad .file = blockVS.hlsl
+block_custom_meshVS .entrypoint = main_custom_mesh .file = blockVS.hlsl
 block_basicPS
 block_basic_lightingPS
 block_normalPS
