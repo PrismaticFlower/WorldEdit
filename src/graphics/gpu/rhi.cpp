@@ -445,6 +445,7 @@ struct command_list_state {
 
       return init;
    }();
+   std::vector<com_ptr<ID3D12Resource2>> referenced_resources;
 
    com_ptr<ID3D12CommandAllocator> command_allocator;
    com_ptr<ID3D12DescriptorHeap> descriptor_heap;
@@ -1906,6 +1907,12 @@ void command_queue::execute_command_lists(std::span<command_list*> command_lists
    for (command_list* list : command_lists) {
       list->state->allocator_pool.add(std::exchange(list->state->command_allocator, nullptr),
                                       state->device->current_frame.load());
+
+      for (com_ptr<ID3D12Resource2>& resource : list->state->referenced_resources) {
+         release_resource(pack_resource_handle(resource.release()));
+      }
+
+      list->state->referenced_resources.clear();
    }
 }
 
@@ -2197,6 +2204,15 @@ void command_list::reset()
                                                  descriptor_heaps.size()),
                                               descriptor_heaps.data());
    }
+}
+
+void command_list::reference_resource(resource_handle resource) noexcept
+{
+   ID3D12Resource2* d3d_resource = unpack_resource_handle(resource);
+
+   d3d_resource->AddRef();
+
+   state->referenced_resources.emplace_back(d3d_resource);
 }
 
 [[msvc::forceinline]] void command_list::clear_state()

@@ -81,6 +81,15 @@ During optimizing the background texture creation it became apparent that the ab
    void unsynced_release_query_heap(query_heap_handle query_heap);
 ```
 
+#### Command List Resource References
+Sometimes it's convenient to be able to release a resource while recording a command list that uses it. To that end `gpu::command_list` has the following method to reference a resource and keep it alive until the command list has executed. Once called the resource can be safely released without by other lifetime functions without creating a hazard.
+
+```c++
+   /// @brief Keep a resource alive until after the command list has executed.
+   /// @param resource The resource.
+   void reference_resource(resource_handle resource) noexcept;
+```
+
 ### Fences
 Fences are not directly exposed. Instead command queues contain functions for syncing with another queue or having the CPU wait for all currently submitted queue work to complete. These cover the main needed uses of fences for the codebase with simple APIs.
 

@@ -911,6 +911,10 @@ struct command_list {
 
    void clear_state();
 
+   /// @brief Keep a resource alive until after the command list has executed.
+   /// @param resource The resource.
+   void reference_resource(resource_handle resource) noexcept;
+
    /// Constructors/Destructor ///
 
    command_list();
@@ -931,7 +935,7 @@ protected:
    friend device;
    friend command_queue;
 
-   implementation_storage<command_list_state, 216> state;
+   implementation_storage<command_list_state, 248> state;
 };
 
 struct copy_command_list : command_list {
