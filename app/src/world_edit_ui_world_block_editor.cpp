@@ -2097,14 +2097,19 @@ void world_edit::ui_show_block_editor() noexcept
             const world::block_description_stairway& stairway =
                _world.blocks.stairways.description[*selected_index];
 
-            float3 size = stairway.size;
             float3 positionWS = stairway.position;
+            float3 size = stairway.size / 2.0f;
+
+            positionWS.y += size.y;
 
             if (_gizmos.gizmo_size({.name = "Resize Block (Stairway)",
                                     .instance = *selected_index,
                                     .alignment = _editor_grid_size,
                                     .gizmo_rotation = stairway.rotation},
                                    positionWS, size)) {
+               positionWS.y -= size.y;
+               size *= 2.0f;
+
                _edit_stack_world.apply(edits::make_set_block_stairway_metrics(
                                           *selected_index, stairway.rotation,
                                           positionWS, size, stairway.step_height,
