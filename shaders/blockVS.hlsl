@@ -30,15 +30,15 @@ struct surface_info {
    uint rotation : 2;
    uint offsetX : 13;
    uint offsetY : 13;
-   uint object_from_world_w_sign : 1;
+   uint local_from_world_w_sign : 1;
    uint quad_split : 1;
 };
 
 struct block_instance_description {
-   float3x4 world_from_object;
-   float3x3 adjugate_world_from_object;
+   float3x4 world_from_local;
+   float3x3 adjugate_world_from_local;
    surface_info surfaces[MAX_SURFACES];
-   float3 object_from_world_xyz;
+   float3 local_from_world_xyz;
 };
 
 struct block_quad_description {
@@ -52,8 +52,8 @@ StructuredBuffer<block_instance_description> instance_descs : register(BLOCK_INS
 StructuredBuffer<block_quad_description> quad_descs : register(BLOCK_INSTANCE_DATA_REGISTER);
 
 struct input_vertex {
-   float3 positionOS : POSITION;
-   float3 normalOS : NORMAL;
+   float3 positionLS : POSITION;
+   float3 normalLS : NORMAL;
    float2 texcoords : TEXCOORD;
    uint surface_index : SURFACE;
    uint instance_id : SV_InstanceID;
@@ -74,8 +74,8 @@ output_vertex main(input_vertex input)
 
    output_vertex output;
 
-   const float3 positionWS = mul(instance.world_from_object, float4(input.positionOS, 1.0)).xyz;
-   const float3 normalWS = normalize(mul(instance.adjugate_world_from_object, input.normalOS));
+   const float3 positionWS = mul(instance.world_from_local, float4(input.positionLS, 1.0)).xyz;
+   const float3 normalWS = normalize(mul(instance.adjugate_world_from_local, input.normalLS));
    const float4 positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
 
    float2 texcoords;
@@ -107,39 +107,39 @@ output_vertex main(input_vertex input)
    case texture_mode_local_space_zy:
    case texture_mode_local_space_xz:
    case texture_mode_local_space_xy: {      
-      quaternion object_from_world;
+      quaternion local_from_world;
 
-      const float w_sign = surface.object_from_world_w_sign ? -1.0 : 1.0;
+      const float w_sign = surface.local_from_world_w_sign ? -1.0 : 1.0;
 
-      object_from_world.w = w_sign * sqrt(1.0 - saturate(dot(instance.object_from_world_xyz, instance.object_from_world_xyz)));
-      object_from_world.x = instance.object_from_world_xyz.x;
-      object_from_world.y = instance.object_from_world_xyz.y;
-      object_from_world.z = instance.object_from_world_xyz.z;
+      local_from_world.w = w_sign * sqrt(1.0 - saturate(dot(instance.local_from_world_xyz, instance.local_from_world_xyz)));
+      local_from_world.x = instance.local_from_world_xyz.x;
+      local_from_world.y = instance.local_from_world_xyz.y;
+      local_from_world.z = instance.local_from_world_xyz.z;
 
-      const float3 positionOS = mul(object_from_world, positionWS);
+      const float3 positionLS = mul(local_from_world, positionWS);
 
       switch (surface.texture_mode) {
       case texture_mode_local_space_auto: {
-         const float3 normal_absOS = abs(mul(object_from_world, normalWS));
+         const float3 normal_absLS = abs(mul(local_from_world, normalWS));
 
-         if (normal_absOS.x < normal_absOS.y && normal_absOS.z < normal_absOS.y) {
-            texcoords = positionOS.xz;
+         if (normal_absLS.x < normal_absLS.y && normal_absLS.z < normal_absLS.y) {
+            texcoords = positionLS.xz;
          }
-         else if (normal_absOS.x < normal_absOS.z) {
-            texcoords = positionOS.xy;
+         else if (normal_absLS.x < normal_absLS.z) {
+            texcoords = positionLS.xy;
          }
          else {
-            texcoords = positionOS.zy;
+            texcoords = positionLS.zy;
          }
       } break;
       case texture_mode_local_space_zy: 
-         texcoords = positionOS.zy;
+         texcoords = positionLS.zy;
          break;
       case texture_mode_local_space_xz:
-         texcoords = positionOS.xz;
+         texcoords = positionLS.xz;
          break;
       case texture_mode_local_space_xy:
-         texcoords = positionOS.xy;
+         texcoords = positionLS.xy;
          break;
       };
    } break;
@@ -284,8 +284,8 @@ output_vertex main_custom_mesh(input_vertex input)
    block_instance_description instance = instance_descs[instance_id];
    surface_info surface = instance.surfaces[min(input.surface_index, MAX_SURFACES - 1)];
 
-   const float3 positionWS = mul(instance.world_from_object, float4(input.positionOS, 1.0)).xyz;
-   const float3 normalWS = normalize(mul(instance.adjugate_world_from_object, input.normalOS));
+   const float3 positionWS = mul(instance.world_from_local, float4(input.positionLS, 1.0)).xyz;
+   const float3 normalWS = normalize(mul(instance.adjugate_world_from_local, input.normalLS));
    const float4 positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
 
    float2 texcoords;
@@ -317,39 +317,39 @@ output_vertex main_custom_mesh(input_vertex input)
    case texture_mode_local_space_zy:
    case texture_mode_local_space_xz:
    case texture_mode_local_space_xy: {      
-      quaternion object_from_world;
+      quaternion local_from_world;
       
-      const float w_sign = surface.object_from_world_w_sign ? -1.0 : 1.0;
+      const float w_sign = surface.local_from_world_w_sign ? -1.0 : 1.0;
 
-      object_from_world.w = w_sign * sqrt(1.0 - saturate(dot(instance.object_from_world_xyz, instance.object_from_world_xyz)));
-      object_from_world.x = instance.object_from_world_xyz.x;
-      object_from_world.y = instance.object_from_world_xyz.y;
-      object_from_world.z = instance.object_from_world_xyz.z;
+      local_from_world.w = w_sign * sqrt(1.0 - saturate(dot(instance.local_from_world_xyz, instance.local_from_world_xyz)));
+      local_from_world.x = instance.local_from_world_xyz.x;
+      local_from_world.y = instance.local_from_world_xyz.y;
+      local_from_world.z = instance.local_from_world_xyz.z;
 
-      const float3 positionOS = mul(object_from_world, positionWS);
+      const float3 positionLS = mul(local_from_world, positionWS);
 
       switch (surface.texture_mode) {
       case texture_mode_local_space_auto: {
-         const float3 normal_absOS = abs(mul(object_from_world, normalWS));
+         const float3 normal_absLS = abs(mul(local_from_world, normalWS));
 
-         if (normal_absOS.x < normal_absOS.y && normal_absOS.z < normal_absOS.y) {
-            texcoords = positionOS.xz;
+         if (normal_absLS.x < normal_absLS.y && normal_absLS.z < normal_absLS.y) {
+            texcoords = positionLS.xz;
          }
-         else if (normal_absOS.x < normal_absOS.z) {
-            texcoords = positionOS.xy;
+         else if (normal_absLS.x < normal_absLS.z) {
+            texcoords = positionLS.xy;
          }
          else {
-            texcoords = positionOS.zy;
+            texcoords = positionLS.zy;
          }
       } break;
       case texture_mode_local_space_zy: 
-         texcoords = positionOS.zy;
+         texcoords = positionLS.zy;
          break;
       case texture_mode_local_space_xz:
-         texcoords = positionOS.xz;
+         texcoords = positionLS.xz;
          break;
       case texture_mode_local_space_xy:
-         texcoords = positionOS.xy;
+         texcoords = positionLS.xy;
          break;
       };
    } break;

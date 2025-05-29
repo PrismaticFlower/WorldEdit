@@ -59,10 +59,10 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
             },
       };
 
-      const float3 box_centreOS = (bboxWS.min + bboxWS.max) * 0.5f;
+      const float3 box_centreLS = (bboxWS.min + bboxWS.max) * 0.5f;
       const float3 box_size = (bboxWS.max - bboxWS.min) * 0.5f;
 
-      const float3 positionAS = positionWS - box_centreOS;
+      const float3 positionAS = positionWS - box_centreLS;
       const float3 distances = abs(positionAS) - box_size;
 
       const float box_distance =
@@ -81,13 +81,13 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       };
       const float4x4 rotation = to_matrix(box.rotation);
 
-      float4x4 world_from_object = rotation * scale;
-      world_from_object[3] = {box.position, 1.0f};
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {box.position, 1.0f};
 
       std::array<float3, 8> verticesWS;
 
       for (std::size_t i = 0; i < block_cube_points.size(); ++i) {
-         verticesWS[i] = world_from_object * block_cube_points[i];
+         verticesWS[i] = world_from_local * block_cube_points[i];
       }
 
       for (const float3& vertex_positionWS : verticesWS) {
@@ -138,10 +138,10 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
             },
       };
 
-      const float3 ramp_centreOS = (bboxWS.min + bboxWS.max) * 0.5f;
+      const float3 ramp_centreLS = (bboxWS.min + bboxWS.max) * 0.5f;
       const float3 ramp_size = (bboxWS.max - bboxWS.min) * 0.5f;
 
-      const float3 positionAS = positionWS - ramp_centreOS;
+      const float3 positionAS = positionWS - ramp_centreLS;
       const float3 distances = abs(positionAS) - ramp_size;
 
       const float ramp_distance =
@@ -160,13 +160,13 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       };
       const float4x4 rotation = to_matrix(ramp.rotation);
 
-      float4x4 world_from_object = rotation * scale;
-      world_from_object[3] = {ramp.position, 1.0f};
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {ramp.position, 1.0f};
 
       std::array<float3, 8> verticesWS;
 
       for (std::size_t i = 0; i < block_ramp_points.size(); ++i) {
-         verticesWS[i] = world_from_object * block_ramp_points[i];
+         verticesWS[i] = world_from_local * block_ramp_points[i];
       }
 
       for (const float3& vertex_positionWS : verticesWS) {
@@ -217,10 +217,10 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
             },
       };
 
-      const float3 quad_centreOS = (bboxWS.min + bboxWS.max) * 0.5f;
+      const float3 quad_centreLS = (bboxWS.min + bboxWS.max) * 0.5f;
       const float3 quad_size = (bboxWS.max - bboxWS.min) * 0.5f;
 
-      const float3 positionAS = positionWS - quad_centreOS;
+      const float3 positionAS = positionWS - quad_centreLS;
       const float3 distances = abs(positionAS) - quad_size;
 
       const float quad_distance =
@@ -286,10 +286,10 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
             },
       };
 
-      const float3 cylinder_centreOS = (bboxWS.min + bboxWS.max) * 0.5f;
+      const float3 cylinder_centreLS = (bboxWS.min + bboxWS.max) * 0.5f;
       const float3 cylinder_size = (bboxWS.max - bboxWS.min) * 0.5f;
 
-      const float3 positionAS = positionWS - cylinder_centreOS;
+      const float3 positionAS = positionWS - cylinder_centreLS;
       const float3 distances = abs(positionAS) - cylinder_size;
 
       const float cylinder_distance =
@@ -309,13 +309,13 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       };
       const float4x4 rotation = to_matrix(cylinder.rotation);
 
-      float4x4 world_from_object = rotation * scale;
-      world_from_object[3] = {cylinder.position, 1.0f};
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {cylinder.position, 1.0f};
 
       std::array<float3, 64> verticesWS;
 
       for (std::size_t i = 0; i < block_cylinder_points.size(); ++i) {
-         verticesWS[i] = world_from_object * block_cylinder_points[i];
+         verticesWS[i] = world_from_local * block_cylinder_points[i];
       }
 
       for (const float3& vertex_positionWS : verticesWS) {
