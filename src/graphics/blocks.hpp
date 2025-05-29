@@ -107,7 +107,7 @@ struct blocks {
       float3 specular_color;
    };
 
-   struct custom_mesh_block {
+   struct custom_mesh {
       offset_allocator_aligned::allocation ia_allocation;
 
       uint32 index_count = 0;
@@ -137,13 +137,15 @@ private:
 
    gpu::unique_resource_handle _stairways_instance_data;
    uint64 _stairways_instance_data_capacity = 0;
-   std::vector<custom_mesh_block> _stairway_meshes;
 
    gpu::unique_command_signature_handle _custom_mesh_command_signature;
 
    offset_allocator_aligned _custom_mesh_allocator;
    gpu::unique_resource_handle _custom_mesh_buffer;
    uint32 _custom_mesh_buffer_capacity = 0;
+
+   bool _initialized_custom_meshes = false;
+   std::vector<custom_mesh> _custom_meshes;
 
    std::vector<uint32> _TEMP_culling_storage;
 

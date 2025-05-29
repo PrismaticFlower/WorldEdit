@@ -1,7 +1,6 @@
 #include "delete_block.hpp"
 
 #include "world/blocks/bounding_box.hpp"
-#include "world/blocks/mesh_generate.hpp"
 
 #pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
 #pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
@@ -100,6 +99,8 @@ struct delete_block_custom_mesh final : edit<world::edit_context> {
    {
       blocks_type& blocks = context.world.blocks.*type_ptr;
 
+      context.world.blocks.custom_meshes.remove(blocks.mesh[block_index]);
+
       blocks.bbox.min_x.erase(blocks.bbox.min_x.begin() + block_index);
       blocks.bbox.min_y.erase(blocks.bbox.min_y.begin() + block_index);
       blocks.bbox.min_z.erase(blocks.bbox.min_z.begin() + block_index);
@@ -144,7 +145,8 @@ struct delete_block_custom_mesh final : edit<world::edit_context> {
       blocks.layer.insert(blocks.layer.begin() + block_index, layer);
       blocks.description.insert(blocks.description.begin() + block_index, block);
       blocks.mesh.insert(blocks.mesh.begin() + block_index,
-                         world::generate_mesh(block));
+                         context.world.blocks.custom_meshes.add(
+                            block.custom_mesh_desc()));
       blocks.ids.insert(blocks.ids.begin() + block_index, id);
 
       blocks.dirty.add({block_index, static_cast<uint32>(blocks.size())});

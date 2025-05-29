@@ -46,11 +46,13 @@ auto get_bounding_box(const block_description_cylinder& cylinder) noexcept
 auto get_bounding_box(const block_description_stairway& stairway) noexcept
    -> math::bounding_box
 {
-   const math::bounding_box bboxLS{.min = {-stairway.size.x, 0.0f,
-                                           -stairway.size.z},
-                                   .max = {stairway.size.x,
+   const float half_width = stairway.size.x / 2.0f;
+   const float half_length = stairway.size.z / 2.0f;
+
+   const math::bounding_box bboxLS{.min = {-half_width, 0.0f, -half_length},
+                                   .max = {half_width,
                                            stairway.size.y + stairway.first_step_offset,
-                                           stairway.size.z}};
+                                           half_length}};
 
    return stairway.rotation * math::bounding_box{.min = min(bboxLS.min, bboxLS.max),
                                                  .max = max(bboxLS.min, bboxLS.max)} +

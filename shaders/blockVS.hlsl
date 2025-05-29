@@ -46,16 +46,9 @@ struct block_quad_description {
    surface_info surface;
 };
 
-struct block_custom_mesh_instance_description {
-   surface_info surfaces[MAX_SURFACES];
-   float3 object_from_world_xyz;
-   float pad;
-};
-
 StructuredBuffer<uint> instance_index : register(BLOCK_INSTANCE_INDEX_REGISTER);
 StructuredBuffer<block_instance_description> instance_descs : register(BLOCK_INSTANCE_DATA_REGISTER);
 StructuredBuffer<block_quad_description> quad_descs : register(BLOCK_INSTANCE_DATA_REGISTER);
-StructuredBuffer<block_custom_mesh_instance_description> instance_custom_mesh_descs : register(BLOCK_INSTANCE_DATA_REGISTER);
 
 struct input_vertex {
    float3 positionOS : POSITION;
@@ -285,11 +278,11 @@ cbuffer CustomMeshInstanceId : register(BLOCK_CUSTOM_MESH_CB_REGISTER)
 
 output_vertex main_custom_mesh(input_vertex input)
 {
-   block_custom_mesh_instance_description instance = instance_custom_mesh_descs[instance_id];
+   block_instance_description instance = instance_descs[instance_id];
    surface_info surface = instance.surfaces[min(input.surface_index, MAX_SURFACES - 1)];
 
-   const float3 positionWS = input.positionOS;
-   const float3 normalWS = input.normalOS;
+   const float3 positionWS = mul(instance.world_from_object, float4(input.positionOS, 1.0)).xyz;
+   const float3 normalWS = normalize(mul(instance.adjugate_world_from_object, input.normalOS));
    const float4 positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
 
    float2 texcoords;

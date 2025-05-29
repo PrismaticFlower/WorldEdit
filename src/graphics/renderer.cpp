@@ -3429,15 +3429,19 @@ void renderer_impl::draw_interaction_targets(
                const uint32 color_packed =
                   utility::pack_srgb_bgra(float4{color, 1.0f});
 
-               const world::block_custom_mesh& block =
-                  world.blocks.stairways.mesh[*block_index];
+               const world::block_description_stairway& block =
+                  world.blocks.stairways.description[*block_index];
+               const world::block_custom_mesh& mesh =
+                  world.blocks.custom_meshes[world.blocks.stairways.mesh[*block_index]];
 
-               for (const std::array<uint16, 3>& tri : block.triangles) {
-                  _meta_draw_batcher
-                     .add_triangle_wireframe(block.vertices[tri[0]].position,
-                                             block.vertices[tri[1]].position,
-                                             block.vertices[tri[2]].position,
-                                             color_packed);
+               float4x4 world_from_local = to_matrix(block.rotation);
+               world_from_local[3] = {block.position, 1.0f};
+
+               for (const std::array<uint16, 3>& tri : mesh.triangles) {
+                  _meta_draw_batcher.add_triangle_wireframe(
+                     world_from_local * mesh.vertices[tri[0]].position,
+                     world_from_local * mesh.vertices[tri[1]].position,
+                     world_from_local * mesh.vertices[tri[2]].position, color_packed);
                }
             } break;
             }

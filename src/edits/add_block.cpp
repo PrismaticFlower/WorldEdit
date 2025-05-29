@@ -1,7 +1,6 @@
 #include "add_block.hpp"
 
 #include "world/blocks/bounding_box.hpp"
-#include "world/blocks/mesh_generate.hpp"
 
 namespace we::edits {
 
@@ -113,7 +112,8 @@ struct add_block_custom_mesh final : edit<world::edit_context> {
       blocks.hidden.push_back(false);
       blocks.layer.push_back(layer);
       blocks.description.push_back(block);
-      blocks.mesh.push_back(world::generate_mesh(block));
+      blocks.mesh.push_back(
+         context.world.blocks.custom_meshes.add(block.custom_mesh_desc()));
       blocks.ids.push_back(id);
 
       blocks.dirty.add({block_index, block_index + 1});
@@ -124,6 +124,8 @@ struct add_block_custom_mesh final : edit<world::edit_context> {
    void revert(world::edit_context& context) noexcept override
    {
       blocks_type& blocks = context.world.blocks.*type_ptr;
+
+      context.world.blocks.custom_meshes.remove(blocks.mesh.back());
 
       blocks.bbox.min_x.pop_back();
       blocks.bbox.min_y.pop_back();

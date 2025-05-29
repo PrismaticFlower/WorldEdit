@@ -265,6 +265,7 @@
     <ClCompile Include="src\world\blocks\mesh_generate.cpp" />
     <ClCompile Include="src\graphics\shaders\block_custom_meshVS.cpp" />
     <ClCompile Include="src\allocators\offset_allocator.cpp" />
+    <ClCompile Include="src\world\blocks\custom_mesh_library.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -586,6 +587,7 @@
     <ClInclude Include="src\world\blocks\mesh_generate.hpp" />
     <ClInclude Include="src\graphics\gpu\indirect_structures.hpp" />
     <ClInclude Include="src\allocators\offset_allocator.hpp" />
+    <ClInclude Include="src\world\blocks\custom_mesh_library.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
