@@ -30,6 +30,7 @@ struct surface_info {
    uint rotation : 2;
    uint offsetX : 13;
    uint offsetY : 13;
+   uint object_from_world_w_sign : 1;
    uint quad_split : 1;
 };
 
@@ -108,7 +109,9 @@ output_vertex main(input_vertex input)
    case texture_mode_local_space_xy: {      
       quaternion object_from_world;
 
-      object_from_world.w = sqrt(1.0 - saturate(dot(instance.object_from_world_xyz, instance.object_from_world_xyz)));
+      const float w_sign = surface.object_from_world_w_sign ? -1.0 : 1.0;
+
+      object_from_world.w = w_sign * sqrt(1.0 - saturate(dot(instance.object_from_world_xyz, instance.object_from_world_xyz)));
       object_from_world.x = instance.object_from_world_xyz.x;
       object_from_world.y = instance.object_from_world_xyz.y;
       object_from_world.z = instance.object_from_world_xyz.z;
@@ -315,8 +318,10 @@ output_vertex main_custom_mesh(input_vertex input)
    case texture_mode_local_space_xz:
    case texture_mode_local_space_xy: {      
       quaternion object_from_world;
+      
+      const float w_sign = surface.object_from_world_w_sign ? -1.0 : 1.0;
 
-      object_from_world.w = sqrt(1.0 - saturate(dot(instance.object_from_world_xyz, instance.object_from_world_xyz)));
+      object_from_world.w = w_sign * sqrt(1.0 - saturate(dot(instance.object_from_world_xyz, instance.object_from_world_xyz)));
       object_from_world.x = instance.object_from_world_xyz.x;
       object_from_world.y = instance.object_from_world_xyz.y;
       object_from_world.z = instance.object_from_world_xyz.z;
