@@ -144,9 +144,12 @@ void process_blocks(const T& blocks, std::span<const block_vertex> block_vertice
 
       const float3 local_from_world_xyz = {-block.rotation.x, -block.rotation.y,
                                            -block.rotation.z};
+      const float local_from_world_w_sign = -block.rotation.w < 0.0f ? -1.0f : 1.0f;
+
       const quaternion local_from_world =
-         {sqrt(1.0f - std::max(std::min(dot(local_from_world_xyz, local_from_world_xyz), 1.0f),
-                               0.0f)),
+         {local_from_world_w_sign *
+             sqrt(1.0f - std::max(std::min(dot(local_from_world_xyz, local_from_world_xyz), 1.0f),
+                                  0.0f)),
           local_from_world_xyz.x, local_from_world_xyz.y, local_from_world_xyz.z};
 
       for (const std::array<uint16, 3>& tri : block_triangles) {
