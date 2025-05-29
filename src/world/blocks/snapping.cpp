@@ -345,6 +345,80 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
    }
 
+   for (uint32 stairway_index = 0; stairway_index < blocks.stairways.size();
+        ++stairway_index) {
+      if (not config.active_layers[blocks.stairways.layer[stairway_index]])
+         continue;
+      if (blocks.stairways.hidden[stairway_index]) continue;
+      if (blocks.stairways.ids[stairway_index] == config.filter_id) continue;
+
+      const math::bounding_box bboxWS = {
+         .min =
+            {
+               blocks.stairways.bbox.min_x[stairway_index],
+               blocks.stairways.bbox.min_y[stairway_index],
+               blocks.stairways.bbox.min_z[stairway_index],
+            },
+
+         .max =
+            {
+               blocks.stairways.bbox.max_x[stairway_index],
+               blocks.stairways.bbox.max_y[stairway_index],
+               blocks.stairways.bbox.max_z[stairway_index],
+            },
+      };
+
+      const float3 stairway_centreLS = (bboxWS.min + bboxWS.max) * 0.5f;
+      const float3 stairway_size = (bboxWS.max - bboxWS.min) * 0.5f;
+
+      const float3 positionAS = positionWS - stairway_centreLS;
+      const float3 distances = abs(positionAS) - stairway_size;
+
+      const float stairway_distance =
+         length(max(distances, float3{0.0f, 0.0f, 0.0f})) +
+         std::min(std::max(std::max(distances.x, distances.y), distances.z), 0.0f);
+
+      if (stairway_distance > config.snap_radius) continue;
+
+      const block_description_stairway& stairway =
+         blocks.stairways.description[stairway_index];
+
+      float4x4 world_from_local = to_matrix(stairway.rotation);
+      world_from_local[3] = {stairway.position, 1.0f};
+
+      const block_custom_mesh& mesh =
+         blocks.custom_meshes[blocks.stairways.mesh[stairway_index]];
+
+      for (const float3& vertex_positionLS : mesh.snap_points) {
+         const float3 vertex_positionWS = world_from_local * vertex_positionLS;
+
+         const float corner_distance = distance(positionWS, vertex_positionWS);
+
+         if (corner_distance < closest_distance) {
+            closest_pointWS = vertex_positionWS;
+            closest_distance = corner_distance;
+         }
+
+         draw_point(visualizers, vertex_positionWS, colors.corner);
+      }
+
+      for (const auto& [i0, i1] : mesh.snap_edges) {
+         for (int i = 1; i < edge_point_count; ++i) {
+            const float3 pointWS =
+               world_from_local * lerp(mesh.snap_points[i0], mesh.snap_points[i1],
+                                       i / flt_edge_point_count);
+            const float point_distance = distance(positionWS, pointWS);
+
+            if (point_distance < closest_distance) {
+               closest_pointWS = pointWS;
+               closest_distance = point_distance;
+            }
+
+            draw_point(visualizers, pointWS, colors.edge);
+         }
+      }
+   }
+
    float3 new_positionWS;
 
    if (closest_distance > 0.0f and closest_distance <= config.snap_radius) {
