@@ -24,10 +24,10 @@ void highlight_block(const blocks& blocks, const block_type type,
       };
       const float4x4 rotation = to_matrix(box.rotation);
 
-      float4x4 world_from_object = rotation * scale;
-      world_from_object[3] = {box.position, 1.0f};
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {box.position, 1.0f};
 
-      visualizers.add_box_additive(world_from_object, {1.0f, 1.0f, 1.0f, 0.125f});
+      visualizers.add_box_additive(world_from_local, {1.0f, 1.0f, 1.0f, 0.125f});
    } break;
    case block_type::ramp: {
       const world::block_description_ramp& ramp =
@@ -41,10 +41,10 @@ void highlight_block(const blocks& blocks, const block_type type,
       };
       const float4x4 rotation = to_matrix(ramp.rotation);
 
-      float4x4 world_from_object = rotation * scale;
-      world_from_object[3] = {ramp.position, 1.0f};
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {ramp.position, 1.0f};
 
-      visualizers.add_ramp_additive(world_from_object, {1.0f, 1.0f, 1.0f, 0.125f});
+      visualizers.add_ramp_additive(world_from_local, {1.0f, 1.0f, 1.0f, 0.125f});
    } break;
    case block_type::quad: {
       const world::block_description_quad& quad =
@@ -69,10 +69,10 @@ void highlight_block(const blocks& blocks, const block_type type,
       };
       const float4x4 rotation = to_matrix(cylinder.rotation);
 
-      float4x4 world_from_object = rotation * scale;
-      world_from_object[3] = {cylinder.position, 1.0f};
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {cylinder.position, 1.0f};
 
-      visualizers.add_cylinder_additive(world_from_object, {1.0f, 1.0f, 1.0f, 0.125f});
+      visualizers.add_cylinder_additive(world_from_local, {1.0f, 1.0f, 1.0f, 0.125f});
    } break;
    case block_type::stairway: {
       const world::block_description_stairway& stairway =

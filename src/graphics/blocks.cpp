@@ -32,17 +32,17 @@ struct surface_info {
    uint32 rotation : 2;
    uint32 offsetX : 13;
    uint32 offsetY : 13;
-   uint32 object_from_world_w_sign : 1;
+   uint32 local_from_world_w_sign : 1;
    uint32 quad_split : 1;
 };
 
 static_assert(sizeof(surface_info) == 8);
 
 struct block_instance_description {
-   std::array<float3, 4> world_from_object;
-   float3x3 adjugate_world_from_object;
+   std::array<float3, 4> world_from_local;
+   float3x3 adjugate_world_from_local;
    std::array<surface_info, 6> surfaces;
-   float3 object_from_world_xyz;
+   float3 local_from_world_xyz;
 };
 
 static_assert(sizeof(block_instance_description) == 144);
@@ -670,27 +670,27 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
             {0.0f, 0.0f, 0.0f, 1.0f},
          };
          const float4x4 rotation = to_matrix(block.rotation);
-         const float4x4 world_from_object = rotation * scale;
+         const float4x4 world_from_local = rotation * scale;
 
          block_instance_description description;
 
-         description.adjugate_world_from_object = adjugate(world_from_object);
-         description.world_from_object[0] = {world_from_object[0].x,
-                                             world_from_object[0].y,
-                                             world_from_object[0].z};
-         description.world_from_object[1] = {world_from_object[1].x,
-                                             world_from_object[1].y,
-                                             world_from_object[1].z};
-         description.world_from_object[2] = {world_from_object[2].x,
-                                             world_from_object[2].y,
-                                             world_from_object[2].z};
-         description.world_from_object[3] = block.position;
+         description.adjugate_world_from_local = adjugate(world_from_local);
+         description.world_from_local[0] = {world_from_local[0].x,
+                                            world_from_local[0].y,
+                                            world_from_local[0].z};
+         description.world_from_local[1] = {world_from_local[1].x,
+                                            world_from_local[1].y,
+                                            world_from_local[1].z};
+         description.world_from_local[2] = {world_from_local[2].x,
+                                            world_from_local[2].y,
+                                            world_from_local[2].z};
+         description.world_from_local[3] = block.position;
 
-         const quaternion object_from_world = conjugate(block.rotation);
+         const quaternion local_from_world = conjugate(block.rotation);
 
-         description.object_from_world_xyz = {object_from_world.x,
-                                              object_from_world.y,
-                                              object_from_world.z};
+         description.local_from_world_xyz = {local_from_world.x,
+                                             local_from_world.y,
+                                             local_from_world.z};
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
@@ -701,7 +701,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
-               .object_from_world_w_sign = object_from_world.w < 0.0f,
+               .local_from_world_w_sign = local_from_world.w < 0.0f,
             };
          }
 
@@ -736,27 +736,27 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
             {0.0f, 0.0f, 0.0f, 1.0f},
          };
          const float4x4 rotation = to_matrix(block.rotation);
-         const float4x4 world_from_object = rotation * scale;
+         const float4x4 world_from_local = rotation * scale;
 
          block_instance_description description;
 
-         description.adjugate_world_from_object = adjugate(world_from_object);
-         description.world_from_object[0] = {world_from_object[0].x,
-                                             world_from_object[0].y,
-                                             world_from_object[0].z};
-         description.world_from_object[1] = {world_from_object[1].x,
-                                             world_from_object[1].y,
-                                             world_from_object[1].z};
-         description.world_from_object[2] = {world_from_object[2].x,
-                                             world_from_object[2].y,
-                                             world_from_object[2].z};
-         description.world_from_object[3] = block.position;
+         description.adjugate_world_from_local = adjugate(world_from_local);
+         description.world_from_local[0] = {world_from_local[0].x,
+                                            world_from_local[0].y,
+                                            world_from_local[0].z};
+         description.world_from_local[1] = {world_from_local[1].x,
+                                            world_from_local[1].y,
+                                            world_from_local[1].z};
+         description.world_from_local[2] = {world_from_local[2].x,
+                                            world_from_local[2].y,
+                                            world_from_local[2].z};
+         description.world_from_local[3] = block.position;
 
-         const quaternion object_from_world = conjugate(block.rotation);
+         const quaternion local_from_world = conjugate(block.rotation);
 
-         description.object_from_world_xyz = {object_from_world.x,
-                                              object_from_world.y,
-                                              object_from_world.z};
+         description.local_from_world_xyz = {local_from_world.x,
+                                             local_from_world.y,
+                                             local_from_world.z};
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
@@ -767,7 +767,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
-               .object_from_world_w_sign = object_from_world.w < 0.0f,
+               .local_from_world_w_sign = local_from_world.w < 0.0f,
             };
          }
 
@@ -856,27 +856,27 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
             {0.0f, 0.0f, 0.0f, 1.0f},
          };
          const float4x4 rotation = to_matrix(block.rotation);
-         const float4x4 world_from_object = rotation * scale;
+         const float4x4 world_from_local = rotation * scale;
 
          block_instance_description description;
 
-         description.adjugate_world_from_object = adjugate(world_from_object);
-         description.world_from_object[0] = {world_from_object[0].x,
-                                             world_from_object[0].y,
-                                             world_from_object[0].z};
-         description.world_from_object[1] = {world_from_object[1].x,
-                                             world_from_object[1].y,
-                                             world_from_object[1].z};
-         description.world_from_object[2] = {world_from_object[2].x,
-                                             world_from_object[2].y,
-                                             world_from_object[2].z};
-         description.world_from_object[3] = block.position;
+         description.adjugate_world_from_local = adjugate(world_from_local);
+         description.world_from_local[0] = {world_from_local[0].x,
+                                            world_from_local[0].y,
+                                            world_from_local[0].z};
+         description.world_from_local[1] = {world_from_local[1].x,
+                                            world_from_local[1].y,
+                                            world_from_local[1].z};
+         description.world_from_local[2] = {world_from_local[2].x,
+                                            world_from_local[2].y,
+                                            world_from_local[2].z};
+         description.world_from_local[3] = block.position;
 
-         const quaternion object_from_world = conjugate(block.rotation);
+         const quaternion local_from_world = conjugate(block.rotation);
 
-         description.object_from_world_xyz = {object_from_world.x,
-                                              object_from_world.y,
-                                              object_from_world.z};
+         description.local_from_world_xyz = {local_from_world.x,
+                                             local_from_world.y,
+                                             local_from_world.z};
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
@@ -887,7 +887,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
-               .object_from_world_w_sign = object_from_world.w < 0.0f,
+               .local_from_world_w_sign = local_from_world.w < 0.0f,
             };
          }
 
@@ -915,27 +915,27 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
          const world::block_description_stairway& block =
             blocks.stairways.description[block_index];
 
-         const float4x4 world_from_object = to_matrix(block.rotation);
+         const float4x4 world_from_local = to_matrix(block.rotation);
 
          block_instance_description description;
 
-         description.adjugate_world_from_object = adjugate(world_from_object);
-         description.world_from_object[0] = {world_from_object[0].x,
-                                             world_from_object[0].y,
-                                             world_from_object[0].z};
-         description.world_from_object[1] = {world_from_object[1].x,
-                                             world_from_object[1].y,
-                                             world_from_object[1].z};
-         description.world_from_object[2] = {world_from_object[2].x,
-                                             world_from_object[2].y,
-                                             world_from_object[2].z};
-         description.world_from_object[3] = block.position;
+         description.adjugate_world_from_local = adjugate(world_from_local);
+         description.world_from_local[0] = {world_from_local[0].x,
+                                            world_from_local[0].y,
+                                            world_from_local[0].z};
+         description.world_from_local[1] = {world_from_local[1].x,
+                                            world_from_local[1].y,
+                                            world_from_local[1].z};
+         description.world_from_local[2] = {world_from_local[2].x,
+                                            world_from_local[2].y,
+                                            world_from_local[2].z};
+         description.world_from_local[3] = block.position;
 
-         const quaternion object_from_world = conjugate(block.rotation);
+         const quaternion local_from_world = conjugate(block.rotation);
 
-         description.object_from_world_xyz = {object_from_world.x,
-                                              object_from_world.y,
-                                              object_from_world.z};
+         description.local_from_world_xyz = {local_from_world.x,
+                                             local_from_world.y,
+                                             local_from_world.z};
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
@@ -946,7 +946,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
-               .object_from_world_w_sign = object_from_world.w < 0.0f,
+               .local_from_world_w_sign = local_from_world.w < 0.0f,
             };
          }
 
@@ -1503,27 +1503,27 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
             {0.0f, 0.0f, 0.0f, 1.0f},
          };
          const float4x4 rotation = to_matrix(block_rotation);
-         const float4x4 world_from_object = rotation * scale;
+         const float4x4 world_from_local = rotation * scale;
 
          block_instance_description description;
 
-         description.adjugate_world_from_object = adjugate(world_from_object);
-         description.world_from_object[0] = {world_from_object[0].x,
-                                             world_from_object[0].y,
-                                             world_from_object[0].z};
-         description.world_from_object[1] = {world_from_object[1].x,
-                                             world_from_object[1].y,
-                                             world_from_object[1].z};
-         description.world_from_object[2] = {world_from_object[2].x,
-                                             world_from_object[2].y,
-                                             world_from_object[2].z};
-         description.world_from_object[3] = block_positionWS;
+         description.adjugate_world_from_local = adjugate(world_from_local);
+         description.world_from_local[0] = {world_from_local[0].x,
+                                            world_from_local[0].y,
+                                            world_from_local[0].z};
+         description.world_from_local[1] = {world_from_local[1].x,
+                                            world_from_local[1].y,
+                                            world_from_local[1].z};
+         description.world_from_local[2] = {world_from_local[2].x,
+                                            world_from_local[2].y,
+                                            world_from_local[2].z};
+         description.world_from_local[3] = block_positionWS;
 
-         const quaternion object_from_world = conjugate(block.rotation);
+         const quaternion local_from_world = conjugate(block.rotation);
 
-         description.object_from_world_xyz = {object_from_world.x,
-                                              object_from_world.y,
-                                              object_from_world.z};
+         description.local_from_world_xyz = {local_from_world.x,
+                                             local_from_world.y,
+                                             local_from_world.z};
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
@@ -1534,7 +1534,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
-               .object_from_world_w_sign = object_from_world.w < 0.0f,
+               .local_from_world_w_sign = local_from_world.w < 0.0f,
             };
          }
 
@@ -1586,27 +1586,27 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
             {0.0f, 0.0f, 0.0f, 1.0f},
          };
          const float4x4 rotation = to_matrix(block_rotation);
-         const float4x4 world_from_object = rotation * scale;
+         const float4x4 world_from_local = rotation * scale;
 
          block_instance_description description;
 
-         description.adjugate_world_from_object = adjugate(world_from_object);
-         description.world_from_object[0] = {world_from_object[0].x,
-                                             world_from_object[0].y,
-                                             world_from_object[0].z};
-         description.world_from_object[1] = {world_from_object[1].x,
-                                             world_from_object[1].y,
-                                             world_from_object[1].z};
-         description.world_from_object[2] = {world_from_object[2].x,
-                                             world_from_object[2].y,
-                                             world_from_object[2].z};
-         description.world_from_object[3] = block_positionWS;
+         description.adjugate_world_from_local = adjugate(world_from_local);
+         description.world_from_local[0] = {world_from_local[0].x,
+                                            world_from_local[0].y,
+                                            world_from_local[0].z};
+         description.world_from_local[1] = {world_from_local[1].x,
+                                            world_from_local[1].y,
+                                            world_from_local[1].z};
+         description.world_from_local[2] = {world_from_local[2].x,
+                                            world_from_local[2].y,
+                                            world_from_local[2].z};
+         description.world_from_local[3] = block_positionWS;
 
-         const quaternion object_from_world = conjugate(block.rotation);
+         const quaternion local_from_world = conjugate(block.rotation);
 
-         description.object_from_world_xyz = {object_from_world.x,
-                                              object_from_world.y,
-                                              object_from_world.z};
+         description.local_from_world_xyz = {local_from_world.x,
+                                             local_from_world.y,
+                                             local_from_world.z};
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
@@ -1617,7 +1617,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
-               .object_from_world_w_sign = object_from_world.w < 0.0f,
+               .local_from_world_w_sign = local_from_world.w < 0.0f,
             };
          }
 
@@ -1738,27 +1738,27 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
             {0.0f, 0.0f, 0.0f, 1.0f},
          };
          const float4x4 rotation = to_matrix(block_rotation);
-         const float4x4 world_from_object = rotation * scale;
+         const float4x4 world_from_local = rotation * scale;
 
          block_instance_description description;
 
-         description.adjugate_world_from_object = adjugate(world_from_object);
-         description.world_from_object[0] = {world_from_object[0].x,
-                                             world_from_object[0].y,
-                                             world_from_object[0].z};
-         description.world_from_object[1] = {world_from_object[1].x,
-                                             world_from_object[1].y,
-                                             world_from_object[1].z};
-         description.world_from_object[2] = {world_from_object[2].x,
-                                             world_from_object[2].y,
-                                             world_from_object[2].z};
-         description.world_from_object[3] = block_positionWS;
+         description.adjugate_world_from_local = adjugate(world_from_local);
+         description.world_from_local[0] = {world_from_local[0].x,
+                                            world_from_local[0].y,
+                                            world_from_local[0].z};
+         description.world_from_local[1] = {world_from_local[1].x,
+                                            world_from_local[1].y,
+                                            world_from_local[1].z};
+         description.world_from_local[2] = {world_from_local[2].x,
+                                            world_from_local[2].y,
+                                            world_from_local[2].z};
+         description.world_from_local[3] = block_positionWS;
 
-         const quaternion object_from_world = conjugate(block.rotation);
+         const quaternion local_from_world = conjugate(block.rotation);
 
-         description.object_from_world_xyz = {object_from_world.x,
-                                              object_from_world.y,
-                                              object_from_world.z};
+         description.local_from_world_xyz = {local_from_world.x,
+                                             local_from_world.y,
+                                             local_from_world.z};
 
          for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
             description.surfaces[i] = {
@@ -1769,7 +1769,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
-               .object_from_world_w_sign = object_from_world.w < 0.0f,
+               .local_from_world_w_sign = local_from_world.w < 0.0f,
             };
          }
 

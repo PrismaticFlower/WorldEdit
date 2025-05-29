@@ -1067,14 +1067,14 @@ void world_edit::ui_show_block_editor() noexcept
             _block_editor_context.draw_block.block_id = id;
 
             const std::array<float3, 2> cornersWS{draw_block_start, draw_block_width};
-            std::array<float3, 2> cornersOS{};
+            std::array<float3, 2> cornersLS{};
 
-            for (std::size_t i = 0; i < cornersOS.size(); ++i) {
-               cornersOS[i] = inv_rotation * cornersWS[i];
+            for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+               cornersLS[i] = inv_rotation * cornersWS[i];
             }
 
-            const float3 block_max = max(cornersOS[0], cornersOS[1]);
-            const float3 block_min = min(cornersOS[0], cornersOS[1]);
+            const float3 block_max = max(cornersLS[0], cornersLS[1]);
+            const float3 block_min = min(cornersLS[0], cornersLS[1]);
 
             const float3 size = float3{std::fabs(block_max.x - block_min.x), 0.0f,
                                        std::fabs(block_max.z - block_min.z)} /
@@ -1121,14 +1121,14 @@ void world_edit::ui_show_block_editor() noexcept
          const quaternion inv_rotation = conjugate(rotation);
 
          const std::array<float3, 2> cornersWS{draw_block_start, draw_block_width};
-         std::array<float3, 2> cornersOS{};
+         std::array<float3, 2> cornersLS{};
 
-         for (std::size_t i = 0; i < cornersOS.size(); ++i) {
-            cornersOS[i] = inv_rotation * cornersWS[i];
+         for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+            cornersLS[i] = inv_rotation * cornersWS[i];
          }
 
-         const float3 block_max = max(cornersOS[0], cornersOS[1]);
-         const float3 block_min = min(cornersOS[0], cornersOS[1]);
+         const float3 block_max = max(cornersLS[0], cornersLS[1]);
+         const float3 block_min = min(cornersLS[0], cornersLS[1]);
 
          const float4 height_plane =
             make_plane_from_point(draw_block_width,
@@ -1251,14 +1251,14 @@ void world_edit::ui_show_block_editor() noexcept
             _block_editor_context.draw_block.block_id = id;
 
             const std::array<float3, 2> cornersWS{draw_block_start, draw_block_length};
-            std::array<float3, 2> cornersOS{};
+            std::array<float3, 2> cornersLS{};
 
-            for (std::size_t i = 0; i < cornersOS.size(); ++i) {
-               cornersOS[i] = inv_rotation * cornersWS[i];
+            for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+               cornersLS[i] = inv_rotation * cornersWS[i];
             }
 
-            const float3 block_max = max(cornersOS[0], cornersOS[1]);
-            const float3 block_min = min(cornersOS[0], cornersOS[1]);
+            const float3 block_max = max(cornersLS[0], cornersLS[1]);
+            const float3 block_min = min(cornersLS[0], cornersLS[1]);
 
             const float3 size = float3{std::fabs(block_max.x - block_min.x), 0.0f,
                                        std::fabs(block_max.z - block_min.z)} /
@@ -1304,14 +1304,14 @@ void world_edit::ui_show_block_editor() noexcept
          quaternion inv_rotation = conjugate(rotation);
 
          const std::array<float3, 2> cornersWS{draw_block_start, draw_block_length};
-         std::array<float3, 2> cornersOS{};
+         std::array<float3, 2> cornersLS{};
 
-         for (std::size_t i = 0; i < cornersOS.size(); ++i) {
-            cornersOS[i] = inv_rotation * cornersWS[i];
+         for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+            cornersLS[i] = inv_rotation * cornersWS[i];
          }
 
-         const float3 block_max = max(cornersOS[0], cornersOS[1]);
-         const float3 block_min = min(cornersOS[0], cornersOS[1]);
+         const float3 block_max = max(cornersLS[0], cornersLS[1]);
+         const float3 block_min = min(cornersLS[0], cornersLS[1]);
 
          const float4 height_plane =
             make_plane_from_point(draw_block_width,
@@ -1612,14 +1612,14 @@ void world_edit::ui_show_block_editor() noexcept
             _block_editor_context.draw_block.block_id = id;
 
             const std::array<float3, 2> cornersWS{draw_block_start, draw_block_length};
-            std::array<float3, 2> cornersOS{};
+            std::array<float3, 2> cornersLS{};
 
-            for (std::size_t i = 0; i < cornersOS.size(); ++i) {
-               cornersOS[i] = inv_rotation * cornersWS[i];
+            for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+               cornersLS[i] = inv_rotation * cornersWS[i];
             }
 
-            const float3 block_max = max(cornersOS[0], cornersOS[1]);
-            const float3 block_min = min(cornersOS[0], cornersOS[1]);
+            const float3 block_max = max(cornersLS[0], cornersLS[1]);
+            const float3 block_min = min(cornersLS[0], cornersLS[1]);
 
             const float3 size = float3{std::fabs(block_max.x - block_min.x), 0.0f,
                                        std::fabs(block_max.z - block_min.z)} /
@@ -1666,14 +1666,14 @@ void world_edit::ui_show_block_editor() noexcept
          quaternion inv_rotation = conjugate(rotation);
 
          const std::array<float3, 2> cornersWS{draw_block_start, draw_block_length};
-         std::array<float3, 2> cornersOS{};
+         std::array<float3, 2> cornersLS{};
 
-         for (std::size_t i = 0; i < cornersOS.size(); ++i) {
-            cornersOS[i] = inv_rotation * cornersWS[i];
+         for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+            cornersLS[i] = inv_rotation * cornersWS[i];
          }
 
-         const float3 block_max = max(cornersOS[0], cornersOS[1]);
-         const float3 block_min = min(cornersOS[0], cornersOS[1]);
+         const float3 block_max = max(cornersLS[0], cornersLS[1]);
+         const float3 block_min = min(cornersLS[0], cornersLS[1]);
 
          const float4 height_plane =
             make_plane_from_point(draw_block_width,

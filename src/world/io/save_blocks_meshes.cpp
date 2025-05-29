@@ -29,7 +29,7 @@ constexpr int32 max_cluster_subdivision = 6;
 
 auto evaluate_texcorrds(const float3& positionWS, const float3& normalWS,
                         const float2& vertex_texcoords,
-                        const quaternion& object_from_world,
+                        const quaternion& local_from_world,
                         block_texture_mode mode, block_texture_rotation rotation,
                         const std::array<int8, 2>& scale,
                         const std::array<uint16, 2>& offset) noexcept -> float2
@@ -60,34 +60,34 @@ auto evaluate_texcorrds(const float3& positionWS, const float3& normalWS,
       texcoords = {positionWS.x, positionWS.y};
       break;
    case block_texture_mode::local_space_auto: {
-      const float3 positionOS = object_from_world * positionWS;
-      const float3 normal_absOS = abs(object_from_world * normalWS);
+      const float3 positionLS = local_from_world * positionWS;
+      const float3 normal_absLS = abs(local_from_world * normalWS);
 
-      if (normal_absOS.x < normal_absOS.y && normal_absOS.z < normal_absOS.y) {
-         texcoords = {positionOS.x, positionOS.z};
+      if (normal_absLS.x < normal_absLS.y && normal_absLS.z < normal_absLS.y) {
+         texcoords = {positionLS.x, positionLS.z};
       }
-      else if (normal_absOS.x < normal_absOS.z) {
-         texcoords = {positionOS.x, positionOS.y};
+      else if (normal_absLS.x < normal_absLS.z) {
+         texcoords = {positionLS.x, positionLS.y};
       }
       else {
-         texcoords = {positionOS.z, positionOS.y};
+         texcoords = {positionLS.z, positionLS.y};
       }
    } break;
    case block_texture_mode::local_space_zy: {
-      const float3 positionOS = object_from_world * positionWS;
+      const float3 positionLS = local_from_world * positionWS;
 
-      texcoords = {positionOS.z, positionOS.y};
+      texcoords = {positionLS.z, positionLS.y};
       break;
    }
    case block_texture_mode::local_space_xz: {
-      const float3 positionOS = object_from_world * positionWS;
+      const float3 positionLS = local_from_world * positionWS;
 
-      texcoords = {positionOS.x, positionOS.z};
+      texcoords = {positionLS.x, positionLS.z};
    } break;
    case block_texture_mode::local_space_xy: {
-      const float3 positionOS = object_from_world * positionWS;
+      const float3 positionLS = local_from_world * positionWS;
 
-      texcoords = {positionOS.x, positionOS.y};
+      texcoords = {positionLS.x, positionLS.y};
    } break;
    case block_texture_mode::unwrapped:
       texcoords = vertex_texcoords;
@@ -138,19 +138,16 @@ void process_blocks(const T& blocks, std::span<const block_vertex> block_vertice
       };
       const float4x4 rotation = to_matrix(block.rotation);
 
-      float4x4 world_from_object = rotation * scale;
-      float3x3 world_from_object_adjugate = adjugate(world_from_object);
-      world_from_object[3] = {block.position, 1.0f};
+      float4x4 world_from_local = rotation * scale;
+      float3x3 world_from_local_adjugate = adjugate(world_from_local);
+      world_from_local[3] = {block.position, 1.0f};
 
-      const float3 object_from_world_xyz = {-block.rotation.x, -block.rotation.y,
-                                            -block.rotation.z};
-      const float object_from_world_w_sign = -block.rotation.w < 0.0f ? -1.0f : 1.0f;
-
-      const quaternion object_from_world =
-         {sqrt(1.0f - std::max(std::min(dot(object_from_world_xyz, object_from_world_xyz), 1.0f),
+      const float3 local_from_world_xyz = {-block.rotation.x, -block.rotation.y,
+                                           -block.rotation.z};
+      const quaternion local_from_world =
+         {sqrt(1.0f - std::max(std::min(dot(local_from_world_xyz, local_from_world_xyz), 1.0f),
                                0.0f)),
-          object_from_world_xyz.x, object_from_world_xyz.y,
-          object_from_world_xyz.z};
+          local_from_world_xyz.x, local_from_world_xyz.y, local_from_world_xyz.z};
 
       for (const std::array<uint16, 3>& tri : block_triangles) {
          block_world_triangle world_triangle = {.block_id = block_id};
@@ -158,12 +155,12 @@ void process_blocks(const T& blocks, std::span<const block_vertex> block_vertice
          for (std::size_t i = 0; i < tri.size(); ++i) {
             const block_vertex& vertex = block_vertices[tri[i]];
 
-            const float3 positionWS = world_from_object * vertex.position;
+            const float3 positionWS = world_from_local * vertex.position;
             const float3 normalWS =
-               normalize(world_from_object_adjugate * vertex.normal);
+               normalize(world_from_local_adjugate * vertex.normal);
             const float2 texcoords =
                evaluate_texcorrds(positionWS, normalWS, vertex.texcoords,
-                                  object_from_world,
+                                  local_from_world,
                                   block.surface_texture_mode[vertex.surface_index],
                                   block.surface_texture_rotation[vertex.surface_index],
                                   block.surface_texture_scale[vertex.surface_index],
@@ -185,7 +182,7 @@ void process_blocks(const T& blocks, std::span<const block_vertex> block_vertice
          for (std::size_t i = 0; i < quad.size(); ++i) {
             const block_vertex& vertex = block_vertices[quad[i]];
 
-            occluder.verticesWS[i] = world_from_object * vertex.position;
+            occluder.verticesWS[i] = world_from_local * vertex.position;
          }
 
          const float3 edge0WS = occluder.verticesWS[1] - occluder.verticesWS[0];

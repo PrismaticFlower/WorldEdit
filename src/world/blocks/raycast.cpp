@@ -57,16 +57,16 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
       };
       const float4x4 rotation = to_matrix(box.rotation);
 
-      float4x4 world_from_object = rotation * scale;
-      world_from_object[3] = {box.position, 1.0f};
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {box.position, 1.0f};
 
       uint32 surface_index = UINT32_MAX;
       float closest_surface = FLT_MAX;
 
       for (const std::array<uint16, 3>& tri : block_cube_triangles) {
-         const float3 pos0WS = world_from_object * block_cube_vertices[tri[0]].position;
-         const float3 pos1WS = world_from_object * block_cube_vertices[tri[1]].position;
-         const float3 pos2WS = world_from_object * block_cube_vertices[tri[2]].position;
+         const float3 pos0WS = world_from_local * block_cube_vertices[tri[0]].position;
+         const float3 pos1WS = world_from_local * block_cube_vertices[tri[1]].position;
+         const float3 pos2WS = world_from_local * block_cube_vertices[tri[2]].position;
 
          if (float hit; intersect_tri(ray_originWS, ray_directionWS, pos0WS,
                                       pos1WS, pos2WS, hit) and
@@ -137,16 +137,16 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
       };
       const float4x4 rotation = to_matrix(ramp.rotation);
 
-      float4x4 world_from_object = rotation * scale;
-      world_from_object[3] = {ramp.position, 1.0f};
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {ramp.position, 1.0f};
 
       uint32 surface_index = UINT32_MAX;
       float closest_surface = FLT_MAX;
 
       for (const std::array<uint16, 3>& tri : block_ramp_triangles) {
-         const float3 pos0WS = world_from_object * block_ramp_vertices[tri[0]].position;
-         const float3 pos1WS = world_from_object * block_ramp_vertices[tri[1]].position;
-         const float3 pos2WS = world_from_object * block_ramp_vertices[tri[2]].position;
+         const float3 pos0WS = world_from_local * block_ramp_vertices[tri[0]].position;
+         const float3 pos1WS = world_from_local * block_ramp_vertices[tri[1]].position;
+         const float3 pos2WS = world_from_local * block_ramp_vertices[tri[2]].position;
 
          if (float hit; intersect_tri(ray_originWS, ray_directionWS, pos0WS,
                                       pos1WS, pos2WS, hit) and
@@ -241,16 +241,16 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
          };
          const float4x4 rotation = to_matrix(cylinder.rotation);
 
-         float4x4 world_from_object = rotation * scale;
-         world_from_object[3] = {cylinder.position, 1.0f};
+         float4x4 world_from_local = rotation * scale;
+         world_from_local[3] = {cylinder.position, 1.0f};
 
          for (const std::array<uint16, 3>& tri : block_cylinder_triangles) {
             const float3 pos0WS =
-               world_from_object * block_cylinder_vertices[tri[0]].position;
+               world_from_local * block_cylinder_vertices[tri[0]].position;
             const float3 pos1WS =
-               world_from_object * block_cylinder_vertices[tri[1]].position;
+               world_from_local * block_cylinder_vertices[tri[1]].position;
             const float3 pos2WS =
-               world_from_object * block_cylinder_vertices[tri[2]].position;
+               world_from_local * block_cylinder_vertices[tri[2]].position;
 
             if (intersect_tri(ray_originWS, ray_directionWS, pos0WS, pos1WS, pos2WS, hit) and
                 hit < closest) {
