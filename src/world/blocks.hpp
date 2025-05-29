@@ -3,6 +3,7 @@
 #include "id.hpp"
 #include "types.hpp"
 
+#include "blocks/custom_mesh_library.hpp"
 #include "blocks/dirty_range_tracker.hpp"
 #include "blocks/mesh_vertex.hpp"
 
@@ -119,20 +120,9 @@ struct block_description_stairway {
    std::array<std::array<int8, 2>, 6> surface_texture_scale = {};
    std::array<std::array<uint16, 2>, 6> surface_texture_offset = {};
 
+   auto custom_mesh_desc() const noexcept -> block_custom_mesh_stairway_desc;
+
    bool operator==(const block_description_stairway&) const noexcept = default;
-};
-
-struct block_custom_mesh {
-   std::vector<block_vertex> vertices;
-   std::vector<std::array<uint16, 3>> triangles;
-   std::vector<std::array<uint16, 4>> occluders;
-
-   std::vector<float3> collision_vertices;
-   std::vector<std::array<uint16, 3>> collision_triangles;
-   std::vector<std::array<uint16, 4>> collision_occluders;
-
-   std::vector<float3> snap_points;
-   std::vector<std::array<uint16, 2>> snap_edges;
 };
 
 struct blocks_bbox_soa {
@@ -233,7 +223,7 @@ struct blocks_stairways {
 
    pinned_vector<block_description_stairway> description = blocks_init;
 
-   pinned_vector<block_custom_mesh> mesh = blocks_init;
+   pinned_vector<block_custom_mesh_handle> mesh = blocks_init;
 
    pinned_vector<id<block_description_stairway>> ids = blocks_init;
 
@@ -274,6 +264,8 @@ struct blocks {
 
    pinned_vector<block_material> materials = get_blank_materials();
    blocks_dirty_range_tracker materials_dirty;
+
+   blocks_custom_mesh_library custom_meshes;
 
    struct next_ids {
       id_generator<block_description_box> boxes;

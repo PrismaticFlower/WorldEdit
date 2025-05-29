@@ -75,16 +75,19 @@ void highlight_block(const blocks& blocks, const block_type type,
       visualizers.add_cylinder_additive(world_from_object, {1.0f, 1.0f, 1.0f, 0.125f});
    } break;
    case block_type::stairway: {
-      const world::block_custom_mesh& stairway = blocks.stairways.mesh[block_index];
+      const world::block_description_stairway& stairway =
+         blocks.stairways.description[block_index];
+      const block_custom_mesh& mesh =
+         blocks.custom_meshes[blocks.stairways.mesh[block_index]];
 
-      for (const std::array<uint16, 3>& tri : stairway.triangles) {
-         visualizers.add_triangle_additive(stairway.vertices[tri[0]].position,
-                                           stairway.vertices[tri[1]].position,
-                                           stairway.vertices[tri[2]].position,
-                                           0x20'ff'ff'ffu);
+      for (const std::array<uint16, 3>& tri : mesh.triangles) {
+         visualizers.add_triangle_additive(
+            stairway.rotation * mesh.vertices[tri[0]].position + stairway.position,
+            stairway.rotation * mesh.vertices[tri[1]].position + stairway.position,
+            stairway.rotation * mesh.vertices[tri[2]].position + stairway.position,
+            0x20'ff'ff'ffu);
       }
    } break;
    }
 }
-
 }

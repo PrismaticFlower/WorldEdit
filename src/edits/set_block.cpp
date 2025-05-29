@@ -1,7 +1,6 @@
 #include "set_block.hpp"
 
 #include "world/blocks/bounding_box.hpp"
-#include "world/blocks/mesh_generate.hpp"
 
 namespace we::edits {
 
@@ -146,6 +145,9 @@ struct set_block_stairway_metrics final : edit<world::edit_context> {
 
       assert(index < blocks.size());
 
+      const world::block_custom_mesh_stairway_desc start_custom_mesh_desc =
+         blocks.description[index].custom_mesh_desc();
+
       std::swap(blocks.description[index].rotation, rotation);
       std::swap(blocks.description[index].position, position);
       std::swap(blocks.description[index].size, size);
@@ -161,7 +163,14 @@ struct set_block_stairway_metrics final : edit<world::edit_context> {
       blocks.bbox.max_y[index] = bbox.max.y;
       blocks.bbox.max_z[index] = bbox.max.z;
 
-      world::generate_mesh(blocks.description[index], blocks.mesh[index]);
+      // Regenerating a custom mesh can be a heavy operation, skip it if we can. This causes no observable behaviour difference,
+      // it just saves some time.
+      if (start_custom_mesh_desc != blocks.description[index].custom_mesh_desc()) {
+         context.world.blocks.custom_meshes.remove(blocks.mesh[index]);
+
+         blocks.mesh[index] = context.world.blocks.custom_meshes.add(
+            blocks.description[index].custom_mesh_desc());
+      }
 
       blocks.dirty.add({index, index + 1});
    }

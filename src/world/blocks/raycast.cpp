@@ -271,6 +271,111 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
    return std::nullopt;
 }
 
+auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
+             const active_layers active_layers, const blocks_stairways& stairways,
+             const blocks_custom_mesh_library& custom_meshes, const float max_distance,
+             function_ptr<bool(const block_id id) noexcept> filter) noexcept
+   -> std::optional<raycast_block_result_local>
+{
+   float closest = max_distance;
+   uint32 closest_index = UINT32_MAX;
+   uint32 surface_index = UINT32_MAX;
+
+   for (uint32 stairway_index = 0; stairway_index < stairways.size(); ++stairway_index) {
+      if (not active_layers[stairways.layer[stairway_index]]) continue;
+      if (stairways.hidden[stairway_index]) continue;
+
+      const block_description_stairway& stairway =
+         stairways.description[stairway_index];
+
+      const quaternion local_from_world = conjugate(stairway.rotation);
+
+      const float3 ray_originLS =
+         local_from_world * (ray_originWS - stairway.position);
+      const float3 ray_directionLS = normalize(local_from_world * ray_directionWS);
+      const float3 inv_ray_directionLS = 1.0f / ray_directionLS;
+
+      const float half_width = stairway.size.x / 2.0f;
+      const float half_length = stairway.size.z / 2.0f;
+
+      if (float aabb_hit;
+          not intersect_aabb(ray_originLS, inv_ray_directionLS,
+                             {.min = {-half_width, 0.0f, -half_length},
+                              .max = {half_width, stairway.size.y + stairway.first_step_offset,
+                                      half_length}},
+                             closest, aabb_hit)) {
+         continue;
+      }
+
+      const int steps =
+         static_cast<int>(ceilf(stairway.size.y / stairway.step_height));
+      const float adjusted_step_height = stairway.size.y / steps;
+      const float step_length = stairway.size.z / steps;
+
+      bool step_hit = false;
+
+      for (int i = 0; i < steps; ++i) {
+         float step_base = i * adjusted_step_height;
+         float step_top = (i + 1) * adjusted_step_height;
+
+         step_top += stairway.first_step_offset;
+         if (i != 0) step_base += stairway.first_step_offset;
+
+         if (i + 1 == steps) {
+            step_top = stairway.size.y + stairway.first_step_offset;
+         }
+
+         const float step_back = i * step_length - half_length;
+         const float step_front = half_length;
+
+         const math::bounding_box bboxLS{.min = {-half_width, step_base, step_back},
+                                         .max = {half_width, step_top, step_front}};
+
+         math::bounding_box bboxWS = stairway.rotation * bboxLS + stairway.position;
+
+         float4x4 transform = {{(bboxWS.max - bboxWS.min).x / 2.0f, 0.0f, 0.0f, 0.0f},
+                               {0.0f, (bboxWS.max - bboxWS.min).y / 2.0f, 0.0f, 0.0f},
+                               {0.0f, 0.0f, (bboxWS.max - bboxWS.min).z / 2.0f, 0.0f},
+                               {(bboxWS.min + bboxWS.max) / 2.0f, 1.0f}
+
+         };
+
+         if (float aabb_hit; intersect_aabb(ray_originLS, inv_ray_directionLS,
+                                            bboxLS, closest, aabb_hit) and
+                             aabb_hit >= 0.0f) {
+            step_hit = true;
+            break;
+         }
+      }
+
+      if (not step_hit) continue;
+
+      if (filter and not filter(stairways.ids[stairway_index])) continue;
+
+      const block_custom_mesh& mesh = custom_meshes[stairways.mesh[stairway_index]];
+
+      for (const std::array<uint16, 3>& tri : mesh.triangles) {
+         if (float hit; intersect_tri(ray_originLS, ray_directionLS,
+                                      mesh.vertices[tri[0]].position,
+                                      mesh.vertices[tri[1]].position,
+                                      mesh.vertices[tri[2]].position, hit) and
+                        hit < closest) {
+            closest = hit;
+            closest_index = stairway_index;
+            surface_index = mesh.vertices[tri[0]].surface_index;
+         }
+      }
+   }
+
+   if (closest_index != UINT32_MAX) {
+      return raycast_block_result_local{.distance = closest,
+                                        .index = closest_index,
+                                        .surface_index = surface_index};
+   }
+
+   return std::nullopt;
+}
+
 }
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
@@ -319,6 +424,16 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
        hit) {
       closest = hit->distance;
       closest_id = blocks.cylinders.ids[hit->index];
+      closest_index = hit->index;
+      closest_surface_index = hit->surface_index;
+   }
+
+   if (std::optional<raycast_block_result_local> hit =
+          raycast(ray_originWS, ray_directionWS, active_layers,
+                  blocks.stairways, blocks.custom_meshes, closest, filter);
+       hit) {
+      closest = hit->distance;
+      closest_id = blocks.stairways.ids[hit->index];
       closest_index = hit->index;
       closest_surface_index = hit->surface_index;
    }

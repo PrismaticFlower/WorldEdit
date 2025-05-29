@@ -387,6 +387,7 @@
     <ClCompile Include="src\world\blocks.cpp" />
     <ClCompile Include="src\world\blocks\accessors.cpp" />
     <ClCompile Include="src\world\blocks\bounding_box.cpp" />
+    <ClCompile Include="src\world\blocks\custom_mesh_library.cpp" />
     <ClCompile Include="src\world\blocks\dirty_range_tracker.cpp" />
     <ClCompile Include="src\world\blocks\drag_select.cpp" />
     <ClCompile Include="src\world\blocks\export\mesh_clusters.cpp" />
@@ -706,6 +707,7 @@
     <ClInclude Include="src\world\barrier.hpp" />
     <ClInclude Include="src\world\blocks\accessors.hpp" />
     <ClInclude Include="src\world\blocks\bounding_box.hpp" />
+    <ClInclude Include="src\world\blocks\custom_mesh_library.hpp" />
     <ClInclude Include="src\world\blocks\drag_select.hpp" />
     <ClInclude Include="src\world\blocks\export\mesh_clusters.hpp" />
     <ClInclude Include="src\world\blocks\export\mesh_cull.hpp" />

@@ -79,15 +79,18 @@ TEST_CASE("edits add_block stairway", "[Edits]")
 
    const world::block_stairway_id id = world.blocks.next_id.stairway.aquire();
 
-   auto edit = make_add_block(
-      world::block_description_stairway{
-         .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
-         .position = {10.0f, 10.0f, 10.0f},
-         .size = {5.0f, 5.0f, 5.0f},
-         .step_height = 2.5f,
-         .first_step_offset = -0.1f,
-      },
-      2, id);
+   const world::block_description_stairway stairway_desc = {
+      .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
+      .position = {10.0f, 10.0f, 10.0f},
+      .size = {5.0f, 5.0f, 5.0f},
+      .step_height = 2.5f,
+      .first_step_offset = -0.1f,
+   };
+
+   auto edit = make_add_block(stairway_desc, 2, id);
+
+   const world::block_custom_mesh_stairway_desc custom_mesh_desc =
+      stairway_desc.custom_mesh_desc();
 
    edit->apply(edit_context);
 
@@ -118,12 +121,14 @@ TEST_CASE("edits add_block stairway", "[Edits]")
    CHECK(blocks.stairways.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
    CHECK(blocks.stairways.description[0].position == float3{10.0f, 10.0f, 10.0f});
    CHECK(blocks.stairways.description[0].size == float3{5.0f, 5.0f, 5.0f});
-   CHECK(blocks.stairways.mesh[0].vertices.size() == 40);
-   CHECK(blocks.stairways.mesh[0].triangles.size() == 20);
+   CHECK(blocks.stairways.mesh[0] ==
+         blocks.custom_meshes.debug_query_handle(custom_mesh_desc));
    CHECK(blocks.stairways.ids[0] == id);
 
    REQUIRE(blocks.stairways.dirty.size() == 1);
    CHECK(blocks.stairways.dirty[0] == world::blocks_dirty_range{0, 1});
+
+   CHECK(blocks.custom_meshes.debug_ref_count(custom_mesh_desc) == 1);
 
    edit->revert(edit_context);
 
@@ -142,6 +147,8 @@ TEST_CASE("edits add_block stairway", "[Edits]")
    REQUIRE(blocks.stairways.ids.size() == 0);
 
    REQUIRE(blocks.stairways.dirty.size() == 0);
+
+   CHECK(blocks.custom_meshes.debug_ref_count(custom_mesh_desc) == 0);
 }
 
 }
