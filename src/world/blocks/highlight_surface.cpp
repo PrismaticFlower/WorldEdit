@@ -107,15 +107,11 @@ void highlight_surface(const blocks& blocks, const block_type type,
       const block_custom_mesh& mesh =
          blocks.custom_meshes[blocks.stairways.mesh[block_index]];
 
-      for (const std::array<uint16, 3>& tri : mesh.triangles) {
-         if (mesh.vertices[tri[0]].surface_index != surface_index) continue;
+      float4x4 world_from_local = to_matrix(stairway.rotation);
+      world_from_local[3] = {stairway.position, 1.0f};
 
-         visualizers.add_triangle_additive(
-            stairway.rotation * mesh.vertices[tri[0]].position + stairway.position,
-            stairway.rotation * mesh.vertices[tri[1]].position + stairway.position,
-            stairway.rotation * mesh.vertices[tri[2]].position + stairway.position,
-            0x20'ff'ff'ffu);
-      }
+      highlight_surface_generic(world_from_local, mesh.triangles, mesh.vertices,
+                                surface_index, visualizers);
    } break;
    }
 }
