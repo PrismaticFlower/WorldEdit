@@ -144,6 +144,8 @@ void process_blocks(const T& blocks, std::span<const block_vertex> block_vertice
 
       const float3 object_from_world_xyz = {-block.rotation.x, -block.rotation.y,
                                             -block.rotation.z};
+      const float object_from_world_w_sign = -block.rotation.w < 0.0f ? -1.0f : 1.0f;
+
       const quaternion object_from_world =
          {sqrt(1.0f - std::max(std::min(dot(object_from_world_xyz, object_from_world_xyz), 1.0f),
                                0.0f)),

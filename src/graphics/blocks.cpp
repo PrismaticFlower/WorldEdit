@@ -32,6 +32,7 @@ struct surface_info {
    uint32 rotation : 2;
    uint32 offsetX : 13;
    uint32 offsetY : 13;
+   uint32 object_from_world_w_sign : 1;
    uint32 quad_split : 1;
 };
 
@@ -700,6 +701,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
+               .object_from_world_w_sign = object_from_world.w < 0.0f,
             };
          }
 
@@ -765,6 +767,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
+               .object_from_world_w_sign = object_from_world.w < 0.0f,
             };
          }
 
@@ -884,6 +887,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
+               .object_from_world_w_sign = object_from_world.w < 0.0f,
             };
          }
 
@@ -942,6 +946,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
+               .object_from_world_w_sign = object_from_world.w < 0.0f,
             };
          }
 
@@ -1529,6 +1534,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
+               .object_from_world_w_sign = object_from_world.w < 0.0f,
             };
          }
 
@@ -1611,6 +1617,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
+               .object_from_world_w_sign = object_from_world.w < 0.0f,
             };
          }
 
@@ -1762,6 +1769,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
                .offsetX = block.surface_texture_offset[i][0],
                .offsetY = block.surface_texture_offset[i][1],
+               .object_from_world_w_sign = object_from_world.w < 0.0f,
             };
          }
 
