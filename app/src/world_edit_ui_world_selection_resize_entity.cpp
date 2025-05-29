@@ -539,7 +539,9 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                      _world.blocks.stairways.description[*block_index];
 
                   float3 new_position = stairway.position;
-                  float3 new_size = stairway.size;
+                  float3 new_size = stairway.size / 2.0f;
+
+                  new_position.y += new_size.y;
 
                   if (_gizmos.gizmo_size(
                          {
@@ -550,6 +552,9 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                             .gizmo_rotation = stairway.rotation,
                          },
                          new_position, new_size)) {
+                     new_position.y -= new_size.y;
+                     new_size *= 2.0f;
+
                      _edit_stack_world.apply(edits::make_set_block_stairway_metrics(
                                                 *block_index, stairway.rotation,
                                                 new_position, new_size, stairway.step_height,
