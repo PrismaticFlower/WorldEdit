@@ -1616,12 +1616,46 @@ auto device::create_command_signature(const command_signature_desc& desc,
       std::is_layout_compatible_v<decltype(indirect_argument_desc::incrementing_constant),
                                   decltype(D3D12_INDIRECT_ARGUMENT_DESC::IncrementingConstant)>);
 
-   const D3D12_COMMAND_SIGNATURE_DESC d3d12_desc{
+   D3D12_COMMAND_SIGNATURE_DESC d3d12_desc{
       .ByteStride = desc.byte_stride,
       .NumArgumentDescs = static_cast<UINT>(desc.argument_descs.size()),
       .pArgumentDescs = reinterpret_cast<const D3D12_INDIRECT_ARGUMENT_DESC*>(
          desc.argument_descs.data()),
    };
+
+   std::vector<D3D12_INDIRECT_ARGUMENT_DESC> offset_arg_descs;
+
+   // Offset Root Parameter Indices for hidden descriptor table if SM 6.6 isn't supported.
+   if (not supports_shader_model_6_6()) {
+      offset_arg_descs.reserve(desc.argument_descs.size());
+
+      for (const indirect_argument_desc& arg_desc : desc.argument_descs) {
+         offset_arg_descs.push_back(
+            std::bit_cast<D3D12_INDIRECT_ARGUMENT_DESC>(arg_desc));
+      }
+
+      for (D3D12_INDIRECT_ARGUMENT_DESC& arg_desc : offset_arg_descs) {
+         switch (arg_desc.Type) {
+         case D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT:
+            arg_desc.Constant.RootParameterIndex += 1;
+            break;
+         case D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW:
+            arg_desc.ConstantBufferView.RootParameterIndex += 1;
+            break;
+         case D3D12_INDIRECT_ARGUMENT_TYPE_SHADER_RESOURCE_VIEW:
+            arg_desc.ShaderResourceView.RootParameterIndex += 1;
+            break;
+         case D3D12_INDIRECT_ARGUMENT_TYPE_UNORDERED_ACCESS_VIEW:
+            arg_desc.UnorderedAccessView.RootParameterIndex += 1;
+            break;
+         case D3D12_INDIRECT_ARGUMENT_TYPE_INCREMENTING_CONSTANT:
+            arg_desc.IncrementingConstant.RootParameterIndex += 1;
+            break;
+         }
+      }
+
+      d3d12_desc.pArgumentDescs = offset_arg_descs.data();
+   }
 
    com_ptr<ID3D12CommandSignature> command_signature;
 
