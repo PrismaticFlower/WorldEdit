@@ -77,7 +77,7 @@ TEST_CASE("edits add_block stairway", "[Edits]")
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   const world::block_stairway_id id = world.blocks.next_id.stairway.aquire();
+   const world::block_stairway_id id = world.blocks.next_id.stairways.aquire();
 
    const world::block_description_stairway stairway_desc = {
       .rotation = {0.0f, 1.0f, 0.0f, 0.0f},

@@ -1598,7 +1598,7 @@ void world_edit::ui_show_block_editor() noexcept
 
          if (click) {
             const world::block_stairway_id id =
-               _world.blocks.next_id.stairway.aquire();
+               _world.blocks.next_id.stairways.aquire();
 
             _block_editor_context.draw_block.height_plane = std::nullopt;
             _block_editor_context.draw_block.stairway.length_x =
