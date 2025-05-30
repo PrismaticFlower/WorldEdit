@@ -36,6 +36,7 @@ public:
    void prepare_lights(const camera& view_camera, const frustum& view_frustum,
                        const world::world& world,
                        const world::light* optional_placement_light,
+                       const world::entity_group* optional_entity_group,
                        const std::array<float, 2> scene_depth_min_max,
                        blocks& blocks, const world::active_layers active_layers,
                        const world::active_entity_types active_entity_types,

@@ -48,6 +48,7 @@ struct blocks {
       instance_list dynamic_ramps;
       instance_list dynamic_quads;
       instance_list dynamic_cylinders;
+      draw_list dynamic_stairways;
    };
 
    blocks(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
@@ -60,7 +61,7 @@ struct blocks {
                texture_manager& texture_manager);
 
    auto prepare_view(blocks_draw draw, const world::blocks& blocks,
-                     const frustum& view_frustum,
+                     const world::entity_group* entity_group, const frustum& view_frustum,
                      const world::active_layers active_layers,
                      dynamic_buffer_allocator& dynamic_buffer_allocator) -> view;
 
@@ -185,10 +186,14 @@ private:
       gpu::unique_resource_handle cylinders_instance_data;
       uint64 cylinders_instance_data_capacity = 0;
 
+      gpu::unique_resource_handle stairways_instance_data;
+      uint64 stairways_instance_data_capacity = 0;
+
       bbox_soa boxes_bbox;
       bbox_soa ramps_bbox;
       bbox_soa quads_bbox;
       bbox_soa cylinders_bbox;
+      bbox_soa stairways_bbox;
 
       std::array<material, world::max_block_materials> materials;
 
