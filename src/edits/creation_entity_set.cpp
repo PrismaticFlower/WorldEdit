@@ -22,9 +22,17 @@ struct creation_entity_set final : edit<world::edit_context> {
          object_class_library.free(object.class_handle);
       }
       else if (context.creation_entity.is<world::entity_group>()) {
-         for (world::object& object :
-              context.creation_entity.get<world::entity_group>().objects) {
+         world::entity_group& entity_group =
+            context.creation_entity.get<world::entity_group>();
+
+         for (world::object& object : entity_group.objects) {
             object_class_library.free(object.class_handle);
+         }
+
+         for (std::size_t i = 0;
+              i < entity_group.blocks.stairways.description.size(); ++i) {
+            context.world.blocks.custom_meshes.remove(
+               entity_group.blocks.stairways.mesh[i]);
          }
       }
 
@@ -36,9 +44,18 @@ struct creation_entity_set final : edit<world::edit_context> {
          object.class_handle = object_class_library.acquire(object.class_name);
       }
       else if (context.creation_entity.is<world::entity_group>()) {
-         for (world::object& object :
-              context.creation_entity.get<world::entity_group>().objects) {
+         world::entity_group& entity_group =
+            context.creation_entity.get<world::entity_group>();
+
+         for (world::object& object : entity_group.objects) {
             object.class_handle = object_class_library.acquire(object.class_name);
+         }
+
+         for (std::size_t i = 0;
+              i < entity_group.blocks.stairways.description.size(); ++i) {
+            entity_group.blocks.stairways.mesh[i] =
+               context.world.blocks.custom_meshes.add(
+                  entity_group.blocks.stairways.description[i].custom_mesh_desc());
          }
       }
    }

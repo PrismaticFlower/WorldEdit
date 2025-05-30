@@ -42,7 +42,14 @@ struct entity_group {
       std::vector<block_description_ramp> ramps;
       std::vector<block_description_quad> quads;
       std::vector<block_description_cylinder> cylinders;
-      std::vector<block_description_stairway> stairways;
+
+      struct stairways {
+         std::vector<block_description_stairway> description;
+         std::vector<block_custom_mesh_handle> mesh;
+
+         bool operator==(const stairways&) const noexcept = default;
+      } stairways;
+
       std::vector<block_material> materials;
 
       bool operator==(const blocks&) const noexcept = default;
