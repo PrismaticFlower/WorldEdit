@@ -18,7 +18,7 @@ TEST_CASE("descriptor_allocator tests", "[Graphics][GPU]")
    REQUIRE_THROWS_AS(allocator.allocate(), gpu::exception);
 
    // Test freeing and reallocating.
-   allocator.free(2);
+   allocator.release(2);
 
    REQUIRE(allocator.allocate() == 2);
 }
