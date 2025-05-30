@@ -133,4 +133,24 @@ TEST_CASE("world blocks_custom_mesh_library restore events", "[World]")
    CHECK(library.debug_ref_count(stairway1, false) == 2);
 }
 
+TEST_CASE("world blocks_custom_mesh_library null handle", "[World]")
+{
+   blocks_custom_mesh_library library;
+
+   const block_custom_mesh& mesh =
+      library[blocks_custom_mesh_library::null_handle()];
+
+   CHECK(mesh.vertices.size() == 0);
+   CHECK(mesh.triangles.size() == 0);
+   CHECK(mesh.occluders.size() == 0);
+   CHECK(mesh.collision_vertices.size() == 0);
+   CHECK(mesh.collision_triangles.size() == 0);
+   CHECK(mesh.collision_occluders.size() == 0);
+   CHECK(mesh.snap_points.size() == 0);
+   CHECK(mesh.snap_edges.size() == 0);
+
+   // Removing the null_handle is a no-op.
+   library.remove(blocks_custom_mesh_library::null_handle());
+}
+
 }

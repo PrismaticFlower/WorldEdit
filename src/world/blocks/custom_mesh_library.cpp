@@ -62,8 +62,15 @@ bool operator==(const mesh_desc& left, const mesh_desc& right) noexcept
 
 auto pack_pool_index(const uint32 index) noexcept -> block_custom_mesh_handle
 {
-   return block_custom_mesh_handle{index};
+   return block_custom_mesh_handle{index + 1};
 }
+
+auto unpack_pool_index(const block_custom_mesh_handle handle) noexcept -> uint32
+{
+   return std::to_underlying(handle) - 1;
+}
+
+const block_custom_mesh empty_custom_mesh;
 
 }
 
@@ -115,6 +122,8 @@ struct blocks_custom_mesh_library::impl {
    auto operator[](const block_custom_mesh_handle handle) const noexcept
       -> const block_custom_mesh&
    {
+      if (handle == null_handle()) return empty_custom_mesh;
+
       const uint32 index = unpack_pool_index(handle);
 
       assert(index < _mesh_pool.size());
@@ -154,6 +163,8 @@ struct blocks_custom_mesh_library::impl {
 
    void remove(const block_custom_mesh_handle handle) noexcept
    {
+      if (handle == null_handle()) return;
+
       const uint32 index = unpack_pool_index(handle);
 
       assert(index < _mesh_pool.size());
@@ -203,7 +214,7 @@ struct blocks_custom_mesh_library::impl {
          return pack_pool_index(existing->second);
       }
 
-      return block_custom_mesh_handle{0xff'ff'ff'ff};
+      return null_handle();
    }
 
 private:
@@ -262,7 +273,12 @@ auto blocks_custom_mesh_library::pool_size() const noexcept -> uint32
 auto blocks_custom_mesh_library::unpack_pool_index(const block_custom_mesh_handle handle) noexcept
    -> uint32
 {
-   return std::to_underlying(handle);
+   return world::unpack_pool_index(handle);
+}
+
+auto blocks_custom_mesh_library::null_handle() noexcept -> block_custom_mesh_handle
+{
+   return {};
 }
 
 auto blocks_custom_mesh_library::debug_ref_count(
