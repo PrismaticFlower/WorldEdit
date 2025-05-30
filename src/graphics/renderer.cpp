@@ -412,29 +412,30 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
       const float4 scene_depth_min_max =
          *_depth_minmax_readback_buffer_ptrs[_device.frame_index()];
 
-      _blocks.update(world.blocks,
-                     interaction_targets.creation_entity.is<world::entity_group>()
-                        ? &interaction_targets.creation_entity.get<world::entity_group>()
-                        : nullptr,
-                     _pre_render_command_list, _dynamic_buffer_allocator,
-                     _texture_manager);
+      const world::entity_group* const creation_entity_group =
+         interaction_targets.creation_entity.is<world::entity_group>()
+            ? &interaction_targets.creation_entity.get<world::entity_group>()
+            : nullptr;
+
+      _blocks.update(world.blocks, creation_entity_group, _pre_render_command_list,
+                     _dynamic_buffer_allocator, _texture_manager);
       _terrain.update(world.terrain, _pre_render_command_list,
                       _dynamic_buffer_allocator, _texture_manager, settings);
       _water.update(world, _pre_render_command_list, _dynamic_buffer_allocator,
                     _texture_manager);
-      _light_clusters
-         .prepare_lights(camera, view_frustum, world,
-                         interaction_targets.creation_entity.is<world::light>()
-                            ? &interaction_targets.creation_entity.get<world::light>()
-                            : nullptr,
-                         {scene_depth_min_max.x, scene_depth_min_max.y},
-                         _blocks, active_layers, active_entity_types,
-                         _pre_render_command_list, _dynamic_buffer_allocator);
+      _light_clusters.prepare_lights(
+         camera, view_frustum, world,
+         interaction_targets.creation_entity.is<world::light>()
+            ? &interaction_targets.creation_entity.get<world::light>()
+            : nullptr,
+         creation_entity_group, {scene_depth_min_max.x, scene_depth_min_max.y},
+         _blocks, active_layers, active_entity_types, _pre_render_command_list,
+         _dynamic_buffer_allocator);
 
       if (active_entity_types.blocks) {
-         blocks_view =
-            _blocks.prepare_view(blocks_draw::main, world.blocks, view_frustum,
-                                 active_layers, _dynamic_buffer_allocator);
+         blocks_view = _blocks.prepare_view(blocks_draw::main, world.blocks,
+                                            creation_entity_group, view_frustum,
+                                            active_layers, _dynamic_buffer_allocator);
       }
 
       _pre_render_command_list.close();
@@ -946,7 +947,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
          update_frame_constant_buffer(camera, viewport, false, 0.0f, 1.0f,
                                       pre_render_command_list);
 
-         _light_clusters.prepare_lights(camera, view_frustum, world, nullptr,
+         _light_clusters.prepare_lights(camera, view_frustum, world, nullptr, nullptr,
                                         {shadow_min_depth, shadow_max_depth}, _blocks,
                                         active_layers, {}, pre_render_command_list,
                                         _dynamic_buffer_allocator);

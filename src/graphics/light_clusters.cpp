@@ -367,6 +367,7 @@ void light_clusters::update_descriptors()
 void light_clusters::prepare_lights(
    const camera& view_camera, const frustum& view_frustum,
    const world::world& world, const world::light* optional_placement_light,
+   const world::entity_group* optional_entity_group,
    const std::array<float, 2> scene_depth_min_max, blocks& blocks,
    const world::active_layers active_layers,
    const world::active_entity_types active_entity_types,
@@ -628,7 +629,7 @@ void light_clusters::prepare_lights(
    if (_has_sun_shadows and active_entity_types.blocks) {
       for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
          _sun_shadow_blocks_view[cascade_index] =
-            blocks.prepare_view(blocks_draw::shadow, world.blocks,
+            blocks.prepare_view(blocks_draw::shadow, world.blocks, optional_entity_group,
                                 frustum{_sun_shadow_cascades[cascade_index].world_from_projection(),
                                         1.0f, 0.0f},
                                 active_layers, dynamic_buffer_allocator);
