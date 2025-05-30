@@ -91,13 +91,17 @@ struct blocks_custom_mesh_library {
    static auto unpack_pool_index(const block_custom_mesh_handle handle) noexcept
       -> uint32;
 
+   /// @brief Returns the null handle. When passed to operator[] this will return an empty mesh. Passing the null handle to remove is a no-op.
+   /// @return The null handle.
+   static auto null_handle() noexcept -> block_custom_mesh_handle;
+
    /// @brief Gets the number of references to custom mesh. For testing and debugging.
    /// @return The ref count.
    auto debug_ref_count(const block_custom_mesh_stairway_desc& stairway,
                         bool exclude_event_queue_ref = true) const noexcept -> uint32;
 
    /// @brief Gets a handle to a mesh without increasing it's ref count. For testing and debugging.
-   /// @return The handle or block_custom_mesh_handle{0xffffffff}.
+   /// @return The handle or the null handle.
    auto debug_query_handle(const block_custom_mesh_stairway_desc& stairway) const noexcept
       -> block_custom_mesh_handle;
 
