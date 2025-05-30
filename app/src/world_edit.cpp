@@ -259,6 +259,7 @@ void world_edit::update()
 
       _world.terrain.untracked_clear_dirty_rects();
       _world.blocks.untracked_clear_dirty_ranges();
+      _world.blocks.custom_meshes.clear_events();
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
@@ -309,6 +310,7 @@ void world_edit::recreate_renderer() noexcept
 
    _world.terrain.untracked_fill_dirty_rects();
    _world.blocks.untracked_fill_dirty_ranges();
+   _world.blocks.custom_meshes.issue_restore_events();
 }
 
 void world_edit::update_window_text() noexcept
@@ -1913,6 +1915,13 @@ void world_edit::place_creation_entity() noexcept
 
          return;
       }
+      else if (_world.blocks.stairways.size() +
+                  group.blocks.stairways.description.size() >
+               world::max_blocks) {
+         report_limit_reached("Max blocks (stairways, {}) Reached", world::max_blocks);
+
+         return;
+      }
 
       const uint32 object_base_index = static_cast<uint32>(_world.objects.size());
       const uint32 path_base_index = static_cast<uint32>(_world.paths.size());
@@ -2274,6 +2283,30 @@ void world_edit::place_creation_entity() noexcept
                    _edit_context,
                    {.transparent = std::exchange(is_transparent_edit, true)});
       }
+
+      for (const world::block_description_stairway& stairway :
+           group.blocks.stairways.description) {
+         world::block_description_stairway new_stairway = stairway;
+
+         new_stairway.rotation = group.rotation * new_stairway.rotation;
+         new_stairway.position = group.rotation * new_stairway.position + group.position;
+
+         for (uint8& material : new_stairway.surface_materials) {
+            if (block_material_remap[material]) {
+               material = *block_material_remap[material];
+            }
+            else {
+               material = 0;
+            }
+         }
+
+         _edit_stack_world
+            .apply(edits::make_add_block(new_stairway, group.layer,
+                                         _world.blocks.next_id.stairways.aquire()),
+                   _edit_context,
+                   {.transparent = std::exchange(is_transparent_edit, true)});
+      }
+
       for (uint32 object_index = object_base_index;
            object_index < _world.objects.size(); ++object_index) {
          world::object& object = _world.objects[object_index];

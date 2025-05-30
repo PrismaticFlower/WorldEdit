@@ -163,10 +163,10 @@ TEST_CASE("edits delete_block (stairway)", "[Edits]")
 
    world::blocks& blocks = world.blocks;
 
-   const world::block_stairway_id id0 = blocks.next_id.stairway.aquire();
-   const world::block_stairway_id id1 = blocks.next_id.stairway.aquire();
-   const world::block_stairway_id id2 = blocks.next_id.stairway.aquire();
-   const world::block_stairway_id id3 = blocks.next_id.stairway.aquire();
+   const world::block_stairway_id id0 = blocks.next_id.stairways.aquire();
+   const world::block_stairway_id id1 = blocks.next_id.stairways.aquire();
+   const world::block_stairway_id id2 = blocks.next_id.stairways.aquire();
+   const world::block_stairway_id id3 = blocks.next_id.stairways.aquire();
    const world::block_description_stairway stair_desc0 =
       {.rotation = quaternion{1.0f, 0.0f, 0.0f, 0.0f},
        .position = float3{0.0f, 0.0f, 0.0f},

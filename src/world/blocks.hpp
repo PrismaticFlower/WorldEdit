@@ -272,7 +272,7 @@ struct blocks {
       id_generator<block_description_ramp> ramps;
       id_generator<block_description_quad> quads;
       id_generator<block_description_cylinder> cylinders;
-      id_generator<block_description_stairway> stairway;
+      id_generator<block_description_stairway> stairways;
    } next_id;
 
    bool empty() const noexcept;
