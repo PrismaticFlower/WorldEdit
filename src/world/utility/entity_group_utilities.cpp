@@ -132,7 +132,7 @@ void fill_entity_group_block_materials(entity_group& group, const blocks& blocks
       }
    }
 
-   for (block_description_stairway& stairway : group.blocks.stairways) {
+   for (block_description_stairway& stairway : group.blocks.stairways.description) {
       for (uint8& material : stairway.surface_materials) {
          if (not materials_remap[material]) {
             materials_remap[material] =
@@ -331,7 +331,7 @@ auto entity_group_metrics(const entity_group& group,
       ground_distance = std::min(ground_distance, bboxGS.min.y);
    }
 
-   for (const block_description_stairway& stairway : group.blocks.stairways) {
+   for (const block_description_stairway& stairway : group.blocks.stairways.description) {
       const math::bounding_box bboxGS = get_bounding_box(stairway);
 
       group_bbox = math::combine(group_bbox, get_bounding_box(stairway));
@@ -428,7 +428,7 @@ void centre_entity_group(entity_group& group) noexcept
       count += 1.0f;
    }
 
-   for (const block_description_stairway& stairway : group.blocks.stairways) {
+   for (const block_description_stairway& stairway : group.blocks.stairways.description) {
       position += stairway.position;
       count += 1.0f;
    }
@@ -503,7 +503,7 @@ void centre_entity_group(entity_group& group) noexcept
       cylinder.position -= centre;
    }
 
-   for (block_description_stairway& stairway : group.blocks.stairways) {
+   for (block_description_stairway& stairway : group.blocks.stairways.description) {
       stairway.position -= centre;
    }
 }
@@ -677,8 +677,10 @@ auto make_entity_group_from_selection(const world& world,
                   world.blocks.cylinders.description[*block_index]);
             } break;
             case block_type::stairway: {
-               group.blocks.stairways.push_back(
+               group.blocks.stairways.description.push_back(
                   world.blocks.stairways.description[*block_index]);
+               group.blocks.stairways.mesh.push_back(
+                  blocks_custom_mesh_library::null_handle());
             } break;
             }
          }
@@ -806,7 +808,9 @@ auto make_entity_group_from_block_id(const blocks& blocks, const block_id id) no
       group.blocks.cylinders.push_back(blocks.cylinders.description[*block_index]);
    } break;
    case block_type::stairway: {
-      group.blocks.stairways.push_back(blocks.stairways.description[*block_index]);
+      group.blocks.stairways.description.push_back(
+         blocks.stairways.description[*block_index]);
+      group.blocks.stairways.mesh.push_back(blocks_custom_mesh_library::null_handle());
    } break;
    }
 
@@ -870,8 +874,10 @@ auto make_entity_group_from_layer(const world& world, const int32 layer) noexcep
    for (uint32 block_index = 0; block_index < world.blocks.stairways.size();
         ++block_index) {
       if (world.blocks.stairways.layer[block_index] == layer) {
-         group.blocks.stairways.push_back(
+         group.blocks.stairways.description.push_back(
             world.blocks.stairways.description[block_index]);
+         group.blocks.stairways.mesh.push_back(
+            blocks_custom_mesh_library::null_handle());
       }
    }
 
@@ -907,8 +913,13 @@ auto make_entity_group_from_world(const world& world) noexcept -> entity_group
                       world.blocks.quads.description.end()},
             .cylinders = {world.blocks.cylinders.description.begin(),
                           world.blocks.cylinders.description.end()},
-            .stairways = {world.blocks.stairways.description.begin(),
-                          world.blocks.stairways.description.end()},
+            .stairways =
+               {
+                  .description = {world.blocks.stairways.description.begin(),
+                                  world.blocks.stairways.description.end()},
+                  .mesh = {world.blocks.stairways.size(),
+                           blocks_custom_mesh_library::null_handle()},
+               },
 
             .materials = {world.blocks.materials.begin(), world.blocks.materials.end()},
          },
@@ -944,7 +955,7 @@ bool is_entity_group_blocks_empty(const entity_group& group) noexcept
    empty &= group.blocks.ramps.empty();
    empty &= group.blocks.quads.empty();
    empty &= group.blocks.cylinders.empty();
-   empty &= group.blocks.stairways.empty();
+   empty &= group.blocks.stairways.description.empty();
 
    return empty;
 }
