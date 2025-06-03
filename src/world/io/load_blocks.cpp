@@ -417,6 +417,108 @@ void load_cylinders(assets::config::node& node, const layer_remap& layer_remap,
    }
 }
 
+void load_stairways(assets::config::node& node, const layer_remap& layer_remap,
+                    blocks& blocks_out)
+{
+   for (const auto& key_node : node) {
+      if (not iequals(key_node.key, "Stairway")) continue;
+
+      if (blocks_out.stairways.size() == max_blocks) {
+         throw load_failure{fmt::format(
+            "Too many blocks (of type stairway) for WorldEdit to handle. \n   "
+            "Max Supported Count: {}\n",
+            max_blocks)};
+      }
+
+      block_description_stairway stairway;
+      int8 layer = 0;
+
+      for (const auto& prop : key_node) {
+         if (iequals(prop.key, "Rotation")) {
+            stairway.rotation = {prop.values.get<float>(0),
+                                 prop.values.get<float>(1),
+                                 prop.values.get<float>(2),
+                                 prop.values.get<float>(3)};
+         }
+         else if (iequals(prop.key, "Position")) {
+            stairway.position = {prop.values.get<float>(0),
+                                 prop.values.get<float>(1),
+                                 prop.values.get<float>(2)};
+         }
+         else if (iequals(prop.key, "Size")) {
+            stairway.size = {prop.values.get<float>(0), prop.values.get<float>(1),
+                             prop.values.get<float>(2)};
+         }
+         else if (iequals(prop.key, "StepHeight")) {
+            stairway.step_height = prop.values.get<float>(0);
+         }
+         else if (iequals(prop.key, "FirstStepOffset")) {
+            stairway.first_step_offset = prop.values.get<float>(0);
+         }
+         else if (iequals(prop.key, "SurfaceMaterials")) {
+            for (uint32 i = 0; i < stairway.surface_materials.size(); ++i) {
+               stairway.surface_materials[i] = prop.values.get<uint8>(i);
+            }
+         }
+         else if (iequals(prop.key, "SurfaceTextureMode")) {
+            for (uint32 i = 0; i < stairway.surface_texture_mode.size(); ++i) {
+               stairway.surface_texture_mode[i] =
+                  read_texture_mode(prop.values.get<uint8>(i));
+            }
+         }
+         else if (iequals(prop.key, "SurfaceTextureRotation")) {
+            for (uint32 i = 0; i < stairway.surface_texture_rotation.size(); ++i) {
+               const uint8 rotation = prop.values.get<uint8>(i);
+
+               switch (rotation) {
+               case static_cast<uint8>(block_texture_rotation::d0):
+               case static_cast<uint8>(block_texture_rotation::d90):
+               case static_cast<uint8>(block_texture_rotation::d180):
+               case static_cast<uint8>(block_texture_rotation::d270):
+                  stairway.surface_texture_rotation[i] =
+                     block_texture_rotation{rotation};
+                  break;
+               }
+            }
+         }
+         else if (iequals(prop.key, "SurfaceTextureScale")) {
+            for (uint32 i = 0; i < stairway.surface_texture_scale.size(); ++i) {
+               stairway.surface_texture_scale[i] =
+                  {std::clamp(prop.values.get<int8>(i * 2 + 0),
+                              block_min_texture_scale, block_max_texture_scale),
+                   std::clamp(prop.values.get<int8>(i * 2 + 1),
+                              block_min_texture_scale, block_max_texture_scale)};
+            }
+         }
+         else if (iequals(prop.key, "SurfaceTextureOffset")) {
+            for (uint32 i = 0; i < stairway.surface_texture_offset.size(); ++i) {
+               stairway.surface_texture_offset[i] =
+                  {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
+                   std::min(prop.values.get<uint16>(i * 2 + 1), block_max_texture_offset)};
+            }
+         }
+         else if (iequals(prop.key, "Layer")) {
+            layer = layer_remap[prop.values.get<int>(0)];
+         }
+      }
+
+      const math::bounding_box bbox = get_bounding_box(stairway);
+
+      blocks_out.stairways.bbox.min_x.push_back(bbox.min.x);
+      blocks_out.stairways.bbox.min_y.push_back(bbox.min.y);
+      blocks_out.stairways.bbox.min_z.push_back(bbox.min.z);
+      blocks_out.stairways.bbox.max_x.push_back(bbox.max.x);
+      blocks_out.stairways.bbox.max_y.push_back(bbox.max.y);
+      blocks_out.stairways.bbox.max_z.push_back(bbox.max.z);
+      blocks_out.stairways.hidden.push_back(false);
+      blocks_out.stairways.layer.push_back(layer);
+      blocks_out.stairways.description.push_back(stairway);
+      blocks_out.stairways.mesh.push_back(
+         blocks_out.custom_meshes.add(stairway.custom_mesh_desc()));
+      blocks_out.stairways.ids.push_back(blocks_out.next_id.stairways.aquire());
+   }
+}
+
 void load_materials(assets::config::node& node, blocks& blocks_out,
                     output_stream& output) noexcept
 {
@@ -522,6 +624,13 @@ auto load_blocks(const io::path& path, const layer_remap& layer_remap,
             blocks.cylinders.reserve(box_reservation);
 
             load_cylinders(key_node, layer_remap, blocks);
+         }
+         else if (iequals(key_node.key, "Stairways")) {
+            const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
+
+            blocks.stairways.reserve(box_reservation);
+
+            load_stairways(key_node, layer_remap, blocks);
          }
          else if (iequals(key_node.key, "Materials")) {
             load_materials(key_node, blocks, output);
