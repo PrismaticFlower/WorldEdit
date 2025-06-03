@@ -591,6 +591,191 @@ TEST_CASE("world load blocks (cylinders)", "[World][IO]")
    CHECK(cylinders.dirty[0] == blocks_dirty_range{0, 3});
 }
 
+TEST_CASE("world load blocks (stairways)", "[World][IO]")
+{
+   null_output_stream output;
+   layer_remap layer_remap;
+
+   layer_remap.set(2, 2);
+
+   const blocks blocks = load_blocks("data/blocks/stairways.blk", layer_remap, output);
+
+   REQUIRE(blocks.stairways.size() == 3);
+
+   const blocks_stairways& stairways = blocks.stairways;
+
+   CHECK(stairways.bbox.min_x[0] == 6.5f);
+   CHECK(stairways.bbox.min_y[0] == 0.5f);
+   CHECK(stairways.bbox.min_z[0] == 0.0f);
+   CHECK(stairways.bbox.max_x[0] == 10.5f);
+   CHECK(stairways.bbox.max_y[0] == 4.5f);
+   CHECK(stairways.bbox.max_z[0] == 4.0f);
+   CHECK(stairways.hidden[0] == false);
+   CHECK(stairways.layer[0] == 2);
+   CHECK(stairways.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
+   CHECK(stairways.description[0].position == float3{8.5f, 4.5f, 2.0f});
+   CHECK(stairways.description[0].size == float3{4.0f, 4.0f, 4.0f});
+   CHECK(stairways.description[0].step_height == 0.1f);
+   CHECK(stairways.description[0].first_step_offset == 0.0f);
+   CHECK(stairways.description[0].surface_materials ==
+         std::array<uint8, 6>{0, 1, 2, 3, 4, 5});
+   CHECK(stairways.description[0].surface_texture_mode ==
+         std::array<block_texture_mode, 6>{
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+         });
+   CHECK(stairways.description[0].surface_texture_rotation ==
+         std::array<block_texture_rotation, 6>{
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+         });
+   CHECK(stairways.description[0].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 6>{
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{-1, -2},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+         });
+   CHECK(stairways.description[0].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 6>{
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{256, 256},
+            std::array<uint16, 2>{0, 0},
+         });
+   CHECK(stairways.mesh[0] == blocks.custom_meshes.debug_query_handle(
+                                 stairways.description[0].custom_mesh_desc()));
+   CHECK(is_unique_id(0, stairways.ids));
+
+   CHECK(stairways.bbox.min_x[1] == 6.00000858f);
+   CHECK(stairways.bbox.min_y[1] == 16.0000000f);
+   CHECK(stairways.bbox.min_z[1] == 8.00000858f);
+   CHECK(stairways.bbox.max_x[1] == 13.9999914f);
+   CHECK(stairways.bbox.max_y[1] == 20.1249905f);
+   CHECK(stairways.bbox.max_z[1] == 15.9999914f);
+   CHECK(stairways.hidden[1] == false);
+   CHECK(stairways.description[1].rotation ==
+         quaternion{0.707106f, 0.0f, 0.707106f, 0.0f});
+   CHECK(stairways.description[1].position == float3{10.0f, 16.0f, 12.0f});
+   CHECK(stairways.description[1].size == float3{8.0f, 4.0f, 8.0f});
+   CHECK(stairways.description[1].step_height == 0.25f);
+   CHECK(stairways.description[1].first_step_offset == 0.125f);
+   CHECK(stairways.description[1].surface_materials ==
+         std::array<uint8, 6>{2, 2, 2, 2, 2, 2});
+   CHECK(stairways.description[1].surface_texture_mode ==
+         std::array<block_texture_mode, 6>{
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::local_space_zy,
+            block_texture_mode::world_space_xz,
+         });
+   CHECK(stairways.description[1].surface_texture_rotation ==
+         std::array<block_texture_rotation, 6>{
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+         });
+   CHECK(stairways.description[1].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 6>{
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{-2, -2},
+         });
+   CHECK(stairways.description[1].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 6>{
+            std::array<uint16, 2>{1024, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+         });
+   CHECK(blocks.custom_meshes.debug_ref_count(
+            stairways.description[1].custom_mesh_desc()) == 1);
+   CHECK(stairways.mesh[1] == blocks.custom_meshes.debug_query_handle(
+                                 stairways.description[1].custom_mesh_desc()));
+   CHECK(is_unique_id(1, stairways.ids));
+
+   CHECK(stairways.bbox.min_x[2] == 3.5f);
+   CHECK(stairways.bbox.min_y[2] == 1.0f);
+   CHECK(stairways.bbox.min_z[2] == 3.5f);
+   CHECK(stairways.bbox.max_x[2] == 8.5f);
+   CHECK(stairways.bbox.max_y[2] == 6.0f);
+   CHECK(stairways.bbox.max_z[2] == 8.5f);
+   CHECK(stairways.hidden[2] == false);
+   CHECK(stairways.description[2].rotation == quaternion{0.0f, 0.0f, 0.0f, 1.0f});
+   CHECK(stairways.description[2].position == float3{6.0f, 6.0f, 6.0f});
+   CHECK(stairways.description[2].size == float3{5.0f, 5.0f, 5.0f});
+   CHECK(stairways.description[2].step_height == 1.0f);
+   CHECK(stairways.description[2].first_step_offset == 0.0f);
+   CHECK(stairways.description[2].surface_materials ==
+         std::array<uint8, 6>{0, 0, 0, 0, 0, 0});
+   CHECK(stairways.description[2].surface_texture_mode ==
+         std::array<block_texture_mode, 6>{
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xy,
+            block_texture_mode::local_space_auto,
+            block_texture_mode::local_space_zy,
+         });
+   CHECK(stairways.description[2].surface_texture_rotation ==
+         std::array<block_texture_rotation, 6>{
+            block_texture_rotation::d0,
+            block_texture_rotation::d90,
+            block_texture_rotation::d180,
+            block_texture_rotation::d270,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+         });
+   CHECK(stairways.description[2].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 6>{
+            std::array<int8, 2>{-7, -6},
+            std::array<int8, 2>{-5, -4},
+            std::array<int8, 2>{-3, -2},
+            std::array<int8, 2>{-1, 0},
+            std::array<int8, 2>{1, 2},
+            std::array<int8, 2>{3, 4},
+         });
+   CHECK(stairways.description[2].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 6>{
+            std::array<uint16, 2>{0, 1},
+            std::array<uint16, 2>{2, 3},
+            std::array<uint16, 2>{4, 5},
+            std::array<uint16, 2>{6, 7},
+            std::array<uint16, 2>{8, 9},
+            std::array<uint16, 2>{10, 11},
+         });
+   CHECK(blocks.custom_meshes.debug_ref_count(
+            stairways.description[2].custom_mesh_desc()) == 1);
+   CHECK(stairways.mesh[2] == blocks.custom_meshes.debug_query_handle(
+                                 stairways.description[2].custom_mesh_desc()));
+   CHECK(is_unique_id(2, stairways.ids));
+
+   REQUIRE(stairways.dirty.size() == 1);
+   CHECK(stairways.dirty[0] == blocks_dirty_range{0, 3});
+}
+
 TEST_CASE("world load blocks (materials)", "[World][IO]")
 {
    null_output_stream output;
