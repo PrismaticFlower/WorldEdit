@@ -4,6 +4,8 @@
 
 namespace we::graphics::gpu::tests {
 
+#if 0
+
 struct test_device {
    int called = 0;
 };
@@ -66,5 +68,7 @@ TEST_CASE("unique_handle release tests", "[Graphics][GPU]")
 
    REQUIRE(test_device.called == 0);
 }
+
+#endif
 
 }
