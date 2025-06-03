@@ -1163,6 +1163,37 @@ void clamp_block_material_indices(entity_group& group_out, output_stream& output
          }
       }
    }
+
+   for (uint32 block_index = 0; block_index < group_out.blocks.quads.size();
+        ++block_index) {
+      block_description_quad& quad = group_out.blocks.quads[block_index];
+
+      for (uint8& material : quad.surface_materials) {
+         if (material >= max_material) {
+            output.write("Warning! Quad block '{}' has out of range material "
+                         "index. Setting to zero.\n",
+                         block_index);
+
+            material = 0;
+         }
+      }
+   }
+
+   for (uint32 block_index = 0; block_index < group_out.blocks.cylinders.size();
+        ++block_index) {
+      block_description_cylinder& cylinder = group_out.blocks.cylinders[block_index];
+
+      for (uint8& material : cylinder.surface_materials) {
+         if (material >= max_material) {
+            output
+               .write("Warning! Cylinder block '{}' has out of range material "
+                      "index. Setting to zero.\n",
+                      block_index);
+
+            material = 0;
+         }
+      }
+   }
 }
 
 }

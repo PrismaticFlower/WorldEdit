@@ -688,7 +688,7 @@ TEST_CASE("world entity group loading (blocks, quads)", "[World][IO]")
    CHECK(group.blocks.quads[1].vertices[2] == float3{1.0f, 0.0f, 1.0f});
    CHECK(group.blocks.quads[1].vertices[3] == float3{0.0f, 0.0f, 1.5f});
    CHECK(group.blocks.quads[1].quad_split == block_quad_split::alternate);
-   CHECK(group.blocks.quads[1].surface_materials == std::array<uint8, 1>{2});
+   CHECK(group.blocks.quads[1].surface_materials == std::array<uint8, 1>{0});
    CHECK(group.blocks.quads[1].surface_texture_mode ==
          std::array<block_texture_mode, 1>{
             block_texture_mode::world_space_zy,
@@ -741,7 +741,7 @@ TEST_CASE("world entity group loading (blocks, cylinders)", "[World][IO]")
    CHECK(group.blocks.cylinders[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
    CHECK(group.blocks.cylinders[0].position == float3{8.5f, 4.5f, 2.0f});
    CHECK(group.blocks.cylinders[0].size == float3{4.0f, 4.0f, 4.0f});
-   CHECK(group.blocks.cylinders[0].surface_materials == std::array<uint8, 3>{0, 1, 2});
+   CHECK(group.blocks.cylinders[0].surface_materials == std::array<uint8, 3>{0, 1, 0});
    CHECK(group.blocks.cylinders[0].surface_texture_mode ==
          std::array<block_texture_mode, 3>{
             block_texture_mode::world_space_zy,
