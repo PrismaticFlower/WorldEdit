@@ -32,6 +32,7 @@ auto generate_mesh(const block_custom_mesh_stairway_desc& stairway) noexcept -> 
    const int steps = static_cast<int>(ceilf(steps_height / step_height));
    const float adjusted_step_height = steps_height / steps;
    const float step_length = steps_length / steps;
+   const float inv_steps = 1.0f / steps;
 
    const float half_steps_width = steps_width / 2.0f;
    const float half_steps_length = steps_length / 2.0f;
@@ -102,168 +103,193 @@ auto generate_mesh(const block_custom_mesh_stairway_desc& stairway) noexcept -> 
          const uint16 top_i2 = vertex_index++;
          const uint16 top_i3 = vertex_index++;
 
-         mesh.vertices.push_back({.position =
-                                     {
-                                        half_steps_width,
-                                        step_top,
-                                        step_back,
-                                     },
-                                  .normal = {0.0f, 1.0f, 0.0f},
-                                  .texcoords = {0.0f, 0.0f},
-                                  .surface_index = stairway_surface_pos_y});
-         mesh.vertices.push_back({.position =
-                                     {
-                                        -half_steps_width,
-                                        step_top,
-                                        step_back,
-                                     },
-                                  .normal = {0.0f, 1.0f, 0.0f},
-                                  .texcoords = {1.0f, 0.0f},
-                                  .surface_index = stairway_surface_pos_y});
-         mesh.vertices.push_back({.position =
-                                     {
-                                        -half_steps_width,
-                                        step_top,
-                                        step_front,
-                                     },
-                                  .normal = {0.0f, 1.0f, 0.0f},
-                                  .texcoords = {1.0f, 1.0f},
-                                  .surface_index = stairway_surface_pos_y});
-         mesh.vertices.push_back({.position =
-                                     {
-                                        half_steps_width,
-                                        step_top,
-                                        step_front,
-                                     },
-                                  .normal = {0.0f, 1.0f, 0.0f},
-                                  .texcoords = {0.0f, 1.0f},
-                                  .surface_index = stairway_surface_pos_y});
+         const float2 texcoords_y_min = {0.0f, i * inv_steps};
+         const float2 texcoords_y_max = {1.0f, (i + 1) * inv_steps};
+
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_top,
+                   step_back,
+                },
+             .normal = {0.0f, 1.0f, 0.0f},
+             .texcoords = {texcoords_y_min.x, texcoords_y_min.y},
+             .surface_index = stairway_surface_pos_y});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_top,
+                   step_back,
+                },
+             .normal = {0.0f, 1.0f, 0.0f},
+             .texcoords = {texcoords_y_max.x, texcoords_y_min.y},
+             .surface_index = stairway_surface_pos_y});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_top,
+                   step_front,
+                },
+             .normal = {0.0f, 1.0f, 0.0f},
+             .texcoords = {texcoords_y_max.x, texcoords_y_max.y},
+             .surface_index = stairway_surface_pos_y});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_top,
+                   step_front,
+                },
+             .normal = {0.0f, 1.0f, 0.0f},
+             .texcoords = {texcoords_y_min.x, texcoords_y_max.y},
+             .surface_index = stairway_surface_pos_y});
 
          const uint16 front_i0 = vertex_index++;
          const uint16 front_i1 = vertex_index++;
          const uint16 front_i2 = vertex_index++;
          const uint16 front_i3 = vertex_index++;
 
-         mesh.vertices.push_back({.position =
-                                     {
-                                        -half_steps_width,
-                                        step_top,
-                                        step_back,
-                                     },
-                                  .normal = {0.0f, 0.0f, -1.0f},
-                                  .texcoords = {0.0f, 0.0f},
-                                  .surface_index = stairway_surface_neg_z});
-         mesh.vertices.push_back({.position =
-                                     {
-                                        half_steps_width,
-                                        step_top,
-                                        step_back,
-                                     },
-                                  .normal = {0.0f, 0.0f, -1.0f},
-                                  .texcoords = {1.0f, 0.0f},
-                                  .surface_index = stairway_surface_neg_z});
-         mesh.vertices.push_back({.position =
-                                     {
-                                        half_steps_width,
-                                        step_base,
-                                        step_back,
-                                     },
-                                  .normal = {0.0f, 0.0f, -1.0f},
-                                  .texcoords = {1.0f, 1.0f},
-                                  .surface_index = stairway_surface_neg_z});
-         mesh.vertices.push_back({.position =
-                                     {
-                                        -half_steps_width,
-                                        step_base,
-                                        step_back,
-                                     },
-                                  .normal = {0.0f, 0.0f, -1.0f},
-                                  .texcoords = {0.0f, 1.0f},
-                                  .surface_index = stairway_surface_neg_z});
+         const float2 texcoords_z_min = {0.0f, step_base / steps_height};
+         const float2 texcoords_z_max = {1.0f, step_top / steps_height};
+
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_top,
+                   step_back,
+                },
+             .normal = {0.0f, 0.0f, -1.0f},
+             .texcoords = {texcoords_z_min.x, texcoords_z_min.y},
+             .surface_index = stairway_surface_neg_z});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_top,
+                   step_back,
+                },
+             .normal = {0.0f, 0.0f, -1.0f},
+             .texcoords = {texcoords_z_max.x, texcoords_z_min.y},
+             .surface_index = stairway_surface_neg_z});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_base,
+                   step_back,
+                },
+             .normal = {0.0f, 0.0f, -1.0f},
+             .texcoords = {texcoords_z_max.x, texcoords_z_max.y},
+             .surface_index = stairway_surface_neg_z});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_base,
+                   step_back,
+                },
+             .normal = {0.0f, 0.0f, -1.0f},
+             .texcoords = {texcoords_z_min.x, texcoords_z_max.y},
+             .surface_index = stairway_surface_neg_z});
 
          const uint16 side_neg_i0 = vertex_index++;
          const uint16 side_neg_i1 = vertex_index++;
          const uint16 side_neg_i2 = vertex_index++;
          const uint16 side_neg_i3 = vertex_index++;
 
-         mesh.vertices.push_back({.position =
-                                     {
-                                        -half_steps_width,
-                                        step_top,
-                                        step_back,
-                                     },
-                                  .normal = {-1.0f, 0.0f, 0.0f},
-                                  .texcoords = {0.0f, 0.0f},
-                                  .surface_index = stairway_surface_neg_x});
-         mesh.vertices.push_back({.position =
-                                     {
-                                        -half_steps_width,
-                                        step_base,
-                                        step_back,
-                                     },
-                                  .normal = {-1.0f, 0.0f, 0.0f},
-                                  .texcoords = {1.0f, 0.0f},
-                                  .surface_index = stairway_surface_neg_x});
-         mesh.vertices.push_back({.position =
-                                     {
-                                        -half_steps_width,
-                                        step_base,
-                                        half_steps_length,
-                                     },
-                                  .normal = {-1.0f, 0.0f, 0.0f},
-                                  .texcoords = {1.0f, 1.0f},
-                                  .surface_index = stairway_surface_neg_x});
-         mesh.vertices.push_back({.position =
-                                     {
-                                        -half_steps_width,
-                                        step_top,
-                                        half_steps_length,
-                                     },
-                                  .normal = {-1.0f, 0.0f, 0.0f},
-                                  .texcoords = {0.0f, 1.0f},
-                                  .surface_index = stairway_surface_neg_x});
+         const float2 texcoords_x_min = {step_top / steps_height, i * inv_steps};
+         const float2 texcoords_x_max = {step_base / steps_height, 1.0f};
+
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_top,
+                   step_back,
+                },
+             .normal = {-1.0f, 0.0f, 0.0f},
+             .texcoords = {texcoords_x_min.x, texcoords_x_min.y},
+             .surface_index = stairway_surface_neg_x});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_base,
+                   step_back,
+                },
+             .normal = {-1.0f, 0.0f, 0.0f},
+             .texcoords = {texcoords_x_max.x, texcoords_x_min.y},
+             .surface_index = stairway_surface_neg_x});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_base,
+                   half_steps_length,
+                },
+             .normal = {-1.0f, 0.0f, 0.0f},
+             .texcoords = {texcoords_x_max.x, texcoords_x_max.y},
+             .surface_index = stairway_surface_neg_x});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_top,
+                   half_steps_length,
+                },
+             .normal = {-1.0f, 0.0f, 0.0f},
+             .texcoords = {texcoords_x_min.x, texcoords_x_max.y},
+             .surface_index = stairway_surface_neg_x});
 
          const uint16 side_pos_i0 = vertex_index++;
          const uint16 side_pos_i1 = vertex_index++;
          const uint16 side_pos_i2 = vertex_index++;
          const uint16 side_pos_i3 = vertex_index++;
 
-         mesh.vertices.push_back({.position =
-                                     {
-                                        half_steps_width,
-                                        step_base,
-                                        step_back,
-                                     },
-                                  .normal = {1.0f, 0.0f, 0.0f},
-                                  .texcoords = {0.0f, 0.0f},
-                                  .surface_index = stairway_surface_pos_x});
-         mesh.vertices.push_back({.position =
-                                     {
-                                        half_steps_width,
-                                        step_top,
-                                        step_back,
-                                     },
-                                  .normal = {1.0f, 0.0f, 0.0f},
-                                  .texcoords = {1.0f, 0.0f},
-                                  .surface_index = stairway_surface_pos_x});
-         mesh.vertices.push_back({.position =
-                                     {
-                                        half_steps_width,
-                                        step_top,
-                                        half_steps_length,
-                                     },
-                                  .normal = {1.0f, 0.0f, 0.0f},
-                                  .texcoords = {1.0f, 1.0f},
-                                  .surface_index = stairway_surface_pos_x});
-         mesh.vertices.push_back({.position =
-                                     {
-                                        half_steps_width,
-                                        step_base,
-                                        half_steps_length,
-                                     },
-                                  .normal = {1.0f, 0.0f, 0.0f},
-                                  .texcoords = {0.0f, 1.0f},
-                                  .surface_index = stairway_surface_pos_x});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_base,
+                   step_back,
+                },
+             .normal = {1.0f, 0.0f, 0.0f},
+             .texcoords = {texcoords_x_max.x, texcoords_x_min.y},
+             .surface_index = stairway_surface_pos_x});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_top,
+                   step_back,
+                },
+             .normal = {1.0f, 0.0f, 0.0f},
+             .texcoords = {texcoords_x_min.x, texcoords_x_min.y},
+             .surface_index = stairway_surface_pos_x});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_top,
+                   half_steps_length,
+                },
+             .normal = {1.0f, 0.0f, 0.0f},
+             .texcoords = {texcoords_x_min.x, texcoords_x_max.y},
+             .surface_index = stairway_surface_pos_x});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_base,
+                   half_steps_length,
+                },
+             .normal = {1.0f, 0.0f, 0.0f},
+             .texcoords = {texcoords_x_max.x, texcoords_x_max.y},
+             .surface_index = stairway_surface_pos_x});
 
          mesh.triangles.push_back({top_i0, top_i1, top_i2});
          mesh.triangles.push_back({top_i0, top_i2, top_i3});
