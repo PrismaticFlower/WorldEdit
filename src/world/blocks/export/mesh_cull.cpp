@@ -93,7 +93,21 @@ bool inside_occluder(const std::array<snapped_point, 4>& occluder,
       const int64 d =
          (point.x - e0.x) * (e1.y - e0.y) - (point.y - e0.y) * (e1.x - e0.x);
 
-      if (d == 0) return true;
+      if (d == 0) {
+         // Handle the case of a point being along an line as an edge segment but outside of the edge's bounds.
+         if (e0.x == e1.x and e0.x == point.x) {
+            if (point.y < std::min(e0.y, e1.y) or point.y > std::max(e0.y, e1.y)) {
+               continue;
+            }
+         }
+         else if (e0.y == e1.y and e0.y == point.y) {
+            if (point.x < std::min(e0.x, e1.x) or point.x > std::max(e0.x, e1.x)) {
+               continue;
+            }
+         }
+
+         return true;
+      }
 
       if (d > 0) positive = true;
       if (d < 0) negative = true;
