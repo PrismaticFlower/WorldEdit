@@ -373,12 +373,12 @@ TEST_CASE("edits set_block_stairway_metrics", "[Edits]")
 
    edit->apply(edit_context);
 
-   CHECK(blocks.stairways.bbox.min_x[0] == -10.0f);
+   CHECK(blocks.stairways.bbox.min_x[0] == -5.0f);
    CHECK(blocks.stairways.bbox.min_y[0] == 0.0f);
-   CHECK(blocks.stairways.bbox.min_z[0] == -10.0f);
-   CHECK(blocks.stairways.bbox.max_x[0] == 10.0f);
+   CHECK(blocks.stairways.bbox.min_z[0] == -5.0f);
+   CHECK(blocks.stairways.bbox.max_x[0] == 5.0f);
    CHECK(blocks.stairways.bbox.max_y[0] == 4.125f);
-   CHECK(blocks.stairways.bbox.max_z[0] == 10.0f);
+   CHECK(blocks.stairways.bbox.max_z[0] == 5.0f);
    CHECK(not blocks.stairways.hidden[0]);
    CHECK(blocks.stairways.layer[0] == 0);
    CHECK(blocks.stairways.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
@@ -398,12 +398,12 @@ TEST_CASE("edits set_block_stairway_metrics", "[Edits]")
 
    edit->revert(edit_context);
 
-   CHECK(blocks.stairways.bbox.min_x[0] == -10.0f);
+   CHECK(blocks.stairways.bbox.min_x[0] == -5.0f);
    CHECK(blocks.stairways.bbox.min_y[0] == 0.0f);
-   CHECK(blocks.stairways.bbox.min_z[0] == -10.0f);
-   CHECK(blocks.stairways.bbox.max_x[0] == 10.0f);
+   CHECK(blocks.stairways.bbox.min_z[0] == -5.0f);
+   CHECK(blocks.stairways.bbox.max_x[0] == 5.0f);
    CHECK(blocks.stairways.bbox.max_y[0] == 0.5f);
-   CHECK(blocks.stairways.bbox.max_z[0] == 10.0f);
+   CHECK(blocks.stairways.bbox.max_z[0] == 5.0f);
    CHECK(not blocks.stairways.hidden[0]);
    CHECK(blocks.stairways.layer[0] == 0);
    CHECK(blocks.stairways.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
@@ -471,12 +471,12 @@ TEST_CASE("edits set_block_stairway_metrics coalesce", "[Edits]")
 
    edit->apply(edit_context);
 
-   CHECK(blocks.stairways.bbox.min_x[0] == -10.0f);
+   CHECK(blocks.stairways.bbox.min_x[0] == -5.0f);
    CHECK(blocks.stairways.bbox.min_y[0] == 0.0f);
-   CHECK(blocks.stairways.bbox.min_z[0] == -10.0f);
-   CHECK(blocks.stairways.bbox.max_x[0] == 10.0f);
+   CHECK(blocks.stairways.bbox.min_z[0] == -5.0f);
+   CHECK(blocks.stairways.bbox.max_x[0] == 5.0f);
    CHECK(blocks.stairways.bbox.max_y[0] == 4.125f);
-   CHECK(blocks.stairways.bbox.max_z[0] == 10.0f);
+   CHECK(blocks.stairways.bbox.max_z[0] == 5.0f);
    CHECK(not blocks.stairways.hidden[0]);
    CHECK(blocks.stairways.layer[0] == 0);
    CHECK(blocks.stairways.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
@@ -496,12 +496,12 @@ TEST_CASE("edits set_block_stairway_metrics coalesce", "[Edits]")
 
    edit->revert(edit_context);
 
-   CHECK(blocks.stairways.bbox.min_x[0] == -10.0f);
+   CHECK(blocks.stairways.bbox.min_x[0] == -5.0f);
    CHECK(blocks.stairways.bbox.min_y[0] == 0.0f);
-   CHECK(blocks.stairways.bbox.min_z[0] == -10.0f);
-   CHECK(blocks.stairways.bbox.max_x[0] == 10.0f);
+   CHECK(blocks.stairways.bbox.min_z[0] == -5.0f);
+   CHECK(blocks.stairways.bbox.max_x[0] == 5.0f);
    CHECK(blocks.stairways.bbox.max_y[0] == 0.5f);
-   CHECK(blocks.stairways.bbox.max_z[0] == 10.0f);
+   CHECK(blocks.stairways.bbox.max_z[0] == 5.0f);
    CHECK(not blocks.stairways.hidden[0]);
    CHECK(blocks.stairways.layer[0] == 0);
    CHECK(blocks.stairways.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
