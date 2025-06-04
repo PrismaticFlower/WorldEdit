@@ -131,6 +131,18 @@ void world_edit::ui_show_block_editor() noexcept
          ImGui::EndCombo();
       }
 
+      if (_block_editor_config.draw_type == world::block_type::stairway) {
+         ImGui::DragFloat("Step Height", &_block_editor_config.step_height,
+                          0.125f * 0.25f, 0.125f, 1.0f, "%.3f",
+                          ImGuiSliderFlags_NoRoundToFormat);
+
+         _block_editor_config.step_height =
+            std::max(_block_editor_config.step_height, 0.015625f);
+
+         ImGui::DragFloat("First Step Offset",
+                          &_block_editor_config.first_step_offset, 0.125f);
+      }
+
       ImGui::Checkbox("Enable Alignment", &_block_editor_config.enable_alignment);
       ImGui::SameLine();
       ImGui::Checkbox("Enable Snapping", &_block_editor_config.enable_snapping);
@@ -1630,17 +1642,19 @@ void world_edit::ui_show_block_editor() noexcept
             const uint8 material_index = _block_editor_config.paint_material_index;
 
             if (_world.blocks.stairways.size() < world::max_blocks) {
-               _edit_stack_world.apply(edits::make_add_block(
-                                          world::block_description_stairway{
-                                             .rotation = rotation,
-                                             .position = position,
-                                             .size = size,
-                                             .surface_materials = {material_index, material_index,
-                                                                   material_index, material_index,
-                                                                   material_index},
-                                          },
-                                          _block_editor_config.new_block_layer, id),
-                                       _edit_context);
+               _edit_stack_world.apply(
+                  edits::make_add_block(
+                     world::block_description_stairway{
+                        .rotation = rotation,
+                        .position = position,
+                        .size = size,
+                        .step_height = _block_editor_config.step_height,
+                        .first_step_offset = _block_editor_config.first_step_offset,
+                        .surface_materials = {material_index, material_index, material_index,
+                                              material_index, material_index},
+                     },
+                     _block_editor_config.new_block_layer, id),
+                  _edit_context);
             }
             else {
                MessageBoxA(_window,
@@ -1722,12 +1736,11 @@ void world_edit::ui_show_block_editor() noexcept
              index < _world.blocks.stairways.size() and
              _world.blocks.stairways.ids[index] ==
                 _block_editor_context.draw_block.block_id) {
-            _edit_stack_world
-               .apply(edits::make_set_block_stairway_metrics(
-                         index, rotation, position, size,
-                         _world.blocks.stairways.description[index].step_height,
-                         _world.blocks.stairways.description[index].first_step_offset),
-                      _edit_context, {.transparent = true});
+            _edit_stack_world.apply(edits::make_set_block_stairway_metrics(
+                                       index, rotation, position, size,
+                                       _block_editor_config.step_height,
+                                       _block_editor_config.first_step_offset),
+                                    _edit_context, {.transparent = true});
          }
 
          _tool_visualizers.add_line_overlay(position,

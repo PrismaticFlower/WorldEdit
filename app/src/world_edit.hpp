@@ -979,6 +979,9 @@ private:
 
       world::block_type draw_type = world::block_type::box;
 
+      float step_height = 0.125f;
+      float first_step_offset = 0.0f;
+
       bool enable_alignment = true;
       bool enable_snapping = true;
 
