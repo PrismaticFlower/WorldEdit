@@ -217,6 +217,8 @@ enum class draw_block_step : uint8 {
 
 enum class draw_block_cursor_plane : uint8 { none, x, y, z };
 
+enum class draw_block_quad_split : uint8 { longest, shortest };
+
 constexpr float tool_window_start_x = 264.0f;
 
 class world_edit {
@@ -978,6 +980,8 @@ private:
       int snap_edge_points = 3;
 
       world::block_type draw_type = world::block_type::box;
+
+      draw_block_quad_split quad_split = draw_block_quad_split::longest;
 
       float step_height = 0.125f;
       float first_step_offset = 0.0f;

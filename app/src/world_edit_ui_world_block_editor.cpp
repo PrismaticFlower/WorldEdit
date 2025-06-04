@@ -131,7 +131,27 @@ void world_edit::ui_show_block_editor() noexcept
          ImGui::EndCombo();
       }
 
-      if (_block_editor_config.draw_type == world::block_type::stairway) {
+      if (_block_editor_config.draw_type == world::block_type::quad) {
+         const ImVec2 cursor_pos = ImGui::GetCursorPos();
+
+         ImGui::LabelText("Triangulation", "");
+
+         ImGui::SetCursorPos(cursor_pos);
+
+         if (ImGui::RadioButton("Longest Diagonal", _block_editor_config.quad_split ==
+                                                       draw_block_quad_split::longest)) {
+            _block_editor_config.quad_split = draw_block_quad_split::longest;
+         }
+
+         ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+         if (ImGui::RadioButton("Shortest Diagonal",
+                                _block_editor_config.quad_split ==
+                                   draw_block_quad_split::shortest)) {
+            _block_editor_config.quad_split = draw_block_quad_split::shortest;
+         }
+      }
+      else if (_block_editor_config.draw_type == world::block_type::stairway) {
          ImGui::DragFloat("Step Height", &_block_editor_config.step_height,
                           0.125f * 0.25f, 0.125f, 1.0f, "%.3f",
                           ImGuiSliderFlags_NoRoundToFormat);
@@ -1449,10 +1469,20 @@ void world_edit::ui_show_block_editor() noexcept
                };
             }
 
-            world::block_quad_split quad_split =
-               distance(vertices[0], vertices[2]) > distance(vertices[1], vertices[3])
-                  ? world::block_quad_split::regular
-                  : world::block_quad_split::alternate;
+            world::block_quad_split quad_split = world::block_quad_split::regular;
+
+            if (_block_editor_config.quad_split == draw_block_quad_split::longest) {
+               quad_split = distance(vertices[0], vertices[2]) >
+                                  distance(vertices[1], vertices[3])
+                               ? world::block_quad_split::regular
+                               : world::block_quad_split::alternate;
+            }
+            else {
+               quad_split = distance(vertices[0], vertices[2]) <
+                                  distance(vertices[1], vertices[3])
+                               ? world::block_quad_split::regular
+                               : world::block_quad_split::alternate;
+            }
 
             _edit_stack_world
                .apply(edits::make_add_block(
