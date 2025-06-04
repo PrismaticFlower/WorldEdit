@@ -198,6 +198,8 @@ struct set_block_stairway_metrics final : edit<world::edit_context> {
       this->rotation = other.rotation;
       this->position = other.position;
       this->size = other.size;
+      this->step_height = other.step_height;
+      this->first_step_offset = other.first_step_offset;
    }
 
 private:
