@@ -55,8 +55,6 @@
 #include "world/utility/terrain_cut.hpp"
 #include "world/utility/world_utilities.hpp"
 
-#include "world/blocks/mesh_generate.hpp"
-
 #include <bit>
 #include <stdexcept>
 #include <type_traits>
