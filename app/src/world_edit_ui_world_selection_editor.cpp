@@ -8,6 +8,7 @@
 #include "edits/delete_sector_object.hpp"
 #include "edits/delete_sector_point.hpp"
 #include "edits/imgui_ext.hpp"
+#include "edits/set_block.hpp"
 #include "edits/set_value.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/string_icompare.hpp"
@@ -1941,6 +1942,37 @@ void world_edit::ui_show_world_selection_editor() noexcept
                              &world::get_block_layer(_world.blocks,
                                                      block_id.type(), *block_index),
                              _edit_stack_world, _edit_context);
+
+            if (block_id.type() == world::block_type::stairway) {
+               const world::block_description_stairway& block =
+                  _world.blocks.stairways.description[*block_index];
+
+               float new_step_height = block.step_height;
+               float new_first_step_offset = block.first_step_offset;
+
+               ImGui::BeginGroup();
+
+               ImGui::DragFloat("Step Height", &new_step_height, 0.125f * 0.25f, 0.125f,
+                                1.0f, "%.3f", ImGuiSliderFlags_NoRoundToFormat);
+
+               ImGui::DragFloat("First Step Offset", &new_first_step_offset, 0.125f);
+
+               ImGui::EndGroup();
+
+               if (ImGui::IsItemEdited()) {
+                  new_step_height = std::max(new_step_height, 0.015625f);
+
+                  _edit_stack_world.apply(edits::make_set_block_stairway_metrics(
+                                             *block_index, block.rotation,
+                                             block.position, block.size,
+                                             new_step_height, new_first_step_offset),
+                                          _edit_context);
+               }
+
+               if (ImGui::IsItemDeactivated()) {
+                  _edit_stack_world.close_last();
+               }
+            }
          }
 
          ImGui::PopID();
