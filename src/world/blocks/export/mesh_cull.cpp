@@ -138,9 +138,9 @@ bool is_occluded(const std::array<snapped_point, 3>& trianglePS,
 
 }
 
-auto cull_hidden_triangles(std::span<const block_world_triangle> triangles,
+auto cull_hidden_triangles(std::span<const block_world_mesh> meshes,
                            std::span<const block_world_occluder> occluders) noexcept
-   -> std::vector<block_world_triangle>
+   -> std::vector<block_world_mesh>
 {
    absl::flat_hash_map<quantized_plane, uint32> occluders_count_map;
 
@@ -189,65 +189,78 @@ auto cull_hidden_triangles(std::span<const block_world_triangle> triangles,
                 });
    }
 
-   std::vector<block_world_triangle> new_triangles;
-   new_triangles.reserve(triangles.size());
+   std::vector<block_world_mesh> new_meshes;
+   new_meshes.reserve(meshes.size());
 
-   for (const block_world_triangle& triangle : triangles) {
-      const float3 edge0WS =
-         triangle.vertices[1].positionWS - triangle.vertices[2].positionWS;
-      const float3 edge1WS =
-         triangle.vertices[0].positionWS - triangle.vertices[2].positionWS;
-      const float3 e0_cross_e1 = cross(edge0WS, edge1WS);
+   for (const block_world_mesh& mesh : meshes) {
+      std::vector<block_world_triangle> new_triangles;
+      new_triangles.reserve(mesh.triangles.size());
 
-      const float e0_cross_e1_length = length(e0_cross_e1);
-      const float3 normalWS = e0_cross_e1 / e0_cross_e1_length;
-      const float4 planeWS = {normalWS,
-                              -dot(normalWS, triangle.vertices[2].positionWS)};
+      for (const block_world_triangle& triangle : mesh.triangles) {
+         const float3 edge0WS =
+            triangle.vertices[1].positionWS - triangle.vertices[2].positionWS;
+         const float3 edge1WS =
+            triangle.vertices[0].positionWS - triangle.vertices[2].positionWS;
+         const float3 e0_cross_e1 = cross(edge0WS, edge1WS);
 
-      const float triangle_area = e0_cross_e1_length * 0.5f;
+         const float e0_cross_e1_length = length(e0_cross_e1);
+         const float3 normalWS = e0_cross_e1 / e0_cross_e1_length;
+         const float4 planeWS = {normalWS,
+                                 -dot(normalWS, triangle.vertices[2].positionWS)};
 
-      if (triangle_area < min_triangle_area) continue;
+         const float triangle_area = e0_cross_e1_length * 0.5f;
 
-      bool visible = true;
+         if (triangle_area < min_triangle_area) continue;
 
-      auto occluder_candidates_it = occluders_map.find(quantize(planeWS));
+         bool visible = true;
 
-      if (occluder_candidates_it != occluders_map.end()) {
-         plane_occluders& occluder_candidates = occluder_candidates_it->second;
+         auto occluder_candidates_it = occluders_map.find(quantize(planeWS));
 
-         std::array<snapped_point, 3> trianglePS = {
-            snapped_point{occluder_candidates.plane_from_world *
-                          triangle.vertices[2].positionWS},
-            snapped_point{occluder_candidates.plane_from_world *
-                          triangle.vertices[1].positionWS},
-            snapped_point{occluder_candidates.plane_from_world *
-                          triangle.vertices[0].positionWS},
-         };
+         if (occluder_candidates_it != occluders_map.end()) {
+            plane_occluders& occluder_candidates = occluder_candidates_it->second;
 
-         for (auto candidate_it =
-                 std::upper_bound(occluder_candidates.occluders.begin(),
-                                  occluder_candidates.occluders.end(), triangle_area,
-                                  [&](const float triangle_area,
-                                      const quad_occluder& left) noexcept {
-                                     return triangle_area < left.area;
-                                  });
-              candidate_it != occluder_candidates.occluders.end(); ++candidate_it) {
-            const quad_occluder& occluder = *candidate_it;
+            const std::array<snapped_point, 3> trianglePS = {
+               snapped_point{occluder_candidates.plane_from_world *
+                             triangle.vertices[2].positionWS},
+               snapped_point{occluder_candidates.plane_from_world *
+                             triangle.vertices[1].positionWS},
+               snapped_point{occluder_candidates.plane_from_world *
+                             triangle.vertices[0].positionWS},
+            };
 
-            if (occluder.block_id == triangle.block_id) continue;
+            for (auto candidate_it =
+                    std::upper_bound(occluder_candidates.occluders.begin(),
+                                     occluder_candidates.occluders.end(), triangle_area,
+                                     [&](const float triangle_area,
+                                         const quad_occluder& left) noexcept {
+                                        return triangle_area < left.area;
+                                     });
+                 candidate_it != occluder_candidates.occluders.end(); ++candidate_it) {
+               const quad_occluder& occluder = *candidate_it;
 
-            if (is_occluded(trianglePS, occluder.verticesPS)) {
-               visible = false;
+               if (occluder.block_id == triangle.block_id) continue;
 
-               break;
+               if (is_occluded(trianglePS, occluder.verticesPS)) {
+                  visible = false;
+
+                  break;
+               }
             }
          }
+
+         if (visible) new_triangles.push_back(triangle);
       }
 
-      if (visible) new_triangles.push_back(triangle);
+      if (new_triangles.empty()) continue;
+
+      new_meshes.push_back({
+         .triangles = std::move(new_triangles),
+         .collision_triangles = mesh.collision_triangles,
+         .bboxWS = mesh.bboxWS,
+      });
    }
 
-   return new_triangles;
+   return new_meshes;
 }
 
 }

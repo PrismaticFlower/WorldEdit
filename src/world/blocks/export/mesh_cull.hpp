@@ -7,8 +7,8 @@
 
 namespace we::world {
 
-auto cull_hidden_triangles(std::span<const block_world_triangle> triangles,
+auto cull_hidden_triangles(std::span<const block_world_mesh> meshes,
                            std::span<const block_world_occluder> occluders) noexcept
-   -> std::vector<block_world_triangle>;
+   -> std::vector<block_world_mesh>;
 
 }

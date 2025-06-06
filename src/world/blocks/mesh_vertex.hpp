@@ -11,4 +11,9 @@ struct block_vertex {
    uint32 surface_index;
 };
 
+struct block_collision_vertex {
+   float3 position;
+   uint32 surface_index;
+};
+
 }

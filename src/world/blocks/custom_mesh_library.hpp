@@ -17,7 +17,7 @@ struct block_custom_mesh {
    std::vector<std::array<uint16, 3>> triangles;
    std::vector<std::array<uint16, 4>> occluders;
 
-   std::vector<float3> collision_vertices;
+   std::vector<block_collision_vertex> collision_vertices;
    std::vector<std::array<uint16, 3>> collision_triangles;
    std::vector<std::array<uint16, 4>> collision_occluders;
 

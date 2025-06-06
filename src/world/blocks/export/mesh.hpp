@@ -4,8 +4,11 @@
 
 #include "types.hpp"
 
+#include "math/bounding_box.hpp"
+
 #include <array>
 #include <bit>
+#include <vector>
 
 namespace we::world {
 
@@ -35,6 +38,13 @@ struct block_world_triangle {
    uint8 material_index = 0;
 };
 
+struct block_world_collision_triangle {
+   block_id block_id;
+
+   std::array<float3, 3> verticesWS;
+   uint8 material_index = 0;
+};
+
 struct block_world_occluder {
    block_id block_id;
 
@@ -42,6 +52,13 @@ struct block_world_occluder {
 
    float4 planeWS;
    float area;
+};
+
+struct block_world_mesh {
+   std::vector<block_world_triangle> triangles;
+   std::vector<block_world_collision_triangle> collision_triangles;
+
+   math::bounding_box bboxWS;
 };
 
 }

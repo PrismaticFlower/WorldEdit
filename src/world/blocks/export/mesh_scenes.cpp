@@ -65,6 +65,65 @@ constexpr block_foley_group foley_group_list[] = {
    block_foley_group::water, block_foley_group::wood,
 };
 
+struct cache_vertex {
+   cache_vertex() = default;
+
+   cache_vertex(const block_world_vertex& vertex)
+      : positionWS{vertex.positionWS},
+        normalWS{vertex.normalWS},
+        texcoords{vertex.texcoords}
+   {
+      // clang-format off
+      if (positionWS.x == 0.0f or positionWS.x != positionWS.x) positionWS.x = 0.0f;
+      if (positionWS.y == 0.0f or positionWS.y != positionWS.y) positionWS.y = 0.0f;
+      if (positionWS.z == 0.0f or positionWS.z != positionWS.z) positionWS.z = 0.0f;
+      if (normalWS.x == 0.0f or normalWS.x != normalWS.x) normalWS.x = 0.0f;
+      if (normalWS.y == 0.0f or normalWS.y != normalWS.y) normalWS.y = 0.0f;
+      if (normalWS.z == 0.0f or normalWS.z != normalWS.z) normalWS.z = 0.0f;
+      if (texcoords.x == 0.0f or texcoords.x != texcoords.x) texcoords.x = 0.0f;
+      if (texcoords.y == 0.0f or texcoords.y != texcoords.y) texcoords.y = 0.0f;
+      // clang-format on
+   }
+
+   float3 positionWS;
+   float3 normalWS;
+   float2 texcoords;
+
+   bool operator==(const cache_vertex& other) const noexcept = default;
+
+   template<typename H>
+   friend H AbslHashValue(H h, const cache_vertex& vertex)
+   {
+      return H::combine(std::move(h), vertex.positionWS.x, vertex.positionWS.y,
+                        vertex.positionWS.z, vertex.normalWS.x, vertex.normalWS.y,
+                        vertex.normalWS.z, vertex.texcoords.x, vertex.texcoords.y);
+   }
+};
+
+struct cache_collision_vertex {
+   cache_collision_vertex() = default;
+
+   cache_collision_vertex(const float3& vertexWS) : positionWS{vertexWS}
+   {
+      // clang-format off
+      if (positionWS.x == 0.0f or positionWS.x != positionWS.x) positionWS.x = 0.0f;
+      if (positionWS.y == 0.0f or positionWS.y != positionWS.y) positionWS.y = 0.0f;
+      if (positionWS.z == 0.0f or positionWS.z != positionWS.z) positionWS.z = 0.0f;
+      // clang-format on
+   }
+
+   float3 positionWS;
+
+   bool operator==(const cache_collision_vertex& other) const noexcept = default;
+
+   template<typename H>
+   friend H AbslHashValue(H h, const cache_collision_vertex& vertex)
+   {
+      return H::combine(std::move(h), vertex.positionWS.x, vertex.positionWS.y,
+                        vertex.positionWS.z);
+   }
+};
+
 auto make_material(const block_material& material) noexcept -> assets::msh::material
 {
    using assets::msh::rendertype;
@@ -111,9 +170,12 @@ auto make_material(const block_material& material) noexcept -> assets::msh::mate
 void process_triangles(
    const block_foley_group foley_group,
    const std::array<std::vector<std::array<block_world_vertex, 3>>, max_block_materials>& material_binned_triangles,
+   const std::vector<std::array<float3, 3>>& foley_binned_collision_triangles,
    std::span<const block_material> materials,
    std::vector<block_export_scene>& scenes_out) noexcept
 {
+   const std::size_t first_scene = scenes_out.size();
+
    assets::msh::scene scene = {.nodes = {
                                   assets::msh::node{
                                      .name = "root",
@@ -125,7 +187,7 @@ void process_triangles(
                                   },
                                }};
 
-   absl::flat_hash_map<block_world_vertex, uint16> vertex_map;
+   absl::flat_hash_map<cache_vertex, uint16> vertex_cache;
 
    for (uint32 material_index = 0; material_index < max_block_materials;
         ++material_index) {
@@ -166,7 +228,7 @@ void process_triangles(
          segment.triangles.reserve(binned_triangles.size());
       }
 
-      vertex_map.reserve(binned_triangles.size());
+      vertex_cache.reserve(binned_triangles.size() * 2);
 
       for (const std::array<block_world_vertex, 3>& triangle : binned_triangles) {
          if (scene.nodes[1].segments.back().positions.size() >
@@ -200,7 +262,7 @@ void process_triangles(
             segment.texcoords->reserve(binned_triangles.size());
             segment.triangles.reserve(binned_triangles.size());
 
-            vertex_map.clear();
+            vertex_cache.clear();
          }
 
          assets::msh::geometry_segment& segment = scene.nodes[1].segments.back();
@@ -208,12 +270,12 @@ void process_triangles(
          std::array<uint16, 3>& indexed_triangle = segment.triangles.emplace_back();
 
          for (uint32 i = 0; i < indexed_triangle.size(); ++i) {
-            auto index_it = vertex_map.find(triangle[i]);
+            auto index_it = vertex_cache.find(triangle[i]);
 
-            if (index_it == vertex_map.end()) {
+            if (index_it == vertex_cache.end()) {
                indexed_triangle[i] = static_cast<uint16>(segment.positions.size());
 
-               vertex_map.emplace(triangle[i], indexed_triangle[i]);
+               vertex_cache.emplace(triangle[i], indexed_triangle[i]);
 
                segment.positions.push_back(triangle[i].positionWS);
                segment.normals->push_back(triangle[i].normalWS);
@@ -227,18 +289,84 @@ void process_triangles(
 
       scene.materials.push_back(make_material(materials[material_index]));
 
-      vertex_map.clear();
+      vertex_cache.clear();
    }
 
    if (not scene.nodes[1].segments.empty()) {
       scenes_out.push_back({foley_group, std::move(scene)});
    }
+
+   vertex_cache = {};
+
+   if (foley_binned_collision_triangles.empty()) return;
+
+   const std::size_t last_scene = scenes_out.size();
+   std::size_t collision_triangle_index = 0;
+
+   absl::flat_hash_map<cache_collision_vertex, uint16> collision_vertex_cache;
+   collision_vertex_cache.reserve(foley_binned_collision_triangles.size() * 2);
+
+   for (std::size_t scene_index = first_scene; scene_index < last_scene; ++scene_index) {
+      assets::msh::node node{
+         .name = "collision",
+         .parent = "root",
+         .type = assets::msh::node_type::static_mesh,
+         .hidden = true,
+      };
+
+      for (; collision_triangle_index < foley_binned_collision_triangles.size();
+           ++collision_triangle_index) {
+         if (node.segments.empty() or node.segments.back().positions.size() == 0x8000) {
+            if (node.segments.size() == 2) break;
+
+            assets::msh::geometry_segment& segment = node.segments.emplace_back();
+
+            segment.positions.reserve(
+               std::min((foley_binned_collision_triangles.size() - collision_triangle_index) * 3,
+                        std::size_t{0x8000}));
+            segment.triangles.reserve(foley_binned_collision_triangles.size() -
+                                      collision_triangle_index);
+
+            vertex_cache.clear();
+         }
+
+         assets::msh::geometry_segment& segment = node.segments.back();
+
+         const std::array<float3, 3>& triangle =
+            foley_binned_collision_triangles[collision_triangle_index];
+         std::array<uint16, 3>& indexed_triangle = segment.triangles.emplace_back();
+
+         for (uint32 i = 0; i < indexed_triangle.size(); ++i) {
+            auto index_it = collision_vertex_cache.find(triangle[i]);
+
+            if (index_it == collision_vertex_cache.end()) {
+               indexed_triangle[i] = static_cast<uint16>(segment.positions.size());
+
+               collision_vertex_cache.emplace(triangle[i], indexed_triangle[i]);
+
+               segment.positions.push_back(triangle[i]);
+            }
+            else {
+               indexed_triangle[i] = index_it->second;
+            }
+         }
+      }
+
+      collision_vertex_cache.clear();
+
+      if (not node.segments.empty()) {
+         scenes_out[scene_index].msh_scene.nodes.push_back(std::move(node));
+         scenes_out[scene_index].has_collision = true;
+      }
+   }
+
+   assert(collision_triangle_index == foley_binned_collision_triangles.size());
 }
 
 }
 
-auto build_mesh_scenes(std::span<const block_world_triangle> triangles,
-                       std::span<const std::vector<uint32>> triangle_clusters,
+auto build_mesh_scenes(std::span<const block_world_mesh> meshes,
+                       std::span<const std::vector<uint32>> mesh_clusters,
                        std::span<const block_material> materials) noexcept
    -> std::vector<block_export_scene>
 {
@@ -249,13 +377,24 @@ auto build_mesh_scenes(std::span<const block_world_triangle> triangles,
    std::unique_ptr foley_binned_triangles = std::make_unique<container::enum_array<
       std::array<std::vector<std::array<block_world_vertex, 3>>, max_block_materials>, foley_index>>();
 
-   for (const std::vector<uint32>& cluster : triangle_clusters) {
-      for (const uint32 triangle_index : cluster) {
-         const block_world_triangle& triangle = triangles[triangle_index];
+   std::unique_ptr foley_binned_collision_triangle_counts =
+      std::make_unique<container::enum_array<uint32, foley_index>>();
+   std::unique_ptr foley_binned_collision_triangles =
+      std::make_unique<container::enum_array<std::vector<std::array<float3, 3>>, foley_index>>();
 
-         foley_binned_triangle_counts->at(to_index(
-            materials[triangle.material_index].foley_group))[triangle.material_index] +=
-            1;
+   for (const std::vector<uint32>& cluster : mesh_clusters) {
+      for (const uint32 mesh_index : cluster) {
+         for (const block_world_triangle& triangle : meshes[mesh_index].triangles) {
+            foley_binned_triangle_counts->at(to_index(
+               materials[triangle.material_index].foley_group))[triangle.material_index] +=
+               1;
+         }
+
+         for (const block_world_collision_triangle& triangle :
+              meshes[mesh_index].collision_triangles) {
+            foley_binned_collision_triangle_counts->at(
+               to_index(materials[triangle.material_index].foley_group)) += 1;
+         }
       }
 
       for (const foley_index foley_index : foley_index_list) {
@@ -264,22 +403,35 @@ auto build_mesh_scenes(std::span<const block_world_triangle> triangles,
             foley_binned_triangles->at(foley_index)[material_index].reserve(
                foley_binned_triangle_counts->at(foley_index)[material_index]);
          }
+
+         foley_binned_collision_triangles->at(foley_index)
+            .reserve(foley_binned_collision_triangle_counts->at(foley_index));
       }
 
-      for (const uint32 triangle_index : cluster) {
-         const block_world_triangle& triangle = triangles[triangle_index];
+      for (const uint32 mesh_index : cluster) {
+         for (const block_world_triangle& triangle : meshes[mesh_index].triangles) {
+            foley_binned_triangles
+               ->at(to_index(
+                  materials[triangle.material_index].foley_group))[triangle.material_index]
+               .push_back(triangle.vertices);
+         }
 
-         foley_binned_triangles
-            ->at(to_index(
-               materials[triangle.material_index].foley_group))[triangle.material_index]
-            .push_back(triangle.vertices);
+         for (const block_world_collision_triangle& triangle :
+              meshes[mesh_index].collision_triangles) {
+            foley_binned_collision_triangles
+               ->at(to_index(materials[triangle.material_index].foley_group))
+               .push_back(triangle.verticesWS);
+         }
       }
 
       for (const block_foley_group foley_group : foley_group_list) {
          const std::array<std::vector<std::array<block_world_vertex, 3>>, max_block_materials>& material_binned_triangles =
             foley_binned_triangles->at(to_index(foley_group));
+         const std::vector<std::array<float3, 3>>& binned_collision_triangles =
+            foley_binned_collision_triangles->at(to_index(foley_group));
 
-         process_triangles(foley_group, material_binned_triangles, materials, scenes);
+         process_triangles(foley_group, material_binned_triangles,
+                           binned_collision_triangles, materials, scenes);
       }
 
       for (std::array<uint32, max_block_materials>& counts :
@@ -293,6 +445,12 @@ auto build_mesh_scenes(std::span<const block_world_triangle> triangles,
               material_binned_triangles) {
             tris.clear();
          }
+      }
+
+      for (uint32& count : *foley_binned_collision_triangle_counts) count = 0;
+
+      for (std::vector<std::array<float3, 3>>& tris : *foley_binned_collision_triangles) {
+         tris.clear();
       }
    }
 

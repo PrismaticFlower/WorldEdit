@@ -120,7 +120,7 @@ template<typename T>
 void process_blocks(const T& blocks, std::span<const block_vertex> block_vertices,
                     std::span<const std::array<uint16, 3>> block_triangles,
                     std::span<const std::array<uint16, 4>> block_occluders,
-                    std::vector<block_world_triangle>& out_triangle_list,
+                    std::vector<block_world_mesh>& out_mesh_list,
                     std::vector<block_world_occluder>& out_occluder_list) noexcept
 {
    using description_type = decltype(T::description)::value_type;
@@ -129,6 +129,10 @@ void process_blocks(const T& blocks, std::span<const block_vertex> block_vertice
    for (uint32 block_index = 0; block_index < blocks.size(); ++block_index) {
       const description_type& block = blocks.description[block_index];
       const id_type block_id = blocks.ids[block_index];
+
+      block_world_mesh& out_mesh = out_mesh_list.emplace_back();
+      out_mesh.triangles.reserve(block_triangles.size());
+      out_mesh.collision_triangles.reserve(block_triangles.size());
 
       const float4x4 scale = {
          {block.size.x, 0.0f, 0.0f, 0.0f},
@@ -176,7 +180,13 @@ void process_blocks(const T& blocks, std::span<const block_vertex> block_vertice
             world_triangle.material_index = material_index;
          }
 
-         out_triangle_list.push_back(world_triangle);
+         out_mesh.triangles.push_back(world_triangle);
+         out_mesh.collision_triangles.push_back(
+            {.block_id = world_triangle.block_id,
+             .verticesWS{world_triangle.vertices[0].positionWS,
+                         world_triangle.vertices[1].positionWS,
+                         world_triangle.vertices[2].positionWS},
+             .material_index = world_triangle.material_index});
       }
 
       for (const std::array<uint16, 4>& quad : block_occluders) {
@@ -204,15 +214,20 @@ void process_blocks(const T& blocks, std::span<const block_vertex> block_vertice
 }
 
 void process_blocks(const blocks_quads& blocks,
-                    std::vector<block_world_triangle>& out_triangle_list) noexcept
+                    std::vector<block_world_mesh>& out_mesh_list) noexcept
 {
    for (uint32 block_index = 0; block_index < blocks.size(); ++block_index) {
       const block_description_quad& block = blocks.description[block_index];
       const block_quad_id block_id = blocks.ids[block_index];
 
+      block_world_mesh& out_mesh = out_mesh_list.emplace_back();
+      out_mesh.triangles.reserve(2);
+      out_mesh.collision_triangles.reserve(2);
+
       for (const std::array<uint16, 3>& tri : block.quad_split == block_quad_split::regular
                                                  ? block_quad_triangles
                                                  : block_quad_alternate_triangles) {
+
          const float3 normalWS =
             normalize(cross(block.vertices[tri[1]] - block.vertices[tri[0]],
                             block.vertices[tri[2]] - block.vertices[tri[0]]));
@@ -236,20 +251,30 @@ void process_blocks(const blocks_quads& blocks,
             world_triangle.material_index = material_index;
          }
 
-         out_triangle_list.push_back(world_triangle);
+         out_mesh.triangles.push_back(world_triangle);
+         out_mesh.collision_triangles.push_back(
+            {.block_id = world_triangle.block_id,
+             .verticesWS{world_triangle.vertices[0].positionWS,
+                         world_triangle.vertices[1].positionWS,
+                         world_triangle.vertices[2].positionWS},
+             .material_index = world_triangle.material_index});
       }
    }
 }
 
 void process_blocks(const blocks_stairways& blocks,
                     const blocks_custom_mesh_library& meshes,
-                    std::vector<block_world_triangle>& out_triangle_list,
+                    std::vector<block_world_mesh>& out_mesh_list,
                     std::vector<block_world_occluder>& out_occluder_list) noexcept
 {
    for (uint32 block_index = 0; block_index < blocks.size(); ++block_index) {
       const block_description_stairway& block = blocks.description[block_index];
       const block_stairway_id block_id = blocks.ids[block_index];
       const block_custom_mesh& mesh = meshes[blocks.mesh[block_index]];
+
+      block_world_mesh& out_mesh = out_mesh_list.emplace_back();
+      out_mesh.triangles.reserve(mesh.triangles.size());
+      out_mesh.collision_triangles.reserve(mesh.collision_occluders.size());
 
       float4x4 world_from_local = to_matrix(block.rotation);
       float3x3 world_from_local_adjugate = adjugate(world_from_local);
@@ -289,7 +314,7 @@ void process_blocks(const blocks_stairways& blocks,
             world_triangle.material_index = material_index;
          }
 
-         out_triangle_list.push_back(world_triangle);
+         out_mesh.triangles.push_back(world_triangle);
       }
 
       for (const std::array<uint16, 4>& quad : mesh.occluders) {
@@ -312,6 +337,39 @@ void process_blocks(const blocks_stairways& blocks,
          occluder.planeWS = {normalWS, -dot(normalWS, occluder.verticesWS[0])};
 
          out_occluder_list.push_back(occluder);
+      }
+
+      for (const std::array<uint16, 3>& tri : mesh.collision_triangles) {
+         block_world_collision_triangle world_triangle;
+
+         for (std::size_t i = 0; i < tri.size(); ++i) {
+            const block_collision_vertex& vertex = mesh.collision_vertices[tri[i]];
+
+            world_triangle.verticesWS[i] = world_from_local * vertex.position;
+            world_triangle.material_index =
+               block.surface_materials[vertex.surface_index];
+         }
+
+         out_mesh.collision_triangles.push_back(world_triangle);
+      }
+   }
+}
+
+void fill_bounding_boxes(std::span<block_world_mesh> mesh_list) noexcept
+{
+   for (block_world_mesh& mesh : mesh_list) {
+      mesh.bboxWS = {
+         .min = {FLT_MAX, FLT_MAX, FLT_MAX},
+         .max = {-FLT_MAX, -FLT_MAX, -FLT_MAX},
+      };
+
+      for (const block_world_triangle& tri : mesh.triangles) {
+         mesh.bboxWS.min =
+            min(min(tri.vertices[0].positionWS, tri.vertices[1].positionWS),
+                tri.vertices[2].positionWS);
+         mesh.bboxWS.max =
+            max(max(tri.vertices[0].positionWS, tri.vertices[1].positionWS),
+                tri.vertices[2].positionWS);
       }
    }
 }
@@ -344,12 +402,13 @@ auto save_blocks_meshes(const io::path& output_directory,
       throw std::runtime_error{"Unable to create directory to save blocks."};
    }
 
-   std::size_t triangle_count = 0;
+   std::size_t mesh_count = 0;
 
-   triangle_count += blocks.boxes.size() * block_cube_triangles.size();
-   triangle_count += blocks.ramps.size() * block_ramp_triangles.size();
-   triangle_count += blocks.quads.size() * block_quad_triangles.size();
-   triangle_count += blocks.cylinders.size() * block_cylinder_triangles.size();
+   mesh_count += blocks.boxes.size();
+   mesh_count += blocks.ramps.size();
+   mesh_count += blocks.quads.size();
+   mesh_count += blocks.cylinders.size();
+   mesh_count += blocks.stairways.size();
 
    std::size_t occluder_count = 0;
 
@@ -361,31 +420,32 @@ auto save_blocks_meshes(const io::path& output_directory,
       const block_custom_mesh& mesh =
          blocks.custom_meshes[blocks.stairways.mesh[block_index]];
 
-      occluder_count += mesh.triangles.size();
       occluder_count += mesh.occluders.size();
    }
 
-   std::vector<block_world_triangle> triangle_list;
+   std::vector<block_world_mesh> mesh_list;
    std::vector<block_world_occluder> occluder_list;
 
-   triangle_list.reserve(triangle_count);
+   mesh_list.reserve(mesh_count);
    occluder_list.reserve(occluder_count);
 
    process_blocks(blocks.boxes, block_cube_vertices, block_cube_triangles,
-                  block_cube_occluders, triangle_list, occluder_list);
+                  block_cube_occluders, mesh_list, occluder_list);
    process_blocks(blocks.ramps, block_ramp_vertices, block_ramp_triangles,
-                  block_ramp_occluders, triangle_list, occluder_list);
-   process_blocks(blocks.quads, triangle_list);
+                  block_ramp_occluders, mesh_list, occluder_list);
+   process_blocks(blocks.quads, mesh_list);
    process_blocks(blocks.cylinders, block_cylinder_vertices, block_cylinder_triangles,
-                  block_cylinder_occluders, triangle_list, occluder_list);
-   process_blocks(blocks.stairways, blocks.custom_meshes, triangle_list, occluder_list);
+                  block_cylinder_occluders, mesh_list, occluder_list);
+   process_blocks(blocks.stairways, blocks.custom_meshes, mesh_list, occluder_list);
 
-   triangle_list = cull_hidden_triangles(triangle_list, occluder_list);
+   fill_bounding_boxes(mesh_list);
 
-   const std::vector<std::vector<uint32>> triangle_clusters =
-      build_mesh_clusters(triangle_list, min_cluster_triangles, max_cluster_subdivision);
+   mesh_list = cull_hidden_triangles(mesh_list, occluder_list);
+
+   const std::vector<std::vector<uint32>> mesh_clusters =
+      build_mesh_clusters(mesh_list, min_cluster_triangles, max_cluster_subdivision);
    const std::vector<block_export_scene> scenes =
-      build_mesh_scenes(triangle_list, triangle_clusters, blocks.materials);
+      build_mesh_scenes(mesh_list, mesh_clusters, blocks.materials);
 
    for (std::size_t scene_index = 0; scene_index < scenes.size(); ++scene_index) {
       const block_export_scene& scene = scenes[scene_index];
@@ -395,19 +455,28 @@ auto save_blocks_meshes(const io::path& output_directory,
       assets::msh::save_scene(io::compose_path(output_directory, mesh_name, ".msh"),
                               scene.msh_scene);
 
-      io::output_file odf{io::compose_path(output_directory,
-                                           fmt::format("WE_{}_blocks{}.odf",
-                                                       world_name, scene_index))};
+      // write .msh.option file
+      {
+         io::output_file option{
+            io::compose_path(output_directory, mesh_name, ".msh.option")};
 
-      odf.write_ln("[GameObjectClass]");
-      odf.write_ln("");
-      odf.write_ln("ClassLabel   = \"prop\"");
-      odf.write_ln("GeometryName = \"{}.msh\"", mesh_name);
-      odf.write_ln("");
-      odf.write_ln("[Properties]");
-      odf.write_ln("");
-      odf.write_ln("GeometryName = \"{}\"", mesh_name);
-      odf.write_ln("FoleyFXGroup = \"{}_foley\"", foley_name(scene.foley_group));
+         if (not scene.has_collision) option.write("-nocollision");
+      }
+
+      // write .odf
+      {
+         io::output_file odf{io::compose_path(output_directory, mesh_name, ".odf")};
+
+         odf.write_ln("[GameObjectClass]");
+         odf.write_ln("");
+         odf.write_ln("ClassLabel   = \"prop\"");
+         odf.write_ln("GeometryName = \"{}.msh\"", mesh_name);
+         odf.write_ln("");
+         odf.write_ln("[Properties]");
+         odf.write_ln("");
+         odf.write_ln("GeometryName = \"{}\"", mesh_name);
+         odf.write_ln("FoleyFXGroup = \"{}_foley\"", foley_name(scene.foley_group));
+      }
    }
 
    return scenes.size();
