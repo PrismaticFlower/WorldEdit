@@ -199,12 +199,12 @@ TEST_CASE("edits delete_block (stairway)", "[Edits]")
    REQUIRE(blocks.stairways.size() == 3);
    CHECK(blocks.stairways.is_balanced());
 
-   CHECK(blocks.stairways.bbox.min_x[0] == -1.0f);
+   CHECK(blocks.stairways.bbox.min_x[0] == -0.5f);
    CHECK(blocks.stairways.bbox.min_y[0] == 0.0f);
-   CHECK(blocks.stairways.bbox.min_z[0] == -1.0f);
-   CHECK(blocks.stairways.bbox.max_x[0] == 1.0f);
+   CHECK(blocks.stairways.bbox.min_z[0] == -0.5f);
+   CHECK(blocks.stairways.bbox.max_x[0] == 0.5f);
    CHECK(blocks.stairways.bbox.max_y[0] == 1.0f);
-   CHECK(blocks.stairways.bbox.max_z[0] == 1.0f);
+   CHECK(blocks.stairways.bbox.max_z[0] == 0.5f);
    CHECK(not blocks.stairways.hidden[0]);
    CHECK(blocks.stairways.layer[0] == 1);
    CHECK(blocks.stairways.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
@@ -214,12 +214,12 @@ TEST_CASE("edits delete_block (stairway)", "[Edits]")
          blocks.custom_meshes.debug_query_handle(stair_desc0.custom_mesh_desc()));
    CHECK(blocks.stairways.ids[0] == id0);
 
-   CHECK(blocks.stairways.bbox.min_x[1] == -3.0f);
+   CHECK(blocks.stairways.bbox.min_x[1] == -1.5f);
    CHECK(blocks.stairways.bbox.min_y[1] == 0.0f);
-   CHECK(blocks.stairways.bbox.min_z[1] == -3.0f);
-   CHECK(blocks.stairways.bbox.max_x[1] == 3.0f);
+   CHECK(blocks.stairways.bbox.min_z[1] == -1.5f);
+   CHECK(blocks.stairways.bbox.max_x[1] == 1.5f);
    CHECK(blocks.stairways.bbox.max_y[1] == 3.0f);
-   CHECK(blocks.stairways.bbox.max_z[1] == 3.0f);
+   CHECK(blocks.stairways.bbox.max_z[1] == 1.5f);
    CHECK(not blocks.stairways.hidden[1]);
    CHECK(blocks.stairways.layer[1] == 0);
    CHECK(blocks.stairways.description[1].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
@@ -229,12 +229,12 @@ TEST_CASE("edits delete_block (stairway)", "[Edits]")
          blocks.custom_meshes.debug_query_handle(stair_desc2.custom_mesh_desc()));
    CHECK(blocks.stairways.ids[1] == id2);
 
-   CHECK(blocks.stairways.bbox.min_x[2] == -4.0f);
+   CHECK(blocks.stairways.bbox.min_x[2] == -2.0f);
    CHECK(blocks.stairways.bbox.min_y[2] == 0.0f);
-   CHECK(blocks.stairways.bbox.min_z[2] == -4.0f);
-   CHECK(blocks.stairways.bbox.max_x[2] == 4.0f);
+   CHECK(blocks.stairways.bbox.min_z[2] == -2.0f);
+   CHECK(blocks.stairways.bbox.max_x[2] == 2.0f);
    CHECK(blocks.stairways.bbox.max_y[2] == 4.0f);
-   CHECK(blocks.stairways.bbox.max_z[2] == 4.0f);
+   CHECK(blocks.stairways.bbox.max_z[2] == 2.0f);
    CHECK(not blocks.stairways.hidden[2]);
    CHECK(blocks.stairways.layer[2] == 0);
    CHECK(blocks.stairways.description[2].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
@@ -259,12 +259,12 @@ TEST_CASE("edits delete_block (stairway)", "[Edits]")
    REQUIRE(blocks.stairways.size() == 4);
    CHECK(blocks.stairways.is_balanced());
 
-   CHECK(blocks.stairways.bbox.min_x[0] == -1.0f);
+   CHECK(blocks.stairways.bbox.min_x[0] == -0.5f);
    CHECK(blocks.stairways.bbox.min_y[0] == 0.0f);
-   CHECK(blocks.stairways.bbox.min_z[0] == -1.0f);
-   CHECK(blocks.stairways.bbox.max_x[0] == 1.0f);
+   CHECK(blocks.stairways.bbox.min_z[0] == -0.5f);
+   CHECK(blocks.stairways.bbox.max_x[0] == 0.5f);
    CHECK(blocks.stairways.bbox.max_y[0] == 1.0f);
-   CHECK(blocks.stairways.bbox.max_z[0] == 1.0f);
+   CHECK(blocks.stairways.bbox.max_z[0] == 0.5f);
    CHECK(not blocks.stairways.hidden[0]);
    CHECK(blocks.stairways.layer[0] == 1);
    CHECK(blocks.stairways.description[0].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
@@ -274,12 +274,12 @@ TEST_CASE("edits delete_block (stairway)", "[Edits]")
          blocks.custom_meshes.debug_query_handle(stair_desc0.custom_mesh_desc()));
    CHECK(blocks.stairways.ids[0] == id0);
 
-   CHECK(blocks.stairways.bbox.min_x[1] == -2.0f);
+   CHECK(blocks.stairways.bbox.min_x[1] == -1.0f);
    CHECK(blocks.stairways.bbox.min_y[1] == 0.0f);
-   CHECK(blocks.stairways.bbox.min_z[1] == -2.0f);
-   CHECK(blocks.stairways.bbox.max_x[1] == 2.0f);
+   CHECK(blocks.stairways.bbox.min_z[1] == -1.0f);
+   CHECK(blocks.stairways.bbox.max_x[1] == 1.0f);
    CHECK(blocks.stairways.bbox.max_y[1] == 2.0f);
-   CHECK(blocks.stairways.bbox.max_z[1] == 2.0f);
+   CHECK(blocks.stairways.bbox.max_z[1] == 1.0f);
    CHECK(blocks.stairways.hidden[1]);
    CHECK(blocks.stairways.layer[1] == 1);
    CHECK(blocks.stairways.description[1].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
@@ -289,12 +289,12 @@ TEST_CASE("edits delete_block (stairway)", "[Edits]")
          blocks.custom_meshes.debug_query_handle(stair_desc1.custom_mesh_desc()));
    CHECK(blocks.stairways.ids[1] == id1);
 
-   CHECK(blocks.stairways.bbox.min_x[2] == -3.0f);
+   CHECK(blocks.stairways.bbox.min_x[2] == -1.5f);
    CHECK(blocks.stairways.bbox.min_y[2] == 0.0f);
-   CHECK(blocks.stairways.bbox.min_z[2] == -3.0f);
-   CHECK(blocks.stairways.bbox.max_x[2] == 3.0f);
+   CHECK(blocks.stairways.bbox.min_z[2] == -1.5f);
+   CHECK(blocks.stairways.bbox.max_x[2] == 1.5f);
    CHECK(blocks.stairways.bbox.max_y[2] == 3.0f);
-   CHECK(blocks.stairways.bbox.max_z[2] == 3.0f);
+   CHECK(blocks.stairways.bbox.max_z[2] == 1.5f);
    CHECK(not blocks.stairways.hidden[2]);
    CHECK(blocks.stairways.layer[2] == 0);
    CHECK(blocks.stairways.description[2].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
@@ -304,12 +304,12 @@ TEST_CASE("edits delete_block (stairway)", "[Edits]")
          blocks.custom_meshes.debug_query_handle(stair_desc2.custom_mesh_desc()));
    CHECK(blocks.stairways.ids[2] == id2);
 
-   CHECK(blocks.stairways.bbox.min_x[3] == -4.0f);
+   CHECK(blocks.stairways.bbox.min_x[3] == -2.0f);
    CHECK(blocks.stairways.bbox.min_y[3] == 0.0f);
-   CHECK(blocks.stairways.bbox.min_z[3] == -4.0f);
-   CHECK(blocks.stairways.bbox.max_x[3] == 4.0f);
+   CHECK(blocks.stairways.bbox.min_z[3] == -2.0f);
+   CHECK(blocks.stairways.bbox.max_x[3] == 2.0f);
    CHECK(blocks.stairways.bbox.max_y[3] == 4.0f);
-   CHECK(blocks.stairways.bbox.max_z[3] == 4.0f);
+   CHECK(blocks.stairways.bbox.max_z[3] == 2.0f);
    CHECK(not blocks.stairways.hidden[3]);
    CHECK(blocks.stairways.layer[3] == 0);
    CHECK(blocks.stairways.description[3].rotation == quaternion{1.0f, 0.0f, 0.0f, 0.0f});
