@@ -110,12 +110,12 @@ TEST_CASE("edits add_block stairway", "[Edits]")
    REQUIRE(blocks.stairways.mesh.size() == 1);
    REQUIRE(blocks.stairways.ids.size() == 1);
 
-   CHECK(blocks.stairways.bbox.min_x[0] == 5.0f);
+   CHECK(blocks.stairways.bbox.min_x[0] == 7.5f);
    CHECK(blocks.stairways.bbox.min_y[0] == 5.1f);
-   CHECK(blocks.stairways.bbox.min_z[0] == 5.0f);
-   CHECK(blocks.stairways.bbox.max_x[0] == 15.0f);
+   CHECK(blocks.stairways.bbox.min_z[0] == 7.5f);
+   CHECK(blocks.stairways.bbox.max_x[0] == 12.5f);
    CHECK(blocks.stairways.bbox.max_y[0] == 10.0f);
-   CHECK(blocks.stairways.bbox.max_z[0] == 15.0f);
+   CHECK(blocks.stairways.bbox.max_z[0] == 12.5f);
    CHECK(not blocks.stairways.hidden[0]);
    CHECK(blocks.stairways.layer[0] == 2);
    CHECK(blocks.stairways.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
