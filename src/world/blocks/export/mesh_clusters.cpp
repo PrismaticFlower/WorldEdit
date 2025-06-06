@@ -9,29 +9,27 @@ namespace we::world {
 
 namespace {
 
-struct triangle_clusterizer {
-   triangle_clusterizer(std::span<const block_world_triangle> triangles,
-                        int32 min_triangles, int32 max_subdivisions) noexcept
-      : _triangle_data{triangles}
+struct mesh_clusterizer {
+   mesh_clusterizer(std::span<const block_world_mesh> meshes,
+                    int32 min_triangles, int32 max_subdivisions) noexcept
+      : _mesh_data{meshes}
    {
       std::vector<float3> centroids;
-      centroids.reserve(triangles.size());
+      centroids.reserve(meshes.size());
 
-      for (const block_world_triangle& tri : triangles) {
-         centroids.emplace_back((tri.vertices[0].positionWS + tri.vertices[1].positionWS +
-                                 tri.vertices[2].positionWS) *
-                                (1.0f / 3.0f));
+      for (const block_world_mesh& mesh : meshes) {
+         centroids.emplace_back((mesh.bboxWS.min + mesh.bboxWS.max) * 2.0f);
       }
 
-      _triangles.reserve(triangles.size());
+      _meshes.reserve(meshes.size());
 
-      for (uint32 i = 0; i < triangles.size(); ++i) {
-         _triangles.emplace_back(i);
+      for (uint32 i = 0; i < meshes.size(); ++i) {
+         _meshes.emplace_back(i);
       }
 
       _nodes.reserve((1ull << max_subdivisions) + 1);
 
-      node root_node = {.tri_count = static_cast<int32>(triangles.size())};
+      node root_node = {.mesh_count = static_cast<int32>(meshes.size())};
 
       update_node_bounds(root_node);
 
@@ -49,7 +47,7 @@ struct triangle_clusterizer {
             update_node_bounds(child_node);
 
             if (child_node.generation >= max_subdivisions) continue;
-            if (child_node.tri_count <= min_triangles) continue;
+            if (count_node_tris(child_node) <= min_triangles) continue;
 
             if (std::optional<std::array<node, 2>> subdivided =
                    subdivide(child_node, centroids);
@@ -59,8 +57,8 @@ struct triangle_clusterizer {
                _nodes.push_back((*subdivided)[0]);
                _nodes.push_back((*subdivided)[1]);
 
-               child_node.child_or_first_tri = child_index;
-               child_node.tri_count = 0;
+               child_node.child_or_first_mesh = child_index;
+               child_node.mesh_count = 0;
 
                nodes_used += 1;
             }
@@ -73,11 +71,11 @@ struct triangle_clusterizer {
       _nodes.shrink_to_fit();
    }
 
-   triangle_clusterizer(const triangle_clusterizer&) = delete;
-   auto operator=(const triangle_clusterizer&) -> triangle_clusterizer& = delete;
+   mesh_clusterizer(const mesh_clusterizer&) = delete;
+   auto operator=(const mesh_clusterizer&) -> mesh_clusterizer& = delete;
 
-   triangle_clusterizer(triangle_clusterizer&&) noexcept = delete;
-   auto operator=(triangle_clusterizer&&) -> triangle_clusterizer& = delete;
+   mesh_clusterizer(mesh_clusterizer&&) noexcept = delete;
+   auto operator=(mesh_clusterizer&&) -> mesh_clusterizer& = delete;
 
    auto clusters() const noexcept -> std::vector<std::vector<uint32>>
    {
@@ -88,14 +86,14 @@ struct triangle_clusterizer {
          if (not node.is_leaf()) continue;
 
          std::vector<uint32>& cluster = clusters.emplace_back();
-         cluster.reserve(node.tri_count);
+         cluster.reserve(node.mesh_count);
 
-         const int32 last_tri = node.child_or_first_tri + node.tri_count;
+         const int32 last_mesh = node.child_or_first_mesh + node.mesh_count;
 
-         for (int32 i = node.child_or_first_tri; i < last_tri; ++i) {
-            const uint32 tri_index = _triangles[i];
+         for (int32 i = node.child_or_first_mesh; i < last_mesh; ++i) {
+            const uint32 mesh_index = _meshes[i];
 
-            cluster.push_back(tri_index);
+            cluster.push_back(mesh_index);
          }
       }
 
@@ -107,21 +105,21 @@ private:
 
    struct node {
       math::bounding_box bbox;
-      int32 child_or_first_tri = 0;
-      int32 tri_count = 0;
+      int32 child_or_first_mesh = 0;
+      int32 mesh_count = 0;
       int32 generation = 0;
 
       bool is_leaf() const noexcept
       {
-         return tri_count != 0;
+         return mesh_count != 0;
       }
    };
 
    std::vector<node> _nodes;
-   std::vector<uint32> _triangles;
+   std::vector<uint32> _meshes;
    constexpr static int32 _root_node_index = 0;
 
-   std::span<const block_world_triangle> _triangle_data;
+   std::span<const block_world_mesh> _mesh_data;
 
    using float3_axis = float float3::*;
 
@@ -130,17 +128,13 @@ private:
       node.bbox = {.min = {FLT_MAX, FLT_MAX, FLT_MAX},
                    .max = {-FLT_MAX, -FLT_MAX, -FLT_MAX}};
 
-      const int32 last_tri = node.child_or_first_tri + node.tri_count;
+      const int32 last_mesh = node.child_or_first_mesh + node.mesh_count;
 
-      for (int32 i = node.child_or_first_tri; i < last_tri; ++i) {
-         const uint32 tri_index = _triangles[i];
+      for (int32 i = node.child_or_first_mesh; i < last_mesh; ++i) {
+         const uint32 mesh_index = _meshes[i];
 
-         const float3& v0 = _triangle_data[tri_index].vertices[0].positionWS;
-         const float3& v1 = _triangle_data[tri_index].vertices[1].positionWS;
-         const float3& v2 = _triangle_data[tri_index].vertices[2].positionWS;
-
-         node.bbox.min = min(node.bbox.min, min(v0, min(v1, v2)));
-         node.bbox.max = max(node.bbox.max, max(v0, max(v1, v2)));
+         node.bbox.min = min(node.bbox.min, _mesh_data[mesh_index].bboxWS.min);
+         node.bbox.max = max(node.bbox.max, _mesh_data[mesh_index].bboxWS.max);
       }
    }
 
@@ -149,27 +143,27 @@ private:
    {
       float3_axis split_axis = &float3::x;
       float split_position = 0.0f;
-      float split_cost = FLT_MAX;
+      double split_cost = DBL_MAX;
 
       find_best_split_plane(root, centroids, split_axis, split_position, split_cost);
 
-      const float root_unsplit_cost = calculate_node_cost(root);
+      const double root_unsplit_cost = calculate_node_cost(root);
 
       if (split_cost >= root_unsplit_cost) return std::nullopt;
 
       const int32 right_child_start =
          partition_split(root, split_axis, split_position, centroids);
-      const int32 left_child_count = right_child_start - root.child_or_first_tri;
+      const int32 left_child_count = right_child_start - root.child_or_first_mesh;
 
-      if (left_child_count == 0 or left_child_count == root.tri_count) {
+      if (left_child_count == 0 or left_child_count == root.mesh_count) {
          return std::nullopt;
       }
 
-      node left_child = {.child_or_first_tri = root.child_or_first_tri,
-                         .tri_count = left_child_count,
+      node left_child = {.child_or_first_mesh = root.child_or_first_mesh,
+                         .mesh_count = left_child_count,
                          .generation = root.generation + 1};
-      node right_child = {.child_or_first_tri = right_child_start,
-                          .tri_count = root.tri_count - left_child_count,
+      node right_child = {.child_or_first_mesh = right_child_start,
+                          .mesh_count = root.mesh_count - left_child_count,
                           .generation = root.generation + 1};
 
       update_node_bounds(left_child);
@@ -177,12 +171,12 @@ private:
 
       split_axis = &float3::x;
       split_position = 0.0f;
-      split_cost = FLT_MAX;
+      split_cost = DBL_MAX;
 
       find_best_split_plane(left_child, centroids, split_axis, split_position,
                             split_cost);
 
-      const float left_child_unsplit_cost = calculate_node_cost(left_child);
+      const double left_child_unsplit_cost = calculate_node_cost(left_child);
 
       if (split_cost >= left_child_unsplit_cost) return std::nullopt;
 
@@ -191,16 +185,16 @@ private:
 
    void find_best_split_plane(const node& node, std::span<const float3> centroids,
                               float3_axis& best_split_axis, float& best_split_position,
-                              float& best_split_cost) const noexcept
+                              double& best_split_cost) const noexcept
    {
       for (float3_axis axis : {&float3::x, &float3::y, &float3::z}) {
          float bounds_min = FLT_MAX;
          float bounds_max = -FLT_MAX;
 
-         const int32 last_tri = node.child_or_first_tri + node.tri_count;
+         const int32 last_mesh = node.child_or_first_mesh + node.mesh_count;
 
-         for (int32 i = node.child_or_first_tri; i < last_tri; ++i) {
-            const float3& centroid = centroids[_triangles[i]];
+         for (int32 i = node.child_or_first_mesh; i < last_mesh; ++i) {
+            const float3& centroid = centroids[_meshes[i]];
 
             bounds_min = std::min(bounds_min, centroid.*axis);
             bounds_max = std::max(bounds_max, centroid.*axis);
@@ -211,7 +205,7 @@ private:
          struct bin {
             math::bounding_box bbox = {.min = {FLT_MAX, FLT_MAX, FLT_MAX},
                                        .max = {-FLT_MAX, -FLT_MAX, -FLT_MAX}};
-            float tri_count = 0.0f;
+            double tri_count = 0.0f;
          };
 
          std::array<bin, split_bin_count> bins = {};
@@ -219,37 +213,34 @@ private:
          const float bins_scale =
             static_cast<float>(split_bin_count) / (bounds_max - bounds_min);
 
-         for (int32 i = node.child_or_first_tri; i < last_tri; ++i) {
-            const uint32 tri_index = _triangles[i];
-            const float3& centroid = centroids[tri_index];
+         for (int32 i = node.child_or_first_mesh; i < last_mesh; ++i) {
+            const uint32 mesh_index = _meshes[i];
+            const float3& centroid = centroids[mesh_index];
 
             const int32 bin_index =
                std::min(int32{split_bin_count - 1},
                         static_cast<int32>((centroid.*axis - bounds_min) * bins_scale));
 
-            const float3& v0 = _triangle_data[tri_index].vertices[0].positionWS;
-            const float3& v1 = _triangle_data[tri_index].vertices[1].positionWS;
-            const float3& v2 = _triangle_data[tri_index].vertices[2].positionWS;
-
             bin& bin = bins[bin_index];
 
-            bin.bbox.min = min(bin.bbox.min, min(v0, min(v1, v2)));
-            bin.bbox.max = max(bin.bbox.max, max(v0, max(v1, v2)));
-            bin.tri_count += 1.0f;
+            bin.bbox.min = min(bin.bbox.min, _mesh_data[mesh_index].bboxWS.min);
+            bin.bbox.max = max(bin.bbox.max, _mesh_data[mesh_index].bboxWS.max);
+            bin.tri_count +=
+               static_cast<double>(_mesh_data[mesh_index].triangles.size());
          }
 
          math::bounding_box left_bbox = {.min = {FLT_MAX, FLT_MAX, FLT_MAX},
                                          .max = {-FLT_MAX, -FLT_MAX, -FLT_MAX}};
          math::bounding_box right_bbox = {.min = {FLT_MAX, FLT_MAX, FLT_MAX},
                                           .max = {-FLT_MAX, -FLT_MAX, -FLT_MAX}};
-         float left_sum = 0.0f;
-         float right_sum = 0.0f;
+         double left_sum = 0.0f;
+         double right_sum = 0.0f;
 
-         std::array<float, split_bin_count - 1> left_area = {};
-         std::array<float, split_bin_count - 1> left_count = {};
+         std::array<double, split_bin_count - 1> left_area = {};
+         std::array<double, split_bin_count - 1> left_count = {};
 
-         std::array<float, split_bin_count - 1> right_area = {};
-         std::array<float, split_bin_count - 1> right_count = {};
+         std::array<double, split_bin_count - 1> right_area = {};
+         std::array<double, split_bin_count - 1> right_count = {};
 
          for (int32 i = 0; i < split_bin_count - 1; ++i) {
             left_sum += bins[i].tri_count;
@@ -271,7 +262,7 @@ private:
             (bounds_max - bounds_min) / static_cast<float>(split_bin_count);
 
          for (int32 i = 0; i < split_bin_count - 1; ++i) {
-            const float plane_cost =
+            const double plane_cost =
                left_count[i] * left_area[i] + right_count[i] * right_area[i];
 
             if (plane_cost < best_split_cost) {
@@ -284,28 +275,43 @@ private:
       }
    }
 
-   auto calculate_node_cost(const node& node) const noexcept -> float
+   auto calculate_node_cost(const node& node) const noexcept -> double
    {
       const float3 node_extents = node.bbox.max - node.bbox.min;
-      const float node_area = node_extents.x * node_extents.y +
-                              node_extents.y * node_extents.z +
-                              node_extents.z * node_extents.x;
+      const double node_area = node_extents.x * node_extents.y +
+                               node_extents.y * node_extents.z +
+                               node_extents.z * node_extents.x;
 
-      return static_cast<float>(node.tri_count) * node_area;
+      return static_cast<double>(count_node_tris(node)) * node_area;
+   }
+
+   auto count_node_tris(const node& node) const noexcept -> int32
+   {
+      if (not node.is_leaf()) return 0;
+
+      const uint32 last_mesh = node.child_or_first_mesh + node.mesh_count;
+
+      int32 count = 0;
+
+      for (uint32 i = node.child_or_first_mesh; i < last_mesh; ++i) {
+         count += static_cast<int32>(_mesh_data[_meshes[i]].triangles.size());
+      }
+
+      return count;
    }
 
    auto partition_split(const node& node, float3_axis split_axis, float split_position,
                         std::span<const float3> centroids) noexcept -> int
    {
-      int32 i = node.child_or_first_tri;
-      int32 j = i + node.tri_count - 1;
+      int32 i = node.child_or_first_mesh;
+      int32 j = i + node.mesh_count - 1;
 
       while (i <= j) {
-         if (centroids[_triangles[i]].*split_axis < split_position) {
+         if (centroids[_meshes[i]].*split_axis < split_position) {
             i += 1;
          }
          else {
-            std::swap(_triangles[i], _triangles[j]);
+            std::swap(_meshes[i], _meshes[j]);
 
             j -= 1;
          }
@@ -314,7 +320,7 @@ private:
       return i;
    }
 
-   auto area(const math::bounding_box& bbox) const noexcept -> float
+   auto area(const math::bounding_box& bbox) const noexcept -> double
    {
       const float3 extents = bbox.max - bbox.min;
 
@@ -324,14 +330,11 @@ private:
 
 }
 
-auto build_mesh_clusters(std::span<const block_world_triangle> triangles,
-                         int32 min_triangles, int32 max_subdivisions) noexcept
+auto build_mesh_clusters(std::span<const block_world_mesh> meshes,
+                         int32 min_meshangles, int32 max_subdivisions) noexcept
    -> std::vector<std::vector<uint32>>
 {
-   // This is suboptimal. It'd likely be much better to build clusters by picking
-   // seed triangles and slow expanding the clusters with nearby triangles. But it was quicker to hack something together using
-   // the BVH code we already had and it should be good enough for a start.
-   return triangle_clusterizer{triangles, min_triangles, max_subdivisions}.clusters();
+   return mesh_clusterizer{meshes, min_meshangles, max_subdivisions}.clusters();
 }
 
 }

@@ -56,10 +56,13 @@ output += fmt::format("\nREQUIRE(mesh.collision_vertices.size() == {});\n\n",
 
 for (std::size_t i = 0; i < mesh.collision_vertices.size(); ++i) {
    output +=
-      fmt::format("CHECK(mesh.collision_vertices[{}] == "
+      fmt::format("CHECK(mesh.collision_vertices[{}].position == "
                   "float3({:a}f, {:a}f, {:a}f));\n",
-                  i, mesh.collision_vertices[i].x, mesh.collision_vertices[i].y,
-                  mesh.collision_vertices[i].z);
+                  i, mesh.collision_vertices[i].position.x, mesh.collision_vertices[i].position.y,
+                  mesh.collision_vertices[i].position.z);
+   output +=
+      fmt::format("CHECK(mesh.collision_vertices[{}].surface_index == {});\n",
+                  i, mesh.collision_vertices[i].surface_index);
 }
 
 output += fmt::format("\nREQUIRE(mesh.collision_triangles.size() == {});\n\n",
@@ -464,48 +467,132 @@ TEST_CASE("world blocks generate_mesh stairway", "[World][Blocks]")
 
    REQUIRE(mesh.collision_vertices.size() == 42);
 
-   CHECK(mesh.collision_vertices[0] == float3(0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
-   CHECK(mesh.collision_vertices[1] == float3(-0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
-   CHECK(mesh.collision_vertices[2] == float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
-   CHECK(mesh.collision_vertices[3] == float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
-   CHECK(mesh.collision_vertices[4] == float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
-   CHECK(mesh.collision_vertices[5] == float3(0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+1f));
-   CHECK(mesh.collision_vertices[6] == float3(0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
-   CHECK(mesh.collision_vertices[7] == float3(-0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
-   CHECK(mesh.collision_vertices[8] == float3(-0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+1f));
-   CHECK(mesh.collision_vertices[9] == float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
-   CHECK(mesh.collision_vertices[10] == float3(-0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+1f));
-   CHECK(mesh.collision_vertices[11] == float3(-0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[12] == float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[13] == float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
-   CHECK(mesh.collision_vertices[14] == float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
-   CHECK(mesh.collision_vertices[15] == float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[16] == float3(0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[17] == float3(0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+1f));
-   CHECK(mesh.collision_vertices[18] == float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
-   CHECK(mesh.collision_vertices[19] == float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
-   CHECK(mesh.collision_vertices[20] == float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[21] == float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[22] == float3(0x1.4p+2f, 0x0p-1022f, -0x1.4p+2f));
-   CHECK(mesh.collision_vertices[23] == float3(0x1.4p+2f, 0x0p-1022f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[24] == float3(-0x1.4p+2f, 0x0p-1022f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[25] == float3(-0x1.4p+2f, 0x0p-1022f, -0x1.4p+2f));
-   CHECK(mesh.collision_vertices[26] == float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[27] == float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[28] == float3(-0x1.4p+2f, 0x0p-1022f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[29] == float3(0x1.4p+2f, 0x0p-1022f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[30] == float3(0x1.4p+2f, 0x0p-1022f, -0x1.4p+2f));
-   CHECK(mesh.collision_vertices[31] == float3(-0x1.4p+2f, 0x0p-1022f, -0x1.4p+2f));
-   CHECK(mesh.collision_vertices[32] == float3(-0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
-   CHECK(mesh.collision_vertices[33] == float3(0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
-   CHECK(mesh.collision_vertices[34] == float3(0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
-   CHECK(mesh.collision_vertices[35] == float3(0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[36] == float3(0x1.4p+2f, 0x0p-1022f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[37] == float3(0x1.4p+2f, 0x0p-1022f, -0x1.4p+2f));
-   CHECK(mesh.collision_vertices[38] == float3(-0x1.4p+2f, 0x0p-1022f, -0x1.4p+2f));
-   CHECK(mesh.collision_vertices[39] == float3(-0x1.4p+2f, 0x0p-1022f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[40] == float3(-0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+2f));
-   CHECK(mesh.collision_vertices[41] == float3(-0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[0].position ==
+         float3(0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[0].surface_index == 2);
+   CHECK(mesh.collision_vertices[1].position ==
+         float3(-0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[1].surface_index == 2);
+   CHECK(mesh.collision_vertices[2].position ==
+         float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
+   CHECK(mesh.collision_vertices[2].surface_index == 2);
+   CHECK(mesh.collision_vertices[3].position ==
+         float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
+   CHECK(mesh.collision_vertices[3].surface_index == 2);
+   CHECK(mesh.collision_vertices[4].position ==
+         float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
+   CHECK(mesh.collision_vertices[4].surface_index == 0);
+   CHECK(mesh.collision_vertices[5].position ==
+         float3(0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+1f));
+   CHECK(mesh.collision_vertices[5].surface_index == 0);
+   CHECK(mesh.collision_vertices[6].position ==
+         float3(0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[6].surface_index == 0);
+   CHECK(mesh.collision_vertices[7].position ==
+         float3(-0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[7].surface_index == 1);
+   CHECK(mesh.collision_vertices[8].position ==
+         float3(-0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+1f));
+   CHECK(mesh.collision_vertices[8].surface_index == 1);
+   CHECK(mesh.collision_vertices[9].position ==
+         float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
+   CHECK(mesh.collision_vertices[9].surface_index == 1);
+   CHECK(mesh.collision_vertices[10].position ==
+         float3(-0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+1f));
+   CHECK(mesh.collision_vertices[10].surface_index == 1);
+   CHECK(mesh.collision_vertices[11].position ==
+         float3(-0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[11].surface_index == 1);
+   CHECK(mesh.collision_vertices[12].position ==
+         float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[12].surface_index == 1);
+   CHECK(mesh.collision_vertices[13].position ==
+         float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
+   CHECK(mesh.collision_vertices[13].surface_index == 1);
+   CHECK(mesh.collision_vertices[14].position ==
+         float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
+   CHECK(mesh.collision_vertices[14].surface_index == 0);
+   CHECK(mesh.collision_vertices[15].position ==
+         float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[15].surface_index == 0);
+   CHECK(mesh.collision_vertices[16].position ==
+         float3(0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[16].surface_index == 0);
+   CHECK(mesh.collision_vertices[17].position ==
+         float3(0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+1f));
+   CHECK(mesh.collision_vertices[17].surface_index == 0);
+   CHECK(mesh.collision_vertices[18].position ==
+         float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
+   CHECK(mesh.collision_vertices[18].surface_index == 2);
+   CHECK(mesh.collision_vertices[19].position ==
+         float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+1f));
+   CHECK(mesh.collision_vertices[19].surface_index == 2);
+   CHECK(mesh.collision_vertices[20].position ==
+         float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[20].surface_index == 2);
+   CHECK(mesh.collision_vertices[21].position ==
+         float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[21].surface_index == 2);
+   CHECK(mesh.collision_vertices[22].position ==
+         float3(0x1.4p+2f, 0x0p-1022f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[22].surface_index == 3);
+   CHECK(mesh.collision_vertices[23].position ==
+         float3(0x1.4p+2f, 0x0p-1022f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[23].surface_index == 3);
+   CHECK(mesh.collision_vertices[24].position ==
+         float3(-0x1.4p+2f, 0x0p-1022f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[24].surface_index == 3);
+   CHECK(mesh.collision_vertices[25].position ==
+         float3(-0x1.4p+2f, 0x0p-1022f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[25].surface_index == 3);
+   CHECK(mesh.collision_vertices[26].position ==
+         float3(0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[26].surface_index == 4);
+   CHECK(mesh.collision_vertices[27].position ==
+         float3(-0x1.4p+2f, 0x1.e66666p-1f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[27].surface_index == 4);
+   CHECK(mesh.collision_vertices[28].position ==
+         float3(-0x1.4p+2f, 0x0p-1022f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[28].surface_index == 4);
+   CHECK(mesh.collision_vertices[29].position ==
+         float3(0x1.4p+2f, 0x0p-1022f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[29].surface_index == 4);
+   CHECK(mesh.collision_vertices[30].position ==
+         float3(0x1.4p+2f, 0x0p-1022f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[30].surface_index == 5);
+   CHECK(mesh.collision_vertices[31].position ==
+         float3(-0x1.4p+2f, 0x0p-1022f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[31].surface_index == 5);
+   CHECK(mesh.collision_vertices[32].position ==
+         float3(-0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[32].surface_index == 5);
+   CHECK(mesh.collision_vertices[33].position ==
+         float3(0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[33].surface_index == 5);
+   CHECK(mesh.collision_vertices[34].position ==
+         float3(0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[34].surface_index == 0);
+   CHECK(mesh.collision_vertices[35].position ==
+         float3(0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[35].surface_index == 0);
+   CHECK(mesh.collision_vertices[36].position ==
+         float3(0x1.4p+2f, 0x0p-1022f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[36].surface_index == 0);
+   CHECK(mesh.collision_vertices[37].position ==
+         float3(0x1.4p+2f, 0x0p-1022f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[37].surface_index == 0);
+   CHECK(mesh.collision_vertices[38].position ==
+         float3(-0x1.4p+2f, 0x0p-1022f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[38].surface_index == 1);
+   CHECK(mesh.collision_vertices[39].position ==
+         float3(-0x1.4p+2f, 0x0p-1022f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[39].surface_index == 1);
+   CHECK(mesh.collision_vertices[40].position ==
+         float3(-0x1.4p+2f, 0x1.99999ap-3f, 0x1.4p+2f));
+   CHECK(mesh.collision_vertices[40].surface_index == 1);
+   CHECK(mesh.collision_vertices[41].position ==
+         float3(-0x1.4p+2f, 0x1.99999ap-3f, -0x1.4p+2f));
+   CHECK(mesh.collision_vertices[41].surface_index == 1);
 
    REQUIRE(mesh.collision_triangles.size() == 20);
 
