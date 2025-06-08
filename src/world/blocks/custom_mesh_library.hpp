@@ -120,7 +120,7 @@ struct blocks_custom_mesh_library {
 private:
    struct impl;
 
-   implementation_storage<impl, 1024> _impl;
+   implementation_storage<impl, 128> _impl;
 };
 
 }
