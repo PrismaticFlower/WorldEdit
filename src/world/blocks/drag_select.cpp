@@ -6,6 +6,8 @@ void drag_select(const blocks& blocks, const frustum& frustumWS,
                  block_drag_select_op op, selection& selection) noexcept
 {
    for (uint32 block_index = 0; block_index < blocks.boxes.size(); ++block_index) {
+      if (blocks.boxes.hidden[block_index]) continue;
+
       if (intersects(frustumWS, {.min =
                                     {
                                        blocks.boxes.bbox.min_x[block_index],
@@ -27,6 +29,8 @@ void drag_select(const blocks& blocks, const frustum& frustumWS,
    }
 
    for (uint32 block_index = 0; block_index < blocks.ramps.size(); ++block_index) {
+      if (blocks.ramps.hidden[block_index]) continue;
+
       if (intersects(frustumWS, {.min =
                                     {
                                        blocks.ramps.bbox.min_x[block_index],
@@ -48,6 +52,8 @@ void drag_select(const blocks& blocks, const frustum& frustumWS,
    }
 
    for (uint32 block_index = 0; block_index < blocks.quads.size(); ++block_index) {
+      if (blocks.quads.hidden[block_index]) continue;
+
       if (intersects(frustumWS, {.min =
                                     {
                                        blocks.quads.bbox.min_x[block_index],
@@ -69,6 +75,8 @@ void drag_select(const blocks& blocks, const frustum& frustumWS,
    }
 
    for (uint32 block_index = 0; block_index < blocks.cylinders.size(); ++block_index) {
+      if (blocks.cylinders.hidden[block_index]) continue;
+
       if (intersects(frustumWS, {.min =
                                     {
                                        blocks.cylinders.bbox.min_x[block_index],
@@ -90,6 +98,8 @@ void drag_select(const blocks& blocks, const frustum& frustumWS,
    }
 
    for (uint32 block_index = 0; block_index < blocks.stairways.size(); ++block_index) {
+      if (blocks.stairways.hidden[block_index]) continue;
+
       if (intersects(frustumWS, {.min =
                                     {
                                        blocks.stairways.bbox.min_x[block_index],
