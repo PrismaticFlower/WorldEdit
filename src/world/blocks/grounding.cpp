@@ -130,6 +130,11 @@ auto ground_block(const block_id id, const uint32 block_index,
       return ground_block(stairway.position, bbox, id, world, object_classes,
                           active_layers);
    } break;
+   case block_type::cone: {
+      const block_description_cone& cone = world.blocks.cones.description[block_index];
+
+      return ground_block(cone.position, bbox, id, world, object_classes, active_layers);
+   } break;
    }
 
    std::unreachable();

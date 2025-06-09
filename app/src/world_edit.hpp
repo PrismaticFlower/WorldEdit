@@ -213,6 +213,8 @@ enum class draw_block_step : uint8 {
    stairway_width,
    stairway_length,
    stairway_height,
+   cone_radius,
+   cone_height,
 };
 
 enum class draw_block_cursor_plane : uint8 { none, x, y, z };
@@ -1050,6 +1052,11 @@ private:
             float length_z = 0.0f;
             quaternion rotation;
          } stairway;
+
+         struct cone {
+            float3 start;
+            float radius;
+         } cone;
 
          uint32 index = 0;
          world::block_id block_id = world::block_id::none;

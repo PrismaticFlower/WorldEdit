@@ -88,6 +88,8 @@ struct tool_visualizers {
 
    void add_cylinder_additive(const float4x4& transform, const float4& color);
 
+   void add_cone_additive(const float4x4& transform, const float4& color);
+
    void clear() noexcept;
 
    auto lines_overlay() const noexcept -> std::span<const tool_visualizers_line>;
@@ -120,6 +122,8 @@ struct tool_visualizers {
 
    auto cylinders_additive() const noexcept -> std::span<const tool_visualizers_shape>;
 
+   auto cones_additive() const noexcept -> std::span<const tool_visualizers_shape>;
+
 private:
    std::vector<tool_visualizers_line> _lines_overlay;
    std::vector<tool_visualizers_line> _lines;
@@ -134,6 +138,7 @@ private:
    std::vector<tool_visualizers_shape> _boxes_additive;
    std::vector<tool_visualizers_shape> _ramps_additive;
    std::vector<tool_visualizers_shape> _cylinders_additive;
+   std::vector<tool_visualizers_shape> _cones_additive;
 };
 
 }

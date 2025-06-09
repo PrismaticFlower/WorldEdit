@@ -50,6 +50,8 @@ struct entity_group {
          bool operator==(const stairways&) const noexcept = default;
       } stairways;
 
+      std::vector<block_description_cone> cones;
+
       std::vector<block_material> materials;
 
       bool operator==(const blocks&) const noexcept = default;

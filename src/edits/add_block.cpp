@@ -198,4 +198,11 @@ auto make_add_block(world::block_description_stairway stairway, int8 layer,
                                                                              layer, id);
 }
 
+auto make_add_block(world::block_description_cone cone, int8 layer,
+                    world::block_cone_id id)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<add_block<&world::blocks::cones>>(cone, layer, id);
+}
+
 }

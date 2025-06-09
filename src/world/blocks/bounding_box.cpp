@@ -59,6 +59,11 @@ auto get_bounding_box(const block_description_stairway& stairway) noexcept
           stairway.position;
 }
 
+auto get_bounding_box(const block_description_cone& cone) noexcept -> math::bounding_box
+{
+   return get_bounding_box(cone.rotation, cone.position, cone.size);
+}
+
 auto get_bounding_box(const blocks& blocks, const block_type type,
                       const uint32 block_index) noexcept -> math::bounding_box
 {
@@ -77,6 +82,9 @@ auto get_bounding_box(const blocks& blocks, const block_type type,
    } break;
    case world::block_type::stairway: {
       return get_bounding_box(blocks.stairways.description[block_index]);
+   } break;
+   case world::block_type::cone: {
+      return get_bounding_box(blocks.cones.description[block_index]);
    } break;
    }
 

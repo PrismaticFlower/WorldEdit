@@ -93,6 +93,23 @@ void highlight_block(const blocks& blocks, const block_type type,
                                            0x20'ff'ff'ffu);
       }
    } break;
+   case block_type::cone: {
+      const world::block_description_cone& cone =
+         blocks.cones.description[block_index];
+
+      const float4x4 scale = {
+         {cone.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, cone.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, cone.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(cone.rotation);
+
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {cone.position, 1.0f};
+
+      visualizers.add_cone_additive(world_from_local, {1.0f, 1.0f, 1.0f, 0.125f});
+   } break;
    }
 }
 }

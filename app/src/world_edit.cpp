@@ -2984,6 +2984,15 @@ void world_edit::align_selection(const float alignment) noexcept
                   *block_index, stairway.rotation, align_position(stairway.position),
                   stairway.size, stairway.step_height, stairway.first_step_offset));
             } break;
+            case world::block_type::cone: {
+               const world::block_description_cone& cone =
+                  _world.blocks.cones.description[*block_index];
+
+               bundle.push_back(
+                  edits::make_set_block_cone_metrics(*block_index, cone.rotation,
+                                                     align_position(cone.position),
+                                                     cone.size));
+            } break;
             }
          }
 
@@ -3378,6 +3387,14 @@ void world_edit::ground_selection() noexcept
                   bundle.push_back(edits::make_set_block_stairway_metrics(
                      *block_index, stairway.rotation, *grounded_position,
                      stairway.size, stairway.step_height, stairway.first_step_offset));
+               } break;
+               case world::block_type::cone: {
+                  const world::block_description_cone& cone =
+                     _world.blocks.cones.description[*block_index];
+
+                  bundle.push_back(
+                     edits::make_set_block_cone_metrics(*block_index, cone.rotation,
+                                                        *grounded_position, cone.size));
                } break;
                }
             }

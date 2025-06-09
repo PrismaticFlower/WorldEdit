@@ -22,6 +22,12 @@ extern const std::array<std::array<uint16, 4>, 32> block_cylinder_occluders;
 extern const std::array<float3, 64> block_cylinder_points;
 extern const std::array<std::array<uint16, 2>, 96> block_cylinder_edges;
 
+extern const std::array<block_vertex, 128> block_cone_vertices;
+extern const std::array<std::array<uint16, 3>, 62> block_cone_triangles;
+extern const std::array<std::array<uint16, 4>, 0> block_cone_occluders;
+extern const std::array<float3, 33> block_cone_points;
+extern const std::array<std::array<uint16, 2>, 64> block_cone_edges;
+
 extern const std::array<std::array<uint16, 3>, 2> block_quad_triangles;
 extern const std::array<std::array<uint16, 3>, 2> block_quad_alternate_triangles;
 extern const std::array<float2, 4> block_quad_vertex_texcoords;

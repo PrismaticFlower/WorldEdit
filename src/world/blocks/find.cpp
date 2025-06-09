@@ -39,6 +39,8 @@ auto find_block(const blocks& blocks, const block_id id) -> std::optional<uint32
       return find_block_impl(blocks.cylinders.ids, id.get_cylinder());
    case block_type::stairway:
       return find_block_impl(blocks.stairways.ids, id.get_stairway());
+   case block_type::cone:
+      return find_block_impl(blocks.cones.ids, id.get_cone());
    }
 
    std::unreachable();

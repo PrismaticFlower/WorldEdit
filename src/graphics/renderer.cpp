@@ -2509,6 +2509,10 @@ void renderer_impl::draw_world_meta_objects(
       _meta_draw_batcher.add_cylinder(cylinder.transform, cylinder.color);
    }
 
+   for (const auto& cone : tool_visualizers.cones_additive()) {
+      _meta_draw_batcher.add_cone(cone.transform, cone.color);
+   }
+
    for (const gizmo_draw_pixel_line& line : draw_lists.pixel_lines) {
       _meta_draw_batcher.add_line_solid(line.position_start, line.position_end,
                                         line.color);
@@ -3444,6 +3448,19 @@ void renderer_impl::draw_interaction_targets(
                      world_from_local * mesh.vertices[tri[1]].position,
                      world_from_local * mesh.vertices[tri[2]].position, color_packed);
                }
+            } break;
+            case world::block_type::cone: {
+               const world::block_description_cone& block =
+                  world.blocks.cones.description[*block_index];
+
+               float4x4 transform = to_matrix(block.rotation) *
+                                    float4x4{{block.size.x, 0.0f, 0.0f, 0.0f},
+                                             {0.0f, block.size.y, 0.0f, 0.0f},
+                                             {0.0f, 0.0f, block.size.z, 0.0f},
+                                             {0.0f, 0.0f, 0.0f, 1.0f}};
+               transform[3] = {block.position, 1.0f};
+
+               _meta_draw_batcher.add_cone_wireframe(transform, color);
             } break;
             }
          }

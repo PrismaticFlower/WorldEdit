@@ -42,12 +42,14 @@ struct blocks {
       instance_list ramps;
       instance_list quads;
       instance_list cylinders;
+      instance_list cones;
       draw_list stairways;
 
       instance_list dynamic_boxes;
       instance_list dynamic_ramps;
       instance_list dynamic_quads;
       instance_list dynamic_cylinders;
+      instance_list dynamic_cones;
       draw_list dynamic_stairways;
    };
 
@@ -139,6 +141,9 @@ private:
    gpu::unique_resource_handle _stairways_instance_data;
    uint64 _stairways_instance_data_capacity = 0;
 
+   gpu::unique_resource_handle _cones_instance_data;
+   uint64 _cones_instance_data_capacity = 0;
+
    gpu::unique_command_signature_handle _custom_mesh_command_signature;
 
    offset_allocator_aligned _custom_mesh_allocator;
@@ -189,11 +194,15 @@ private:
       gpu::unique_resource_handle stairways_instance_data;
       uint64 stairways_instance_data_capacity = 0;
 
+      gpu::unique_resource_handle cones_instance_data;
+      uint64 cones_instance_data_capacity = 0;
+
       bbox_soa boxes_bbox;
       bbox_soa ramps_bbox;
       bbox_soa quads_bbox;
       bbox_soa cylinders_bbox;
       bbox_soa stairways_bbox;
+      bbox_soa cones_bbox;
 
       std::array<material, world::max_block_materials> materials;
 

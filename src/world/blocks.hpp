@@ -125,6 +125,19 @@ struct block_description_stairway {
    bool operator==(const block_description_stairway&) const noexcept = default;
 };
 
+struct block_description_cone {
+   quaternion rotation;
+   float3 position;
+   float3 size;
+   std::array<uint8, 2> surface_materials = {};
+   std::array<block_texture_mode, 2> surface_texture_mode = {};
+   std::array<block_texture_rotation, 2> surface_texture_rotation = {};
+   std::array<std::array<int8, 2>, 2> surface_texture_scale = {};
+   std::array<std::array<uint16, 2>, 2> surface_texture_offset = {};
+
+   bool operator==(const block_description_cone&) const noexcept = default;
+};
+
 struct blocks_bbox_soa {
    pinned_vector<float> min_x = blocks_init;
    pinned_vector<float> min_y = blocks_init;
@@ -236,6 +249,26 @@ struct blocks_stairways {
    bool is_balanced() const noexcept;
 };
 
+struct blocks_cones {
+   blocks_bbox_soa bbox;
+
+   pinned_vector<bool> hidden = blocks_init;
+
+   pinned_vector<int8> layer = blocks_init;
+
+   pinned_vector<block_description_cone> description = blocks_init;
+
+   pinned_vector<id<block_description_cone>> ids = blocks_init;
+
+   blocks_dirty_range_tracker dirty;
+
+   void reserve(const std::size_t size) noexcept;
+
+   auto size() const noexcept -> std::size_t;
+
+   bool is_balanced() const noexcept;
+};
+
 struct block_material {
    std::string name;
 
@@ -261,6 +294,7 @@ struct blocks {
    blocks_quads quads;
    blocks_cylinders cylinders;
    blocks_stairways stairways;
+   blocks_cones cones;
 
    pinned_vector<block_material> materials = get_blank_materials();
    blocks_dirty_range_tracker materials_dirty;
@@ -273,6 +307,7 @@ struct blocks {
       id_generator<block_description_quad> quads;
       id_generator<block_description_cylinder> cylinders;
       id_generator<block_description_stairway> stairways;
+      id_generator<block_description_cone> cones;
    } next_id;
 
    bool empty() const noexcept;
@@ -289,6 +324,7 @@ using block_ramp_id = id<block_description_ramp>;
 using block_quad_id = id<block_description_quad>;
 using block_cylinder_id = id<block_description_cylinder>;
 using block_stairway_id = id<block_description_stairway>;
+using block_cone_id = id<block_description_cone>;
 
 enum class block_type {
    box,
@@ -296,6 +332,7 @@ enum class block_type {
    quad,
    cylinder,
    stairway,
+   cone,
 };
 
 struct block_id {
@@ -310,6 +347,8 @@ struct block_id {
    block_id(block_cylinder_id id) noexcept;
 
    block_id(block_stairway_id id) noexcept;
+
+   block_id(block_cone_id id) noexcept;
 
    bool is_box() const noexcept;
 
@@ -331,6 +370,10 @@ struct block_id {
 
    auto get_stairway() const noexcept -> block_stairway_id;
 
+   bool is_cone() const noexcept;
+
+   auto get_cone() const noexcept -> block_cone_id;
+
    auto type() const noexcept -> block_type;
 
    bool operator==(const block_id& other) const noexcept;
@@ -347,6 +390,7 @@ private:
       block_quad_id quad;
       block_cylinder_id cylinder;
       block_stairway_id stairway;
+      block_cone_id cone;
    } id;
 };
 
