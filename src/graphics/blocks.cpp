@@ -868,8 +868,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
       const uint32 range_size = range.end - range.begin;
 
       const dynamic_buffer_allocator::allocation& upload_allocation =
-         dynamic_buffer_allocator.allocate(range_size *
-                                           sizeof(block_instance_description));
+         dynamic_buffer_allocator.allocate(range_size * sizeof(block_quad_description));
       std::byte* upload_ptr = upload_allocation.cpu_address;
 
       for (uint32 block_index = range.begin; block_index < range.end; ++block_index) {
@@ -1896,7 +1895,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
          quads_instance_data_capacity = blocks.quads.size();
          quads_instance_data = {
             device.create_buffer({.size = quads_instance_data_capacity *
-                                          sizeof(block_instance_description),
+                                          sizeof(block_quad_description),
                                   .debug_name = "World Dynamic Blocks (Quads)"},
                                  gpu::heap_type::default_),
             device};
@@ -1907,7 +1906,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
 
       const dynamic_buffer_allocator::allocation& upload_allocation =
          dynamic_buffer_allocator.allocate(blocks.quads.size() *
-                                           sizeof(block_instance_description));
+                                           sizeof(block_quad_description));
       std::byte* upload_ptr = upload_allocation.cpu_address;
 
       for (uint32 block_index = 0; block_index < blocks.quads.size(); ++block_index) {
@@ -1943,9 +1942,9 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                   description.positionWS[world::block_quad_triangles[1][2]] -
                      description.positionWS[world::block_quad_triangles[1][0]]));
 
-         std::memcpy(upload_ptr, &description, sizeof(block_instance_description));
+         std::memcpy(upload_ptr, &description, sizeof(block_quad_description));
 
-         upload_ptr += sizeof(block_instance_description);
+         upload_ptr += sizeof(block_quad_description);
 
          quads_bbox.push_back(entity_group.rotation * world::get_bounding_box(block) +
                               entity_group.position);
@@ -1955,7 +1954,7 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                                       upload_allocation.resource,
                                       upload_allocation.offset,
                                       blocks.quads.size() *
-                                         sizeof(block_instance_description));
+                                         sizeof(block_quad_description));
    }
 
    if (not blocks.cylinders.empty()) {
