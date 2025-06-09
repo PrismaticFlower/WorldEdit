@@ -296,6 +296,50 @@ void save_stairways(io::output_file& out, const blocks_stairways& stairways) noe
    out.write_ln("}\n");
 }
 
+void save_cones(io::output_file& out, const blocks_cones& cones) noexcept
+{
+   if (cones.size() == 0) return;
+
+   out.write_ln("Cones({})", cones.size());
+   out.write_ln("{");
+
+   for (uint32 box_index = 0; box_index < cones.size(); ++box_index) {
+      const block_description_cone& cone = cones.description[box_index];
+      const int8 cone_layer = cones.layer[box_index];
+
+      out.write_ln("   Cone()");
+      out.write_ln("   {");
+
+      out.write_ln("      Rotation({}, {}, {}, {});", cone.rotation.w,
+                   cone.rotation.x, cone.rotation.y, cone.rotation.z);
+      out.write_ln("      Position({}, {}, {});", cone.position.x,
+                   cone.position.y, cone.position.z);
+      out.write_ln("      Size({}, {}, {});", cone.size.x, cone.size.y,
+                   cone.size.z);
+      out.write_ln("      SurfaceMaterials({}, {});", cone.surface_materials[0],
+                   cone.surface_materials[1]);
+      out.write_ln("      SurfaceTextureMode({}, {});",
+                   cone.surface_texture_mode[0], cone.surface_texture_mode[1]);
+      out.write_ln("      SurfaceTextureRotation({}, {});",
+                   cone.surface_texture_rotation[0],
+                   cone.surface_texture_rotation[1]);
+      out.write_ln("      SurfaceTextureScale({}, {}, {}, {});",
+                   cone.surface_texture_scale[0][0],
+                   cone.surface_texture_scale[0][1],
+                   cone.surface_texture_scale[1][0],
+                   cone.surface_texture_scale[1][1]);
+      out.write_ln("      SurfaceTextureOffset({}, {}, {}, {});",
+                   cone.surface_texture_offset[0][0],
+                   cone.surface_texture_offset[0][1],
+                   cone.surface_texture_offset[1][0],
+                   cone.surface_texture_offset[1][1]);
+      if (cone_layer != 0) out.write_ln("      Layer({});", cone_layer);
+      out.write_ln("   }");
+   }
+
+   out.write_ln("}\n");
+}
+
 void save_materials(io::output_file& out, const blocks& blocks) noexcept
 {
    const block_material empty_material;
@@ -340,6 +384,7 @@ void save_blocks(const io::path& path, const blocks& blocks)
    save_quads(out, blocks.quads);
    save_cylinders(out, blocks.cylinders);
    save_stairways(out, blocks.stairways);
+   save_cones(out, blocks.cones);
    save_materials(out, blocks);
 }
 
