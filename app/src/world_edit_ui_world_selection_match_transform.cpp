@@ -210,6 +210,9 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
                   new_rotation =
                      _world.blocks.stairways.description[*block_index].rotation;
                } break;
+               case world::block_type::cone: {
+                  new_rotation = _world.blocks.cones.description[*block_index].rotation;
+               } break;
                }
             }
          }
@@ -461,6 +464,14 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
                      bundled_edits.push_back(edits::make_set_block_stairway_metrics(
                         *block_index, new_rotation, new_position, stairway.size,
                         stairway.step_height, stairway.first_step_offset));
+                  } break;
+                  case world::block_type::cone: {
+                     const world::block_description_cone& cone =
+                        _world.blocks.cones.description[*block_index];
+
+                     bundled_edits.push_back(
+                        edits::make_set_block_cone_metrics(*block_index, new_rotation,
+                                                           new_position, cone.size));
                   } break;
                   }
                }

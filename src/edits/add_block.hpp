@@ -25,4 +25,8 @@ auto make_add_block(world::block_description_cylinder cylinder, int8 layer,
 auto make_add_block(world::block_description_stairway stairway, int8 layer,
                     world::block_stairway_id id)
    -> std::unique_ptr<edit<world::edit_context>>;
+
+auto make_add_block(world::block_description_cone cone, int8 layer,
+                    world::block_cone_id id)
+   -> std::unique_ptr<edit<world::edit_context>>;
 }

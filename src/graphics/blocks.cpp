@@ -99,6 +99,8 @@ struct blocks_ia_buffer {
       world::block_cylinder_vertices;
    std::array<std::array<uint16, 3>, 124> cylinder_indices =
       world::block_cylinder_triangles;
+   std::array<world::block_vertex, 128> cone_vertices = world::block_cone_vertices;
+   std::array<std::array<uint16, 3>, 62> cone_indices = world::block_cone_triangles;
 };
 
 auto select_pipeline(const blocks_draw draw, pipeline_library& pipelines) -> gpu::pipeline_handle
@@ -577,6 +579,28 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
       }
    }
 
+   if (_cones_instance_data_capacity < blocks.cones.size()) {
+      const gpu::unique_resource_handle old_cones_instance_data =
+         std::move(_cones_instance_data);
+      const uint64 old_cones_instance_data_capacity = _cones_instance_data_capacity;
+
+      _cones_instance_data_capacity = blocks.cones.size() * 16180 / 10000;
+      _cones_instance_data =
+         {_device.create_buffer({.size = _cones_instance_data_capacity *
+                                         sizeof(block_instance_description),
+                                 .debug_name = "World blocks (Cones)"},
+                                gpu::heap_type::default_),
+          _device};
+
+      if (old_cones_instance_data_capacity != 0) {
+         command_list.copy_buffer_region(_cones_instance_data.get(), 0,
+                                         old_cones_instance_data.get(), 0,
+                                         old_cones_instance_data_capacity *
+                                            sizeof(block_instance_description));
+         command_list.reference_resource(old_cones_instance_data.get());
+      }
+   }
+
    for (const world::blocks_custom_mesh_library::event event :
         blocks.custom_meshes.events()) {
       using event_type = world::blocks_custom_mesh_library::event_type;
@@ -1020,6 +1044,72 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                                       range_size * sizeof(block_instance_description));
    }
 
+   for (const world::blocks_dirty_range& range : blocks.cones.dirty) {
+      const uint32 range_size = range.end - range.begin;
+
+      const dynamic_buffer_allocator::allocation& upload_allocation =
+         dynamic_buffer_allocator.allocate(range_size *
+                                           sizeof(block_instance_description));
+      std::byte* upload_ptr = upload_allocation.cpu_address;
+
+      for (uint32 block_index = range.begin; block_index < range.end; ++block_index) {
+         const world::block_description_cone& block =
+            blocks.cones.description[block_index];
+
+         const float4x4 scale = {
+            {block.size.x, 0.0f, 0.0f, 0.0f},
+            {0.0f, block.size.y, 0.0f, 0.0f},
+            {0.0f, 0.0f, block.size.z, 0.0f},
+            {0.0f, 0.0f, 0.0f, 1.0f},
+         };
+         const float4x4 rotation = to_matrix(block.rotation);
+         const float4x4 world_from_local = rotation * scale;
+
+         block_instance_description description;
+
+         description.adjugate_world_from_local = adjugate(world_from_local);
+         description.world_from_local[0] = {world_from_local[0].x,
+                                            world_from_local[0].y,
+                                            world_from_local[0].z};
+         description.world_from_local[1] = {world_from_local[1].x,
+                                            world_from_local[1].y,
+                                            world_from_local[1].z};
+         description.world_from_local[2] = {world_from_local[2].x,
+                                            world_from_local[2].y,
+                                            world_from_local[2].z};
+         description.world_from_local[3] = block.position;
+
+         const quaternion local_from_world = conjugate(block.rotation);
+
+         description.local_from_world_xyz = {local_from_world.x,
+                                             local_from_world.y,
+                                             local_from_world.z};
+
+         for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
+            description.surfaces[i] = {
+               .material_index = block.surface_materials[i],
+               .texture_mode = static_cast<uint32>(block.surface_texture_mode[i]),
+               .scaleX = static_cast<uint32>(block.surface_texture_scale[i][0] + 7),
+               .scaleY = static_cast<uint32>(block.surface_texture_scale[i][1] + 7),
+               .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
+               .offsetX = block.surface_texture_offset[i][0],
+               .offsetY = block.surface_texture_offset[i][1],
+               .local_from_world_w_sign = local_from_world.w < 0.0f,
+            };
+         }
+
+         std::memcpy(upload_ptr, &description, sizeof(block_instance_description));
+
+         upload_ptr += sizeof(block_instance_description);
+      }
+
+      command_list.copy_buffer_region(_cones_instance_data.get(),
+                                      range.begin * sizeof(block_instance_description),
+                                      upload_allocation.resource,
+                                      upload_allocation.offset,
+                                      range_size * sizeof(block_instance_description));
+   }
+
    for (const world::blocks_dirty_range& range : blocks.materials_dirty) {
       const uint32 range_size = range.end - range.begin;
 
@@ -1132,6 +1222,13 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                         blocks.stairways.layer, blocks.stairways.mesh,
                         _custom_meshes, active_layers, _TEMP_culling_storage,
                         dynamic_buffer_allocator);
+   view.cones =
+      prepare_instances_view(draw, view_frustum, blocks.cones.bbox.min_x,
+                             blocks.cones.bbox.min_y, blocks.cones.bbox.min_z,
+                             blocks.cones.bbox.max_x, blocks.cones.bbox.max_y,
+                             blocks.cones.bbox.max_z, blocks.cones.hidden,
+                             blocks.cones.layer, active_layers,
+                             _TEMP_culling_storage, dynamic_buffer_allocator);
 
    [[unlikely]] if (entity_group and _dynamic_blocks) {
       view.dynamic_boxes =
@@ -1180,6 +1277,15 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                            _dynamic_blocks->stairways_bbox.max_z,
                            entity_group->blocks.stairways.mesh, _custom_meshes,
                            _TEMP_culling_storage, dynamic_buffer_allocator);
+
+      view.dynamic_cones =
+         prepare_instances_view(draw, view_frustum, _dynamic_blocks->cones_bbox.min_x,
+                                _dynamic_blocks->cones_bbox.min_y,
+                                _dynamic_blocks->cones_bbox.min_z,
+                                _dynamic_blocks->cones_bbox.max_x,
+                                _dynamic_blocks->cones_bbox.max_y,
+                                _dynamic_blocks->cones_bbox.max_z,
+                                _TEMP_culling_storage, dynamic_buffer_allocator);
    }
 
    return view;
@@ -1269,6 +1375,27 @@ void blocks::draw(blocks_draw draw, const view& view,
                                           view.cylinders.count, 0, 0, 0);
    }
 
+   if (view.cones.count > 0) {
+      command_list.set_graphics_srv(rs::block::instances_index_srv, view.cones.instances);
+      command_list.set_graphics_srv(rs::block::instances_srv,
+                                    _device.get_gpu_virtual_address(
+                                       _cones_instance_data.get()));
+
+      command_list.ia_set_index_buffer({
+         .buffer_location = ia_address + offsetof(blocks_ia_buffer, cone_indices),
+         .size_in_bytes = sizeof(blocks_ia_buffer::cone_indices),
+      });
+      command_list.ia_set_vertex_buffers(
+         0, gpu::vertex_buffer_view{
+               .buffer_location = ia_address + offsetof(blocks_ia_buffer, cone_vertices),
+               .size_in_bytes = sizeof(blocks_ia_buffer::cone_vertices),
+               .stride_in_bytes = sizeof(world::block_vertex),
+            });
+
+      command_list.draw_indexed_instanced(sizeof(blocks_ia_buffer::cone_indices) / 2,
+                                          view.cones.count, 0, 0, 0);
+   }
+
    if (view.quads.count > 0) {
       command_list.set_pipeline_state(select_pipeline_quads(draw, pipelines));
 
@@ -1355,6 +1482,28 @@ void blocks::draw(blocks_draw draw, const view& view,
 
          command_list.draw_indexed_instanced(sizeof(blocks_ia_buffer::cylinder_indices) / 2,
                                              view.dynamic_cylinders.count, 0, 0, 0);
+      }
+
+      if (view.dynamic_cones.count > 0) {
+         command_list.set_graphics_srv(rs::block::instances_index_srv,
+                                       view.dynamic_cones.instances);
+         command_list.set_graphics_srv(rs::block::instances_srv,
+                                       _device.get_gpu_virtual_address(
+                                          _dynamic_blocks->cones_instance_data.get()));
+
+         command_list.ia_set_index_buffer({
+            .buffer_location = ia_address + offsetof(blocks_ia_buffer, cone_indices),
+            .size_in_bytes = sizeof(blocks_ia_buffer::cone_indices),
+         });
+         command_list.ia_set_vertex_buffers(
+            0, gpu::vertex_buffer_view{
+                  .buffer_location = ia_address + offsetof(blocks_ia_buffer, cone_vertices),
+                  .size_in_bytes = sizeof(blocks_ia_buffer::cone_vertices),
+                  .stride_in_bytes = sizeof(world::block_vertex),
+               });
+
+         command_list.draw_indexed_instanced(sizeof(blocks_ia_buffer::cone_indices) / 2,
+                                             view.dynamic_cones.count, 0, 0, 0);
       }
 
       if (view.dynamic_quads.count > 0) {
@@ -1891,6 +2040,89 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                                       upload_allocation.resource,
                                       upload_allocation.offset,
                                       blocks.cylinders.size() *
+                                         sizeof(block_instance_description));
+   }
+
+   if (not blocks.cones.empty()) {
+      if (cones_instance_data_capacity < blocks.cones.size()) {
+         cones_instance_data_capacity = blocks.cones.size();
+         cones_instance_data = {
+            device.create_buffer({.size = cones_instance_data_capacity *
+                                          sizeof(block_instance_description),
+                                  .debug_name = "World Dynamic Blocks (Cones)"},
+                                 gpu::heap_type::default_),
+            device};
+      }
+
+      cones_bbox.clear();
+      cones_bbox.reserve(blocks.cones.size());
+
+      const dynamic_buffer_allocator::allocation& upload_allocation =
+         dynamic_buffer_allocator.allocate(blocks.cones.size() *
+                                           sizeof(block_instance_description));
+      std::byte* upload_ptr = upload_allocation.cpu_address;
+
+      for (uint32 block_index = 0; block_index < blocks.cones.size(); ++block_index) {
+         const world::block_description_cone& block = blocks.cones[block_index];
+
+         const quaternion block_rotation = entity_group.rotation * block.rotation;
+         const float3 block_positionWS =
+            entity_group.rotation * block.position + entity_group.position;
+
+         const float4x4 scale = {
+            {block.size.x, 0.0f, 0.0f, 0.0f},
+            {0.0f, block.size.y, 0.0f, 0.0f},
+            {0.0f, 0.0f, block.size.z, 0.0f},
+            {0.0f, 0.0f, 0.0f, 1.0f},
+         };
+         const float4x4 rotation = to_matrix(block_rotation);
+         const float4x4 world_from_local = rotation * scale;
+
+         block_instance_description description;
+
+         description.adjugate_world_from_local = adjugate(world_from_local);
+         description.world_from_local[0] = {world_from_local[0].x,
+                                            world_from_local[0].y,
+                                            world_from_local[0].z};
+         description.world_from_local[1] = {world_from_local[1].x,
+                                            world_from_local[1].y,
+                                            world_from_local[1].z};
+         description.world_from_local[2] = {world_from_local[2].x,
+                                            world_from_local[2].y,
+                                            world_from_local[2].z};
+         description.world_from_local[3] = block_positionWS;
+
+         const quaternion local_from_world = conjugate(block.rotation);
+
+         description.local_from_world_xyz = {local_from_world.x,
+                                             local_from_world.y,
+                                             local_from_world.z};
+
+         for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
+            description.surfaces[i] = {
+               .material_index = block.surface_materials[i],
+               .texture_mode = static_cast<uint32>(block.surface_texture_mode[i]),
+               .scaleX = static_cast<uint32>(block.surface_texture_scale[i][0] + 7),
+               .scaleY = static_cast<uint32>(block.surface_texture_scale[i][1] + 7),
+               .rotation = static_cast<uint32>(block.surface_texture_rotation[i]),
+               .offsetX = block.surface_texture_offset[i][0],
+               .offsetY = block.surface_texture_offset[i][1],
+               .local_from_world_w_sign = local_from_world.w < 0.0f,
+            };
+         }
+
+         std::memcpy(upload_ptr, &description, sizeof(block_instance_description));
+
+         upload_ptr += sizeof(block_instance_description);
+
+         cones_bbox.push_back(entity_group.rotation * world::get_bounding_box(block) +
+                              entity_group.position);
+      }
+
+      command_list.copy_buffer_region(cones_instance_data.get(), 0,
+                                      upload_allocation.resource,
+                                      upload_allocation.offset,
+                                      blocks.cones.size() *
                                          sizeof(block_instance_description));
    }
 

@@ -113,6 +113,24 @@ void highlight_surface(const blocks& blocks, const block_type type,
       highlight_surface_generic(world_from_local, mesh.triangles, mesh.vertices,
                                 surface_index, visualizers);
    } break;
+   case block_type::cone: {
+      const world::block_description_cone& cone =
+         blocks.cones.description[block_index];
+
+      const float4x4 scale = {
+         {cone.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, cone.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, cone.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(cone.rotation);
+
+      float4x4 world_from_object = rotation * scale;
+      world_from_object[3] = {cone.position, 1.0f};
+
+      highlight_surface_generic(world_from_object, block_cone_triangles,
+                                block_cone_vertices, surface_index, visualizers);
+   } break;
    }
 }
 }

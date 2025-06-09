@@ -563,6 +563,29 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                   }
 
                } break;
+               case world::block_type::cone: {
+                  const world::block_description_cone& cone =
+                     _world.blocks.cones.description[*block_index];
+
+                  float3 new_position = cone.position;
+                  float3 new_size = cone.size;
+
+                  if (_gizmos.gizmo_size(
+                         {
+                            .name = "Block Cone Size",
+                            .instance = static_cast<int64>(
+                               _world.blocks.cones.ids[*block_index]),
+                            .alignment = _editor_grid_size,
+                            .gizmo_rotation = cone.rotation,
+                         },
+                         new_position, new_size)) {
+                     _edit_stack_world.apply(edits::make_set_block_cone_metrics(
+                                                *block_index, cone.rotation,
+                                                new_position, new_size),
+                                             _edit_context);
+                  }
+
+               } break;
                }
             }
 
