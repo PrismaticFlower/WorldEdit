@@ -2264,18 +2264,24 @@ void world_edit::ui_show_block_editor() noexcept
             const world::block_description_stairway& stairway =
                _world.blocks.stairways.description[*selected_index];
 
-            float3 positionWS = stairway.position;
-            float3 size = stairway.size / 2.0f;
+            float3 size = stairway.size;
+            size.y += stairway.first_step_offset;
+            size /= 2.0f;
 
-            positionWS.y += size.y;
+            float3 positionWS =
+               stairway.rotation * (conjugate(stairway.rotation) * stairway.position +
+                                    float3{0.0f, size.y, 0.0f});
 
             if (_gizmos.gizmo_size({.name = "Resize Block (Stairway)",
                                     .instance = *selected_index,
                                     .alignment = _editor_grid_size,
                                     .gizmo_rotation = stairway.rotation},
                                    positionWS, size)) {
-               positionWS.y -= size.y;
+               positionWS =
+                  stairway.rotation * (conjugate(stairway.rotation) * positionWS -
+                                       float3{0.0f, size.y, 0.0f});
                size *= 2.0f;
+               size.y -= stairway.first_step_offset;
 
                _edit_stack_world.apply(edits::make_set_block_stairway_metrics(
                                           *selected_index, stairway.rotation,
