@@ -1823,6 +1823,148 @@ TEST_CASE("world save entity group (blocks, cones)", "[World][IO]")
    CHECK(written_eng == expected_eng);
 }
 
+TEST_CASE("world save entity group (blocks, hemispheres)", "[World][IO]")
+{
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_blocks_hemispheres.eng";
+
+   const std::string_view expected_eng =
+      R"(BlocksHemispheres(3)
+{
+   Hemisphere()
+   {
+      Rotation(0, 1, 0, 0);
+      Position(8.5, 4.5, 2);
+      Size(4, 4, 4);
+      SurfaceMaterials(0, 1);
+      SurfaceTextureMode(0, 0);
+      SurfaceTextureRotation(2, 2);
+      SurfaceTextureScale(0, 0, -1, -2);
+      SurfaceTextureOffset(0, 0, 256, 256);
+   }
+   Hemisphere()
+   {
+      Rotation(0.707106, 0, 0.707106, 0);
+      Position(10, 16, 12);
+      Size(8, 4, 8);
+      SurfaceMaterials(2, 2);
+      SurfaceTextureMode(1, 5);
+      SurfaceTextureRotation(1, 1);
+      SurfaceTextureScale(0, 0, -2, -2);
+      SurfaceTextureOffset(1024, 0, 0, 0);
+   }
+   Hemisphere()
+   {
+      Rotation(0, 0, 0, 1);
+      Position(6, 6, 6);
+      Size(5, 5, 5);
+      SurfaceMaterials(0, 0);
+      SurfaceTextureMode(2, 2);
+      SurfaceTextureRotation(0, 0);
+      SurfaceTextureScale(0, 0, 0, 0);
+      SurfaceTextureOffset(0, 0, 0, 0);
+   }
+}
+
+)";
+
+   world::entity_group
+      group =
+         {
+            .blocks =
+               {
+                  .hemispheres =
+                     {
+                        world::block_description_hemisphere{
+                           .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
+                           .position = {8.5f, 4.5f, 2.0f},
+                           .size = {4.0f, 4.0f, 4.0f},
+                           .surface_materials = {0, 1},
+                           .surface_texture_mode =
+                              {
+                                 block_texture_mode::world_space_auto,
+                                 block_texture_mode::world_space_auto,
+                              },
+                           .surface_texture_rotation =
+                              {
+                                 block_texture_rotation::d180,
+                                 block_texture_rotation::d180,
+                              },
+                           .surface_texture_scale =
+                              {
+                                 std::array<int8, 2>{0, 0},
+                                 std::array<int8, 2>{-1, -2},
+                              },
+                           .surface_texture_offset =
+                              {
+                                 std::array<uint16, 2>{0, 0},
+                                 std::array<uint16, 2>{256, 256},
+                              },
+                        },
+                        world::block_description_hemisphere{
+                           .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
+                           .position = {10.0f, 16.0f, 12.0f},
+                           .size = {8.0f, 4.0f, 8.0f},
+                           .surface_materials = {2, 2},
+                           .surface_texture_mode =
+                              {
+                                 block_texture_mode::world_space_zy,
+                                 block_texture_mode::local_space_zy,
+                              },
+                           .surface_texture_rotation =
+                              {
+                                 block_texture_rotation::d90,
+                                 block_texture_rotation::d90,
+                              },
+                           .surface_texture_scale =
+                              {
+                                 std::array<int8, 2>{0, 0},
+                                 std::array<int8, 2>{-2, -2},
+                              },
+                           .surface_texture_offset =
+                              {
+                                 std::array<uint16, 2>{1024, 0},
+                                 std::array<uint16, 2>{0, 0},
+                              },
+                        },
+                        world::block_description_hemisphere{
+                           .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
+                           .position = {6.0f, 6.0f, 6.0f},
+                           .size = {5.0f, 5.0f, 5.0f},
+                           .surface_materials = {0, 0},
+                           .surface_texture_mode =
+                              {
+                                 block_texture_mode::world_space_xz,
+                                 block_texture_mode::world_space_xz,
+                              },
+                           .surface_texture_rotation =
+                              {
+                                 block_texture_rotation::d0,
+                                 block_texture_rotation::d0,
+                              },
+                           .surface_texture_scale =
+                              {
+                                 std::array<int8, 2>{0, 0},
+                                 std::array<int8, 2>{0, 0},
+                              },
+                           .surface_texture_offset =
+                              {
+                                 std::array<uint16, 2>{0, 0},
+                                 std::array<uint16, 2>{0, 0},
+                              },
+                        },
+                     },
+
+               },
+         };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
 TEST_CASE("world save entity group (blocks, materials)", "[World][IO]")
 {
    (void)io::create_directory("temp/entity_groups");
