@@ -777,6 +777,46 @@ void save_entity_group_impl(File& file, const entity_group& group)
       file.write_ln("}\n");
    }
 
+   if (not group.blocks.hemispheres.empty()) {
+      file.write_ln("BlocksHemispheres({})", group.blocks.hemispheres.size());
+      file.write_ln("{");
+
+      for (const block_description_hemisphere& hemisphere : group.blocks.hemispheres) {
+         file.write_ln("   Hemisphere()");
+         file.write_ln("   {");
+
+         file.write_ln("      Rotation({}, {}, {}, {});", hemisphere.rotation.w,
+                       hemisphere.rotation.x, hemisphere.rotation.y,
+                       hemisphere.rotation.z);
+         file.write_ln("      Position({}, {}, {});", hemisphere.position.x,
+                       hemisphere.position.y, hemisphere.position.z);
+         file.write_ln("      Size({}, {}, {});", hemisphere.size.x,
+                       hemisphere.size.y, hemisphere.size.z);
+         file.write_ln("      SurfaceMaterials({}, {});",
+                       hemisphere.surface_materials[0],
+                       hemisphere.surface_materials[1]);
+         file.write_ln("      SurfaceTextureMode({}, {});",
+                       std::to_underlying(hemisphere.surface_texture_mode[0]),
+                       std::to_underlying(hemisphere.surface_texture_mode[1]));
+         file.write_ln("      SurfaceTextureRotation({}, {});",
+                       std::to_underlying(hemisphere.surface_texture_rotation[0]),
+                       std::to_underlying(hemisphere.surface_texture_rotation[1]));
+         file.write_ln("      SurfaceTextureScale({}, {}, {}, {});",
+                       hemisphere.surface_texture_scale[0][0],
+                       hemisphere.surface_texture_scale[0][1],
+                       hemisphere.surface_texture_scale[1][0],
+                       hemisphere.surface_texture_scale[1][1]);
+         file.write_ln("      SurfaceTextureOffset({}, {}, {}, {});",
+                       hemisphere.surface_texture_offset[0][0],
+                       hemisphere.surface_texture_offset[0][1],
+                       hemisphere.surface_texture_offset[1][0],
+                       hemisphere.surface_texture_offset[1][1]);
+         file.write_ln("   }");
+      }
+
+      file.write_ln("}\n");
+   }
+
    if (not group.blocks.materials.empty()) {
       file.write_ln("BlocksMaterials({})", group.blocks.materials.size());
       file.write_ln("{");

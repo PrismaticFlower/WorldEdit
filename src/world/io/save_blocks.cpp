@@ -340,6 +340,54 @@ void save_cones(io::output_file& out, const blocks_cones& cones) noexcept
    out.write_ln("}\n");
 }
 
+void save_hemispheres(io::output_file& out, const blocks_hemispheres& hemispheres) noexcept
+{
+   if (hemispheres.size() == 0) return;
+
+   out.write_ln("Hemispheres({})", hemispheres.size());
+   out.write_ln("{");
+
+   for (uint32 box_index = 0; box_index < hemispheres.size(); ++box_index) {
+      const block_description_hemisphere& hemisphere =
+         hemispheres.description[box_index];
+      const int8 hemisphere_layer = hemispheres.layer[box_index];
+
+      out.write_ln("   Hemisphere()");
+      out.write_ln("   {");
+
+      out.write_ln("      Rotation({}, {}, {}, {});", hemisphere.rotation.w,
+                   hemisphere.rotation.x, hemisphere.rotation.y,
+                   hemisphere.rotation.z);
+      out.write_ln("      Position({}, {}, {});", hemisphere.position.x,
+                   hemisphere.position.y, hemisphere.position.z);
+      out.write_ln("      Size({}, {}, {});", hemisphere.size.x,
+                   hemisphere.size.y, hemisphere.size.z);
+      out.write_ln("      SurfaceMaterials({}, {});",
+                   hemisphere.surface_materials[0], hemisphere.surface_materials[1]);
+      out.write_ln("      SurfaceTextureMode({}, {});",
+                   hemisphere.surface_texture_mode[0],
+                   hemisphere.surface_texture_mode[1]);
+      out.write_ln("      SurfaceTextureRotation({}, {});",
+                   hemisphere.surface_texture_rotation[0],
+                   hemisphere.surface_texture_rotation[1]);
+      out.write_ln("      SurfaceTextureScale({}, {}, {}, {});",
+                   hemisphere.surface_texture_scale[0][0],
+                   hemisphere.surface_texture_scale[0][1],
+                   hemisphere.surface_texture_scale[1][0],
+                   hemisphere.surface_texture_scale[1][1]);
+      out.write_ln("      SurfaceTextureOffset({}, {}, {}, {});",
+                   hemisphere.surface_texture_offset[0][0],
+                   hemisphere.surface_texture_offset[0][1],
+                   hemisphere.surface_texture_offset[1][0],
+                   hemisphere.surface_texture_offset[1][1]);
+      if (hemisphere_layer != 0)
+         out.write_ln("      Layer({});", hemisphere_layer);
+      out.write_ln("   }");
+   }
+
+   out.write_ln("}\n");
+}
+
 void save_materials(io::output_file& out, const blocks& blocks) noexcept
 {
    const block_material empty_material;
@@ -385,6 +433,7 @@ void save_blocks(const io::path& path, const blocks& blocks)
    save_cylinders(out, blocks.cylinders);
    save_stairways(out, blocks.stairways);
    save_cones(out, blocks.cones);
+   save_hemispheres(out, blocks.hemispheres);
    save_materials(out, blocks);
 }
 
