@@ -51,6 +51,7 @@ struct entity_group {
       } stairways;
 
       std::vector<block_description_cone> cones;
+      std::vector<block_description_hemisphere> hemispheres;
 
       std::vector<block_material> materials;
 

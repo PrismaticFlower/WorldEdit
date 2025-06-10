@@ -18,6 +18,7 @@ tool_visualizers::tool_visualizers() noexcept
    _ramps_additive.reserve(8);
    _cylinders_additive.reserve(8);
    _cones_additive.reserve(8);
+   _hemispheres_additive.reserve(8);
 }
 
 void tool_visualizers::add_line_overlay(float3 v0, float3 v1, uint32 color)
@@ -103,6 +104,12 @@ void tool_visualizers::add_cone_additive(const float4x4& transform, const float4
    _cones_additive.emplace_back(transform, color);
 }
 
+void tool_visualizers::add_hemisphere_additive(const float4x4& transform,
+                                               const float4& color)
+{
+   _hemispheres_additive.emplace_back(transform, color);
+}
+
 void tool_visualizers::clear() noexcept
 {
    _lines_overlay.clear();
@@ -119,6 +126,7 @@ void tool_visualizers::clear() noexcept
    _ramps_additive.clear();
    _cylinders_additive.clear();
    _cones_additive.clear();
+   _hemispheres_additive.clear();
 }
 
 auto tool_visualizers::lines_overlay() const noexcept
@@ -202,5 +210,11 @@ auto tool_visualizers::cones_additive() const noexcept
    -> std::span<const tool_visualizers_shape>
 {
    return _cones_additive;
+}
+
+auto tool_visualizers::hemispheres_additive() const noexcept
+   -> std::span<const tool_visualizers_shape>
+{
+   return _hemispheres_additive;
 }
 }

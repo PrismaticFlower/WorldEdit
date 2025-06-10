@@ -440,6 +440,98 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
    return std::nullopt;
 }
 
+auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
+             const active_layers active_layers,
+             const blocks_hemispheres& hemispheres, const float max_distance,
+             function_ptr<bool(const block_id id) noexcept> filter) noexcept
+   -> std::optional<raycast_block_result_local>
+{
+   float closest = max_distance;
+   uint32 closest_index = UINT32_MAX;
+
+   for (uint32 hemisphere_index = 0; hemisphere_index < hemispheres.size();
+        ++hemisphere_index) {
+      if (not active_layers[hemispheres.layer[hemisphere_index]]) continue;
+      if (hemispheres.hidden[hemisphere_index]) continue;
+
+      const block_description_hemisphere& hemisphere =
+         hemispheres.description[hemisphere_index];
+
+      const quaternion local_from_world = conjugate(hemisphere.rotation);
+
+      const float3 ray_originLS =
+         local_from_world * (ray_originWS - hemisphere.position);
+      const float3 ray_directionLS = normalize(local_from_world * ray_directionWS);
+
+      if (float hit =
+             eliIntersect(ray_originLS, ray_directionLS, float3{}, hemisphere.size);
+          hit >= 0.0f and hit < closest) {
+         if ((ray_originLS.y + ray_directionLS.y * hit) < 0.0f) {
+            if (const float disk_hit =
+                   diskIntersect(ray_originLS / float3{hemisphere.size.x, 1.0f,
+                                                       hemisphere.size.z},
+                                 ray_directionLS / float3{hemisphere.size.x, 1.0f,
+                                                          hemisphere.size.z},
+                                 {}, {0.0f, 1.0f, 0.0f}, 1.0f);
+                disk_hit >= 0.0f) {
+               hit = disk_hit;
+            }
+            else {
+               continue;
+            }
+         }
+
+         if (filter and not filter(hemispheres.ids[hemisphere_index])) continue;
+
+         closest = hit;
+         closest_index = hemisphere_index;
+      }
+   }
+
+   if (closest_index != UINT32_MAX) {
+      const block_description_hemisphere& hemisphere =
+         hemispheres.description[closest_index];
+
+      const float4x4 scale = {
+         {hemisphere.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, hemisphere.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, hemisphere.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(hemisphere.rotation);
+
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {hemisphere.position, 1.0f};
+
+      uint32 surface_index = UINT32_MAX;
+      float closest_surface = FLT_MAX;
+
+      for (const std::array<uint16, 3>& tri : block_hemisphere_triangles) {
+         const float3 pos0WS =
+            world_from_local * block_hemisphere_vertices[tri[0]].position;
+         const float3 pos1WS =
+            world_from_local * block_hemisphere_vertices[tri[1]].position;
+         const float3 pos2WS =
+            world_from_local * block_hemisphere_vertices[tri[2]].position;
+
+         if (float hit; intersect_tri(ray_originWS, ray_directionWS, pos0WS,
+                                      pos1WS, pos2WS, hit) and
+                        hit < closest_surface) {
+            surface_index = block_hemisphere_vertices[tri[0]].surface_index;
+            closest_surface = hit;
+         }
+      }
+
+      if (surface_index != UINT32_MAX) {
+         return raycast_block_result_local{.distance = closest,
+                                           .index = closest_index,
+                                           .surface_index = surface_index};
+      }
+   }
+
+   return std::nullopt;
+}
+
 }
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
@@ -508,6 +600,16 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
        hit) {
       closest = hit->distance;
       closest_id = blocks.cones.ids[hit->index];
+      closest_index = hit->index;
+      closest_surface_index = hit->surface_index;
+   }
+
+   if (std::optional<raycast_block_result_local> hit =
+          raycast(ray_originWS, ray_directionWS, active_layers,
+                  blocks.hemispheres, closest, filter);
+       hit) {
+      closest = hit->distance;
+      closest_id = blocks.hemispheres.ids[hit->index];
       closest_index = hit->index;
       closest_surface_index = hit->surface_index;
    }

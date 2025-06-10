@@ -59,6 +59,11 @@ public:
       return _ramp;
    }
 
+   auto hemisphere() const noexcept -> const geometric_shape&
+   {
+      return _hemisphere;
+   }
+
 private:
    void init_gpu_buffer(gpu::device& device,
                         copy_command_list_pool& copy_command_list_pool);
@@ -75,6 +80,7 @@ private:
    geometric_shape _hint_hexahedron;
    geometric_shape _cone;
    geometric_shape _ramp;
+   geometric_shape _hemisphere;
 };
 
 }

@@ -68,6 +68,7 @@ meta_draw_batcher::meta_draw_batcher()
    _cylinders.reserve(256);
    _cones.reserve(256);
    _ramps.reserve(8);
+   _hemispheres.reserve(8);
    _triangles.reserve(2048);
    _lines_solid.reserve(2048);
 
@@ -78,6 +79,7 @@ meta_draw_batcher::meta_draw_batcher()
    _alt_cylinders_wireframe.reserve(16);
    _cones_wireframe.reserve(16);
    _ramps_wireframe.reserve(16);
+   _hemispheres_wireframe.reserve(8);
    _triangles_wireframe.reserve(2048);
 
    _lines_overlay.reserve(2048);
@@ -94,6 +96,7 @@ void meta_draw_batcher::clear()
    _cylinders.clear();
    _cones.clear();
    _ramps.clear();
+   _hemispheres.clear();
    _triangles.clear();
    _lines_solid.clear();
 
@@ -105,6 +108,7 @@ void meta_draw_batcher::clear()
    _alt_cylinders_wireframe.clear();
    _cones_wireframe.clear();
    _ramps_wireframe.clear();
+   _hemispheres_wireframe.clear();
    _triangles_wireframe.clear();
 
    _lines_overlay.clear();
@@ -151,6 +155,11 @@ void meta_draw_batcher::add_cone(const float4x4& transform, const float4& color)
 void meta_draw_batcher::add_ramp(const float4x4& transform, const float4& color)
 {
    _ramps.emplace_back(transform, color);
+}
+
+void meta_draw_batcher::add_hemisphere(const float4x4& transform, const float4& color)
+{
+   _hemispheres.emplace_back(transform, color);
 }
 
 void meta_draw_batcher::add_triangle(const float3& a, const float3& b,
@@ -225,6 +234,12 @@ void meta_draw_batcher::add_cone_wireframe(const float4x4& transform, const floa
 void meta_draw_batcher::add_ramp_wireframe(const float4x4& transform, const float3& color)
 {
    _ramps_wireframe.emplace_back(transform, float4{color, 1.0f});
+}
+
+void meta_draw_batcher::add_hemisphere_wireframe(const float4x4& transform,
+                                                 const float3& color)
+{
+   _hemispheres_wireframe.emplace_back(transform, float4{color, 1.0f});
 }
 
 void meta_draw_batcher::add_triangle_wireframe(const float3& a, const float3& b,
@@ -399,6 +414,12 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
                   pipeline_library.meta_draw_shape_wireframe.get(), shapes.ramp());
    }
 
+   if (not _hemispheres_wireframe.empty()) {
+      draw_shapes(_hemispheres_wireframe,
+                  pipeline_library.meta_draw_shape_wireframe.get(),
+                  shapes.hemisphere());
+   }
+
    if (not _triangles_wireframe.empty()) {
       draw_vertices(_triangles_wireframe,
                     pipeline_library.meta_draw_triangle_wireframe.get());
@@ -436,6 +457,11 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
       draw_shapes(_ramps, pipeline_library.meta_draw_shape.get(), shapes.ramp());
    }
 
+   if (not _hemispheres.empty()) {
+      draw_shapes(_hemispheres, pipeline_library.meta_draw_shape.get(),
+                  shapes.hemisphere());
+   }
+
    if (not _triangles.empty()) {
       draw_vertices(_triangles, pipeline_library.meta_draw_triangle.get());
    }
@@ -447,15 +473,28 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
 
 bool meta_draw_batcher::all_empty() const noexcept
 {
-   return _octahedrons_outlined.empty() and _octahedrons.empty() and
-          _hint_hexahedrons.empty() and _boxes.empty() and _spheres.empty() and
-          _cylinders.empty() and _cones.empty() and _ramps.empty() and
-          _triangles.empty() and _lines_solid.empty() and
-          _octahedrons_wireframe.empty() and _hint_hexahedrons_wireframe.empty() and
-          _boxes_wireframe.empty() and _spheres_wireframe.empty() and
-          _cylinders_wireframe.empty() and _alt_cylinders_wireframe.empty() and
-          _cones_wireframe.empty() and _ramps_wireframe.empty() and
-          _triangles_wireframe.empty() and _lines_overlay.empty();
+   return _octahedrons_outlined.empty() and       //
+          _octahedrons.empty() and                //
+          _hint_hexahedrons.empty() and           //
+          _boxes.empty() and                      //
+          _spheres.empty() and                    //
+          _cylinders.empty() and                  //
+          _cones.empty() and                      //
+          _hemispheres.empty() and                //
+          _ramps.empty() and                      //
+          _triangles.empty() and                  //
+          _lines_solid.empty() and                //
+          _octahedrons_wireframe.empty() and      //
+          _hint_hexahedrons_wireframe.empty() and //
+          _boxes_wireframe.empty() and            //
+          _spheres_wireframe.empty() and          //
+          _cylinders_wireframe.empty() and        //
+          _alt_cylinders_wireframe.empty() and    //
+          _cones_wireframe.empty() and            //
+          _ramps_wireframe.empty() and            //
+          _hemispheres_wireframe.empty() and      //
+          _triangles_wireframe.empty() and        //
+          _lines_overlay.empty();
 }
 
 }

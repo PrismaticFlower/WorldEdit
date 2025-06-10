@@ -64,6 +64,15 @@ auto get_bounding_box(const block_description_cone& cone) noexcept -> math::boun
    return get_bounding_box(cone.rotation, cone.position, cone.size);
 }
 
+auto get_bounding_box(const block_description_hemisphere& hemisphere) noexcept
+   -> math::bounding_box
+{
+   return hemisphere.rotation * math::bounding_box{.min = {-hemisphere.size.x, 0.0f,
+                                                           -hemisphere.size.z},
+                                                   .max = hemisphere.size} +
+          hemisphere.position;
+}
+
 auto get_bounding_box(const blocks& blocks, const block_type type,
                       const uint32 block_index) noexcept -> math::bounding_box
 {
@@ -85,6 +94,9 @@ auto get_bounding_box(const blocks& blocks, const block_type type,
    } break;
    case world::block_type::cone: {
       return get_bounding_box(blocks.cones.description[block_index]);
+   } break;
+   case world::block_type::hemisphere: {
+      return get_bounding_box(blocks.hemispheres.description[block_index]);
    } break;
    }
 

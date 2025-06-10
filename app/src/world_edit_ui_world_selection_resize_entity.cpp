@@ -593,6 +593,39 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                   }
 
                } break;
+               case world::block_type::hemisphere: {
+                  const world::block_description_hemisphere& hemisphere =
+                     _world.blocks.hemispheres.description[*block_index];
+
+                  float3 new_size = hemisphere.size;
+                  new_size.y /= 2.0f;
+
+                  float3 new_position =
+                     hemisphere.rotation *
+                     (conjugate(hemisphere.rotation) * hemisphere.position +
+                      float3{0.0f, new_size.y, 0.0f});
+
+                  if (_gizmos.gizmo_size(
+                         {
+                            .name = "Block Hemisphere Size",
+                            .instance = static_cast<int64>(
+                               _world.blocks.hemispheres.ids[*block_index]),
+                            .alignment = _editor_grid_size,
+                            .gizmo_rotation = hemisphere.rotation,
+                         },
+                         new_position, new_size)) {
+
+                     new_position = hemisphere.rotation *
+                                    (conjugate(hemisphere.rotation) * new_position -
+                                     float3{0.0f, new_size.y, 0.0f});
+                     new_size.y *= 2.0f;
+
+                     _edit_stack_world.apply(edits::make_set_block_hemisphere_metrics(
+                                                *block_index, hemisphere.rotation,
+                                                new_position, new_size),
+                                             _edit_context);
+                  }
+               } break;
                }
             }
 

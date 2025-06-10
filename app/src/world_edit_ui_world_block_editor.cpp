@@ -86,12 +86,13 @@ auto block_type_name(world::block_type type) noexcept -> const char*
 
    // clang-format off
    switch (type) {
-   case world::block_type::box:  return "Box";
-   case world::block_type::ramp: return "Ramp";
-   case world::block_type::quad: return "Quadrilateral";
-   case world::block_type::cylinder: return "Cylinder";
-   case world::block_type::stairway: return "Stairs";
-   case world::block_type::cone: return "Cone";
+   case world::block_type::box:        return "Box";
+   case world::block_type::ramp:       return "Ramp";
+   case world::block_type::quad:       return "Quadrilateral";
+   case world::block_type::cylinder:   return "Cylinder";
+   case world::block_type::stairway:   return "Stairs";
+   case world::block_type::cone:       return "Cone";
+   case world::block_type::hemisphere: return "Hemisphere";
    }
    // clang-format on
 
@@ -119,10 +120,15 @@ void world_edit::ui_show_block_editor() noexcept
 
       if (ImGui::BeginCombo("Draw Shape",
                             block_type_name(_block_editor_config.draw_type))) {
-         for (const world::block_type type :
-              {world::block_type::box, world::block_type::ramp,
-               world::block_type::quad, world::block_type::cylinder,
-               world::block_type::stairway, world::block_type::cone}) {
+         for (const world::block_type type : {
+                 world::block_type::box,
+                 world::block_type::ramp,
+                 world::block_type::quad,
+                 world::block_type::cylinder,
+                 world::block_type::stairway,
+                 world::block_type::cone,
+                 world::block_type::hemisphere,
+              }) {
 
             if (ImGui::Selectable(block_type_name(type),
                                   type == _block_editor_config.draw_type)) {
@@ -706,6 +712,11 @@ void world_edit::ui_show_block_editor() noexcept
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
+      if (ImGui::MenuItem("Draw Hemisphere")) {
+         _block_editor_config.draw_type = world::block_type::hemisphere;
+         _block_editor_context = {.activate_tool = block_edit_tool::draw};
+      }
+
       ImGui::EndPopup();
    }
 
@@ -1060,6 +1071,41 @@ void world_edit::ui_show_block_editor() noexcept
                else {
                   MessageBoxA(_window,
                               fmt::format("Max cones ({}) Reached", world::max_blocks)
+                                 .c_str(),
+                              "Limit Reached", MB_OK);
+
+                  _block_editor_context.tool = block_edit_tool::none;
+               }
+
+            } break;
+            case world::block_type::hemisphere: {
+               const uint8 material_index = _block_editor_config.paint_material_index;
+               const world::block_hemisphere_id id =
+                  _world.blocks.next_id.hemispheres.aquire();
+
+               _block_editor_context.draw_block.index =
+                  static_cast<uint32>(_world.blocks.hemispheres.size());
+               _block_editor_context.draw_block.block_id = id;
+
+               _block_editor_context.draw_block.hemisphere.start = cursor_positionWS;
+               _block_editor_context.draw_block.step =
+                  draw_block_step::hemisphere_radius;
+
+               if (_world.blocks.hemispheres.size() < world::max_blocks) {
+                  _edit_stack_world.apply(
+                     edits::make_add_block(
+                        world::block_description_hemisphere{
+                           .position = cursor_positionWS,
+                           .size = {1.0f, 1.0f, 1.0f},
+                           .surface_materials = {material_index, material_index},
+                           .surface_texture_mode = {world::block_texture_mode::world_space_auto,
+                                                    world::block_texture_mode::unwrapped}},
+                        _block_editor_config.new_block_layer, id),
+                     _edit_context);
+               }
+               else {
+                  MessageBoxA(_window,
+                              fmt::format("Max hemispheres ({}) Reached", world::max_blocks)
                                  .c_str(),
                               "Limit Reached", MB_OK);
 
@@ -1908,6 +1954,37 @@ void world_edit::ui_show_block_editor() noexcept
             _edit_stack_world.close_last();
          }
       } break;
+      case draw_block_step::hemisphere_radius: {
+         const float3 draw_block_start =
+            _block_editor_context.draw_block.hemisphere.start;
+
+         _tool_visualizers.add_line_overlay(draw_block_start,
+                                            {cursor_positionWS.x,
+                                             draw_block_start.y,
+                                             cursor_positionWS.z},
+                                            line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         const float radius =
+            distance(float2{draw_block_start.x, draw_block_start.z},
+                     float2{cursor_positionWS.x, cursor_positionWS.z});
+
+         if (const uint32 index = _block_editor_context.draw_block.index;
+             index < _world.blocks.hemispheres.size() and
+             _world.blocks.hemispheres.ids[index] ==
+                _block_editor_context.draw_block.block_id) {
+            _edit_stack_world.apply(
+               edits::make_set_block_hemisphere_metrics(index, {}, draw_block_start,
+                                                        {radius, radius, radius}),
+               _edit_context, {.transparent = true});
+         }
+
+         if (click) {
+            _block_editor_context.draw_block = {};
+
+            _edit_stack_world.close_last();
+         }
+      } break;
       }
    }
    else if (_block_editor_context.tool == block_edit_tool::rotate_texture) {
@@ -2305,6 +2382,33 @@ void world_edit::ui_show_block_editor() noexcept
                _edit_stack_world.apply(edits::make_set_block_cone_metrics(*selected_index,
                                                                           cone.rotation, positionWS,
                                                                           size),
+                                       _edit_context);
+            }
+         } break;
+         case world::block_type::hemisphere: {
+            const world::block_description_hemisphere& hemisphere =
+               _world.blocks.hemispheres.description[*selected_index];
+
+            float3 size = hemisphere.size;
+            size.y /= 2.0f;
+
+            float3 positionWS = hemisphere.rotation *
+                                (conjugate(hemisphere.rotation) * hemisphere.position +
+                                 float3{0.0f, size.y, 0.0f});
+
+            if (_gizmos.gizmo_size({.name = "Resize Block (Hemisphere)",
+                                    .instance = *selected_index,
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation = hemisphere.rotation},
+                                   positionWS, size)) {
+               positionWS = hemisphere.rotation *
+                            (conjugate(hemisphere.rotation) * positionWS -
+                             float3{0.0f, size.y, 0.0f});
+               size.y *= 2.0f;
+
+               _edit_stack_world.apply(edits::make_set_block_hemisphere_metrics(
+                                          *selected_index, hemisphere.rotation,
+                                          positionWS, size),
                                        _edit_context);
             }
          } break;

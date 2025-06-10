@@ -28,6 +28,12 @@ extern const std::array<std::array<uint16, 4>, 0> block_cone_occluders;
 extern const std::array<float3, 33> block_cone_points;
 extern const std::array<std::array<uint16, 2>, 64> block_cone_edges;
 
+extern const std::array<block_vertex, 328> block_hemisphere_vertices;
+extern const std::array<std::array<uint16, 3>, 510> block_hemisphere_triangles;
+extern const std::array<std::array<uint16, 4>, 0> block_hemisphere_occluders;
+extern const std::array<float3, 1> block_hemisphere_points;
+extern const std::array<std::array<uint16, 2>, 0> block_hemisphere_edges;
+
 extern const std::array<std::array<uint16, 3>, 2> block_quad_triangles;
 extern const std::array<std::array<uint16, 3>, 2> block_quad_alternate_triangles;
 extern const std::array<float2, 4> block_quad_vertex_texcoords;
