@@ -310,6 +310,15 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                         *block_index, rotation * cone.rotation,
                         (rotation * (cone.position - centre)) + centre, cone.size));
                   } break;
+                  case world::block_type::hemisphere: {
+                     const world::block_description_hemisphere& hemisphere =
+                        _world.blocks.hemispheres.description[*block_index];
+
+                     bundled_edits.push_back(edits::make_set_block_hemisphere_metrics(
+                        *block_index, rotation * hemisphere.rotation,
+                        (rotation * (hemisphere.position - centre)) + centre,
+                        hemisphere.size));
+                  } break;
                   }
                }
             }

@@ -215,6 +215,7 @@ enum class draw_block_step : uint8 {
    stairway_height,
    cone_radius,
    cone_height,
+   hemisphere_radius,
 };
 
 enum class draw_block_cursor_plane : uint8 { none, x, y, z };
@@ -1057,6 +1058,10 @@ private:
             float3 start;
             float radius;
          } cone;
+
+         struct hemisphere {
+            float3 start;
+         } hemisphere;
 
          uint32 index = 0;
          world::block_id block_id = world::block_id::none;

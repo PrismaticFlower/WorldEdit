@@ -216,6 +216,40 @@ bool blocks_cones::is_balanced() const noexcept
           bbox.min_x.size() == ids.size();
 }
 
+void blocks_hemispheres::reserve(const std::size_t size) noexcept
+{
+   bbox.min_x.reserve(size);
+   bbox.min_y.reserve(size);
+   bbox.min_z.reserve(size);
+   bbox.max_x.reserve(size);
+   bbox.max_y.reserve(size);
+   bbox.max_z.reserve(size);
+   hidden.reserve(size);
+   layer.reserve(size);
+   description.reserve(size);
+   ids.reserve(size);
+}
+
+auto blocks_hemispheres::size() const noexcept -> std::size_t
+{
+   assert(is_balanced());
+
+   return bbox.min_x.size();
+}
+
+bool blocks_hemispheres::is_balanced() const noexcept
+{
+   return bbox.min_x.size() == bbox.min_y.size() and
+          bbox.min_x.size() == bbox.min_z.size() and
+          bbox.min_x.size() == bbox.max_x.size() and
+          bbox.min_x.size() == bbox.max_y.size() and
+          bbox.min_x.size() == bbox.max_z.size() and
+          bbox.min_x.size() == hidden.size() and
+          bbox.min_x.size() == layer.size() and //
+          bbox.min_x.size() == description.size() and
+          bbox.min_x.size() == ids.size();
+}
+
 bool blocks::empty() const noexcept
 {
    return boxes.size() == 0 and     //
@@ -223,7 +257,8 @@ bool blocks::empty() const noexcept
           quads.size() == 0 and     //
           cylinders.size() == 0 and //
           stairways.size() == 0 and //
-          cones.size() == 0;
+          cones.size() == 0 and     //
+          hemispheres.size() == 0;
 }
 
 void blocks::untracked_fill_dirty_ranges() noexcept
@@ -252,6 +287,10 @@ void blocks::untracked_fill_dirty_ranges() noexcept
       cones.dirty.add({0, static_cast<uint32>(cones.size())});
    }
 
+   if (hemispheres.size() != 0) {
+      hemispheres.dirty.add({0, static_cast<uint32>(hemispheres.size())});
+   }
+
    materials_dirty.add({0, static_cast<uint32>(materials.size())});
 }
 
@@ -263,6 +302,7 @@ void blocks::untracked_clear_dirty_ranges() noexcept
    cylinders.dirty.clear();
    stairways.dirty.clear();
    cones.dirty.clear();
+   hemispheres.dirty.clear();
    materials_dirty.clear();
 }
 
@@ -303,6 +343,11 @@ block_id::block_id(block_stairway_id id) noexcept
 
 block_id::block_id(block_cone_id id) noexcept
    : id_type{block_type::cone}, id{.cone = id}
+{
+}
+
+block_id::block_id(block_hemisphere_id id) noexcept
+   : id_type{block_type::hemisphere}, id{.hemisphere = id}
 {
 }
 
@@ -376,6 +421,18 @@ auto block_id::get_cone() const noexcept -> block_cone_id
    assert(id_type == block_type::cone);
 
    return id.cone;
+}
+
+bool block_id::is_hemisphere() const noexcept
+{
+   return id_type == block_type::hemisphere;
+}
+
+auto block_id::get_hemisphere() const noexcept -> block_hemisphere_id
+{
+   assert(id_type == block_type::hemisphere);
+
+   return id.hemisphere;
 }
 
 auto block_id::type() const noexcept -> block_type

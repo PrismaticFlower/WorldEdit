@@ -23,6 +23,8 @@ bool valid_index(const blocks& blocks, const block_type type,
       return block_index < blocks.stairways.size();
    case block_type::cone:
       return block_index < blocks.cones.size();
+   case block_type::hemisphere:
+      return block_index < blocks.hemispheres.size();
    }
 
    std::unreachable();
@@ -46,6 +48,8 @@ auto get_dirty_tracker(blocks& blocks, const block_type type) noexcept
       return blocks.stairways.dirty;
    case block_type::cone:
       return blocks.cones.dirty;
+   case block_type::hemisphere:
+      return blocks.hemispheres.dirty;
    }
 
    std::unreachable();
@@ -69,6 +73,8 @@ auto get_block_hidden(blocks& blocks, const block_type type,
       return blocks.stairways.hidden[block_index];
    case block_type::cone:
       return blocks.cones.hidden[block_index];
+   case block_type::hemisphere:
+      return blocks.hemispheres.hidden[block_index];
    }
 
    std::unreachable();
@@ -92,6 +98,8 @@ auto get_block_layer(blocks& blocks, const block_type type,
       return blocks.stairways.layer[block_index];
    case block_type::cone:
       return blocks.cones.layer[block_index];
+   case block_type::hemisphere:
+      return blocks.hemispheres.layer[block_index];
    }
 
    std::unreachable();
@@ -139,6 +147,12 @@ auto get_block_surface_material(blocks& blocks, const block_type type,
    case block_type::cone: {
       std::array<uint8, 2>& surface_materials =
          blocks.cones.description[block_index].surface_materials;
+
+      return surface_materials[surface_index % surface_materials.size()];
+   }
+   case block_type::hemisphere: {
+      std::array<uint8, 2>& surface_materials =
+         blocks.hemispheres.description[block_index].surface_materials;
 
       return surface_materials[surface_index % surface_materials.size()];
    }
@@ -191,6 +205,12 @@ auto get_block_surface_texture_mode(blocks& blocks, const block_type type,
 
       return surface_texture_mode[surface_index % surface_texture_mode.size()];
    }
+   case block_type::hemisphere: {
+      std::array<block_texture_mode, 2>& surface_texture_mode =
+         blocks.hemispheres.description[block_index].surface_texture_mode;
+
+      return surface_texture_mode[surface_index % surface_texture_mode.size()];
+   }
    }
 
    std::unreachable();
@@ -237,6 +257,12 @@ auto get_block_surface_texture_rotation(blocks& blocks, const block_type type,
    case block_type::cone: {
       std::array<block_texture_rotation, 2>& surface_texture_rotation =
          blocks.cones.description[block_index].surface_texture_rotation;
+
+      return surface_texture_rotation[surface_index % surface_texture_rotation.size()];
+   }
+   case block_type::hemisphere: {
+      std::array<block_texture_rotation, 2>& surface_texture_rotation =
+         blocks.hemispheres.description[block_index].surface_texture_rotation;
 
       return surface_texture_rotation[surface_index % surface_texture_rotation.size()];
    }
@@ -289,6 +315,12 @@ auto get_block_surface_texture_scale(blocks& blocks, const block_type type,
 
       return surface_texture_scale[surface_index % surface_texture_scale.size()];
    }
+   case block_type::hemisphere: {
+      std::array<std::array<int8, 2>, 2>& surface_texture_scale =
+         blocks.hemispheres.description[block_index].surface_texture_scale;
+
+      return surface_texture_scale[surface_index % surface_texture_scale.size()];
+   }
    }
 
    std::unreachable();
@@ -335,6 +367,12 @@ auto get_block_surface_texture_offset(blocks& blocks, const block_type type,
    case block_type::cone: {
       std::array<std::array<uint16, 2>, 2>& surface_texture_offset =
          blocks.cones.description[block_index].surface_texture_offset;
+
+      return surface_texture_offset[surface_index % surface_texture_offset.size()];
+   }
+   case block_type::hemisphere: {
+      std::array<std::array<uint16, 2>, 2>& surface_texture_offset =
+         blocks.hemispheres.description[block_index].surface_texture_offset;
 
       return surface_texture_offset[surface_index % surface_texture_offset.size()];
    }

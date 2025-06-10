@@ -498,6 +498,89 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
    }
 
+   for (uint32 hemisphere_index = 0;
+        hemisphere_index < blocks.hemispheres.size(); ++hemisphere_index) {
+      if (not config.active_layers[blocks.hemispheres.layer[hemisphere_index]])
+         continue;
+      if (blocks.hemispheres.hidden[hemisphere_index]) continue;
+      if (blocks.hemispheres.ids[hemisphere_index] == config.filter_id)
+         continue;
+
+      const math::bounding_box bboxWS = {
+         .min =
+            {
+               blocks.hemispheres.bbox.min_x[hemisphere_index],
+               blocks.hemispheres.bbox.min_y[hemisphere_index],
+               blocks.hemispheres.bbox.min_z[hemisphere_index],
+            },
+
+         .max =
+            {
+               blocks.hemispheres.bbox.max_x[hemisphere_index],
+               blocks.hemispheres.bbox.max_y[hemisphere_index],
+               blocks.hemispheres.bbox.max_z[hemisphere_index],
+            },
+      };
+
+      const float3 hemisphere_centreLS = (bboxWS.min + bboxWS.max) * 0.5f;
+      const float3 hemisphere_size = (bboxWS.max - bboxWS.min) * 0.5f;
+
+      const float3 positionAS = positionWS - hemisphere_centreLS;
+      const float3 distances = abs(positionAS) - hemisphere_size;
+
+      const float hemisphere_distance =
+         length(max(distances, float3{0.0f, 0.0f, 0.0f})) +
+         std::min(std::max(std::max(distances.x, distances.y), distances.z), 0.0f);
+
+      if (hemisphere_distance > config.snap_radius) continue;
+
+      const block_description_hemisphere& hemisphere =
+         blocks.hemispheres.description[hemisphere_index];
+
+      const float4x4 scale = {
+         {hemisphere.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, hemisphere.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, hemisphere.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(hemisphere.rotation);
+
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {hemisphere.position, 1.0f};
+
+      std::array<float3, 64> verticesWS;
+
+      for (std::size_t i = 0; i < block_hemisphere_points.size(); ++i) {
+         verticesWS[i] = world_from_local * block_hemisphere_points[i];
+      }
+
+      for (const float3& vertex_positionWS : verticesWS) {
+         const float corner_distance = distance(positionWS, vertex_positionWS);
+
+         if (corner_distance < closest_distance) {
+            closest_pointWS = vertex_positionWS;
+            closest_distance = corner_distance;
+         }
+
+         draw_point(visualizers, vertex_positionWS, colors.corner);
+      }
+
+      for (const auto& [i0, i1] : block_hemisphere_edges) {
+         for (int i = 1; i < edge_point_count; ++i) {
+            const float3 pointWS =
+               lerp(verticesWS[i0], verticesWS[i1], i / flt_edge_point_count);
+            const float point_distance = distance(positionWS, pointWS);
+
+            if (point_distance < closest_distance) {
+               closest_pointWS = pointWS;
+               closest_distance = point_distance;
+            }
+
+            draw_point(visualizers, pointWS, colors.edge);
+         }
+      }
+   }
+
    float3 new_positionWS;
 
    if (closest_distance > 0.0f and closest_distance <= config.snap_radius) {

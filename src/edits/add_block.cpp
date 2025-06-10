@@ -205,4 +205,12 @@ auto make_add_block(world::block_description_cone cone, int8 layer,
    return std::make_unique<add_block<&world::blocks::cones>>(cone, layer, id);
 }
 
+auto make_add_block(world::block_description_hemisphere hemisphere, int8 layer,
+                    world::block_hemisphere_id id)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<add_block<&world::blocks::hemispheres>>(hemisphere,
+                                                                   layer, id);
+}
+
 }

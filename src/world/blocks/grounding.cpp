@@ -135,6 +135,13 @@ auto ground_block(const block_id id, const uint32 block_index,
 
       return ground_block(cone.position, bbox, id, world, object_classes, active_layers);
    } break;
+   case block_type::hemisphere: {
+      const block_description_hemisphere& hemisphere =
+         world.blocks.hemispheres.description[block_index];
+
+      return ground_block(hemisphere.position, bbox, id, world, object_classes,
+                          active_layers);
+   } break;
    }
 
    std::unreachable();

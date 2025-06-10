@@ -188,6 +188,8 @@ auto make_delete_block(world::block_type type, uint32 index)
       return std::make_unique<delete_block_custom_mesh<&world::blocks::stairways>>(index);
    case world::block_type::cone:
       return std::make_unique<delete_block<&world::blocks::cones>>(index);
+   case world::block_type::hemisphere:
+      return std::make_unique<delete_block<&world::blocks::hemispheres>>(index);
    }
 
    std::unreachable();

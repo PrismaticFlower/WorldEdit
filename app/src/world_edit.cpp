@@ -1925,6 +1925,12 @@ void world_edit::place_creation_entity() noexcept
 
          return;
       }
+      else if (_world.blocks.hemispheres.size() + group.blocks.hemispheres.size() >
+               world::max_blocks) {
+         report_limit_reached("Max blocks (hemispheres, {}) Reached", world::max_blocks);
+
+         return;
+      }
 
       const uint32 object_base_index = static_cast<uint32>(_world.objects.size());
       const uint32 path_base_index = static_cast<uint32>(_world.paths.size());
@@ -2328,6 +2334,30 @@ void world_edit::place_creation_entity() noexcept
          _edit_stack_world
             .apply(edits::make_add_block(new_cone, group.layer,
                                          _world.blocks.next_id.cones.aquire()),
+                   _edit_context,
+                   {.transparent = std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::block_description_hemisphere& hemisphere :
+           group.blocks.hemispheres) {
+         world::block_description_hemisphere new_hemisphere = hemisphere;
+
+         new_hemisphere.rotation = group.rotation * new_hemisphere.rotation;
+         new_hemisphere.position =
+            group.rotation * new_hemisphere.position + group.position;
+
+         for (uint8& material : new_hemisphere.surface_materials) {
+            if (block_material_remap[material]) {
+               material = *block_material_remap[material];
+            }
+            else {
+               material = 0;
+            }
+         }
+
+         _edit_stack_world
+            .apply(edits::make_add_block(new_hemisphere, group.layer,
+                                         _world.blocks.next_id.hemispheres.aquire()),
                    _edit_context,
                    {.transparent = std::exchange(is_transparent_edit, true)});
       }
@@ -3020,6 +3050,14 @@ void world_edit::align_selection(const float alignment) noexcept
                                                      align_position(cone.position),
                                                      cone.size));
             } break;
+            case world::block_type::hemisphere: {
+               const world::block_description_hemisphere& hemisphere =
+                  _world.blocks.hemispheres.description[*block_index];
+
+               bundle.push_back(edits::make_set_block_hemisphere_metrics(
+                  *block_index, hemisphere.rotation,
+                  align_position(hemisphere.position), hemisphere.size));
+            } break;
             }
          }
 
@@ -3422,6 +3460,16 @@ void world_edit::ground_selection() noexcept
                   bundle.push_back(
                      edits::make_set_block_cone_metrics(*block_index, cone.rotation,
                                                         *grounded_position, cone.size));
+               } break;
+               case world::block_type::hemisphere: {
+                  const world::block_description_hemisphere& hemisphere =
+                     _world.blocks.hemispheres.description[*block_index];
+
+                  bundle.push_back(
+                     edits::make_set_block_hemisphere_metrics(*block_index,
+                                                              hemisphere.rotation,
+                                                              *grounded_position,
+                                                              hemisphere.size));
                } break;
                }
             }

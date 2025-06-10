@@ -157,6 +157,19 @@ void fill_entity_group_block_materials(entity_group& group, const blocks& blocks
          material = *materials_remap[material];
       }
    }
+
+   for (block_description_hemisphere& hemisphere : group.blocks.hemispheres) {
+      for (uint8& material : hemisphere.surface_materials) {
+         if (not materials_remap[material]) {
+            materials_remap[material] =
+               static_cast<uint8>(group.blocks.materials.size());
+
+            group.blocks.materials.push_back(blocks.materials[material]);
+         }
+
+         material = *materials_remap[material];
+      }
+   }
 }
 
 }
@@ -358,6 +371,13 @@ auto entity_group_metrics(const entity_group& group,
       ground_distance = std::min(ground_distance, bboxGS.min.y);
    }
 
+   for (const block_description_hemisphere& hemisphere : group.blocks.hemispheres) {
+      const math::bounding_box bboxGS = get_bounding_box(hemisphere);
+
+      group_bbox = math::combine(group_bbox, get_bounding_box(hemisphere));
+      ground_distance = std::min(ground_distance, bboxGS.min.y);
+   }
+
    if (ground_distance == FLT_MAX) ground_distance = 0.0f;
 
    return {.ground_distance = ground_distance, .visual_bbox = group_bbox};
@@ -458,6 +478,11 @@ void centre_entity_group(entity_group& group) noexcept
       count += 1.0f;
    }
 
+   for (const block_description_hemisphere& hemisphere : group.blocks.hemispheres) {
+      position += hemisphere.position;
+      count += 1.0f;
+   }
+
    const float3 centre = position / count;
 
    for (object& object : group.objects) {
@@ -534,6 +559,10 @@ void centre_entity_group(entity_group& group) noexcept
 
    for (block_description_cone& cone : group.blocks.cones) {
       cone.position -= centre;
+   }
+
+   for (block_description_hemisphere& hemisphere : group.blocks.hemispheres) {
+      hemisphere.position -= centre;
    }
 }
 
@@ -714,6 +743,10 @@ auto make_entity_group_from_selection(const world& world,
             case block_type::cone: {
                group.blocks.cones.push_back(world.blocks.cones.description[*block_index]);
             } break;
+            case block_type::hemisphere: {
+               group.blocks.hemispheres.push_back(
+                  world.blocks.hemispheres.description[*block_index]);
+            } break;
             }
          }
       }
@@ -847,6 +880,9 @@ auto make_entity_group_from_block_id(const blocks& blocks, const block_id id) no
    case block_type::cone: {
       group.blocks.cones.push_back(blocks.cones.description[*block_index]);
    } break;
+   case block_type::hemisphere: {
+      group.blocks.hemispheres.push_back(blocks.hemispheres.description[*block_index]);
+   } break;
    }
 
    fill_entity_group_block_materials(group, blocks);
@@ -922,6 +958,14 @@ auto make_entity_group_from_layer(const world& world, const int32 layer) noexcep
       }
    }
 
+   for (uint32 block_index = 0; block_index < world.blocks.hemispheres.size();
+        ++block_index) {
+      if (world.blocks.hemispheres.layer[block_index] == layer) {
+         group.blocks.hemispheres.push_back(
+            world.blocks.hemispheres.description[block_index]);
+      }
+   }
+
    fill_entity_group_block_materials(group, world.blocks);
 
    return group;
@@ -963,6 +1007,8 @@ auto make_entity_group_from_world(const world& world) noexcept -> entity_group
                },
             .cones = {world.blocks.cones.description.begin(),
                       world.blocks.cones.description.end()},
+            .hemispheres = {world.blocks.hemispheres.description.begin(),
+                            world.blocks.hemispheres.description.end()},
 
             .materials = {world.blocks.materials.begin(), world.blocks.materials.end()},
          },
@@ -1000,6 +1046,7 @@ bool is_entity_group_blocks_empty(const entity_group& group) noexcept
    empty &= group.blocks.cylinders.empty();
    empty &= group.blocks.stairways.description.empty();
    empty &= group.blocks.cones.empty();
+   empty &= group.blocks.hemispheres.empty();
 
    return empty;
 }

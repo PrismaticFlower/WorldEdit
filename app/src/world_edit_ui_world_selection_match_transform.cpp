@@ -213,6 +213,10 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
                case world::block_type::cone: {
                   new_rotation = _world.blocks.cones.description[*block_index].rotation;
                } break;
+               case world::block_type::hemisphere: {
+                  new_rotation =
+                     _world.blocks.hemispheres.description[*block_index].rotation;
+               } break;
                }
             }
          }
@@ -472,6 +476,15 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
                      bundled_edits.push_back(
                         edits::make_set_block_cone_metrics(*block_index, new_rotation,
                                                            new_position, cone.size));
+                  } break;
+                  case world::block_type::hemisphere: {
+                     const world::block_description_hemisphere& hemisphere =
+                        _world.blocks.hemispheres.description[*block_index];
+
+                     bundled_edits.push_back(
+                        edits::make_set_block_hemisphere_metrics(*block_index,
+                                                                 new_rotation, new_position,
+                                                                 hemisphere.size));
                   } break;
                   }
                }

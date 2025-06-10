@@ -51,6 +51,21 @@ inline float sphIntersect(float3 ro, float3 rd, float3 sph, float radius)
    return -b - sqrt(h);
 }
 
+inline float eliIntersect(float3 ro, float3 rd, float3 cen, float3 rad)
+{
+   float3 oc = ro - cen;
+
+   float3 ocn = oc / rad;
+   float3 rdn = rd / rad;
+
+   float a = dot(rdn, rdn);
+   float b = dot(ocn, rdn);
+   float c = dot(ocn, ocn);
+   float h = b * b - a * (c - 1.0f);
+   if (h < 0.0f) return -1.0f;
+   return (-b - sqrt(h)) / a;
+}
+
 inline float boxIntersection(float3 ro, float3 rd, float3 boxSize)
 {
    float3 m = 1.0f / rd; // can precompute if traversing a set of aligned boxes
