@@ -266,6 +266,9 @@ bool edit_context::is_memory_valid(const void* ptr, std::size_t size) const noex
       address_range::container(world.blocks.hemispheres.hidden),
       address_range::container(world.blocks.hemispheres.layer),
       address_range::container(world.blocks.hemispheres.description),
+      address_range::container(world.blocks.pyramids.hidden),
+      address_range::container(world.blocks.pyramids.layer),
+      address_range::container(world.blocks.pyramids.description),
       address_range::container(world.blocks.materials),
    };
 

@@ -73,6 +73,11 @@ auto get_bounding_box(const block_description_hemisphere& hemisphere) noexcept
           hemisphere.position;
 }
 
+auto get_bounding_box(const block_description_pyramid& pyramid) noexcept -> math::bounding_box
+{
+   return get_bounding_box(pyramid.rotation, pyramid.position, pyramid.size);
+}
+
 auto get_bounding_box(const blocks& blocks, const block_type type,
                       const uint32 block_index) noexcept -> math::bounding_box
 {
@@ -97,6 +102,9 @@ auto get_bounding_box(const blocks& blocks, const block_type type,
    } break;
    case world::block_type::hemisphere: {
       return get_bounding_box(blocks.hemispheres.description[block_index]);
+   } break;
+   case world::block_type::pyramid: {
+      return get_bounding_box(blocks.pyramids.description[block_index]);
    } break;
    }
 

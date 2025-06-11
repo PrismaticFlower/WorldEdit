@@ -176,6 +176,10 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                   gizmo_rotation =
                      _world.blocks.hemispheres.description[*block_index].rotation;
                } break;
+               case world::block_type::pyramid: {
+                  gizmo_rotation =
+                     _world.blocks.pyramids.description[*block_index].rotation;
+               } break;
                }
             }
          }
@@ -444,6 +448,16 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                         local_space ? hemisphere.rotation * rotation
                                     : rotation * hemisphere.rotation,
                         hemisphere.position, hemisphere.size));
+                  } break;
+                  case world::block_type::pyramid: {
+                     const world::block_description_pyramid& pyramid =
+                        _world.blocks.pyramids.description[*block_index];
+
+                     bundled_edits.push_back(edits::make_set_block_pyramid_metrics(
+                        *block_index,
+                        local_space ? pyramid.rotation * rotation
+                                    : rotation * pyramid.rotation,
+                        pyramid.position, pyramid.size));
                   } break;
                   }
                }

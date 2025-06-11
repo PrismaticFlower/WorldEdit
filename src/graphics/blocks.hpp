@@ -44,6 +44,7 @@ struct blocks {
       instance_list cylinders;
       instance_list cones;
       instance_list hemispheres;
+      instance_list pyramids;
       draw_list stairways;
 
       instance_list dynamic_boxes;
@@ -52,6 +53,7 @@ struct blocks {
       instance_list dynamic_cylinders;
       instance_list dynamic_cones;
       instance_list dynamic_hemispheres;
+      instance_list dynamic_pyramids;
       draw_list dynamic_stairways;
    };
 
@@ -149,6 +151,9 @@ private:
    gpu::unique_resource_handle _hemispheres_instance_data;
    uint64 _hemispheres_instance_data_capacity = 0;
 
+   gpu::unique_resource_handle _pyramids_instance_data;
+   uint64 _pyramids_instance_data_capacity = 0;
+
    gpu::unique_command_signature_handle _custom_mesh_command_signature;
 
    offset_allocator_aligned _custom_mesh_allocator;
@@ -205,6 +210,9 @@ private:
       gpu::unique_resource_handle hemispheres_instance_data;
       uint64 hemispheres_instance_data_capacity = 0;
 
+      gpu::unique_resource_handle pyramids_instance_data;
+      uint64 pyramids_instance_data_capacity = 0;
+
       bbox_soa boxes_bbox;
       bbox_soa ramps_bbox;
       bbox_soa quads_bbox;
@@ -212,6 +220,7 @@ private:
       bbox_soa stairways_bbox;
       bbox_soa cones_bbox;
       bbox_soa hemispheres_bbox;
+      bbox_soa pyramids_bbox;
 
       std::array<material, world::max_block_materials> materials;
 

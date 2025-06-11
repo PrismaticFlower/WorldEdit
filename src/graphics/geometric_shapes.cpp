@@ -962,6 +962,24 @@ struct geometric_shapes_buffer {
          {59, 28, 251},   {128, 90, 59},   {189, 159, 128}, {251, 220, 189},
          {128, 59, 251},  {251, 189, 128},
       }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment) const std::array<float3, 5> pyramid_vertices = {{
+      {-1.0, -1.0, 1.0},
+      {1.0, -1.0, 1.0},
+      {1.0, -1.0, -1.0},
+      {-1.0, -1.0, -1.0},
+      {0.0, 1.0, 0.0},
+   }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment)
+      const std::array<std::array<uint16, 3>, 6> pyramid_indices = {{
+         {2, 1, 0},
+         {3, 2, 0},
+         {4, 0, 1},
+         {4, 1, 2},
+         {2, 3, 4},
+         {0, 4, 3},
+      }};
 };
 
 constexpr geometric_shapes_buffer shapes_buffer;
@@ -1157,6 +1175,23 @@ void geometric_shapes::init_shapes(gpu::device& device)
             .buffer_location =
                gpu_address + offsetof(geometric_shapes_buffer, hemisphere_vertices),
             .size_in_bytes = sizeof(geometric_shapes_buffer::hemisphere_vertices),
+            .stride_in_bytes = sizeof(float3),
+         },
+   };
+
+   _pyramid = {
+      .index_count = static_cast<uint32>(shapes_buffer.pyramid_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, pyramid_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::pyramid_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, pyramid_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::pyramid_vertices),
             .stride_in_bytes = sizeof(float3),
          },
    };

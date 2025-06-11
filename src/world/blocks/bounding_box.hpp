@@ -23,6 +23,9 @@ auto get_bounding_box(const block_description_cone& cone) noexcept -> math::boun
 auto get_bounding_box(const block_description_hemisphere& hemisphere) noexcept
    -> math::bounding_box;
 
+auto get_bounding_box(const block_description_pyramid& pyramid) noexcept
+   -> math::bounding_box;
+
 auto get_bounding_box(const blocks& blocks, const block_type type,
                       const uint32 block_index) noexcept -> math::bounding_box;
 

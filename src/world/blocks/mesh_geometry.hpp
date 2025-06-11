@@ -34,6 +34,12 @@ extern const std::array<std::array<uint16, 4>, 0> block_hemisphere_occluders;
 extern const std::array<float3, 1> block_hemisphere_points;
 extern const std::array<std::array<uint16, 2>, 0> block_hemisphere_edges;
 
+extern const std::array<block_vertex, 16> block_pyramid_vertices;
+extern const std::array<std::array<uint16, 3>, 6> block_pyramid_triangles;
+extern const std::array<std::array<uint16, 4>, 1> block_pyramid_occluders;
+extern const std::array<float3, 5> block_pyramid_points;
+extern const std::array<std::array<uint16, 2>, 8> block_pyramid_edges;
+
 extern const std::array<std::array<uint16, 3>, 2> block_quad_triangles;
 extern const std::array<std::array<uint16, 3>, 2> block_quad_alternate_triangles;
 extern const std::array<float2, 4> block_quad_vertex_texcoords;

@@ -142,6 +142,13 @@ auto ground_block(const block_id id, const uint32 block_index,
       return ground_block(hemisphere.position, bbox, id, world, object_classes,
                           active_layers);
    } break;
+   case block_type::pyramid: {
+      const block_description_pyramid& pyramid =
+         world.blocks.pyramids.description[block_index];
+
+      return ground_block(pyramid.position, bbox, id, world, object_classes,
+                          active_layers);
+   } break;
    }
 
    std::unreachable();

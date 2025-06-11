@@ -19,6 +19,7 @@ tool_visualizers::tool_visualizers() noexcept
    _cylinders_additive.reserve(8);
    _cones_additive.reserve(8);
    _hemispheres_additive.reserve(8);
+   _pyramids_additive.reserve(8);
 }
 
 void tool_visualizers::add_line_overlay(float3 v0, float3 v1, uint32 color)
@@ -110,6 +111,11 @@ void tool_visualizers::add_hemisphere_additive(const float4x4& transform,
    _hemispheres_additive.emplace_back(transform, color);
 }
 
+void tool_visualizers::add_pyramid_additive(const float4x4& transform, const float4& color)
+{
+   _pyramids_additive.emplace_back(transform, color);
+}
+
 void tool_visualizers::clear() noexcept
 {
    _lines_overlay.clear();
@@ -127,6 +133,7 @@ void tool_visualizers::clear() noexcept
    _cylinders_additive.clear();
    _cones_additive.clear();
    _hemispheres_additive.clear();
+   _pyramids_additive.clear();
 }
 
 auto tool_visualizers::lines_overlay() const noexcept
@@ -216,5 +223,11 @@ auto tool_visualizers::hemispheres_additive() const noexcept
    -> std::span<const tool_visualizers_shape>
 {
    return _hemispheres_additive;
+}
+
+auto tool_visualizers::pyramids_additive() const noexcept
+   -> std::span<const tool_visualizers_shape>
+{
+   return _pyramids_additive;
 }
 }
