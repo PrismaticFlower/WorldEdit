@@ -38,7 +38,7 @@
 #include "utility/overload.hpp"
 #include "utility/srgb_conversion.hpp"
 
-#include "world/blocks/find.hpp"
+#include "world/blocks/utility/find.hpp"
 #include "world/object_class_library.hpp"
 #include "world/utility/boundary_nodes.hpp"
 #include "world/utility/world_utilities.hpp"

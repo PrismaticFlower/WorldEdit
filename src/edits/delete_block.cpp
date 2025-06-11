@@ -1,6 +1,6 @@
 #include "delete_block.hpp"
 
-#include "world/blocks/bounding_box.hpp"
+#include "world/blocks/utility/bounding_box.hpp"
 
 #pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
 #pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled

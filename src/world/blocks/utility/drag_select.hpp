@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../blocks.hpp"
-#include "../interaction_context.hpp"
+#include "../../blocks.hpp"
+#include "../../interaction_context.hpp"
 
 #include "math/frustum.hpp"
 

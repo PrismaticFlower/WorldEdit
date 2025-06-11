@@ -1,7 +1,7 @@
 #include "load_blocks.hpp"
 #include "load_failure.hpp"
 
-#include "../blocks/bounding_box.hpp"
+#include "../blocks/utility/bounding_box.hpp"
 
 #include "assets/config/io.hpp"
 

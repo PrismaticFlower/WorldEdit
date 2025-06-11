@@ -1,5 +1,6 @@
 #include "highlight_block.hpp"
-#include "mesh_geometry.hpp"
+
+#include "../mesh_geometry.hpp"
 
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"

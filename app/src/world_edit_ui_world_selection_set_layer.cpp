@@ -3,8 +3,8 @@
 #include "edits/bundle.hpp"
 #include "edits/set_value.hpp"
 
-#include "world/blocks/accessors.hpp"
-#include "world/blocks/find.hpp"
+#include "world/blocks/utility/accessors.hpp"
+#include "world/blocks/utility/find.hpp"
 
 #include <imgui.h>
 

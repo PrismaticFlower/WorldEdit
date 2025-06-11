@@ -33,12 +33,12 @@
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 
-#include "world/blocks/accessors.hpp"
-#include "world/blocks/bounding_box.hpp"
-#include "world/blocks/drag_select.hpp"
-#include "world/blocks/find.hpp"
-#include "world/blocks/grounding.hpp"
-#include "world/blocks/raycast.hpp"
+#include "world/blocks/utility/accessors.hpp"
+#include "world/blocks/utility/bounding_box.hpp"
+#include "world/blocks/utility/drag_select.hpp"
+#include "world/blocks/utility/find.hpp"
+#include "world/blocks/utility/grounding.hpp"
+#include "world/blocks/utility/raycast.hpp"
 #include "world/io/load.hpp"
 #include "world/io/load_entity_group.hpp"
 #include "world/io/save.hpp"
@@ -3062,9 +3062,10 @@ void world_edit::align_selection(const float alignment) noexcept
                const world::block_description_pyramid& pyramid =
                   _world.blocks.pyramids.description[*block_index];
 
-               bundle.push_back(edits::make_set_block_pyramid_metrics(
-                  *block_index, pyramid.rotation,
-                  align_position(pyramid.position), pyramid.size));
+               bundle.push_back(
+                  edits::make_set_block_pyramid_metrics(*block_index, pyramid.rotation,
+                                                        align_position(pyramid.position),
+                                                        pyramid.size));
             } break;
             }
          }
@@ -3484,10 +3485,9 @@ void world_edit::ground_selection() noexcept
                      _world.blocks.pyramids.description[*block_index];
 
                   bundle.push_back(
-                     edits::make_set_block_pyramid_metrics(*block_index,
-                                                              pyramid.rotation,
-                                                              *grounded_position,
-                                                              pyramid.size));
+                     edits::make_set_block_pyramid_metrics(*block_index, pyramid.rotation,
+                                                           *grounded_position,
+                                                           pyramid.size));
                } break;
                }
             }

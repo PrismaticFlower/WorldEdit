@@ -9,8 +9,8 @@
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
-#include "world/blocks/bounding_box.hpp"
-#include "world/blocks/find.hpp"
+#include "world/blocks/utility/bounding_box.hpp"
+#include "world/blocks/utility/find.hpp"
 #include "world/utility/world_utilities.hpp"
 
 #pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
@@ -456,19 +456,19 @@ void world_edit::ui_show_world_selection_move() noexcept
                      const world::block_description_hemisphere& hemisphere =
                         _world.blocks.hemispheres.description[*block_index];
 
-                     bundled_edits.push_back(
-                        edits::make_set_block_hemisphere_metrics(*block_index, hemisphere.rotation,
-                                                           hemisphere.position + move_delta,
-                                                           hemisphere.size));
+                     bundled_edits.push_back(edits::make_set_block_hemisphere_metrics(
+                        *block_index, hemisphere.rotation,
+                        hemisphere.position + move_delta, hemisphere.size));
                   } break;
                   case world::block_type::pyramid: {
                      const world::block_description_pyramid& pyramid =
                         _world.blocks.pyramids.description[*block_index];
 
                      bundled_edits.push_back(
-                        edits::make_set_block_pyramid_metrics(*block_index, pyramid.rotation,
-                                                           pyramid.position + move_delta,
-                                                           pyramid.size));
+                        edits::make_set_block_pyramid_metrics(*block_index,
+                                                              pyramid.rotation,
+                                                              pyramid.position + move_delta,
+                                                              pyramid.size));
                   } break;
                   }
                }
