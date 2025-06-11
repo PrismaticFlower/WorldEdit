@@ -388,6 +388,61 @@ void save_hemispheres(io::output_file& out, const blocks_hemispheres& hemisphere
    out.write_ln("}\n");
 }
 
+void save_pyramids(io::output_file& out, const blocks_pyramids& pyramids) noexcept
+{
+   if (pyramids.size() == 0) return;
+
+   out.write_ln("Pyramids({})", pyramids.size());
+   out.write_ln("{");
+
+   for (uint32 box_index = 0; box_index < pyramids.size(); ++box_index) {
+      const block_description_pyramid& pyramid = pyramids.description[box_index];
+      const int8 pyramid_layer = pyramids.layer[box_index];
+
+      out.write_ln("   Pyramid()");
+      out.write_ln("   {");
+
+      out.write_ln("      Rotation({}, {}, {}, {});", pyramid.rotation.w,
+                   pyramid.rotation.x, pyramid.rotation.y, pyramid.rotation.z);
+      out.write_ln("      Position({}, {}, {});", pyramid.position.x,
+                   pyramid.position.y, pyramid.position.z);
+      out.write_ln("      Size({}, {}, {});", pyramid.size.x, pyramid.size.y,
+                   pyramid.size.z);
+      out.write_ln("      SurfaceMaterials({}, {}, {}, {}, {});",
+                   pyramid.surface_materials[0], pyramid.surface_materials[1],
+                   pyramid.surface_materials[2], pyramid.surface_materials[3],
+                   pyramid.surface_materials[4]);
+      out.write_ln("      SurfaceTextureMode({}, {}, {}, {}, {});",
+                   pyramid.surface_texture_mode[0], pyramid.surface_texture_mode[1],
+                   pyramid.surface_texture_mode[2], pyramid.surface_texture_mode[3],
+                   pyramid.surface_texture_mode[4]);
+      out.write_ln("      SurfaceTextureRotation({}, {}, {}, {}, {});",
+                   pyramid.surface_texture_rotation[0],
+                   pyramid.surface_texture_rotation[1],
+                   pyramid.surface_texture_rotation[2],
+                   pyramid.surface_texture_rotation[3],
+                   pyramid.surface_texture_rotation[4]);
+      out.write_ln(
+         "      SurfaceTextureScale({}, {}, {}, {}, {}, {}, {}, {}, {}, {});",
+         pyramid.surface_texture_scale[0][0], pyramid.surface_texture_scale[0][1],
+         pyramid.surface_texture_scale[1][0], pyramid.surface_texture_scale[1][1],
+         pyramid.surface_texture_scale[2][0], pyramid.surface_texture_scale[2][1],
+         pyramid.surface_texture_scale[3][0], pyramid.surface_texture_scale[3][1],
+         pyramid.surface_texture_scale[4][0], pyramid.surface_texture_scale[4][1]);
+      out.write_ln(
+         "      SurfaceTextureOffset({}, {}, {}, {}, {}, {}, {}, {}, {}, {});",
+         pyramid.surface_texture_offset[0][0], pyramid.surface_texture_offset[0][1],
+         pyramid.surface_texture_offset[1][0], pyramid.surface_texture_offset[1][1],
+         pyramid.surface_texture_offset[2][0], pyramid.surface_texture_offset[2][1],
+         pyramid.surface_texture_offset[3][0], pyramid.surface_texture_offset[3][1],
+         pyramid.surface_texture_offset[4][0], pyramid.surface_texture_offset[4][1]);
+      if (pyramid_layer != 0) out.write_ln("      Layer({});", pyramid_layer);
+      out.write_ln("   }");
+   }
+
+   out.write_ln("}\n");
+}
+
 void save_materials(io::output_file& out, const blocks& blocks) noexcept
 {
    const block_material empty_material;
@@ -434,6 +489,7 @@ void save_blocks(const io::path& path, const blocks& blocks)
    save_stairways(out, blocks.stairways);
    save_cones(out, blocks.cones);
    save_hemispheres(out, blocks.hemispheres);
+   save_pyramids(out, blocks.pyramids);
    save_materials(out, blocks);
 }
 
