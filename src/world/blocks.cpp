@@ -250,6 +250,40 @@ bool blocks_hemispheres::is_balanced() const noexcept
           bbox.min_x.size() == ids.size();
 }
 
+void blocks_pyramids::reserve(const std::size_t size) noexcept
+{
+   bbox.min_x.reserve(size);
+   bbox.min_y.reserve(size);
+   bbox.min_z.reserve(size);
+   bbox.max_x.reserve(size);
+   bbox.max_y.reserve(size);
+   bbox.max_z.reserve(size);
+   hidden.reserve(size);
+   layer.reserve(size);
+   description.reserve(size);
+   ids.reserve(size);
+}
+
+auto blocks_pyramids::size() const noexcept -> std::size_t
+{
+   assert(is_balanced());
+
+   return bbox.min_x.size();
+}
+
+bool blocks_pyramids::is_balanced() const noexcept
+{
+   return bbox.min_x.size() == bbox.min_y.size() and
+          bbox.min_x.size() == bbox.min_z.size() and
+          bbox.min_x.size() == bbox.max_x.size() and
+          bbox.min_x.size() == bbox.max_y.size() and
+          bbox.min_x.size() == bbox.max_z.size() and
+          bbox.min_x.size() == hidden.size() and
+          bbox.min_x.size() == layer.size() and //
+          bbox.min_x.size() == description.size() and
+          bbox.min_x.size() == ids.size();
+}
+
 bool blocks::empty() const noexcept
 {
    return boxes.size() == 0 and     //
@@ -291,6 +325,10 @@ void blocks::untracked_fill_dirty_ranges() noexcept
       hemispheres.dirty.add({0, static_cast<uint32>(hemispheres.size())});
    }
 
+   if (pyramids.size() != 0) {
+      pyramids.dirty.add({0, static_cast<uint32>(pyramids.size())});
+   }
+
    materials_dirty.add({0, static_cast<uint32>(materials.size())});
 }
 
@@ -303,6 +341,7 @@ void blocks::untracked_clear_dirty_ranges() noexcept
    stairways.dirty.clear();
    cones.dirty.clear();
    hemispheres.dirty.clear();
+   pyramids.dirty.clear();
    materials_dirty.clear();
 }
 
@@ -348,6 +387,11 @@ block_id::block_id(block_cone_id id) noexcept
 
 block_id::block_id(block_hemisphere_id id) noexcept
    : id_type{block_type::hemisphere}, id{.hemisphere = id}
+{
+}
+
+block_id::block_id(block_pyramid_id id) noexcept
+   : id_type{block_type::pyramid}, id{.pyramid = id}
 {
 }
 
@@ -433,6 +477,18 @@ auto block_id::get_hemisphere() const noexcept -> block_hemisphere_id
    assert(id_type == block_type::hemisphere);
 
    return id.hemisphere;
+}
+
+bool block_id::is_pyramid() const noexcept
+{
+   return id_type == block_type::pyramid;
+}
+
+auto block_id::get_pyramid() const noexcept -> block_pyramid_id
+{
+   assert(id_type == block_type::pyramid);
+
+   return id.pyramid;
 }
 
 auto block_id::type() const noexcept -> block_type

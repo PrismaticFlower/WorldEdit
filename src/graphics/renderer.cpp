@@ -2517,6 +2517,10 @@ void renderer_impl::draw_world_meta_objects(
       _meta_draw_batcher.add_hemisphere(hemisphere.transform, hemisphere.color);
    }
 
+   for (const auto& pyramid : tool_visualizers.pyramids_additive()) {
+      _meta_draw_batcher.add_pyramid(pyramid.transform, pyramid.color);
+   }
+
    for (const gizmo_draw_pixel_line& line : draw_lists.pixel_lines) {
       _meta_draw_batcher.add_line_solid(line.position_start, line.position_end,
                                         line.color);
@@ -3478,6 +3482,19 @@ void renderer_impl::draw_interaction_targets(
                transform[3] = {block.position, 1.0f};
 
                _meta_draw_batcher.add_hemisphere_wireframe(transform, color);
+            } break;
+            case world::block_type::pyramid: {
+               const world::block_description_pyramid& block =
+                  world.blocks.pyramids.description[*block_index];
+
+               float4x4 transform = to_matrix(block.rotation) *
+                                    float4x4{{block.size.x, 0.0f, 0.0f, 0.0f},
+                                             {0.0f, block.size.y, 0.0f, 0.0f},
+                                             {0.0f, 0.0f, block.size.z, 0.0f},
+                                             {0.0f, 0.0f, 0.0f, 1.0f}};
+               transform[3] = {block.position, 1.0f};
+
+               _meta_draw_batcher.add_pyramid_wireframe(transform, color);
             } break;
             }
          }

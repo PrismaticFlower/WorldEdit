@@ -149,6 +149,24 @@ void highlight_surface(const blocks& blocks, const block_type type,
       highlight_surface_generic(world_from_object, block_hemisphere_triangles,
                                 block_hemisphere_vertices, surface_index, visualizers);
    } break;
+   case block_type::pyramid: {
+      const world::block_description_pyramid& pyramid =
+         blocks.pyramids.description[block_index];
+
+      const float4x4 scale = {
+         {pyramid.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, pyramid.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, pyramid.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(pyramid.rotation);
+
+      float4x4 world_from_object = rotation * scale;
+      world_from_object[3] = {pyramid.position, 1.0f};
+
+      highlight_surface_generic(world_from_object, block_pyramid_triangles,
+                                block_pyramid_vertices, surface_index, visualizers);
+   } break;
    }
 }
 }

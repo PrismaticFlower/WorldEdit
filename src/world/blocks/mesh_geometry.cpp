@@ -135,6 +135,14 @@ enum cylinder_surface {
    cylinder_surface_wall
 };
 
+enum pyramid_surface {
+   pyramid_surface_pos_x,
+   pyramid_surface_neg_x,
+   pyramid_surface_neg_y,
+   pyramid_surface_neg_z,
+   pyramid_surface_pos_z,
+};
+
 enum cone_surface { cone_surface_neg_y, cone_surface_wall };
 
 enum hemisphere_surface { hemisphere_surface_neg_y, hemisphere_surface_dome };
@@ -2936,6 +2944,57 @@ const std::array<float3, 1> block_hemisphere_points = {{
 }};
 
 const std::array<std::array<uint16, 2>, 0> block_hemisphere_edges = {{}};
+
+const std::array<block_vertex, 16> block_pyramid_vertices = {{
+   {{-1.0, -1.0, 1.0}, {0.0, -1.0, 0.0}, {0.0, 1.0}, pyramid_surface_neg_y},
+   {{1.0, -1.0, 1.0}, {0.0, -1.0, 0.0}, {1.0, 1.0}, pyramid_surface_neg_y},
+   {{1.0, -1.0, -1.0}, {0.0, -1.0, 0.0}, {1.0, 0.0}, pyramid_surface_neg_y},
+   {{-1.0, -1.0, -1.0}, {0.0, -1.0, 0.0}, {0.0, 0.0}, pyramid_surface_neg_y},
+   {{1.0, -1.0, 1.0}, {0.0, 0.4472140073776245, 0.8944270014762878}, {1.0, 0.0}, pyramid_surface_pos_z},
+   {{-1.0, -1.0, 1.0}, {0.0, 0.4472140073776245, 0.8944270014762878}, {0.0, 0.0}, pyramid_surface_pos_z},
+   {{0.0, 1.0, 0.0}, {0.0, 0.4472140073776245, 0.8944270014762878}, {0.5, 1.0}, pyramid_surface_pos_z},
+   {{1.0, -1.0, -1.0}, {0.8944270014762878, 0.4472140073776245, 0.0}, {0.0, 0.0}, pyramid_surface_pos_x},
+   {{1.0, -1.0, 1.0}, {0.8944270014762878, 0.4472140073776245, 0.0}, {1.0, 0.0}, pyramid_surface_pos_x},
+   {{0.0, 1.0, 0.0}, {0.8944270014762878, 0.4472140073776245, 0.0}, {0.5, 1.0}, pyramid_surface_pos_x},
+   {{0.0, 1.0, 0.0}, {0.0, 0.4472140073776245, -0.8944270014762878}, {0.5, 1.0}, pyramid_surface_neg_z},
+   {{-1.0, -1.0, -1.0}, {0.0, 0.4472140073776245, -0.8944270014762878}, {0.0, 0.0}, pyramid_surface_neg_z},
+   {{1.0, -1.0, -1.0}, {0.0, 0.4472140073776245, -0.8944270014762878}, {1.0, 0.0}, pyramid_surface_neg_z},
+   {{-1.0, -1.0, -1.0}, {-0.8944270014762878, 0.4472140073776245, 0.0}, {0.0, 0.0}, pyramid_surface_neg_x},
+   {{0.0, 1.0, 0.0}, {-0.8944270014762878, 0.4472140073776245, 0.0}, {0.5, 1.0}, pyramid_surface_neg_x},
+   {{-1.0, -1.0, 1.0}, {-0.8944270014762878, 0.4472140073776245, 0.0}, {1.0, 0.0}, pyramid_surface_neg_x},
+}};
+
+const std::array<std::array<uint16, 3>, 6> block_pyramid_triangles = {{
+   {2, 1, 0},
+   {3, 2, 0},
+   {6, 5, 4},
+   {9, 8, 7},
+   {12, 11, 10},
+   {15, 14, 13},
+}};
+
+const std::array<std::array<uint16, 4>, 1> block_pyramid_occluders = {{
+   {3, 2, 1, 0},
+}};
+
+const std::array<float3, 5> block_pyramid_points = {{
+   {1.0, -1.0, 1.0},
+   {1.0, -1.0, -1.0},
+   {0.0, 1.0, 0.0},
+   {-1.0, -1.0, -1.0},
+   {-1.0, -1.0, 1.0},
+}};
+
+const std::array<std::array<uint16, 2>, 8> block_pyramid_edges = {{
+   {0, 4},
+   {1, 0},
+   {2, 0},
+   {2, 1},
+   {3, 1},
+   {3, 2},
+   {4, 2},
+   {4, 3},
+}};
 
 const std::array<std::array<uint16, 3>, 2> block_quad_triangles = {{
    {0, 1, 2},

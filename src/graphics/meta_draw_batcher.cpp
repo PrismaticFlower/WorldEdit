@@ -69,6 +69,7 @@ meta_draw_batcher::meta_draw_batcher()
    _cones.reserve(256);
    _ramps.reserve(8);
    _hemispheres.reserve(8);
+   _pyramids.reserve(8);
    _triangles.reserve(2048);
    _lines_solid.reserve(2048);
 
@@ -80,6 +81,7 @@ meta_draw_batcher::meta_draw_batcher()
    _cones_wireframe.reserve(16);
    _ramps_wireframe.reserve(16);
    _hemispheres_wireframe.reserve(8);
+   _pyramids_wireframe.reserve(8);
    _triangles_wireframe.reserve(2048);
 
    _lines_overlay.reserve(2048);
@@ -97,6 +99,7 @@ void meta_draw_batcher::clear()
    _cones.clear();
    _ramps.clear();
    _hemispheres.clear();
+   _pyramids.clear();
    _triangles.clear();
    _lines_solid.clear();
 
@@ -109,6 +112,7 @@ void meta_draw_batcher::clear()
    _cones_wireframe.clear();
    _ramps_wireframe.clear();
    _hemispheres_wireframe.clear();
+   _pyramids_wireframe.clear();
    _triangles_wireframe.clear();
 
    _lines_overlay.clear();
@@ -160,6 +164,11 @@ void meta_draw_batcher::add_ramp(const float4x4& transform, const float4& color)
 void meta_draw_batcher::add_hemisphere(const float4x4& transform, const float4& color)
 {
    _hemispheres.emplace_back(transform, color);
+}
+
+void meta_draw_batcher::add_pyramid(const float4x4& transform, const float4& color)
+{
+   _pyramids.emplace_back(transform, color);
 }
 
 void meta_draw_batcher::add_triangle(const float3& a, const float3& b,
@@ -240,6 +249,12 @@ void meta_draw_batcher::add_hemisphere_wireframe(const float4x4& transform,
                                                  const float3& color)
 {
    _hemispheres_wireframe.emplace_back(transform, float4{color, 1.0f});
+}
+
+void meta_draw_batcher::add_pyramid_wireframe(const float4x4& transform,
+                                              const float3& color)
+{
+   _pyramids_wireframe.emplace_back(transform, float4{color, 1.0f});
 }
 
 void meta_draw_batcher::add_triangle_wireframe(const float3& a, const float3& b,
@@ -420,6 +435,11 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
                   shapes.hemisphere());
    }
 
+   if (not _pyramids_wireframe.empty()) {
+      draw_shapes(_pyramids_wireframe,
+                  pipeline_library.meta_draw_shape_wireframe.get(), shapes.pyramid());
+   }
+
    if (not _triangles_wireframe.empty()) {
       draw_vertices(_triangles_wireframe,
                     pipeline_library.meta_draw_triangle_wireframe.get());
@@ -462,6 +482,10 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
                   shapes.hemisphere());
    }
 
+   if (not _pyramids.empty()) {
+      draw_shapes(_pyramids, pipeline_library.meta_draw_shape.get(), shapes.pyramid());
+   }
+
    if (not _triangles.empty()) {
       draw_vertices(_triangles, pipeline_library.meta_draw_triangle.get());
    }
@@ -481,6 +505,7 @@ bool meta_draw_batcher::all_empty() const noexcept
           _cylinders.empty() and                  //
           _cones.empty() and                      //
           _hemispheres.empty() and                //
+          _pyramids.empty() and                   //
           _ramps.empty() and                      //
           _triangles.empty() and                  //
           _lines_solid.empty() and                //
@@ -493,6 +518,7 @@ bool meta_draw_batcher::all_empty() const noexcept
           _cones_wireframe.empty() and            //
           _ramps_wireframe.empty() and            //
           _hemispheres_wireframe.empty() and      //
+          _pyramids_wireframe.empty() and         //
           _triangles_wireframe.empty() and        //
           _lines_overlay.empty();
 }

@@ -581,6 +581,88 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
    }
 
+   for (uint32 pyramid_index = 0; pyramid_index < blocks.pyramids.size();
+        ++pyramid_index) {
+      if (not config.active_layers[blocks.pyramids.layer[pyramid_index]])
+         continue;
+      if (blocks.pyramids.hidden[pyramid_index]) continue;
+      if (blocks.pyramids.ids[pyramid_index] == config.filter_id) continue;
+
+      const math::bounding_box bboxWS = {
+         .min =
+            {
+               blocks.pyramids.bbox.min_x[pyramid_index],
+               blocks.pyramids.bbox.min_y[pyramid_index],
+               blocks.pyramids.bbox.min_z[pyramid_index],
+            },
+
+         .max =
+            {
+               blocks.pyramids.bbox.max_x[pyramid_index],
+               blocks.pyramids.bbox.max_y[pyramid_index],
+               blocks.pyramids.bbox.max_z[pyramid_index],
+            },
+      };
+
+      const float3 pyramid_centreLS = (bboxWS.min + bboxWS.max) * 0.5f;
+      const float3 pyramid_size = (bboxWS.max - bboxWS.min) * 0.5f;
+
+      const float3 positionAS = positionWS - pyramid_centreLS;
+      const float3 distances = abs(positionAS) - pyramid_size;
+
+      const float pyramid_distance =
+         length(max(distances, float3{0.0f, 0.0f, 0.0f})) +
+         std::min(std::max(std::max(distances.x, distances.y), distances.z), 0.0f);
+
+      if (pyramid_distance > config.snap_radius) continue;
+
+      const block_description_pyramid& pyramid =
+         blocks.pyramids.description[pyramid_index];
+
+      const float4x4 scale = {
+         {pyramid.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, pyramid.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, pyramid.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(pyramid.rotation);
+
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {pyramid.position, 1.0f};
+
+      std::array<float3, 64> verticesWS;
+
+      for (std::size_t i = 0; i < block_pyramid_points.size(); ++i) {
+         verticesWS[i] = world_from_local * block_pyramid_points[i];
+      }
+
+      for (const float3& vertex_positionWS : verticesWS) {
+         const float corner_distance = distance(positionWS, vertex_positionWS);
+
+         if (corner_distance < closest_distance) {
+            closest_pointWS = vertex_positionWS;
+            closest_distance = corner_distance;
+         }
+
+         draw_point(visualizers, vertex_positionWS, colors.corner);
+      }
+
+      for (const auto& [i0, i1] : block_pyramid_edges) {
+         for (int i = 1; i < edge_point_count; ++i) {
+            const float3 pointWS =
+               lerp(verticesWS[i0], verticesWS[i1], i / flt_edge_point_count);
+            const float point_distance = distance(positionWS, pointWS);
+
+            if (point_distance < closest_distance) {
+               closest_pointWS = pointWS;
+               closest_distance = point_distance;
+            }
+
+            draw_point(visualizers, pointWS, colors.edge);
+         }
+      }
+   }
+
    float3 new_positionWS;
 
    if (closest_distance > 0.0f and closest_distance <= config.snap_radius) {

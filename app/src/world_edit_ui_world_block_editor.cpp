@@ -93,6 +93,7 @@ auto block_type_name(world::block_type type) noexcept -> const char*
    case world::block_type::stairway:   return "Stairs";
    case world::block_type::cone:       return "Cone";
    case world::block_type::hemisphere: return "Hemisphere";
+   case world::block_type::pyramid:    return "Pyramid";
    }
    // clang-format on
 
@@ -128,6 +129,7 @@ void world_edit::ui_show_block_editor() noexcept
                  world::block_type::stairway,
                  world::block_type::cone,
                  world::block_type::hemisphere,
+                 world::block_type::pyramid,
               }) {
 
             if (ImGui::Selectable(block_type_name(type),
@@ -717,6 +719,11 @@ void world_edit::ui_show_block_editor() noexcept
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
+      if (ImGui::MenuItem("Draw Pyramid")) {
+         _block_editor_config.draw_type = world::block_type::pyramid;
+         _block_editor_context = {.activate_tool = block_edit_tool::draw};
+      }
+
       ImGui::EndPopup();
    }
 
@@ -1112,6 +1119,10 @@ void world_edit::ui_show_block_editor() noexcept
                   _block_editor_context.tool = block_edit_tool::none;
                }
 
+            } break;
+            case world::block_type::pyramid: {
+               _block_editor_context.draw_block.pyramid.start = cursor_positionWS;
+               _block_editor_context.draw_block.step = draw_block_step::pyramid_depth;
             } break;
             }
          }
@@ -1985,6 +1996,197 @@ void world_edit::ui_show_block_editor() noexcept
             _edit_stack_world.close_last();
          }
       } break;
+      case draw_block_step::pyramid_depth: {
+         _tool_visualizers
+            .add_line_overlay(_block_editor_context.draw_block.pyramid.start,
+                              {cursor_positionWS.x,
+                               _block_editor_context.draw_block.pyramid.start.y,
+                               cursor_positionWS.z},
+                              line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            _block_editor_context.draw_block.pyramid.depth_x = cursor_positionWS.x;
+            _block_editor_context.draw_block.pyramid.depth_z = cursor_positionWS.z;
+            _block_editor_context.draw_block.step = draw_block_step::pyramid_width;
+         }
+
+      } break;
+      case draw_block_step::pyramid_width: {
+         const float3 draw_block_start =
+            _block_editor_context.draw_block.pyramid.start;
+         const float3 draw_block_depth =
+            {_block_editor_context.draw_block.pyramid.depth_x, draw_block_start.y,
+             _block_editor_context.draw_block.pyramid.depth_z};
+
+         const float3 cursor_direction =
+            normalize(cursor_positionWS - draw_block_depth);
+
+         const float3 extend_normal =
+            normalize(float3{draw_block_depth.z, 0.0f, draw_block_depth.x} -
+                      float3{draw_block_start.z, 0.0f, draw_block_start.x}) *
+            float3{-1.0, 0.0f, 1.0};
+
+         float rotation_angle = std::atan2(draw_block_start.x - draw_block_depth.x,
+                                           draw_block_start.z - draw_block_depth.z);
+
+         if (draw_block_start.z - draw_block_depth.z < 0.0f) {
+            rotation_angle += std::numbers::pi_v<float>;
+         }
+
+         const quaternion rotation =
+            make_quat_from_euler({0.0f, rotation_angle, 0.0f});
+         const quaternion inv_rotation = conjugate(rotation);
+
+         const float normal_sign =
+            dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
+
+         const float cursor_distance =
+            std::fabs((inv_rotation * draw_block_depth).x -
+                      (inv_rotation * cursor_positionWS).x);
+
+         const float3 draw_block_width =
+            draw_block_depth + extend_normal * cursor_distance * normal_sign;
+
+         _tool_visualizers.add_line_overlay(draw_block_start, draw_block_depth,
+                                            line_color);
+         _tool_visualizers.add_line_overlay(draw_block_depth, draw_block_width,
+                                            line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            const world::block_pyramid_id id =
+               _world.blocks.next_id.pyramids.aquire();
+
+            _block_editor_context.draw_block.height_plane = std::nullopt;
+            _block_editor_context.draw_block.pyramid.width_x = draw_block_width.x;
+            _block_editor_context.draw_block.pyramid.width_z = draw_block_width.z;
+            _block_editor_context.draw_block.pyramid.rotation = rotation;
+            _block_editor_context.draw_block.step = draw_block_step::pyramid_height;
+            _block_editor_context.draw_block.index =
+               static_cast<uint32>(_world.blocks.pyramids.size());
+            _block_editor_context.draw_block.block_id = id;
+
+            const std::array<float3, 2> cornersWS{draw_block_start, draw_block_width};
+            std::array<float3, 2> cornersLS{};
+
+            for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+               cornersLS[i] = inv_rotation * cornersWS[i];
+            }
+
+            const float3 block_max = max(cornersLS[0], cornersLS[1]);
+            const float3 block_min = min(cornersLS[0], cornersLS[1]);
+
+            const float3 size = float3{std::fabs(block_max.x - block_min.x), 0.0f,
+                                       std::fabs(block_max.z - block_min.z)} /
+                                2.0f;
+
+            const float3 position = (draw_block_start + draw_block_width) / 2.0f;
+
+            const uint8 material_index = _block_editor_config.paint_material_index;
+
+            if (_world.blocks.pyramids.size() < world::max_blocks) {
+               _edit_stack_world.apply(edits::make_add_block(
+                                          world::block_description_pyramid{
+                                             .rotation = rotation,
+                                             .position = position,
+                                             .size = size,
+                                             .surface_materials = {material_index, material_index,
+                                                                   material_index, material_index,
+                                                                   material_index},
+                                          },
+                                          _block_editor_config.new_block_layer, id),
+                                       _edit_context);
+            }
+            else {
+               MessageBoxA(_window,
+                           fmt::format("Max Pyramids ({}) Reached", world::max_blocks)
+                              .c_str(),
+                           "Limit Reached", MB_OK);
+
+               _block_editor_context.tool = block_edit_tool::none;
+            }
+         }
+      } break;
+      case draw_block_step::pyramid_height: {
+         const float3 draw_block_start =
+            _block_editor_context.draw_block.pyramid.start;
+         const float3 draw_block_depth =
+            {_block_editor_context.draw_block.pyramid.depth_x, draw_block_start.y,
+             _block_editor_context.draw_block.pyramid.depth_z};
+         const float3 draw_block_width =
+            {_block_editor_context.draw_block.pyramid.width_x, draw_block_start.y,
+             _block_editor_context.draw_block.pyramid.width_z};
+
+         const quaternion rotation = _block_editor_context.draw_block.pyramid.rotation;
+         const quaternion inv_rotation = conjugate(rotation);
+
+         const std::array<float3, 2> cornersWS{draw_block_start, draw_block_width};
+         std::array<float3, 2> cornersLS{};
+
+         for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+            cornersLS[i] = inv_rotation * cornersWS[i];
+         }
+
+         const float3 block_max = max(cornersLS[0], cornersLS[1]);
+         const float3 block_min = min(cornersLS[0], cornersLS[1]);
+
+         const float4 height_plane =
+            make_plane_from_point(draw_block_width,
+                                  normalize(draw_block_width - _camera.position()));
+
+         graphics::camera_ray ray =
+            make_camera_ray(_camera,
+                            {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                            {ImGui::GetMainViewport()->Size.x,
+                             ImGui::GetMainViewport()->Size.y});
+
+         float3 cursor_position = cursor_positionWS;
+
+         if (float hit = 0.0f;
+             intersect_aabb(inv_rotation * ray.origin,
+                            1.0f / (inv_rotation * ray.direction),
+                            {.min = {block_min.x, -FLT_MAX, block_min.z},
+                             .max = {block_max.x, FLT_MAX, block_max.z}},
+                            FLT_MAX, hit) and
+             hit < distance(_camera.position(), cursor_positionWS)) {
+            cursor_position = ray.origin + hit * ray.direction;
+         }
+
+         const float unaligned_pyramid_height =
+            cursor_position.y - draw_block_start.y;
+         const float pyramid_height =
+            align
+               ? std::round(unaligned_pyramid_height / alignment.y) * alignment.y
+               : unaligned_pyramid_height;
+
+         const float3 position = {(draw_block_start.x + draw_block_width.x) / 2.0f,
+                                  draw_block_start.y + (pyramid_height / 2.0f),
+                                  (draw_block_start.z + draw_block_width.z) / 2.0f};
+         const float3 size = abs(float3{block_max.x - block_min.x, pyramid_height,
+                                        block_max.z - block_min.z}) /
+                             2.0f;
+
+         if (const uint32 index = _block_editor_context.draw_block.index;
+             index < _world.blocks.pyramids.size() and
+             _world.blocks.pyramids.ids[index] ==
+                _block_editor_context.draw_block.block_id) {
+            _edit_stack_world.apply(edits::make_set_block_pyramid_metrics(index, rotation,
+                                                                          position, size),
+                                    _edit_context, {.transparent = true});
+         }
+
+         _tool_visualizers
+            .add_line_overlay(position - float3{0.0f, pyramid_height * 0.5f, 0.0f},
+                              position + float3{0.0f, pyramid_height * 0.5f, 0.0f},
+                              line_color);
+
+         if (click) {
+            _block_editor_context.draw_block = {};
+
+            _edit_stack_world.close_last();
+         }
+      } break;
       }
    }
    else if (_block_editor_context.tool == block_edit_tool::rotate_texture) {
@@ -2410,6 +2612,25 @@ void world_edit::ui_show_block_editor() noexcept
                                           *selected_index, hemisphere.rotation,
                                           positionWS, size),
                                        _edit_context);
+            }
+         } break;
+         case world::block_type::pyramid: {
+            const world::block_description_pyramid& pyramid =
+               _world.blocks.pyramids.description[*selected_index];
+
+            float3 size = pyramid.size;
+            float3 positionWS = pyramid.position;
+
+            if (_gizmos.gizmo_size({.name = "Resize Block (Pyramid)",
+                                    .instance = *selected_index,
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation = pyramid.rotation},
+                                   positionWS, size)) {
+               _edit_stack_world
+                  .apply(edits::make_set_block_pyramid_metrics(*selected_index,
+                                                               pyramid.rotation,
+                                                               positionWS, size),
+                         _edit_context);
             }
          } break;
          }

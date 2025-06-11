@@ -216,6 +216,9 @@ enum class draw_block_step : uint8 {
    cone_radius,
    cone_height,
    hemisphere_radius,
+   pyramid_depth,
+   pyramid_width,
+   pyramid_height,
 };
 
 enum class draw_block_cursor_plane : uint8 { none, x, y, z };
@@ -1062,6 +1065,15 @@ private:
          struct hemisphere {
             float3 start;
          } hemisphere;
+
+         struct pyramid {
+            float3 start;
+            float depth_x = 0.0f;
+            float depth_z = 0.0f;
+            float width_x = 0.0f;
+            float width_z = 0.0f;
+            quaternion rotation;
+         } pyramid;
 
          uint32 index = 0;
          world::block_id block_id = world::block_id::none;

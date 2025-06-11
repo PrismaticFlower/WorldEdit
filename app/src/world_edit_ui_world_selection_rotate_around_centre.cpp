@@ -319,6 +319,15 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                         (rotation * (hemisphere.position - centre)) + centre,
                         hemisphere.size));
                   } break;
+                  case world::block_type::pyramid: {
+                     const world::block_description_pyramid& pyramid =
+                        _world.blocks.pyramids.description[*block_index];
+
+                     bundled_edits.push_back(edits::make_set_block_pyramid_metrics(
+                        *block_index, rotation * pyramid.rotation,
+                        (rotation * (pyramid.position - centre)) + centre,
+                        pyramid.size));
+                  } break;
                   }
                }
             }

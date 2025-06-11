@@ -213,4 +213,11 @@ auto make_add_block(world::block_description_hemisphere hemisphere, int8 layer,
                                                                    layer, id);
 }
 
+auto make_add_block(world::block_description_pyramid pyramid, int8 layer,
+                    world::block_pyramid_id id)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<add_block<&world::blocks::pyramids>>(pyramid, layer, id);
+}
+
 }

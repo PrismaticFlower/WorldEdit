@@ -127,6 +127,23 @@ void highlight_block(const blocks& blocks, const block_type type,
 
       visualizers.add_hemisphere_additive(world_from_local, {1.0f, 1.0f, 1.0f, 0.125f});
    } break;
+   case block_type::pyramid: {
+      const world::block_description_pyramid& pyramid =
+         blocks.pyramids.description[block_index];
+
+      const float4x4 scale = {
+         {pyramid.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, pyramid.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, pyramid.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(pyramid.rotation);
+
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {pyramid.position, 1.0f};
+
+      visualizers.add_pyramid_additive(world_from_local, {1.0f, 1.0f, 1.0f, 0.125f});
+   } break;
    }
 }
 }

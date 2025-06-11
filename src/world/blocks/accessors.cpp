@@ -25,6 +25,8 @@ bool valid_index(const blocks& blocks, const block_type type,
       return block_index < blocks.cones.size();
    case block_type::hemisphere:
       return block_index < blocks.hemispheres.size();
+   case block_type::pyramid:
+      return block_index < blocks.pyramids.size();
    }
 
    std::unreachable();
@@ -50,6 +52,8 @@ auto get_dirty_tracker(blocks& blocks, const block_type type) noexcept
       return blocks.cones.dirty;
    case block_type::hemisphere:
       return blocks.hemispheres.dirty;
+   case block_type::pyramid:
+      return blocks.pyramids.dirty;
    }
 
    std::unreachable();
@@ -75,6 +79,8 @@ auto get_block_hidden(blocks& blocks, const block_type type,
       return blocks.cones.hidden[block_index];
    case block_type::hemisphere:
       return blocks.hemispheres.hidden[block_index];
+   case block_type::pyramid:
+      return blocks.pyramids.hidden[block_index];
    }
 
    std::unreachable();
@@ -100,6 +106,8 @@ auto get_block_layer(blocks& blocks, const block_type type,
       return blocks.cones.layer[block_index];
    case block_type::hemisphere:
       return blocks.hemispheres.layer[block_index];
+   case block_type::pyramid:
+      return blocks.pyramids.layer[block_index];
    }
 
    std::unreachable();
@@ -153,6 +161,13 @@ auto get_block_surface_material(blocks& blocks, const block_type type,
    case block_type::hemisphere: {
       std::array<uint8, 2>& surface_materials =
          blocks.hemispheres.description[block_index].surface_materials;
+
+      return surface_materials[surface_index % surface_materials.size()];
+   }
+   case block_type::pyramid: {
+
+      std::array<uint8, 5>& surface_materials =
+         blocks.pyramids.description[block_index].surface_materials;
 
       return surface_materials[surface_index % surface_materials.size()];
    }
@@ -211,6 +226,12 @@ auto get_block_surface_texture_mode(blocks& blocks, const block_type type,
 
       return surface_texture_mode[surface_index % surface_texture_mode.size()];
    }
+   case block_type::pyramid: {
+      std::array<block_texture_mode, 5>& surface_texture_mode =
+         blocks.pyramids.description[block_index].surface_texture_mode;
+
+      return surface_texture_mode[surface_index % surface_texture_mode.size()];
+   }
    }
 
    std::unreachable();
@@ -263,6 +284,12 @@ auto get_block_surface_texture_rotation(blocks& blocks, const block_type type,
    case block_type::hemisphere: {
       std::array<block_texture_rotation, 2>& surface_texture_rotation =
          blocks.hemispheres.description[block_index].surface_texture_rotation;
+
+      return surface_texture_rotation[surface_index % surface_texture_rotation.size()];
+   }
+   case block_type::pyramid: {
+      std::array<block_texture_rotation, 5>& surface_texture_rotation =
+         blocks.pyramids.description[block_index].surface_texture_rotation;
 
       return surface_texture_rotation[surface_index % surface_texture_rotation.size()];
    }
@@ -321,6 +348,12 @@ auto get_block_surface_texture_scale(blocks& blocks, const block_type type,
 
       return surface_texture_scale[surface_index % surface_texture_scale.size()];
    }
+   case block_type::pyramid: {
+      std::array<std::array<int8, 2>, 5>& surface_texture_scale =
+         blocks.pyramids.description[block_index].surface_texture_scale;
+
+      return surface_texture_scale[surface_index % surface_texture_scale.size()];
+   }
    }
 
    std::unreachable();
@@ -373,6 +406,12 @@ auto get_block_surface_texture_offset(blocks& blocks, const block_type type,
    case block_type::hemisphere: {
       std::array<std::array<uint16, 2>, 2>& surface_texture_offset =
          blocks.hemispheres.description[block_index].surface_texture_offset;
+
+      return surface_texture_offset[surface_index % surface_texture_offset.size()];
+   }
+   case block_type::pyramid: {
+      std::array<std::array<uint16, 2>, 5>& surface_texture_offset =
+         blocks.pyramids.description[block_index].surface_texture_offset;
 
       return surface_texture_offset[surface_index % surface_texture_offset.size()];
    }
