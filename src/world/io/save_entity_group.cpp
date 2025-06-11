@@ -817,6 +817,66 @@ void save_entity_group_impl(File& file, const entity_group& group)
       file.write_ln("}\n");
    }
 
+   if (not group.blocks.pyramids.empty()) {
+      file.write_ln("BlocksPyramids({})", group.blocks.pyramids.size());
+      file.write_ln("{");
+
+      for (const block_description_pyramid& pyramid : group.blocks.pyramids) {
+         file.write_ln("   Pyramid()");
+         file.write_ln("   {");
+
+         file.write_ln("      Rotation({}, {}, {}, {});", pyramid.rotation.w,
+                       pyramid.rotation.x, pyramid.rotation.y, pyramid.rotation.z);
+         file.write_ln("      Position({}, {}, {});", pyramid.position.x,
+                       pyramid.position.y, pyramid.position.z);
+         file.write_ln("      Size({}, {}, {});", pyramid.size.x,
+                       pyramid.size.y, pyramid.size.z);
+         file.write_ln("      SurfaceMaterials({}, {}, {}, {}, {});",
+                       pyramid.surface_materials[0], pyramid.surface_materials[1],
+                       pyramid.surface_materials[2], pyramid.surface_materials[3],
+                       pyramid.surface_materials[4]);
+         file.write_ln("      SurfaceTextureMode({}, {}, {}, {}, {});",
+                       std::to_underlying(pyramid.surface_texture_mode[0]),
+                       std::to_underlying(pyramid.surface_texture_mode[1]),
+                       std::to_underlying(pyramid.surface_texture_mode[2]),
+                       std::to_underlying(pyramid.surface_texture_mode[3]),
+                       std::to_underlying(pyramid.surface_texture_mode[4]));
+         file.write_ln("      SurfaceTextureRotation({}, {}, {}, {}, {});",
+                       std::to_underlying(pyramid.surface_texture_rotation[0]),
+                       std::to_underlying(pyramid.surface_texture_rotation[1]),
+                       std::to_underlying(pyramid.surface_texture_rotation[2]),
+                       std::to_underlying(pyramid.surface_texture_rotation[3]),
+                       std::to_underlying(pyramid.surface_texture_rotation[4]));
+         file.write_ln("      SurfaceTextureScale({}, {}, {}, {}, {}, {}, {}, "
+                       "{}, {}, {});",
+                       pyramid.surface_texture_scale[0][0],
+                       pyramid.surface_texture_scale[0][1],
+                       pyramid.surface_texture_scale[1][0],
+                       pyramid.surface_texture_scale[1][1],
+                       pyramid.surface_texture_scale[2][0],
+                       pyramid.surface_texture_scale[2][1],
+                       pyramid.surface_texture_scale[3][0],
+                       pyramid.surface_texture_scale[3][1],
+                       pyramid.surface_texture_scale[4][0],
+                       pyramid.surface_texture_scale[4][1]);
+         file.write_ln("      SurfaceTextureOffset({}, {}, {}, {}, {}, {}, {}, "
+                       "{}, {}, {});",
+                       pyramid.surface_texture_offset[0][0],
+                       pyramid.surface_texture_offset[0][1],
+                       pyramid.surface_texture_offset[1][0],
+                       pyramid.surface_texture_offset[1][1],
+                       pyramid.surface_texture_offset[2][0],
+                       pyramid.surface_texture_offset[2][1],
+                       pyramid.surface_texture_offset[3][0],
+                       pyramid.surface_texture_offset[3][1],
+                       pyramid.surface_texture_offset[4][0],
+                       pyramid.surface_texture_offset[4][1]);
+         file.write_ln("   }");
+      }
+
+      file.write_ln("}\n");
+   }
+
    if (not group.blocks.materials.empty()) {
       file.write_ln("BlocksMaterials({})", group.blocks.materials.size());
       file.write_ln("{");
