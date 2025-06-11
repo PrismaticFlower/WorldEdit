@@ -238,23 +238,14 @@
     <ClCompile Include="src\edits\add_block.cpp" />
     <ClCompile Include="src\edits\set_block.cpp" />
     <ClCompile Include="src\graphics\shaders\block_basic_lightingPS.cpp" />
-    <ClCompile Include="src\world\blocks\raycast.cpp" />
     <ClCompile Include="src\graphics\shaders\grid_overlay_fadePS.cpp" />
-    <ClCompile Include="src\world\blocks\find.cpp" />
     <ClCompile Include="src\world\blocks\mesh_geometry.cpp" />
     <ClCompile Include="src\graphics\shaders\block_normalPS.cpp" />
-    <ClCompile Include="src\world\blocks\highlight_surface.cpp" />
-    <ClCompile Include="src\world\blocks\snapping.cpp" />
     <ClCompile Include="src\world\blocks.cpp" />
-    <ClCompile Include="src\world\blocks\accessors.cpp" />
-    <ClCompile Include="src\world\blocks\highlight_block.cpp" />
     <ClCompile Include="src\world\io\save_blocks.cpp" />
     <ClCompile Include="src\world\io\load_blocks.cpp" />
     <ClCompile Include="src\edits\delete_block.cpp" />
     <ClCompile Include="src\world\io\layer_remap.cpp" />
-    <ClCompile Include="src\world\blocks\bounding_box.cpp" />
-    <ClCompile Include="src\world\blocks\grounding.cpp" />
-    <ClCompile Include="src\world\blocks\drag_select.cpp" />
     <ClCompile Include="src\world\io\save_blocks_meshes.cpp" />
     <ClCompile Include="src\world\blocks\export\mesh_clusters.cpp" />
     <ClCompile Include="src\world\blocks\export\mesh_scenes.cpp" />
@@ -266,6 +257,15 @@
     <ClCompile Include="src\graphics\shaders\block_custom_meshVS.cpp" />
     <ClCompile Include="src\allocators\offset_allocator.cpp" />
     <ClCompile Include="src\world\blocks\custom_mesh_library.cpp" />
+    <ClCompile Include="src\world\blocks\utility\accessors.cpp" />
+    <ClCompile Include="src\world\blocks\utility\bounding_box.cpp" />
+    <ClCompile Include="src\world\blocks\utility\drag_select.cpp" />
+    <ClCompile Include="src\world\blocks\utility\find.cpp" />
+    <ClCompile Include="src\world\blocks\utility\grounding.cpp" />
+    <ClCompile Include="src\world\blocks\utility\highlight_block.cpp" />
+    <ClCompile Include="src\world\blocks\utility\highlight_surface.cpp" />
+    <ClCompile Include="src\world\blocks\utility\raycast.cpp" />
+    <ClCompile Include="src\world\blocks\utility\snapping.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -562,20 +562,11 @@
     <ClInclude Include="src\edits\add_block.hpp" />
     <ClInclude Include="src\edits\set_block.hpp" />
     <ClInclude Include="src\graphics\constant_buffers.hpp" />
-    <ClInclude Include="src\world\blocks\raycast.hpp" />
-    <ClInclude Include="src\world\blocks\find.hpp" />
     <ClInclude Include="src\world\blocks\mesh_geometry.hpp" />
-    <ClInclude Include="src\world\blocks\highlight_surface.hpp" />
-    <ClInclude Include="src\world\blocks\snapping.hpp" />
-    <ClInclude Include="src\world\blocks\accessors.hpp" />
-    <ClInclude Include="src\world\blocks\highlight_block.hpp" />
     <ClInclude Include="src\world\io\save_blocks.hpp" />
     <ClInclude Include="src\world\io\load_blocks.hpp" />
     <ClInclude Include="src\edits\delete_block.hpp" />
     <ClInclude Include="src\world\io\layer_remap.hpp" />
-    <ClInclude Include="src\world\blocks\bounding_box.hpp" />
-    <ClInclude Include="src\world\blocks\grounding.hpp" />
-    <ClInclude Include="src\world\blocks\drag_select.hpp" />
     <ClInclude Include="src\world\io\save_blocks_meshes.hpp" />
     <ClInclude Include="src\world\blocks\export\mesh.hpp" />
     <ClInclude Include="src\world\blocks\export\mesh_clusters.hpp" />
@@ -588,6 +579,15 @@
     <ClInclude Include="src\graphics\gpu\indirect_structures.hpp" />
     <ClInclude Include="src\allocators\offset_allocator.hpp" />
     <ClInclude Include="src\world\blocks\custom_mesh_library.hpp" />
+    <ClInclude Include="src\world\blocks\utility\accessors.hpp" />
+    <ClInclude Include="src\world\blocks\utility\bounding_box.hpp" />
+    <ClInclude Include="src\world\blocks\utility\drag_select.hpp" />
+    <ClInclude Include="src\world\blocks\utility\find.hpp" />
+    <ClInclude Include="src\world\blocks\utility\grounding.hpp" />
+    <ClInclude Include="src\world\blocks\utility\highlight_block.hpp" />
+    <ClInclude Include="src\world\blocks\utility\highlight_surface.hpp" />
+    <ClInclude Include="src\world\blocks\utility\raycast.hpp" />
+    <ClInclude Include="src\world\blocks\utility\snapping.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
