@@ -411,6 +411,7 @@ auto save_blocks_meshes(const io::path& output_directory,
    mesh_count += blocks.stairways.size();
    mesh_count += blocks.cones.size();
    mesh_count += blocks.hemispheres.size();
+   mesh_count += blocks.pyramids.size();
 
    std::size_t occluder_count = 0;
 
@@ -419,6 +420,7 @@ auto save_blocks_meshes(const io::path& output_directory,
    occluder_count += blocks.cylinders.size() * block_cylinder_occluders.size();
    occluder_count += blocks.cones.size() * block_cone_occluders.size();
    occluder_count += blocks.hemispheres.size() * block_hemisphere_occluders.size();
+   occluder_count += blocks.pyramids.size() * block_pyramid_occluders.size();
 
    for (uint32 block_index = 0; block_index < blocks.stairways.size(); ++block_index) {
       const block_custom_mesh& mesh =
@@ -446,6 +448,8 @@ auto save_blocks_meshes(const io::path& output_directory,
    process_blocks(blocks.hemispheres, block_hemisphere_vertices,
                   block_hemisphere_triangles, block_hemisphere_occluders,
                   mesh_list, occluder_list);
+   process_blocks(blocks.pyramids, block_pyramid_vertices, block_pyramid_triangles,
+                  block_pyramid_occluders, mesh_list, occluder_list);
 
    fill_bounding_boxes(mesh_list);
 
