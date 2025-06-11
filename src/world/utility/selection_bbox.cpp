@@ -1,8 +1,8 @@
 #include "selection_bbox.hpp"
 #include "world_utilities.hpp"
 
-#include "../blocks/bounding_box.hpp"
-#include "../blocks/find.hpp"
+#include "../blocks/utility/bounding_box.hpp"
+#include "../blocks/utility/find.hpp"
 #include "../object_class.hpp"
 
 #include "math/matrix_funcs.hpp"

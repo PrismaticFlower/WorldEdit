@@ -13,13 +13,13 @@
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 
-#include "world/blocks/accessors.hpp"
-#include "world/blocks/bounding_box.hpp"
-#include "world/blocks/find.hpp"
-#include "world/blocks/highlight_block.hpp"
-#include "world/blocks/highlight_surface.hpp"
-#include "world/blocks/raycast.hpp"
-#include "world/blocks/snapping.hpp"
+#include "world/blocks/utility/accessors.hpp"
+#include "world/blocks/utility/bounding_box.hpp"
+#include "world/blocks/utility/find.hpp"
+#include "world/blocks/utility/highlight_block.hpp"
+#include "world/blocks/utility/highlight_surface.hpp"
+#include "world/blocks/utility/raycast.hpp"
+#include "world/blocks/utility/snapping.hpp"
 
 #include <algorithm>
 #include <numbers>

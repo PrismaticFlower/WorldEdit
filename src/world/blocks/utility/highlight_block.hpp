@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../blocks.hpp"
-#include "../tool_visualizers.hpp"
+#include "../../blocks.hpp"
+#include "../../tool_visualizers.hpp"
 
 namespace we::world {
 

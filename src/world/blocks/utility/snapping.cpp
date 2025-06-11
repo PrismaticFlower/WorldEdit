@@ -1,5 +1,6 @@
 #include "snapping.hpp"
-#include "mesh_geometry.hpp"
+
+#include "../mesh_geometry.hpp"
 
 #include "math/bounding_box.hpp"
 #include "math/matrix_funcs.hpp"

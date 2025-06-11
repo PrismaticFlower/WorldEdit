@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../active_elements.hpp"
-#include "../blocks.hpp"
-#include "../tool_visualizers.hpp"
+#include "../../active_elements.hpp"
+#include "../../blocks.hpp"
+#include "../../tool_visualizers.hpp"
 
 #include <optional>
 

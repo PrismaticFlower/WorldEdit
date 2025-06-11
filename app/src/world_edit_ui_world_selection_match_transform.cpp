@@ -9,8 +9,8 @@
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
-#include "world/blocks/bounding_box.hpp"
-#include "world/blocks/find.hpp"
+#include "world/blocks/utility/bounding_box.hpp"
+#include "world/blocks/utility/find.hpp"
 #include "world/utility/world_utilities.hpp"
 
 #pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
@@ -496,8 +496,8 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
 
                      bundled_edits.push_back(
                         edits::make_set_block_pyramid_metrics(*block_index,
-                                                                 new_rotation, new_position,
-                                                                 pyramid.size));
+                                                              new_rotation, new_position,
+                                                              pyramid.size));
                   } break;
                   }
                }

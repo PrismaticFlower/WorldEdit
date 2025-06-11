@@ -10,8 +10,8 @@
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
-#include "world/blocks/find.hpp"
-#include "world/blocks/raycast.hpp"
+#include "world/blocks/utility/find.hpp"
+#include "world/blocks/utility/raycast.hpp"
 #include "world/utility/raycast.hpp"
 #include "world/utility/raycast_terrain.hpp"
 #include "world/utility/selection_bbox.hpp"

@@ -2,8 +2,8 @@
 #include "bounding_box.hpp"
 #include "raycast.hpp"
 
-#include "../utility/raycast.hpp"
-#include "../utility/raycast_terrain.hpp"
+#include "../../utility/raycast.hpp"
+#include "../../utility/raycast_terrain.hpp"
 
 #include "math/vector_funcs.hpp"
 

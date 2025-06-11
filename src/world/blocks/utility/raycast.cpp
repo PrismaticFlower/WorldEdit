@@ -1,5 +1,6 @@
 #include "raycast.hpp"
-#include "mesh_geometry.hpp"
+
+#include "../mesh_geometry.hpp"
 
 #include "math/intersectors.hpp"
 #include "math/iq_intersectors.hpp"

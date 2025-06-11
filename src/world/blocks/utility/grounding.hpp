@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../active_elements.hpp"
-#include "../object_class_library.hpp"
-#include "../world.hpp"
+#include "../../active_elements.hpp"
+#include "../../object_class_library.hpp"
+#include "../../world.hpp"
 
 #include <optional>
 

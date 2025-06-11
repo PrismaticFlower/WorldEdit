@@ -1,6 +1,6 @@
 #include "interaction_context.hpp"
 
-#include "blocks/find.hpp"
+#include "blocks/utility/find.hpp"
 
 #include "utility/world_utilities.hpp"
 

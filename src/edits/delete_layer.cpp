@@ -2,7 +2,7 @@
 #include "utility/string_icompare.hpp"
 #include "world/object_class_library.hpp"
 
-#include "world/blocks/bounding_box.hpp"
+#include "world/blocks/utility/bounding_box.hpp"
 
 #include <vector>
 

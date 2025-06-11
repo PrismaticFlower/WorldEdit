@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../active_elements.hpp"
-#include "../blocks.hpp"
+#include "../../active_elements.hpp"
+#include "../../blocks.hpp"
 
 #include "utility/function_ptr.hpp"
 

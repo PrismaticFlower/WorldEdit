@@ -1,6 +1,6 @@
 #include "add_block.hpp"
 
-#include "world/blocks/bounding_box.hpp"
+#include "world/blocks/utility/bounding_box.hpp"
 
 namespace we::edits {
 

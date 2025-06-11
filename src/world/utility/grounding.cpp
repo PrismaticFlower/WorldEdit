@@ -2,7 +2,7 @@
 #include "raycast.hpp"
 #include "raycast_terrain.hpp"
 
-#include "../blocks/raycast.hpp"
+#include "../blocks/utility/raycast.hpp"
 #include "../object_class.hpp"
 
 #include "math/vector_funcs.hpp"
