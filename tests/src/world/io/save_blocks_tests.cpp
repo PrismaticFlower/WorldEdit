@@ -828,9 +828,13 @@ Materials()
                      world::block_description_stairway{
                         .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                         .position = {8.5f, 4.5f, 2.0f},
-                        .size = {4.0f, 4.0f, 4.0f},
-                        .step_height = 0.1f,
-                        .first_step_offset = 0.0f,
+
+                        .mesh_description =
+                           world::block_custom_mesh_description_stairway{
+                              .size = {4.0f, 4.0f, 4.0f},
+                              .step_height = 0.1f,
+                              .first_step_offset = 0.0f,
+                           },
 
                         .surface_materials = {0, 1, 2, 3, 4, 5},
                         .surface_texture_mode =
@@ -873,9 +877,12 @@ Materials()
                      world::block_description_stairway{
                         .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                         .position = {10.0f, 16.0f, 12.0f},
-                        .size = {8.0f, 4.0f, 8.0f},
-                        .step_height = 0.25f,
-                        .first_step_offset = 0.125f,
+                        .mesh_description =
+                           world::block_custom_mesh_description_stairway{
+                              .size = {8.0f, 4.0f, 8.0f},
+                              .step_height = 0.25f,
+                              .first_step_offset = 0.125f,
+                           },
                         .surface_materials = {2, 2, 2, 2, 2, 2},
                         .surface_texture_mode =
                            {
@@ -917,9 +924,12 @@ Materials()
                      world::block_description_stairway{
                         .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                         .position = {6.0f, 6.0f, 6.0f},
-                        .size = {5.0f, 5.0f, 5.0f},
-                        .step_height = 1.0f,
-                        .first_step_offset = 0.0f,
+                        .mesh_description =
+                           world::block_custom_mesh_description_stairway{
+                              .size = {5.0f, 5.0f, 5.0f},
+                              .step_height = 1.0f,
+                              .first_step_offset = 0.0f,
+                           },
                         .surface_materials = {0, 0, 0, 0, 0, 0},
                         .surface_texture_mode =
                            {

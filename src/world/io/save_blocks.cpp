@@ -2,6 +2,9 @@
 
 #include "io/output_file.hpp"
 
+#pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+#pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
+
 namespace we::world {
 
 auto format_as(block_texture_mode mode) noexcept -> uint8
@@ -233,63 +236,68 @@ void save_stairways(io::output_file& out, const blocks_stairways& stairways) noe
    out.write_ln("Stairways({})", stairways.size());
    out.write_ln("{");
 
-   for (uint32 stairway_index = 0; stairway_index < stairways.size(); ++stairway_index) {
-      const block_description_stairway& stairway =
-         stairways.description[stairway_index];
-      const int8 stairway_layer = stairways.layer[stairway_index];
+   for (uint32 block_index = 0; block_index < stairways.size(); ++block_index) {
+      const block_description_stairway& block = stairways.description[block_index];
+      const int8 block_layer = stairways.layer[block_index];
 
-      out.write_ln("   Stairway()");
+      switch (block.mesh_description.type) {
+      case block_custom_mesh_type::stairway: {
+         out.write_ln("   Stairway()");
+      } break;
+      }
       out.write_ln("   {");
 
-      out.write_ln("      Rotation({}, {}, {}, {});", stairway.rotation.w,
-                   stairway.rotation.x, stairway.rotation.y, stairway.rotation.z);
-      out.write_ln("      Position({}, {}, {});", stairway.position.x,
-                   stairway.position.y, stairway.position.z);
-      out.write_ln("      Size({}, {}, {});", stairway.size.x, stairway.size.y,
-                   stairway.size.z);
-      out.write_ln("      StepHeight({});", stairway.step_height);
-      out.write_ln("      FirstStepOffset({});", stairway.first_step_offset);
+      out.write_ln("      Rotation({}, {}, {}, {});", block.rotation.w,
+                   block.rotation.x, block.rotation.y, block.rotation.z);
+      out.write_ln("      Position({}, {}, {});", block.position.x,
+                   block.position.y, block.position.z);
+
+      switch (block.mesh_description.type) {
+      case block_custom_mesh_type::stairway: {
+         const world::block_custom_mesh_description_stairway& stairway =
+            block.mesh_description.stairway;
+
+         out.write_ln("      Size({}, {}, {});", stairway.size.x,
+                      stairway.size.y, stairway.size.z);
+         out.write_ln("      StepHeight({});", stairway.step_height);
+         out.write_ln("      FirstStepOffset({});", stairway.first_step_offset);
+      } break;
+      }
+
       out.write_ln("      SurfaceMaterials({}, {}, {}, {}, {}, {});",
-                   stairway.surface_materials[0], stairway.surface_materials[1],
-                   stairway.surface_materials[2], stairway.surface_materials[3],
-                   stairway.surface_materials[4], stairway.surface_materials[5]);
+                   block.surface_materials[0], block.surface_materials[1],
+                   block.surface_materials[2], block.surface_materials[3],
+                   block.surface_materials[4], block.surface_materials[5]);
       out.write_ln("      SurfaceTextureMode({}, {}, {}, {}, {}, {});",
-                   stairway.surface_texture_mode[0],
-                   stairway.surface_texture_mode[1], stairway.surface_texture_mode[2],
-                   stairway.surface_texture_mode[3], stairway.surface_texture_mode[4],
-                   stairway.surface_texture_mode[5]);
+                   block.surface_texture_mode[0], block.surface_texture_mode[1],
+                   block.surface_texture_mode[2], block.surface_texture_mode[3],
+                   block.surface_texture_mode[4], block.surface_texture_mode[5]);
       out.write_ln("      SurfaceTextureRotation({}, {}, {}, {}, {}, {});",
-                   stairway.surface_texture_rotation[0],
-                   stairway.surface_texture_rotation[1],
-                   stairway.surface_texture_rotation[2],
-                   stairway.surface_texture_rotation[3],
-                   stairway.surface_texture_rotation[4],
-                   stairway.surface_texture_rotation[5]);
+                   block.surface_texture_rotation[0],
+                   block.surface_texture_rotation[1],
+                   block.surface_texture_rotation[2],
+                   block.surface_texture_rotation[3],
+                   block.surface_texture_rotation[4],
+                   block.surface_texture_rotation[5]);
       out.write_ln(
          "      SurfaceTextureScale({}, {}, {}, {}, {}, {}, {}, {}, {}, "
          "{}, {}, {});",
-         stairway.surface_texture_scale[0][0], stairway.surface_texture_scale[0][1],
-         stairway.surface_texture_scale[1][0], stairway.surface_texture_scale[1][1],
-         stairway.surface_texture_scale[2][0], stairway.surface_texture_scale[2][1],
-         stairway.surface_texture_scale[3][0], stairway.surface_texture_scale[3][1],
-         stairway.surface_texture_scale[4][0], stairway.surface_texture_scale[4][1],
-         stairway.surface_texture_scale[5][0], stairway.surface_texture_scale[5][1]);
+         block.surface_texture_scale[0][0], block.surface_texture_scale[0][1],
+         block.surface_texture_scale[1][0], block.surface_texture_scale[1][1],
+         block.surface_texture_scale[2][0], block.surface_texture_scale[2][1],
+         block.surface_texture_scale[3][0], block.surface_texture_scale[3][1],
+         block.surface_texture_scale[4][0], block.surface_texture_scale[4][1],
+         block.surface_texture_scale[5][0], block.surface_texture_scale[5][1]);
       out.write_ln(
          "      SurfaceTextureOffset({}, {}, {}, {}, {}, {}, {}, {}, {}, "
          "{}, {}, {});",
-         stairway.surface_texture_offset[0][0],
-         stairway.surface_texture_offset[0][1],
-         stairway.surface_texture_offset[1][0],
-         stairway.surface_texture_offset[1][1],
-         stairway.surface_texture_offset[2][0],
-         stairway.surface_texture_offset[2][1],
-         stairway.surface_texture_offset[3][0],
-         stairway.surface_texture_offset[3][1],
-         stairway.surface_texture_offset[4][0],
-         stairway.surface_texture_offset[4][1],
-         stairway.surface_texture_offset[5][0],
-         stairway.surface_texture_offset[5][1]);
-      if (stairway_layer != 0) out.write_ln("      Layer({});", stairway_layer);
+         block.surface_texture_offset[0][0], block.surface_texture_offset[0][1],
+         block.surface_texture_offset[1][0], block.surface_texture_offset[1][1],
+         block.surface_texture_offset[2][0], block.surface_texture_offset[2][1],
+         block.surface_texture_offset[3][0], block.surface_texture_offset[3][1],
+         block.surface_texture_offset[4][0], block.surface_texture_offset[4][1],
+         block.surface_texture_offset[5][0], block.surface_texture_offset[5][1]);
+      if (block_layer != 0) out.write_ln("      Layer({});", block_layer);
       out.write_ln("   }");
    }
 

@@ -55,7 +55,7 @@ struct creation_entity_set final : edit<world::edit_context> {
               i < entity_group.blocks.stairways.description.size(); ++i) {
             entity_group.blocks.stairways.mesh[i] =
                context.world.blocks.custom_meshes.add(
-                  entity_group.blocks.stairways.description[i].custom_mesh_desc());
+                  entity_group.blocks.stairways.description[i].mesh_description);
          }
       }
    }

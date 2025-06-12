@@ -109,8 +109,8 @@ for (std::size_t i = 0; i < mesh.snap_edges.size(); ++i) {
 
 TEST_CASE("world blocks generate_mesh stairway", "[World][Blocks]")
 {
-   world::block_custom_mesh mesh = world::generate_mesh(
-      world::block_custom_mesh_stairway_desc{.size = {10.0f, 1.0f, 10.0f},
+   block_custom_mesh mesh = world::generate_mesh(
+      block_custom_mesh_description_stairway{.size = {10.0f, 1.0f, 10.0f},
                                              .step_height = 0.25f,
                                              .first_step_offset = -0.05f});
 

@@ -145,8 +145,7 @@ struct delete_block_custom_mesh final : edit<world::edit_context> {
       blocks.layer.insert(blocks.layer.begin() + block_index, layer);
       blocks.description.insert(blocks.description.begin() + block_index, block);
       blocks.mesh.insert(blocks.mesh.begin() + block_index,
-                         context.world.blocks.custom_meshes.add(
-                            block.custom_mesh_desc()));
+                         context.world.blocks.custom_meshes.add(block.mesh_description));
       blocks.ids.insert(blocks.ids.begin() + block_index, id);
 
       blocks.dirty.add({block_index, static_cast<uint32>(blocks.size())});

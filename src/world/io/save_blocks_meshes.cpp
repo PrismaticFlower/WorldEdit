@@ -1,5 +1,6 @@
 #include "save_blocks_meshes.hpp"
 
+#include "../blocks/custom_mesh.hpp"
 #include "../blocks/export/mesh.hpp"
 #include "../blocks/export/mesh_clusters.hpp"
 #include "../blocks/export/mesh_cull.hpp"

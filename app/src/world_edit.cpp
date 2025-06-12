@@ -3037,9 +3037,10 @@ void world_edit::align_selection(const float alignment) noexcept
                const world::block_description_stairway& stairway =
                   _world.blocks.stairways.description[*block_index];
 
-               bundle.push_back(edits::make_set_block_stairway_metrics(
-                  *block_index, stairway.rotation, align_position(stairway.position),
-                  stairway.size, stairway.step_height, stairway.first_step_offset));
+               bundle.push_back(
+                  edits::make_set_block_custom_metrics(*block_index, stairway.rotation,
+                                                       align_position(stairway.position),
+                                                       stairway.mesh_description));
             } break;
             case world::block_type::cone: {
                const world::block_description_cone& cone =
@@ -3458,9 +3459,10 @@ void world_edit::ground_selection() noexcept
                   const world::block_description_stairway& stairway =
                      _world.blocks.stairways.description[*block_index];
 
-                  bundle.push_back(edits::make_set_block_stairway_metrics(
-                     *block_index, stairway.rotation, *grounded_position,
-                     stairway.size, stairway.step_height, stairway.first_step_offset));
+                  bundle.push_back(
+                     edits::make_set_block_custom_metrics(*block_index, stairway.rotation,
+                                                          *grounded_position,
+                                                          stairway.mesh_description));
                } break;
                case world::block_type::cone: {
                   const world::block_description_cone& cone =

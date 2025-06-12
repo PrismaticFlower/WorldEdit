@@ -18,7 +18,8 @@ enum stairway_surface {
 
 }
 
-auto generate_mesh(const block_custom_mesh_stairway_desc& stairway) noexcept -> block_custom_mesh
+auto generate_mesh(const block_custom_mesh_description_stairway& stairway) noexcept
+   -> block_custom_mesh
 {
    block_custom_mesh mesh;
 

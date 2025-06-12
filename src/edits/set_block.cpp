@@ -126,16 +126,11 @@ private:
    std::array<float3, 4> vertices;
 };
 
-struct set_block_stairway_metrics final : edit<world::edit_context> {
-   set_block_stairway_metrics(const uint32 index, const quaternion& rotation,
-                              const float3& position, const float3& size,
-                              const float step_height, const float first_step_offset)
-      : index{index},
-        rotation{rotation},
-        position{position},
-        size{size},
-        step_height{step_height},
-        first_step_offset{first_step_offset}
+struct set_block_custom_metrics final : edit<world::edit_context> {
+   set_block_custom_metrics(const uint32 index, const quaternion& rotation,
+                            const float3& position,
+                            const world::block_custom_mesh_description& mesh_description)
+      : index{index}, rotation{rotation}, position{position}, mesh_description{mesh_description}
    {
    }
 
@@ -145,14 +140,12 @@ struct set_block_stairway_metrics final : edit<world::edit_context> {
 
       assert(index < blocks.size());
 
-      const world::block_custom_mesh_stairway_desc start_custom_mesh_desc =
-         blocks.description[index].custom_mesh_desc();
+      const world::block_custom_mesh_description start_custom_mesh_desc =
+         blocks.description[index].mesh_description;
 
       std::swap(blocks.description[index].rotation, rotation);
       std::swap(blocks.description[index].position, position);
-      std::swap(blocks.description[index].size, size);
-      std::swap(blocks.description[index].step_height, step_height);
-      std::swap(blocks.description[index].first_step_offset, first_step_offset);
+      std::swap(blocks.description[index].mesh_description, mesh_description);
 
       const math::bounding_box bbox = get_bounding_box(blocks.description[index]);
 
@@ -165,11 +158,11 @@ struct set_block_stairway_metrics final : edit<world::edit_context> {
 
       // Regenerating a custom mesh can be a heavy operation, skip it if we can. This causes no observable behaviour difference,
       // it just saves some time.
-      if (start_custom_mesh_desc != blocks.description[index].custom_mesh_desc()) {
+      if (start_custom_mesh_desc != blocks.description[index].mesh_description) {
          context.world.blocks.custom_meshes.remove(blocks.mesh[index]);
 
          blocks.mesh[index] = context.world.blocks.custom_meshes.add(
-            blocks.description[index].custom_mesh_desc());
+            blocks.description[index].mesh_description);
       }
 
       blocks.dirty.add({index, index + 1});
@@ -182,8 +175,8 @@ struct set_block_stairway_metrics final : edit<world::edit_context> {
 
    bool is_coalescable(const edit& other_unknown) const noexcept override
    {
-      const set_block_stairway_metrics* other =
-         dynamic_cast<const set_block_stairway_metrics*>(&other_unknown);
+      const set_block_custom_metrics* other =
+         dynamic_cast<const set_block_custom_metrics*>(&other_unknown);
 
       if (not other) return false;
 
@@ -192,14 +185,12 @@ struct set_block_stairway_metrics final : edit<world::edit_context> {
 
    void coalesce(edit& other_unknown) noexcept override
    {
-      set_block_stairway_metrics& other =
-         dynamic_cast<set_block_stairway_metrics&>(other_unknown);
+      set_block_custom_metrics& other =
+         dynamic_cast<set_block_custom_metrics&>(other_unknown);
 
       this->rotation = other.rotation;
       this->position = other.position;
-      this->size = other.size;
-      this->step_height = other.step_height;
-      this->first_step_offset = other.first_step_offset;
+      this->mesh_description = other.mesh_description;
    }
 
 private:
@@ -207,9 +198,7 @@ private:
 
    quaternion rotation;
    float3 position;
-   float3 size;
-   float step_height;
-   float first_step_offset;
+   world::block_custom_mesh_description mesh_description;
 };
 
 template<typename T>
@@ -298,15 +287,13 @@ auto make_set_block_cylinder_metrics(const uint32 index, const quaternion& rotat
                                                                          size);
 }
 
-auto make_set_block_stairway_metrics(const uint32 index, const quaternion& rotation,
-                                     const float3& position, const float3& size,
-                                     const float step_height,
-                                     const float first_step_offset) noexcept
+auto make_set_block_custom_metrics(
+   const uint32 index, const quaternion& rotation, const float3& position,
+   const world::block_custom_mesh_description& mesh_description) noexcept
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<set_block_stairway_metrics>(index, rotation, position,
-                                                       size, step_height,
-                                                       first_step_offset);
+   return std::make_unique<set_block_custom_metrics>(index, rotation, position,
+                                                     mesh_description);
 }
 
 auto make_set_block_cone_metrics(const uint32 index, const quaternion& rotation,

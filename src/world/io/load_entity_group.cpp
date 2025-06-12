@@ -911,77 +911,85 @@ void read_blocks_cylinders(const assets::config::node& node, entity_group& group
 void read_blocks_stairways(const assets::config::node& node, entity_group& group_out)
 {
    for (const auto& key_node : node) {
-      if (not string::iequals(key_node.key, "Stairway")) continue;
+      block_description_stairway block;
 
-      block_description_stairway stairway;
+      if (string::iequals(key_node.key, "Stairway")) {
+         block.mesh_description.stairway = block_custom_mesh_description_stairway{};
+         block_custom_mesh_description_stairway& stairway =
+            block.mesh_description.stairway;
 
-      for (const auto& prop : key_node) {
-         if (string::iequals(prop.key, "Rotation")) {
-            stairway.rotation = {prop.values.get<float>(0),
+         for (const auto& prop : key_node) {
+            if (string::iequals(prop.key, "Rotation")) {
+               block.rotation = {prop.values.get<float>(0),
                                  prop.values.get<float>(1),
                                  prop.values.get<float>(2),
                                  prop.values.get<float>(3)};
-         }
-         else if (string::iequals(prop.key, "Position")) {
-            stairway.position = {prop.values.get<float>(0),
+            }
+            else if (string::iequals(prop.key, "Position")) {
+               block.position = {prop.values.get<float>(0),
                                  prop.values.get<float>(1),
                                  prop.values.get<float>(2)};
-         }
-         else if (string::iequals(prop.key, "Size")) {
-            stairway.size = {prop.values.get<float>(0), prop.values.get<float>(1),
-                             prop.values.get<float>(2)};
-         }
-         else if (string::iequals(prop.key, "StepHeight")) {
-            stairway.step_height = prop.values.get<float>(0);
-         }
-         else if (string::iequals(prop.key, "FirstStepOffset")) {
-            stairway.first_step_offset = prop.values.get<float>(0);
-         }
-         else if (string::iequals(prop.key, "SurfaceMaterials")) {
-            for (uint32 i = 0; i < stairway.surface_materials.size(); ++i) {
-               stairway.surface_materials[i] = prop.values.get<uint8>(i);
             }
-         }
-         else if (string::iequals(prop.key, "SurfaceTextureMode")) {
-            for (uint32 i = 0; i < stairway.surface_texture_mode.size(); ++i) {
-               stairway.surface_texture_mode[i] =
-                  read_block_texture_mode(prop.values.get<uint8>(i));
+            else if (string::iequals(prop.key, "Size")) {
+               stairway.size = {prop.values.get<float>(0), prop.values.get<float>(1),
+                                prop.values.get<float>(2)};
             }
-         }
-         else if (string::iequals(prop.key, "SurfaceTextureRotation")) {
-            for (uint32 i = 0; i < stairway.surface_texture_rotation.size(); ++i) {
-               const uint8 rotation = prop.values.get<uint8>(i);
+            else if (string::iequals(prop.key, "StepHeight")) {
+               stairway.step_height = prop.values.get<float>(0);
+            }
+            else if (string::iequals(prop.key, "FirstStepOffset")) {
+               stairway.first_step_offset = prop.values.get<float>(0);
+            }
+            else if (string::iequals(prop.key, "SurfaceMaterials")) {
+               for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
+                  block.surface_materials[i] = prop.values.get<uint8>(i);
+               }
+            }
+            else if (string::iequals(prop.key, "SurfaceTextureMode")) {
+               for (uint32 i = 0; i < block.surface_texture_mode.size(); ++i) {
+                  block.surface_texture_mode[i] =
+                     read_block_texture_mode(prop.values.get<uint8>(i));
+               }
+            }
+            else if (string::iequals(prop.key, "SurfaceTextureRotation")) {
+               for (uint32 i = 0; i < block.surface_texture_rotation.size(); ++i) {
+                  const uint8 rotation = prop.values.get<uint8>(i);
 
-               switch (rotation) {
-               case static_cast<uint8>(block_texture_rotation::d0):
-               case static_cast<uint8>(block_texture_rotation::d90):
-               case static_cast<uint8>(block_texture_rotation::d180):
-               case static_cast<uint8>(block_texture_rotation::d270):
-                  stairway.surface_texture_rotation[i] =
-                     block_texture_rotation{rotation};
-                  break;
+                  switch (rotation) {
+                  case static_cast<uint8>(block_texture_rotation::d0):
+                  case static_cast<uint8>(block_texture_rotation::d90):
+                  case static_cast<uint8>(block_texture_rotation::d180):
+                  case static_cast<uint8>(block_texture_rotation::d270):
+                     block.surface_texture_rotation[i] =
+                        block_texture_rotation{rotation};
+                     break;
+                  }
+               }
+            }
+            else if (string::iequals(prop.key, "SurfaceTextureScale")) {
+               for (uint32 i = 0; i < block.surface_texture_scale.size(); ++i) {
+                  block.surface_texture_scale[i] =
+                     {std::clamp(prop.values.get<int8>(i * 2 + 0),
+                                 block_min_texture_scale, block_max_texture_scale),
+                      std::clamp(prop.values.get<int8>(i * 2 + 1),
+                                 block_min_texture_scale, block_max_texture_scale)};
+               }
+            }
+            else if (string::iequals(prop.key, "SurfaceTextureOffset")) {
+               for (uint32 i = 0; i < block.surface_texture_offset.size(); ++i) {
+                  block.surface_texture_offset[i] =
+                     {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
+                      std::min(prop.values.get<uint16>(i * 2 + 1),
+                               block_max_texture_offset)};
                }
             }
          }
-         else if (string::iequals(prop.key, "SurfaceTextureScale")) {
-            for (uint32 i = 0; i < stairway.surface_texture_scale.size(); ++i) {
-               stairway.surface_texture_scale[i] =
-                  {std::clamp(prop.values.get<int8>(i * 2 + 0),
-                              block_min_texture_scale, block_max_texture_scale),
-                   std::clamp(prop.values.get<int8>(i * 2 + 1),
-                              block_min_texture_scale, block_max_texture_scale)};
-            }
-         }
-         else if (string::iequals(prop.key, "SurfaceTextureOffset")) {
-            for (uint32 i = 0; i < stairway.surface_texture_offset.size(); ++i) {
-               stairway.surface_texture_offset[i] =
-                  {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
-                   std::min(prop.values.get<uint16>(i * 2 + 1), block_max_texture_offset)};
-            }
-         }
+      }
+      else {
+         continue;
       }
 
-      group_out.blocks.stairways.description.push_back(stairway);
+      group_out.blocks.stairways.description.push_back(block);
       group_out.blocks.stairways.mesh.push_back(
          blocks_custom_mesh_library::null_handle());
    }

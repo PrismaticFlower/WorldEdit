@@ -1,5 +1,6 @@
 #include "highlight_surface.hpp"
 
+#include "../custom_mesh.hpp"
 #include "../mesh_geometry.hpp"
 
 #include "math/matrix_funcs.hpp"
