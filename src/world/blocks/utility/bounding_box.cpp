@@ -60,15 +60,16 @@ auto get_bounding_box(const block_description_cylinder& cylinder) noexcept
    return get_bounding_box(cylinder.rotation, cylinder.position, cylinder.size);
 }
 
-auto get_bounding_box(const block_description_stairway& stairway) noexcept
+auto get_bounding_box(const block_description_custom& custom_block) noexcept
    -> math::bounding_box
 {
    const math::bounding_box bboxLS =
-      get_bounding_box_local_space(stairway.mesh_description);
+      get_bounding_box_local_space(custom_block.mesh_description);
 
-   return stairway.rotation * math::bounding_box{.min = min(bboxLS.min, bboxLS.max),
-                                                 .max = max(bboxLS.min, bboxLS.max)} +
-          stairway.position;
+   return custom_block.rotation *
+             math::bounding_box{.min = min(bboxLS.min, bboxLS.max),
+                                .max = max(bboxLS.min, bboxLS.max)} +
+          custom_block.position;
 }
 
 auto get_bounding_box(const block_description_cone& cone) noexcept -> math::bounding_box
@@ -106,8 +107,8 @@ auto get_bounding_box(const blocks& blocks, const block_type type,
    case world::block_type::cylinder: {
       return get_bounding_box(blocks.cylinders.description[block_index]);
    } break;
-   case world::block_type::stairway: {
-      return get_bounding_box(blocks.stairways.description[block_index]);
+   case world::block_type::custom: {
+      return get_bounding_box(blocks.custom.description[block_index]);
    } break;
    case world::block_type::cone: {
       return get_bounding_box(blocks.cones.description[block_index]);

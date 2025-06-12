@@ -670,11 +670,11 @@ void save_entity_group_impl(File& file, const entity_group& group)
       file.write_ln("}\n");
    }
 
-   if (not group.blocks.stairways.description.empty()) {
-      file.write_ln("BlocksStairways({})", group.blocks.stairways.description.size());
+   if (not group.blocks.custom.description.empty()) {
+      file.write_ln("BlocksCustom({})", group.blocks.custom.description.size());
       file.write_ln("{");
 
-      for (const block_description_stairway& block : group.blocks.stairways.description) {
+      for (const block_description_custom& block : group.blocks.custom.description) {
          switch (block.mesh_description.type) {
          case block_custom_mesh_type::stairway: {
             file.write_ln("   Stairway()");

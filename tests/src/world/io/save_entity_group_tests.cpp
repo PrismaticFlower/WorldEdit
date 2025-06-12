@@ -1474,7 +1474,7 @@ TEST_CASE("world save entity group (blocks, stairways)", "[World][IO]")
    const io::path path = "temp/entity_groups/test_blocks_stairways.eng";
 
    const std::string_view expected_eng =
-      R"(BlocksStairways(3)
+      R"(BlocksCustom(3)
 {
    Stairway()
    {
@@ -1524,11 +1524,11 @@ TEST_CASE("world save entity group (blocks, stairways)", "[World][IO]")
          {
             .blocks =
                {
-                  .stairways =
+                  .custom =
                      {
                         .description =
                            {
-                              world::block_description_stairway{
+                              world::block_description_custom{
                                  .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                                  .position = {8.5f, 4.5f, 2.0f},
                                  .mesh_description =
@@ -1575,7 +1575,7 @@ TEST_CASE("world save entity group (blocks, stairways)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_stairway{
+                              world::block_description_custom{
                                  .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                                  .position = {10.0f, 16.0f, 12.0f},
                                  .mesh_description =
@@ -1622,7 +1622,7 @@ TEST_CASE("world save entity group (blocks, stairways)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_stairway{
+                              world::block_description_custom{
                                  .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                                  .position = {6.0f, 6.0f, 6.0f},
                                  .mesh_description =

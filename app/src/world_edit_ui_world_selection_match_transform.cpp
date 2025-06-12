@@ -206,9 +206,8 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
                   new_rotation =
                      _world.blocks.cylinders.description[*block_index].rotation;
                } break;
-               case world::block_type::stairway: {
-                  new_rotation =
-                     _world.blocks.stairways.description[*block_index].rotation;
+               case world::block_type::custom: {
+                  new_rotation = _world.blocks.custom.description[*block_index].rotation;
                } break;
                case world::block_type::cone: {
                   new_rotation = _world.blocks.cones.description[*block_index].rotation;
@@ -465,14 +464,14 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
                                                                new_rotation, new_position,
                                                                cylinder.size));
                   } break;
-                  case world::block_type::stairway: {
-                     const world::block_description_stairway& stairway =
-                        _world.blocks.stairways.description[*block_index];
+                  case world::block_type::custom: {
+                     const world::block_description_custom& block =
+                        _world.blocks.custom.description[*block_index];
 
                      bundled_edits.push_back(
                         edits::make_set_block_custom_metrics(*block_index,
                                                              new_rotation, new_position,
-                                                             stairway.mesh_description));
+                                                             block.mesh_description));
                   } break;
                   case world::block_type::cone: {
                      const world::block_description_cone& cone =

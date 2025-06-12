@@ -77,9 +77,9 @@ TEST_CASE("edits add_block stairway", "[Edits]")
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   const world::block_stairway_id id = world.blocks.next_id.stairways.aquire();
+   const world::block_custom_id id = world.blocks.next_id.custom.aquire();
 
-   const world::block_description_stairway stairway_desc = {
+   const world::block_description_custom stairway_desc = {
       .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
       .position = {10.0f, 10.0f, 10.0f},
       .mesh_description =
@@ -99,61 +99,61 @@ TEST_CASE("edits add_block stairway", "[Edits]")
 
    world::blocks& blocks = world.blocks;
 
-   REQUIRE(blocks.stairways.size() == 1);
+   REQUIRE(blocks.custom.size() == 1);
 
-   REQUIRE(blocks.stairways.bbox.min_x.size() == 1);
-   REQUIRE(blocks.stairways.bbox.min_y.size() == 1);
-   REQUIRE(blocks.stairways.bbox.min_z.size() == 1);
-   REQUIRE(blocks.stairways.bbox.max_x.size() == 1);
-   REQUIRE(blocks.stairways.bbox.max_y.size() == 1);
-   REQUIRE(blocks.stairways.bbox.max_z.size() == 1);
-   REQUIRE(blocks.stairways.hidden.size() == 1);
-   REQUIRE(blocks.stairways.layer.size() == 1);
-   REQUIRE(blocks.stairways.description.size() == 1);
-   REQUIRE(blocks.stairways.mesh.size() == 1);
-   REQUIRE(blocks.stairways.ids.size() == 1);
+   REQUIRE(blocks.custom.bbox.min_x.size() == 1);
+   REQUIRE(blocks.custom.bbox.min_y.size() == 1);
+   REQUIRE(blocks.custom.bbox.min_z.size() == 1);
+   REQUIRE(blocks.custom.bbox.max_x.size() == 1);
+   REQUIRE(blocks.custom.bbox.max_y.size() == 1);
+   REQUIRE(blocks.custom.bbox.max_z.size() == 1);
+   REQUIRE(blocks.custom.hidden.size() == 1);
+   REQUIRE(blocks.custom.layer.size() == 1);
+   REQUIRE(blocks.custom.description.size() == 1);
+   REQUIRE(blocks.custom.mesh.size() == 1);
+   REQUIRE(blocks.custom.ids.size() == 1);
 
-   CHECK(blocks.stairways.bbox.min_x[0] == 7.5f);
-   CHECK(blocks.stairways.bbox.min_y[0] == 5.1f);
-   CHECK(blocks.stairways.bbox.min_z[0] == 7.5f);
-   CHECK(blocks.stairways.bbox.max_x[0] == 12.5f);
-   CHECK(blocks.stairways.bbox.max_y[0] == 10.0f);
-   CHECK(blocks.stairways.bbox.max_z[0] == 12.5f);
-   CHECK(not blocks.stairways.hidden[0]);
-   CHECK(blocks.stairways.layer[0] == 2);
-   CHECK(blocks.stairways.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
-   CHECK(blocks.stairways.description[0].position == float3{10.0f, 10.0f, 10.0f});
-   CHECK(blocks.stairways.description[0].mesh_description.stairway.size ==
+   CHECK(blocks.custom.bbox.min_x[0] == 7.5f);
+   CHECK(blocks.custom.bbox.min_y[0] == 5.1f);
+   CHECK(blocks.custom.bbox.min_z[0] == 7.5f);
+   CHECK(blocks.custom.bbox.max_x[0] == 12.5f);
+   CHECK(blocks.custom.bbox.max_y[0] == 10.0f);
+   CHECK(blocks.custom.bbox.max_z[0] == 12.5f);
+   CHECK(not blocks.custom.hidden[0]);
+   CHECK(blocks.custom.layer[0] == 2);
+   CHECK(blocks.custom.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
+   CHECK(blocks.custom.description[0].position == float3{10.0f, 10.0f, 10.0f});
+   CHECK(blocks.custom.description[0].mesh_description.stairway.size ==
          float3{5.0f, 5.0f, 5.0f});
-   CHECK(blocks.stairways.description[0].mesh_description.stairway.step_height == 2.5f);
-   CHECK(blocks.stairways.description[0].mesh_description.stairway.first_step_offset ==
+   CHECK(blocks.custom.description[0].mesh_description.stairway.step_height == 2.5f);
+   CHECK(blocks.custom.description[0].mesh_description.stairway.first_step_offset ==
          -0.1f);
-   CHECK(blocks.stairways.mesh[0] ==
+   CHECK(blocks.custom.mesh[0] ==
          blocks.custom_meshes.debug_query_handle(custom_mesh_desc));
-   CHECK(blocks.stairways.ids[0] == id);
+   CHECK(blocks.custom.ids[0] == id);
 
-   REQUIRE(blocks.stairways.dirty.size() == 1);
-   CHECK(blocks.stairways.dirty[0] == world::blocks_dirty_range{0, 1});
+   REQUIRE(blocks.custom.dirty.size() == 1);
+   CHECK(blocks.custom.dirty[0] == world::blocks_dirty_range{0, 1});
 
    CHECK(blocks.custom_meshes.debug_ref_count(custom_mesh_desc) == 1);
 
    edit->revert(edit_context);
 
-   REQUIRE(blocks.stairways.size() == 0);
+   REQUIRE(blocks.custom.size() == 0);
 
-   REQUIRE(blocks.stairways.bbox.min_x.size() == 0);
-   REQUIRE(blocks.stairways.bbox.min_y.size() == 0);
-   REQUIRE(blocks.stairways.bbox.min_z.size() == 0);
-   REQUIRE(blocks.stairways.bbox.max_x.size() == 0);
-   REQUIRE(blocks.stairways.bbox.max_y.size() == 0);
-   REQUIRE(blocks.stairways.bbox.max_z.size() == 0);
-   REQUIRE(blocks.stairways.hidden.size() == 0);
-   REQUIRE(blocks.stairways.layer.size() == 0);
-   REQUIRE(blocks.stairways.description.size() == 0);
-   REQUIRE(blocks.stairways.mesh.size() == 0);
-   REQUIRE(blocks.stairways.ids.size() == 0);
+   REQUIRE(blocks.custom.bbox.min_x.size() == 0);
+   REQUIRE(blocks.custom.bbox.min_y.size() == 0);
+   REQUIRE(blocks.custom.bbox.min_z.size() == 0);
+   REQUIRE(blocks.custom.bbox.max_x.size() == 0);
+   REQUIRE(blocks.custom.bbox.max_y.size() == 0);
+   REQUIRE(blocks.custom.bbox.max_z.size() == 0);
+   REQUIRE(blocks.custom.hidden.size() == 0);
+   REQUIRE(blocks.custom.layer.size() == 0);
+   REQUIRE(blocks.custom.description.size() == 0);
+   REQUIRE(blocks.custom.mesh.size() == 0);
+   REQUIRE(blocks.custom.ids.size() == 0);
 
-   REQUIRE(blocks.stairways.dirty.size() == 0);
+   REQUIRE(blocks.custom.dirty.size() == 0);
 
    CHECK(blocks.custom_meshes.debug_ref_count(custom_mesh_desc) == 0);
 }

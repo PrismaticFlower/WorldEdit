@@ -203,9 +203,9 @@ void world_edit::ui_show_world_selection_move() noexcept
                   gizmo_rotation =
                      _world.blocks.cylinders.description[*block_index].rotation;
                } break;
-               case world::block_type::stairway: {
+               case world::block_type::custom: {
                   gizmo_rotation =
-                     _world.blocks.stairways.description[*block_index].rotation;
+                     _world.blocks.custom.description[*block_index].rotation;
                } break;
                case world::block_type::cone: {
                   gizmo_rotation =
@@ -434,13 +434,14 @@ void world_edit::ui_show_world_selection_move() noexcept
                                                                cylinder.position + move_delta,
                                                                cylinder.size));
                   } break;
-                  case world::block_type::stairway: {
-                     const world::block_description_stairway& stairway =
-                        _world.blocks.stairways.description[*block_index];
+                  case world::block_type::custom: {
+                     const world::block_description_custom& block =
+                        _world.blocks.custom.description[*block_index];
 
-                     bundled_edits.push_back(edits::make_set_block_custom_metrics(
-                        *block_index, stairway.rotation,
-                        stairway.position + move_delta, stairway.mesh_description));
+                     bundled_edits.push_back(
+                        edits::make_set_block_custom_metrics(*block_index, block.rotation,
+                                                             block.position + move_delta,
+                                                             block.mesh_description));
                   } break;
                   case world::block_type::cone: {
                      const world::block_description_cone& cone =

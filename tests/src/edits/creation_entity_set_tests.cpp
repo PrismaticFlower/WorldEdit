@@ -273,7 +273,7 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime none to "
    world::edit_context edit_context{world, interaction_targets.creation_entity};
    world::object_class_library object_class_library{null_asset_libraries()};
 
-   const world::block_description_stairway stairway = {
+   const world::block_description_custom stairway = {
       .mesh_description =
          world::block_custom_mesh_description_stairway{
             .size = {1.0f, 1.0f, 1.0f},
@@ -282,7 +282,7 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime none to "
 
    world::entity_group group{
       .blocks = {
-         .stairways =
+         .custom =
             {
                .description =
                   {
@@ -316,14 +316,14 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime "
    world::edit_context edit_context{world, interaction_targets.creation_entity};
    world::object_class_library object_class_library{null_asset_libraries()};
 
-   const world::block_description_stairway stairway_short = {
+   const world::block_description_custom stairway_short = {
       .mesh_description =
          world::block_custom_mesh_description_stairway{
             .size = {1.0f, 1.0f, 1.0f},
          },
    };
 
-   const world::block_description_stairway stairway_long = {
+   const world::block_description_custom stairway_long = {
       .mesh_description =
          world::block_custom_mesh_description_stairway{
             .size = {1.0f, 1.0f, 8.0f},
@@ -332,7 +332,7 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime "
 
    interaction_targets.creation_entity = world::entity_group{
       .blocks = {
-         .stairways =
+         .custom =
             {
                .description =
                   {
@@ -347,7 +347,7 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime "
 
    world::entity_group group{
       .blocks = {
-         .stairways =
+         .custom =
             {
                .description =
                   {
@@ -385,7 +385,7 @@ TEST_CASE(
 
    const lowercase_string class_name_stars{"map_prop_stars"sv};
 
-   const world::block_description_stairway stairway = {
+   const world::block_description_custom stairway = {
       .mesh_description =
          world::block_custom_mesh_description_stairway{
             .size = {1.0f, 1.0f, 1.0f},
@@ -399,7 +399,7 @@ TEST_CASE(
 
    world::entity_group group{
       .blocks = {
-         .stairways =
+         .custom =
             {
                .description =
                   {
@@ -435,7 +435,7 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime "
    world::edit_context edit_context{world, interaction_targets.creation_entity};
    world::object_class_library object_class_library{null_asset_libraries()};
 
-   const world::block_description_stairway stairway = {
+   const world::block_description_custom stairway = {
       .mesh_description =
          world::block_custom_mesh_description_stairway{
             .size = {1.0f, 1.0f, 1.0f},
@@ -446,7 +446,7 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime "
 
    interaction_targets.creation_entity = world::entity_group{
       .blocks = {
-         .stairways =
+         .custom =
             {
                .description =
                   {

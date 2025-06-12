@@ -1913,10 +1913,9 @@ void world_edit::place_creation_entity() noexcept
 
          return;
       }
-      else if (_world.blocks.stairways.size() +
-                  group.blocks.stairways.description.size() >
+      else if (_world.blocks.custom.size() + group.blocks.custom.description.size() >
                world::max_blocks) {
-         report_limit_reached("Max blocks (stairways, {}) Reached", world::max_blocks);
+         report_limit_reached("Max blocks (custom, {}) Reached", world::max_blocks);
 
          return;
       }
@@ -2293,14 +2292,14 @@ void world_edit::place_creation_entity() noexcept
                    {.transparent = std::exchange(is_transparent_edit, true)});
       }
 
-      for (const world::block_description_stairway& stairway :
-           group.blocks.stairways.description) {
-         world::block_description_stairway new_stairway = stairway;
+      for (const world::block_description_custom& block :
+           group.blocks.custom.description) {
+         world::block_description_custom new_block = block;
 
-         new_stairway.rotation = group.rotation * new_stairway.rotation;
-         new_stairway.position = group.rotation * new_stairway.position + group.position;
+         new_block.rotation = group.rotation * new_block.rotation;
+         new_block.position = group.rotation * new_block.position + group.position;
 
-         for (uint8& material : new_stairway.surface_materials) {
+         for (uint8& material : new_block.surface_materials) {
             if (block_material_remap[material]) {
                material = *block_material_remap[material];
             }
@@ -2310,8 +2309,8 @@ void world_edit::place_creation_entity() noexcept
          }
 
          _edit_stack_world
-            .apply(edits::make_add_block(new_stairway, group.layer,
-                                         _world.blocks.next_id.stairways.aquire()),
+            .apply(edits::make_add_block(new_block, group.layer,
+                                         _world.blocks.next_id.custom.aquire()),
                    _edit_context,
                    {.transparent = std::exchange(is_transparent_edit, true)});
       }
@@ -3033,14 +3032,14 @@ void world_edit::align_selection(const float alignment) noexcept
                                                          align_position(cylinder.position),
                                                          cylinder.size));
             } break;
-            case world::block_type::stairway: {
-               const world::block_description_stairway& stairway =
-                  _world.blocks.stairways.description[*block_index];
+            case world::block_type::custom: {
+               const world::block_description_custom& block =
+                  _world.blocks.custom.description[*block_index];
 
                bundle.push_back(
-                  edits::make_set_block_custom_metrics(*block_index, stairway.rotation,
-                                                       align_position(stairway.position),
-                                                       stairway.mesh_description));
+                  edits::make_set_block_custom_metrics(*block_index, block.rotation,
+                                                       align_position(block.position),
+                                                       block.mesh_description));
             } break;
             case world::block_type::cone: {
                const world::block_description_cone& cone =
@@ -3455,14 +3454,14 @@ void world_edit::ground_selection() noexcept
                                                             *grounded_position,
                                                             cylinder.size));
                } break;
-               case world::block_type::stairway: {
-                  const world::block_description_stairway& stairway =
-                     _world.blocks.stairways.description[*block_index];
+               case world::block_type::custom: {
+                  const world::block_description_custom& block =
+                     _world.blocks.custom.description[*block_index];
 
                   bundle.push_back(
-                     edits::make_set_block_custom_metrics(*block_index, stairway.rotation,
+                     edits::make_set_block_custom_metrics(*block_index, block.rotation,
                                                           *grounded_position,
-                                                          stairway.mesh_description));
+                                                          block.mesh_description));
                } break;
                case world::block_type::cone: {
                   const world::block_description_cone& cone =

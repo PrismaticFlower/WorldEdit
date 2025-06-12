@@ -908,10 +908,10 @@ void read_blocks_cylinders(const assets::config::node& node, entity_group& group
    }
 }
 
-void read_blocks_stairways(const assets::config::node& node, entity_group& group_out)
+void read_blocks_custom(const assets::config::node& node, entity_group& group_out)
 {
    for (const auto& key_node : node) {
-      block_description_stairway block;
+      block_description_custom block;
 
       if (string::iequals(key_node.key, "Stairway")) {
          block.mesh_description.stairway = block_custom_mesh_description_stairway{};
@@ -989,9 +989,8 @@ void read_blocks_stairways(const assets::config::node& node, entity_group& group
          continue;
       }
 
-      group_out.blocks.stairways.description.push_back(block);
-      group_out.blocks.stairways.mesh.push_back(
-         blocks_custom_mesh_library::null_handle());
+      group_out.blocks.custom.description.push_back(block);
+      group_out.blocks.custom.mesh.push_back(blocks_custom_mesh_library::null_handle());
    }
 }
 
@@ -1490,16 +1489,15 @@ void clamp_block_material_indices(entity_group& group_out, output_stream& output
    }
 
    for (uint32 block_index = 0;
-        block_index < group_out.blocks.stairways.description.size(); ++block_index) {
-      block_description_stairway& stairway =
-         group_out.blocks.stairways.description[block_index];
+        block_index < group_out.blocks.custom.description.size(); ++block_index) {
+      block_description_custom& stairway =
+         group_out.blocks.custom.description[block_index];
 
       for (uint8& material : stairway.surface_materials) {
          if (material >= max_material) {
-            output
-               .write("Warning! Stairway block '{}' has out of range material "
-                      "index. Setting to zero.\n",
-                      block_index);
+            output.write("Warning! Custom block '{}' has out of range material "
+                         "index. Setting to zero.\n",
+                         block_index);
 
             material = 0;
          }
@@ -1624,11 +1622,11 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
 
             read_blocks_cylinders(key_node, group);
          }
-         else if (string::iequals(key_node.key, "Blocksstairways"sv)) {
-            group.blocks.stairways.description.reserve(key_node.values.get<uint32>(0));
-            group.blocks.stairways.mesh.reserve(key_node.values.get<uint32>(0));
+         else if (string::iequals(key_node.key, "BlocksCustom"sv)) {
+            group.blocks.custom.description.reserve(key_node.values.get<uint32>(0));
+            group.blocks.custom.mesh.reserve(key_node.values.get<uint32>(0));
 
-            read_blocks_stairways(key_node, group);
+            read_blocks_custom(key_node, group);
          }
          else if (string::iequals(key_node.key, "BlocksCones"sv)) {
             group.blocks.cones.reserve(key_node.values.get<uint32>(0));

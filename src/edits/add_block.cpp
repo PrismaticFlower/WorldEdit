@@ -81,21 +81,16 @@ private:
    id_type id;
 };
 
-template<auto type_ptr>
 struct add_block_custom_mesh final : edit<world::edit_context> {
-   using blocks_type =
-      std::remove_cvref_t<decltype(std::declval<world::blocks>().*type_ptr)>;
-   using description_type = decltype(blocks_type::description)::value_type;
-   using id_type = world::id<description_type>;
-
-   add_block_custom_mesh(description_type block, int8 layer, id_type id)
+   add_block_custom_mesh(world::block_description_custom block, int8 layer,
+                         world::block_custom_id id)
       : block{block}, layer{layer}, id{id}
    {
    }
 
    void apply(world::edit_context& context) noexcept override
    {
-      blocks_type& blocks = context.world.blocks.*type_ptr;
+      world::blocks_custom& blocks = context.world.blocks.custom;
 
       const math::bounding_box bbox = get_bounding_box(block);
 
@@ -123,7 +118,7 @@ struct add_block_custom_mesh final : edit<world::edit_context> {
 
    void revert(world::edit_context& context) noexcept override
    {
-      blocks_type& blocks = context.world.blocks.*type_ptr;
+      world::blocks_custom& blocks = context.world.blocks.custom;
 
       context.world.blocks.custom_meshes.remove(blocks.mesh.back());
 
@@ -156,9 +151,9 @@ struct add_block_custom_mesh final : edit<world::edit_context> {
    void coalesce([[maybe_unused]] edit& other) noexcept override {}
 
 private:
-   description_type block;
+   world::block_description_custom block;
    int8 layer;
-   id_type id;
+   world::block_custom_id id;
 };
 
 }
@@ -190,12 +185,11 @@ auto make_add_block(world::block_description_cylinder cylinder, int8 layer,
    return std::make_unique<add_block<&world::blocks::cylinders>>(cylinder, layer, id);
 }
 
-auto make_add_block(world::block_description_stairway stairway, int8 layer,
-                    world::block_stairway_id id)
+auto make_add_block(world::block_description_custom block, int8 layer,
+                    world::block_custom_id id)
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<add_block_custom_mesh<&world::blocks::stairways>>(stairway,
-                                                                             layer, id);
+   return std::make_unique<add_block_custom_mesh>(block, layer, id);
 }
 
 auto make_add_block(world::block_description_cone cone, int8 layer,

@@ -90,7 +90,7 @@ auto block_type_name(world::block_type type) noexcept -> const char*
    case world::block_type::ramp:       return "Ramp";
    case world::block_type::quad:       return "Quadrilateral";
    case world::block_type::cylinder:   return "Cylinder";
-   case world::block_type::stairway:   return "Stairs";
+   case world::block_type::custom:   return "Stairs";
    case world::block_type::cone:       return "Cone";
    case world::block_type::hemisphere: return "Hemisphere";
    case world::block_type::pyramid:    return "Pyramid";
@@ -126,7 +126,7 @@ void world_edit::ui_show_block_editor() noexcept
                  world::block_type::ramp,
                  world::block_type::quad,
                  world::block_type::cylinder,
-                 world::block_type::stairway,
+                 world::block_type::custom,
                  world::block_type::cone,
                  world::block_type::hemisphere,
                  world::block_type::pyramid,
@@ -161,7 +161,7 @@ void world_edit::ui_show_block_editor() noexcept
             _block_editor_config.quad_split = draw_block_quad_split::shortest;
          }
       }
-      else if (_block_editor_config.draw_type == world::block_type::stairway) {
+      else if (_block_editor_config.draw_type == world::block_type::custom) {
          ImGui::DragFloat("Step Height", &_block_editor_config.step_height,
                           0.125f * 0.25f, 0.125f, 1.0f, "%.3f",
                           ImGuiSliderFlags_NoRoundToFormat);
@@ -705,7 +705,7 @@ void world_edit::ui_show_block_editor() noexcept
       }
 
       if (ImGui::MenuItem("Draw Stairs")) {
-         _block_editor_config.draw_type = world::block_type::stairway;
+         _block_editor_config.draw_type = world::block_type::custom;
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
@@ -1047,7 +1047,7 @@ void world_edit::ui_show_block_editor() noexcept
                }
 
             } break;
-            case world::block_type::stairway: {
+            case world::block_type::custom: {
                _block_editor_context.draw_block.stairway.start = cursor_positionWS;
                _block_editor_context.draw_block.step = draw_block_step::stairway_width;
             } break;
@@ -1737,8 +1737,7 @@ void world_edit::ui_show_block_editor() noexcept
          _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
-            const world::block_stairway_id id =
-               _world.blocks.next_id.stairways.aquire();
+            const world::block_custom_id id = _world.blocks.next_id.custom.aquire();
 
             _block_editor_context.draw_block.height_plane = std::nullopt;
             _block_editor_context.draw_block.stairway.length_x =
@@ -1748,7 +1747,7 @@ void world_edit::ui_show_block_editor() noexcept
             _block_editor_context.draw_block.stairway.rotation = rotation;
             _block_editor_context.draw_block.step = draw_block_step::stairway_height;
             _block_editor_context.draw_block.index =
-               static_cast<uint32>(_world.blocks.stairways.size());
+               static_cast<uint32>(_world.blocks.custom.size());
             _block_editor_context.draw_block.block_id = id;
 
             const std::array<float3, 2> cornersWS{draw_block_start, draw_block_length};
@@ -1769,10 +1768,10 @@ void world_edit::ui_show_block_editor() noexcept
 
             const uint8 material_index = _block_editor_config.paint_material_index;
 
-            if (_world.blocks.stairways.size() < world::max_blocks) {
+            if (_world.blocks.custom.size() < world::max_blocks) {
                _edit_stack_world.apply(
                   edits::make_add_block(
-                     world::block_description_stairway{
+                     world::block_description_custom{
                         .rotation = rotation,
                         .position = position,
                         .mesh_description =
@@ -1789,7 +1788,7 @@ void world_edit::ui_show_block_editor() noexcept
             }
             else {
                MessageBoxA(_window,
-                           fmt::format("Max Stairways ({}) Reached", world::max_blocks)
+                           fmt::format("Max Custom Blocks ({}) Reached", world::max_blocks)
                               .c_str(),
                            "Limit Reached", MB_OK);
 
@@ -1864,9 +1863,8 @@ void world_edit::ui_show_block_editor() noexcept
          }
 
          if (const uint32 index = _block_editor_context.draw_block.index;
-             index < _world.blocks.stairways.size() and
-             _world.blocks.stairways.ids[index] ==
-                _block_editor_context.draw_block.block_id) {
+             index < _world.blocks.custom.size() and
+             _world.blocks.custom.ids[index] == _block_editor_context.draw_block.block_id) {
             _edit_stack_world.apply(edits::make_set_block_custom_metrics(
                                        index, rotation, position,
                                        world::block_custom_mesh_description_stairway{
@@ -2546,9 +2544,9 @@ void world_edit::ui_show_block_editor() noexcept
                          _edit_context);
             }
          } break;
-         case world::block_type::stairway: {
-            const world::block_description_stairway& block =
-               _world.blocks.stairways.description[*selected_index];
+         case world::block_type::custom: {
+            const world::block_description_custom& block =
+               _world.blocks.custom.description[*selected_index];
 
             switch (block.mesh_description.type) {
             case world::block_custom_mesh_type::stairway: {

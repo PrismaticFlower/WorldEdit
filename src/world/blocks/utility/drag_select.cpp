@@ -97,25 +97,25 @@ void drag_select(const blocks& blocks, const frustum& frustumWS,
       }
    }
 
-   for (uint32 block_index = 0; block_index < blocks.stairways.size(); ++block_index) {
-      if (blocks.stairways.hidden[block_index]) continue;
+   for (uint32 block_index = 0; block_index < blocks.custom.size(); ++block_index) {
+      if (blocks.custom.hidden[block_index]) continue;
 
       if (intersects(frustumWS, {.min =
                                     {
-                                       blocks.stairways.bbox.min_x[block_index],
-                                       blocks.stairways.bbox.min_y[block_index],
-                                       blocks.stairways.bbox.min_z[block_index],
+                                       blocks.custom.bbox.min_x[block_index],
+                                       blocks.custom.bbox.min_y[block_index],
+                                       blocks.custom.bbox.min_z[block_index],
                                     },
                                  .max = {
-                                    blocks.stairways.bbox.max_x[block_index],
-                                    blocks.stairways.bbox.max_y[block_index],
-                                    blocks.stairways.bbox.max_z[block_index],
+                                    blocks.custom.bbox.max_x[block_index],
+                                    blocks.custom.bbox.max_y[block_index],
+                                    blocks.custom.bbox.max_z[block_index],
                                  }})) {
          if (op == block_drag_select_op::add) {
-            selection.add(block_id{blocks.stairways.ids[block_index]});
+            selection.add(block_id{blocks.custom.ids[block_index]});
          }
          else if (op == block_drag_select_op::remove) {
-            selection.remove(block_id{blocks.stairways.ids[block_index]});
+            selection.remove(block_id{blocks.custom.ids[block_index]});
          }
       }
    }

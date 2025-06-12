@@ -140,7 +140,7 @@ bool blocks_cylinders::is_balanced() const noexcept
           bbox.min_x.size() == ids.size();
 }
 
-void blocks_stairways::reserve(const std::size_t size) noexcept
+void blocks_custom::reserve(const std::size_t size) noexcept
 {
    bbox.min_x.reserve(size);
    bbox.min_y.reserve(size);
@@ -155,14 +155,14 @@ void blocks_stairways::reserve(const std::size_t size) noexcept
    ids.reserve(size);
 }
 
-auto blocks_stairways::size() const noexcept -> std::size_t
+auto blocks_custom::size() const noexcept -> std::size_t
 {
    assert(is_balanced());
 
    return bbox.min_x.size();
 }
 
-bool blocks_stairways::is_balanced() const noexcept
+bool blocks_custom::is_balanced() const noexcept
 {
    return bbox.min_x.size() == bbox.min_y.size() and
           bbox.min_x.size() == bbox.min_z.size() and
@@ -284,7 +284,7 @@ bool blocks::empty() const noexcept
           ramps.size() == 0 and     //
           quads.size() == 0 and     //
           cylinders.size() == 0 and //
-          stairways.size() == 0 and //
+          custom.size() == 0 and    //
           cones.size() == 0 and     //
           hemispheres.size() == 0;
 }
@@ -307,8 +307,8 @@ void blocks::untracked_fill_dirty_ranges() noexcept
       cylinders.dirty.add({0, static_cast<uint32>(cylinders.size())});
    }
 
-   if (stairways.size() != 0) {
-      stairways.dirty.add({0, static_cast<uint32>(stairways.size())});
+   if (custom.size() != 0) {
+      custom.dirty.add({0, static_cast<uint32>(custom.size())});
    }
 
    if (cones.size() != 0) {
@@ -332,7 +332,7 @@ void blocks::untracked_clear_dirty_ranges() noexcept
    ramps.dirty.clear();
    quads.dirty.clear();
    cylinders.dirty.clear();
-   stairways.dirty.clear();
+   custom.dirty.clear();
    cones.dirty.clear();
    hemispheres.dirty.clear();
    pyramids.dirty.clear();
@@ -369,8 +369,8 @@ block_id::block_id(block_cylinder_id id) noexcept
 {
 }
 
-block_id::block_id(block_stairway_id id) noexcept
-   : id_type{block_type::stairway}, id{.stairway = id}
+block_id::block_id(block_custom_id id) noexcept
+   : id_type{block_type::custom}, id{.custom = id}
 {
 }
 
@@ -437,16 +437,16 @@ auto block_id::get_cylinder() const noexcept -> block_cylinder_id
    return id.cylinder;
 }
 
-bool block_id::is_stairway() const noexcept
+bool block_id::is_custom() const noexcept
 {
-   return id_type == block_type::stairway;
+   return id_type == block_type::custom;
 }
 
-auto block_id::get_stairway() const noexcept -> block_stairway_id
+auto block_id::get_custom() const noexcept -> block_custom_id
 {
-   assert(id_type == block_type::stairway);
+   assert(id_type == block_type::custom);
 
-   return id.stairway;
+   return id.custom;
 }
 
 bool block_id::is_cone() const noexcept

@@ -263,14 +263,14 @@ void process_blocks(const blocks_quads& blocks,
    }
 }
 
-void process_blocks(const blocks_stairways& blocks,
+void process_blocks(const blocks_custom& blocks,
                     const blocks_custom_mesh_library& meshes,
                     std::vector<block_world_mesh>& out_mesh_list,
                     std::vector<block_world_occluder>& out_occluder_list) noexcept
 {
    for (uint32 block_index = 0; block_index < blocks.size(); ++block_index) {
-      const block_description_stairway& block = blocks.description[block_index];
-      const block_stairway_id block_id = blocks.ids[block_index];
+      const block_description_custom& block = blocks.description[block_index];
+      const block_custom_id block_id = blocks.ids[block_index];
       const block_custom_mesh& mesh = meshes[blocks.mesh[block_index]];
 
       block_world_mesh& out_mesh = out_mesh_list.emplace_back();
@@ -409,7 +409,7 @@ auto save_blocks_meshes(const io::path& output_directory,
    mesh_count += blocks.ramps.size();
    mesh_count += blocks.quads.size();
    mesh_count += blocks.cylinders.size();
-   mesh_count += blocks.stairways.size();
+   mesh_count += blocks.custom.size();
    mesh_count += blocks.cones.size();
    mesh_count += blocks.hemispheres.size();
    mesh_count += blocks.pyramids.size();
@@ -423,9 +423,9 @@ auto save_blocks_meshes(const io::path& output_directory,
    occluder_count += blocks.hemispheres.size() * block_hemisphere_occluders.size();
    occluder_count += blocks.pyramids.size() * block_pyramid_occluders.size();
 
-   for (uint32 block_index = 0; block_index < blocks.stairways.size(); ++block_index) {
+   for (uint32 block_index = 0; block_index < blocks.custom.size(); ++block_index) {
       const block_custom_mesh& mesh =
-         blocks.custom_meshes[blocks.stairways.mesh[block_index]];
+         blocks.custom_meshes[blocks.custom.mesh[block_index]];
 
       occluder_count += mesh.occluders.size();
    }
@@ -443,7 +443,7 @@ auto save_blocks_meshes(const io::path& output_directory,
    process_blocks(blocks.quads, mesh_list);
    process_blocks(blocks.cylinders, block_cylinder_vertices, block_cylinder_triangles,
                   block_cylinder_occluders, mesh_list, occluder_list);
-   process_blocks(blocks.stairways, blocks.custom_meshes, mesh_list, occluder_list);
+   process_blocks(blocks.custom, blocks.custom_meshes, mesh_list, occluder_list);
    process_blocks(blocks.cones, block_cone_vertices, block_cone_triangles,
                   block_cone_occluders, mesh_list, occluder_list);
    process_blocks(blocks.hemispheres, block_hemisphere_vertices,

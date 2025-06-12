@@ -347,49 +347,49 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
    }
 
-   for (uint32 stairway_index = 0; stairway_index < blocks.stairways.size();
-        ++stairway_index) {
-      if (not config.active_layers[blocks.stairways.layer[stairway_index]])
+   for (uint32 custom_block_index = 0;
+        custom_block_index < blocks.custom.size(); ++custom_block_index) {
+      if (not config.active_layers[blocks.custom.layer[custom_block_index]])
          continue;
-      if (blocks.stairways.hidden[stairway_index]) continue;
-      if (blocks.stairways.ids[stairway_index] == config.filter_id) continue;
+      if (blocks.custom.hidden[custom_block_index]) continue;
+      if (blocks.custom.ids[custom_block_index] == config.filter_id) continue;
 
       const math::bounding_box bboxWS = {
          .min =
             {
-               blocks.stairways.bbox.min_x[stairway_index],
-               blocks.stairways.bbox.min_y[stairway_index],
-               blocks.stairways.bbox.min_z[stairway_index],
+               blocks.custom.bbox.min_x[custom_block_index],
+               blocks.custom.bbox.min_y[custom_block_index],
+               blocks.custom.bbox.min_z[custom_block_index],
             },
 
          .max =
             {
-               blocks.stairways.bbox.max_x[stairway_index],
-               blocks.stairways.bbox.max_y[stairway_index],
-               blocks.stairways.bbox.max_z[stairway_index],
+               blocks.custom.bbox.max_x[custom_block_index],
+               blocks.custom.bbox.max_y[custom_block_index],
+               blocks.custom.bbox.max_z[custom_block_index],
             },
       };
 
-      const float3 stairway_centreLS = (bboxWS.min + bboxWS.max) * 0.5f;
-      const float3 stairway_size = (bboxWS.max - bboxWS.min) * 0.5f;
+      const float3 block_centreLS = (bboxWS.min + bboxWS.max) * 0.5f;
+      const float3 block_size = (bboxWS.max - bboxWS.min) * 0.5f;
 
-      const float3 positionAS = positionWS - stairway_centreLS;
-      const float3 distances = abs(positionAS) - stairway_size;
+      const float3 positionAS = positionWS - block_centreLS;
+      const float3 distances = abs(positionAS) - block_size;
 
-      const float stairway_distance =
+      const float block_distance =
          length(max(distances, float3{0.0f, 0.0f, 0.0f})) +
          std::min(std::max(std::max(distances.x, distances.y), distances.z), 0.0f);
 
-      if (stairway_distance > config.snap_radius) continue;
+      if (block_distance > config.snap_radius) continue;
 
-      const block_description_stairway& stairway =
-         blocks.stairways.description[stairway_index];
+      const block_description_custom& block =
+         blocks.custom.description[custom_block_index];
 
-      float4x4 world_from_local = to_matrix(stairway.rotation);
-      world_from_local[3] = {stairway.position, 1.0f};
+      float4x4 world_from_local = to_matrix(block.rotation);
+      world_from_local[3] = {block.position, 1.0f};
 
       const block_custom_mesh& mesh =
-         blocks.custom_meshes[blocks.stairways.mesh[stairway_index]];
+         blocks.custom_meshes[blocks.custom.mesh[custom_block_index]];
 
       for (const float3& vertex_positionLS : mesh.snap_points) {
          const float3 vertex_positionWS = world_from_local * vertex_positionLS;

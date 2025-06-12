@@ -45,7 +45,7 @@ struct blocks {
       instance_list cones;
       instance_list hemispheres;
       instance_list pyramids;
-      draw_list stairways;
+      draw_list custom;
 
       instance_list dynamic_boxes;
       instance_list dynamic_ramps;
@@ -54,7 +54,7 @@ struct blocks {
       instance_list dynamic_cones;
       instance_list dynamic_hemispheres;
       instance_list dynamic_pyramids;
-      draw_list dynamic_stairways;
+      draw_list dynamic_custom;
    };
 
    blocks(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
@@ -142,8 +142,8 @@ private:
    gpu::unique_resource_handle _cylinders_instance_data;
    uint64 _cylinders_instance_data_capacity = 0;
 
-   gpu::unique_resource_handle _stairways_instance_data;
-   uint64 _stairways_instance_data_capacity = 0;
+   gpu::unique_resource_handle _custom_instance_data;
+   uint64 _custom_instance_data_capacity = 0;
 
    gpu::unique_resource_handle _cones_instance_data;
    uint64 _cones_instance_data_capacity = 0;
@@ -201,8 +201,8 @@ private:
       gpu::unique_resource_handle cylinders_instance_data;
       uint64 cylinders_instance_data_capacity = 0;
 
-      gpu::unique_resource_handle stairways_instance_data;
-      uint64 stairways_instance_data_capacity = 0;
+      gpu::unique_resource_handle custom_instance_data;
+      uint64 custom_instance_data_capacity = 0;
 
       gpu::unique_resource_handle cones_instance_data;
       uint64 cones_instance_data_capacity = 0;
@@ -217,7 +217,7 @@ private:
       bbox_soa ramps_bbox;
       bbox_soa quads_bbox;
       bbox_soa cylinders_bbox;
-      bbox_soa stairways_bbox;
+      bbox_soa custom_bbox;
       bbox_soa cones_bbox;
       bbox_soa hemispheres_bbox;
       bbox_soa pyramids_bbox;

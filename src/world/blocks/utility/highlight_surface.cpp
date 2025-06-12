@@ -103,14 +103,14 @@ void highlight_surface(const blocks& blocks, const block_type type,
       highlight_surface_generic(world_from_object, block_cylinder_triangles,
                                 block_cylinder_vertices, surface_index, visualizers);
    } break;
-   case block_type::stairway: {
-      const world::block_description_stairway& stairway =
-         blocks.stairways.description[block_index];
+   case block_type::custom: {
+      const world::block_description_custom& block =
+         blocks.custom.description[block_index];
       const block_custom_mesh& mesh =
-         blocks.custom_meshes[blocks.stairways.mesh[block_index]];
+         blocks.custom_meshes[blocks.custom.mesh[block_index]];
 
-      float4x4 world_from_local = to_matrix(stairway.rotation);
-      world_from_local[3] = {stairway.position, 1.0f};
+      float4x4 world_from_local = to_matrix(block.rotation);
+      world_from_local[3] = {block.position, 1.0f};
 
       highlight_surface_generic(world_from_local, mesh.triangles, mesh.vertices,
                                 surface_index, visualizers);

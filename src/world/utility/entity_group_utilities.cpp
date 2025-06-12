@@ -132,8 +132,8 @@ void fill_entity_group_block_materials(entity_group& group, const blocks& blocks
       }
    }
 
-   for (block_description_stairway& stairway : group.blocks.stairways.description) {
-      for (uint8& material : stairway.surface_materials) {
+   for (block_description_custom& block : group.blocks.custom.description) {
+      for (uint8& material : block.surface_materials) {
          if (not materials_remap[material]) {
             materials_remap[material] =
                static_cast<uint8>(group.blocks.materials.size());
@@ -370,10 +370,10 @@ auto entity_group_metrics(const entity_group& group,
       ground_distance = std::min(ground_distance, bboxGS.min.y);
    }
 
-   for (const block_description_stairway& stairway : group.blocks.stairways.description) {
-      const math::bounding_box bboxGS = get_bounding_box(stairway);
+   for (const block_description_custom& block : group.blocks.custom.description) {
+      const math::bounding_box bboxGS = get_bounding_box(block);
 
-      group_bbox = math::combine(group_bbox, get_bounding_box(stairway));
+      group_bbox = math::combine(group_bbox, get_bounding_box(block));
       ground_distance = std::min(ground_distance, bboxGS.min.y);
    }
 
@@ -488,8 +488,8 @@ void centre_entity_group(entity_group& group) noexcept
       count += 1.0f;
    }
 
-   for (const block_description_stairway& stairway : group.blocks.stairways.description) {
-      position += stairway.position;
+   for (const block_description_custom& block : group.blocks.custom.description) {
+      position += block.position;
       count += 1.0f;
    }
 
@@ -578,8 +578,8 @@ void centre_entity_group(entity_group& group) noexcept
       cylinder.position -= centre;
    }
 
-   for (block_description_stairway& stairway : group.blocks.stairways.description) {
-      stairway.position -= centre;
+   for (block_description_custom& block : group.blocks.custom.description) {
+      block.position -= centre;
    }
 
    for (block_description_cone& cone : group.blocks.cones) {
@@ -763,10 +763,10 @@ auto make_entity_group_from_selection(const world& world,
                group.blocks.cylinders.push_back(
                   world.blocks.cylinders.description[*block_index]);
             } break;
-            case block_type::stairway: {
-               group.blocks.stairways.description.push_back(
-                  world.blocks.stairways.description[*block_index]);
-               group.blocks.stairways.mesh.push_back(
+            case block_type::custom: {
+               group.blocks.custom.description.push_back(
+                  world.blocks.custom.description[*block_index]);
+               group.blocks.custom.mesh.push_back(
                   blocks_custom_mesh_library::null_handle());
             } break;
             case block_type::cone: {
@@ -905,10 +905,9 @@ auto make_entity_group_from_block_id(const blocks& blocks, const block_id id) no
    case block_type::cylinder: {
       group.blocks.cylinders.push_back(blocks.cylinders.description[*block_index]);
    } break;
-   case block_type::stairway: {
-      group.blocks.stairways.description.push_back(
-         blocks.stairways.description[*block_index]);
-      group.blocks.stairways.mesh.push_back(blocks_custom_mesh_library::null_handle());
+   case block_type::custom: {
+      group.blocks.custom.description.push_back(blocks.custom.description[*block_index]);
+      group.blocks.custom.mesh.push_back(blocks_custom_mesh_library::null_handle());
    } break;
    case block_type::cone: {
       group.blocks.cones.push_back(blocks.cones.description[*block_index]);
@@ -978,13 +977,11 @@ auto make_entity_group_from_layer(const world& world, const int32 layer) noexcep
       }
    }
 
-   for (uint32 block_index = 0; block_index < world.blocks.stairways.size();
-        ++block_index) {
-      if (world.blocks.stairways.layer[block_index] == layer) {
-         group.blocks.stairways.description.push_back(
-            world.blocks.stairways.description[block_index]);
-         group.blocks.stairways.mesh.push_back(
-            blocks_custom_mesh_library::null_handle());
+   for (uint32 block_index = 0; block_index < world.blocks.custom.size(); ++block_index) {
+      if (world.blocks.custom.layer[block_index] == layer) {
+         group.blocks.custom.description.push_back(
+            world.blocks.custom.description[block_index]);
+         group.blocks.custom.mesh.push_back(blocks_custom_mesh_library::null_handle());
       }
    }
 
@@ -1041,11 +1038,11 @@ auto make_entity_group_from_world(const world& world) noexcept -> entity_group
                       world.blocks.quads.description.end()},
             .cylinders = {world.blocks.cylinders.description.begin(),
                           world.blocks.cylinders.description.end()},
-            .stairways =
+            .custom =
                {
-                  .description = {world.blocks.stairways.description.begin(),
-                                  world.blocks.stairways.description.end()},
-                  .mesh = {world.blocks.stairways.size(),
+                  .description = {world.blocks.custom.description.begin(),
+                                  world.blocks.custom.description.end()},
+                  .mesh = {world.blocks.custom.size(),
                            blocks_custom_mesh_library::null_handle()},
                },
             .cones = {world.blocks.cones.description.begin(),
@@ -1089,7 +1086,7 @@ bool is_entity_group_blocks_empty(const entity_group& group) noexcept
    empty &= group.blocks.ramps.empty();
    empty &= group.blocks.quads.empty();
    empty &= group.blocks.cylinders.empty();
-   empty &= group.blocks.stairways.description.empty();
+   empty &= group.blocks.custom.description.empty();
    empty &= group.blocks.cones.empty();
    empty &= group.blocks.hemispheres.empty();
    empty &= group.blocks.pyramids.empty();

@@ -534,9 +534,9 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                   }
 
                } break;
-               case world::block_type::stairway: {
-                  const world::block_description_stairway& block =
-                     _world.blocks.stairways.description[*block_index];
+               case world::block_type::custom: {
+                  const world::block_description_custom& block =
+                     _world.blocks.custom.description[*block_index];
 
                   switch (block.mesh_description.type) {
                   case world::block_custom_mesh_type::stairway: {
@@ -555,7 +555,7 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                             {
                                .name = "Block Stairway Size",
                                .instance = static_cast<int64>(
-                                  _world.blocks.stairways.ids[*block_index]),
+                                  _world.blocks.custom.ids[*block_index]),
                                .alignment = _editor_grid_size,
                                .gizmo_rotation = block.rotation,
                             },

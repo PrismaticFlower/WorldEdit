@@ -30,9 +30,9 @@ struct creation_entity_set final : edit<world::edit_context> {
          }
 
          for (std::size_t i = 0;
-              i < entity_group.blocks.stairways.description.size(); ++i) {
+              i < entity_group.blocks.custom.description.size(); ++i) {
             context.world.blocks.custom_meshes.remove(
-               entity_group.blocks.stairways.mesh[i]);
+               entity_group.blocks.custom.mesh[i]);
          }
       }
 
@@ -52,10 +52,10 @@ struct creation_entity_set final : edit<world::edit_context> {
          }
 
          for (std::size_t i = 0;
-              i < entity_group.blocks.stairways.description.size(); ++i) {
-            entity_group.blocks.stairways.mesh[i] =
+              i < entity_group.blocks.custom.description.size(); ++i) {
+            entity_group.blocks.custom.mesh[i] =
                context.world.blocks.custom_meshes.add(
-                  entity_group.blocks.stairways.description[i].mesh_description);
+                  entity_group.blocks.custom.description[i].mesh_description);
          }
       }
    }
