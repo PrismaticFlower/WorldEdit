@@ -113,7 +113,7 @@ struct add_block_custom_mesh final : edit<world::edit_context> {
       blocks.layer.push_back(layer);
       blocks.description.push_back(block);
       blocks.mesh.push_back(
-         context.world.blocks.custom_meshes.add(block.custom_mesh_desc()));
+         context.world.blocks.custom_meshes.add(block.mesh_description));
       blocks.ids.push_back(id);
 
       blocks.dirty.add({block_index, block_index + 1});

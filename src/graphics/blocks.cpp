@@ -4,6 +4,7 @@
 #include "gpu/exception.hpp"
 #include "gpu/indirect_structures.hpp"
 
+#include "world/blocks/custom_mesh.hpp"
 #include "world/blocks/mesh_geometry.hpp"
 #include "world/blocks/utility/bounding_box.hpp"
 #include "world/utility/entity_group_utilities.hpp"

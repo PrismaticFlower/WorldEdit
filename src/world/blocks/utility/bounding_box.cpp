@@ -15,6 +15,23 @@ auto get_bounding_box(const quaternion& rotation, const float3& position,
    return rotation * math::bounding_box{.min = -size, .max = size} + position;
 }
 
+auto get_bounding_box_local_space(const block_custom_mesh_description& mesh) noexcept
+   -> math::bounding_box
+{
+   switch (mesh.type) {
+   case block_custom_mesh_type::stairway: {
+      const float half_width = mesh.stairway.size.x / 2.0f;
+      const float half_length = mesh.stairway.size.z / 2.0f;
+
+      return {.min = {-half_width, 0.0f, -half_length},
+              .max = {half_width, mesh.stairway.size.y + mesh.stairway.first_step_offset,
+                      half_length}};
+   }
+   }
+
+   std::unreachable();
+}
+
 }
 
 auto get_bounding_box(const block_description_box& box) noexcept -> math::bounding_box
@@ -46,13 +63,8 @@ auto get_bounding_box(const block_description_cylinder& cylinder) noexcept
 auto get_bounding_box(const block_description_stairway& stairway) noexcept
    -> math::bounding_box
 {
-   const float half_width = stairway.size.x / 2.0f;
-   const float half_length = stairway.size.z / 2.0f;
-
-   const math::bounding_box bboxLS{.min = {-half_width, 0.0f, -half_length},
-                                   .max = {half_width,
-                                           stairway.size.y + stairway.first_step_offset,
-                                           half_length}};
+   const math::bounding_box bboxLS =
+      get_bounding_box_local_space(stairway.mesh_description);
 
    return stairway.rotation * math::bounding_box{.min = min(bboxLS.min, bboxLS.max),
                                                  .max = max(bboxLS.min, bboxLS.max)} +

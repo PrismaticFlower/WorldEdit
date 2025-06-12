@@ -12,49 +12,28 @@ namespace we::world {
 #pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
 #pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
 
+template<typename H>
+static H AbslHashValue(H h, const block_custom_mesh_description& desc)
+{
+   switch (desc.type) {
+   case block_custom_mesh_type::stairway:
+      return H::combine(std::move(h), desc.type, desc.stairway.size.x,
+                        desc.stairway.size.y, desc.stairway.size.z,
+                        desc.stairway.step_height, desc.stairway.first_step_offset);
+   }
+
+   std::unreachable();
+}
+
 namespace {
 
 constexpr uint32 max_custom_meshes = 1'048'576;
 
-enum class mesh_type {
-   stairway,
-};
-
-struct mesh_desc {
-   mesh_desc() = default;
-
-   mesh_desc(const block_custom_mesh_stairway_desc& desc)
-      : type{mesh_type::stairway}, stairway{desc}
-   {
-   }
-
-   mesh_type type = mesh_type::stairway;
-
-   union {
-      block_custom_mesh_stairway_desc stairway = {};
-   };
-
-   template<typename H>
-   friend H AbslHashValue(H h, const mesh_desc& desc)
-   {
-      switch (desc.type) {
-      case mesh_type::stairway:
-         return H::combine(std::move(h), desc.type, desc.stairway.size.x,
-                           desc.stairway.size.y, desc.stairway.size.z,
-                           desc.stairway.step_height, desc.stairway.first_step_offset);
-      }
-
-      std::unreachable();
-   }
-};
-
-bool operator==(const mesh_desc& left, const mesh_desc& right) noexcept
+auto generate_mesh(const block_custom_mesh_description& mesh) noexcept -> block_custom_mesh
 {
-   if (left.type != right.type) return false;
-
-   switch (left.type) {
-   case mesh_type::stairway:
-      return left.stairway == right.stairway;
+   switch (mesh.type) {
+   case block_custom_mesh_type::stairway:
+      return generate_mesh(mesh.stairway);
    }
 
    std::unreachable();
@@ -131,9 +110,9 @@ struct blocks_custom_mesh_library::impl {
       return _mesh_pool[index].mesh;
    }
 
-   auto add(const block_custom_mesh_stairway_desc& stairway) noexcept -> block_custom_mesh_handle
+   auto add(const block_custom_mesh_description& mesh) noexcept -> block_custom_mesh_handle
    {
-      if (auto existing = _mesh_index.find(stairway); existing != _mesh_index.end()) {
+      if (auto existing = _mesh_index.find(mesh); existing != _mesh_index.end()) {
          entry& entry = _mesh_pool[existing->second];
 
          entry.ref_count += 1;
@@ -154,8 +133,9 @@ struct blocks_custom_mesh_library::impl {
          _mesh_pool.push_back({});
       }
 
-      _mesh_pool[index] = {generate_mesh(stairway), 2, true, stairway};
-      _mesh_index.emplace(stairway, index);
+      _mesh_pool[index] = {generate_mesh(mesh), 2, true, mesh};
+
+      _mesh_index.emplace(mesh, index);
       _events.push_back({event_type::mesh_added, pack_pool_index(index)});
 
       return pack_pool_index(index);
@@ -191,10 +171,10 @@ struct blocks_custom_mesh_library::impl {
       return static_cast<uint32>(_mesh_pool.size());
    }
 
-   auto debug_ref_count(const block_custom_mesh_stairway_desc& stairway,
+   auto debug_ref_count(const block_custom_mesh_description& mesh,
                         bool exclude_event_queue_ref) const noexcept -> uint32
    {
-      if (auto existing = _mesh_index.find(stairway); existing != _mesh_index.end()) {
+      if (auto existing = _mesh_index.find(mesh); existing != _mesh_index.end()) {
          const uint32 ref_count = _mesh_pool[existing->second].ref_count;
 
          if (exclude_event_queue_ref and _mesh_pool[existing->second].in_event_queue) {
@@ -207,10 +187,10 @@ struct blocks_custom_mesh_library::impl {
       return 0;
    }
 
-   auto debug_query_handle(const block_custom_mesh_stairway_desc& stairway) const noexcept
+   auto debug_query_handle(const block_custom_mesh_description& mesh) const noexcept
       -> block_custom_mesh_handle
    {
-      if (auto existing = _mesh_index.find(stairway); existing != _mesh_index.end()) {
+      if (auto existing = _mesh_index.find(mesh); existing != _mesh_index.end()) {
          return pack_pool_index(existing->second);
       }
 
@@ -222,13 +202,13 @@ private:
       block_custom_mesh mesh;
       uint32 ref_count = 0;
       bool in_event_queue = false;
-      mesh_desc desc;
+      block_custom_mesh_description desc;
    };
 
    pinned_vector<entry> _mesh_pool =
       pinned_vector_init{.max_size = max_custom_meshes, .initial_capacity = 1024};
    std::vector<uint32> _mesh_free_list;
-   absl::flat_hash_map<mesh_desc, uint32> _mesh_index;
+   absl::flat_hash_map<block_custom_mesh_description, uint32> _mesh_index;
 
    std::vector<event> _events;
 };
@@ -254,7 +234,7 @@ auto blocks_custom_mesh_library::operator[](const block_custom_mesh_handle handl
    return _impl.get()[handle];
 }
 
-auto blocks_custom_mesh_library::add(const block_custom_mesh_stairway_desc& stairway) noexcept
+auto blocks_custom_mesh_library::add(const block_custom_mesh_description& stairway) noexcept
    -> block_custom_mesh_handle
 {
    return _impl->add(stairway);
@@ -281,16 +261,17 @@ auto blocks_custom_mesh_library::null_handle() noexcept -> block_custom_mesh_han
    return {};
 }
 
-auto blocks_custom_mesh_library::debug_ref_count(
-   const block_custom_mesh_stairway_desc& stairway,
-   bool exclude_event_queue_ref) const noexcept -> uint32
+auto blocks_custom_mesh_library::debug_ref_count(const block_custom_mesh_description& mesh,
+                                                 bool exclude_event_queue_ref) const noexcept
+   -> uint32
 {
-   return _impl->debug_ref_count(stairway, exclude_event_queue_ref);
+   return _impl->debug_ref_count(mesh, exclude_event_queue_ref);
 }
+
 auto blocks_custom_mesh_library::debug_query_handle(
-   const block_custom_mesh_stairway_desc& stairway) const noexcept -> block_custom_mesh_handle
+   const block_custom_mesh_description& mesh) const noexcept -> block_custom_mesh_handle
 {
-   return _impl->debug_query_handle(stairway);
+   return _impl->debug_query_handle(mesh);
 }
 
 blocks_custom_mesh_library::blocks_custom_mesh_library() = default;

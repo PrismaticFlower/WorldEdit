@@ -438,10 +438,9 @@ void world_edit::ui_show_world_selection_move() noexcept
                      const world::block_description_stairway& stairway =
                         _world.blocks.stairways.description[*block_index];
 
-                     bundled_edits.push_back(edits::make_set_block_stairway_metrics(
+                     bundled_edits.push_back(edits::make_set_block_custom_metrics(
                         *block_index, stairway.rotation,
-                        stairway.position + move_delta, stairway.size,
-                        stairway.step_height, stairway.first_step_offset));
+                        stairway.position + move_delta, stairway.mesh_description));
                   } break;
                   case world::block_type::cone: {
                      const world::block_description_cone& cone =

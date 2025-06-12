@@ -614,9 +614,12 @@ TEST_CASE("world load blocks (stairways)", "[World][IO]")
    CHECK(stairways.layer[0] == 2);
    CHECK(stairways.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
    CHECK(stairways.description[0].position == float3{8.5f, 4.5f, 2.0f});
-   CHECK(stairways.description[0].size == float3{4.0f, 4.0f, 4.0f});
-   CHECK(stairways.description[0].step_height == 0.1f);
-   CHECK(stairways.description[0].first_step_offset == 0.0f);
+   CHECK(stairways.description[0].mesh_description.type ==
+         block_custom_mesh_type::stairway);
+   CHECK(stairways.description[0].mesh_description.stairway.size ==
+         float3{4.0f, 4.0f, 4.0f});
+   CHECK(stairways.description[0].mesh_description.stairway.step_height == 0.1f);
+   CHECK(stairways.description[0].mesh_description.stairway.first_step_offset == 0.0f);
    CHECK(stairways.description[0].surface_materials ==
          std::array<uint8, 6>{0, 1, 2, 3, 4, 5});
    CHECK(stairways.description[0].surface_texture_mode ==
@@ -656,7 +659,7 @@ TEST_CASE("world load blocks (stairways)", "[World][IO]")
             std::array<uint16, 2>{0, 0},
          });
    CHECK(stairways.mesh[0] == blocks.custom_meshes.debug_query_handle(
-                                 stairways.description[0].custom_mesh_desc()));
+                                 stairways.description[0].mesh_description));
    CHECK(is_unique_id(0, stairways.ids));
 
    CHECK(stairways.bbox.min_x[1] == 6.00000858f);
@@ -669,9 +672,12 @@ TEST_CASE("world load blocks (stairways)", "[World][IO]")
    CHECK(stairways.description[1].rotation ==
          quaternion{0.707106f, 0.0f, 0.707106f, 0.0f});
    CHECK(stairways.description[1].position == float3{10.0f, 16.0f, 12.0f});
-   CHECK(stairways.description[1].size == float3{8.0f, 4.0f, 8.0f});
-   CHECK(stairways.description[1].step_height == 0.25f);
-   CHECK(stairways.description[1].first_step_offset == 0.125f);
+   CHECK(stairways.description[1].mesh_description.type ==
+         block_custom_mesh_type::stairway);
+   CHECK(stairways.description[1].mesh_description.stairway.size ==
+         float3{8.0f, 4.0f, 8.0f});
+   CHECK(stairways.description[1].mesh_description.stairway.step_height == 0.25f);
+   CHECK(stairways.description[1].mesh_description.stairway.first_step_offset == 0.125f);
    CHECK(stairways.description[1].surface_materials ==
          std::array<uint8, 6>{2, 2, 2, 2, 2, 2});
    CHECK(stairways.description[1].surface_texture_mode ==
@@ -711,9 +717,9 @@ TEST_CASE("world load blocks (stairways)", "[World][IO]")
             std::array<uint16, 2>{0, 0},
          });
    CHECK(blocks.custom_meshes.debug_ref_count(
-            stairways.description[1].custom_mesh_desc()) == 1);
+            stairways.description[1].mesh_description) == 1);
    CHECK(stairways.mesh[1] == blocks.custom_meshes.debug_query_handle(
-                                 stairways.description[1].custom_mesh_desc()));
+                                 stairways.description[1].mesh_description));
    CHECK(is_unique_id(1, stairways.ids));
 
    CHECK(stairways.bbox.min_x[2] == 3.5f);
@@ -725,9 +731,12 @@ TEST_CASE("world load blocks (stairways)", "[World][IO]")
    CHECK(stairways.hidden[2] == false);
    CHECK(stairways.description[2].rotation == quaternion{0.0f, 0.0f, 0.0f, 1.0f});
    CHECK(stairways.description[2].position == float3{6.0f, 6.0f, 6.0f});
-   CHECK(stairways.description[2].size == float3{5.0f, 5.0f, 5.0f});
-   CHECK(stairways.description[2].step_height == 1.0f);
-   CHECK(stairways.description[2].first_step_offset == 0.0f);
+   CHECK(stairways.description[2].mesh_description.type ==
+         block_custom_mesh_type::stairway);
+   CHECK(stairways.description[2].mesh_description.stairway.size ==
+         float3{5.0f, 5.0f, 5.0f});
+   CHECK(stairways.description[2].mesh_description.stairway.step_height == 1.0f);
+   CHECK(stairways.description[2].mesh_description.stairway.first_step_offset == 0.0f);
    CHECK(stairways.description[2].surface_materials ==
          std::array<uint8, 6>{0, 0, 0, 0, 0, 0});
    CHECK(stairways.description[2].surface_texture_mode ==
@@ -767,9 +776,9 @@ TEST_CASE("world load blocks (stairways)", "[World][IO]")
             std::array<uint16, 2>{10, 11},
          });
    CHECK(blocks.custom_meshes.debug_ref_count(
-            stairways.description[2].custom_mesh_desc()) == 1);
+            stairways.description[2].mesh_description) == 1);
    CHECK(stairways.mesh[2] == blocks.custom_meshes.debug_query_handle(
-                                 stairways.description[2].custom_mesh_desc()));
+                                 stairways.description[2].mesh_description));
    CHECK(is_unique_id(2, stairways.ids));
 
    REQUIRE(stairways.dirty.size() == 1);

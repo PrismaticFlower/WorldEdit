@@ -38,6 +38,7 @@
 #include "utility/overload.hpp"
 #include "utility/srgb_conversion.hpp"
 
+#include "world/blocks/custom_mesh.hpp"
 #include "world/blocks/utility/find.hpp"
 #include "world/object_class_library.hpp"
 #include "world/utility/boundary_nodes.hpp"

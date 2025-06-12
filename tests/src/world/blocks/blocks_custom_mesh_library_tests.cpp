@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "world/blocks/custom_mesh.hpp"
 #include "world/blocks/custom_mesh_library.hpp"
 
 using namespace std::literals;
@@ -9,12 +10,13 @@ namespace we::world::tests {
 TEST_CASE("world blocks_custom_mesh_library acquire-free", "[World]")
 {
    blocks_custom_mesh_library library;
-
-   const block_custom_mesh_stairway_desc stairway0{.size = {2.0f, 2.0f, 2.0f},
-                                                   .step_height = 0.25f};
-   const block_custom_mesh_stairway_desc stairway1{.size = {2.0f, 2.0f, 2.0f},
-                                                   .step_height = 0.25f,
-                                                   .first_step_offset = 0.1f};
+   const block_custom_mesh_description stairway0 =
+      block_custom_mesh_description_stairway{.size = {2.0f, 2.0f, 2.0f},
+                                             .step_height = 0.25f};
+   const block_custom_mesh_description stairway1 =
+      block_custom_mesh_description_stairway{.size = {2.0f, 2.0f, 2.0f},
+                                             .step_height = 0.25f,
+                                             .first_step_offset = 0.1f};
 
    block_custom_mesh_handle handle0 = library.add(stairway0);
 
@@ -45,11 +47,13 @@ TEST_CASE("world blocks_custom_mesh_library acquire-free events", "[World]")
 {
    blocks_custom_mesh_library library;
 
-   const block_custom_mesh_stairway_desc stairway0{.size = {2.0f, 2.0f, 2.0f},
-                                                   .step_height = 0.25f};
-   const block_custom_mesh_stairway_desc stairway1{.size = {2.0f, 2.0f, 2.0f},
-                                                   .step_height = 0.25f,
-                                                   .first_step_offset = 0.1f};
+   const block_custom_mesh_description stairway0 =
+      block_custom_mesh_description_stairway{.size = {2.0f, 2.0f, 2.0f},
+                                             .step_height = 0.25f};
+   const block_custom_mesh_description stairway1 =
+      block_custom_mesh_description_stairway{.size = {2.0f, 2.0f, 2.0f},
+                                             .step_height = 0.25f,
+                                             .first_step_offset = 0.1f};
 
    block_custom_mesh_handle handle0 = library.add(stairway0);
    block_custom_mesh_handle handle1 = library.add(stairway1);
@@ -81,11 +85,13 @@ TEST_CASE("world blocks_custom_mesh_library events ref", "[World]")
 {
    blocks_custom_mesh_library library;
 
-   const block_custom_mesh_stairway_desc stairway0{.size = {2.0f, 2.0f, 2.0f},
-                                                   .step_height = 0.25f};
-   const block_custom_mesh_stairway_desc stairway1{.size = {2.0f, 2.0f, 2.0f},
-                                                   .step_height = 0.25f,
-                                                   .first_step_offset = 0.1f};
+   const block_custom_mesh_description stairway0 =
+      block_custom_mesh_description_stairway{.size = {2.0f, 2.0f, 2.0f},
+                                             .step_height = 0.25f};
+   const block_custom_mesh_description stairway1 =
+      block_custom_mesh_description_stairway{.size = {2.0f, 2.0f, 2.0f},
+                                             .step_height = 0.25f,
+                                             .first_step_offset = 0.1f};
 
    block_custom_mesh_handle handle0 = library.add(stairway0);
    block_custom_mesh_handle handle1 = library.add(stairway1);
@@ -108,11 +114,13 @@ TEST_CASE("world blocks_custom_mesh_library restore events", "[World]")
 {
    blocks_custom_mesh_library library;
 
-   const block_custom_mesh_stairway_desc stairway0{.size = {2.0f, 2.0f, 2.0f},
-                                                   .step_height = 0.25f};
-   const block_custom_mesh_stairway_desc stairway1{.size = {2.0f, 2.0f, 2.0f},
-                                                   .step_height = 0.25f,
-                                                   .first_step_offset = 0.1f};
+   const block_custom_mesh_description stairway0 =
+      block_custom_mesh_description_stairway{.size = {2.0f, 2.0f, 2.0f},
+                                             .step_height = 0.25f};
+   const block_custom_mesh_description stairway1 =
+      block_custom_mesh_description_stairway{.size = {2.0f, 2.0f, 2.0f},
+                                             .step_height = 0.25f,
+                                             .first_step_offset = 0.1f};
 
    block_custom_mesh_handle handle0 = library.add(stairway0);
    block_custom_mesh_handle handle1 = library.add(stairway1);

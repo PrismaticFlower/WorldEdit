@@ -4,12 +4,6 @@
 
 namespace we::world {
 
-auto block_description_stairway::custom_mesh_desc() const noexcept
-   -> block_custom_mesh_stairway_desc
-{
-   return {.size = size, .step_height = step_height, .first_step_offset = first_step_offset};
-}
-
 void blocks_boxes::reserve(const std::size_t size) noexcept
 {
    bbox.min_x.reserve(size);

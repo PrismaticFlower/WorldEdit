@@ -1775,9 +1775,12 @@ void world_edit::ui_show_block_editor() noexcept
                      world::block_description_stairway{
                         .rotation = rotation,
                         .position = position,
-                        .size = size,
-                        .step_height = _block_editor_config.step_height,
-                        .first_step_offset = _block_editor_config.first_step_offset,
+                        .mesh_description =
+                           world::block_custom_mesh_description_stairway{
+                              .size = size,
+                              .step_height = _block_editor_config.step_height,
+                              .first_step_offset = _block_editor_config.first_step_offset,
+                           },
                         .surface_materials = {material_index, material_index, material_index,
                                               material_index, material_index},
                      },
@@ -1864,10 +1867,14 @@ void world_edit::ui_show_block_editor() noexcept
              index < _world.blocks.stairways.size() and
              _world.blocks.stairways.ids[index] ==
                 _block_editor_context.draw_block.block_id) {
-            _edit_stack_world.apply(edits::make_set_block_stairway_metrics(
-                                       index, rotation, position, size,
-                                       _block_editor_config.step_height,
-                                       _block_editor_config.first_step_offset),
+            _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                       index, rotation, position,
+                                       world::block_custom_mesh_description_stairway{
+                                          .size = size,
+                                          .step_height = _block_editor_config.step_height,
+                                          .first_step_offset =
+                                             _block_editor_config.first_step_offset,
+                                       }),
                                     _edit_context, {.transparent = true});
          }
 
@@ -2540,34 +2547,44 @@ void world_edit::ui_show_block_editor() noexcept
             }
          } break;
          case world::block_type::stairway: {
-            const world::block_description_stairway& stairway =
+            const world::block_description_stairway& block =
                _world.blocks.stairways.description[*selected_index];
 
-            float3 size = stairway.size;
-            size.y += stairway.first_step_offset;
-            size /= 2.0f;
+            switch (block.mesh_description.type) {
+            case world::block_custom_mesh_type::stairway: {
+               const world::block_custom_mesh_description_stairway& stairway =
+                  block.mesh_description.stairway;
 
-            float3 positionWS =
-               stairway.rotation * (conjugate(stairway.rotation) * stairway.position +
+               float3 size = stairway.size;
+               size.y += stairway.first_step_offset;
+               size /= 2.0f;
+
+               float3 positionWS =
+                  block.rotation * (conjugate(block.rotation) * block.position +
                                     float3{0.0f, size.y, 0.0f});
 
-            if (_gizmos.gizmo_size({.name = "Resize Block (Stairway)",
-                                    .instance = *selected_index,
-                                    .alignment = _editor_grid_size,
-                                    .gizmo_rotation = stairway.rotation},
-                                   positionWS, size)) {
-               positionWS =
-                  stairway.rotation * (conjugate(stairway.rotation) * positionWS -
-                                       float3{0.0f, size.y, 0.0f});
-               size *= 2.0f;
-               size.y -= stairway.first_step_offset;
+               if (_gizmos.gizmo_size({.name = "Resize Block (Stairway)",
+                                       .instance = *selected_index,
+                                       .alignment = _editor_grid_size,
+                                       .gizmo_rotation = block.rotation},
+                                      positionWS, size)) {
+                  positionWS = block.rotation * (conjugate(block.rotation) * positionWS -
+                                                 float3{0.0f, size.y, 0.0f});
+                  size *= 2.0f;
+                  size.y -= stairway.first_step_offset;
 
-               _edit_stack_world.apply(edits::make_set_block_stairway_metrics(
-                                          *selected_index, stairway.rotation,
-                                          positionWS, size, stairway.step_height,
-                                          stairway.first_step_offset),
-                                       _edit_context);
+                  _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                             *selected_index, block.rotation, positionWS,
+                                             world::block_custom_mesh_description_stairway{
+                                                .size = size,
+                                                .step_height = stairway.step_height,
+                                                .first_step_offset = stairway.first_step_offset,
+                                             }),
+                                          _edit_context);
+               }
+            } break;
             }
+
          } break;
          case world::block_type::cone: {
             const world::block_description_cone& cone =

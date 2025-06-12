@@ -3,6 +3,7 @@
 #include "id.hpp"
 #include "types.hpp"
 
+#include "blocks/custom_mesh_description.hpp"
 #include "blocks/custom_mesh_library.hpp"
 #include "blocks/dirty_range_tracker.hpp"
 #include "blocks/mesh_vertex.hpp"
@@ -110,17 +111,13 @@ struct block_description_cylinder {
 struct block_description_stairway {
    quaternion rotation;
    float3 position;
-   float3 size;
-   float step_height = 0.125f;
-   float first_step_offset = 0.0f;
+   block_custom_mesh_description mesh_description;
 
    std::array<uint8, 6> surface_materials = {};
    std::array<block_texture_mode, 6> surface_texture_mode = {};
    std::array<block_texture_rotation, 6> surface_texture_rotation = {};
    std::array<std::array<int8, 2>, 6> surface_texture_scale = {};
    std::array<std::array<uint16, 2>, 6> surface_texture_offset = {};
-
-   auto custom_mesh_desc() const noexcept -> block_custom_mesh_stairway_desc;
 
    bool operator==(const block_description_stairway&) const noexcept = default;
 };

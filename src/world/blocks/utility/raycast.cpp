@@ -1,5 +1,6 @@
 #include "raycast.hpp"
 
+#include "../custom_mesh.hpp"
 #include "../mesh_geometry.hpp"
 
 #include "math/intersectors.hpp"
@@ -282,78 +283,74 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
    uint32 closest_index = UINT32_MAX;
    uint32 surface_index = UINT32_MAX;
 
-   for (uint32 stairway_index = 0; stairway_index < stairways.size(); ++stairway_index) {
-      if (not active_layers[stairways.layer[stairway_index]]) continue;
-      if (stairways.hidden[stairway_index]) continue;
+   for (uint32 block_index = 0; block_index < stairways.size(); ++block_index) {
+      if (not active_layers[stairways.layer[block_index]]) continue;
+      if (stairways.hidden[block_index]) continue;
 
-      const block_description_stairway& stairway =
-         stairways.description[stairway_index];
+      const block_description_stairway& block = stairways.description[block_index];
 
-      const quaternion local_from_world = conjugate(stairway.rotation);
+      const quaternion local_from_world = conjugate(block.rotation);
 
-      const float3 ray_originLS =
-         local_from_world * (ray_originWS - stairway.position);
+      const float3 ray_originLS = local_from_world * (ray_originWS - block.position);
       const float3 ray_directionLS = normalize(local_from_world * ray_directionWS);
       const float3 inv_ray_directionLS = 1.0f / ray_directionLS;
 
-      const float half_width = stairway.size.x / 2.0f;
-      const float half_length = stairway.size.z / 2.0f;
+      bool mesh_proxy_hit = false;
 
-      if (float aabb_hit;
-          not intersect_aabb(ray_originLS, inv_ray_directionLS,
-                             {.min = {-half_width, 0.0f, -half_length},
-                              .max = {half_width, stairway.size.y + stairway.first_step_offset,
-                                      half_length}},
-                             closest, aabb_hit)) {
-         continue;
-      }
+      switch (block.mesh_description.type) {
+      case block_custom_mesh_type::stairway: {
+         const block_custom_mesh_description_stairway& stairway =
+            block.mesh_description.stairway;
 
-      const int steps =
-         static_cast<int>(ceilf(stairway.size.y / stairway.step_height));
-      const float adjusted_step_height = stairway.size.y / steps;
-      const float step_length = stairway.size.z / steps;
+         const float half_width = stairway.size.x / 2.0f;
+         const float half_length = stairway.size.z / 2.0f;
 
-      bool step_hit = false;
-
-      for (int i = 0; i < steps; ++i) {
-         float step_base = i * adjusted_step_height;
-         float step_top = (i + 1) * adjusted_step_height;
-
-         step_top += stairway.first_step_offset;
-         if (i != 0) step_base += stairway.first_step_offset;
-
-         if (i + 1 == steps) {
-            step_top = stairway.size.y + stairway.first_step_offset;
+         if (float aabb_hit;
+             not intersect_aabb(ray_originLS, inv_ray_directionLS,
+                                {.min = {-half_width, 0.0f, -half_length},
+                                 .max = {half_width, stairway.size.y + stairway.first_step_offset,
+                                         half_length}},
+                                closest, aabb_hit)) {
+            continue;
          }
 
-         const float step_back = i * step_length - half_length;
-         const float step_front = half_length;
+         const int steps =
+            static_cast<int>(ceilf(stairway.size.y / stairway.step_height));
+         const float adjusted_step_height = stairway.size.y / steps;
+         const float step_length = stairway.size.z / steps;
 
-         const math::bounding_box bboxLS{.min = {-half_width, step_base, step_back},
-                                         .max = {half_width, step_top, step_front}};
+         for (int i = 0; i < steps; ++i) {
+            float step_base = i * adjusted_step_height;
+            float step_top = (i + 1) * adjusted_step_height;
 
-         math::bounding_box bboxWS = stairway.rotation * bboxLS + stairway.position;
+            step_top += stairway.first_step_offset;
+            if (i != 0) step_base += stairway.first_step_offset;
 
-         float4x4 transform = {{(bboxWS.max - bboxWS.min).x / 2.0f, 0.0f, 0.0f, 0.0f},
-                               {0.0f, (bboxWS.max - bboxWS.min).y / 2.0f, 0.0f, 0.0f},
-                               {0.0f, 0.0f, (bboxWS.max - bboxWS.min).z / 2.0f, 0.0f},
-                               {(bboxWS.min + bboxWS.max) / 2.0f, 1.0f}
+            if (i + 1 == steps) {
+               step_top = stairway.size.y + stairway.first_step_offset;
+            }
 
-         };
+            const float step_back = i * step_length - half_length;
+            const float step_front = half_length;
 
-         if (float aabb_hit; intersect_aabb(ray_originLS, inv_ray_directionLS,
-                                            bboxLS, closest, aabb_hit) and
-                             aabb_hit >= 0.0f) {
-            step_hit = true;
-            break;
+            const math::bounding_box bboxLS{.min = {-half_width, step_base, step_back},
+                                            .max = {half_width, step_top, step_front}};
+
+            if (float aabb_hit; intersect_aabb(ray_originLS, inv_ray_directionLS,
+                                               bboxLS, closest, aabb_hit) and
+                                aabb_hit >= 0.0f) {
+               mesh_proxy_hit = true;
+               break;
+            }
          }
       }
+      }
 
-      if (not step_hit) continue;
+      if (not mesh_proxy_hit) continue;
 
-      if (filter and not filter(stairways.ids[stairway_index])) continue;
+      if (filter and not filter(stairways.ids[block_index])) continue;
 
-      const block_custom_mesh& mesh = custom_meshes[stairways.mesh[stairway_index]];
+      const block_custom_mesh& mesh = custom_meshes[stairways.mesh[block_index]];
 
       for (const std::array<uint16, 3>& tri : mesh.triangles) {
          if (float hit; intersect_tri(ray_originLS, ray_directionLS,
@@ -362,7 +359,7 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
                                       mesh.vertices[tri[2]].position, hit) and
                         hit < closest) {
             closest = hit;
-            closest_index = stairway_index;
+            closest_index = block_index;
             surface_index = mesh.vertices[tri[0]].surface_index;
          }
       }

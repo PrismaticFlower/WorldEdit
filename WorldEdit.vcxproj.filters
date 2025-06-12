@@ -266,6 +266,7 @@
     <ClCompile Include="src\world\blocks\utility\highlight_surface.cpp" />
     <ClCompile Include="src\world\blocks\utility\raycast.cpp" />
     <ClCompile Include="src\world\blocks\utility\snapping.cpp" />
+    <ClCompile Include="src\world\blocks\custom_mesh_description.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -588,6 +589,8 @@
     <ClInclude Include="src\world\blocks\utility\highlight_surface.hpp" />
     <ClInclude Include="src\world\blocks\utility\raycast.hpp" />
     <ClInclude Include="src\world\blocks\utility\snapping.hpp" />
+    <ClInclude Include="src\world\blocks\custom_mesh_description.hpp" />
+    <ClInclude Include="src\world\blocks\custom_mesh.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

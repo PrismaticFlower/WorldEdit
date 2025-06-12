@@ -274,7 +274,10 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime none to "
    world::object_class_library object_class_library{null_asset_libraries()};
 
    const world::block_description_stairway stairway = {
-      .size = {1.0f, 1.0f, 1.0f},
+      .mesh_description =
+         world::block_custom_mesh_description_stairway{
+            .size = {1.0f, 1.0f, 1.0f},
+         },
    };
 
    world::entity_group group{
@@ -296,11 +299,11 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime none to "
 
    action->apply(edit_context);
 
-   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway.custom_mesh_desc()) == 1);
+   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway.mesh_description) == 1);
 
    action->revert(edit_context);
 
-   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway.custom_mesh_desc()) == 0);
+   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway.mesh_description) == 0);
 }
 
 TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime "
@@ -314,11 +317,17 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime "
    world::object_class_library object_class_library{null_asset_libraries()};
 
    const world::block_description_stairway stairway_short = {
-      .size = {1.0f, 1.0f, 1.0f},
+      .mesh_description =
+         world::block_custom_mesh_description_stairway{
+            .size = {1.0f, 1.0f, 1.0f},
+         },
    };
 
    const world::block_description_stairway stairway_long = {
-      .size = {1.0f, 1.0f, 8.0f},
+      .mesh_description =
+         world::block_custom_mesh_description_stairway{
+            .size = {1.0f, 1.0f, 8.0f},
+         },
    };
 
    interaction_targets.creation_entity = world::entity_group{
@@ -331,7 +340,7 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime "
                   },
                .mesh =
                   {
-                     world.blocks.custom_meshes.add(stairway_short.custom_mesh_desc()),
+                     world.blocks.custom_meshes.add(stairway_short.mesh_description),
                   },
             },
       }};
@@ -355,17 +364,13 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime "
 
    action->apply(edit_context);
 
-   CHECK(world.blocks.custom_meshes.debug_ref_count(
-            stairway_short.custom_mesh_desc()) == 0);
-   CHECK(world.blocks.custom_meshes.debug_ref_count(
-            stairway_long.custom_mesh_desc()) == 1);
+   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway_short.mesh_description) == 0);
+   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway_long.mesh_description) == 1);
 
    action->revert(edit_context);
 
-   CHECK(world.blocks.custom_meshes.debug_ref_count(
-            stairway_short.custom_mesh_desc()) == 1);
-   CHECK(world.blocks.custom_meshes.debug_ref_count(
-            stairway_long.custom_mesh_desc()) == 0);
+   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway_short.mesh_description) == 1);
+   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway_long.mesh_description) == 0);
 }
 
 TEST_CASE(
@@ -381,7 +386,10 @@ TEST_CASE(
    const lowercase_string class_name_stars{"map_prop_stars"sv};
 
    const world::block_description_stairway stairway = {
-      .size = {1.0f, 1.0f, 1.0f},
+      .mesh_description =
+         world::block_custom_mesh_description_stairway{
+            .size = {1.0f, 1.0f, 1.0f},
+         },
    };
 
    interaction_targets.creation_entity =
@@ -409,12 +417,12 @@ TEST_CASE(
    action->apply(edit_context);
 
    CHECK(object_class_library.debug_ref_count(class_name_stars) == 0);
-   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway.custom_mesh_desc()) == 1);
+   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway.mesh_description) == 1);
 
    action->revert(edit_context);
 
    CHECK(object_class_library.debug_ref_count(class_name_stars) == 1);
-   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway.custom_mesh_desc()) == 0);
+   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway.mesh_description) == 0);
 }
 
 TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime "
@@ -428,7 +436,10 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime "
    world::object_class_library object_class_library{null_asset_libraries()};
 
    const world::block_description_stairway stairway = {
-      .size = {1.0f, 1.0f, 1.0f},
+      .mesh_description =
+         world::block_custom_mesh_description_stairway{
+            .size = {1.0f, 1.0f, 1.0f},
+         },
    };
 
    const lowercase_string class_name_stars{"map_prop_stars"sv};
@@ -443,7 +454,7 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime "
                   },
                .mesh =
                   {
-                     world.blocks.custom_meshes.add(stairway.custom_mesh_desc()),
+                     world.blocks.custom_meshes.add(stairway.mesh_description),
                   },
             },
       }};
@@ -456,11 +467,11 @@ TEST_CASE("edits creation_entity_set block_custom_mesh_handle lifetime "
    action->apply(edit_context);
 
    CHECK(object_class_library.debug_ref_count(class_name_stars) == 1);
-   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway.custom_mesh_desc()) == 0);
+   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway.mesh_description) == 0);
 
    action->revert(edit_context);
 
    CHECK(object_class_library.debug_ref_count(class_name_stars) == 0);
-   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway.custom_mesh_desc()) == 1);
+   CHECK(world.blocks.custom_meshes.debug_ref_count(stairway.mesh_description) == 1);
 }
 }

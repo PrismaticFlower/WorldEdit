@@ -1947,30 +1947,39 @@ void world_edit::ui_show_world_selection_editor() noexcept
                const world::block_description_stairway& block =
                   _world.blocks.stairways.description[*block_index];
 
-               float new_step_height = block.step_height;
-               float new_first_step_offset = block.first_step_offset;
+               if (block.mesh_description.type == world::block_custom_mesh_type::stairway) {
+                  const world::block_custom_mesh_description_stairway& stairway =
+                     block.mesh_description.stairway;
 
-               ImGui::BeginGroup();
+                  float new_step_height = stairway.step_height;
+                  float new_first_step_offset = stairway.first_step_offset;
 
-               ImGui::DragFloat("Step Height", &new_step_height, 0.125f * 0.25f, 0.125f,
-                                1.0f, "%.3f", ImGuiSliderFlags_NoRoundToFormat);
+                  ImGui::BeginGroup();
 
-               ImGui::DragFloat("First Step Offset", &new_first_step_offset, 0.125f);
+                  ImGui::DragFloat("Step Height", &new_step_height,
+                                   0.125f * 0.25f, 0.125f, 1.0f, "%.3f",
+                                   ImGuiSliderFlags_NoRoundToFormat);
 
-               ImGui::EndGroup();
+                  ImGui::DragFloat("First Step Offset", &new_first_step_offset, 0.125f);
 
-               if (ImGui::IsItemEdited()) {
-                  new_step_height = std::max(new_step_height, 0.015625f);
+                  ImGui::EndGroup();
 
-                  _edit_stack_world.apply(edits::make_set_block_stairway_metrics(
-                                             *block_index, block.rotation,
-                                             block.position, block.size,
-                                             new_step_height, new_first_step_offset),
-                                          _edit_context);
-               }
+                  if (ImGui::IsItemEdited()) {
+                     new_step_height = std::max(new_step_height, 0.015625f);
 
-               if (ImGui::IsItemDeactivated()) {
-                  _edit_stack_world.close_last();
+                     _edit_stack_world
+                        .apply(edits::make_set_block_custom_metrics(
+                                  *block_index, block.rotation, block.position,
+                                  world::block_custom_mesh_description_stairway{
+                                     .size = stairway.size,
+                                     .step_height = new_step_height,
+                                     .first_step_offset = new_first_step_offset}),
+                               _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivated()) {
+                     _edit_stack_world.close_last();
+                  }
                }
             }
          }
