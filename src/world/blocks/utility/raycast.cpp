@@ -274,7 +274,7 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
 }
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
-             const active_layers active_layers, const blocks_stairways& stairways,
+             const active_layers active_layers, const blocks_custom& blocks,
              const blocks_custom_mesh_library& custom_meshes, const float max_distance,
              function_ptr<bool(const block_id id) noexcept> filter) noexcept
    -> std::optional<raycast_block_result_local>
@@ -283,11 +283,11 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
    uint32 closest_index = UINT32_MAX;
    uint32 surface_index = UINT32_MAX;
 
-   for (uint32 block_index = 0; block_index < stairways.size(); ++block_index) {
-      if (not active_layers[stairways.layer[block_index]]) continue;
-      if (stairways.hidden[block_index]) continue;
+   for (uint32 block_index = 0; block_index < blocks.size(); ++block_index) {
+      if (not active_layers[blocks.layer[block_index]]) continue;
+      if (blocks.hidden[block_index]) continue;
 
-      const block_description_stairway& block = stairways.description[block_index];
+      const block_description_custom& block = blocks.description[block_index];
 
       const quaternion local_from_world = conjugate(block.rotation);
 
@@ -348,9 +348,9 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
 
       if (not mesh_proxy_hit) continue;
 
-      if (filter and not filter(stairways.ids[block_index])) continue;
+      if (filter and not filter(blocks.ids[block_index])) continue;
 
-      const block_custom_mesh& mesh = custom_meshes[stairways.mesh[block_index]];
+      const block_custom_mesh& mesh = custom_meshes[blocks.mesh[block_index]];
 
       for (const std::array<uint16, 3>& tri : mesh.triangles) {
          if (float hit; intersect_tri(ray_originLS, ray_directionLS,
@@ -656,11 +656,11 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
    }
 
    if (std::optional<raycast_block_result_local> hit =
-          raycast(ray_originWS, ray_directionWS, active_layers,
-                  blocks.stairways, blocks.custom_meshes, closest, filter);
+          raycast(ray_originWS, ray_directionWS, active_layers, blocks.custom,
+                  blocks.custom_meshes, closest, filter);
        hit) {
       closest = hit->distance;
-      closest_id = blocks.stairways.ids[hit->index];
+      closest_id = blocks.custom.ids[hit->index];
       closest_index = hit->index;
       closest_surface_index = hit->surface_index;
    }

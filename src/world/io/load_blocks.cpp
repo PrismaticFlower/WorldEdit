@@ -417,18 +417,18 @@ void load_cylinders(assets::config::node& node, const layer_remap& layer_remap,
    }
 }
 
-void load_stairways(assets::config::node& node, const layer_remap& layer_remap,
-                    blocks& blocks_out)
+void load_custom(assets::config::node& node, const layer_remap& layer_remap,
+                 blocks& blocks_out)
 {
    for (const auto& key_node : node) {
-      if (blocks_out.stairways.size() == max_blocks) {
+      if (blocks_out.custom.size() == max_blocks) {
          throw load_failure{fmt::format(
-            "Too many blocks (of type stairway) for WorldEdit to handle. \n   "
+            "Too many blocks (of type custom) for WorldEdit to handle. \n   "
             "Max Supported Count: {}\n",
             max_blocks)};
       }
 
-      block_description_stairway block;
+      block_description_custom block;
       int8 layer = 0;
 
       if (iequals(key_node.key, "Stairway")) {
@@ -512,18 +512,18 @@ void load_stairways(assets::config::node& node, const layer_remap& layer_remap,
 
       const math::bounding_box bbox = get_bounding_box(block);
 
-      blocks_out.stairways.bbox.min_x.push_back(bbox.min.x);
-      blocks_out.stairways.bbox.min_y.push_back(bbox.min.y);
-      blocks_out.stairways.bbox.min_z.push_back(bbox.min.z);
-      blocks_out.stairways.bbox.max_x.push_back(bbox.max.x);
-      blocks_out.stairways.bbox.max_y.push_back(bbox.max.y);
-      blocks_out.stairways.bbox.max_z.push_back(bbox.max.z);
-      blocks_out.stairways.hidden.push_back(false);
-      blocks_out.stairways.layer.push_back(layer);
-      blocks_out.stairways.description.push_back(block);
-      blocks_out.stairways.mesh.push_back(
+      blocks_out.custom.bbox.min_x.push_back(bbox.min.x);
+      blocks_out.custom.bbox.min_y.push_back(bbox.min.y);
+      blocks_out.custom.bbox.min_z.push_back(bbox.min.z);
+      blocks_out.custom.bbox.max_x.push_back(bbox.max.x);
+      blocks_out.custom.bbox.max_y.push_back(bbox.max.y);
+      blocks_out.custom.bbox.max_z.push_back(bbox.max.z);
+      blocks_out.custom.hidden.push_back(false);
+      blocks_out.custom.layer.push_back(layer);
+      blocks_out.custom.description.push_back(block);
+      blocks_out.custom.mesh.push_back(
          blocks_out.custom_meshes.add(block.mesh_description));
-      blocks_out.stairways.ids.push_back(blocks_out.next_id.stairways.aquire());
+      blocks_out.custom.ids.push_back(blocks_out.next_id.custom.aquire());
    }
 }
 
@@ -909,12 +909,12 @@ auto load_blocks(const io::path& path, const layer_remap& layer_remap,
 
             load_cylinders(key_node, layer_remap, blocks);
          }
-         else if (iequals(key_node.key, "Stairways")) {
+         else if (iequals(key_node.key, "Custom")) {
             const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
 
-            blocks.stairways.reserve(box_reservation);
+            blocks.custom.reserve(box_reservation);
 
-            load_stairways(key_node, layer_remap, blocks);
+            load_custom(key_node, layer_remap, blocks);
          }
          else if (iequals(key_node.key, "Cones")) {
             const std::size_t box_reservation = key_node.values.get<std::size_t>(0);

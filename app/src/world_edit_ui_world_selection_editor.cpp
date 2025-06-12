@@ -1943,9 +1943,9 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                                      block_id.type(), *block_index),
                              _edit_stack_world, _edit_context);
 
-            if (block_id.type() == world::block_type::stairway) {
-               const world::block_description_stairway& block =
-                  _world.blocks.stairways.description[*block_index];
+            if (block_id.type() == world::block_type::custom) {
+               const world::block_description_custom& block =
+                  _world.blocks.custom.description[*block_index];
 
                if (block.mesh_description.type == world::block_custom_mesh_type::stairway) {
                   const world::block_custom_mesh_description_stairway& stairway =

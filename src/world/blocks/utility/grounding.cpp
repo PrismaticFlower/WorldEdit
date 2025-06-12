@@ -123,12 +123,11 @@ auto ground_block(const block_id id, const uint32 block_index,
       return ground_block(cylinder.position, bbox, id, world, object_classes,
                           active_layers);
    } break;
-   case block_type::stairway: {
-      const block_description_stairway& stairway =
-         world.blocks.stairways.description[block_index];
+   case block_type::custom: {
+      const block_description_custom& block =
+         world.blocks.custom.description[block_index];
 
-      return ground_block(stairway.position, bbox, id, world, object_classes,
-                          active_layers);
+      return ground_block(block.position, bbox, id, world, object_classes, active_layers);
    } break;
    case block_type::cone: {
       const block_description_cone& cone = world.blocks.cones.description[block_index];

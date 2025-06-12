@@ -563,26 +563,25 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
       }
    }
 
-   if (_stairways_instance_data_capacity < blocks.stairways.size()) {
-      const gpu::unique_resource_handle old_stairways_instance_data =
-         std::move(_stairways_instance_data);
-      const uint64 old_stairways_instance_data_capacity =
-         _stairways_instance_data_capacity;
+   if (_custom_instance_data_capacity < blocks.custom.size()) {
+      const gpu::unique_resource_handle old_custom_instance_data =
+         std::move(_custom_instance_data);
+      const uint64 old_custom_instance_data_capacity = _custom_instance_data_capacity;
 
-      _stairways_instance_data_capacity = blocks.stairways.size() * 16180 / 10000;
-      _stairways_instance_data =
-         {_device.create_buffer({.size = _stairways_instance_data_capacity *
+      _custom_instance_data_capacity = blocks.custom.size() * 16180 / 10000;
+      _custom_instance_data =
+         {_device.create_buffer({.size = _custom_instance_data_capacity *
                                          sizeof(block_instance_description),
-                                 .debug_name = "World blocks (Stairways)"},
+                                 .debug_name = "World blocks (Custom Blocks)"},
                                 gpu::heap_type::default_),
           _device};
 
-      if (old_stairways_instance_data_capacity != 0) {
-         command_list.copy_buffer_region(_stairways_instance_data.get(), 0,
-                                         old_stairways_instance_data.get(), 0,
-                                         old_stairways_instance_data_capacity *
+      if (old_custom_instance_data_capacity != 0) {
+         command_list.copy_buffer_region(_custom_instance_data.get(), 0,
+                                         old_custom_instance_data.get(), 0,
+                                         old_custom_instance_data_capacity *
                                             sizeof(block_instance_description));
-         command_list.reference_resource(old_stairways_instance_data.get());
+         command_list.reference_resource(old_custom_instance_data.get());
       }
    }
 
@@ -1036,7 +1035,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
                                       range_size * sizeof(block_instance_description));
    }
 
-   for (const world::blocks_dirty_range& range : blocks.stairways.dirty) {
+   for (const world::blocks_dirty_range& range : blocks.custom.dirty) {
       const uint32 range_size = range.end - range.begin;
 
       const dynamic_buffer_allocator::allocation& upload_allocation =
@@ -1045,8 +1044,8 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
       std::byte* instance_upload_ptr = upload_allocation.cpu_address;
 
       for (uint32 block_index = range.begin; block_index < range.end; ++block_index) {
-         const world::block_description_stairway& block =
-            blocks.stairways.description[block_index];
+         const world::block_description_custom& block =
+            blocks.custom.description[block_index];
 
          const float4x4 world_from_local = to_matrix(block.rotation);
 
@@ -1089,7 +1088,7 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
          instance_upload_ptr += sizeof(block_instance_description);
       }
 
-      command_list.copy_buffer_region(_stairways_instance_data.get(),
+      command_list.copy_buffer_region(_custom_instance_data.get(),
                                       range.begin * sizeof(block_instance_description),
                                       upload_allocation.resource,
                                       upload_allocation.offset,
@@ -1398,13 +1397,13 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                              blocks.cylinders.bbox.max_z, blocks.cylinders.hidden,
                              blocks.cylinders.layer, active_layers,
                              _TEMP_culling_storage, dynamic_buffer_allocator);
-   view.stairways =
-      prepare_draw_list(draw, view_frustum, blocks.stairways.bbox.min_x,
-                        blocks.stairways.bbox.min_y, blocks.stairways.bbox.min_z,
-                        blocks.stairways.bbox.max_x, blocks.stairways.bbox.max_y,
-                        blocks.stairways.bbox.max_z, blocks.stairways.hidden,
-                        blocks.stairways.layer, blocks.stairways.mesh,
-                        _custom_meshes, active_layers, _TEMP_culling_storage,
+   view.custom =
+      prepare_draw_list(draw, view_frustum, blocks.custom.bbox.min_x,
+                        blocks.custom.bbox.min_y, blocks.custom.bbox.min_z,
+                        blocks.custom.bbox.max_x, blocks.custom.bbox.max_y,
+                        blocks.custom.bbox.max_z, blocks.custom.hidden,
+                        blocks.custom.layer, blocks.custom.mesh, _custom_meshes,
+                        active_layers, _TEMP_culling_storage,
                         dynamic_buffer_allocator);
    view.cones =
       prepare_instances_view(draw, view_frustum, blocks.cones.bbox.min_x,
@@ -1468,14 +1467,14 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                 _dynamic_blocks->cylinders_bbox.max_z,
                                 _TEMP_culling_storage, dynamic_buffer_allocator);
 
-      view.dynamic_stairways =
-         prepare_draw_list(draw, view_frustum, _dynamic_blocks->stairways_bbox.min_x,
-                           _dynamic_blocks->stairways_bbox.min_y,
-                           _dynamic_blocks->stairways_bbox.min_z,
-                           _dynamic_blocks->stairways_bbox.max_x,
-                           _dynamic_blocks->stairways_bbox.max_y,
-                           _dynamic_blocks->stairways_bbox.max_z,
-                           entity_group->blocks.stairways.mesh, _custom_meshes,
+      view.dynamic_custom =
+         prepare_draw_list(draw, view_frustum, _dynamic_blocks->custom_bbox.min_x,
+                           _dynamic_blocks->custom_bbox.min_y,
+                           _dynamic_blocks->custom_bbox.min_z,
+                           _dynamic_blocks->custom_bbox.max_x,
+                           _dynamic_blocks->custom_bbox.max_y,
+                           _dynamic_blocks->custom_bbox.max_z,
+                           entity_group->blocks.custom.mesh, _custom_meshes,
                            _TEMP_culling_storage, dynamic_buffer_allocator);
 
       view.dynamic_cones =
@@ -1832,12 +1831,12 @@ void blocks::draw(blocks_draw draw, const view& view,
       }
    }
 
-   if (view.stairways.count > 0) {
+   if (view.custom.count > 0) {
       command_list.set_graphics_root_signature(root_signatures.block_custom_mesh.get());
 
       command_list.set_graphics_srv(rs::block_custom_mesh::instances_srv,
                                     _device.get_gpu_virtual_address(
-                                       _stairways_instance_data.get()));
+                                       _custom_instance_data.get()));
       command_list.set_graphics_cbv(rs::block_custom_mesh::frame_cbv,
                                     frame_constant_buffer_view);
       command_list.set_graphics_cbv(rs::block_custom_mesh::lights_cbv,
@@ -1860,19 +1859,18 @@ void blocks::draw(blocks_draw draw, const view& view,
                                                   sizeof(world::block_vertex)});
 
       command_list.execute_indirect(_custom_mesh_command_signature.get(),
-                                    view.stairways.count, view.stairways.draw_buffer,
-                                    view.stairways.draw_buffer_offset);
+                                    view.custom.count, view.custom.draw_buffer,
+                                    view.custom.draw_buffer_offset);
    }
 
    [[unlikely]] if (_dynamic_blocks) {
-      if (view.dynamic_stairways.count > 0) {
+      if (view.dynamic_custom.count > 0) {
          command_list.set_graphics_root_signature(
             root_signatures.block_custom_mesh.get());
 
-         command_list
-            .set_graphics_srv(rs::block_custom_mesh::instances_srv,
-                              _device.get_gpu_virtual_address(
-                                 _dynamic_blocks->stairways_instance_data.get()));
+         command_list.set_graphics_srv(rs::block_custom_mesh::instances_srv,
+                                       _device.get_gpu_virtual_address(
+                                          _dynamic_blocks->custom_instance_data.get()));
          command_list.set_graphics_cbv(rs::block_custom_mesh::frame_cbv,
                                        frame_constant_buffer_view);
          command_list.set_graphics_cbv(rs::block_custom_mesh::lights_cbv,
@@ -1896,9 +1894,9 @@ void blocks::draw(blocks_draw draw, const view& view,
                   .stride_in_bytes = sizeof(world::block_vertex)});
 
          command_list.execute_indirect(_custom_mesh_command_signature.get(),
-                                       view.dynamic_stairways.count,
-                                       view.dynamic_stairways.draw_buffer,
-                                       view.dynamic_stairways.draw_buffer_offset);
+                                       view.dynamic_custom.count,
+                                       view.dynamic_custom.draw_buffer,
+                                       view.dynamic_custom.draw_buffer_offset);
       }
    }
 }
@@ -2610,11 +2608,11 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
                                          sizeof(block_instance_description));
    }
 
-   if (not blocks.stairways.description.empty()) {
-      if (stairways_instance_data_capacity < blocks.stairways.description.size()) {
-         stairways_instance_data_capacity = blocks.stairways.description.size();
-         stairways_instance_data =
-            {device.create_buffer({.size = stairways_instance_data_capacity *
+   if (not blocks.custom.description.empty()) {
+      if (custom_instance_data_capacity < blocks.custom.description.size()) {
+         custom_instance_data_capacity = blocks.custom.description.size();
+         custom_instance_data =
+            {device.create_buffer({.size = custom_instance_data_capacity *
                                            sizeof(block_instance_description),
                                    .debug_name =
                                       "World Dynamic Blocks (Cylinders)"},
@@ -2622,18 +2620,18 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
              device};
       }
 
-      stairways_bbox.clear();
-      stairways_bbox.reserve(blocks.stairways.description.size());
+      custom_bbox.clear();
+      custom_bbox.reserve(blocks.custom.description.size());
 
       const dynamic_buffer_allocator::allocation& upload_allocation =
-         dynamic_buffer_allocator.allocate(blocks.stairways.description.size() *
+         dynamic_buffer_allocator.allocate(blocks.custom.description.size() *
                                            sizeof(block_instance_description));
       std::byte* upload_ptr = upload_allocation.cpu_address;
 
       for (uint32 block_index = 0;
-           block_index < blocks.stairways.description.size(); ++block_index) {
-         const world::block_description_stairway& block =
-            blocks.stairways.description[block_index];
+           block_index < blocks.custom.description.size(); ++block_index) {
+         const world::block_description_custom& block =
+            blocks.custom.description[block_index];
 
          const quaternion block_rotation = entity_group.rotation * block.rotation;
          const float3 block_positionWS =
@@ -2678,14 +2676,14 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
 
          upload_ptr += sizeof(block_instance_description);
 
-         stairways_bbox.push_back(entity_group.rotation * world::get_bounding_box(block) +
-                                  entity_group.position);
+         custom_bbox.push_back(entity_group.rotation * world::get_bounding_box(block) +
+                               entity_group.position);
       }
 
-      command_list.copy_buffer_region(stairways_instance_data.get(), 0,
+      command_list.copy_buffer_region(custom_instance_data.get(), 0,
                                       upload_allocation.resource,
                                       upload_allocation.offset,
-                                      blocks.stairways.description.size() *
+                                      blocks.custom.description.size() *
                                          sizeof(block_instance_description));
    }
 

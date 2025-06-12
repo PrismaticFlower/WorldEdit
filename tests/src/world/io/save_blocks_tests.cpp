@@ -757,7 +757,7 @@ Materials()
 
 TEST_CASE("world save blocks (stairways)", "[World][IO]")
 {
-   const std::string_view expected_blk = R"(Stairways(3)
+   const std::string_view expected_blk = R"(Custom(3)
 {
    Stairway()
    {
@@ -808,7 +808,7 @@ Materials()
 )";
 
    blocks blocks{
-      .stairways =
+      .custom =
          {
             .bbox =
                {
@@ -825,7 +825,7 @@ Materials()
                {
                   world::blocks_init,
                   std::initializer_list{
-                     world::block_description_stairway{
+                     world::block_description_custom{
                         .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                         .position = {8.5f, 4.5f, 2.0f},
 
@@ -874,7 +874,7 @@ Materials()
                               std::array<uint16, 2>{0, 0},
                            },
                      },
-                     world::block_description_stairway{
+                     world::block_description_custom{
                         .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                         .position = {10.0f, 16.0f, 12.0f},
                         .mesh_description =
@@ -921,7 +921,7 @@ Materials()
                               std::array<uint16, 2>{0, 0},
                            },
                      },
-                     world::block_description_stairway{
+                     world::block_description_custom{
                         .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                         .position = {6.0f, 6.0f, 6.0f},
                         .mesh_description =
@@ -977,7 +977,8 @@ Materials()
                         blocks_custom_mesh_library::null_handle(),
                      }},
             .ids = {world::blocks_init,
-                    std::initializer_list{block_stairway_id{0}, block_stairway_id{1}, block_stairway_id{2}}},
+                    std::initializer_list{block_custom_id{0}, block_custom_id{1},
+                                          block_custom_id{2}}},
 
          },
    };

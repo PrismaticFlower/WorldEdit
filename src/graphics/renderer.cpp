@@ -3439,14 +3439,14 @@ void renderer_impl::draw_interaction_targets(
 
                _meta_draw_batcher.add_alt_cylinder_wireframe(transform, color);
             } break;
-            case world::block_type::stairway: {
+            case world::block_type::custom: {
                const uint32 color_packed =
                   utility::pack_srgb_bgra(float4{color, 1.0f});
 
-               const world::block_description_stairway& block =
-                  world.blocks.stairways.description[*block_index];
+               const world::block_description_custom& block =
+                  world.blocks.custom.description[*block_index];
                const world::block_custom_mesh& mesh =
-                  world.blocks.custom_meshes[world.blocks.stairways.mesh[*block_index]];
+                  world.blocks.custom_meshes[world.blocks.custom.mesh[*block_index]];
 
                float4x4 world_from_local = to_matrix(block.rotation);
                world_from_local[3] = {block.position, 1.0f};

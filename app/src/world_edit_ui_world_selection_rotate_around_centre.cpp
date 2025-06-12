@@ -292,14 +292,14 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                         (rotation * (cylinder.position - centre)) + centre,
                         cylinder.size));
                   } break;
-                  case world::block_type::stairway: {
-                     const world::block_description_stairway& stairway =
-                        _world.blocks.stairways.description[*block_index];
+                  case world::block_type::custom: {
+                     const world::block_description_custom& block =
+                        _world.blocks.custom.description[*block_index];
 
                      bundled_edits.push_back(edits::make_set_block_custom_metrics(
-                        *block_index, rotation * stairway.rotation,
-                        (rotation * (stairway.position - centre)) + centre,
-                        stairway.mesh_description));
+                        *block_index, rotation * block.rotation,
+                        (rotation * (block.position - centre)) + centre,
+                        block.mesh_description));
                   } break;
                   case world::block_type::cone: {
                      const world::block_description_cone& cone =

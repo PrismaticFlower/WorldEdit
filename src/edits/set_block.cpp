@@ -136,7 +136,7 @@ struct set_block_custom_metrics final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      world::blocks_stairways& blocks = context.world.blocks.stairways;
+      world::blocks_custom& blocks = context.world.blocks.custom;
 
       assert(index < blocks.size());
 

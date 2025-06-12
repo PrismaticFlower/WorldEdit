@@ -108,7 +108,7 @@ struct block_description_cylinder {
    bool operator==(const block_description_cylinder&) const noexcept = default;
 };
 
-struct block_description_stairway {
+struct block_description_custom {
    quaternion rotation;
    float3 position;
    block_custom_mesh_description mesh_description;
@@ -119,7 +119,7 @@ struct block_description_stairway {
    std::array<std::array<int8, 2>, 6> surface_texture_scale = {};
    std::array<std::array<uint16, 2>, 6> surface_texture_offset = {};
 
-   bool operator==(const block_description_stairway&) const noexcept = default;
+   bool operator==(const block_description_custom&) const noexcept = default;
 };
 
 struct block_description_cone {
@@ -250,18 +250,18 @@ struct blocks_cylinders {
    bool is_balanced() const noexcept;
 };
 
-struct blocks_stairways {
+struct blocks_custom {
    blocks_bbox_soa bbox;
 
    pinned_vector<bool> hidden = blocks_init;
 
    pinned_vector<int8> layer = blocks_init;
 
-   pinned_vector<block_description_stairway> description = blocks_init;
+   pinned_vector<block_description_custom> description = blocks_init;
 
    pinned_vector<block_custom_mesh_handle> mesh = blocks_init;
 
-   pinned_vector<id<block_description_stairway>> ids = blocks_init;
+   pinned_vector<id<block_description_custom>> ids = blocks_init;
 
    blocks_dirty_range_tracker dirty;
 
@@ -355,7 +355,7 @@ struct blocks {
    blocks_ramps ramps;
    blocks_quads quads;
    blocks_cylinders cylinders;
-   blocks_stairways stairways;
+   blocks_custom custom;
    blocks_cones cones;
    blocks_hemispheres hemispheres;
    blocks_pyramids pyramids;
@@ -370,7 +370,7 @@ struct blocks {
       id_generator<block_description_ramp> ramps;
       id_generator<block_description_quad> quads;
       id_generator<block_description_cylinder> cylinders;
-      id_generator<block_description_stairway> stairways;
+      id_generator<block_description_custom> custom;
       id_generator<block_description_cone> cones;
       id_generator<block_description_hemisphere> hemispheres;
       id_generator<block_description_pyramid> pyramids;
@@ -389,7 +389,7 @@ using block_box_id = id<block_description_box>;
 using block_ramp_id = id<block_description_ramp>;
 using block_quad_id = id<block_description_quad>;
 using block_cylinder_id = id<block_description_cylinder>;
-using block_stairway_id = id<block_description_stairway>;
+using block_custom_id = id<block_description_custom>;
 using block_cone_id = id<block_description_cone>;
 using block_hemisphere_id = id<block_description_hemisphere>;
 using block_pyramid_id = id<block_description_pyramid>;
@@ -399,7 +399,7 @@ enum class block_type {
    ramp,
    quad,
    cylinder,
-   stairway,
+   custom,
    cone,
    hemisphere,
    pyramid,
@@ -416,7 +416,7 @@ struct block_id {
 
    block_id(block_cylinder_id id) noexcept;
 
-   block_id(block_stairway_id id) noexcept;
+   block_id(block_custom_id id) noexcept;
 
    block_id(block_cone_id id) noexcept;
 
@@ -440,9 +440,9 @@ struct block_id {
 
    auto get_cylinder() const noexcept -> block_cylinder_id;
 
-   bool is_stairway() const noexcept;
+   bool is_custom() const noexcept;
 
-   auto get_stairway() const noexcept -> block_stairway_id;
+   auto get_custom() const noexcept -> block_custom_id;
 
    bool is_cone() const noexcept;
 
@@ -471,7 +471,7 @@ private:
       block_ramp_id ramp;
       block_quad_id quad;
       block_cylinder_id cylinder;
-      block_stairway_id stairway;
+      block_custom_id custom;
       block_cone_id cone;
       block_hemisphere_id hemisphere;
       block_pyramid_id pyramid;

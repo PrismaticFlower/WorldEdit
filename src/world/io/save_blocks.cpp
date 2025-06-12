@@ -229,16 +229,16 @@ void save_cylinders(io::output_file& out, const blocks_cylinders& cylinders) noe
    out.write_ln("}\n");
 }
 
-void save_stairways(io::output_file& out, const blocks_stairways& stairways) noexcept
+void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
 {
-   if (stairways.size() == 0) return;
+   if (blocks.size() == 0) return;
 
-   out.write_ln("Stairways({})", stairways.size());
+   out.write_ln("Custom({})", blocks.size());
    out.write_ln("{");
 
-   for (uint32 block_index = 0; block_index < stairways.size(); ++block_index) {
-      const block_description_stairway& block = stairways.description[block_index];
-      const int8 block_layer = stairways.layer[block_index];
+   for (uint32 block_index = 0; block_index < blocks.size(); ++block_index) {
+      const block_description_custom& block = blocks.description[block_index];
+      const int8 block_layer = blocks.layer[block_index];
 
       switch (block.mesh_description.type) {
       case block_custom_mesh_type::stairway: {
@@ -494,7 +494,7 @@ void save_blocks(const io::path& path, const blocks& blocks)
    save_ramps(out, blocks.ramps);
    save_quads(out, blocks.quads);
    save_cylinders(out, blocks.cylinders);
-   save_stairways(out, blocks.stairways);
+   save_custom(out, blocks.custom);
    save_cones(out, blocks.cones);
    save_hemispheres(out, blocks.hemispheres);
    save_pyramids(out, blocks.pyramids);

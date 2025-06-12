@@ -43,12 +43,12 @@ struct entity_group {
       std::vector<block_description_quad> quads;
       std::vector<block_description_cylinder> cylinders;
 
-      struct stairways {
-         std::vector<block_description_stairway> description;
+      struct custom {
+         std::vector<block_description_custom> description;
          std::vector<block_custom_mesh_handle> mesh;
 
-         bool operator==(const stairways&) const noexcept = default;
-      } stairways;
+         bool operator==(const custom&) const noexcept = default;
+      } custom;
 
       std::vector<block_description_cone> cones;
       std::vector<block_description_hemisphere> hemispheres;

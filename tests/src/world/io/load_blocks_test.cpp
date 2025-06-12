@@ -600,9 +600,9 @@ TEST_CASE("world load blocks (stairways)", "[World][IO]")
 
    const blocks blocks = load_blocks("data/blocks/stairways.blk", layer_remap, output);
 
-   REQUIRE(blocks.stairways.size() == 3);
+   REQUIRE(blocks.custom.size() == 3);
 
-   const blocks_stairways& stairways = blocks.stairways;
+   const blocks_custom& stairways = blocks.custom;
 
    CHECK(stairways.bbox.min_x[0] == 6.5f);
    CHECK(stairways.bbox.min_y[0] == 0.5f);
