@@ -378,49 +378,55 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          if (ImGui::MenuItem("Draw Box")) {
             _block_editor_open = true;
-            _block_editor_config.draw_type = world::block_type::box;
+            _block_editor_config.draw_type = draw_block_type::box;
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 
          if (ImGui::MenuItem("Draw Ramp")) {
             _block_editor_open = true;
-            _block_editor_config.draw_type = world::block_type::ramp;
+            _block_editor_config.draw_type = draw_block_type::ramp;
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 
          if (ImGui::MenuItem("Draw Quadrilateral")) {
             _block_editor_open = true;
-            _block_editor_config.draw_type = world::block_type::quad;
+            _block_editor_config.draw_type = draw_block_type::quad;
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 
          if (ImGui::MenuItem("Draw Cylinder")) {
             _block_editor_open = true;
-            _block_editor_config.draw_type = world::block_type::cylinder;
+            _block_editor_config.draw_type = draw_block_type::cylinder;
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 
          if (ImGui::MenuItem("Draw Stairs")) {
             _block_editor_open = true;
-            _block_editor_config.draw_type = world::block_type::custom;
+            _block_editor_config.draw_type = draw_block_type::stairway;
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 
          if (ImGui::MenuItem("Draw Cone")) {
             _block_editor_open = true;
-            _block_editor_config.draw_type = world::block_type::cone;
+            _block_editor_config.draw_type = draw_block_type::cone;
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 
          if (ImGui::MenuItem("Draw Hemisphere")) {
             _block_editor_open = true;
-            _block_editor_config.draw_type = world::block_type::hemisphere;
+            _block_editor_config.draw_type = draw_block_type::hemisphere;
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 
          if (ImGui::MenuItem("Draw Pyramid")) {
             _block_editor_open = true;
-            _block_editor_config.draw_type = world::block_type::pyramid;
+            _block_editor_config.draw_type = draw_block_type::pyramid;
+            _block_editor_context = {.activate_tool = block_edit_tool::draw};
+         }
+
+         if (ImGui::MenuItem("Draw Ring")) {
+            _block_editor_open = true;
+            _block_editor_config.draw_type = draw_block_type::ring;
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 

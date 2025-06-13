@@ -197,6 +197,18 @@ enum class block_edit_tool : uint8 {
    resize_block,
 };
 
+enum class draw_block_type {
+   box,
+   ramp,
+   quad,
+   cylinder,
+   stairway,
+   cone,
+   hemisphere,
+   pyramid,
+   ring,
+};
+
 enum class draw_block_step : uint8 {
    start,
    box_depth,
@@ -219,6 +231,9 @@ enum class draw_block_step : uint8 {
    pyramid_depth,
    pyramid_width,
    pyramid_height,
+   ring_inner_radius,
+   ring_outer_radius,
+   ring_height,
 };
 
 enum class draw_block_cursor_plane : uint8 { none, x, y, z };
@@ -985,12 +1000,18 @@ private:
       int y_alignment_exponent = 0;
       int snap_edge_points = 3;
 
-      world::block_type draw_type = world::block_type::box;
+      draw_block_type draw_type = draw_block_type::box;
 
       draw_block_quad_split quad_split = draw_block_quad_split::longest;
 
       float step_height = 0.125f;
       float first_step_offset = 0.0f;
+
+      struct ring {
+         uint16 segments = 16;
+         bool flat_shading = false;
+         float texture_loops = 1.0f;
+      } ring;
 
       bool enable_alignment = true;
       bool enable_snapping = true;
@@ -1074,6 +1095,12 @@ private:
             float width_z = 0.0f;
             quaternion rotation;
          } pyramid;
+
+         struct ring {
+            float3 start;
+            float inner_radius;
+            float outer_radius;
+         } ring;
 
          uint32 index = 0;
          world::block_id block_id = world::block_id::none;

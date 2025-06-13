@@ -27,6 +27,12 @@ auto get_bounding_box_local_space(const block_custom_mesh_description& mesh) noe
               .max = {half_width, mesh.stairway.size.y + mesh.stairway.first_step_offset,
                       half_length}};
    }
+   case block_custom_mesh_type::ring: {
+      const float radius = mesh.ring.inner_radius + mesh.ring.outer_radius * 2.0f;
+
+      return {.min = {-radius, -mesh.ring.height, -radius},
+              .max = {radius, mesh.ring.height, radius}};
+   }
    }
 
    std::unreachable();

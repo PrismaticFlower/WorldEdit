@@ -577,6 +577,68 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                                   _edit_context);
                      }
                   } break;
+                  case world::block_custom_mesh_type::ring: {
+                     const world::block_custom_mesh_description_ring& ring =
+                        block.mesh_description.ring;
+
+                     float3 new_size = {ring.outer_radius, ring.height,
+                                        ring.outer_radius};
+                     float3 new_position = block.position;
+
+                     if (_gizmos.gizmo_size(
+                            {
+                               .name = "Block Outer Ring Size",
+                               .instance = static_cast<int64>(
+                                  _world.blocks.custom.ids[*block_index]),
+                               .alignment = _editor_grid_size,
+                               .gizmo_rotation = block.rotation,
+                            },
+                            new_position, new_size)) {
+                        const float new_radius = new_size.x != ring.outer_radius
+                                                    ? new_size.x
+                                                    : new_size.z;
+
+                        _edit_stack_world
+                           .apply(edits::make_set_block_custom_metrics(
+                                     *block_index, block.rotation, new_position,
+                                     world::block_custom_mesh_description_ring{
+                                        .inner_radius = ring.inner_radius,
+                                        .outer_radius = std::max(new_radius, 0.0f),
+                                        .height = new_size.y,
+                                        .segments = ring.segments,
+                                     }),
+                                  _edit_context);
+                     }
+
+                     new_size = {ring.inner_radius, ring.height, ring.inner_radius};
+                     new_position = block.position;
+
+                     if (_gizmos.gizmo_size(
+                            {
+                               .name = "Block Inner Ring Size",
+                               .instance = static_cast<int64>(
+                                  _world.blocks.custom.ids[*block_index]),
+                               .alignment = _editor_grid_size,
+                               .gizmo_rotation = block.rotation,
+                               .show_y_axis = false,
+                            },
+                            new_position, new_size)) {
+                        const float new_radius = new_size.x != ring.inner_radius
+                                                    ? new_size.x
+                                                    : new_size.z;
+
+                        _edit_stack_world
+                           .apply(edits::make_set_block_custom_metrics(
+                                     *block_index, block.rotation, new_position,
+                                     world::block_custom_mesh_description_ring{
+                                        .inner_radius = std::max(new_radius, 0.0f),
+                                        .outer_radius = ring.outer_radius,
+                                        .height = new_size.y,
+                                        .segments = ring.segments,
+                                     }),
+                                  _edit_context);
+                     }
+                  } break;
                   }
 
                } break;
