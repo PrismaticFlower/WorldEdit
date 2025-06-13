@@ -1,0 +1,50 @@
+Custom(3)
+{
+   Ring()
+   {
+      Rotation(0, 1, 0, 0);
+      Position(8.5, 4.5, 2);
+      InnerRadius(4);
+      OuterRadius(2);
+      Height(4);
+      Segments(12);
+      TextureLoops(4);
+      SurfaceMaterials(0, 1, 2, 3, 4, 5);
+      SurfaceTextureMode(1, 1, 1, 1, 1, 1);
+      SurfaceTextureRotation(2, 2, 2, 2, 2, 2);
+      SurfaceTextureScale(0, 0, -1, -2, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(0, 0, 0, 0, 0, 0, 0, 0, 256, 256, 0, 0);
+      Layer(2);
+   }
+   Ring()
+   {
+      Rotation(0.707106, 0, 0.707106, 0);
+      Position(10, 16, 12);
+      InnerRadius(8);
+      OuterRadius(4);
+      Height(6);
+      Segments(10);
+      FlatShading();
+      TextureLoops(2);
+      SurfaceMaterials(2, 2, 2, 2, 2, 2);
+      SurfaceTextureMode(2, 2, 2, 2, 5, 2);
+      SurfaceTextureRotation(1, 1, 1, 1, 1, 1);
+      SurfaceTextureScale(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, -2);
+      SurfaceTextureOffset(1024, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+   }
+   Ring()
+   {
+      Rotation(0, 0, 0, 1);
+      Position(6, 6, 6);
+      InnerRadius(1);
+      OuterRadius(2);
+      Height(3);
+      Segments(4);
+      TextureLoops(5);
+      SurfaceMaterials(0, 0, 0, 0, 0, 0);
+      SurfaceTextureMode(0, 1, 2, 3, 4, 5);
+      SurfaceTextureRotation(0, 1, 2, 3, 0, 0);
+      SurfaceTextureScale(-7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4);
+      SurfaceTextureOffset(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+   }
+}
