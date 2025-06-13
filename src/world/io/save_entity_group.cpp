@@ -702,13 +702,15 @@ void save_entity_group_impl(File& file, const entity_group& group)
             file.write_ln("      FirstStepOffset({});", stairway.first_step_offset);
          } break;
          case block_custom_mesh_type::ring: {
-            const block_custom_mesh_description_ring& ring =
+            const world::block_custom_mesh_description_ring& ring =
                block.mesh_description.ring;
 
             file.write_ln("      InnerRadius({});", ring.inner_radius);
             file.write_ln("      OuterRadius({});", ring.outer_radius);
             file.write_ln("      Height({});", ring.height);
             file.write_ln("      Segments({});", ring.segments);
+            if (ring.flat_shading) file.write_ln("      FlatShading();");
+            file.write_ln("      TextureLoops({});", ring.texture_loops);
          } break;
          }
 

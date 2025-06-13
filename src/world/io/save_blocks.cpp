@@ -273,6 +273,8 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
          out.write_ln("      OuterRadius({});", ring.outer_radius);
          out.write_ln("      Height({});", ring.height);
          out.write_ln("      Segments({});", ring.segments);
+         if (ring.flat_shading) out.write_ln("      FlatShading();");
+         out.write_ln("      TextureLoops({});", ring.texture_loops);
       } break;
       }
 

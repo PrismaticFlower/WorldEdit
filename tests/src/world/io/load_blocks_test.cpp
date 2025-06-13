@@ -1178,6 +1178,200 @@ TEST_CASE("world load blocks (pyramids)", "[World][IO]")
    CHECK(pyramids.dirty[0] == blocks_dirty_range{0, 3});
 }
 
+TEST_CASE("world load blocks (rings)", "[World][IO]")
+{
+   null_output_stream output;
+   layer_remap layer_remap;
+
+   layer_remap.set(2, 2);
+
+   const blocks blocks = load_blocks("data/blocks/rings.blk", layer_remap, output);
+
+   REQUIRE(blocks.custom.size() == 3);
+
+   const blocks_custom& rings = blocks.custom;
+
+   CHECK(rings.bbox.min_x[0] == 0.5f);
+   CHECK(rings.bbox.min_y[0] == 0.5f);
+   CHECK(rings.bbox.min_z[0] == -6.0f);
+   CHECK(rings.bbox.max_x[0] == 16.5f);
+   CHECK(rings.bbox.max_y[0] == 8.5f);
+   CHECK(rings.bbox.max_z[0] == 10.0f);
+   CHECK(rings.hidden[0] == false);
+   CHECK(rings.layer[0] == 2);
+   CHECK(rings.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
+   CHECK(rings.description[0].position == float3{8.5f, 4.5f, 2.0f});
+   CHECK(rings.description[0].mesh_description.type == block_custom_mesh_type::ring);
+   CHECK(rings.description[0].mesh_description.ring.inner_radius == 4.0f);
+   CHECK(rings.description[0].mesh_description.ring.outer_radius == 2.0f);
+   CHECK(rings.description[0].mesh_description.ring.height == 4.0f);
+   CHECK(rings.description[0].mesh_description.ring.segments == 12);
+   CHECK(not rings.description[0].mesh_description.ring.flat_shading);
+   CHECK(rings.description[0].mesh_description.ring.texture_loops == 4.0f);
+   CHECK(rings.description[0].surface_materials ==
+         std::array<uint8, 6>{0, 1, 2, 3, 4, 5});
+   CHECK(rings.description[0].surface_texture_mode ==
+         std::array<block_texture_mode, 6>{
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+         });
+   CHECK(rings.description[0].surface_texture_rotation ==
+         std::array<block_texture_rotation, 6>{
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+         });
+   CHECK(rings.description[0].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 6>{
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{-1, -2},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+         });
+   CHECK(rings.description[0].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 6>{
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{256, 256},
+            std::array<uint16, 2>{0, 0},
+         });
+   CHECK(rings.mesh[0] == blocks.custom_meshes.debug_query_handle(
+                             rings.description[0].mesh_description));
+   CHECK(is_unique_id(0, rings.ids));
+
+   CHECK(rings.bbox.min_x[1] == -5.99996471f);
+   CHECK(rings.bbox.min_y[1] == 10.0000134f);
+   CHECK(rings.bbox.min_z[1] == -3.99996471f);
+   CHECK(rings.bbox.max_x[1] == 25.9999657f);
+   CHECK(rings.bbox.max_y[1] == 21.9999866f);
+   CHECK(rings.bbox.max_z[1] == 27.9999657f);
+   CHECK(rings.hidden[1] == false);
+   CHECK(rings.description[1].rotation == quaternion{0.707106f, 0.0f, 0.707106f, 0.0f});
+   CHECK(rings.description[1].position == float3{10.0f, 16.0f, 12.0f});
+   CHECK(rings.description[1].mesh_description.type == block_custom_mesh_type::ring);
+   CHECK(rings.description[1].mesh_description.ring.inner_radius == 8.0f);
+   CHECK(rings.description[1].mesh_description.ring.outer_radius == 4.0f);
+   CHECK(rings.description[1].mesh_description.ring.height == 6.0f);
+   CHECK(rings.description[1].mesh_description.ring.segments == 10);
+   CHECK(rings.description[1].mesh_description.ring.flat_shading);
+   CHECK(rings.description[1].mesh_description.ring.texture_loops == 2.0f);
+   CHECK(rings.description[1].surface_materials ==
+         std::array<uint8, 6>{2, 2, 2, 2, 2, 2});
+   CHECK(rings.description[1].surface_texture_mode ==
+         std::array<block_texture_mode, 6>{
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::local_space_zy,
+            block_texture_mode::world_space_xz,
+         });
+   CHECK(rings.description[1].surface_texture_rotation ==
+         std::array<block_texture_rotation, 6>{
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+         });
+   CHECK(rings.description[1].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 6>{
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{-2, -2},
+         });
+   CHECK(rings.description[1].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 6>{
+            std::array<uint16, 2>{1024, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+         });
+   CHECK(blocks.custom_meshes.debug_ref_count(rings.description[1].mesh_description) == 1);
+   CHECK(rings.mesh[1] == blocks.custom_meshes.debug_query_handle(
+                             rings.description[1].mesh_description));
+   CHECK(is_unique_id(1, rings.ids));
+
+   CHECK(rings.bbox.min_x[2] == 1.0f);
+   CHECK(rings.bbox.min_y[2] == 3.0f);
+   CHECK(rings.bbox.min_z[2] == 1.0f);
+   CHECK(rings.bbox.max_x[2] == 11.0f);
+   CHECK(rings.bbox.max_y[2] == 9.0f);
+   CHECK(rings.bbox.max_z[2] == 11.0f);
+   CHECK(rings.hidden[2] == false);
+   CHECK(rings.description[2].rotation == quaternion{0.0f, 0.0f, 0.0f, 1.0f});
+   CHECK(rings.description[2].position == float3{6.0f, 6.0f, 6.0f});
+   CHECK(rings.description[2].mesh_description.type == block_custom_mesh_type::ring);
+   CHECK(rings.description[2].mesh_description.ring.inner_radius == 1.0f);
+   CHECK(rings.description[2].mesh_description.ring.outer_radius == 2.0f);
+   CHECK(rings.description[2].mesh_description.ring.height == 3.0f);
+   CHECK(rings.description[2].mesh_description.ring.segments == 4);
+   CHECK(not rings.description[2].mesh_description.ring.flat_shading);
+   CHECK(rings.description[2].mesh_description.ring.texture_loops == 5.0f);
+   CHECK(rings.description[2].surface_materials ==
+         std::array<uint8, 6>{0, 0, 0, 0, 0, 0});
+   CHECK(rings.description[2].surface_texture_mode ==
+         std::array<block_texture_mode, 6>{
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xy,
+            block_texture_mode::local_space_auto,
+            block_texture_mode::local_space_zy,
+         });
+   CHECK(rings.description[2].surface_texture_rotation ==
+         std::array<block_texture_rotation, 6>{
+            block_texture_rotation::d0,
+            block_texture_rotation::d90,
+            block_texture_rotation::d180,
+            block_texture_rotation::d270,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+         });
+   CHECK(rings.description[2].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 6>{
+            std::array<int8, 2>{-7, -6},
+            std::array<int8, 2>{-5, -4},
+            std::array<int8, 2>{-3, -2},
+            std::array<int8, 2>{-1, 0},
+            std::array<int8, 2>{1, 2},
+            std::array<int8, 2>{3, 4},
+         });
+   CHECK(rings.description[2].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 6>{
+            std::array<uint16, 2>{0, 1},
+            std::array<uint16, 2>{2, 3},
+            std::array<uint16, 2>{4, 5},
+            std::array<uint16, 2>{6, 7},
+            std::array<uint16, 2>{8, 9},
+            std::array<uint16, 2>{10, 11},
+         });
+   CHECK(blocks.custom_meshes.debug_ref_count(rings.description[2].mesh_description) == 1);
+   CHECK(rings.mesh[2] == blocks.custom_meshes.debug_query_handle(
+                             rings.description[2].mesh_description));
+   CHECK(is_unique_id(2, rings.ids));
+
+   REQUIRE(rings.dirty.size() == 1);
+   CHECK(rings.dirty[0] == blocks_dirty_range{0, 3});
+}
+
 TEST_CASE("world load blocks (materials)", "[World][IO]")
 {
    null_output_stream output;
