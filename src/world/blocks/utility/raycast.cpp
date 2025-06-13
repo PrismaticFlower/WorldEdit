@@ -8,6 +8,9 @@
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
+#pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+#pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
+
 namespace we::world {
 
 namespace {
@@ -343,7 +346,19 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
                break;
             }
          }
-      }
+      } break;
+      case block_custom_mesh_type::ring: {
+         const block_custom_mesh_description_ring& ring = block.mesh_description.ring;
+         const float radius = ring.inner_radius + ring.outer_radius * 2.0f;
+
+         if (const float hit = iCylinder(ray_originLS, ray_directionLS,
+                                         {0.0f, ring.height, 0.0f},
+                                         {0.0f, -ring.height, 0.0f}, radius)
+                                  .x;
+             hit >= 0.0f and hit < closest) {
+            mesh_proxy_hit = true;
+         }
+      } break;
       }
 
       if (not mesh_proxy_hit) continue;

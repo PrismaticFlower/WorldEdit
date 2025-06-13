@@ -19,6 +19,12 @@ block_custom_mesh_description::block_custom_mesh_description(
 {
 }
 
+block_custom_mesh_description::block_custom_mesh_description(
+   const block_custom_mesh_description_ring& ring) noexcept
+   : type{block_custom_mesh_type::ring}, ring{ring}
+{
+}
+
 auto block_custom_mesh_description::operator=(const block_custom_mesh_description& other) noexcept
    -> block_custom_mesh_description&
 {
@@ -27,6 +33,9 @@ auto block_custom_mesh_description::operator=(const block_custom_mesh_descriptio
    switch (other.type) {
    case block_custom_mesh_type::stairway: {
       this->stairway = other.stairway;
+   } break;
+   case block_custom_mesh_type::ring: {
+      this->ring = other.ring;
    } break;
    }
 
@@ -41,6 +50,8 @@ bool operator==(const block_custom_mesh_description& left,
    switch (left.type) {
    case block_custom_mesh_type::stairway:
       return left.stairway == right.stairway;
+   case block_custom_mesh_type::ring:
+      return left.ring == right.ring;
    }
 
    std::unreachable();

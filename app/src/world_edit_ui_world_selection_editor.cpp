@@ -1947,7 +1947,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                const world::block_description_custom& block =
                   _world.blocks.custom.description[*block_index];
 
-               if (block.mesh_description.type == world::block_custom_mesh_type::stairway) {
+               switch (block.mesh_description.type) {
+               case world::block_custom_mesh_type::stairway: {
                   const world::block_custom_mesh_description_stairway& stairway =
                      block.mesh_description.stairway;
 
@@ -1980,6 +1981,49 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   if (ImGui::IsItemDeactivated()) {
                      _edit_stack_world.close_last();
                   }
+               } break;
+               case world::block_custom_mesh_type::ring: {
+                  world::block_custom_mesh_description_ring ring =
+                     block.mesh_description.ring;
+
+                  const uint16 min_segments = 3;
+                  const uint16 max_segments = 256;
+
+                  bool edited = false;
+
+                  edited |= ImGui::DragFloat("Inner Radius", &ring.inner_radius,
+                                             1.0f, 0.0f, 1e10f);
+                  edited |= ImGui::DragFloat("Outer Radius", &ring.outer_radius,
+                                             1.0f, 0.0f, 1e10f);
+                  edited |= ImGui::SliderScalar("First Step Offset",
+                                                ImGuiDataType_U16, &ring.segments,
+                                                &min_segments, &max_segments);
+                  edited |= ImGui::Checkbox("Flat Shading", &ring.flat_shading);
+                  edited |= ImGui::DragFloat("Texture Loops", &ring.texture_loops);
+
+                  ImGui::SetItemTooltip(
+                     "How many times the texture wraps around the ring in the "
+                     "Unwrapped Texture Mode.");
+
+                  if (edited) {
+                     ring.inner_radius = std::max(ring.inner_radius, 0.0f);
+                     ring.outer_radius = std::max(ring.outer_radius, 0.0f);
+                     ring.segments = std::max(ring.segments, min_segments);
+
+                     if (ring.inner_radius == 0.0f and ring.outer_radius == 0.0f) {
+                        ring.inner_radius = 1.0f;
+                     }
+
+                     _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                                *block_index, block.rotation,
+                                                block.position, ring),
+                                             _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivated()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
                }
             }
          }

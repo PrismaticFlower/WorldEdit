@@ -81,19 +81,20 @@ auto foley_group_name(world::block_foley_group group) noexcept -> const char*
    return "<unknown>";
 }
 
-auto block_type_name(world::block_type type) noexcept -> const char*
+auto block_type_name(draw_block_type type) noexcept -> const char*
 {
 
    // clang-format off
    switch (type) {
-   case world::block_type::box:        return "Box";
-   case world::block_type::ramp:       return "Ramp";
-   case world::block_type::quad:       return "Quadrilateral";
-   case world::block_type::cylinder:   return "Cylinder";
-   case world::block_type::custom:   return "Stairs";
-   case world::block_type::cone:       return "Cone";
-   case world::block_type::hemisphere: return "Hemisphere";
-   case world::block_type::pyramid:    return "Pyramid";
+   case draw_block_type::box:        return "Box";
+   case draw_block_type::ramp:       return "Ramp";
+   case draw_block_type::quad:       return "Quadrilateral";
+   case draw_block_type::cylinder:   return "Cylinder";
+   case draw_block_type::stairway:   return "Stairs";
+   case draw_block_type::cone:       return "Cone";
+   case draw_block_type::hemisphere: return "Hemisphere";
+   case draw_block_type::pyramid:    return "Pyramid";
+   case draw_block_type::ring:       return "Ring";
    }
    // clang-format on
 
@@ -121,15 +122,16 @@ void world_edit::ui_show_block_editor() noexcept
 
       if (ImGui::BeginCombo("Draw Shape",
                             block_type_name(_block_editor_config.draw_type))) {
-         for (const world::block_type type : {
-                 world::block_type::box,
-                 world::block_type::ramp,
-                 world::block_type::quad,
-                 world::block_type::cylinder,
-                 world::block_type::custom,
-                 world::block_type::cone,
-                 world::block_type::hemisphere,
-                 world::block_type::pyramid,
+         for (const draw_block_type type : {
+                 draw_block_type::box,
+                 draw_block_type::ramp,
+                 draw_block_type::quad,
+                 draw_block_type::cylinder,
+                 draw_block_type::stairway,
+                 draw_block_type::cone,
+                 draw_block_type::hemisphere,
+                 draw_block_type::pyramid,
+                 draw_block_type::ring,
               }) {
 
             if (ImGui::Selectable(block_type_name(type),
@@ -141,7 +143,7 @@ void world_edit::ui_show_block_editor() noexcept
          ImGui::EndCombo();
       }
 
-      if (_block_editor_config.draw_type == world::block_type::quad) {
+      if (_block_editor_config.draw_type == draw_block_type::quad) {
          const ImVec2 cursor_pos = ImGui::GetCursorPos();
 
          ImGui::LabelText("Triangulation", "");
@@ -161,7 +163,7 @@ void world_edit::ui_show_block_editor() noexcept
             _block_editor_config.quad_split = draw_block_quad_split::shortest;
          }
       }
-      else if (_block_editor_config.draw_type == world::block_type::custom) {
+      else if (_block_editor_config.draw_type == draw_block_type::stairway) {
          ImGui::DragFloat("Step Height", &_block_editor_config.step_height,
                           0.125f * 0.25f, 0.125f, 1.0f, "%.3f",
                           ImGuiSliderFlags_NoRoundToFormat);
@@ -171,6 +173,23 @@ void world_edit::ui_show_block_editor() noexcept
 
          ImGui::DragFloat("First Step Offset",
                           &_block_editor_config.first_step_offset, 0.125f);
+      }
+      else if (_block_editor_config.draw_type == draw_block_type::ring) {
+         const uint16 min_segments = 3;
+         const uint16 max_segments = 256;
+
+         ImGui::SliderScalar("Segments", ImGuiDataType_U16,
+                             &_block_editor_config.ring.segments, &min_segments,
+                             &max_segments);
+         ImGui::Checkbox("Flat Shading", &_block_editor_config.ring.flat_shading);
+         ImGui::DragFloat("Texture Loops", &_block_editor_config.ring.texture_loops);
+
+         ImGui::SetItemTooltip(
+            "How many times the texture wraps around the ring in the "
+            "Unwrapped Texture Mode.");
+
+         _block_editor_config.ring.segments =
+            std::max(_block_editor_config.ring.segments, min_segments);
       }
 
       ImGui::Checkbox("Enable Alignment", &_block_editor_config.enable_alignment);
@@ -685,42 +704,47 @@ void world_edit::ui_show_block_editor() noexcept
 
    if (ImGui::BeginPopup("Block Quick Tools", ImGuiWindowFlags_NoTitleBar)) {
       if (ImGui::MenuItem("Draw Box")) {
-         _block_editor_config.draw_type = world::block_type::box;
+         _block_editor_config.draw_type = draw_block_type::box;
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
       if (ImGui::MenuItem("Draw Ramp")) {
-         _block_editor_config.draw_type = world::block_type::ramp;
+         _block_editor_config.draw_type = draw_block_type::ramp;
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
       if (ImGui::MenuItem("Draw Quadrilateral")) {
-         _block_editor_config.draw_type = world::block_type::quad;
+         _block_editor_config.draw_type = draw_block_type::quad;
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
       if (ImGui::MenuItem("Draw Cylinder")) {
-         _block_editor_config.draw_type = world::block_type::cylinder;
+         _block_editor_config.draw_type = draw_block_type::cylinder;
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
       if (ImGui::MenuItem("Draw Stairs")) {
-         _block_editor_config.draw_type = world::block_type::custom;
+         _block_editor_config.draw_type = draw_block_type::stairway;
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
       if (ImGui::MenuItem("Draw Cone")) {
-         _block_editor_config.draw_type = world::block_type::cone;
+         _block_editor_config.draw_type = draw_block_type::cone;
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
       if (ImGui::MenuItem("Draw Hemisphere")) {
-         _block_editor_config.draw_type = world::block_type::hemisphere;
+         _block_editor_config.draw_type = draw_block_type::hemisphere;
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
       if (ImGui::MenuItem("Draw Pyramid")) {
-         _block_editor_config.draw_type = world::block_type::pyramid;
+         _block_editor_config.draw_type = draw_block_type::pyramid;
+         _block_editor_context = {.activate_tool = block_edit_tool::draw};
+      }
+
+      if (ImGui::MenuItem("Draw Ring")) {
+         _block_editor_config.draw_type = draw_block_type::ring;
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
@@ -999,20 +1023,20 @@ void world_edit::ui_show_block_editor() noexcept
             _block_editor_context.draw_block.height_plane = cursor_positionWS.y;
 
             switch (_block_editor_config.draw_type) {
-            case world::block_type::box: {
+            case draw_block_type::box: {
                _block_editor_context.draw_block.box.start = cursor_positionWS;
                _block_editor_context.draw_block.step = draw_block_step::box_depth;
             } break;
-            case world::block_type::ramp: {
+            case draw_block_type::ramp: {
                _block_editor_context.draw_block.ramp.start = cursor_positionWS;
                _block_editor_context.draw_block.step = draw_block_step::ramp_width;
             } break;
-            case world::block_type::quad: {
+            case draw_block_type::quad: {
                _block_editor_context.draw_block.height_plane = std::nullopt;
                _block_editor_context.draw_block.quad.vertices[0] = cursor_positionWS;
                _block_editor_context.draw_block.step = draw_block_step::quad_v1;
             } break;
-            case world::block_type::cylinder: {
+            case draw_block_type::cylinder: {
                const uint8 material_index = _block_editor_config.paint_material_index;
                const world::block_cylinder_id id =
                   _world.blocks.next_id.cylinders.aquire();
@@ -1047,11 +1071,11 @@ void world_edit::ui_show_block_editor() noexcept
                }
 
             } break;
-            case world::block_type::custom: {
+            case draw_block_type::stairway: {
                _block_editor_context.draw_block.stairway.start = cursor_positionWS;
                _block_editor_context.draw_block.step = draw_block_step::stairway_width;
             } break;
-            case world::block_type::cone: {
+            case draw_block_type::cone: {
                const uint8 material_index = _block_editor_config.paint_material_index;
                const world::block_cone_id id = _world.blocks.next_id.cones.aquire();
 
@@ -1085,7 +1109,7 @@ void world_edit::ui_show_block_editor() noexcept
                }
 
             } break;
-            case world::block_type::hemisphere: {
+            case draw_block_type::hemisphere: {
                const uint8 material_index = _block_editor_config.paint_material_index;
                const world::block_hemisphere_id id =
                   _world.blocks.next_id.hemispheres.aquire();
@@ -1120,9 +1144,14 @@ void world_edit::ui_show_block_editor() noexcept
                }
 
             } break;
-            case world::block_type::pyramid: {
+            case draw_block_type::pyramid: {
                _block_editor_context.draw_block.pyramid.start = cursor_positionWS;
                _block_editor_context.draw_block.step = draw_block_step::pyramid_depth;
+            } break;
+            case draw_block_type::ring: {
+               _block_editor_context.draw_block.ring.start = cursor_positionWS;
+               _block_editor_context.draw_block.step =
+                  draw_block_step::ring_inner_radius;
             } break;
             }
          }
@@ -2192,6 +2221,196 @@ void world_edit::ui_show_block_editor() noexcept
             _edit_stack_world.close_last();
          }
       } break;
+      case draw_block_step::ring_inner_radius: {
+         const float3 positionWS = _block_editor_context.draw_block.ring.start;
+
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         const float inner_radius =
+            distance(float2{positionWS.x, positionWS.z},
+                     float2{cursor_positionWS.x, cursor_positionWS.z});
+
+         if (click) {
+            _block_editor_context.draw_block.height_plane = std::nullopt;
+            _block_editor_context.draw_block.ring.inner_radius = inner_radius;
+            _block_editor_context.draw_block.step = draw_block_step::ring_outer_radius;
+         }
+
+         const float pi2 = std::numbers::pi_v<float> * 2.0f;
+         const int segments = _block_editor_config.ring.segments;
+
+         for (int i = 0; i < segments; ++i) {
+            const float segment_begin = (i / static_cast<float>(segments)) * pi2;
+            const float segment_end = ((i + 1) / static_cast<float>(segments)) * pi2;
+
+            const float3 beginLS = {
+               cosf(segment_begin),
+               0.0f,
+               sinf(segment_begin),
+            };
+            const float3 endLS = {
+               cosf(segment_end),
+               0.0f,
+               sinf(segment_end),
+            };
+
+            _tool_visualizers.add_line_overlay(positionWS + beginLS * inner_radius,
+                                               positionWS + endLS * inner_radius,
+                                               line_color);
+         }
+      } break;
+      case draw_block_step::ring_outer_radius: {
+         const float3 positionWS = _block_editor_context.draw_block.ring.start;
+         const float inner_radius = _block_editor_context.draw_block.ring.inner_radius;
+
+         const float cursor_radius =
+            distance(float2{positionWS.x, positionWS.z},
+                     float2{cursor_positionWS.x, cursor_positionWS.z});
+         const float outer_radius =
+            std::max((cursor_radius - inner_radius) / 2.0f, 0.0f);
+
+         if (click) {
+            if (_world.blocks.custom.size() < world::max_blocks) {
+               const uint8 material_index = _block_editor_config.paint_material_index;
+               const world::block_custom_id id =
+                  _world.blocks.next_id.custom.aquire();
+
+               _block_editor_context.draw_block.index =
+                  static_cast<uint32>(_world.blocks.custom.size());
+               _block_editor_context.draw_block.block_id = id;
+
+               _edit_stack_world.apply(
+                  edits::make_add_block(
+                     world::block_description_custom{
+                        .position = positionWS,
+                        .mesh_description =
+                           world::block_custom_mesh_description_ring{
+                              .inner_radius = inner_radius,
+                              .outer_radius = outer_radius,
+                              .height = 1.0f,
+                              .segments = _block_editor_config.ring.segments,
+                              .flat_shading = _block_editor_config.ring.flat_shading,
+                              .texture_loops = _block_editor_config.ring.texture_loops,
+                           },
+                        .surface_materials = {material_index, material_index,
+                                              material_index, material_index},
+                        .surface_texture_mode = {world::block_texture_mode::world_space_auto,
+                                                 world::block_texture_mode::world_space_auto,
+                                                 world::block_texture_mode::unwrapped,
+                                                 world::block_texture_mode::unwrapped}},
+                     _block_editor_config.new_block_layer, id),
+                  _edit_context);
+            }
+            else {
+               MessageBoxA(_window,
+                           fmt::format("Max Custom Blocks ({}) Reached", world::max_blocks)
+                              .c_str(),
+                           "Limit Reached", MB_OK);
+
+               _block_editor_context.tool = block_edit_tool::none;
+            }
+
+            _block_editor_context.draw_block.height_plane = std::nullopt;
+            _block_editor_context.draw_block.ring.outer_radius = outer_radius;
+            _block_editor_context.draw_block.step = draw_block_step::ring_height;
+         }
+
+         const float pi2 = std::numbers::pi_v<float> * 2.0f;
+         const float ring_radius = inner_radius + outer_radius * 2.0f;
+         const int segments = _block_editor_config.ring.segments;
+
+         for (int i = 0; i < segments; ++i) {
+            const float segment_begin = (i / static_cast<float>(segments)) * pi2;
+            const float segment_end = ((i + 1) / static_cast<float>(segments)) * pi2;
+
+            const float3 beginLS = {
+               cosf(segment_begin),
+               0.0f,
+               sinf(segment_begin),
+            };
+            const float3 endLS = {
+               cosf(segment_end),
+               0.0f,
+               sinf(segment_end),
+            };
+
+            const float3 offsetWS = positionWS + float3{0.0f, 0.001f, 0.0f};
+
+            const float3 v0 = endLS * inner_radius + offsetWS;
+            const float3 v1 = endLS * ring_radius + offsetWS;
+            const float3 v2 = beginLS * ring_radius + offsetWS;
+            const float3 v3 = beginLS * inner_radius + offsetWS;
+
+            _tool_visualizers.add_line_overlay(v0, v3, line_color);
+            _tool_visualizers.add_line_overlay(v1, v2, line_color);
+
+            _tool_visualizers.add_triangle_additive(v0, v1, v2,
+                                                    line_color & 0x20'ff'ff'ff);
+            _tool_visualizers.add_triangle_additive(v0, v2, v3,
+                                                    line_color & 0x20'ff'ff'ff);
+         }
+
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+      } break;
+      case draw_block_step::ring_height: {
+         const float3 draw_block_start = _block_editor_context.draw_block.ring.start;
+         const float inner_radius = _block_editor_context.draw_block.ring.inner_radius;
+         const float outer_radius = _block_editor_context.draw_block.ring.outer_radius;
+
+         graphics::camera_ray rayWS =
+            make_camera_ray(_camera,
+                            {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                            {ImGui::GetMainViewport()->Size.x,
+                             ImGui::GetMainViewport()->Size.y});
+
+         float3 cursor_position = cursor_positionWS;
+
+         if (float hit = iCylinderInfinite(rayWS.origin, rayWS.direction,
+                                           draw_block_start, float3{0.0f, 1.0f, 0.0f},
+                                           inner_radius + outer_radius * 2.0f)
+                            .x;
+             hit >= 0.0f and hit < distance(_camera.position(), cursor_positionWS)) {
+            cursor_position = rayWS.origin + hit * rayWS.direction;
+         }
+
+         const float unaligned_ring_height =
+            cursor_position.y - draw_block_start.y;
+         const float ring_height =
+            align ? std::round(unaligned_ring_height / alignment.y) * alignment.y
+                  : unaligned_ring_height;
+
+         const float3 position = {draw_block_start.x,
+                                  draw_block_start.y + (ring_height / 2.0f),
+                                  draw_block_start.z};
+
+         if (const uint32 index = _block_editor_context.draw_block.index;
+             index < _world.blocks.custom.size() and
+             _world.blocks.custom.ids[index] == _block_editor_context.draw_block.block_id) {
+            _edit_stack_world
+               .apply(edits::make_set_block_custom_metrics(
+                         index, {}, position,
+                         world::block_custom_mesh_description_ring{
+                            .inner_radius = inner_radius,
+                            .outer_radius = outer_radius,
+                            .height = ring_height / 2.0f,
+                            .segments = _block_editor_config.ring.segments,
+                            .flat_shading = _block_editor_config.ring.flat_shading,
+                            .texture_loops = _block_editor_config.ring.texture_loops,
+                         }),
+                      _edit_context, {.transparent = true});
+         }
+
+         _tool_visualizers
+            .add_line_overlay(position - float3{0.0f, ring_height * 0.5f, 0.0f},
+                              position + float3{0.0f, ring_height * 0.5f, 0.0f},
+                              line_color);
+
+         if (click) {
+            _block_editor_context.draw_block = {};
+
+            _edit_stack_world.close_last();
+         }
+      } break;
       }
    }
    else if (_block_editor_context.tool == block_edit_tool::rotate_texture) {
@@ -2577,6 +2796,59 @@ void world_edit::ui_show_block_editor() noexcept
                                                 .size = size,
                                                 .step_height = stairway.step_height,
                                                 .first_step_offset = stairway.first_step_offset,
+                                             }),
+                                          _edit_context);
+               }
+            } break;
+            case world::block_custom_mesh_type::ring: {
+               const world::block_custom_mesh_description_ring& ring =
+                  block.mesh_description.ring;
+
+               float3 size = {ring.outer_radius, ring.height, ring.outer_radius};
+               float3 positionWS = block.position;
+
+               if (_gizmos.gizmo_size(
+                      {
+                         .name = "Resize Block (Ring, Outer)",
+                         .alignment = _editor_grid_size,
+                         .gizmo_rotation = block.rotation,
+                      },
+                      positionWS, size)) {
+                  const float new_radius =
+                     size.x != ring.outer_radius ? size.x : size.z;
+
+                  _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                             *selected_index, block.rotation, positionWS,
+                                             world::block_custom_mesh_description_ring{
+                                                .inner_radius = ring.inner_radius,
+                                                .outer_radius = std::max(new_radius, 0.0f),
+                                                .height = size.y,
+                                                .segments = ring.segments,
+                                             }),
+                                          _edit_context);
+               }
+
+               size = {ring.inner_radius, ring.height, ring.inner_radius};
+               positionWS = block.position;
+
+               if (_gizmos.gizmo_size(
+                      {
+                         .name = "Resize Block (Ring, Inner)",
+                         .alignment = _editor_grid_size,
+                         .gizmo_rotation = block.rotation,
+                         .show_y_axis = false,
+                      },
+                      positionWS, size)) {
+                  const float new_radius =
+                     size.x != ring.inner_radius ? size.x : size.z;
+
+                  _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                             *selected_index, block.rotation, positionWS,
+                                             world::block_custom_mesh_description_ring{
+                                                .inner_radius = std::max(new_radius, 0.0f),
+                                                .outer_radius = ring.outer_radius,
+                                                .height = size.y,
+                                                .segments = ring.segments,
                                              }),
                                           _edit_context);
                }
