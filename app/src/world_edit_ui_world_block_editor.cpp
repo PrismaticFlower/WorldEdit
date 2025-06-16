@@ -2824,6 +2824,7 @@ void world_edit::ui_show_block_editor() noexcept
                                                 .outer_radius = std::max(new_radius, 0.0f),
                                                 .height = size.y,
                                                 .segments = ring.segments,
+                                                .flat_shading = ring.flat_shading,
                                              }),
                                           _edit_context);
                }
@@ -2849,6 +2850,7 @@ void world_edit::ui_show_block_editor() noexcept
                                                 .outer_radius = ring.outer_radius,
                                                 .height = size.y,
                                                 .segments = ring.segments,
+                                                .flat_shading = ring.flat_shading,
                                              }),
                                           _edit_context);
                }
