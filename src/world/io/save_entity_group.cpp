@@ -682,6 +682,9 @@ void save_entity_group_impl(File& file, const entity_group& group)
          case block_custom_mesh_type::ring: {
             file.write_ln("   Ring()");
          } break;
+         case block_custom_mesh_type::beveled_box: {
+            file.write_ln("   BeveledBox()");
+         } break;
          }
 
          file.write_ln("   {");
@@ -711,6 +714,17 @@ void save_entity_group_impl(File& file, const entity_group& group)
             file.write_ln("      Segments({});", ring.segments);
             if (ring.flat_shading) file.write_ln("      FlatShading();");
             file.write_ln("      TextureLoops({});", ring.texture_loops);
+         } break;
+         case block_custom_mesh_type::beveled_box: {
+            const world::block_custom_mesh_description_beveled_box& box =
+               block.mesh_description.beveled_box;
+
+            file.write_ln("      Size({}, {}, {});", box.size.x, box.size.y,
+                          box.size.z);
+            file.write_ln("      Amount({});", box.amount);
+            if (box.bevel_top) file.write_ln("      BevelTop();");
+            if (box.bevel_sides) file.write_ln("      BevelSides();");
+            if (box.bevel_bottom) file.write_ln("      BevelBottom();");
          } break;
          }
 

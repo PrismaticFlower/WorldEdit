@@ -25,6 +25,23 @@ enum ring_surface {
    ring_surface_inner
 };
 
+enum beveled_box_surface {
+   beveled_box_surface_x,
+   beveled_box_surface_y,
+   beveled_box_surface_z,
+   beveled_box_surface_top_edge,
+   beveled_box_surface_side_edge,
+   beveled_box_surface_bottom_edge,
+};
+
+auto calculate_normal(const float3& v0, const float3& v1, const float3& v2)
+{
+   const float3 edge0 = v1 - v0;
+   const float3 edge1 = v2 - v0;
+
+   return normalize(cross(edge0, edge1));
+}
+
 }
 
 auto generate_mesh(const block_custom_mesh_description_stairway& stairway) noexcept
@@ -1818,6 +1835,1107 @@ auto generate_mesh(const block_custom_mesh_description_ring& ring) noexcept -> b
          mesh.snap_edges.push_back({neg_y_inner, next_neg_y_inner});
          mesh.snap_edges.push_back({neg_y_outer, next_neg_y_outer});
       }
+   }
+
+   return mesh;
+}
+
+auto generate_mesh(const block_custom_mesh_description_beveled_box& box) noexcept
+   -> block_custom_mesh
+{
+   const float3 size = box.size;
+   const float amount =
+      std::max(std::min(std::min(std::min(box.size.x, box.size.y), box.size.z),
+                        box.amount),
+               0.0f);
+
+   block_custom_mesh mesh;
+
+   const float top_amount = box.bevel_top ? amount : 0.0f;
+   const float sides_amount = box.bevel_sides ? amount : 0.0f;
+   const float bottom_amount = box.bevel_bottom ? amount : 0.0f;
+
+   const std::array<float3, 4> top = {
+      float3{size.x - amount, size.y, -size.z + amount},
+      float3{-size.x + amount, size.y, -size.z + amount},
+      float3{-size.x + amount, size.y, size.z - amount},
+      float3{size.x - amount, size.y, size.z - amount},
+   };
+
+   const std::array<float3, 4> bottom = {
+      float3{size.x - amount, -size.y, size.z - amount},
+      float3{-size.x + amount, -size.y, size.z - amount},
+      float3{-size.x + amount, -size.y, -size.z + amount},
+      float3{size.x - amount, -size.y, -size.z + amount},
+   };
+
+   const std::array<float3, 4> left = {
+      float3{-size.x, size.y - top_amount, -size.z + sides_amount},
+      float3{-size.x, -size.y + bottom_amount, -size.z + sides_amount},
+      float3{-size.x, -size.y + bottom_amount, size.z - sides_amount},
+      float3{-size.x, size.y - top_amount, size.z - sides_amount},
+   };
+
+   const std::array<float3, 4> right = {
+      float3{size.x, size.y - top_amount, size.z - sides_amount},
+      float3{size.x, -size.y + bottom_amount, size.z - sides_amount},
+      float3{size.x, -size.y + bottom_amount, -size.z + sides_amount},
+      float3{size.x, size.y - top_amount, -size.z + sides_amount},
+   };
+
+   const std::array<float3, 4> front = {
+      float3{size.x - sides_amount, size.y - top_amount, size.z},
+      float3{-size.x + sides_amount, size.y - top_amount, size.z},
+      float3{-size.x + sides_amount, -size.y + bottom_amount, size.z},
+      float3{size.x - sides_amount, -size.y + bottom_amount, size.z},
+   };
+
+   const std::array<float3, 4> back = {
+
+      float3{size.x - sides_amount, -size.y + bottom_amount, -size.z},
+      float3{-size.x + sides_amount, -size.y + bottom_amount, -size.z},
+      float3{-size.x + sides_amount, size.y - top_amount, -size.z},
+      float3{size.x - sides_amount, size.y - top_amount, -size.z},
+   };
+
+   // Visible Mesh
+   {
+      // 96 verts, 44 tris, 18 occluders
+
+      uint16 vertex_index = 0;
+
+      mesh.vertices.reserve(box.bevel_sides ? 96 : 56);
+      mesh.triangles.reserve(box.bevel_sides ? 44 : 28);
+      mesh.occluders.reserve(box.bevel_sides ? 18 : 14);
+
+      // Top
+      {
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = top[0],
+            .normal = {0.0f, 1.0f, 0.0f},
+            .texcoords = float2{top[0].z / size.z, top[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_y,
+         });
+         mesh.vertices.push_back({
+            .position = top[1],
+            .normal = {0.0f, 1.0f, 0.0f},
+            .texcoords = float2{top[1].z / size.z, top[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_y,
+         });
+         mesh.vertices.push_back({
+            .position = top[2],
+            .normal = {0.0f, 1.0f, 0.0f},
+            .texcoords = float2{top[2].z / size.z, top[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_y,
+         });
+         mesh.vertices.push_back({
+            .position = top[3],
+            .normal = {0.0f, 1.0f, 0.0f},
+            .texcoords = float2{top[3].z / size.z, top[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_y,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Bottom
+      {
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = bottom[0],
+            .normal = {0.0f, -1.0f, 0.0f},
+            .texcoords = float2{bottom[0].z / size.z, bottom[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_y,
+         });
+         mesh.vertices.push_back({
+            .position = bottom[1],
+            .normal = {0.0f, -1.0f, 0.0f},
+            .texcoords = float2{bottom[1].z / size.z, bottom[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_y,
+         });
+         mesh.vertices.push_back({
+            .position = bottom[2],
+            .normal = {0.0f, -1.0f, 0.0f},
+            .texcoords = float2{bottom[2].z / size.z, bottom[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_y,
+         });
+         mesh.vertices.push_back({
+            .position = bottom[3],
+            .normal = {0.0f, -1.0f, 0.0f},
+            .texcoords = float2{bottom[3].z / size.z, bottom[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_y,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Left
+      {
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = left[0],
+            .normal = {-1.0f, 0.0f, 0.0f},
+            .texcoords = float2{left[0].z / size.z, left[0].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_x,
+         });
+         mesh.vertices.push_back({
+            .position = left[1],
+            .normal = {-1.0f, 0.0f, 0.0f},
+            .texcoords = float2{left[1].z / size.z, left[1].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_x,
+         });
+         mesh.vertices.push_back({
+            .position = left[2],
+            .normal = {-1.0f, 0.0f, 0.0f},
+            .texcoords = float2{left[2].z / size.z, left[2].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_x,
+         });
+         mesh.vertices.push_back({
+            .position = left[3],
+            .normal = {-1.0f, 0.0f, 0.0f},
+            .texcoords = float2{left[3].z / size.z, left[3].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_x,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Right
+      {
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = right[0],
+            .normal = {1.0f, 0.0f, 0.0f},
+            .texcoords = float2{right[0].z / size.z, right[0].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_x,
+         });
+         mesh.vertices.push_back({
+            .position = right[1],
+            .normal = {1.0f, 0.0f, 0.0f},
+            .texcoords = float2{right[1].z / size.z, right[1].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_x,
+         });
+         mesh.vertices.push_back({
+            .position = right[2],
+            .normal = {1.0f, 0.0f, 0.0f},
+            .texcoords = float2{right[2].z / size.z, right[2].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_x,
+         });
+         mesh.vertices.push_back({
+            .position = right[3],
+            .normal = {1.0f, 0.0f, 0.0f},
+            .texcoords = float2{right[3].z / size.z, right[3].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_x,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Front
+      {
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = front[0],
+            .normal = {0.0f, 0.0f, 1.0f},
+            .texcoords = float2{front[0].x / size.x, front[0].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_z,
+         });
+         mesh.vertices.push_back({
+            .position = front[1],
+            .normal = {0.0f, 0.0f, 1.0f},
+            .texcoords = float2{front[1].x / size.x, front[1].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_z,
+         });
+         mesh.vertices.push_back({
+            .position = front[2],
+            .normal = {0.0f, 0.0f, 1.0f},
+            .texcoords = float2{front[2].x / size.x, front[2].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_z,
+         });
+         mesh.vertices.push_back({
+            .position = front[3],
+            .normal = {0.0f, 0.0f, 1.0f},
+            .texcoords = float2{front[3].x / size.x, front[3].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_z,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Back
+      {
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = back[0],
+            .normal = {0.0f, 0.0f, -1.0f},
+            .texcoords = float2{back[0].x / size.x, back[0].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_z,
+         });
+         mesh.vertices.push_back({
+            .position = back[1],
+            .normal = {0.0f, 0.0f, -1.0f},
+            .texcoords = float2{back[1].x / size.x, back[1].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_z,
+         });
+         mesh.vertices.push_back({
+            .position = back[2],
+            .normal = {0.0f, 0.0f, -1.0f},
+            .texcoords = float2{back[2].x / size.x, back[2].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_z,
+         });
+         mesh.vertices.push_back({
+            .position = back[3],
+            .normal = {0.0f, 0.0f, -1.0f},
+            .texcoords = float2{back[3].x / size.x, back[3].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_z,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Top Left
+      {
+         const float3 normal = calculate_normal(top[2], top[1], left[0]);
+
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+         mesh.vertices.push_back({
+            .position = top[2],
+            .normal = normal,
+            .texcoords = float2{top[2].z / size.z, top[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = top[1],
+            .normal = normal,
+            .texcoords = float2{top[1].z / size.z, top[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = left[0],
+            .normal = normal,
+            .texcoords = float2{left[0].z / size.z, left[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = left[3],
+            .normal = normal,
+            .texcoords = float2{left[3].z / size.z, left[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Top Right
+      {
+         const float3 normal = calculate_normal(right[0], right[3], top[0]);
+
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = right[0],
+            .normal = normal,
+            .texcoords = float2{right[0].z / size.z, right[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = right[3],
+            .normal = normal,
+            .texcoords = float2{right[3].z / size.z, right[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = top[0],
+            .normal = normal,
+            .texcoords = float2{top[0].z / size.z, top[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = top[3],
+            .normal = normal,
+            .texcoords = float2{top[3].z / size.z, top[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Top Front
+      {
+         const float3 normal = calculate_normal(front[1], front[0], top[3]);
+
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = front[1],
+            .normal = normal,
+            .texcoords = float2{front[1].z / size.z, front[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = front[0],
+            .normal = normal,
+            .texcoords = float2{front[0].z / size.z, front[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = top[3],
+            .normal = normal,
+            .texcoords = float2{top[3].z / size.z, top[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = top[2],
+            .normal = normal,
+            .texcoords = float2{top[2].z / size.z, top[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Top Back
+      {
+         const float3 normal = calculate_normal(top[1], top[0], back[3]);
+
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = top[1],
+            .normal = normal,
+            .texcoords = float2{top[1].z / size.z, top[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = top[0],
+            .normal = normal,
+            .texcoords = float2{top[0].z / size.z, top[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = back[3],
+            .normal = normal,
+            .texcoords = float2{back[3].z / size.z, back[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = back[2],
+            .normal = normal,
+            .texcoords = float2{back[2].z / size.z, back[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Top Left Front
+      if (box.bevel_sides) {
+         const float3 normal = calculate_normal(top[2], left[3], front[1]);
+
+         const std::array<uint16, 3> tri = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = top[2],
+            .normal = normal,
+            .texcoords = float2{top[2].z / size.z, top[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = left[3],
+            .normal = normal,
+            .texcoords = float2{left[3].z / size.z, left[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = front[1],
+            .normal = normal,
+            .texcoords = float2{front[1].z / size.z, front[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+
+         mesh.triangles.push_back(tri);
+      }
+
+      // Top Right Front
+      if (box.bevel_sides) {
+         const float3 normal = calculate_normal(front[0], right[0], top[3]);
+
+         const std::array<uint16, 3> tri = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = front[0],
+            .normal = normal,
+            .texcoords = float2{front[0].z / size.z, front[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = right[0],
+            .normal = normal,
+            .texcoords = float2{right[0].z / size.z, right[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = top[3],
+            .normal = normal,
+            .texcoords = float2{top[3].z / size.z, top[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+
+         mesh.triangles.push_back(tri);
+      }
+
+      // Top Left Back
+      if (box.bevel_sides) {
+         const float3 normal = calculate_normal(back[2], left[0], top[1]);
+
+         const std::array<uint16, 3> tri = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = back[2],
+            .normal = normal,
+            .texcoords = float2{back[2].z / size.z, back[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = left[0],
+            .normal = normal,
+            .texcoords = float2{left[0].z / size.z, left[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = top[1],
+            .normal = normal,
+            .texcoords = float2{top[1].z / size.z, top[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+
+         mesh.triangles.push_back(tri);
+      }
+
+      // Top Right Back
+      if (box.bevel_sides) {
+         const float3 normal = calculate_normal(top[0], right[3], back[3]);
+
+         const std::array<uint16, 3> tri = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = top[0],
+            .normal = normal,
+            .texcoords = float2{top[0].z / size.z, top[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = right[3],
+            .normal = normal,
+            .texcoords = float2{right[3].z / size.z, right[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+         mesh.vertices.push_back({
+            .position = back[3],
+            .normal = normal,
+            .texcoords = float2{back[3].z / size.z, back[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_top_edge,
+         });
+
+         mesh.triangles.push_back(tri);
+      }
+
+      // Bottom Left
+      {
+         const float3 normal = calculate_normal(left[2], left[1], bottom[2]);
+
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = left[2],
+            .normal = normal,
+            .texcoords = float2{left[2].z / size.z, left[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = left[1],
+            .normal = normal,
+            .texcoords = float2{left[1].z / size.z, left[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = bottom[2],
+            .normal = normal,
+            .texcoords = float2{bottom[2].z / size.z, bottom[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = bottom[1],
+            .normal = normal,
+            .texcoords = float2{bottom[1].z / size.z, bottom[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Bottom Right
+      {
+         const float3 normal = calculate_normal(bottom[0], bottom[3], right[2]);
+
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = bottom[0],
+            .normal = normal,
+            .texcoords = float2{bottom[0].z / size.z, bottom[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = bottom[3],
+            .normal = normal,
+            .texcoords = float2{bottom[3].z / size.z, bottom[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = right[2],
+            .normal = normal,
+            .texcoords = float2{right[2].z / size.z, right[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = right[1],
+            .normal = normal,
+            .texcoords = float2{right[1].z / size.z, right[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Bottom Front
+      {
+         const float3 normal = calculate_normal(bottom[1], bottom[0], front[3]);
+
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = bottom[1],
+            .normal = normal,
+            .texcoords = float2{bottom[1].z / size.z, bottom[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = bottom[0],
+            .normal = normal,
+            .texcoords = float2{bottom[0].z / size.z, bottom[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = front[3],
+            .normal = normal,
+            .texcoords = float2{front[3].z / size.z, front[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = front[2],
+            .normal = normal,
+            .texcoords = float2{front[2].z / size.z, front[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Bottom Back
+      {
+         const float3 normal = calculate_normal(back[1], back[0], bottom[3]);
+
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = back[1],
+            .normal = normal,
+            .texcoords = float2{back[1].z / size.z, back[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = back[0],
+            .normal = normal,
+            .texcoords = float2{back[0].z / size.z, back[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = bottom[3],
+            .normal = normal,
+            .texcoords = float2{bottom[3].z / size.z, bottom[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = bottom[2],
+            .normal = normal,
+            .texcoords = float2{bottom[2].z / size.z, bottom[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      // Bottom Left Front
+      if (box.bevel_sides) {
+         const float3 normal = calculate_normal(front[2], left[2], bottom[1]);
+
+         const std::array<uint16, 3> tri = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = front[2],
+            .normal = normal,
+            .texcoords = float2{front[2].z / size.z, front[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = left[2],
+            .normal = normal,
+            .texcoords = float2{left[2].z / size.z, left[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = bottom[1],
+            .normal = normal,
+            .texcoords = float2{bottom[1].z / size.z, bottom[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+
+         mesh.triangles.push_back(tri);
+      }
+
+      // Bottom Right Front
+      if (box.bevel_sides) {
+         const float3 normal = calculate_normal(bottom[0], right[1], front[3]);
+
+         const std::array<uint16, 3> tri = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = bottom[0],
+            .normal = normal,
+            .texcoords = float2{bottom[0].z / size.z, bottom[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = right[1],
+            .normal = normal,
+            .texcoords = float2{right[1].z / size.z, right[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = front[3],
+            .normal = normal,
+            .texcoords = float2{front[3].z / size.z, front[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+
+         mesh.triangles.push_back(tri);
+      }
+
+      // Bottom Left Back
+      if (box.bevel_sides) {
+         const float3 normal = calculate_normal(bottom[2], left[1], back[1]);
+
+         const std::array<uint16, 3> tri = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = bottom[2],
+            .normal = normal,
+            .texcoords = float2{front[2].z / size.z, front[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = left[1],
+            .normal = normal,
+            .texcoords = float2{left[1].z / size.z, left[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = back[1],
+            .normal = normal,
+            .texcoords = float2{back[1].z / size.z, back[1].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+
+         mesh.triangles.push_back(tri);
+      }
+
+      // Bottom Right Back
+      if (box.bevel_sides) {
+         const float3 normal = calculate_normal(back[0], right[2], bottom[3]);
+
+         const std::array<uint16, 3> tri = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = back[0],
+            .normal = normal,
+            .texcoords = float2{back[0].z / size.z, back[0].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = right[2],
+            .normal = normal,
+            .texcoords = float2{right[2].z / size.z, right[2].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+         mesh.vertices.push_back({
+            .position = bottom[3],
+            .normal = normal,
+            .texcoords = float2{bottom[3].z / size.z, bottom[3].x / size.x} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_bottom_edge,
+         });
+
+         mesh.triangles.push_back(tri);
+      }
+
+      // Left Front
+      if (box.bevel_sides) {
+         const float3 normal = calculate_normal(front[2], front[1], left[3]);
+
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = front[2],
+            .normal = normal,
+            .texcoords = float2{front[2].z / size.z, front[2].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+         mesh.vertices.push_back({
+            .position = front[1],
+            .normal = normal,
+            .texcoords = float2{front[1].z / size.z, front[1].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+         mesh.vertices.push_back({
+            .position = left[3],
+            .normal = normal,
+            .texcoords = float2{left[3].z / size.z, left[3].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+         mesh.vertices.push_back({
+            .position = left[2],
+            .normal = normal,
+            .texcoords = float2{left[2].z / size.z, left[2].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      //  Right Front
+      if (box.bevel_sides) {
+         const float3 normal = calculate_normal(front[0], front[3], right[1]);
+
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = front[0],
+            .normal = normal,
+            .texcoords = float2{front[0].z / size.z, front[0].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+         mesh.vertices.push_back({
+            .position = front[3],
+            .normal = normal,
+            .texcoords = float2{front[3].z / size.z, front[3].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+         mesh.vertices.push_back({
+            .position = right[1],
+            .normal = normal,
+            .texcoords = float2{right[1].z / size.z, right[1].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+         mesh.vertices.push_back({
+            .position = right[0],
+            .normal = normal,
+            .texcoords = float2{right[0].z / size.z, right[0].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      //  Left Back
+      if (box.bevel_sides) {
+         const float3 normal = calculate_normal(back[2], back[1], left[1]);
+
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = back[2],
+            .normal = normal,
+            .texcoords = float2{back[2].z / size.z, back[2].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+         mesh.vertices.push_back({
+            .position = back[1],
+            .normal = normal,
+            .texcoords = float2{back[1].z / size.z, back[1].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+         mesh.vertices.push_back({
+            .position = left[1],
+            .normal = normal,
+            .texcoords = float2{left[1].z / size.z, left[1].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+         mesh.vertices.push_back({
+            .position = left[0],
+            .normal = normal,
+            .texcoords = float2{left[0].z / size.z, left[0].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+
+      //  Right Back
+      if (box.bevel_sides) {
+         const float3 normal = calculate_normal(right[2], back[0], back[3]);
+
+         const std::array<uint16, 4> quad = {
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+            vertex_index++,
+         };
+
+         mesh.vertices.push_back({
+            .position = right[2],
+            .normal = normal,
+            .texcoords = float2{right[2].z / size.z, right[2].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+         mesh.vertices.push_back({
+            .position = back[0],
+            .normal = normal,
+            .texcoords = float2{back[0].z / size.z, back[0].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+         mesh.vertices.push_back({
+            .position = back[3],
+            .normal = normal,
+            .texcoords = float2{back[3].z / size.z, back[3].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+         mesh.vertices.push_back({
+            .position = right[3],
+            .normal = normal,
+            .texcoords = float2{right[3].z / size.z, right[3].y / size.y} * 0.5f + 0.5f,
+            .surface_index = beveled_box_surface_side_edge,
+         });
+
+         mesh.triangles.push_back({quad[0], quad[1], quad[2]});
+         mesh.triangles.push_back({quad[0], quad[2], quad[3]});
+
+         mesh.occluders.push_back(quad);
+      }
+   }
+
+   mesh.collision_vertices.reserve(mesh.vertices.size());
+
+   for (const block_vertex& vertex : mesh.vertices) {
+      mesh.collision_vertices.push_back(
+         {.position = vertex.position, .surface_index = vertex.surface_index});
+   }
+
+   mesh.collision_triangles = mesh.triangles;
+   mesh.collision_occluders = mesh.occluders;
+
+   // Snapping Points
+   {
+      mesh.snap_points = {// top corners
+                          float3{box.size.x, box.size.y, box.size.z},
+                          float3{-box.size.x, box.size.y, box.size.z},
+                          float3{-box.size.x, box.size.y, -box.size.z},
+                          float3{box.size.x, box.size.y, -box.size.z},
+                          // bottom corners
+                          float3{box.size.x, -box.size.y, box.size.z},
+                          float3{-box.size.x, -box.size.y, box.size.z},
+                          float3{-box.size.x, -box.size.y, -box.size.z},
+                          float3{box.size.x, -box.size.y, -box.size.z}};
+
+      mesh.snap_edges = {
+         {0, 1}, {1, 2}, {2, 3}, {3, 0}, //
+         {4, 5}, {5, 6}, {6, 7}, {7, 5}, //
+         {0, 4}, {1, 5}, {2, 6}, {3, 7}, //
+      };
    }
 
    return mesh;

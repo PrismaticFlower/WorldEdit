@@ -207,6 +207,7 @@ enum class draw_block_type {
    hemisphere,
    pyramid,
    ring,
+   beveled_box,
 };
 
 enum class draw_block_step : uint8 {
@@ -234,6 +235,9 @@ enum class draw_block_step : uint8 {
    ring_inner_radius,
    ring_outer_radius,
    ring_height,
+   beveled_box_depth,
+   beveled_box_width,
+   beveled_box_height,
 };
 
 enum class draw_block_cursor_plane : uint8 { none, x, y, z };
@@ -1013,6 +1017,14 @@ private:
          float texture_loops = 1.0f;
       } ring;
 
+      struct beveled_box {
+         float amount = 0.125f;
+
+         bool bevel_top = true;
+         bool bevel_bottom = true;
+         bool bevel_sides = true;
+      } beveled_box;
+
       bool enable_alignment = true;
       bool enable_snapping = true;
 
@@ -1101,6 +1113,15 @@ private:
             float inner_radius;
             float outer_radius;
          } ring;
+
+         struct beveled_box {
+            float3 start;
+            float depth_x = 0.0f;
+            float depth_z = 0.0f;
+            float width_x = 0.0f;
+            float width_z = 0.0f;
+            quaternion rotation;
+         } beveled_box;
 
          uint32 index = 0;
          world::block_id block_id = world::block_id::none;

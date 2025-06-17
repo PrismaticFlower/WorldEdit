@@ -33,6 +33,9 @@ auto get_bounding_box_local_space(const block_custom_mesh_description& mesh) noe
       return {.min = {-radius, -mesh.ring.height, -radius},
               .max = {radius, mesh.ring.height, radius}};
    }
+   case block_custom_mesh_type::beveled_box: {
+      return {.min = {-mesh.beveled_box.size}, .max = {mesh.beveled_box.size}};
+   }
    }
 
    std::unreachable();

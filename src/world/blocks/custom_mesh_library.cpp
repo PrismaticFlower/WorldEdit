@@ -24,6 +24,11 @@ static H AbslHashValue(H h, const block_custom_mesh_description& desc)
       return H::combine(std::move(h), desc.type, desc.ring.inner_radius,
                         desc.ring.outer_radius, desc.ring.height, desc.ring.segments,
                         desc.ring.flat_shading, desc.ring.texture_loops);
+   case block_custom_mesh_type::beveled_box:
+      return H::combine(std::move(h), desc.type, desc.beveled_box.size.x,
+                        desc.beveled_box.size.y, desc.beveled_box.size.z,
+                        desc.beveled_box.amount, desc.beveled_box.bevel_top,
+                        desc.beveled_box.bevel_sides, desc.beveled_box.bevel_bottom);
    }
 
    std::unreachable();
@@ -40,6 +45,8 @@ auto generate_mesh(const block_custom_mesh_description& mesh) noexcept -> block_
       return generate_mesh(mesh.stairway);
    case block_custom_mesh_type::ring:
       return generate_mesh(mesh.ring);
+   case block_custom_mesh_type::beveled_box:
+      return generate_mesh(mesh.beveled_box);
    }
 
    std::unreachable();

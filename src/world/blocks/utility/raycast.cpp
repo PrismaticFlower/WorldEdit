@@ -359,6 +359,17 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
             mesh_proxy_hit = true;
          }
       } break;
+      case block_custom_mesh_type::beveled_box: {
+         const block_custom_mesh_description_beveled_box& beveled_box =
+            block.mesh_description.beveled_box;
+
+         if (float hit; intersect_aabb(ray_originLS, 1.0f / ray_directionLS,
+                                       {-beveled_box.size, beveled_box.size},
+                                       closest, hit) and
+                        hit >= 0.0f) {
+            mesh_proxy_hit = true;
+         }
+      } break;
       }
 
       if (not mesh_proxy_hit) continue;
