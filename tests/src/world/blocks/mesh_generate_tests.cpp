@@ -2262,4 +2262,861 @@ TEST_CASE("world blocks generate_mesh ring", "[World][Blocks]")
    CHECK(mesh.snap_edges[126] == std::array<uint16, 2>{62, 2});
    CHECK(mesh.snap_edges[127] == std::array<uint16, 2>{63, 3});
 }
+
+TEST_CASE("world blocks generate_mesh beveled box", "[World][Blocks]")
+{
+   block_custom_mesh mesh = world::generate_mesh(
+      block_custom_mesh_description_beveled_box{.size = {4.0f, 8.0f, 20.0f},
+                                                .amount = 0.25f,
+                                                .bevel_bottom = false});
+
+   REQUIRE(mesh.vertices.size() == 96);
+
+   CHECK(mesh.vertices[0].position == float3(0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[0].normal == float3(0x0p-1022f, 0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[0].texcoords == float2(0x1.99998p-8f, 0x1.fp-1f));
+   CHECK(mesh.vertices[0].surface_index == 1);
+   CHECK(mesh.vertices[1].position == float3(-0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[1].normal == float3(0x0p-1022f, 0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[1].texcoords == float2(0x1.99998p-8f, 0x1p-5f));
+   CHECK(mesh.vertices[1].surface_index == 1);
+   CHECK(mesh.vertices[2].position == float3(-0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[2].normal == float3(0x0p-1022f, 0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[2].texcoords == float2(0x1.fcccccp-1f, 0x1p-5f));
+   CHECK(mesh.vertices[2].surface_index == 1);
+   CHECK(mesh.vertices[3].position == float3(0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[3].normal == float3(0x0p-1022f, 0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[3].texcoords == float2(0x1.fcccccp-1f, 0x1.fp-1f));
+   CHECK(mesh.vertices[3].surface_index == 1);
+   CHECK(mesh.vertices[4].position == float3(0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[4].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[4].texcoords == float2(0x1.fcccccp-1f, 0x1.fp-1f));
+   CHECK(mesh.vertices[4].surface_index == 1);
+   CHECK(mesh.vertices[5].position == float3(-0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[5].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[5].texcoords == float2(0x1.fcccccp-1f, 0x1p-5f));
+   CHECK(mesh.vertices[5].surface_index == 1);
+   CHECK(mesh.vertices[6].position == float3(-0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[6].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[6].texcoords == float2(0x1.99998p-8f, 0x1p-5f));
+   CHECK(mesh.vertices[6].surface_index == 1);
+   CHECK(mesh.vertices[7].position == float3(0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[7].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[7].texcoords == float2(0x1.99998p-8f, 0x1.fp-1f));
+   CHECK(mesh.vertices[7].surface_index == 1);
+   CHECK(mesh.vertices[8].position == float3(-0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[8].normal == float3(-0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[8].texcoords == float2(0x1.99998p-8f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[8].surface_index == 0);
+   CHECK(mesh.vertices[9].position == float3(-0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[9].normal == float3(-0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[9].texcoords == float2(0x1.99998p-8f, 0x0p-1022f));
+   CHECK(mesh.vertices[9].surface_index == 0);
+   CHECK(mesh.vertices[10].position == float3(-0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[10].normal == float3(-0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[10].texcoords == float2(0x1.fcccccp-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[10].surface_index == 0);
+   CHECK(mesh.vertices[11].position == float3(-0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[11].normal == float3(-0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[11].texcoords == float2(0x1.fcccccp-1f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[11].surface_index == 0);
+   CHECK(mesh.vertices[12].position == float3(0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[12].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[12].texcoords == float2(0x1.fcccccp-1f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[12].surface_index == 0);
+   CHECK(mesh.vertices[13].position == float3(0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[13].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[13].texcoords == float2(0x1.fcccccp-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[13].surface_index == 0);
+   CHECK(mesh.vertices[14].position == float3(0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[14].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[14].texcoords == float2(0x1.99998p-8f, 0x0p-1022f));
+   CHECK(mesh.vertices[14].surface_index == 0);
+   CHECK(mesh.vertices[15].position == float3(0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[15].normal == float3(0x1p+0f, 0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[15].texcoords == float2(0x1.99998p-8f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[15].surface_index == 0);
+   CHECK(mesh.vertices[16].position == float3(0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.vertices[16].normal == float3(0x0p-1022f, 0x0p-1022f, 0x1p+0f));
+   CHECK(mesh.vertices[16].texcoords == float2(0x1.fp-1f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[16].surface_index == 2);
+   CHECK(mesh.vertices[17].position == float3(-0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.vertices[17].normal == float3(0x0p-1022f, 0x0p-1022f, 0x1p+0f));
+   CHECK(mesh.vertices[17].texcoords == float2(0x1p-5f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[17].surface_index == 2);
+   CHECK(mesh.vertices[18].position == float3(-0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.vertices[18].normal == float3(0x0p-1022f, 0x0p-1022f, 0x1p+0f));
+   CHECK(mesh.vertices[18].texcoords == float2(0x1p-5f, 0x0p-1022f));
+   CHECK(mesh.vertices[18].surface_index == 2);
+   CHECK(mesh.vertices[19].position == float3(0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.vertices[19].normal == float3(0x0p-1022f, 0x0p-1022f, 0x1p+0f));
+   CHECK(mesh.vertices[19].texcoords == float2(0x1.fp-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[19].surface_index == 2);
+   CHECK(mesh.vertices[20].position == float3(0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.vertices[20].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
+   CHECK(mesh.vertices[20].texcoords == float2(0x1.fp-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[20].surface_index == 2);
+   CHECK(mesh.vertices[21].position == float3(-0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.vertices[21].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
+   CHECK(mesh.vertices[21].texcoords == float2(0x1p-5f, 0x0p-1022f));
+   CHECK(mesh.vertices[21].surface_index == 2);
+   CHECK(mesh.vertices[22].position == float3(-0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.vertices[22].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
+   CHECK(mesh.vertices[22].texcoords == float2(0x1p-5f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[22].surface_index == 2);
+   CHECK(mesh.vertices[23].position == float3(0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.vertices[23].normal == float3(0x0p-1022f, 0x0p-1022f, -0x1p+0f));
+   CHECK(mesh.vertices[23].texcoords == float2(0x1.fp-1f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[23].surface_index == 2);
+   CHECK(mesh.vertices[24].position == float3(-0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[24].normal ==
+         float3(-0x1.6a09e6p-1f, 0x1.6a09e6p-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[24].texcoords == float2(0x1.fcccccp-1f, 0x1p-5f));
+   CHECK(mesh.vertices[24].surface_index == 3);
+   CHECK(mesh.vertices[25].position == float3(-0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[25].normal ==
+         float3(-0x1.6a09e6p-1f, 0x1.6a09e6p-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[25].texcoords == float2(0x1.99998p-8f, 0x1p-5f));
+   CHECK(mesh.vertices[25].surface_index == 3);
+   CHECK(mesh.vertices[26].position == float3(-0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[26].normal ==
+         float3(-0x1.6a09e6p-1f, 0x1.6a09e6p-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[26].texcoords == float2(0x1.99998p-8f, 0x0p-1022f));
+   CHECK(mesh.vertices[26].surface_index == 3);
+   CHECK(mesh.vertices[27].position == float3(-0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[27].normal ==
+         float3(-0x1.6a09e6p-1f, 0x1.6a09e6p-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[27].texcoords == float2(0x1.fcccccp-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[27].surface_index == 3);
+   CHECK(mesh.vertices[28].position == float3(0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[28].normal == float3(0x1.6a09e6p-1f, 0x1.6a09e6p-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[28].texcoords == float2(0x1.fcccccp-1f, 0x1p+0f));
+   CHECK(mesh.vertices[28].surface_index == 3);
+   CHECK(mesh.vertices[29].position == float3(0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[29].normal == float3(0x1.6a09e6p-1f, 0x1.6a09e6p-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[29].texcoords == float2(0x1.99998p-8f, 0x1p+0f));
+   CHECK(mesh.vertices[29].surface_index == 3);
+   CHECK(mesh.vertices[30].position == float3(0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[30].normal == float3(0x1.6a09e6p-1f, 0x1.6a09e6p-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[30].texcoords == float2(0x1.99998p-8f, 0x1.fp-1f));
+   CHECK(mesh.vertices[30].surface_index == 3);
+   CHECK(mesh.vertices[31].position == float3(0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[31].normal == float3(0x1.6a09e6p-1f, 0x1.6a09e6p-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[31].texcoords == float2(0x1.fcccccp-1f, 0x1.fp-1f));
+   CHECK(mesh.vertices[31].surface_index == 3);
+   CHECK(mesh.vertices[32].position == float3(-0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.vertices[32].normal ==
+         float3(-0x0p-1022f, 0x1.6a09e6p-1f, 0x1.6a09e6p-1f));
+   CHECK(mesh.vertices[32].texcoords == float2(0x1p+0f, 0x1p-5f));
+   CHECK(mesh.vertices[32].surface_index == 3);
+   CHECK(mesh.vertices[33].position == float3(0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.vertices[33].normal ==
+         float3(-0x0p-1022f, 0x1.6a09e6p-1f, 0x1.6a09e6p-1f));
+   CHECK(mesh.vertices[33].texcoords == float2(0x1p+0f, 0x1.fp-1f));
+   CHECK(mesh.vertices[33].surface_index == 3);
+   CHECK(mesh.vertices[34].position == float3(0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[34].normal ==
+         float3(-0x0p-1022f, 0x1.6a09e6p-1f, 0x1.6a09e6p-1f));
+   CHECK(mesh.vertices[34].texcoords == float2(0x1.fcccccp-1f, 0x1.fp-1f));
+   CHECK(mesh.vertices[34].surface_index == 3);
+   CHECK(mesh.vertices[35].position == float3(-0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[35].normal ==
+         float3(-0x0p-1022f, 0x1.6a09e6p-1f, 0x1.6a09e6p-1f));
+   CHECK(mesh.vertices[35].texcoords == float2(0x1.fcccccp-1f, 0x1p-5f));
+   CHECK(mesh.vertices[35].surface_index == 3);
+   CHECK(mesh.vertices[36].position == float3(-0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[36].normal ==
+         float3(0x0p-1022f, 0x1.6a09e6p-1f, -0x1.6a09e6p-1f));
+   CHECK(mesh.vertices[36].texcoords == float2(0x1.99998p-8f, 0x1p-5f));
+   CHECK(mesh.vertices[36].surface_index == 3);
+   CHECK(mesh.vertices[37].position == float3(0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[37].normal ==
+         float3(0x0p-1022f, 0x1.6a09e6p-1f, -0x1.6a09e6p-1f));
+   CHECK(mesh.vertices[37].texcoords == float2(0x1.99998p-8f, 0x1.fp-1f));
+   CHECK(mesh.vertices[37].surface_index == 3);
+   CHECK(mesh.vertices[38].position == float3(0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.vertices[38].normal ==
+         float3(0x0p-1022f, 0x1.6a09e6p-1f, -0x1.6a09e6p-1f));
+   CHECK(mesh.vertices[38].texcoords == float2(0x0p-1022f, 0x1.fp-1f));
+   CHECK(mesh.vertices[38].surface_index == 3);
+   CHECK(mesh.vertices[39].position == float3(-0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.vertices[39].normal ==
+         float3(0x0p-1022f, 0x1.6a09e6p-1f, -0x1.6a09e6p-1f));
+   CHECK(mesh.vertices[39].texcoords == float2(0x0p-1022f, 0x1p-5f));
+   CHECK(mesh.vertices[39].surface_index == 3);
+   CHECK(mesh.vertices[40].position == float3(-0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[40].normal ==
+         float3(-0x1.279a74p-1f, 0x1.279a74p-1f, 0x1.279a74p-1f));
+   CHECK(mesh.vertices[40].texcoords == float2(0x1.fcccccp-1f, 0x1p-5f));
+   CHECK(mesh.vertices[40].surface_index == 3);
+   CHECK(mesh.vertices[41].position == float3(-0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[41].normal ==
+         float3(-0x1.279a74p-1f, 0x1.279a74p-1f, 0x1.279a74p-1f));
+   CHECK(mesh.vertices[41].texcoords == float2(0x1.fcccccp-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[41].surface_index == 3);
+   CHECK(mesh.vertices[42].position == float3(-0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.vertices[42].normal ==
+         float3(-0x1.279a74p-1f, 0x1.279a74p-1f, 0x1.279a74p-1f));
+   CHECK(mesh.vertices[42].texcoords == float2(0x1p+0f, 0x1p-5f));
+   CHECK(mesh.vertices[42].surface_index == 3);
+   CHECK(mesh.vertices[43].position == float3(0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.vertices[43].normal ==
+         float3(0x1.279a74p-1f, 0x1.279a74p-1f, 0x1.279a74p-1f));
+   CHECK(mesh.vertices[43].texcoords == float2(0x1p+0f, 0x1.fp-1f));
+   CHECK(mesh.vertices[43].surface_index == 3);
+   CHECK(mesh.vertices[44].position == float3(0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[44].normal ==
+         float3(0x1.279a74p-1f, 0x1.279a74p-1f, 0x1.279a74p-1f));
+   CHECK(mesh.vertices[44].texcoords == float2(0x1.fcccccp-1f, 0x1p+0f));
+   CHECK(mesh.vertices[44].surface_index == 3);
+   CHECK(mesh.vertices[45].position == float3(0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[45].normal ==
+         float3(0x1.279a74p-1f, 0x1.279a74p-1f, 0x1.279a74p-1f));
+   CHECK(mesh.vertices[45].texcoords == float2(0x1.fcccccp-1f, 0x1.fp-1f));
+   CHECK(mesh.vertices[45].surface_index == 3);
+   CHECK(mesh.vertices[46].position == float3(-0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.vertices[46].normal ==
+         float3(-0x1.279a74p-1f, 0x1.279a74p-1f, -0x1.279a74p-1f));
+   CHECK(mesh.vertices[46].texcoords == float2(0x0p-1022f, 0x1p-5f));
+   CHECK(mesh.vertices[46].surface_index == 3);
+   CHECK(mesh.vertices[47].position == float3(-0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[47].normal ==
+         float3(-0x1.279a74p-1f, 0x1.279a74p-1f, -0x1.279a74p-1f));
+   CHECK(mesh.vertices[47].texcoords == float2(0x1.99998p-8f, 0x0p-1022f));
+   CHECK(mesh.vertices[47].surface_index == 3);
+   CHECK(mesh.vertices[48].position == float3(-0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[48].normal ==
+         float3(-0x1.279a74p-1f, 0x1.279a74p-1f, -0x1.279a74p-1f));
+   CHECK(mesh.vertices[48].texcoords == float2(0x1.99998p-8f, 0x1p-5f));
+   CHECK(mesh.vertices[48].surface_index == 3);
+   CHECK(mesh.vertices[49].position == float3(0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[49].normal ==
+         float3(0x1.279a74p-1f, 0x1.279a74p-1f, -0x1.279a74p-1f));
+   CHECK(mesh.vertices[49].texcoords == float2(0x1.99998p-8f, 0x1.fp-1f));
+   CHECK(mesh.vertices[49].surface_index == 3);
+   CHECK(mesh.vertices[50].position == float3(0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[50].normal ==
+         float3(0x1.279a74p-1f, 0x1.279a74p-1f, -0x1.279a74p-1f));
+   CHECK(mesh.vertices[50].texcoords == float2(0x1.99998p-8f, 0x1p+0f));
+   CHECK(mesh.vertices[50].surface_index == 3);
+   CHECK(mesh.vertices[51].position == float3(0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.vertices[51].normal ==
+         float3(0x1.279a74p-1f, 0x1.279a74p-1f, -0x1.279a74p-1f));
+   CHECK(mesh.vertices[51].texcoords == float2(0x0p-1022f, 0x1.fp-1f));
+   CHECK(mesh.vertices[51].surface_index == 3);
+   CHECK(mesh.vertices[52].position == float3(-0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[52].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[52].texcoords == float2(0x1.fcccccp-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[52].surface_index == 5);
+   CHECK(mesh.vertices[53].position == float3(-0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[53].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[53].texcoords == float2(0x1.99998p-8f, 0x0p-1022f));
+   CHECK(mesh.vertices[53].surface_index == 5);
+   CHECK(mesh.vertices[54].position == float3(-0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[54].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[54].texcoords == float2(0x1.99998p-8f, 0x1p-5f));
+   CHECK(mesh.vertices[54].surface_index == 5);
+   CHECK(mesh.vertices[55].position == float3(-0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[55].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[55].texcoords == float2(0x1.fcccccp-1f, 0x1p-5f));
+   CHECK(mesh.vertices[55].surface_index == 5);
+   CHECK(mesh.vertices[56].position == float3(0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[56].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[56].texcoords == float2(0x1.fcccccp-1f, 0x1.fp-1f));
+   CHECK(mesh.vertices[56].surface_index == 5);
+   CHECK(mesh.vertices[57].position == float3(0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[57].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[57].texcoords == float2(0x1.99998p-8f, 0x1.fp-1f));
+   CHECK(mesh.vertices[57].surface_index == 5);
+   CHECK(mesh.vertices[58].position == float3(0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[58].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[58].texcoords == float2(0x1.99998p-8f, 0x1p+0f));
+   CHECK(mesh.vertices[58].surface_index == 5);
+   CHECK(mesh.vertices[59].position == float3(0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[59].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[59].texcoords == float2(0x1.fcccccp-1f, 0x1p+0f));
+   CHECK(mesh.vertices[59].surface_index == 5);
+   CHECK(mesh.vertices[60].position == float3(-0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[60].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[60].texcoords == float2(0x1.fcccccp-1f, 0x1p-5f));
+   CHECK(mesh.vertices[60].surface_index == 5);
+   CHECK(mesh.vertices[61].position == float3(0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[61].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[61].texcoords == float2(0x1.fcccccp-1f, 0x1.fp-1f));
+   CHECK(mesh.vertices[61].surface_index == 5);
+   CHECK(mesh.vertices[62].position == float3(0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.vertices[62].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[62].texcoords == float2(0x1p+0f, 0x1.fp-1f));
+   CHECK(mesh.vertices[62].surface_index == 5);
+   CHECK(mesh.vertices[63].position == float3(-0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.vertices[63].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[63].texcoords == float2(0x1p+0f, 0x1p-5f));
+   CHECK(mesh.vertices[63].surface_index == 5);
+   CHECK(mesh.vertices[64].position == float3(-0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.vertices[64].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[64].texcoords == float2(0x0p-1022f, 0x1p-5f));
+   CHECK(mesh.vertices[64].surface_index == 5);
+   CHECK(mesh.vertices[65].position == float3(0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.vertices[65].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[65].texcoords == float2(0x0p-1022f, 0x1.fp-1f));
+   CHECK(mesh.vertices[65].surface_index == 5);
+   CHECK(mesh.vertices[66].position == float3(0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[66].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[66].texcoords == float2(0x1.99998p-8f, 0x1.fp-1f));
+   CHECK(mesh.vertices[66].surface_index == 5);
+   CHECK(mesh.vertices[67].position == float3(-0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[67].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[67].texcoords == float2(0x1.99998p-8f, 0x1p-5f));
+   CHECK(mesh.vertices[67].surface_index == 5);
+   CHECK(mesh.vertices[68].position == float3(-0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.vertices[68].normal == float3(0x0p-1022f, -0x1p+0f, -0x0p-1022f));
+   CHECK(mesh.vertices[68].texcoords == float2(0x1p+0f, 0x1p-5f));
+   CHECK(mesh.vertices[68].surface_index == 5);
+   CHECK(mesh.vertices[69].position == float3(-0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[69].normal == float3(0x0p-1022f, -0x1p+0f, -0x0p-1022f));
+   CHECK(mesh.vertices[69].texcoords == float2(0x1.fcccccp-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[69].surface_index == 5);
+   CHECK(mesh.vertices[70].position == float3(-0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[70].normal == float3(0x0p-1022f, -0x1p+0f, -0x0p-1022f));
+   CHECK(mesh.vertices[70].texcoords == float2(0x1.fcccccp-1f, 0x1p-5f));
+   CHECK(mesh.vertices[70].surface_index == 5);
+   CHECK(mesh.vertices[71].position == float3(0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[71].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[71].texcoords == float2(0x1.fcccccp-1f, 0x1.fp-1f));
+   CHECK(mesh.vertices[71].surface_index == 5);
+   CHECK(mesh.vertices[72].position == float3(0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[72].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[72].texcoords == float2(0x1.fcccccp-1f, 0x1p+0f));
+   CHECK(mesh.vertices[72].surface_index == 5);
+   CHECK(mesh.vertices[73].position == float3(0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.vertices[73].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[73].texcoords == float2(0x1p+0f, 0x1.fp-1f));
+   CHECK(mesh.vertices[73].surface_index == 5);
+   CHECK(mesh.vertices[74].position == float3(-0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[74].normal == float3(-0x0p-1022f, -0x1p+0f, -0x0p-1022f));
+   CHECK(mesh.vertices[74].texcoords == float2(0x1p+0f, 0x1p-5f));
+   CHECK(mesh.vertices[74].surface_index == 5);
+   CHECK(mesh.vertices[75].position == float3(-0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[75].normal == float3(-0x0p-1022f, -0x1p+0f, -0x0p-1022f));
+   CHECK(mesh.vertices[75].texcoords == float2(0x1.99998p-8f, 0x0p-1022f));
+   CHECK(mesh.vertices[75].surface_index == 5);
+   CHECK(mesh.vertices[76].position == float3(-0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.vertices[76].normal == float3(-0x0p-1022f, -0x1p+0f, -0x0p-1022f));
+   CHECK(mesh.vertices[76].texcoords == float2(0x0p-1022f, 0x1p-5f));
+   CHECK(mesh.vertices[76].surface_index == 5);
+   CHECK(mesh.vertices[77].position == float3(0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.vertices[77].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[77].texcoords == float2(0x0p-1022f, 0x1.fp-1f));
+   CHECK(mesh.vertices[77].surface_index == 5);
+   CHECK(mesh.vertices[78].position == float3(0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[78].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[78].texcoords == float2(0x1.99998p-8f, 0x1p+0f));
+   CHECK(mesh.vertices[78].surface_index == 5);
+   CHECK(mesh.vertices[79].position == float3(0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[79].normal == float3(0x0p-1022f, -0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[79].texcoords == float2(0x1.99998p-8f, 0x1.fp-1f));
+   CHECK(mesh.vertices[79].surface_index == 5);
+   CHECK(mesh.vertices[80].position == float3(-0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.vertices[80].normal ==
+         float3(-0x1.6a09e8p-1f, 0x0p-1022f, 0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[80].texcoords == float2(0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[80].surface_index == 4);
+   CHECK(mesh.vertices[81].position == float3(-0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.vertices[81].normal ==
+         float3(-0x1.6a09e8p-1f, 0x0p-1022f, 0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[81].texcoords == float2(0x1p+0f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[81].surface_index == 4);
+   CHECK(mesh.vertices[82].position == float3(-0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[82].normal ==
+         float3(-0x1.6a09e8p-1f, 0x0p-1022f, 0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[82].texcoords == float2(0x1.fcccccp-1f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[82].surface_index == 4);
+   CHECK(mesh.vertices[83].position == float3(-0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[83].normal ==
+         float3(-0x1.6a09e8p-1f, 0x0p-1022f, 0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[83].texcoords == float2(0x1.fcccccp-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[83].surface_index == 4);
+   CHECK(mesh.vertices[84].position == float3(0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.vertices[84].normal == float3(0x1.6a09e8p-1f, 0x0p-1022f, 0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[84].texcoords == float2(0x1p+0f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[84].surface_index == 4);
+   CHECK(mesh.vertices[85].position == float3(0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.vertices[85].normal == float3(0x1.6a09e8p-1f, 0x0p-1022f, 0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[85].texcoords == float2(0x1p+0f, 0x0p-1022f));
+   CHECK(mesh.vertices[85].surface_index == 4);
+   CHECK(mesh.vertices[86].position == float3(0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[86].normal == float3(0x1.6a09e8p-1f, 0x0p-1022f, 0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[86].texcoords == float2(0x1.fcccccp-1f, 0x0p-1022f));
+   CHECK(mesh.vertices[86].surface_index == 4);
+   CHECK(mesh.vertices[87].position == float3(0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.vertices[87].normal == float3(0x1.6a09e8p-1f, 0x0p-1022f, 0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[87].texcoords == float2(0x1.fcccccp-1f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[87].surface_index == 4);
+   CHECK(mesh.vertices[88].position == float3(-0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.vertices[88].normal ==
+         float3(-0x1.6a09e8p-1f, -0x0p-1022f, -0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[88].texcoords == float2(0x0p-1022f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[88].surface_index == 4);
+   CHECK(mesh.vertices[89].position == float3(-0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.vertices[89].normal ==
+         float3(-0x1.6a09e8p-1f, -0x0p-1022f, -0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[89].texcoords == float2(0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[89].surface_index == 4);
+   CHECK(mesh.vertices[90].position == float3(-0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[90].normal ==
+         float3(-0x1.6a09e8p-1f, -0x0p-1022f, -0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[90].texcoords == float2(0x1.99998p-8f, 0x0p-1022f));
+   CHECK(mesh.vertices[90].surface_index == 4);
+   CHECK(mesh.vertices[91].position == float3(-0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[91].normal ==
+         float3(-0x1.6a09e8p-1f, -0x0p-1022f, -0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[91].texcoords == float2(0x1.99998p-8f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[91].surface_index == 4);
+   CHECK(mesh.vertices[92].position == float3(0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[92].normal ==
+         float3(0x1.6a09e8p-1f, 0x0p-1022f, -0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[92].texcoords == float2(0x1.99998p-8f, 0x0p-1022f));
+   CHECK(mesh.vertices[92].surface_index == 4);
+   CHECK(mesh.vertices[93].position == float3(0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.vertices[93].normal ==
+         float3(0x1.6a09e8p-1f, 0x0p-1022f, -0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[93].texcoords == float2(0x0p-1022f, 0x0p-1022f));
+   CHECK(mesh.vertices[93].surface_index == 4);
+   CHECK(mesh.vertices[94].position == float3(0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.vertices[94].normal ==
+         float3(0x1.6a09e8p-1f, 0x0p-1022f, -0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[94].texcoords == float2(0x0p-1022f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[94].surface_index == 4);
+   CHECK(mesh.vertices[95].position == float3(0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.vertices[95].normal ==
+         float3(0x1.6a09e8p-1f, 0x0p-1022f, -0x1.6a09e8p-1f));
+   CHECK(mesh.vertices[95].texcoords == float2(0x1.99998p-8f, 0x1.f8p-1f));
+   CHECK(mesh.vertices[95].surface_index == 4);
+
+   REQUIRE(mesh.triangles.size() == 44);
+
+   CHECK(mesh.triangles[0] == std::array<uint16, 3>{0, 1, 2});
+   CHECK(mesh.triangles[1] == std::array<uint16, 3>{0, 2, 3});
+   CHECK(mesh.triangles[2] == std::array<uint16, 3>{4, 5, 6});
+   CHECK(mesh.triangles[3] == std::array<uint16, 3>{4, 6, 7});
+   CHECK(mesh.triangles[4] == std::array<uint16, 3>{8, 9, 10});
+   CHECK(mesh.triangles[5] == std::array<uint16, 3>{8, 10, 11});
+   CHECK(mesh.triangles[6] == std::array<uint16, 3>{12, 13, 14});
+   CHECK(mesh.triangles[7] == std::array<uint16, 3>{12, 14, 15});
+   CHECK(mesh.triangles[8] == std::array<uint16, 3>{16, 17, 18});
+   CHECK(mesh.triangles[9] == std::array<uint16, 3>{16, 18, 19});
+   CHECK(mesh.triangles[10] == std::array<uint16, 3>{20, 21, 22});
+   CHECK(mesh.triangles[11] == std::array<uint16, 3>{20, 22, 23});
+   CHECK(mesh.triangles[12] == std::array<uint16, 3>{24, 25, 26});
+   CHECK(mesh.triangles[13] == std::array<uint16, 3>{24, 26, 27});
+   CHECK(mesh.triangles[14] == std::array<uint16, 3>{28, 29, 30});
+   CHECK(mesh.triangles[15] == std::array<uint16, 3>{28, 30, 31});
+   CHECK(mesh.triangles[16] == std::array<uint16, 3>{32, 33, 34});
+   CHECK(mesh.triangles[17] == std::array<uint16, 3>{32, 34, 35});
+   CHECK(mesh.triangles[18] == std::array<uint16, 3>{36, 37, 38});
+   CHECK(mesh.triangles[19] == std::array<uint16, 3>{36, 38, 39});
+   CHECK(mesh.triangles[20] == std::array<uint16, 3>{40, 41, 42});
+   CHECK(mesh.triangles[21] == std::array<uint16, 3>{43, 44, 45});
+   CHECK(mesh.triangles[22] == std::array<uint16, 3>{46, 47, 48});
+   CHECK(mesh.triangles[23] == std::array<uint16, 3>{49, 50, 51});
+   CHECK(mesh.triangles[24] == std::array<uint16, 3>{52, 53, 54});
+   CHECK(mesh.triangles[25] == std::array<uint16, 3>{52, 54, 55});
+   CHECK(mesh.triangles[26] == std::array<uint16, 3>{56, 57, 58});
+   CHECK(mesh.triangles[27] == std::array<uint16, 3>{56, 58, 59});
+   CHECK(mesh.triangles[28] == std::array<uint16, 3>{60, 61, 62});
+   CHECK(mesh.triangles[29] == std::array<uint16, 3>{60, 62, 63});
+   CHECK(mesh.triangles[30] == std::array<uint16, 3>{64, 65, 66});
+   CHECK(mesh.triangles[31] == std::array<uint16, 3>{64, 66, 67});
+   CHECK(mesh.triangles[32] == std::array<uint16, 3>{68, 69, 70});
+   CHECK(mesh.triangles[33] == std::array<uint16, 3>{71, 72, 73});
+   CHECK(mesh.triangles[34] == std::array<uint16, 3>{74, 75, 76});
+   CHECK(mesh.triangles[35] == std::array<uint16, 3>{77, 78, 79});
+   CHECK(mesh.triangles[36] == std::array<uint16, 3>{80, 81, 82});
+   CHECK(mesh.triangles[37] == std::array<uint16, 3>{80, 82, 83});
+   CHECK(mesh.triangles[38] == std::array<uint16, 3>{84, 85, 86});
+   CHECK(mesh.triangles[39] == std::array<uint16, 3>{84, 86, 87});
+   CHECK(mesh.triangles[40] == std::array<uint16, 3>{88, 89, 90});
+   CHECK(mesh.triangles[41] == std::array<uint16, 3>{88, 90, 91});
+   CHECK(mesh.triangles[42] == std::array<uint16, 3>{92, 93, 94});
+   CHECK(mesh.triangles[43] == std::array<uint16, 3>{92, 94, 95});
+
+   REQUIRE(mesh.occluders.size() == 18);
+
+   CHECK(mesh.occluders[0] == std::array<uint16, 4>{0, 1, 2, 3});
+   CHECK(mesh.occluders[1] == std::array<uint16, 4>{4, 5, 6, 7});
+   CHECK(mesh.occluders[2] == std::array<uint16, 4>{8, 9, 10, 11});
+   CHECK(mesh.occluders[3] == std::array<uint16, 4>{12, 13, 14, 15});
+   CHECK(mesh.occluders[4] == std::array<uint16, 4>{16, 17, 18, 19});
+   CHECK(mesh.occluders[5] == std::array<uint16, 4>{20, 21, 22, 23});
+   CHECK(mesh.occluders[6] == std::array<uint16, 4>{24, 25, 26, 27});
+   CHECK(mesh.occluders[7] == std::array<uint16, 4>{28, 29, 30, 31});
+   CHECK(mesh.occluders[8] == std::array<uint16, 4>{32, 33, 34, 35});
+   CHECK(mesh.occluders[9] == std::array<uint16, 4>{36, 37, 38, 39});
+   CHECK(mesh.occluders[10] == std::array<uint16, 4>{52, 53, 54, 55});
+   CHECK(mesh.occluders[11] == std::array<uint16, 4>{56, 57, 58, 59});
+   CHECK(mesh.occluders[12] == std::array<uint16, 4>{60, 61, 62, 63});
+   CHECK(mesh.occluders[13] == std::array<uint16, 4>{64, 65, 66, 67});
+   CHECK(mesh.occluders[14] == std::array<uint16, 4>{80, 81, 82, 83});
+   CHECK(mesh.occluders[15] == std::array<uint16, 4>{84, 85, 86, 87});
+   CHECK(mesh.occluders[16] == std::array<uint16, 4>{88, 89, 90, 91});
+   CHECK(mesh.occluders[17] == std::array<uint16, 4>{92, 93, 94, 95});
+
+   REQUIRE(mesh.collision_vertices.size() == 96);
+
+   CHECK(mesh.collision_vertices[0].position == float3(0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[0].surface_index == 1);
+   CHECK(mesh.collision_vertices[1].position ==
+         float3(-0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[1].surface_index == 1);
+   CHECK(mesh.collision_vertices[2].position == float3(-0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[2].surface_index == 1);
+   CHECK(mesh.collision_vertices[3].position == float3(0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[3].surface_index == 1);
+   CHECK(mesh.collision_vertices[4].position == float3(0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[4].surface_index == 1);
+   CHECK(mesh.collision_vertices[5].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[5].surface_index == 1);
+   CHECK(mesh.collision_vertices[6].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[6].surface_index == 1);
+   CHECK(mesh.collision_vertices[7].position ==
+         float3(0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[7].surface_index == 1);
+   CHECK(mesh.collision_vertices[8].position ==
+         float3(-0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[8].surface_index == 0);
+   CHECK(mesh.collision_vertices[9].position == float3(-0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[9].surface_index == 0);
+   CHECK(mesh.collision_vertices[10].position == float3(-0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[10].surface_index == 0);
+   CHECK(mesh.collision_vertices[11].position ==
+         float3(-0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[11].surface_index == 0);
+   CHECK(mesh.collision_vertices[12].position == float3(0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[12].surface_index == 0);
+   CHECK(mesh.collision_vertices[13].position == float3(0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[13].surface_index == 0);
+   CHECK(mesh.collision_vertices[14].position == float3(0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[14].surface_index == 0);
+   CHECK(mesh.collision_vertices[15].position ==
+         float3(0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[15].surface_index == 0);
+   CHECK(mesh.collision_vertices[16].position ==
+         float3(0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[16].surface_index == 2);
+   CHECK(mesh.collision_vertices[17].position ==
+         float3(-0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[17].surface_index == 2);
+   CHECK(mesh.collision_vertices[18].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[18].surface_index == 2);
+   CHECK(mesh.collision_vertices[19].position == float3(0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[19].surface_index == 2);
+   CHECK(mesh.collision_vertices[20].position ==
+         float3(0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[20].surface_index == 2);
+   CHECK(mesh.collision_vertices[21].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[21].surface_index == 2);
+   CHECK(mesh.collision_vertices[22].position ==
+         float3(-0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[22].surface_index == 2);
+   CHECK(mesh.collision_vertices[23].position ==
+         float3(0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[23].surface_index == 2);
+   CHECK(mesh.collision_vertices[24].position ==
+         float3(-0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[24].surface_index == 3);
+   CHECK(mesh.collision_vertices[25].position ==
+         float3(-0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[25].surface_index == 3);
+   CHECK(mesh.collision_vertices[26].position ==
+         float3(-0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[26].surface_index == 3);
+   CHECK(mesh.collision_vertices[27].position ==
+         float3(-0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[27].surface_index == 3);
+   CHECK(mesh.collision_vertices[28].position == float3(0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[28].surface_index == 3);
+   CHECK(mesh.collision_vertices[29].position ==
+         float3(0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[29].surface_index == 3);
+   CHECK(mesh.collision_vertices[30].position ==
+         float3(0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[30].surface_index == 3);
+   CHECK(mesh.collision_vertices[31].position == float3(0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[31].surface_index == 3);
+   CHECK(mesh.collision_vertices[32].position ==
+         float3(-0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[32].surface_index == 3);
+   CHECK(mesh.collision_vertices[33].position ==
+         float3(0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[33].surface_index == 3);
+   CHECK(mesh.collision_vertices[34].position == float3(0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[34].surface_index == 3);
+   CHECK(mesh.collision_vertices[35].position ==
+         float3(-0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[35].surface_index == 3);
+   CHECK(mesh.collision_vertices[36].position ==
+         float3(-0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[36].surface_index == 3);
+   CHECK(mesh.collision_vertices[37].position ==
+         float3(0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[37].surface_index == 3);
+   CHECK(mesh.collision_vertices[38].position ==
+         float3(0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[38].surface_index == 3);
+   CHECK(mesh.collision_vertices[39].position ==
+         float3(-0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[39].surface_index == 3);
+   CHECK(mesh.collision_vertices[40].position ==
+         float3(-0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[40].surface_index == 3);
+   CHECK(mesh.collision_vertices[41].position ==
+         float3(-0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[41].surface_index == 3);
+   CHECK(mesh.collision_vertices[42].position ==
+         float3(-0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[42].surface_index == 3);
+   CHECK(mesh.collision_vertices[43].position ==
+         float3(0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[43].surface_index == 3);
+   CHECK(mesh.collision_vertices[44].position == float3(0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[44].surface_index == 3);
+   CHECK(mesh.collision_vertices[45].position == float3(0x1.ep+1f, 0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[45].surface_index == 3);
+   CHECK(mesh.collision_vertices[46].position ==
+         float3(-0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[46].surface_index == 3);
+   CHECK(mesh.collision_vertices[47].position ==
+         float3(-0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[47].surface_index == 3);
+   CHECK(mesh.collision_vertices[48].position ==
+         float3(-0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[48].surface_index == 3);
+   CHECK(mesh.collision_vertices[49].position ==
+         float3(0x1.ep+1f, 0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[49].surface_index == 3);
+   CHECK(mesh.collision_vertices[50].position ==
+         float3(0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[50].surface_index == 3);
+   CHECK(mesh.collision_vertices[51].position ==
+         float3(0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[51].surface_index == 3);
+   CHECK(mesh.collision_vertices[52].position == float3(-0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[52].surface_index == 5);
+   CHECK(mesh.collision_vertices[53].position ==
+         float3(-0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[53].surface_index == 5);
+   CHECK(mesh.collision_vertices[54].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[54].surface_index == 5);
+   CHECK(mesh.collision_vertices[55].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[55].surface_index == 5);
+   CHECK(mesh.collision_vertices[56].position ==
+         float3(0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[56].surface_index == 5);
+   CHECK(mesh.collision_vertices[57].position ==
+         float3(0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[57].surface_index == 5);
+   CHECK(mesh.collision_vertices[58].position == float3(0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[58].surface_index == 5);
+   CHECK(mesh.collision_vertices[59].position == float3(0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[59].surface_index == 5);
+   CHECK(mesh.collision_vertices[60].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[60].surface_index == 5);
+   CHECK(mesh.collision_vertices[61].position ==
+         float3(0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[61].surface_index == 5);
+   CHECK(mesh.collision_vertices[62].position == float3(0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[62].surface_index == 5);
+   CHECK(mesh.collision_vertices[63].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[63].surface_index == 5);
+   CHECK(mesh.collision_vertices[64].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[64].surface_index == 5);
+   CHECK(mesh.collision_vertices[65].position ==
+         float3(0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[65].surface_index == 5);
+   CHECK(mesh.collision_vertices[66].position ==
+         float3(0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[66].surface_index == 5);
+   CHECK(mesh.collision_vertices[67].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[67].surface_index == 5);
+   CHECK(mesh.collision_vertices[68].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[68].surface_index == 5);
+   CHECK(mesh.collision_vertices[69].position == float3(-0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[69].surface_index == 5);
+   CHECK(mesh.collision_vertices[70].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[70].surface_index == 5);
+   CHECK(mesh.collision_vertices[71].position ==
+         float3(0x1.ep+1f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[71].surface_index == 5);
+   CHECK(mesh.collision_vertices[72].position == float3(0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[72].surface_index == 5);
+   CHECK(mesh.collision_vertices[73].position == float3(0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[73].surface_index == 5);
+   CHECK(mesh.collision_vertices[74].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[74].surface_index == 5);
+   CHECK(mesh.collision_vertices[75].position ==
+         float3(-0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[75].surface_index == 5);
+   CHECK(mesh.collision_vertices[76].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[76].surface_index == 5);
+   CHECK(mesh.collision_vertices[77].position ==
+         float3(0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[77].surface_index == 5);
+   CHECK(mesh.collision_vertices[78].position == float3(0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[78].surface_index == 5);
+   CHECK(mesh.collision_vertices[79].position ==
+         float3(0x1.ep+1f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[79].surface_index == 5);
+   CHECK(mesh.collision_vertices[80].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[80].surface_index == 4);
+   CHECK(mesh.collision_vertices[81].position ==
+         float3(-0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[81].surface_index == 4);
+   CHECK(mesh.collision_vertices[82].position ==
+         float3(-0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[82].surface_index == 4);
+   CHECK(mesh.collision_vertices[83].position == float3(-0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[83].surface_index == 4);
+   CHECK(mesh.collision_vertices[84].position ==
+         float3(0x1.ep+1f, 0x1.fp+2f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[84].surface_index == 4);
+   CHECK(mesh.collision_vertices[85].position == float3(0x1.ep+1f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.collision_vertices[85].surface_index == 4);
+   CHECK(mesh.collision_vertices[86].position == float3(0x1p+2f, -0x1p+3f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[86].surface_index == 4);
+   CHECK(mesh.collision_vertices[87].position == float3(0x1p+2f, 0x1.fp+2f, 0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[87].surface_index == 4);
+   CHECK(mesh.collision_vertices[88].position ==
+         float3(-0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[88].surface_index == 4);
+   CHECK(mesh.collision_vertices[89].position ==
+         float3(-0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[89].surface_index == 4);
+   CHECK(mesh.collision_vertices[90].position ==
+         float3(-0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[90].surface_index == 4);
+   CHECK(mesh.collision_vertices[91].position ==
+         float3(-0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[91].surface_index == 4);
+   CHECK(mesh.collision_vertices[92].position == float3(0x1p+2f, -0x1p+3f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[92].surface_index == 4);
+   CHECK(mesh.collision_vertices[93].position ==
+         float3(0x1.ep+1f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[93].surface_index == 4);
+   CHECK(mesh.collision_vertices[94].position ==
+         float3(0x1.ep+1f, 0x1.fp+2f, -0x1.4p+4f));
+   CHECK(mesh.collision_vertices[94].surface_index == 4);
+   CHECK(mesh.collision_vertices[95].position ==
+         float3(0x1p+2f, 0x1.fp+2f, -0x1.3cp+4f));
+   CHECK(mesh.collision_vertices[95].surface_index == 4);
+
+   REQUIRE(mesh.collision_triangles.size() == 44);
+
+   CHECK(mesh.collision_triangles[0] == std::array<uint16, 3>{0, 1, 2});
+   CHECK(mesh.collision_triangles[1] == std::array<uint16, 3>{0, 2, 3});
+   CHECK(mesh.collision_triangles[2] == std::array<uint16, 3>{4, 5, 6});
+   CHECK(mesh.collision_triangles[3] == std::array<uint16, 3>{4, 6, 7});
+   CHECK(mesh.collision_triangles[4] == std::array<uint16, 3>{8, 9, 10});
+   CHECK(mesh.collision_triangles[5] == std::array<uint16, 3>{8, 10, 11});
+   CHECK(mesh.collision_triangles[6] == std::array<uint16, 3>{12, 13, 14});
+   CHECK(mesh.collision_triangles[7] == std::array<uint16, 3>{12, 14, 15});
+   CHECK(mesh.collision_triangles[8] == std::array<uint16, 3>{16, 17, 18});
+   CHECK(mesh.collision_triangles[9] == std::array<uint16, 3>{16, 18, 19});
+   CHECK(mesh.collision_triangles[10] == std::array<uint16, 3>{20, 21, 22});
+   CHECK(mesh.collision_triangles[11] == std::array<uint16, 3>{20, 22, 23});
+   CHECK(mesh.collision_triangles[12] == std::array<uint16, 3>{24, 25, 26});
+   CHECK(mesh.collision_triangles[13] == std::array<uint16, 3>{24, 26, 27});
+   CHECK(mesh.collision_triangles[14] == std::array<uint16, 3>{28, 29, 30});
+   CHECK(mesh.collision_triangles[15] == std::array<uint16, 3>{28, 30, 31});
+   CHECK(mesh.collision_triangles[16] == std::array<uint16, 3>{32, 33, 34});
+   CHECK(mesh.collision_triangles[17] == std::array<uint16, 3>{32, 34, 35});
+   CHECK(mesh.collision_triangles[18] == std::array<uint16, 3>{36, 37, 38});
+   CHECK(mesh.collision_triangles[19] == std::array<uint16, 3>{36, 38, 39});
+   CHECK(mesh.collision_triangles[20] == std::array<uint16, 3>{40, 41, 42});
+   CHECK(mesh.collision_triangles[21] == std::array<uint16, 3>{43, 44, 45});
+   CHECK(mesh.collision_triangles[22] == std::array<uint16, 3>{46, 47, 48});
+   CHECK(mesh.collision_triangles[23] == std::array<uint16, 3>{49, 50, 51});
+   CHECK(mesh.collision_triangles[24] == std::array<uint16, 3>{52, 53, 54});
+   CHECK(mesh.collision_triangles[25] == std::array<uint16, 3>{52, 54, 55});
+   CHECK(mesh.collision_triangles[26] == std::array<uint16, 3>{56, 57, 58});
+   CHECK(mesh.collision_triangles[27] == std::array<uint16, 3>{56, 58, 59});
+   CHECK(mesh.collision_triangles[28] == std::array<uint16, 3>{60, 61, 62});
+   CHECK(mesh.collision_triangles[29] == std::array<uint16, 3>{60, 62, 63});
+   CHECK(mesh.collision_triangles[30] == std::array<uint16, 3>{64, 65, 66});
+   CHECK(mesh.collision_triangles[31] == std::array<uint16, 3>{64, 66, 67});
+   CHECK(mesh.collision_triangles[32] == std::array<uint16, 3>{68, 69, 70});
+   CHECK(mesh.collision_triangles[33] == std::array<uint16, 3>{71, 72, 73});
+   CHECK(mesh.collision_triangles[34] == std::array<uint16, 3>{74, 75, 76});
+   CHECK(mesh.collision_triangles[35] == std::array<uint16, 3>{77, 78, 79});
+   CHECK(mesh.collision_triangles[36] == std::array<uint16, 3>{80, 81, 82});
+   CHECK(mesh.collision_triangles[37] == std::array<uint16, 3>{80, 82, 83});
+   CHECK(mesh.collision_triangles[38] == std::array<uint16, 3>{84, 85, 86});
+   CHECK(mesh.collision_triangles[39] == std::array<uint16, 3>{84, 86, 87});
+   CHECK(mesh.collision_triangles[40] == std::array<uint16, 3>{88, 89, 90});
+   CHECK(mesh.collision_triangles[41] == std::array<uint16, 3>{88, 90, 91});
+   CHECK(mesh.collision_triangles[42] == std::array<uint16, 3>{92, 93, 94});
+   CHECK(mesh.collision_triangles[43] == std::array<uint16, 3>{92, 94, 95});
+
+   REQUIRE(mesh.collision_occluders.size() == 18);
+
+   CHECK(mesh.collision_occluders[0] == std::array<uint16, 4>{0, 1, 2, 3});
+   CHECK(mesh.collision_occluders[1] == std::array<uint16, 4>{4, 5, 6, 7});
+   CHECK(mesh.collision_occluders[2] == std::array<uint16, 4>{8, 9, 10, 11});
+   CHECK(mesh.collision_occluders[3] == std::array<uint16, 4>{12, 13, 14, 15});
+   CHECK(mesh.collision_occluders[4] == std::array<uint16, 4>{16, 17, 18, 19});
+   CHECK(mesh.collision_occluders[5] == std::array<uint16, 4>{20, 21, 22, 23});
+   CHECK(mesh.collision_occluders[6] == std::array<uint16, 4>{24, 25, 26, 27});
+   CHECK(mesh.collision_occluders[7] == std::array<uint16, 4>{28, 29, 30, 31});
+   CHECK(mesh.collision_occluders[8] == std::array<uint16, 4>{32, 33, 34, 35});
+   CHECK(mesh.collision_occluders[9] == std::array<uint16, 4>{36, 37, 38, 39});
+   CHECK(mesh.collision_occluders[10] == std::array<uint16, 4>{52, 53, 54, 55});
+   CHECK(mesh.collision_occluders[11] == std::array<uint16, 4>{56, 57, 58, 59});
+   CHECK(mesh.collision_occluders[12] == std::array<uint16, 4>{60, 61, 62, 63});
+   CHECK(mesh.collision_occluders[13] == std::array<uint16, 4>{64, 65, 66, 67});
+   CHECK(mesh.collision_occluders[14] == std::array<uint16, 4>{80, 81, 82, 83});
+   CHECK(mesh.collision_occluders[15] == std::array<uint16, 4>{84, 85, 86, 87});
+   CHECK(mesh.collision_occluders[16] == std::array<uint16, 4>{88, 89, 90, 91});
+   CHECK(mesh.collision_occluders[17] == std::array<uint16, 4>{92, 93, 94, 95});
+
+   REQUIRE(mesh.snap_points.size() == 8);
+
+   CHECK(mesh.snap_points[0] == float3(0x1p+2f, 0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.snap_points[1] == float3(-0x1p+2f, 0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.snap_points[2] == float3(-0x1p+2f, 0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.snap_points[3] == float3(0x1p+2f, 0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.snap_points[4] == float3(0x1p+2f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.snap_points[5] == float3(-0x1p+2f, -0x1p+3f, 0x1.4p+4f));
+   CHECK(mesh.snap_points[6] == float3(-0x1p+2f, -0x1p+3f, -0x1.4p+4f));
+   CHECK(mesh.snap_points[7] == float3(0x1p+2f, -0x1p+3f, -0x1.4p+4f));
+
+   REQUIRE(mesh.snap_edges.size() == 12);
+
+   CHECK(mesh.snap_edges[0] == std::array<uint16, 2>{0, 1});
+   CHECK(mesh.snap_edges[1] == std::array<uint16, 2>{1, 2});
+   CHECK(mesh.snap_edges[2] == std::array<uint16, 2>{2, 3});
+   CHECK(mesh.snap_edges[3] == std::array<uint16, 2>{3, 0});
+   CHECK(mesh.snap_edges[4] == std::array<uint16, 2>{4, 5});
+   CHECK(mesh.snap_edges[5] == std::array<uint16, 2>{5, 6});
+   CHECK(mesh.snap_edges[6] == std::array<uint16, 2>{6, 7});
+   CHECK(mesh.snap_edges[7] == std::array<uint16, 2>{7, 5});
+   CHECK(mesh.snap_edges[8] == std::array<uint16, 2>{0, 4});
+   CHECK(mesh.snap_edges[9] == std::array<uint16, 2>{1, 5});
+   CHECK(mesh.snap_edges[10] == std::array<uint16, 2>{2, 6});
+   CHECK(mesh.snap_edges[11] == std::array<uint16, 2>{3, 7});
+}
+
 }
