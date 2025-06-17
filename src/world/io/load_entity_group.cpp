@@ -1064,6 +1064,85 @@ void read_blocks_custom(const assets::config::node& node, entity_group& group_ou
             }
          }
       }
+      else if (string::iequals(key_node.key, "BeveledBox")) {
+         block.mesh_description = block_custom_mesh_description_beveled_box{};
+         block_custom_mesh_description_beveled_box& beveled_box =
+            block.mesh_description.beveled_box;
+
+         for (const auto& prop : key_node) {
+            if (string::iequals(prop.key, "Rotation")) {
+               block.rotation = {prop.values.get<float>(0),
+                                 prop.values.get<float>(1),
+                                 prop.values.get<float>(2),
+                                 prop.values.get<float>(3)};
+            }
+            else if (string::iequals(prop.key, "Position")) {
+               block.position = {prop.values.get<float>(0),
+                                 prop.values.get<float>(1),
+                                 prop.values.get<float>(2)};
+            }
+            else if (string::iequals(prop.key, "Size")) {
+               beveled_box.size = {prop.values.get<float>(0),
+                                   prop.values.get<float>(1),
+                                   prop.values.get<float>(2)};
+            }
+            else if (string::iequals(prop.key, "Amount")) {
+               beveled_box.amount = prop.values.get<float>(0);
+            }
+            else if (string::iequals(prop.key, "BevelTop")) {
+               beveled_box.bevel_top = prop.values.get<int>(0) != 0;
+            }
+            else if (string::iequals(prop.key, "BevelSides")) {
+               beveled_box.bevel_sides = prop.values.get<int>(0) != 0;
+            }
+            else if (string::iequals(prop.key, "BevelBottom")) {
+               beveled_box.bevel_bottom = prop.values.get<int>(0) != 0;
+            }
+            else if (string::iequals(prop.key, "SurfaceMaterials")) {
+               for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
+                  block.surface_materials[i] = prop.values.get<uint8>(i);
+               }
+            }
+            else if (string::iequals(prop.key, "SurfaceTextureMode")) {
+               for (uint32 i = 0; i < block.surface_texture_mode.size(); ++i) {
+                  block.surface_texture_mode[i] =
+                     read_block_texture_mode(prop.values.get<uint8>(i));
+               }
+            }
+            else if (string::iequals(prop.key, "SurfaceTextureRotation")) {
+               for (uint32 i = 0; i < block.surface_texture_rotation.size(); ++i) {
+                  const uint8 rotation = prop.values.get<uint8>(i);
+
+                  switch (rotation) {
+                  case static_cast<uint8>(block_texture_rotation::d0):
+                  case static_cast<uint8>(block_texture_rotation::d90):
+                  case static_cast<uint8>(block_texture_rotation::d180):
+                  case static_cast<uint8>(block_texture_rotation::d270):
+                     block.surface_texture_rotation[i] =
+                        block_texture_rotation{rotation};
+                     break;
+                  }
+               }
+            }
+            else if (string::iequals(prop.key, "SurfaceTextureScale")) {
+               for (uint32 i = 0; i < block.surface_texture_scale.size(); ++i) {
+                  block.surface_texture_scale[i] =
+                     {std::clamp(prop.values.get<int8>(i * 2 + 0),
+                                 block_min_texture_scale, block_max_texture_scale),
+                      std::clamp(prop.values.get<int8>(i * 2 + 1),
+                                 block_min_texture_scale, block_max_texture_scale)};
+               }
+            }
+            else if (string::iequals(prop.key, "SurfaceTextureOffset")) {
+               for (uint32 i = 0; i < block.surface_texture_offset.size(); ++i) {
+                  block.surface_texture_offset[i] =
+                     {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
+                      std::min(prop.values.get<uint16>(i * 2 + 1),
+                               block_max_texture_offset)};
+               }
+            }
+         }
+      }
       else {
          continue;
       }

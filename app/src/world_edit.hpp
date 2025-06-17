@@ -1021,8 +1021,8 @@ private:
          float amount = 0.125f;
 
          bool bevel_top = true;
-         bool bevel_bottom = true;
          bool bevel_sides = true;
+         bool bevel_bottom = true;
       } beveled_box;
 
       bool enable_alignment = true;
