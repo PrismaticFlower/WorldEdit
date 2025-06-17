@@ -28,8 +28,8 @@ struct block_custom_mesh_description_beveled_box {
    float amount = 0.125f;
 
    bool bevel_top = true;
-   bool bevel_bottom = true;
    bool bevel_sides = true;
+   bool bevel_bottom = true;
 
    bool operator==(const block_custom_mesh_description_beveled_box&) const noexcept = default;
 };

@@ -2534,8 +2534,8 @@ void world_edit::ui_show_block_editor() noexcept
                               .size = size,
                               .amount = _block_editor_config.beveled_box.amount,
                               .bevel_top = _block_editor_config.beveled_box.bevel_top,
-                              .bevel_bottom = _block_editor_config.beveled_box.bevel_bottom,
                               .bevel_sides = _block_editor_config.beveled_box.bevel_sides,
+                              .bevel_bottom = _block_editor_config.beveled_box.bevel_bottom,
                            },
                         .surface_materials = {material_index, material_index,
                                               material_index, material_index,
@@ -2624,8 +2624,8 @@ void world_edit::ui_show_block_editor() noexcept
                             .size = size,
                             .amount = _block_editor_config.beveled_box.amount,
                             .bevel_top = _block_editor_config.beveled_box.bevel_top,
-                            .bevel_bottom = _block_editor_config.beveled_box.bevel_bottom,
                             .bevel_sides = _block_editor_config.beveled_box.bevel_sides,
+                            .bevel_bottom = _block_editor_config.beveled_box.bevel_bottom,
                          }),
                       _edit_context, {.transparent = true});
          }

@@ -286,9 +286,9 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
          out.write_ln("      Size({}, {}, {});", box.size.x, box.size.y,
                       box.size.z);
          out.write_ln("      Amount({});", box.amount);
-         if (box.bevel_top) out.write_ln("      BevelTop();");
-         if (box.bevel_sides) out.write_ln("      BevelSides();");
-         if (box.bevel_bottom) out.write_ln("      BevelBottom();");
+         out.write_ln("      BevelTop({:d});", box.bevel_top);
+         out.write_ln("      BevelSides({:d});", box.bevel_sides);
+         out.write_ln("      BevelBottom({:d});", box.bevel_bottom);
       } break;
       }
 

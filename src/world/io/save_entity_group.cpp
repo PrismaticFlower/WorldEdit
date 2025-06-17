@@ -722,9 +722,9 @@ void save_entity_group_impl(File& file, const entity_group& group)
             file.write_ln("      Size({}, {}, {});", box.size.x, box.size.y,
                           box.size.z);
             file.write_ln("      Amount({});", box.amount);
-            if (box.bevel_top) file.write_ln("      BevelTop();");
-            if (box.bevel_sides) file.write_ln("      BevelSides();");
-            if (box.bevel_bottom) file.write_ln("      BevelBottom();");
+            file.write_ln("      BevelTop({:d});", box.bevel_top);
+            file.write_ln("      BevelSides({:d});", box.bevel_sides);
+            file.write_ln("      BevelBottom({:d});", box.bevel_bottom);
          } break;
          }
 
