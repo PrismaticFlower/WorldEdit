@@ -25,6 +25,12 @@ block_custom_mesh_description::block_custom_mesh_description(
 {
 }
 
+block_custom_mesh_description::block_custom_mesh_description(
+   const block_custom_mesh_description_beveled_box& beveled_box) noexcept
+   : type{block_custom_mesh_type::beveled_box}, beveled_box{beveled_box}
+{
+}
+
 auto block_custom_mesh_description::operator=(const block_custom_mesh_description& other) noexcept
    -> block_custom_mesh_description&
 {
@@ -36,6 +42,9 @@ auto block_custom_mesh_description::operator=(const block_custom_mesh_descriptio
    } break;
    case block_custom_mesh_type::ring: {
       this->ring = other.ring;
+   } break;
+   case block_custom_mesh_type::beveled_box: {
+      this->beveled_box = other.beveled_box;
    } break;
    }
 
@@ -52,6 +61,8 @@ bool operator==(const block_custom_mesh_description& left,
       return left.stairway == right.stairway;
    case block_custom_mesh_type::ring:
       return left.ring == right.ring;
+   case block_custom_mesh_type::beveled_box:
+      return left.beveled_box == right.beveled_box;
    }
 
    std::unreachable();

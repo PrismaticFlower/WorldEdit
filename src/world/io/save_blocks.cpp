@@ -247,6 +247,9 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
       case block_custom_mesh_type::ring: {
          out.write_ln("   Ring()");
       } break;
+      case block_custom_mesh_type::beveled_box: {
+         out.write_ln("   BeveledBox()");
+      } break;
       }
       out.write_ln("   {");
 
@@ -275,6 +278,17 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
          out.write_ln("      Segments({});", ring.segments);
          if (ring.flat_shading) out.write_ln("      FlatShading();");
          out.write_ln("      TextureLoops({});", ring.texture_loops);
+      } break;
+      case block_custom_mesh_type::beveled_box: {
+         const world::block_custom_mesh_description_beveled_box& box =
+            block.mesh_description.beveled_box;
+
+         out.write_ln("      Size({}, {}, {});", box.size.x, box.size.y,
+                      box.size.z);
+         out.write_ln("      Amount({});", box.amount);
+         if (box.bevel_top) out.write_ln("      BevelTop();");
+         if (box.bevel_sides) out.write_ln("      BevelSides();");
+         if (box.bevel_bottom) out.write_ln("      BevelBottom();");
       } break;
       }
 

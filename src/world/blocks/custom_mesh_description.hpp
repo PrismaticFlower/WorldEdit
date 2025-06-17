@@ -23,9 +23,21 @@ struct block_custom_mesh_description_ring {
    bool operator==(const block_custom_mesh_description_ring&) const noexcept = default;
 };
 
+struct block_custom_mesh_description_beveled_box {
+   float3 size = {1.0f, 1.0f, 1.0f};
+   float amount = 0.125f;
+
+   bool bevel_top = true;
+   bool bevel_bottom = true;
+   bool bevel_sides = true;
+
+   bool operator==(const block_custom_mesh_description_beveled_box&) const noexcept = default;
+};
+
 enum class block_custom_mesh_type {
    stairway,
    ring,
+   beveled_box,
 };
 
 struct block_custom_mesh_description {
@@ -37,6 +49,8 @@ struct block_custom_mesh_description {
 
    block_custom_mesh_description(const block_custom_mesh_description_ring& ring) noexcept;
 
+   block_custom_mesh_description(const block_custom_mesh_description_beveled_box& beveled_box) noexcept;
+
    auto operator=(const block_custom_mesh_description& other) noexcept
       -> block_custom_mesh_description&;
 
@@ -45,6 +59,7 @@ struct block_custom_mesh_description {
    union {
       block_custom_mesh_description_stairway stairway = {};
       block_custom_mesh_description_ring ring;
+      block_custom_mesh_description_beveled_box beveled_box;
    };
 };
 

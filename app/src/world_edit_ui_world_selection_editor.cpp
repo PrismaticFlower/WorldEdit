@@ -2024,6 +2024,33 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      _edit_stack_world.close_last();
                   }
                } break;
+               case world::block_custom_mesh_type::beveled_box: {
+                  world::block_custom_mesh_description_beveled_box box =
+                     block.mesh_description.beveled_box;
+
+                  bool edited = false;
+
+                  edited |=
+                     ImGui::DragFloat("Bevel Amount", &box.amount, 0.0625f, 0.0f,
+                                      std::min(std::min(box.size.x, box.size.y),
+                                               box.size.z));
+                  edited |= ImGui::Checkbox("Bevel Top", &box.bevel_top);
+                  edited |= ImGui::Checkbox("Bevel Sides", &box.bevel_sides);
+                  edited |= ImGui::Checkbox("Bevel Bottom", &box.bevel_bottom);
+
+                  if (edited) {
+                     box.amount = std::max(box.amount, 0.0f);
+
+                     _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                                *block_index, block.rotation,
+                                                block.position, box),
+                                             _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivated()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
                }
             }
          }
