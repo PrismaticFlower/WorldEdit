@@ -744,6 +744,7 @@ private:
 
       float heightmap_peak_height = 0.0f;
       float heightmap_terrain_world_size = 0.0f;
+      int heightmap_precision_steps = 100;
       bool start_from_bottom = false;
       bool start_from_midpoint = false;
    } _terrain_import_heightmap_context;

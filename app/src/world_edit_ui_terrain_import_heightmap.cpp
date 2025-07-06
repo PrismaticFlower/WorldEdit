@@ -115,6 +115,16 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
       ImGui::SetItemTooltip("Import the heightmap at the bottom of the "
                             "terrain instead of the midpoint.");
 
+      terrain_needs_update |=
+         ImGui::SliderInt("Imported Precision Steps",
+                          &_terrain_import_heightmap_context.heightmap_precision_steps,
+                          1, 128, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+      ImGui::SetItemTooltip(
+         "Set how many heightmap steps will be available "
+         "between imported steps. Higher values allow smoother editing but "
+         "reduce the total range the heightmap can cover.");
+
       ImGui::EndDisabled();
 
       ImGui::BeginDisabled(
@@ -175,12 +185,16 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
          float height_scale = 1.0f;
 
          if (not _terrain_import_heightmap_context.loaded_heightmap_u8.empty()) {
+            const int heightmap_precision_steps =
+               _terrain_import_heightmap_context.heightmap_precision_steps;
+
             if (_terrain_import_heightmap_context.start_from_bottom) {
                for (int32 y = 0; y < new_length; ++y) {
                   for (int32 x = 0; x < new_length; ++x) {
                      height_map[{x, y}] = static_cast<int16>(
                         -32768 +
-                        _terrain_import_heightmap_context.loaded_heightmap_u8[{x, y}]);
+                        _terrain_import_heightmap_context.loaded_heightmap_u8[{x, y}] *
+                           heightmap_precision_steps);
                   }
                }
             }
@@ -188,13 +202,14 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
                for (int32 y = 0; y < new_length; ++y) {
                   for (int32 x = 0; x < new_length; ++x) {
                      height_map[{x, y}] = static_cast<int16>(
-                        _terrain_import_heightmap_context.loaded_heightmap_u8[{x, y}]);
+                        _terrain_import_heightmap_context.loaded_heightmap_u8[{x, y}] *
+                        heightmap_precision_steps);
                   }
                }
             }
 
-            height_scale =
-               _terrain_import_heightmap_context.heightmap_peak_height / 255.0f;
+            height_scale = _terrain_import_heightmap_context.heightmap_peak_height /
+                           255.0f / heightmap_precision_steps;
          }
          else if (not _terrain_import_heightmap_context.loaded_heightmap_u16.empty()) {
             if (_terrain_import_heightmap_context.start_from_midpoint) {
