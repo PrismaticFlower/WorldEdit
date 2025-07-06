@@ -103,6 +103,7 @@ struct renderer {
                            const settings::graphics& settings) = 0;
 
    virtual auto draw_env_map(const env_map_params& params, const world::world& world,
+                             const world::active_entity_types active_entity_types,
                              const world::active_layers active_layers,
                              const world::object_class_library& world_classes)
       -> env_map_result = 0;

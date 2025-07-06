@@ -222,7 +222,7 @@ void world_edit::update()
          _env_map_render_requested = false;
 
          graphics::env_map_result env_map =
-            _renderer->draw_env_map(_env_map_render_params, _world,
+            _renderer->draw_env_map(_env_map_render_params, _world, _world_draw_mask,
                                     _world_layers_draw_mask, _object_classes);
 
          try {

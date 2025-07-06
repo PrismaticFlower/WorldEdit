@@ -98,6 +98,7 @@ struct renderer_impl final : renderer {
                    const settings::graphics& settings) override;
 
    auto draw_env_map(const env_map_params& params, const world::world& world,
+                     const world::active_entity_types active_entity_types,
                      const world::active_layers active_layers,
                      const world::object_class_library& world_classes) -> env_map_result;
 
@@ -601,6 +602,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 }
 
 auto renderer_impl::draw_env_map(const env_map_params& params, const world::world& world,
+                                 const world::active_entity_types active_entity_types,
                                  const world::active_layers active_layers,
                                  const world::object_class_library& world_classes)
    -> env_map_result
@@ -731,7 +733,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       {.debug_name = "Env Map Command List"});
 
    // Pre-Render Work
-   {
+   if (active_entity_types.objects) {
       pre_render_command_list.reset();
 
       build_world_mesh_list(pre_render_command_list, world, active_layers,
@@ -740,6 +742,10 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       pre_render_command_list.close();
 
       _device.copy_queue.execute_command_lists(pre_render_command_list);
+   }
+   else {
+      _world_mesh_list.clear();
+      _terrain_cut_list.clear();
    }
 
    for (uint32 i = 0; i < 6; ++i) {
@@ -789,36 +795,41 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       command_list.om_set_render_targets(env_map_super_sample_rtv.get(),
                                          env_map_depth_stencil_view.get());
 
-      _terrain.draw(terrain_draw::depth_prepass, view_frustum,
-                    _terrain_cut_list, _camera_constant_buffer_view,
-                    _light_clusters.lights_constant_buffer_view(), command_list,
-                    _root_signatures, _pipelines, _dynamic_buffer_allocator);
+      if (active_entity_types.terrain) {
+         _terrain.draw(terrain_draw::depth_prepass, view_frustum,
+                       _terrain_cut_list, _camera_constant_buffer_view,
+                       _light_clusters.lights_constant_buffer_view(), command_list,
+                       _root_signatures, _pipelines, _dynamic_buffer_allocator);
+      }
 
-      setup_pre_draw_world_render_list_depth_prepass(command_list);
+      if (active_entity_types.objects) {
+         setup_pre_draw_world_render_list_depth_prepass(command_list);
 
-      draw_world_render_list(
-         mesh_opaque_flags::none,
-         _pipelines.mesh_depth_prepass[depth_prepass_pipeline_flags::none].get(),
-         command_list);
+         draw_world_render_list(
+            mesh_opaque_flags::none,
+            _pipelines.mesh_depth_prepass[depth_prepass_pipeline_flags::none].get(),
+            command_list);
 
-      draw_world_render_list(mesh_opaque_flags::doublesided,
-                             _pipelines
-                                .mesh_depth_prepass[depth_prepass_pipeline_flags::doublesided]
-                                .get(),
-                             command_list);
+         draw_world_render_list(mesh_opaque_flags::doublesided,
+                                _pipelines
+                                   .mesh_depth_prepass[depth_prepass_pipeline_flags::doublesided]
+                                   .get(),
+                                command_list);
 
-      draw_world_render_list(mesh_opaque_flags::alpha_cutout,
-                             _pipelines
-                                .mesh_depth_prepass[depth_prepass_pipeline_flags::alpha_cutout]
-                                .get(),
-                             command_list);
+         draw_world_render_list(mesh_opaque_flags::alpha_cutout,
+                                _pipelines
+                                   .mesh_depth_prepass[depth_prepass_pipeline_flags::alpha_cutout]
+                                   .get(),
+                                command_list);
 
-      draw_world_render_list(mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided,
-                             _pipelines
-                                .mesh_depth_prepass[depth_prepass_pipeline_flags::alpha_cutout |
-                                                    depth_prepass_pipeline_flags::doublesided]
-                                .get(),
-                             command_list);
+         draw_world_render_list(mesh_opaque_flags::alpha_cutout |
+                                   mesh_opaque_flags::doublesided,
+                                _pipelines
+                                   .mesh_depth_prepass[depth_prepass_pipeline_flags::alpha_cutout |
+                                                       depth_prepass_pipeline_flags::doublesided]
+                                   .get(),
+                                command_list);
+      }
 
       [[likely]] if (_device.supports_enhanced_barriers()) {
          command_list.deferred_barrier(
@@ -979,7 +990,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       command_list.om_set_render_targets(env_map_super_sample_rtv.get(),
                                          env_map_depth_stencil_view.get());
 
-      draw_world(view_frustum, {.objects = true, .terrain = true}, command_list);
+      draw_world(view_frustum, active_entity_types, command_list);
 
       // Downsample to desired size.
 
