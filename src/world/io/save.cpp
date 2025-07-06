@@ -161,7 +161,8 @@ void save_objects(const io::path& path, const std::string_view layer_name,
    }
 }
 
-void save_paths(const io::path& file_path, const int layer_index, const world& world)
+void save_paths(const io::path& file_path, const int layer_index,
+                const world& world, const save_flags flags)
 {
    io::output_file file{file_path};
 
@@ -278,11 +279,16 @@ void save_paths(const io::path& file_path, const int layer_index, const world& w
       file.write_ln("{");
 
       file.write_ln("\tData(0);");
-      file.write_ln("\tPathType(0);");
+      file.write_ln("\tPathType({});", flags.save_boundary_bf1_format ? 2 : 0);
       file.write_ln("\tPathSpeedType(0);");
       file.write_ln("\tPathTime(0.000000);");
       file.write_ln("\tOffsetPath(0);");
-      file.write_ln("\tSplineType(\"Hermite\");\n");
+
+      if (not flags.save_boundary_bf1_format) {
+         file.write_ln("\tSplineType(\"Hermite\");");
+      }
+
+      file.write_ln("");
 
       file.write_ln("\tProperties(0)");
       file.write_ln("\t{");
@@ -761,13 +767,14 @@ void save_animations(const io::path& path, const world& world)
 /// @param world The world that is being saved.
 void save_layer(const io::path& world_dir, const std::string_view layer_name,
                 const int layer_index, const world& world,
-                sequence_numbers& sequence_numbers)
+                const save_flags flags, sequence_numbers& sequence_numbers)
 {
    save_objects(io::compose_path(world_dir, layer_name,
                                  (layer_index == 0 ? ".wld"sv : ".lyr"sv)),
                 layer_name, layer_index, world, sequence_numbers);
 
-   save_paths(io::compose_path(world_dir, layer_name, ".pth"sv), layer_index, world);
+   save_paths(io::compose_path(world_dir, layer_name, ".pth"sv), layer_index,
+              world, flags);
    save_regions(io::compose_path(world_dir, layer_name, ".rgn"sv), layer_index, world);
    save_lights(io::compose_path(world_dir, layer_name, ".lgt"sv), layer_index,
                world, sequence_numbers);
@@ -877,13 +884,13 @@ void save_world(const io::path& path, const world& world,
 
    save_layer_index(make_path_with_new_extension(path, ".ldx"sv), world, flags);
 
-   save_layer(world_dir, world_name, 0, world, sequence_numbers);
+   save_layer(world_dir, world_name, 0, world, flags, sequence_numbers);
 
    for (std::size_t i = 1; i < world.layer_descriptions.size(); ++i) {
       auto& layer = world.layer_descriptions[i];
 
       save_layer(world_dir, fmt::format("{}_{}", world_name, layer.name),
-                 static_cast<uint32>(i), world, sequence_numbers);
+                 static_cast<uint32>(i), world, flags, sequence_numbers);
    }
 
    save_terrain(make_path_with_new_extension(path, ".ter"sv), world.terrain,

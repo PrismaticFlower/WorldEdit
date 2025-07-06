@@ -803,6 +803,358 @@ constexpr auto expected_mrq = R"(ucft
 }
 )"sv;
 
+constexpr auto expected_pth_no_boundary_spline_type = R"(Version(10);
+PathCount(2);
+
+Path("boundary")
+{
+	Data(0);
+	PathType(2);
+	PathSpeedType(0);
+	PathTime(0.000000);
+	OffsetPath(0);
+
+	Properties(0)
+	{
+	}
+
+	Nodes(12)
+	{
+		Node()
+		{
+			Position(383.557434, 0.000000, -4.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(332.111023, 0.000000, 187.202209);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(191.557434, 0.000000, 327.755798);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-0.442566, 0.000000, 379.202209);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-192.442566, 0.000000, 327.755798);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-332.996155, 0.000000, 187.202209);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-384.442566, 0.000000, -4.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-332.996155, 0.000000, -196.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-192.442566, 0.000000, -337.351379);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-0.442566, 0.000000, -388.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(191.557434, 0.000000, -337.351379);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(332.111023, 0.000000, -196.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+	}
+
+}
+
+Path("boundary1")
+{
+	Data(0);
+	PathType(2);
+	PathSpeedType(0);
+	PathTime(0.000000);
+	OffsetPath(0);
+
+	Properties(0)
+	{
+	}
+
+	Nodes(12)
+	{
+		Node()
+		{
+			Position(383.557434, 1.000000, -4.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(332.111023, 1.000000, 187.202209);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(191.557434, 1.000000, 327.755798);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-0.442566, 1.000000, 379.202209);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-192.442566, 1.000000, 327.755798);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-332.996155, 1.000000, 187.202209);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-384.442566, 1.000000, -4.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-332.996155, 1.000000, -196.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-192.442566, 1.000000, -337.351379);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-0.442566, 1.000000, -388.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(191.557434, 1.000000, -337.351379);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(332.111023, 1.000000, -196.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+	}
+
+}
+
+)"sv;
 }
 
 TEST_CASE("world saving", "[World][IO]")
@@ -1327,6 +1679,38 @@ TEST_CASE("world saving no gamemodes", "[World][IO]")
    CHECK(written_req == expected_req);
 
    CHECK(not io::exists("temp/world/test_no_gamemodes_conquest.mrq"));
+}
+
+TEST_CASE("world saving boundary bf1 format", "[World][IO]")
+{
+   (void)io::create_directory("temp/world");
+
+   const world world{
+      .name = "test_no_boundary_spline_type",
+
+      .layer_descriptions = {{.name = "[Base]"}},
+
+      .boundaries =
+         {
+            entities_init,
+            std::initializer_list{
+               boundary{.name = "boundary",
+                        .position = {-0.442565918f, 0.0f, 4.79779053f},
+                        .size = {384.000000f, 384.000000f}},
+               boundary{.name = "boundary1",
+                        .position = {-0.442565918f, 1.0f, 4.79779053f},
+                        .size = {384.000000f, 384.000000f}},
+            },
+         },
+   };
+
+   save_world("temp/world/test_no_boundary_spline_type.wld", world, {},
+              {.save_boundary_bf1_format = true});
+
+   const auto written_pth =
+      io::read_file_to_string("temp/world/test_no_boundary_spline_type.pth");
+
+   CHECK(written_pth == expected_pth_no_boundary_spline_type);
 }
 
 TEST_CASE("world saving no effects", "[World][IO]")

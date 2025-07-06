@@ -12,6 +12,9 @@ struct save_flags {
    /// @brief Controls saving the GameMode section in the layer index and the saving of .mrq files.
    bool save_gamemodes : 1 = true;
 
+   /// @brief Controls the PathType and saving the SplineType property in boundary paths.
+   bool save_boundary_bf1_format : 1 = false;
+
    /// @brief Controls saving the .fx file.
    bool save_effects : 1 = true;
 };

@@ -112,6 +112,9 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
                "around a crash when trying to load worlds using BF1's Zero "
                "Editor.");
 
+            ImGui::Checkbox("Save World Boundary in BF1 Format",
+                            &preferences.save_world_boundary_bf1_format);
+
             ImGui::Checkbox("Don't Save World Effects",
                             &preferences.dont_save_world_effects);
 
