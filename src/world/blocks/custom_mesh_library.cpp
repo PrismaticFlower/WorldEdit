@@ -29,6 +29,13 @@ static H AbslHashValue(H h, const block_custom_mesh_description& desc)
                         desc.beveled_box.size.y, desc.beveled_box.size.z,
                         desc.beveled_box.amount, desc.beveled_box.bevel_top,
                         desc.beveled_box.bevel_sides, desc.beveled_box.bevel_bottom);
+   case block_custom_mesh_type::curve:
+      return H::combine(std::move(h), desc.type, desc.curve.width, desc.curve.height,
+                        desc.curve.segments, desc.curve.texture_loops,
+                        desc.curve.p0.x, desc.curve.p0.y, desc.curve.p0.z,
+                        desc.curve.p1.x, desc.curve.p1.y, desc.curve.p1.z,
+                        desc.curve.p2.x, desc.curve.p2.y, desc.curve.p2.z,
+                        desc.curve.p3.x, desc.curve.p3.y, desc.curve.p3.z);
    }
 
    std::unreachable();
@@ -47,6 +54,8 @@ auto generate_mesh(const block_custom_mesh_description& mesh) noexcept -> block_
       return generate_mesh(mesh.ring);
    case block_custom_mesh_type::beveled_box:
       return generate_mesh(mesh.beveled_box);
+   case block_custom_mesh_type::curve:
+      return generate_mesh(mesh.curve);
    }
 
    std::unreachable();

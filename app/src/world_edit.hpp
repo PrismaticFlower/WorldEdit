@@ -208,6 +208,7 @@ enum class draw_block_type {
    pyramid,
    ring,
    beveled_box,
+   curve,
 };
 
 enum class draw_block_step : uint8 {
@@ -238,6 +239,8 @@ enum class draw_block_step : uint8 {
    beveled_box_depth,
    beveled_box_width,
    beveled_box_height,
+   curve_p3,
+   curve_finalize,
 };
 
 enum class draw_block_cursor_plane : uint8 { none, x, y, z };
@@ -1025,6 +1028,13 @@ private:
          bool bevel_bottom = true;
       } beveled_box;
 
+      struct curve {
+         float width = 1.0f;
+         float height = 1.0f;
+         uint16 segments = 16;
+         float texture_loops = 1.0f;
+      } curve;
+
       bool enable_alignment = true;
       bool enable_snapping = true;
 
@@ -1122,6 +1132,13 @@ private:
             float width_z = 0.0f;
             quaternion rotation;
          } beveled_box;
+
+         struct curve {
+            float3 p0;
+            float3 p1;
+            float3 p2;
+            float3 p3;
+         } curve;
 
          uint32 index = 0;
          world::block_id block_id = world::block_id::none;

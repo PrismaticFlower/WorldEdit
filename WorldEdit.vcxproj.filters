@@ -267,6 +267,7 @@
     <ClCompile Include="src\world\blocks\utility\raycast.cpp" />
     <ClCompile Include="src\world\blocks\utility\snapping.cpp" />
     <ClCompile Include="src\world\blocks\custom_mesh_description.cpp" />
+    <ClCompile Include="src\math\curves.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -591,6 +592,7 @@
     <ClInclude Include="src\world\blocks\utility\snapping.hpp" />
     <ClInclude Include="src\world\blocks\custom_mesh_description.hpp" />
     <ClInclude Include="src\world\blocks\custom_mesh.hpp" />
+    <ClInclude Include="src\math\curves.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

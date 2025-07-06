@@ -372,6 +372,7 @@
     <ClCompile Include="src\key.cpp" />
     <ClCompile Include="src\math\bounding_box.cpp" />
     <ClCompile Include="src\math\bvh.cpp" />
+    <ClCompile Include="src\math\curves.cpp" />
     <ClCompile Include="src\math\frustum.cpp" />
     <ClCompile Include="src\math\matrix_funcs.cpp" />
     <ClCompile Include="src\math\scalar_funcs.cpp" />
@@ -641,6 +642,7 @@
     <ClInclude Include="src\math\align.hpp" />
     <ClInclude Include="src\math\bounding_box.hpp" />
     <ClInclude Include="src\math\bvh.hpp" />
+    <ClInclude Include="src\math\curves.hpp" />
     <ClInclude Include="src\math\distance_funcs.hpp" />
     <ClInclude Include="src\math\frustum.hpp" />
     <ClInclude Include="src\math\intersectors.hpp" />

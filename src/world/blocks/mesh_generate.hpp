@@ -22,4 +22,10 @@ auto generate_mesh(const block_custom_mesh_description_ring& ring) noexcept
 /// @return The resulting block_custom_mesh.
 auto generate_mesh(const block_custom_mesh_description_beveled_box& box) noexcept
    -> block_custom_mesh;
+
+/// @brief Generates the mesh for a cubic curve.
+/// @param box The curve.
+/// @return The resulting block_custom_mesh.
+auto generate_mesh(const block_custom_mesh_description_curve& curve) noexcept
+   -> block_custom_mesh;
 }

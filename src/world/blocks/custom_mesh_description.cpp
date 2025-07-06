@@ -31,6 +31,12 @@ block_custom_mesh_description::block_custom_mesh_description(
 {
 }
 
+block_custom_mesh_description::block_custom_mesh_description(
+   const block_custom_mesh_description_curve& curve) noexcept
+   : type{block_custom_mesh_type::curve}, curve{curve}
+{
+}
+
 auto block_custom_mesh_description::operator=(const block_custom_mesh_description& other) noexcept
    -> block_custom_mesh_description&
 {
@@ -45,6 +51,9 @@ auto block_custom_mesh_description::operator=(const block_custom_mesh_descriptio
    } break;
    case block_custom_mesh_type::beveled_box: {
       this->beveled_box = other.beveled_box;
+   } break;
+   case block_custom_mesh_type::curve: {
+      this->curve = other.curve;
    } break;
    }
 
@@ -63,6 +72,8 @@ bool operator==(const block_custom_mesh_description& left,
       return left.ring == right.ring;
    case block_custom_mesh_type::beveled_box:
       return left.beveled_box == right.beveled_box;
+   case block_custom_mesh_type::curve:
+      return left.curve == right.curve;
    }
 
    std::unreachable();

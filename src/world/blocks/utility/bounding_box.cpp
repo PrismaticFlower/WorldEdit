@@ -1,5 +1,6 @@
 #include "bounding_box.hpp"
 
+#include "math/curves.hpp"
 #include "math/vector_funcs.hpp"
 
 #pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
@@ -35,6 +36,46 @@ auto get_bounding_box_local_space(const block_custom_mesh_description& mesh) noe
    }
    case block_custom_mesh_type::beveled_box: {
       return {.min = {-mesh.beveled_box.size}, .max = {mesh.beveled_box.size}};
+   }
+   case block_custom_mesh_type::curve: {
+      const float3& p0 = mesh.curve.p0;
+      const float3& p1 = mesh.curve.p1;
+      const float3& p2 = mesh.curve.p2;
+      const float3& p3 = mesh.curve.p3;
+
+      const float width = mesh.curve.width;
+      const float half_width = width / 2.0f;
+      const float height = mesh.curve.height;
+      const int segments = mesh.curve.segments;
+      const float segments_flt = static_cast<float>(segments);
+
+      math::bounding_box bboxLS{
+         .min = {FLT_MAX, FLT_MAX, FLT_MAX},
+         .max = {-FLT_MAX, -FLT_MAX, -FLT_MAX},
+      };
+
+      for (int i = 0; i <= segments; ++i) {
+         const float3 position = cubic_bezier(p0, p1, p2, p3, i / segments_flt);
+         const float3 tangent =
+            cubic_bezier_tangent(p0, p1, p2, p3,
+                                 std::max(std::min(i / segments_flt, 1.0f - FLT_EPSILON),
+                                          FLT_EPSILON));
+         const float3 normal = cross(tangent, cross({0.0f, 1.0f, 0.0f}, tangent));
+
+         const float3 x_axis = normalize(cross(tangent, normal));
+         const float3 y_axis = normalize(cross(x_axis, tangent));
+         const float3 z_axis = tangent;
+
+         const float3 top = position + y_axis * height;
+         const float3 bottom = position;
+         const float3 left = position - x_axis * half_width;
+         const float3 right = position + x_axis * half_width;
+
+         bboxLS.min = min(bboxLS.min, min(min(min(top, bottom), left), right));
+         bboxLS.max = max(bboxLS.max, max(max(max(top, bottom), left), right));
+      }
+
+      return bboxLS;
    }
    }
 

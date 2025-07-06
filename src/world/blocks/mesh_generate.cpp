@@ -1,5 +1,6 @@
 #include "mesh_generate.hpp"
 
+#include "math/curves.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
@@ -34,12 +35,30 @@ enum beveled_box_surface {
    beveled_box_surface_bottom_edge,
 };
 
-auto calculate_normal(const float3& v0, const float3& v1, const float3& v2)
+enum curve_surface {
+   curve_surface_pos_x,
+   curve_surface_neg_x,
+   curve_surface_pos_y,
+   curve_surface_neg_y,
+   curve_surface_pos_z,
+   curve_surface_neg_z,
+};
+
+auto calculate_normal(const float3& v0, const float3& v1, const float3& v2) noexcept
+   -> float3
 {
    const float3 edge0 = v1 - v0;
    const float3 edge1 = v2 - v0;
 
    return normalize(cross(edge0, edge1));
+}
+
+auto calculate_curve_axis_normal(const float3& tangent, const float3& axis) noexcept
+   -> float3
+{
+   const float3 binormal = cross(axis, tangent);
+
+   return cross(tangent, binormal);
 }
 
 }
@@ -2937,6 +2956,335 @@ auto generate_mesh(const block_custom_mesh_description_beveled_box& box) noexcep
          {0, 4}, {1, 5}, {2, 6}, {3, 7}, //
       };
    }
+
+   return mesh;
+}
+
+auto generate_mesh(const block_custom_mesh_description_curve& curve) noexcept -> block_custom_mesh
+{
+   const float3 p0 = curve.p0;
+   const float3 p1 = curve.p1;
+   const float3 p2 = curve.p2;
+   const float3 p3 = curve.p3;
+   const float width = curve.width;
+   const float half_width = width / 2.0f;
+   const float height = curve.height;
+   const float texture_loops = curve.texture_loops;
+   const int segments = curve.segments;
+   const float segments_flt = static_cast<float>(segments);
+
+   float curve_length = 0.0f;
+
+   for (int i = 0; i < segments; ++i) {
+      const float3 start = cubic_bezier(p0, p1, p2, p3, i / segments_flt);
+      const float3 end = cubic_bezier(p0, p1, p2, p3, (i + 1) / segments_flt);
+
+      curve_length += distance(start, end);
+   }
+
+   block_custom_mesh mesh;
+
+   mesh.vertices.reserve((segments + 1) * 8 + 8);
+   mesh.occluders.reserve(segments * 4 + 2);
+
+   float3 last_position = p0;
+   float traveled_length = 0.0f;
+
+   for (int i = 0; i <= segments; ++i) {
+      const float3 position = cubic_bezier(p0, p1, p2, p3, i / segments_flt);
+      const float3 tangent =
+         cubic_bezier_tangent(p0, p1, p2, p3,
+                              std::max(std::min(i / segments_flt, 1.0f - FLT_EPSILON),
+                                       FLT_EPSILON));
+      const float3 normal = calculate_curve_axis_normal(tangent, {0.0f, 1.0f, 0.0f});
+
+      const float3 x_axis = normalize(cross(tangent, normal));
+      const float3 y_axis = normalize(cross(x_axis, tangent));
+      const float3 z_axis = tangent;
+
+      const float3 top = position + y_axis * height;
+      const float3 bottom = position;
+      const float3 left = position - x_axis * half_width;
+      const float3 right = position + x_axis * half_width;
+
+      traveled_length += distance(position, last_position);
+      last_position = position;
+
+      const float texcoord = (traveled_length / curve_length) * texture_loops;
+
+      mesh.vertices.push_back({
+         .position = left + y_axis * height,
+         .normal = y_axis,
+         .texcoords = {0.0f, texcoord},
+         .surface_index = curve_surface_pos_y,
+      });
+
+      mesh.vertices.push_back({
+         .position = right + y_axis * height,
+         .normal = y_axis,
+         .texcoords = {1.0f, texcoord},
+         .surface_index = curve_surface_pos_y,
+      });
+
+      mesh.vertices.push_back({
+         .position = left,
+         .normal = -y_axis,
+         .texcoords = {0.0f, texcoord},
+         .surface_index = curve_surface_neg_y,
+      });
+
+      mesh.vertices.push_back({
+         .position = right,
+         .normal = -y_axis,
+         .texcoords = {1.0f, texcoord},
+         .surface_index = curve_surface_neg_y,
+      });
+
+      mesh.vertices.push_back({
+         .position = top - x_axis * half_width,
+         .normal = -x_axis,
+         .texcoords = {texcoord, 1.0f},
+         .surface_index = curve_surface_neg_x,
+      });
+
+      mesh.vertices.push_back({
+         .position = bottom - x_axis * half_width,
+         .normal = -x_axis,
+         .texcoords = {texcoord, 0.0f},
+         .surface_index = curve_surface_neg_x,
+      });
+
+      mesh.vertices.push_back({
+         .position = top + x_axis * half_width,
+         .normal = x_axis,
+         .texcoords = {texcoord, 1.0f},
+         .surface_index = curve_surface_pos_x,
+      });
+
+      mesh.vertices.push_back({
+         .position = bottom + x_axis * half_width,
+         .normal = x_axis,
+         .texcoords = {texcoord, 0.0f},
+         .surface_index = curve_surface_pos_x,
+      });
+   }
+
+   for (int i = 0; i < segments; ++i) {
+      const int segment_start = i * 8;
+      const int segment_end = (i + 1) * 8;
+
+      if (width > 0.0f) {
+         // Y+
+         mesh.occluders.push_back({
+            static_cast<uint16>(segment_start + 0),
+            static_cast<uint16>(segment_start + 1),
+            static_cast<uint16>(segment_end + 1),
+            static_cast<uint16>(segment_end + 0),
+         });
+
+         // Y-
+         mesh.occluders.push_back({
+            static_cast<uint16>(segment_end + 2),
+            static_cast<uint16>(segment_end + 3),
+            static_cast<uint16>(segment_start + 3),
+            static_cast<uint16>(segment_start + 2),
+         });
+      }
+
+      // X-
+      mesh.occluders.push_back({
+         static_cast<uint16>(segment_end + 4),
+         static_cast<uint16>(segment_end + 5),
+         static_cast<uint16>(segment_start + 5),
+         static_cast<uint16>(segment_start + 4),
+      });
+
+      // X+
+      mesh.occluders.push_back({
+         static_cast<uint16>(segment_start + 6),
+         static_cast<uint16>(segment_start + 7),
+         static_cast<uint16>(segment_end + 7),
+         static_cast<uint16>(segment_end + 6),
+      });
+   }
+
+   if (width > 0.0f and height > 0.0f) {
+      // Back
+      {
+         const float3 position = cubic_bezier(p0, p1, p2, p3, 0.0f);
+         const float3 tangent = cubic_bezier_tangent(p0, p1, p2, p3, FLT_EPSILON);
+         const float3 normal =
+            calculate_curve_axis_normal(tangent, {0.0f, 1.0f, 0.0f});
+
+         const float3 x_axis = normalize(cross(tangent, normal));
+         const float3 y_axis = normalize(cross(x_axis, tangent));
+         const float3 z_axis = tangent;
+
+         const float3 top = position + y_axis * height;
+         const float3 bottom = position;
+
+         const float3 top_left = top - x_axis * half_width;
+         const float3 top_right = top + x_axis * half_width;
+
+         const float3 bottom_left = bottom - x_axis * half_width;
+         const float3 bottom_right = bottom + x_axis * half_width;
+
+         mesh.occluders.push_back({
+            static_cast<uint16>(mesh.vertices.size() + 0),
+            static_cast<uint16>(mesh.vertices.size() + 1),
+            static_cast<uint16>(mesh.vertices.size() + 2),
+            static_cast<uint16>(mesh.vertices.size() + 3),
+         });
+
+         mesh.vertices.push_back({
+            .position = bottom_left,
+            .normal = -z_axis,
+            .texcoords = {0.0f, 1.0f},
+            .surface_index = curve_surface_neg_z,
+         });
+         mesh.vertices.push_back({
+            .position = bottom_right,
+            .normal = -z_axis,
+            .texcoords = {1.0f, 1.0f},
+            .surface_index = curve_surface_neg_z,
+         });
+         mesh.vertices.push_back({
+            .position = top_right,
+            .normal = -z_axis,
+            .texcoords = {1.0f, 0.0f},
+            .surface_index = curve_surface_neg_z,
+         });
+         mesh.vertices.push_back({
+            .position = top_left,
+            .normal = -z_axis,
+            .texcoords = {0.0f, 0.0f},
+            .surface_index = curve_surface_neg_z,
+         });
+      }
+
+      // Front
+      {
+         const float3 position = cubic_bezier(p0, p1, p2, p3, 1.0f);
+         const float3 tangent =
+            cubic_bezier_tangent(p0, p1, p2, p3, 1.0f - FLT_EPSILON);
+         const float3 normal =
+            calculate_curve_axis_normal(tangent, {0.0f, 1.0f, 0.0f});
+
+         const float3 x_axis = normalize(cross(tangent, normal));
+         const float3 y_axis = normalize(cross(x_axis, tangent));
+         const float3 z_axis = tangent;
+
+         const float3 top = position + y_axis * height;
+         const float3 bottom = position;
+
+         const float3 top_left = top - x_axis * half_width;
+         const float3 top_right = top + x_axis * half_width;
+
+         const float3 bottom_left = bottom - x_axis * half_width;
+         const float3 bottom_right = bottom + x_axis * half_width;
+
+         mesh.occluders.push_back({
+            static_cast<uint16>(mesh.vertices.size() + 0),
+            static_cast<uint16>(mesh.vertices.size() + 1),
+            static_cast<uint16>(mesh.vertices.size() + 2),
+            static_cast<uint16>(mesh.vertices.size() + 3),
+         });
+
+         mesh.vertices.push_back({
+            .position = top_left,
+            .normal = z_axis,
+            .texcoords = {0.0f, 0.0f},
+            .surface_index = curve_surface_neg_z,
+         });
+         mesh.vertices.push_back({
+            .position = top_right,
+            .normal = z_axis,
+            .texcoords = {1.0f, 0.0f},
+            .surface_index = curve_surface_neg_z,
+         });
+         mesh.vertices.push_back({
+            .position = bottom_right,
+            .normal = z_axis,
+            .texcoords = {1.0f, 1.0f},
+            .surface_index = curve_surface_neg_z,
+         });
+         mesh.vertices.push_back({
+            .position = bottom_left,
+            .normal = z_axis,
+            .texcoords = {0.0f, 1.0f},
+            .surface_index = curve_surface_neg_z,
+         });
+      }
+   }
+
+   mesh.triangles.reserve(mesh.occluders.size() * 2);
+
+   for (const auto [i0, i1, i2, i3] : mesh.occluders) {
+      mesh.triangles.push_back({i0, i1, i2});
+      mesh.triangles.push_back({i0, i2, i3});
+   }
+
+   mesh.collision_vertices.reserve(mesh.vertices.size());
+
+   for (const block_vertex& vertex : mesh.vertices) {
+      mesh.collision_vertices.push_back(
+         {.position = vertex.position, .surface_index = vertex.surface_index});
+   }
+
+   mesh.collision_triangles = mesh.triangles;
+   mesh.collision_occluders = mesh.occluders;
+
+   mesh.snap_points.reserve((segments + 1) * 4);
+   mesh.snap_edges.reserve(segments * 4 + 8);
+
+   // 0, 1, 2, 3
+   for (int i = 0; i <= segments; ++i) {
+      mesh.snap_points.push_back(mesh.vertices[i * 8 + 0].position);
+      mesh.snap_points.push_back(mesh.vertices[i * 8 + 1].position);
+      mesh.snap_points.push_back(mesh.vertices[i * 8 + 2].position);
+      mesh.snap_points.push_back(mesh.vertices[i * 8 + 3].position);
+   }
+
+   for (int i = 0; i < segments; ++i) {
+      const int segment_start = i * 4;
+      const int segment_end = (i + 1) * 4;
+
+      mesh.snap_edges.push_back({
+         static_cast<uint16>(segment_start + 0),
+         static_cast<uint16>(segment_end + 0),
+      });
+
+      if (width > 0.0f) {
+         mesh.snap_edges.push_back({
+            static_cast<uint16>(segment_start + 1),
+            static_cast<uint16>(segment_end + 1),
+         });
+
+         mesh.snap_edges.push_back({
+            static_cast<uint16>(segment_start + 2),
+            static_cast<uint16>(segment_end + 2),
+         });
+      }
+
+      mesh.snap_edges.push_back({
+         static_cast<uint16>(segment_start + 3),
+         static_cast<uint16>(segment_end + 3),
+      });
+   }
+
+   mesh.snap_edges.push_back({0, 1});
+   mesh.snap_edges.push_back({1, 3});
+   mesh.snap_edges.push_back({2, 3});
+   mesh.snap_edges.push_back({2, 0});
+
+   mesh.snap_edges.push_back({static_cast<uint16>(segments * 4 + 0),
+                              static_cast<uint16>(segments * 4 + 1)});
+   mesh.snap_edges.push_back({static_cast<uint16>(segments * 4 + 1),
+                              static_cast<uint16>(segments * 4 + 3)});
+   mesh.snap_edges.push_back({static_cast<uint16>(segments * 4 + 2),
+                              static_cast<uint16>(segments * 4 + 3)});
+   mesh.snap_edges.push_back({static_cast<uint16>(segments * 4 + 2),
+                              static_cast<uint16>(segments * 4 + 0)});
 
    return mesh;
 }

@@ -4,6 +4,7 @@
 #include "edits/imgui_ext.hpp"
 #include "edits/set_block.hpp"
 
+#include "math/curves.hpp"
 #include "math/intersectors.hpp"
 #include "math/iq_intersectors.hpp"
 #include "math/plane_funcs.hpp"
@@ -96,6 +97,7 @@ auto block_type_name(draw_block_type type) noexcept -> const char*
    case draw_block_type::pyramid:     return "Pyramid";
    case draw_block_type::ring:        return "Ring";
    case draw_block_type::beveled_box: return "Beveled Box";
+   case draw_block_type::curve:       return "Curve";
    }
    // clang-format on
 
@@ -134,6 +136,7 @@ void world_edit::ui_show_block_editor() noexcept
                  draw_block_type::pyramid,
                  draw_block_type::ring,
                  draw_block_type::beveled_box,
+                 draw_block_type::curve,
               }) {
 
             if (ImGui::Selectable(block_type_name(type),
@@ -199,6 +202,24 @@ void world_edit::ui_show_block_editor() noexcept
          ImGui::Checkbox("Bevel Top", &_block_editor_config.beveled_box.bevel_top);
          ImGui::Checkbox("Bevel Sides", &_block_editor_config.beveled_box.bevel_sides);
          ImGui::Checkbox("Bevel Bottom", &_block_editor_config.beveled_box.bevel_bottom);
+      }
+      else if (_block_editor_config.draw_type == draw_block_type::curve) {
+         ImGui::DragFloat("Width", &_block_editor_config.curve.width, 1.0f,
+                          0.0f, 1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+         ImGui::DragFloat("Height", &_block_editor_config.curve.height, 1.0f,
+                          0.0f, 1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+
+         const uint16 min_segments = 3;
+         const uint16 max_segments = 256;
+
+         ImGui::SliderScalar("Segments", ImGuiDataType_U16,
+                             &_block_editor_config.curve.segments,
+                             &min_segments, &max_segments);
+
+         ImGui::DragFloat("Texture Loops", &_block_editor_config.curve.texture_loops);
+
+         _block_editor_config.curve.segments =
+            std::max(_block_editor_config.curve.segments, min_segments);
       }
 
       ImGui::Checkbox("Enable Alignment", &_block_editor_config.enable_alignment);
@@ -762,6 +783,11 @@ void world_edit::ui_show_block_editor() noexcept
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
+      if (ImGui::MenuItem("Draw Curve")) {
+         _block_editor_config.draw_type = draw_block_type::curve;
+         _block_editor_context = {.activate_tool = block_edit_tool::draw};
+      }
+
       ImGui::EndPopup();
    }
 
@@ -1171,6 +1197,11 @@ void world_edit::ui_show_block_editor() noexcept
                _block_editor_context.draw_block.beveled_box.start = cursor_positionWS;
                _block_editor_context.draw_block.step =
                   draw_block_step::beveled_box_depth;
+            } break;
+            case draw_block_type::curve: {
+               _block_editor_context.draw_block.height_plane = std::nullopt;
+               _block_editor_context.draw_block.curve.p0 = cursor_positionWS;
+               _block_editor_context.draw_block.step = draw_block_step::curve_p3;
             } break;
             }
          }
@@ -2639,6 +2670,228 @@ void world_edit::ui_show_block_editor() noexcept
 
             _edit_stack_world.close_last();
          }
+      } break;
+      case draw_block_step::curve_p3: {
+         _tool_visualizers
+            .add_line_overlay(_block_editor_context.draw_block.curve.p0,
+                              cursor_positionWS, line_color & 0x7f'ff'ff'ffu);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            _block_editor_context.draw_block.curve.p3 = cursor_positionWS;
+            _block_editor_context.draw_block.curve.p1 =
+               _block_editor_context.draw_block.curve.p0;
+            _block_editor_context.draw_block.curve.p2 =
+               _block_editor_context.draw_block.curve.p3;
+            _block_editor_context.draw_block.step = draw_block_step::curve_finalize;
+         }
+      } break;
+      case draw_block_step::curve_finalize: {
+         _gizmos.gizmo_position({.name = "Curve Finalize",
+                                 .instance = 0,
+                                 .alignment = alignment.x},
+                                _block_editor_context.draw_block.curve.p1);
+         _gizmos.gizmo_position({.name = "Curve Finalize",
+                                 .instance = 1,
+                                 .alignment = alignment.x},
+                                _block_editor_context.draw_block.curve.p2);
+
+         if (click) {
+            const world::block_custom_id id = _world.blocks.next_id.custom.aquire();
+            const uint8 material_index = _block_editor_config.paint_material_index;
+
+            const float3 position = (_block_editor_context.draw_block.curve.p0 +
+                                     _block_editor_context.draw_block.curve.p1 +
+                                     _block_editor_context.draw_block.curve.p2 +
+                                     _block_editor_context.draw_block.curve.p3) /
+                                    4.0f;
+
+            if (_world.blocks.custom.size() < world::max_blocks) {
+               _edit_stack_world.apply(
+                  edits::make_add_block(
+                     world::block_description_custom{
+                        .position = position,
+
+                        .mesh_description =
+                           world::block_custom_mesh_description_curve{
+                              .width = _block_editor_config.curve.width,
+                              .height = _block_editor_config.curve.height,
+                              .segments = _block_editor_config.curve.segments,
+                              .texture_loops = _block_editor_config.curve.texture_loops,
+                              .p0 = _block_editor_context.draw_block.curve.p0 - position,
+                              .p1 = _block_editor_context.draw_block.curve.p1 - position,
+                              .p2 = _block_editor_context.draw_block.curve.p2 - position,
+                              .p3 = _block_editor_context.draw_block.curve.p3 - position,
+                           },
+                        .surface_materials = {material_index, material_index,
+                                              material_index, material_index,
+                                              material_index, material_index},
+                        .surface_texture_mode = {world::block_texture_mode::unwrapped,
+                                                 world::block_texture_mode::unwrapped,
+                                                 world::block_texture_mode::unwrapped,
+                                                 world::block_texture_mode::unwrapped,
+                                                 world::block_texture_mode::unwrapped,
+                                                 world::block_texture_mode::unwrapped},
+                     },
+                     _block_editor_config.new_block_layer, id),
+                  _edit_context);
+            }
+            else {
+               MessageBoxA(_window,
+                           fmt::format("Max Custom Blocks ({}) Reached", world::max_blocks)
+                              .c_str(),
+                           "Limit Reached", MB_OK);
+
+               _block_editor_context.tool = block_edit_tool::none;
+            }
+
+            _block_editor_context.draw_block = {};
+         }
+
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         {
+
+            const float3& p0 = _block_editor_context.draw_block.curve.p0;
+            const float3& p1 = _block_editor_context.draw_block.curve.p1;
+            const float3& p2 = _block_editor_context.draw_block.curve.p2;
+            const float3& p3 = _block_editor_context.draw_block.curve.p3;
+
+            const float segments_flt = _block_editor_config.curve.segments;
+            const float height = _block_editor_config.curve.height;
+            const float half_width = _block_editor_config.curve.width / 2.0f;
+
+            for (int i = 0; i < _block_editor_config.curve.segments; ++i) {
+               const float3 start = cubic_bezier(p0, p1, p2, p3, i / segments_flt);
+               const float3 start_tangent =
+                  cubic_bezier_tangent(p0, p1, p2, p3,
+                                       std::max(std::min(i / segments_flt, 1.0f - FLT_EPSILON),
+                                                FLT_EPSILON));
+               const float3 start_normal =
+                  cross(start_tangent, cross(float3{0.0f, 1.0f, 0.0f}, start_tangent));
+
+               const float3 start_x_axis =
+                  normalize(cross(start_tangent, start_normal));
+               const float3 start_y_axis =
+                  normalize(cross(start_x_axis, start_tangent));
+               const float3 start_z_axis = start_tangent;
+
+               const float3 start_top = start + start_y_axis * height;
+               const float3 start_bottom = start;
+
+               const float3 start_top_left = start_top - start_x_axis * half_width;
+               const float3 start_top_right = start_top + start_x_axis * half_width;
+               const float3 start_bottom_left = start_bottom - start_x_axis * half_width;
+               const float3 start_bottom_right =
+                  start_bottom + start_x_axis * half_width;
+
+               const float3 end = cubic_bezier(p0, p1, p2, p3, (i + 1) / segments_flt);
+               const float3 end_tangent =
+                  cubic_bezier_tangent(p0, p1, p2, p3,
+                                       std::max(std::min((i + 1) / segments_flt,
+                                                         1.0f - FLT_EPSILON),
+                                                FLT_EPSILON));
+               const float3 end_normal =
+                  cross(end_tangent, cross(float3{0.0f, 1.0f, 0.0f}, end_tangent));
+
+               const float3 end_x_axis = normalize(cross(end_tangent, end_normal));
+               const float3 end_y_axis = normalize(cross(end_x_axis, end_tangent));
+               const float3 end_z_axis = end_tangent;
+
+               const float3 end_top = end + end_y_axis * height;
+               const float3 end_bottom = end;
+
+               const float3 end_top_left = end_top - end_x_axis * half_width;
+               const float3 end_top_right = end_top + end_x_axis * half_width;
+               const float3 end_bottom_left = end_bottom - end_x_axis * half_width;
+               const float3 end_bottom_right = end_bottom + end_x_axis * half_width;
+
+               _tool_visualizers.add_line_overlay(start, end, line_color);
+               _tool_visualizers.add_line(start_top_left, end_top_left,
+                                          0x7f'ff'ff'ffu & line_color);
+               _tool_visualizers.add_line(start_top_right, end_top_right,
+                                          0x7f'ff'ff'ffu & line_color);
+               _tool_visualizers.add_line(start_bottom_left, end_bottom_left,
+                                          0x7f'ff'ff'ffu & line_color);
+               _tool_visualizers.add_line(start_bottom_right, end_bottom_right,
+                                          0x7f'ff'ff'ffu & line_color);
+
+               _tool_visualizers.add_triangle_additive(start_top_left,
+                                                       start_top_right, end_top_right,
+                                                       0x3f'ff'ff'ffu & line_color);
+               _tool_visualizers.add_triangle_additive(start_top_left,
+                                                       end_top_right, end_top_left,
+                                                       0x3f'ff'ff'ffu & line_color);
+
+               _tool_visualizers.add_triangle_additive(end_bottom_right,
+                                                       start_bottom_right,
+                                                       start_bottom_left,
+                                                       0x3f'ff'ff'ffu & line_color);
+               _tool_visualizers.add_triangle_additive(end_bottom_left, end_bottom_right,
+                                                       start_bottom_left,
+                                                       0x3f'ff'ff'ffu & line_color);
+
+               _tool_visualizers.add_triangle_additive(start_top_left, end_top_left,
+                                                       end_bottom_left,
+                                                       0x3f'ff'ff'ffu & line_color);
+               _tool_visualizers.add_triangle_additive(start_top_left, end_bottom_left,
+                                                       start_bottom_left,
+                                                       0x3f'ff'ff'ffu & line_color);
+
+               _tool_visualizers.add_triangle_additive(end_bottom_right,
+                                                       end_top_right, start_top_right,
+                                                       0x3f'ff'ff'ffu & line_color);
+               _tool_visualizers.add_triangle_additive(start_bottom_right,
+                                                       end_bottom_right, start_top_right,
+                                                       0x3f'ff'ff'ffu & line_color);
+
+               if (i == 0) {
+                  _tool_visualizers.add_triangle_additive(start_bottom_right,
+                                                          start_top_right, start_top_left,
+                                                          0x3f'ff'ff'ffu & line_color);
+                  _tool_visualizers.add_triangle_additive(start_bottom_left,
+                                                          start_bottom_right,
+                                                          start_top_left,
+                                                          0x3f'ff'ff'ffu & line_color);
+
+                  _tool_visualizers.add_line(start_top_left, start_top_right,
+                                             0x7f'ff'ff'ffu & line_color);
+                  _tool_visualizers.add_line(start_top_right, start_bottom_right,
+                                             0x7f'ff'ff'ffu & line_color);
+                  _tool_visualizers.add_line(start_bottom_right, start_bottom_left,
+                                             0x7f'ff'ff'ffu & line_color);
+                  _tool_visualizers.add_line(start_bottom_left, start_top_left,
+                                             0x7f'ff'ff'ffu & line_color);
+               }
+               else if (i == (_block_editor_config.curve.segments - 1)) {
+                  _tool_visualizers.add_triangle_additive(end_top_left, end_top_right,
+                                                          end_bottom_right,
+                                                          0x3f'ff'ff'ffu & line_color);
+                  _tool_visualizers.add_triangle_additive(end_top_left, end_bottom_right,
+                                                          end_bottom_left,
+                                                          0x3f'ff'ff'ffu & line_color);
+
+                  _tool_visualizers.add_line(end_top_left, end_top_right,
+                                             0x7f'ff'ff'ffu & line_color);
+                  _tool_visualizers.add_line(end_top_right, end_bottom_right,
+                                             0x7f'ff'ff'ffu & line_color);
+                  _tool_visualizers.add_line(end_bottom_right, end_bottom_left,
+                                             0x7f'ff'ff'ffu & line_color);
+                  _tool_visualizers.add_line(end_bottom_left, end_top_left,
+                                             0x7f'ff'ff'ffu & line_color);
+               }
+            }
+
+            _tool_visualizers
+               .add_line_overlay(_block_editor_context.draw_block.curve.p0,
+                                 _block_editor_context.draw_block.curve.p1,
+                                 line_color);
+            _tool_visualizers
+               .add_line_overlay(_block_editor_context.draw_block.curve.p3,
+                                 _block_editor_context.draw_block.curve.p2,
+                                 line_color);
+         }
+
       } break;
       }
    }
