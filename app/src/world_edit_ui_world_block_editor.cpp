@@ -3361,6 +3361,68 @@ void world_edit::ui_show_block_editor() noexcept
                                           _edit_context);
                }
             } break;
+            case world::block_custom_mesh_type::curve: {
+               const world::block_custom_mesh_description_curve& curve =
+                  block.mesh_description.curve;
+
+               const int64 gizmo_instance =
+                  static_cast<int64>(_world.blocks.custom.ids[*selected_index]);
+
+               float3 p0WS = block.rotation * curve.p0 + block.position;
+               float3 p1WS = block.rotation * curve.p1 + block.position;
+               float3 p2WS = block.rotation * curve.p2 + block.position;
+               float3 p3WS = block.rotation * curve.p3 + block.position;
+
+               bool edited = false;
+
+               edited |= _gizmos.gizmo_position(
+                  {
+                     .name = "Resize Block (Curve), P0",
+                     .instance = gizmo_instance,
+                     .alignment = _editor_grid_size,
+                  },
+                  p0WS);
+               edited |= _gizmos.gizmo_position(
+                  {
+                     .name = "Resize Block (Curve), P1",
+                     .instance = gizmo_instance,
+                     .alignment = _editor_grid_size,
+                  },
+                  p1WS);
+               edited |= _gizmos.gizmo_position(
+                  {
+                     .name = "Resize Block (Curve), P2",
+                     .instance = gizmo_instance,
+                     .alignment = _editor_grid_size,
+                  },
+                  p2WS);
+               edited |= _gizmos.gizmo_position(
+                  {
+                     .name = "Resize Block (Curve), P3",
+                     .instance = gizmo_instance,
+                     .alignment = _editor_grid_size,
+                  },
+                  p3WS);
+
+               _tool_visualizers.add_line(p0WS, p1WS, 0x7f'ff'ff'ff);
+               _tool_visualizers.add_line(p1WS, p2WS, 0x7f'ff'ff'ff);
+               _tool_visualizers.add_line(p2WS, p3WS, 0x7f'ff'ff'ff);
+               _tool_visualizers.add_line(p0WS, p1WS, 0xff'ff'ff'ff);
+
+               if (edited) {
+                  world::block_custom_mesh_description_curve new_curve = curve;
+
+                  new_curve.p0 = conjugate(block.rotation) * (p0WS - block.position);
+                  new_curve.p1 = conjugate(block.rotation) * (p1WS - block.position);
+                  new_curve.p2 = conjugate(block.rotation) * (p2WS - block.position);
+                  new_curve.p3 = conjugate(block.rotation) * (p3WS - block.position);
+
+                  _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                             *selected_index, block.rotation,
+                                             block.position, new_curve),
+                                          _edit_context);
+               }
+            } break;
             }
 
          } break;

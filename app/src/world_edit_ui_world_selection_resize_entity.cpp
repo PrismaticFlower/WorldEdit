@@ -667,6 +667,72 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                                                 _edit_context);
                      }
                   } break;
+                  case world::block_custom_mesh_type::curve: {
+                     const world::block_custom_mesh_description_curve& curve =
+                        block.mesh_description.curve;
+
+                     const int64 gizmo_instance =
+                        static_cast<int64>(_world.blocks.custom.ids[*block_index]);
+
+                     float3 new_p0 = block.rotation * curve.p0 + block.position;
+                     float3 new_p1 = block.rotation * curve.p1 + block.position;
+                     float3 new_p2 = block.rotation * curve.p2 + block.position;
+                     float3 new_p3 = block.rotation * curve.p3 + block.position;
+
+                     bool edited = false;
+
+                     edited |= _gizmos.gizmo_position(
+                        {
+                           .name = "Block Curve Size, P0",
+                           .instance = gizmo_instance,
+                           .alignment = _editor_grid_size,
+                        },
+                        new_p0);
+                     edited |= _gizmos.gizmo_position(
+                        {
+                           .name = "Block Curve Size, P1",
+                           .instance = gizmo_instance,
+                           .alignment = _editor_grid_size,
+                        },
+                        new_p1);
+                     edited |= _gizmos.gizmo_position(
+                        {
+                           .name = "Block Curve Size, P2",
+                           .instance = gizmo_instance,
+                           .alignment = _editor_grid_size,
+                        },
+                        new_p2);
+                     edited |= _gizmos.gizmo_position(
+                        {
+                           .name = "Block Curve Size, P3",
+                           .instance = gizmo_instance,
+                           .alignment = _editor_grid_size,
+                        },
+                        new_p3);
+
+                     _tool_visualizers.add_line(new_p0, new_p1, 0x7f'ff'ff'ff);
+                     _tool_visualizers.add_line(new_p1, new_p2, 0x7f'ff'ff'ff);
+                     _tool_visualizers.add_line(new_p2, new_p3, 0x7f'ff'ff'ff);
+                     _tool_visualizers.add_line(new_p0, new_p3, 0xff'ff'ff'ff);
+
+                     if (edited) {
+                        world::block_custom_mesh_description_curve new_curve = curve;
+
+                        new_curve.p0 =
+                           conjugate(block.rotation) * (new_p0 - block.position);
+                        new_curve.p1 =
+                           conjugate(block.rotation) * (new_p1 - block.position);
+                        new_curve.p2 =
+                           conjugate(block.rotation) * (new_p2 - block.position);
+                        new_curve.p3 =
+                           conjugate(block.rotation) * (new_p3 - block.position);
+
+                        _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                                   *block_index, block.rotation,
+                                                   block.position, new_curve),
+                                                _edit_context);
+                     }
+                  } break;
                   }
 
                } break;
