@@ -2051,6 +2051,44 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      _edit_stack_world.close_last();
                   }
                } break;
+               case world::block_custom_mesh_type::curve: {
+                  world::block_custom_mesh_description_curve curve =
+                     block.mesh_description.curve;
+
+                  const uint16 min_segments = 3;
+                  const uint16 max_segments = 256;
+
+                  bool edited = false;
+
+                  edited |= ImGui::DragFloat("Width", &curve.width, 1.0f, 0.0f, 1e10f);
+                  edited |=
+                     ImGui::DragFloat("Height", &curve.height, 1.0f, 0.0f, 1e10f);
+                  edited |= ImGui::SliderScalar("Segments", ImGuiDataType_U16,
+                                                &curve.segments, &min_segments,
+                                                &max_segments);
+                  edited |= ImGui::DragFloat("Texture Loops", &curve.texture_loops);
+
+                  ImGui::SetItemTooltip(
+                     "How many times the texture wraps around the ring in the "
+                     "Unwrapped Texture Mode.");
+
+                  if (edited) {
+                     curve.segments = std::max(curve.segments, min_segments);
+
+                     if (curve.width == 0.0f and curve.height == 0.0f) {
+                        curve.height = 1.0f;
+                     }
+
+                     _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                                *block_index, block.rotation,
+                                                block.position, curve),
+                                             _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivated()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
                }
             }
          }
