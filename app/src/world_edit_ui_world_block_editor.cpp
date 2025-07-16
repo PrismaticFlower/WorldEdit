@@ -3286,51 +3286,27 @@ void world_edit::ui_show_block_editor() noexcept
                const world::block_custom_mesh_description_ring& ring =
                   block.mesh_description.ring;
 
-               float3 size = {ring.outer_radius, ring.height, ring.outer_radius};
                float3 positionWS = block.position;
 
-               if (_gizmos.gizmo_size(
+               float new_inner_radius = ring.inner_radius;
+               float new_outer_radius = ring.outer_radius;
+               float new_height = ring.height;
+
+               if (_gizmos.gizmo_ring_size(
                       {
-                         .name = "Resize Block (Ring, Outer)",
+                         .name = "Resize Block (Ring)",
+                         .instance = static_cast<int64>(
+                            _world.blocks.custom.ids[*selected_index]),
                          .alignment = _editor_grid_size,
                          .gizmo_rotation = block.rotation,
                       },
-                      positionWS, size)) {
-                  const float new_radius =
-                     size.x != ring.outer_radius ? size.x : size.z;
-
+                      positionWS, new_inner_radius, new_outer_radius, new_height)) {
                   _edit_stack_world.apply(edits::make_set_block_custom_metrics(
                                              *selected_index, block.rotation, positionWS,
                                              world::block_custom_mesh_description_ring{
-                                                .inner_radius = ring.inner_radius,
-                                                .outer_radius = std::max(new_radius, 0.0f),
-                                                .height = size.y,
-                                                .segments = ring.segments,
-                                                .flat_shading = ring.flat_shading,
-                                             }),
-                                          _edit_context);
-               }
-
-               size = {ring.inner_radius, ring.height, ring.inner_radius};
-               positionWS = block.position;
-
-               if (_gizmos.gizmo_size(
-                      {
-                         .name = "Resize Block (Ring, Inner)",
-                         .alignment = _editor_grid_size,
-                         .gizmo_rotation = block.rotation,
-                         .show_y_axis = false,
-                      },
-                      positionWS, size)) {
-                  const float new_radius =
-                     size.x != ring.inner_radius ? size.x : size.z;
-
-                  _edit_stack_world.apply(edits::make_set_block_custom_metrics(
-                                             *selected_index, block.rotation, positionWS,
-                                             world::block_custom_mesh_description_ring{
-                                                .inner_radius = std::max(new_radius, 0.0f),
-                                                .outer_radius = ring.outer_radius,
-                                                .height = size.y,
+                                                .inner_radius = new_inner_radius,
+                                                .outer_radius = new_outer_radius,
+                                                .height = new_height,
                                                 .segments = ring.segments,
                                                 .flat_shading = ring.flat_shading,
                                              }),

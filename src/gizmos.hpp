@@ -52,6 +52,13 @@ struct gizmo_cone_size_desc {
    float3 gizmo_positionWS;
 };
 
+struct gizmo_ring_size_desc {
+   std::string_view name;
+   int64 instance = 0;
+   float alignment = 1.0f;
+   quaternion gizmo_rotation;
+};
+
 struct gizmo_draw_cone {
    float3 position_start;
    float3 position_end;
@@ -143,11 +150,14 @@ struct gizmos {
    bool gizmo_cone_size(const gizmo_cone_size_desc& desc, float& length,
                         float& base_radius) noexcept;
 
+   bool gizmo_ring_size(const gizmo_ring_size_desc& desc, float3& positionWS,
+                        float& inner_radius, float& outer_radius, float& height) noexcept;
+
    bool can_close_last_edit() const noexcept;
 
 private:
    struct impl;
 
-   implementation_storage<impl, 520> impl;
+   implementation_storage<impl, 552> impl;
 };
 }
