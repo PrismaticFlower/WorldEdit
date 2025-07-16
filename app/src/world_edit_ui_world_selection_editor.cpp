@@ -1995,9 +1995,9 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                              1.0f, 0.0f, 1e10f);
                   edited |= ImGui::DragFloat("Outer Radius", &ring.outer_radius,
                                              1.0f, 0.0f, 1e10f);
-                  edited |= ImGui::SliderScalar("First Step Offset",
-                                                ImGuiDataType_U16, &ring.segments,
-                                                &min_segments, &max_segments);
+                  edited |= ImGui::SliderScalar("Segments", ImGuiDataType_U16,
+                                                &ring.segments, &min_segments,
+                                                &max_segments);
                   edited |= ImGui::Checkbox("Flat Shading", &ring.flat_shading);
                   edited |= ImGui::DragFloat("Texture Loops", &ring.texture_loops);
 
