@@ -3789,6 +3789,13 @@ void world_edit::unhide_all() noexcept
    unhide_entities(_world.measurements);
 
    unhide_blocks(_world.blocks.boxes.hidden);
+   unhide_blocks(_world.blocks.ramps.hidden);
+   unhide_blocks(_world.blocks.quads.hidden);
+   unhide_blocks(_world.blocks.cylinders.hidden);
+   unhide_blocks(_world.blocks.custom.hidden);
+   unhide_blocks(_world.blocks.cones.hidden);
+   unhide_blocks(_world.blocks.hemispheres.hidden);
+   unhide_blocks(_world.blocks.pyramids.hidden);
 
    if (bundle.size() == 1) {
       _edit_stack_world.apply(std::move(bundle.back()), _edit_context,
