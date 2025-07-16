@@ -685,6 +685,9 @@ void save_entity_group_impl(File& file, const entity_group& group)
          case block_custom_mesh_type::beveled_box: {
             file.write_ln("   BeveledBox()");
          } break;
+         case block_custom_mesh_type::curve: {
+            file.write_ln("   CubicCurve()");
+         } break;
          }
 
          file.write_ln("   {");
@@ -725,6 +728,24 @@ void save_entity_group_impl(File& file, const entity_group& group)
             file.write_ln("      BevelTop({:d});", box.bevel_top);
             file.write_ln("      BevelSides({:d});", box.bevel_sides);
             file.write_ln("      BevelBottom({:d});", box.bevel_bottom);
+         } break;
+         case block_custom_mesh_type::curve: {
+            const world::block_custom_mesh_description_curve& curve =
+               block.mesh_description.curve;
+
+            file.write_ln("      Width({});", curve.width);
+            file.write_ln("      Height({});", curve.height);
+            file.write_ln("      Segments({});", curve.segments);
+            file.write_ln("      TextureLoops({});", curve.texture_loops);
+
+            file.write_ln("      P0({}, {}, {});", curve.p0.x, curve.p0.y,
+                          curve.p0.z);
+            file.write_ln("      P1({}, {}, {});", curve.p1.x, curve.p1.y,
+                          curve.p1.z);
+            file.write_ln("      P2({}, {}, {});", curve.p2.x, curve.p2.y,
+                          curve.p2.z);
+            file.write_ln("      P3({}, {}, {});", curve.p3.x, curve.p3.y,
+                          curve.p3.z);
          } break;
          }
 

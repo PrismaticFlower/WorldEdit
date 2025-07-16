@@ -1,0 +1,58 @@
+Custom(3)
+{
+   CubicCurve()
+   {
+      Rotation(0, 1, 0, 0);
+      Position(8.5, 4.5, 2);
+      Width(4);
+      Height(4);
+      Segments(12);
+      TextureLoops(4);
+      P0(0, 0, 0);
+      P1(0, 0, 1);
+      P2(1, 0, 1);
+      P3(1, 0, 0);
+      SurfaceMaterials(0, 1, 2, 3, 4, 5);
+      SurfaceTextureMode(1, 1, 1, 1, 1, 1);
+      SurfaceTextureRotation(2, 2, 2, 2, 2, 2);
+      SurfaceTextureScale(0, 0, -1, -2, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(0, 0, 0, 0, 0, 0, 0, 0, 256, 256, 0, 0);
+      Layer(2);
+   }
+   CubicCurve()
+   {
+      Rotation(0.707106, 0, 0.707106, 0);
+      Position(10, 16, 12);
+      Width(8);
+      Height(8);
+      Segments(24);
+      TextureLoops(8);
+      P0(0, 0, 0);
+      P1(0, 0, 2);
+      P2(2, 0, 2);
+      P3(2, 0, 0);
+      SurfaceMaterials(2, 2, 2, 2, 2, 2);
+      SurfaceTextureMode(2, 2, 2, 2, 5, 2);
+      SurfaceTextureRotation(1, 1, 1, 1, 1, 1);
+      SurfaceTextureScale(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, -2);
+      SurfaceTextureOffset(1024, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+   }
+   CubicCurve()
+   {
+      Rotation(0, 0, 0, 1);
+      Position(6, 6, 6);
+      Width(16);
+      Height(16);
+      Segments(48);
+      TextureLoops(16);
+      P0(0, 0, 0);
+      P1(0, 0, 4);
+      P2(4, 0, 4);
+      P3(4, 0, 0);
+      SurfaceMaterials(0, 0, 0, 0, 0, 0);
+      SurfaceTextureMode(0, 1, 2, 3, 4, 5);
+      SurfaceTextureRotation(0, 1, 2, 3, 0, 0);
+      SurfaceTextureScale(-7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4);
+      SurfaceTextureOffset(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+   }
+}

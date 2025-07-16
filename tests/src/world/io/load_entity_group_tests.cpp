@@ -1613,6 +1613,189 @@ TEST_CASE("world entity group loading (blocks, beveled boxes)", "[World][IO]")
    CHECK(group.blocks.custom.mesh[2] == blocks_custom_mesh_library::null_handle());
 }
 
+TEST_CASE("world entity group loading (blocks, curves)", "[World][IO]")
+{
+   null_output_stream out;
+   const entity_group group =
+      load_entity_group("data/entity_groups/test_blocks_curves.eng", out);
+
+   REQUIRE(group.blocks.custom.description.size() == 3);
+
+   CHECK(group.blocks.custom.description[0].rotation ==
+         quaternion{0.0f, 1.0f, 0.0f, 0.0f});
+   CHECK(group.blocks.custom.description[0].position == float3{8.5f, 4.5f, 2.0f});
+   CHECK(group.blocks.custom.description[0].mesh_description.type ==
+         block_custom_mesh_type::curve);
+   CHECK(group.blocks.custom.description[0].mesh_description.curve.width == 4.0f);
+   CHECK(group.blocks.custom.description[0].mesh_description.curve.height == 4.0f);
+   CHECK(group.blocks.custom.description[0].mesh_description.curve.segments == 12);
+   CHECK(group.blocks.custom.description[0].mesh_description.curve.texture_loops == 4.0f);
+   CHECK(group.blocks.custom.description[0].mesh_description.curve.p0 ==
+         float3{0.0f, 0.0f, 0.0f});
+   CHECK(group.blocks.custom.description[0].mesh_description.curve.p1 ==
+         float3{0.0f, 0.0f, 1.0f});
+   CHECK(group.blocks.custom.description[0].mesh_description.curve.p2 ==
+         float3{1.0f, 0.0f, 1.0f});
+   CHECK(group.blocks.custom.description[0].mesh_description.curve.p3 ==
+         float3{1.0f, 0.0f, 0.0f});
+   CHECK(group.blocks.custom.description[0].surface_materials ==
+         std::array<uint8, 6>{0, 1, 0, 0, 0, 0});
+   CHECK(group.blocks.custom.description[0].surface_texture_mode ==
+         std::array<block_texture_mode, 6>{
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+         });
+   CHECK(group.blocks.custom.description[0].surface_texture_rotation ==
+         std::array<block_texture_rotation, 6>{
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+            block_texture_rotation::d180,
+         });
+   CHECK(group.blocks.custom.description[0].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 6>{
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{-1, -2},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+         });
+   CHECK(group.blocks.custom.description[0].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 6>{
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{256, 256},
+            std::array<uint16, 2>{0, 0},
+         });
+
+   CHECK(group.blocks.custom.description[1].rotation ==
+         quaternion{0.707106f, 0.0f, 0.707106f, 0.0f});
+   CHECK(group.blocks.custom.description[1].position == float3{10.0f, 16.0f, 12.0f});
+   CHECK(group.blocks.custom.description[1].mesh_description.type ==
+         block_custom_mesh_type::curve);
+   CHECK(group.blocks.custom.description[1].mesh_description.curve.width == 8.0f);
+   CHECK(group.blocks.custom.description[1].mesh_description.curve.height == 8.0f);
+   CHECK(group.blocks.custom.description[1].mesh_description.curve.segments == 24);
+   CHECK(group.blocks.custom.description[1].mesh_description.curve.texture_loops == 8.0f);
+   CHECK(group.blocks.custom.description[1].mesh_description.curve.p0 ==
+         float3{0.0f, 0.0f, 0.0f});
+   CHECK(group.blocks.custom.description[1].mesh_description.curve.p1 ==
+         float3{0.0f, 0.0f, 2.0f});
+   CHECK(group.blocks.custom.description[1].mesh_description.curve.p2 ==
+         float3{2.0f, 0.0f, 2.0f});
+   CHECK(group.blocks.custom.description[1].mesh_description.curve.p3 ==
+         float3{2.0f, 0.0f, 0.0f});
+   CHECK(group.blocks.custom.description[1].surface_materials ==
+         std::array<uint8, 6>{1, 1, 1, 1, 1, 1});
+   CHECK(group.blocks.custom.description[1].surface_texture_mode ==
+         std::array<block_texture_mode, 6>{
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_zy,
+            block_texture_mode::local_space_zy,
+            block_texture_mode::world_space_zy,
+         });
+   CHECK(group.blocks.custom.description[1].surface_texture_rotation ==
+         std::array<block_texture_rotation, 6>{
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+            block_texture_rotation::d90,
+         });
+   CHECK(group.blocks.custom.description[1].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 6>{
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{-2, -2},
+         });
+   CHECK(group.blocks.custom.description[1].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 6>{
+            std::array<uint16, 2>{1024, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+         });
+
+   CHECK(group.blocks.custom.description[2].rotation ==
+         quaternion{0.0f, 0.0f, 0.0f, 1.0f});
+   CHECK(group.blocks.custom.description[2].position == float3{6.0f, 6.0f, 6.0f});
+   CHECK(group.blocks.custom.description[2].mesh_description.type ==
+         block_custom_mesh_type::curve);
+   CHECK(group.blocks.custom.description[2].mesh_description.curve.width == 16.0f);
+   CHECK(group.blocks.custom.description[2].mesh_description.curve.height == 16.0f);
+   CHECK(group.blocks.custom.description[2].mesh_description.curve.segments == 48);
+   CHECK(group.blocks.custom.description[2].mesh_description.curve.texture_loops == 16.0f);
+   CHECK(group.blocks.custom.description[2].mesh_description.curve.p0 ==
+         float3{0.0f, 0.0f, 0.0f});
+   CHECK(group.blocks.custom.description[2].mesh_description.curve.p1 ==
+         float3{0.0f, 0.0f, 4.0f});
+   CHECK(group.blocks.custom.description[2].mesh_description.curve.p2 ==
+         float3{4.0f, 0.0f, 4.0f});
+   CHECK(group.blocks.custom.description[2].mesh_description.curve.p3 ==
+         float3{4.0f, 0.0f, 0.0f});
+   CHECK(group.blocks.custom.description[2].surface_materials ==
+         std::array<uint8, 6>{0, 0, 0, 0, 0, 0});
+   CHECK(group.blocks.custom.description[2].surface_texture_mode ==
+         std::array<block_texture_mode, 6>{
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_xz,
+         });
+   CHECK(group.blocks.custom.description[2].surface_texture_rotation ==
+         std::array<block_texture_rotation, 6>{
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+         });
+   CHECK(group.blocks.custom.description[2].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 6>{
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+         });
+   CHECK(group.blocks.custom.description[2].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 6>{
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+         });
+
+   REQUIRE(group.blocks.custom.mesh.size() == 3);
+
+   CHECK(group.blocks.custom.mesh[0] == blocks_custom_mesh_library::null_handle());
+   CHECK(group.blocks.custom.mesh[1] == blocks_custom_mesh_library::null_handle());
+   CHECK(group.blocks.custom.mesh[2] == blocks_custom_mesh_library::null_handle());
+}
+
 TEST_CASE("world entity group loading (blocks, materials)", "[World][IO]")
 {
    null_output_stream out;

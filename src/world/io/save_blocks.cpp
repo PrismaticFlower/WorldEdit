@@ -250,6 +250,9 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
       case block_custom_mesh_type::beveled_box: {
          out.write_ln("   BeveledBox()");
       } break;
+      case block_custom_mesh_type::curve: {
+         out.write_ln("   CubicCurve()");
+      } break;
       }
       out.write_ln("   {");
 
@@ -289,6 +292,20 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
          out.write_ln("      BevelTop({:d});", box.bevel_top);
          out.write_ln("      BevelSides({:d});", box.bevel_sides);
          out.write_ln("      BevelBottom({:d});", box.bevel_bottom);
+      } break;
+      case block_custom_mesh_type::curve: {
+         const world::block_custom_mesh_description_curve& curve =
+            block.mesh_description.curve;
+
+         out.write_ln("      Width({});", curve.width);
+         out.write_ln("      Height({});", curve.height);
+         out.write_ln("      Segments({});", curve.segments);
+         out.write_ln("      TextureLoops({});", curve.texture_loops);
+
+         out.write_ln("      P0({}, {}, {});", curve.p0.x, curve.p0.y, curve.p0.z);
+         out.write_ln("      P1({}, {}, {});", curve.p1.x, curve.p1.y, curve.p1.z);
+         out.write_ln("      P2({}, {}, {});", curve.p2.x, curve.p2.y, curve.p2.z);
+         out.write_ln("      P3({}, {}, {});", curve.p3.x, curve.p3.y, curve.p3.z);
       } break;
       }
 
