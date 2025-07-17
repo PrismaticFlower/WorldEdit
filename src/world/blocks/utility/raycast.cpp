@@ -1,6 +1,8 @@
 #include "raycast.hpp"
 
+#include "../bvh.hpp"
 #include "../custom_mesh.hpp"
+#include "../custom_mesh_bvh_library.hpp"
 #include "../mesh_geometry.hpp"
 
 #include "math/intersectors.hpp"
@@ -278,7 +280,8 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
              const active_layers active_layers, const blocks_custom& blocks,
-             const blocks_custom_mesh_library& custom_meshes, const float max_distance,
+             const blocks_custom_mesh_library& custom_meshes,
+             const blocks_custom_mesh_bvh_library& bvh_library, const float max_distance,
              function_ptr<bool(const block_id id) noexcept> filter) noexcept
    -> std::optional<raycast_block_result_local>
 {
@@ -296,83 +299,14 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
 
       const float3 ray_originLS = local_from_world * (ray_originWS - block.position);
       const float3 ray_directionLS = normalize(local_from_world * ray_directionWS);
-      const float3 inv_ray_directionLS = 1.0f / ray_directionLS;
 
-      bool mesh_proxy_hit = false;
+      const block_bvh& bvh = bvh_library[blocks.mesh[block_index]];
 
-      switch (block.mesh_description.type) {
-      case block_custom_mesh_type::stairway: {
-         const block_custom_mesh_description_stairway& stairway =
-            block.mesh_description.stairway;
-
-         const float half_width = stairway.size.x / 2.0f;
-         const float half_length = stairway.size.z / 2.0f;
-
-         if (float aabb_hit;
-             not intersect_aabb(ray_originLS, inv_ray_directionLS,
-                                {.min = {-half_width, 0.0f, -half_length},
-                                 .max = {half_width, stairway.size.y + stairway.first_step_offset,
-                                         half_length}},
-                                closest, aabb_hit)) {
-            continue;
-         }
-
-         const int steps =
-            static_cast<int>(ceilf(stairway.size.y / stairway.step_height));
-         const float adjusted_step_height = stairway.size.y / steps;
-         const float step_length = stairway.size.z / steps;
-
-         for (int i = 0; i < steps; ++i) {
-            float step_base = i * adjusted_step_height;
-            float step_top = (i + 1) * adjusted_step_height;
-
-            step_top += stairway.first_step_offset;
-            if (i != 0) step_base += stairway.first_step_offset;
-
-            if (i + 1 == steps) {
-               step_top = stairway.size.y + stairway.first_step_offset;
-            }
-
-            const float step_back = i * step_length - half_length;
-            const float step_front = half_length;
-
-            const math::bounding_box bboxLS{.min = {-half_width, step_base, step_back},
-                                            .max = {half_width, step_top, step_front}};
-
-            if (float aabb_hit; intersect_aabb(ray_originLS, inv_ray_directionLS,
-                                               bboxLS, closest, aabb_hit) and
-                                aabb_hit >= 0.0f) {
-               mesh_proxy_hit = true;
-               break;
-            }
-         }
-      } break;
-      case block_custom_mesh_type::ring: {
-         const block_custom_mesh_description_ring& ring = block.mesh_description.ring;
-         const float radius = ring.inner_radius + ring.outer_radius * 2.0f;
-
-         if (const float hit = iCylinder(ray_originLS, ray_directionLS,
-                                         {0.0f, ring.height, 0.0f},
-                                         {0.0f, -ring.height, 0.0f}, radius)
-                                  .x;
-             hit >= 0.0f and hit < closest) {
-            mesh_proxy_hit = true;
-         }
-      } break;
-      case block_custom_mesh_type::beveled_box: {
-         const block_custom_mesh_description_beveled_box& beveled_box =
-            block.mesh_description.beveled_box;
-
-         if (float hit; intersect_aabb(ray_originLS, 1.0f / ray_directionLS,
-                                       {-beveled_box.size, beveled_box.size},
-                                       closest, hit) and
-                        hit >= 0.0f) {
-            mesh_proxy_hit = true;
-         }
-      } break;
+      if (const std::optional<bvh::ray_hit> hit =
+             bvh.raycast(ray_originLS, ray_directionLS, closest);
+          not hit) {
+         continue;
       }
-
-      if (not mesh_proxy_hit) continue;
 
       if (filter and not filter(blocks.ids[block_index])) continue;
 
@@ -633,6 +567,7 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
              const active_layers active_layers, const blocks& blocks,
+             const blocks_custom_mesh_bvh_library& bvh_library,
              function_ptr<bool(const block_id id) noexcept> filter) noexcept
    -> std::optional<raycast_block_result>
 {
@@ -683,7 +618,7 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
 
    if (std::optional<raycast_block_result_local> hit =
           raycast(ray_originWS, ray_directionWS, active_layers, blocks.custom,
-                  blocks.custom_meshes, closest, filter);
+                  blocks.custom_meshes, bvh_library, closest, filter);
        hit) {
       closest = hit->distance;
       closest_id = blocks.custom.ids[hit->index];

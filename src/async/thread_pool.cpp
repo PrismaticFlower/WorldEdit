@@ -24,6 +24,13 @@ void task_context_base::cancel() noexcept
    if (execution_started.load()) wait();
 }
 
+void task_context_base::cancel_no_wait() noexcept
+{
+   if (auto thread_pool = owning_thread_pool.lock(); thread_pool) {
+      thread_pool->cancel_task(*this);
+   }
+}
+
 }
 
 struct thread_pool::impl {

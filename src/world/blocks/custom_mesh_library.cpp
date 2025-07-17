@@ -43,8 +43,6 @@ static H AbslHashValue(H h, const block_custom_mesh_description& desc)
 
 namespace {
 
-constexpr uint32 max_custom_meshes = 1'048'576;
-
 auto generate_mesh(const block_custom_mesh_description& mesh) noexcept -> block_custom_mesh
 {
    switch (mesh.type) {
@@ -232,8 +230,10 @@ private:
    std::vector<uint32> _mesh_free_list;
    absl::flat_hash_map<block_custom_mesh_description, uint32> _mesh_index;
 
-   std::vector<event> _events;
+   std::vector<event> _events = {event{event_type::cleared}};
 };
+
+const uint32 blocks_custom_mesh_library::max_custom_meshes = 1'048'576;
 
 auto blocks_custom_mesh_library::events() const noexcept -> std::span<const event>
 {

@@ -386,6 +386,8 @@
     <ClCompile Include="src\utility\stopwatch.cpp" />
     <ClCompile Include="src\utility\string_icompare.cpp" />
     <ClCompile Include="src\world\blocks.cpp" />
+    <ClCompile Include="src\world\blocks\bvh.cpp" />
+    <ClCompile Include="src\world\blocks\custom_mesh_bvh_library.cpp" />
     <ClCompile Include="src\world\blocks\custom_mesh_description.cpp" />
     <ClCompile Include="src\world\blocks\custom_mesh_library.cpp" />
     <ClCompile Include="src\world\blocks\dirty_range_tracker.cpp" />
@@ -708,7 +710,9 @@
     <ClInclude Include="src\world\ai_path_flags.hpp" />
     <ClInclude Include="src\world\animation.hpp" />
     <ClInclude Include="src\world\barrier.hpp" />
+    <ClInclude Include="src\world\blocks\bvh.hpp" />
     <ClInclude Include="src\world\blocks\custom_mesh.hpp" />
+    <ClInclude Include="src\world\blocks\custom_mesh_bvh_library.hpp" />
     <ClInclude Include="src\world\blocks\custom_mesh_description.hpp" />
     <ClInclude Include="src\world\blocks\custom_mesh_library.hpp" />
     <ClInclude Include="src\world\blocks\export\mesh_clusters.hpp" />

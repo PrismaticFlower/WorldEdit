@@ -268,6 +268,8 @@
     <ClCompile Include="src\world\blocks\utility\snapping.cpp" />
     <ClCompile Include="src\world\blocks\custom_mesh_description.cpp" />
     <ClCompile Include="src\math\curves.cpp" />
+    <ClCompile Include="src\world\blocks\bvh.cpp" />
+    <ClCompile Include="src\world\blocks\custom_mesh_bvh_library.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -593,6 +595,8 @@
     <ClInclude Include="src\world\blocks\custom_mesh_description.hpp" />
     <ClInclude Include="src\world\blocks\custom_mesh.hpp" />
     <ClInclude Include="src\math\curves.hpp" />
+    <ClInclude Include="src\world\blocks\bvh.hpp" />
+    <ClInclude Include="src\world\blocks\custom_mesh_bvh_library.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

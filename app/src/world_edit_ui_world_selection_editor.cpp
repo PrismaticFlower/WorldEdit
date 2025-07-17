@@ -201,6 +201,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
             if (ground_object) {
                if (const std::optional<float3> grounded_position =
                       world::ground_object(*object, _world, _object_classes,
+                                           _world_blocks_bvh_library,
                                            _world_layers_hit_mask);
                    grounded_position) {
                   _edit_stack_world.apply(edits::make_set_value(&object->position,

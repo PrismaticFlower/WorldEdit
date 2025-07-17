@@ -2904,8 +2904,8 @@ void world_edit::ui_show_block_editor() noexcept
                           ImGui::GetMainViewport()->Size.y});
 
       if (std::optional<world::raycast_block_result> hit =
-             world::raycast(rayWS.origin, rayWS.direction,
-                            _world_layers_hit_mask, _world.blocks);
+             world::raycast(rayWS.origin, rayWS.direction, _world_layers_hit_mask,
+                            _world.blocks, _world_blocks_bvh_library);
           hit) {
          if (click) {
             world::block_texture_rotation new_rotation =
@@ -2954,8 +2954,8 @@ void world_edit::ui_show_block_editor() noexcept
                           ImGui::GetMainViewport()->Size.y});
 
       if (std::optional<world::raycast_block_result> hit =
-             world::raycast(rayWS.origin, rayWS.direction,
-                            _world_layers_hit_mask, _world.blocks);
+             world::raycast(rayWS.origin, rayWS.direction, _world_layers_hit_mask,
+                            _world.blocks, _world_blocks_bvh_library);
           hit) {
          if (click_enlarge or click_shrink) {
             std::array<int8, 2> new_scale =
@@ -3000,8 +3000,8 @@ void world_edit::ui_show_block_editor() noexcept
                           ImGui::GetMainViewport()->Size.y});
 
       if (std::optional<world::raycast_block_result> hit =
-             world::raycast(rayWS.origin, rayWS.direction,
-                            _world_layers_hit_mask, _world.blocks);
+             world::raycast(rayWS.origin, rayWS.direction, _world_layers_hit_mask,
+                            _world.blocks, _world_blocks_bvh_library);
           hit) {
          if (click) {
             _edit_stack_world.apply(
@@ -3026,8 +3026,8 @@ void world_edit::ui_show_block_editor() noexcept
                           ImGui::GetMainViewport()->Size.y});
 
       if (std::optional<world::raycast_block_result> hit =
-             world::raycast(rayWS.origin, rayWS.direction,
-                            _world_layers_hit_mask, _world.blocks);
+             world::raycast(rayWS.origin, rayWS.direction, _world_layers_hit_mask,
+                            _world.blocks, _world_blocks_bvh_library);
           hit) {
          if (click) {
             _edit_stack_world.apply(
@@ -3054,8 +3054,8 @@ void world_edit::ui_show_block_editor() noexcept
                              ImGui::GetMainViewport()->Size.y});
 
          if (std::optional<world::raycast_block_result> hit =
-                world::raycast(rayWS.origin, rayWS.direction,
-                               _world_layers_hit_mask, _world.blocks);
+                world::raycast(rayWS.origin, rayWS.direction, _world_layers_hit_mask,
+                               _world.blocks, _world_blocks_bvh_library);
              hit) {
             if (click) {
                _block_editor_context.offset_texture.block_id = hit->id;
@@ -3130,8 +3130,8 @@ void world_edit::ui_show_block_editor() noexcept
 
       if (not _gizmos.want_capture_mouse()) {
          if (std::optional<world::raycast_block_result> hit =
-                world::raycast(rayWS.origin, rayWS.direction,
-                               _world_layers_hit_mask, _world.blocks);
+                world::raycast(rayWS.origin, rayWS.direction, _world_layers_hit_mask,
+                               _world.blocks, _world_blocks_bvh_library);
              hit) {
             if (click) _block_editor_context.resize_block.block_id = hit->id;
 

@@ -16,6 +16,8 @@ struct block_custom_mesh;
 enum class block_custom_mesh_handle : uint32 {};
 
 struct blocks_custom_mesh_library {
+   const static uint32 max_custom_meshes;
+
    enum class event_type {
       /// @brief The library has been cleared.
       cleared,

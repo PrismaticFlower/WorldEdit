@@ -255,6 +255,8 @@ void world_edit::update()
          }
       }
 
+      _world_blocks_bvh_library.update(_world.blocks.custom_meshes, *_thread_pool);
+
       _world.terrain.untracked_clear_dirty_rects();
       _world.blocks.untracked_clear_dirty_ranges();
       _world.blocks.custom_meshes.clear_events();
@@ -568,7 +570,7 @@ void world_edit::update_hovered_entity() noexcept
    if (raycast_mask.blocks) {
       if (std::optional<world::raycast_block_result> hit =
              world::raycast(ray.origin, ray.direction, _world_layers_hit_mask,
-                            _world.blocks);
+                            _world.blocks, _world_blocks_bvh_library);
           hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
@@ -3267,7 +3269,7 @@ void world_edit::ground_selection() noexcept
          if (object) {
             if (const std::optional<float3> grounded_position =
                    world::ground_object(*object, _world, _object_classes,
-                                        _world_layers_hit_mask);
+                                        _world_blocks_bvh_library, _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(&object->position, *grounded_position));
@@ -3281,7 +3283,7 @@ void world_edit::ground_selection() noexcept
          if (light) {
             if (const std::optional<float3> grounded_position =
                    world::ground_light(*light, _world, _object_classes,
-                                       _world_layers_hit_mask);
+                                       _world_blocks_bvh_library, _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(&light->position, *grounded_position));
@@ -3302,7 +3304,8 @@ void world_edit::ground_selection() noexcept
 
                if (const std::optional<float3> grounded_position =
                       world::ground_point(path->nodes[node_index].position, _world,
-                                          _object_classes, _world_layers_hit_mask);
+                                          _object_classes, _world_blocks_bvh_library,
+                                          _world_layers_hit_mask);
                    grounded_position) {
                   bundle.push_back(
                      edits::make_set_vector_value(&path->nodes, node_index,
@@ -3319,7 +3322,7 @@ void world_edit::ground_selection() noexcept
          if (region) {
             if (const std::optional<float3> grounded_position =
                    world::ground_region(*region, _world, _object_classes,
-                                        _world_layers_hit_mask);
+                                        _world_blocks_bvh_library, _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(&region->position, *grounded_position));
@@ -3333,7 +3336,7 @@ void world_edit::ground_selection() noexcept
          if (sector) {
             if (const std::optional<float> grounded_base =
                    world::ground_sector(*sector, _world, _object_classes,
-                                        _world_layers_hit_mask);
+                                        _world_blocks_bvh_library, _world_layers_hit_mask);
                 grounded_base) {
                bundle.push_back(edits::make_set_value(&sector->base, *grounded_base));
             }
@@ -3346,7 +3349,7 @@ void world_edit::ground_selection() noexcept
          if (portal) {
             if (const std::optional<float3> grounded_position =
                    world::ground_portal(*portal, _world, _object_classes,
-                                        _world_layers_hit_mask);
+                                        _world_blocks_bvh_library, _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(&portal->position, *grounded_position));
@@ -3359,8 +3362,8 @@ void world_edit::ground_selection() noexcept
 
          if (hintnode) {
             if (const std::optional<float3> grounded_position =
-                   world::ground_point(hintnode->position, _world,
-                                       _object_classes, _world_layers_hit_mask);
+                   world::ground_point(hintnode->position, _world, _object_classes,
+                                       _world_blocks_bvh_library, _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(edits::make_set_value(&hintnode->position,
                                                       *grounded_position));
@@ -3373,8 +3376,8 @@ void world_edit::ground_selection() noexcept
 
          if (barrier) {
             if (const std::optional<float3> grounded_position =
-                   world::ground_point(barrier->position, _world,
-                                       _object_classes, _world_layers_hit_mask);
+                   world::ground_point(barrier->position, _world, _object_classes,
+                                       _world_blocks_bvh_library, _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(&barrier->position, *grounded_position));
@@ -3389,7 +3392,7 @@ void world_edit::ground_selection() noexcept
          if (hub) {
             if (const std::optional<float3> grounded_position =
                    world::ground_point(hub->position, _world, _object_classes,
-                                       _world_layers_hit_mask);
+                                       _world_blocks_bvh_library, _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(&hub->position, *grounded_position));
@@ -3408,7 +3411,8 @@ void world_edit::ground_selection() noexcept
          if (block_index) {
             if (const std::optional<float3> grounded_position =
                    world::ground_block(block_id, *block_index, _world,
-                                       _object_classes, _world_layers_hit_mask);
+                                       _object_classes, _world_blocks_bvh_library,
+                                       _world_layers_hit_mask);
                 grounded_position) {
                switch (block_id.type()) {
                case world::block_type::box: {

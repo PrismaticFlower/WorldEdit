@@ -17,6 +17,7 @@ namespace {
 auto ground_block(const float3& position, const math::bounding_box& bbox,
                   const block_id id, const world& world,
                   const object_class_library& object_classes,
+                  const blocks_custom_mesh_bvh_library& blocks_bvh_library,
                   const active_layers active_layers) noexcept -> std::optional<float3>
 {
    float hit_distance = FLT_MAX;
@@ -29,7 +30,7 @@ auto ground_block(const float3& position, const math::bounding_box& bbox,
 
    if (std::optional<raycast_block_result> hit =
           raycast(ray_origin, {0.0f, -1.0f, 0.0f}, active_layers, world.blocks,
-                  raycast_filter);
+                  blocks_bvh_library, raycast_filter);
        hit) {
       if (hit->distance < hit_distance) {
          hit_distance = hit->distance;
@@ -53,7 +54,7 @@ auto ground_block(const float3& position, const math::bounding_box& bbox,
    if (hit_distance == FLT_MAX) {
       if (std::optional<raycast_block_result> hit =
              raycast(ray_origin, {0.0f, 1.0f, 0.0f}, active_layers,
-                     world.blocks, raycast_filter);
+                     world.blocks, blocks_bvh_library, raycast_filter);
           hit) {
          if (hit->distance < hit_distance) {
             hit_distance = hit->distance;
@@ -96,6 +97,7 @@ auto ground_block(const float3& position, const math::bounding_box& bbox,
 
 auto ground_block(const block_id id, const uint32 block_index,
                   const world& world, const object_class_library& object_classes,
+                  const blocks_custom_mesh_bvh_library& blocks_bvh_library,
                   const active_layers active_layers) noexcept -> std::optional<float3>
 {
    const math::bounding_box bbox =
@@ -105,48 +107,52 @@ auto ground_block(const block_id id, const uint32 block_index,
    case block_type::box: {
       const block_description_box& box = world.blocks.boxes.description[block_index];
 
-      return ground_block(box.position, bbox, id, world, object_classes, active_layers);
+      return ground_block(box.position, bbox, id, world, object_classes,
+                          blocks_bvh_library, active_layers);
    } break;
    case block_type::ramp: {
       const block_description_ramp& ramp = world.blocks.ramps.description[block_index];
 
-      return ground_block(ramp.position, bbox, id, world, object_classes, active_layers);
+      return ground_block(ramp.position, bbox, id, world, object_classes,
+                          blocks_bvh_library, active_layers);
    } break;
    case block_type::quad: {
       return ground_block((bbox.min + bbox.max) / 2.0f, bbox, id, world,
-                          object_classes, active_layers);
+                          object_classes, blocks_bvh_library, active_layers);
    } break;
    case block_type::cylinder: {
       const block_description_cylinder& cylinder =
          world.blocks.cylinders.description[block_index];
 
       return ground_block(cylinder.position, bbox, id, world, object_classes,
-                          active_layers);
+                          blocks_bvh_library, active_layers);
    } break;
    case block_type::custom: {
       const block_description_custom& block =
          world.blocks.custom.description[block_index];
 
-      return ground_block(block.position, bbox, id, world, object_classes, active_layers);
+      return ground_block(block.position, bbox, id, world, object_classes,
+                          blocks_bvh_library, active_layers);
    } break;
    case block_type::cone: {
       const block_description_cone& cone = world.blocks.cones.description[block_index];
 
-      return ground_block(cone.position, bbox, id, world, object_classes, active_layers);
+      return ground_block(cone.position, bbox, id, world, object_classes,
+                          blocks_bvh_library, active_layers);
    } break;
    case block_type::hemisphere: {
       const block_description_hemisphere& hemisphere =
          world.blocks.hemispheres.description[block_index];
 
       return ground_block(hemisphere.position, bbox, id, world, object_classes,
-                          active_layers);
+                          blocks_bvh_library, active_layers);
    } break;
    case block_type::pyramid: {
       const block_description_pyramid& pyramid =
          world.blocks.pyramids.description[block_index];
 
       return ground_block(pyramid.position, bbox, id, world, object_classes,
-                          active_layers);
+                          blocks_bvh_library, active_layers);
    } break;
    }
 

@@ -34,6 +34,9 @@ struct task_context_base {
    /// @brief Use owning_thread_pool to cancel the task.
    void cancel() noexcept;
 
+   /// @brief Use owning_thread_pool to cancel the task without waiting for it to complete if it's execution has started.
+   void cancel_no_wait() noexcept;
+
    /// @brief Check if the task's result is ready.
    /// @return True if the task's result is ready, false otherwise.
    [[nodiscard]] bool ready() const noexcept
@@ -135,6 +138,20 @@ public:
       if (!_context) std::terminate();
 
       _context->cancel();
+      _context = nullptr;
+   }
+
+   /// @brief Cancels a task, removing it from the owning thread_pool's queue. If the task had started execution this method will not
+   /// wait for it to complete before returning.
+   ///
+   /// This makes this method unsafe if the task was referencing objects that will be destroyed after the cancel call.
+   ///
+   /// After this calls to methods other than valid on this task object will result in std::terminate being called.
+   void cancel_no_wait() noexcept
+   {
+      if (!_context) std::terminate();
+
+      _context->cancel_no_wait();
       _context = nullptr;
    }
 

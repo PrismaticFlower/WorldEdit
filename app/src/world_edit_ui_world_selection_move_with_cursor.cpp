@@ -186,7 +186,7 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
       if (raycast_mask.blocks) {
          if (std::optional<world::raycast_block_result> hit =
                 world::raycast(ray.origin, ray.direction, _world_layers_hit_mask,
-                               _world.blocks, filter_block);
+                               _world.blocks, _world_blocks_bvh_library, filter_block);
              hit) {
             cursor_distance = std::min(cursor_distance, hit->distance);
          }

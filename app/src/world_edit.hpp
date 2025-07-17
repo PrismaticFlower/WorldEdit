@@ -17,6 +17,7 @@
 #include "settings/settings.hpp"
 #include "utility/command_line.hpp"
 #include "utility/stopwatch.hpp"
+#include "world/blocks/custom_mesh_bvh_library.hpp"
 #include "world/object_class.hpp"
 #include "world/object_class_library.hpp"
 #include "world/tool_visualizers.hpp"
@@ -526,6 +527,7 @@ private:
    world::active_layers _world_layers_draw_mask{true};
    world::active_layers _world_layers_hit_mask{true};
    world::tool_visualizers _tool_visualizers;
+   world::blocks_custom_mesh_bvh_library _world_blocks_bvh_library;
 
    edits::stack<world::edit_context> _edit_stack_world;
    world::edit_context _edit_context{.world = _world,
