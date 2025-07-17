@@ -30,6 +30,7 @@ struct bvh {
    struct ray_hit {
       float distance;
       float3 unnormalized_normal;
+      uint32 tri_index = 0;
    };
 
    bvh() noexcept;

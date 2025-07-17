@@ -310,6 +310,7 @@ struct detail::bvh_impl {
 
       __m128 closest_hit = _mm_broadcast_ss(&max_distance);
       float3 hit_normal = {};
+      uint32 hit_mesh_tri_index = 0;
 
       while (stack_ptr >= 0) {
          const node_packed_x4& node = _nodes[stack[stack_ptr]];
@@ -374,11 +375,13 @@ struct detail::bvh_impl {
 
                         closest_hit = _mm_broadcast_ss(&hit);
                         hit_normal = normal;
+                        hit_mesh_tri_index = _triangles[tri_index];
 
                         if (flags.accept_first_hit) {
                            return std::optional{
                               bvh::ray_hit{.distance = hit,
-                                           .unnormalized_normal = hit_normal}};
+                                           .unnormalized_normal = hit_normal,
+                                           .tri_index = hit_mesh_tri_index}};
                         }
                      }
                   }
@@ -398,7 +401,8 @@ struct detail::bvh_impl {
 
       return closest_hit_scalar < max_distance
                 ? std::optional{bvh::ray_hit{.distance = closest_hit_scalar,
-                                             .unnormalized_normal = hit_normal}}
+                                             .unnormalized_normal = hit_normal,
+                                             .tri_index = hit_mesh_tri_index}}
                 : std::nullopt;
    }
 

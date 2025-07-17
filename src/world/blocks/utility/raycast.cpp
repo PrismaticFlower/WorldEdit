@@ -289,9 +289,22 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
    uint32 closest_index = UINT32_MAX;
    uint32 surface_index = UINT32_MAX;
 
+   const float3 inv_ray_directionWS = 1.0f / ray_directionWS;
+
    for (uint32 block_index = 0; block_index < blocks.size(); ++block_index) {
       if (not active_layers[blocks.layer[block_index]]) continue;
       if (blocks.hidden[block_index]) continue;
+
+      if (float hit; not intersect_aabb(ray_originWS, inv_ray_directionWS,
+                                        {{blocks.bbox.min_x[block_index],
+                                          blocks.bbox.min_y[block_index],
+                                          blocks.bbox.min_z[block_index]},
+                                         {blocks.bbox.max_x[block_index],
+                                          blocks.bbox.max_y[block_index],
+                                          blocks.bbox.max_z[block_index]}},
+                                        closest, hit)) {
+         continue;
+      }
 
       const block_description_custom& block = blocks.description[block_index];
 
@@ -304,24 +317,14 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
 
       if (const std::optional<bvh::ray_hit> hit =
              bvh.raycast(ray_originLS, ray_directionLS, closest);
-          not hit) {
-         continue;
-      }
+          hit) {
+         if (filter and not filter(blocks.ids[block_index])) continue;
 
-      if (filter and not filter(blocks.ids[block_index])) continue;
+         const block_custom_mesh& mesh = custom_meshes[blocks.mesh[block_index]];
 
-      const block_custom_mesh& mesh = custom_meshes[blocks.mesh[block_index]];
-
-      for (const std::array<uint16, 3>& tri : mesh.triangles) {
-         if (float hit; intersect_tri(ray_originLS, ray_directionLS,
-                                      mesh.vertices[tri[0]].position,
-                                      mesh.vertices[tri[1]].position,
-                                      mesh.vertices[tri[2]].position, hit) and
-                        hit < closest) {
-            closest = hit;
-            closest_index = block_index;
-            surface_index = mesh.vertices[tri[0]].surface_index;
-         }
+         closest = hit->distance;
+         closest_index = block_index;
+         surface_index = mesh.vertices[mesh.triangles[hit->tri_index][0]].surface_index;
       }
    }
 
