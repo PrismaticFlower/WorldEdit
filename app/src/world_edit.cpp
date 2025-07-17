@@ -1278,7 +1278,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
       }
 
       if (_world_hit_mask.blocks) {
-         world::drag_select(_world.blocks, frustumWS,
+         world::drag_select(_world.blocks, _world_blocks_bvh_library, frustumWS,
                             method == select_method::remove
                                ? world::block_drag_select_op::remove
                                : world::block_drag_select_op::add,

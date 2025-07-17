@@ -1,9 +1,16 @@
 #include "drag_select.hpp"
 
+#include "../bvh.hpp"
+#include "../custom_mesh_bvh_library.hpp"
+
+#include "math/quaternion_funcs.hpp"
+#include "math/vector_funcs.hpp"
+
 namespace we::world {
 
-void drag_select(const blocks& blocks, const frustum& frustumWS,
-                 block_drag_select_op op, selection& selection) noexcept
+void drag_select(const blocks& blocks, const blocks_custom_mesh_bvh_library& bvh_library,
+                 const frustum& frustumWS, block_drag_select_op op,
+                 selection& selection) noexcept
 {
    for (uint32 block_index = 0; block_index < blocks.boxes.size(); ++block_index) {
       if (blocks.boxes.hidden[block_index]) continue;
@@ -111,11 +118,20 @@ void drag_select(const blocks& blocks, const frustum& frustumWS,
                                     blocks.custom.bbox.max_y[block_index],
                                     blocks.custom.bbox.max_z[block_index],
                                  }})) {
-         if (op == block_drag_select_op::add) {
-            selection.add(block_id{blocks.custom.ids[block_index]});
-         }
-         else if (op == block_drag_select_op::remove) {
-            selection.remove(block_id{blocks.custom.ids[block_index]});
+         const quaternion local_from_world =
+            conjugate(blocks.custom.description[block_index].rotation);
+         const float3 positionLS =
+            local_from_world * -blocks.custom.description[block_index].position;
+
+         const frustum frustumLS = transform(frustumWS, local_from_world, positionLS);
+
+         if (bvh_library[blocks.custom.mesh[block_index]].intersects(frustumLS)) {
+            if (op == block_drag_select_op::add) {
+               selection.add(block_id{blocks.custom.ids[block_index]});
+            }
+            else if (op == block_drag_select_op::remove) {
+               selection.remove(block_id{blocks.custom.ids[block_index]});
+            }
          }
       }
    }
