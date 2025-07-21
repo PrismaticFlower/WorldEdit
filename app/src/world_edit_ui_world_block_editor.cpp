@@ -3295,8 +3295,6 @@ void world_edit::ui_show_block_editor() noexcept
                if (_gizmos.gizmo_ring_size(
                       {
                          .name = "Resize Block (Ring)",
-                         .instance = static_cast<int64>(
-                            _world.blocks.custom.ids[*selected_index]),
                          .alignment = _editor_grid_size,
                          .gizmo_rotation = block.rotation,
                       },
