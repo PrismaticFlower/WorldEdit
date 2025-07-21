@@ -621,7 +621,7 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                             {
                                .name = "Block Beveled Box Size",
                                .instance = static_cast<int64>(
-                                  _world.blocks.boxes.ids[*block_index]),
+                                  _world.blocks.custom.ids[*block_index]),
                                .alignment = _editor_grid_size,
                                .gizmo_rotation = block.rotation,
                             },
