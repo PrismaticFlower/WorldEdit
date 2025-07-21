@@ -2090,6 +2090,38 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      _edit_stack_world.close_last();
                   }
                } break;
+               case world::block_custom_mesh_type::cylinder: {
+                  world::block_custom_mesh_description_cylinder cylinder =
+                     block.mesh_description.cylinder;
+
+                  const uint16 min_segments = 3;
+                  const uint16 max_segments = 256;
+
+                  bool edited = false;
+
+                  edited |= ImGui::SliderScalar("Segments", ImGuiDataType_U16,
+                                                &cylinder.segments,
+                                                &min_segments, &max_segments);
+                  edited |= ImGui::Checkbox("Flat Shading", &cylinder.flat_shading);
+                  edited |= ImGui::DragFloat("Texture Loops", &cylinder.texture_loops);
+
+                  ImGui::SetItemTooltip(
+                     "How many times the texture wraps around the ring in the "
+                     "Unwrapped Texture Mode.");
+
+                  if (edited) {
+                     cylinder.segments = std::max(cylinder.segments, min_segments);
+
+                     _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                                *block_index, block.rotation,
+                                                block.position, cylinder),
+                                             _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivated()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
                }
             }
          }

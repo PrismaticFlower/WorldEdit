@@ -221,6 +221,23 @@ void world_edit::ui_show_block_editor() noexcept
          _block_editor_config.curve.segments =
             std::max(_block_editor_config.curve.segments, min_segments);
       }
+      else if (_block_editor_config.draw_type == draw_block_type::cylinder) {
+         const uint16 min_segments = 3;
+         const uint16 max_segments = 256;
+
+         ImGui::SliderScalar("Segments", ImGuiDataType_U16,
+                             &_block_editor_config.cylinder.segments,
+                             &min_segments, &max_segments);
+         ImGui::Checkbox("Flat Shading", &_block_editor_config.cylinder.flat_shading);
+         ImGui::DragFloat("Texture Loops", &_block_editor_config.cylinder.texture_loops);
+
+         ImGui::SetItemTooltip(
+            "How many times the texture wraps around the ring in the "
+            "Unwrapped Texture Mode.");
+
+         _block_editor_config.cylinder.segments =
+            std::max(_block_editor_config.cylinder.segments, min_segments);
+      }
 
       ImGui::Checkbox("Enable Alignment", &_block_editor_config.enable_alignment);
       ImGui::SameLine();
@@ -1078,22 +1095,28 @@ void world_edit::ui_show_block_editor() noexcept
             } break;
             case draw_block_type::cylinder: {
                const uint8 material_index = _block_editor_config.paint_material_index;
-               const world::block_cylinder_id id =
-                  _world.blocks.next_id.cylinders.aquire();
+               const world::block_custom_id id =
+                  _world.blocks.next_id.custom.aquire();
 
                _block_editor_context.draw_block.index =
-                  static_cast<uint32>(_world.blocks.cylinders.size());
+                  static_cast<uint32>(_world.blocks.custom.size());
                _block_editor_context.draw_block.block_id = id;
 
                _block_editor_context.draw_block.cylinder.start = cursor_positionWS;
                _block_editor_context.draw_block.step = draw_block_step::cylinder_radius;
 
-               if (_world.blocks.cylinders.size() < world::max_blocks) {
+               if (_world.blocks.custom.size() < world::max_blocks) {
                   _edit_stack_world.apply(
                      edits::make_add_block(
-                        world::block_description_cylinder{
+                        world::block_description_custom{
                            .position = cursor_positionWS,
-                           .size = {1.0f, 0.0f, 1.0f},
+                           .mesh_description =
+                              world::block_custom_mesh_description_cylinder{
+                                 .size = {1.0f, 0.0f, 1.0f},
+                                 .segments = _block_editor_config.cylinder.segments,
+                                 .flat_shading = _block_editor_config.cylinder.flat_shading,
+                                 .texture_loops = _block_editor_config.cylinder.texture_loops,
+                              },
                            .surface_materials = {material_index, material_index, material_index},
                            .surface_texture_mode = {world::block_texture_mode::world_space_auto,
                                                     world::block_texture_mode::world_space_auto,
@@ -1103,7 +1126,7 @@ void world_edit::ui_show_block_editor() noexcept
                }
                else {
                   MessageBoxA(_window,
-                              fmt::format("Max Cylinders ({}) Reached", world::max_blocks)
+                              fmt::format("Max Custom Blocks ({}) Reached", world::max_blocks)
                                  .c_str(),
                               "Limit Reached", MB_OK);
 
@@ -1692,12 +1715,17 @@ void world_edit::ui_show_block_editor() noexcept
                      float2{cursor_positionWS.x, cursor_positionWS.z});
 
          if (const uint32 index = _block_editor_context.draw_block.index;
-             index < _world.blocks.cylinders.size() and
-             _world.blocks.cylinders.ids[index] ==
-                _block_editor_context.draw_block.block_id) {
+             index < _world.blocks.custom.size() and
+             _world.blocks.custom.ids[index] == _block_editor_context.draw_block.block_id) {
             _edit_stack_world
-               .apply(edits::make_set_block_cylinder_metrics(index, {}, draw_block_start,
-                                                             {radius, 0.0f, radius}),
+               .apply(edits::make_set_block_custom_metrics(
+                         index, {}, draw_block_start,
+                         world::block_custom_mesh_description_cylinder{
+                            .size = {radius, 0.0f, radius},
+                            .segments = _block_editor_config.cylinder.segments,
+                            .flat_shading = _block_editor_config.cylinder.flat_shading,
+                            .texture_loops = _block_editor_config.cylinder.texture_loops,
+                         }),
                       _edit_context, {.transparent = true});
          }
 
@@ -1740,12 +1768,18 @@ void world_edit::ui_show_block_editor() noexcept
          const float3 size = abs(float3{radius, cylinder_height / 2.0f, radius});
 
          if (const uint32 index = _block_editor_context.draw_block.index;
-             index < _world.blocks.cylinders.size() and
-             _world.blocks.cylinders.ids[index] ==
-                _block_editor_context.draw_block.block_id) {
-            _edit_stack_world.apply(edits::make_set_block_cylinder_metrics(index, {}, position,
-                                                                           size),
-                                    _edit_context, {.transparent = true});
+             index < _world.blocks.custom.size() and
+             _world.blocks.custom.ids[index] == _block_editor_context.draw_block.block_id) {
+            _edit_stack_world
+               .apply(edits::make_set_block_custom_metrics(
+                         index, {}, position,
+                         world::block_custom_mesh_description_cylinder{
+                            .size = size,
+                            .segments = _block_editor_config.cylinder.segments,
+                            .flat_shading = _block_editor_config.cylinder.flat_shading,
+                            .texture_loops = _block_editor_config.cylinder.texture_loops,
+                         }),
+                      _edit_context, {.transparent = true});
          }
 
          _tool_visualizers.add_line_overlay(
@@ -3226,25 +3260,6 @@ void world_edit::ui_show_block_editor() noexcept
                                        _edit_context);
             }
          } break;
-         case world::block_type::cylinder: {
-            const world::block_description_cylinder& cylinder =
-               _world.blocks.cylinders.description[*selected_index];
-
-            float3 size = cylinder.size;
-            float3 positionWS = cylinder.position;
-
-            if (_gizmos.gizmo_size({.name = "Resize Block (Cylinder)",
-                                    .instance = *selected_index,
-                                    .alignment = _editor_grid_size,
-                                    .gizmo_rotation = cylinder.rotation},
-                                   positionWS, size)) {
-               _edit_stack_world
-                  .apply(edits::make_set_block_cylinder_metrics(*selected_index,
-                                                                cylinder.rotation,
-                                                                positionWS, size),
-                         _edit_context);
-            }
-         } break;
          case world::block_type::custom: {
             const world::block_description_custom& block =
                _world.blocks.custom.description[*selected_index];
@@ -3394,6 +3409,30 @@ void world_edit::ui_show_block_editor() noexcept
                   _edit_stack_world.apply(edits::make_set_block_custom_metrics(
                                              *selected_index, block.rotation,
                                              block.position, new_curve),
+                                          _edit_context);
+               }
+            } break;
+            case world::block_custom_mesh_type::cylinder: {
+               const world::block_custom_mesh_description_cylinder& cylinder =
+                  block.mesh_description.cylinder;
+
+               float3 size = cylinder.size;
+               float3 positionWS = block.position;
+
+               if (_gizmos.gizmo_size(
+                      {
+                         .name = "Resize Block (Cylinder)",
+                         .alignment = _editor_grid_size,
+                         .gizmo_rotation = block.rotation,
+                      },
+                      positionWS, size)) {
+                  world::block_custom_mesh_description_cylinder new_cylinder = cylinder;
+
+                  new_cylinder.size = size;
+
+                  _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                             *selected_index, block.rotation,
+                                             positionWS, new_cylinder),
                                           _edit_context);
                }
             } break;

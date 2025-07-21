@@ -17,8 +17,6 @@ bool valid_index(const blocks& blocks, const block_type type,
       return block_index < blocks.ramps.size();
    case block_type::quad:
       return block_index < blocks.quads.size();
-   case block_type::cylinder:
-      return block_index < blocks.cylinders.size();
    case block_type::custom:
       return block_index < blocks.custom.size();
    case block_type::cone:
@@ -44,8 +42,6 @@ auto get_dirty_tracker(blocks& blocks, const block_type type) noexcept
       return blocks.ramps.dirty;
    case block_type::quad:
       return blocks.quads.dirty;
-   case block_type::cylinder:
-      return blocks.cylinders.dirty;
    case block_type::custom:
       return blocks.custom.dirty;
    case block_type::cone:
@@ -71,8 +67,6 @@ auto get_block_hidden(blocks& blocks, const block_type type,
       return blocks.ramps.hidden[block_index];
    case block_type::quad:
       return blocks.quads.hidden[block_index];
-   case block_type::cylinder:
-      return blocks.cylinders.hidden[block_index];
    case block_type::custom:
       return blocks.custom.hidden[block_index];
    case block_type::cone:
@@ -98,8 +92,6 @@ auto get_block_layer(blocks& blocks, const block_type type,
       return blocks.ramps.layer[block_index];
    case block_type::quad:
       return blocks.quads.layer[block_index];
-   case block_type::cylinder:
-      return blocks.cylinders.layer[block_index];
    case block_type::custom:
       return blocks.custom.layer[block_index];
    case block_type::cone:
@@ -137,12 +129,6 @@ auto get_block_surface_material(blocks& blocks, const block_type type,
    case block_type::quad: {
       std::array<uint8, 1>& surface_materials =
          blocks.quads.description[block_index].surface_materials;
-
-      return surface_materials[surface_index % surface_materials.size()];
-   }
-   case block_type::cylinder: {
-      std::array<uint8, 3>& surface_materials =
-         blocks.cylinders.description[block_index].surface_materials;
 
       return surface_materials[surface_index % surface_materials.size()];
    }
@@ -202,12 +188,6 @@ auto get_block_surface_texture_mode(blocks& blocks, const block_type type,
 
       return surface_texture_mode[surface_index % surface_texture_mode.size()];
    }
-   case block_type::cylinder: {
-      std::array<block_texture_mode, 3>& surface_texture_mode =
-         blocks.cylinders.description[block_index].surface_texture_mode;
-
-      return surface_texture_mode[surface_index % surface_texture_mode.size()];
-   }
    case block_type::custom: {
       std::array<block_texture_mode, 6>& surface_texture_mode =
          blocks.custom.description[block_index].surface_texture_mode;
@@ -260,12 +240,6 @@ auto get_block_surface_texture_rotation(blocks& blocks, const block_type type,
    case block_type::quad: {
       std::array<block_texture_rotation, 1>& surface_texture_rotation =
          blocks.quads.description[block_index].surface_texture_rotation;
-
-      return surface_texture_rotation[surface_index % surface_texture_rotation.size()];
-   }
-   case block_type::cylinder: {
-      std::array<block_texture_rotation, 3>& surface_texture_rotation =
-         blocks.cylinders.description[block_index].surface_texture_rotation;
 
       return surface_texture_rotation[surface_index % surface_texture_rotation.size()];
    }
@@ -324,12 +298,6 @@ auto get_block_surface_texture_scale(blocks& blocks, const block_type type,
 
       return surface_texture_scale[surface_index % surface_texture_scale.size()];
    }
-   case block_type::cylinder: {
-      std::array<std::array<int8, 2>, 3>& surface_texture_scale =
-         blocks.cylinders.description[block_index].surface_texture_scale;
-
-      return surface_texture_scale[surface_index % surface_texture_scale.size()];
-   }
    case block_type::custom: {
       std::array<std::array<int8, 2>, 6>& surface_texture_scale =
          blocks.custom.description[block_index].surface_texture_scale;
@@ -382,12 +350,6 @@ auto get_block_surface_texture_offset(blocks& blocks, const block_type type,
    case block_type::quad: {
       std::array<std::array<uint16, 2>, 1>& surface_texture_offset =
          blocks.quads.description[block_index].surface_texture_offset;
-
-      return surface_texture_offset[surface_index % surface_texture_offset.size()];
-   }
-   case block_type::cylinder: {
-      std::array<std::array<uint16, 2>, 3>& surface_texture_offset =
-         blocks.cylinders.description[block_index].surface_texture_offset;
 
       return surface_texture_offset[surface_index % surface_texture_offset.size()];
    }

@@ -41,7 +41,6 @@ struct blocks {
       instance_list boxes;
       instance_list ramps;
       instance_list quads;
-      instance_list cylinders;
       instance_list cones;
       instance_list hemispheres;
       instance_list pyramids;
@@ -50,7 +49,6 @@ struct blocks {
       instance_list dynamic_boxes;
       instance_list dynamic_ramps;
       instance_list dynamic_quads;
-      instance_list dynamic_cylinders;
       instance_list dynamic_cones;
       instance_list dynamic_hemispheres;
       instance_list dynamic_pyramids;
@@ -139,9 +137,6 @@ private:
    gpu::unique_resource_handle _quads_instance_data;
    uint64 _quads_instance_data_capacity = 0;
 
-   gpu::unique_resource_handle _cylinders_instance_data;
-   uint64 _cylinders_instance_data_capacity = 0;
-
    gpu::unique_resource_handle _custom_instance_data;
    uint64 _custom_instance_data_capacity = 0;
 
@@ -198,9 +193,6 @@ private:
       gpu::unique_resource_handle quads_instance_data;
       uint64 quads_instance_data_capacity = 0;
 
-      gpu::unique_resource_handle cylinders_instance_data;
-      uint64 cylinders_instance_data_capacity = 0;
-
       gpu::unique_resource_handle custom_instance_data;
       uint64 custom_instance_data_capacity = 0;
 
@@ -216,7 +208,6 @@ private:
       bbox_soa boxes_bbox;
       bbox_soa ramps_bbox;
       bbox_soa quads_bbox;
-      bbox_soa cylinders_bbox;
       bbox_soa custom_bbox;
       bbox_soa cones_bbox;
       bbox_soa hemispheres_bbox;

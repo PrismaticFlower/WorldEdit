@@ -119,19 +119,6 @@ void fill_entity_group_block_materials(entity_group& group, const blocks& blocks
       }
    }
 
-   for (block_description_cylinder& cylinder : group.blocks.cylinders) {
-      for (uint8& material : cylinder.surface_materials) {
-         if (not materials_remap[material]) {
-            materials_remap[material] =
-               static_cast<uint8>(group.blocks.materials.size());
-
-            group.blocks.materials.push_back(blocks.materials[material]);
-         }
-
-         material = *materials_remap[material];
-      }
-   }
-
    for (block_description_custom& block : group.blocks.custom.description) {
       for (uint8& material : block.surface_materials) {
          if (not materials_remap[material]) {
@@ -363,13 +350,6 @@ auto entity_group_metrics(const entity_group& group,
       ground_distance = std::min(ground_distance, bboxGS.min.y);
    }
 
-   for (const block_description_cylinder& cylinder : group.blocks.cylinders) {
-      const math::bounding_box bboxGS = get_bounding_box(cylinder);
-
-      group_bbox = math::combine(group_bbox, get_bounding_box(cylinder));
-      ground_distance = std::min(ground_distance, bboxGS.min.y);
-   }
-
    for (const block_description_custom& block : group.blocks.custom.description) {
       const math::bounding_box bboxGS = get_bounding_box(block);
 
@@ -483,11 +463,6 @@ void centre_entity_group(entity_group& group) noexcept
       count += 4.0f;
    }
 
-   for (const block_description_cylinder& cylinder : group.blocks.cylinders) {
-      position += cylinder.position;
-      count += 1.0f;
-   }
-
    for (const block_description_custom& block : group.blocks.custom.description) {
       position += block.position;
       count += 1.0f;
@@ -572,10 +547,6 @@ void centre_entity_group(entity_group& group) noexcept
 
    for (block_description_quad& quad : group.blocks.quads) {
       for (float3& v : quad.vertices) v -= centre;
-   }
-
-   for (block_description_cylinder& cylinder : group.blocks.cylinders) {
-      cylinder.position -= centre;
    }
 
    for (block_description_custom& block : group.blocks.custom.description) {
@@ -759,10 +730,6 @@ auto make_entity_group_from_selection(const world& world,
             case block_type::quad: {
                group.blocks.quads.push_back(world.blocks.quads.description[*block_index]);
             } break;
-            case block_type::cylinder: {
-               group.blocks.cylinders.push_back(
-                  world.blocks.cylinders.description[*block_index]);
-            } break;
             case block_type::custom: {
                group.blocks.custom.description.push_back(
                   world.blocks.custom.description[*block_index]);
@@ -902,9 +869,6 @@ auto make_entity_group_from_block_id(const blocks& blocks, const block_id id) no
    case block_type::quad: {
       group.blocks.quads.push_back(blocks.quads.description[*block_index]);
    } break;
-   case block_type::cylinder: {
-      group.blocks.cylinders.push_back(blocks.cylinders.description[*block_index]);
-   } break;
    case block_type::custom: {
       group.blocks.custom.description.push_back(blocks.custom.description[*block_index]);
       group.blocks.custom.mesh.push_back(blocks_custom_mesh_library::null_handle());
@@ -969,14 +933,6 @@ auto make_entity_group_from_layer(const world& world, const int32 layer) noexcep
       }
    }
 
-   for (uint32 block_index = 0; block_index < world.blocks.cylinders.size();
-        ++block_index) {
-      if (world.blocks.cylinders.layer[block_index] == layer) {
-         group.blocks.cylinders.push_back(
-            world.blocks.cylinders.description[block_index]);
-      }
-   }
-
    for (uint32 block_index = 0; block_index < world.blocks.custom.size(); ++block_index) {
       if (world.blocks.custom.layer[block_index] == layer) {
          group.blocks.custom.description.push_back(
@@ -1036,8 +992,6 @@ auto make_entity_group_from_world(const world& world) noexcept -> entity_group
                       world.blocks.ramps.description.end()},
             .quads = {world.blocks.quads.description.begin(),
                       world.blocks.quads.description.end()},
-            .cylinders = {world.blocks.cylinders.description.begin(),
-                          world.blocks.cylinders.description.end()},
             .custom =
                {
                   .description = {world.blocks.custom.description.begin(),
@@ -1085,7 +1039,6 @@ bool is_entity_group_blocks_empty(const entity_group& group) noexcept
    empty &= group.blocks.boxes.empty();
    empty &= group.blocks.ramps.empty();
    empty &= group.blocks.quads.empty();
-   empty &= group.blocks.cylinders.empty();
    empty &= group.blocks.custom.description.empty();
    empty &= group.blocks.cones.empty();
    empty &= group.blocks.hemispheres.empty();

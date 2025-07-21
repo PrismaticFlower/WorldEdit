@@ -37,6 +37,12 @@ block_custom_mesh_description::block_custom_mesh_description(
 {
 }
 
+block_custom_mesh_description::block_custom_mesh_description(
+   const block_custom_mesh_description_cylinder& cylinder) noexcept
+   : type{block_custom_mesh_type::cylinder}, cylinder{cylinder}
+{
+}
+
 auto block_custom_mesh_description::operator=(const block_custom_mesh_description& other) noexcept
    -> block_custom_mesh_description&
 {
@@ -54,6 +60,9 @@ auto block_custom_mesh_description::operator=(const block_custom_mesh_descriptio
    } break;
    case block_custom_mesh_type::curve: {
       this->curve = other.curve;
+   } break;
+   case block_custom_mesh_type::cylinder: {
+      this->cylinder = other.cylinder;
    } break;
    }
 
@@ -74,6 +83,8 @@ bool operator==(const block_custom_mesh_description& left,
       return left.beveled_box == right.beveled_box;
    case block_custom_mesh_type::curve:
       return left.curve == right.curve;
+   case block_custom_mesh_type::cylinder:
+      return left.cylinder == right.cylinder;
    }
 
    std::unreachable();

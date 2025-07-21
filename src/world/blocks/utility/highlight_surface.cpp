@@ -85,24 +85,6 @@ void highlight_surface(const blocks& blocks, const block_type type,
                                            quad.vertices[i2], 0x20'ff'ff'ffu);
       }
    } break;
-   case block_type::cylinder: {
-      const world::block_description_cylinder& cylinder =
-         blocks.cylinders.description[block_index];
-
-      const float4x4 scale = {
-         {cylinder.size.x, 0.0f, 0.0f, 0.0f},
-         {0.0f, cylinder.size.y, 0.0f, 0.0f},
-         {0.0f, 0.0f, cylinder.size.z, 0.0f},
-         {0.0f, 0.0f, 0.0f, 1.0f},
-      };
-      const float4x4 rotation = to_matrix(cylinder.rotation);
-
-      float4x4 world_from_object = rotation * scale;
-      world_from_object[3] = {cylinder.position, 1.0f};
-
-      highlight_surface_generic(world_from_object, block_cylinder_triangles,
-                                block_cylinder_vertices, surface_index, visualizers);
-   } break;
    case block_type::custom: {
       const world::block_description_custom& block =
          blocks.custom.description[block_index];

@@ -1909,12 +1909,6 @@ void world_edit::place_creation_entity() noexcept
 
          return;
       }
-      else if (_world.blocks.cylinders.size() + group.blocks.cylinders.size() >
-               world::max_blocks) {
-         report_limit_reached("Max blocks (cylinders, {}) Reached", world::max_blocks);
-
-         return;
-      }
       else if (_world.blocks.custom.size() + group.blocks.custom.description.size() >
                world::max_blocks) {
          report_limit_reached("Max blocks (custom, {}) Reached", world::max_blocks);
@@ -2268,28 +2262,6 @@ void world_edit::place_creation_entity() noexcept
          _edit_stack_world
             .apply(edits::make_add_block(new_quad, group.layer,
                                          _world.blocks.next_id.quads.aquire()),
-                   _edit_context,
-                   {.transparent = std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::block_description_cylinder& cylinder : group.blocks.cylinders) {
-         world::block_description_cylinder new_cylinder = cylinder;
-
-         new_cylinder.rotation = group.rotation * new_cylinder.rotation;
-         new_cylinder.position = group.rotation * new_cylinder.position + group.position;
-
-         for (uint8& material : new_cylinder.surface_materials) {
-            if (block_material_remap[material]) {
-               material = *block_material_remap[material];
-            }
-            else {
-               material = 0;
-            }
-         }
-
-         _edit_stack_world
-            .apply(edits::make_add_block(new_cylinder, group.layer,
-                                         _world.blocks.next_id.cylinders.aquire()),
                    _edit_context,
                    {.transparent = std::exchange(is_transparent_edit, true)});
       }
@@ -3025,15 +2997,6 @@ void world_edit::align_selection(const float alignment) noexcept
                                    align_position(quad.vertices[3]),
                                 }));
             } break;
-            case world::block_type::cylinder: {
-               const world::block_description_cylinder& cylinder =
-                  _world.blocks.cylinders.description[*block_index];
-
-               bundle.push_back(
-                  edits::make_set_block_cylinder_metrics(*block_index, cylinder.rotation,
-                                                         align_position(cylinder.position),
-                                                         cylinder.size));
-            } break;
             case world::block_type::custom: {
                const world::block_description_custom& block =
                   _world.blocks.custom.description[*block_index];
@@ -3448,16 +3411,6 @@ void world_edit::ground_selection() noexcept
                         quad.vertices[3] - quad_centreWS + *grounded_position,
                      }));
                } break;
-               case world::block_type::cylinder: {
-                  const world::block_description_cylinder& cylinder =
-                     _world.blocks.cylinders.description[*block_index];
-
-                  bundle.push_back(
-                     edits::make_set_block_cylinder_metrics(*block_index,
-                                                            cylinder.rotation,
-                                                            *grounded_position,
-                                                            cylinder.size));
-               } break;
                case world::block_type::custom: {
                   const world::block_description_custom& block =
                      _world.blocks.custom.description[*block_index];
@@ -3795,7 +3748,6 @@ void world_edit::unhide_all() noexcept
    unhide_blocks(_world.blocks.boxes.hidden);
    unhide_blocks(_world.blocks.ramps.hidden);
    unhide_blocks(_world.blocks.quads.hidden);
-   unhide_blocks(_world.blocks.cylinders.hidden);
    unhide_blocks(_world.blocks.custom.hidden);
    unhide_blocks(_world.blocks.cones.hidden);
    unhide_blocks(_world.blocks.hemispheres.hidden);

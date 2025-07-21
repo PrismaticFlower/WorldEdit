@@ -77,6 +77,9 @@ auto get_bounding_box_local_space(const block_custom_mesh_description& mesh) noe
 
       return bboxLS;
    }
+   case block_custom_mesh_type::cylinder: {
+      return {.min = {-mesh.cylinder.size}, .max = {mesh.cylinder.size}};
+   }
    }
 
    std::unreachable();
@@ -102,12 +105,6 @@ auto get_bounding_box(const block_description_quad& quad) noexcept -> math::boun
       .max = max(max(max(quad.vertices[0], quad.vertices[1]), quad.vertices[2]),
                  quad.vertices[3]),
    };
-}
-
-auto get_bounding_box(const block_description_cylinder& cylinder) noexcept
-   -> math::bounding_box
-{
-   return get_bounding_box(cylinder.rotation, cylinder.position, cylinder.size);
 }
 
 auto get_bounding_box(const block_description_custom& custom_block) noexcept
@@ -153,9 +150,6 @@ auto get_bounding_box(const blocks& blocks, const block_type type,
    } break;
    case world::block_type::quad: {
       return get_bounding_box(blocks.quads.description[block_index]);
-   } break;
-   case world::block_type::cylinder: {
-      return get_bounding_box(blocks.cylinders.description[block_index]);
    } break;
    case world::block_type::custom: {
       return get_bounding_box(blocks.custom.description[block_index]);

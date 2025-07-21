@@ -624,52 +624,6 @@ void save_entity_group_impl(File& file, const entity_group& group)
       file.write_ln("}\n");
    }
 
-   if (not group.blocks.cylinders.empty()) {
-      file.write_ln("BlocksCylinders({})", group.blocks.cylinders.size());
-      file.write_ln("{");
-
-      for (const block_description_cylinder& cylinder : group.blocks.cylinders) {
-         file.write_ln("   Cylinder()");
-         file.write_ln("   {");
-
-         file.write_ln("      Rotation({}, {}, {}, {});", cylinder.rotation.w,
-                       cylinder.rotation.x, cylinder.rotation.y,
-                       cylinder.rotation.z);
-         file.write_ln("      Position({}, {}, {});", cylinder.position.x,
-                       cylinder.position.y, cylinder.position.z);
-         file.write_ln("      Size({}, {}, {});", cylinder.size.x,
-                       cylinder.size.y, cylinder.size.z);
-         file.write_ln("      SurfaceMaterials({}, {}, {});",
-                       cylinder.surface_materials[0], cylinder.surface_materials[1],
-                       cylinder.surface_materials[2]);
-         file.write_ln("      SurfaceTextureMode({}, {}, {});",
-                       std::to_underlying(cylinder.surface_texture_mode[0]),
-                       std::to_underlying(cylinder.surface_texture_mode[1]),
-                       std::to_underlying(cylinder.surface_texture_mode[2]));
-         file.write_ln("      SurfaceTextureRotation({}, {}, {});",
-                       std::to_underlying(cylinder.surface_texture_rotation[0]),
-                       std::to_underlying(cylinder.surface_texture_rotation[1]),
-                       std::to_underlying(cylinder.surface_texture_rotation[2]));
-         file.write_ln("      SurfaceTextureScale({}, {}, {}, {}, {}, {});",
-                       cylinder.surface_texture_scale[0][0],
-                       cylinder.surface_texture_scale[0][1],
-                       cylinder.surface_texture_scale[1][0],
-                       cylinder.surface_texture_scale[1][1],
-                       cylinder.surface_texture_scale[2][0],
-                       cylinder.surface_texture_scale[2][1]);
-         file.write_ln("      SurfaceTextureOffset({}, {}, {}, {}, {}, {});",
-                       cylinder.surface_texture_offset[0][0],
-                       cylinder.surface_texture_offset[0][1],
-                       cylinder.surface_texture_offset[1][0],
-                       cylinder.surface_texture_offset[1][1],
-                       cylinder.surface_texture_offset[2][0],
-                       cylinder.surface_texture_offset[2][1]);
-         file.write_ln("   }");
-      }
-
-      file.write_ln("}\n");
-   }
-
    if (not group.blocks.custom.description.empty()) {
       file.write_ln("BlocksCustom({})", group.blocks.custom.description.size());
       file.write_ln("{");
@@ -687,6 +641,9 @@ void save_entity_group_impl(File& file, const entity_group& group)
          } break;
          case block_custom_mesh_type::curve: {
             file.write_ln("   CubicCurve()");
+         } break;
+         case block_custom_mesh_type::cylinder: {
+            file.write_ln("   Cylinder()");
          } break;
          }
 
@@ -746,6 +703,16 @@ void save_entity_group_impl(File& file, const entity_group& group)
                           curve.p2.z);
             file.write_ln("      P3({}, {}, {});", curve.p3.x, curve.p3.y,
                           curve.p3.z);
+         } break;
+         case block_custom_mesh_type::cylinder: {
+            const world::block_custom_mesh_description_cylinder& cylinder =
+               block.mesh_description.cylinder;
+
+            file.write_ln("      Size({}, {}, {});", cylinder.size.x,
+                          cylinder.size.y, cylinder.size.z);
+            file.write_ln("      Segments({});", cylinder.segments);
+            if (cylinder.flat_shading) file.write_ln("      FlatShading();");
+            file.write_ln("      TextureLoops({});", cylinder.texture_loops);
          } break;
          }
 

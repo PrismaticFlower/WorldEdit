@@ -33,6 +33,7 @@ struct block_custom_mesh_description_beveled_box {
 
    bool operator==(const block_custom_mesh_description_beveled_box&) const noexcept = default;
 };
+
 struct block_custom_mesh_description_curve {
    float width = 1.0f;
    float height = 1.0f;
@@ -47,11 +48,21 @@ struct block_custom_mesh_description_curve {
    bool operator==(const block_custom_mesh_description_curve&) const noexcept = default;
 };
 
+struct block_custom_mesh_description_cylinder {
+   float3 size = {1.0f, 1.0f, 1.0f};
+   uint16 segments = 16;
+   bool flat_shading = false;
+   float texture_loops = 1.0f;
+
+   bool operator==(const block_custom_mesh_description_cylinder&) const noexcept = default;
+};
+
 enum class block_custom_mesh_type {
    stairway,
    ring,
    beveled_box,
    curve,
+   cylinder,
 };
 
 struct block_custom_mesh_description {
@@ -67,6 +78,8 @@ struct block_custom_mesh_description {
 
    block_custom_mesh_description(const block_custom_mesh_description_curve& curve) noexcept;
 
+   block_custom_mesh_description(const block_custom_mesh_description_cylinder& cylinder) noexcept;
+
    auto operator=(const block_custom_mesh_description& other) noexcept
       -> block_custom_mesh_description&;
 
@@ -77,6 +90,7 @@ struct block_custom_mesh_description {
       block_custom_mesh_description_ring ring;
       block_custom_mesh_description_beveled_box beveled_box;
       block_custom_mesh_description_curve curve;
+      block_custom_mesh_description_cylinder cylinder;
    };
 };
 

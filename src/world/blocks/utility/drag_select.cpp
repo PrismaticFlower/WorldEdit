@@ -81,29 +81,6 @@ void drag_select(const blocks& blocks, const blocks_custom_mesh_bvh_library& bvh
       }
    }
 
-   for (uint32 block_index = 0; block_index < blocks.cylinders.size(); ++block_index) {
-      if (blocks.cylinders.hidden[block_index]) continue;
-
-      if (intersects(frustumWS, {.min =
-                                    {
-                                       blocks.cylinders.bbox.min_x[block_index],
-                                       blocks.cylinders.bbox.min_y[block_index],
-                                       blocks.cylinders.bbox.min_z[block_index],
-                                    },
-                                 .max = {
-                                    blocks.cylinders.bbox.max_x[block_index],
-                                    blocks.cylinders.bbox.max_y[block_index],
-                                    blocks.cylinders.bbox.max_z[block_index],
-                                 }})) {
-         if (op == block_drag_select_op::add) {
-            selection.add(block_id{blocks.cylinders.ids[block_index]});
-         }
-         else if (op == block_drag_select_op::remove) {
-            selection.remove(block_id{blocks.cylinders.ids[block_index]});
-         }
-      }
-   }
-
    for (uint32 block_index = 0; block_index < blocks.custom.size(); ++block_index) {
       if (blocks.custom.hidden[block_index]) continue;
 

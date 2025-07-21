@@ -1037,6 +1037,12 @@ private:
          float texture_loops = 1.0f;
       } curve;
 
+      struct cylinder {
+         uint16 segments = 16;
+         bool flat_shading = false;
+         float texture_loops = 1.0f;
+      } cylinder;
+
       bool enable_alignment = true;
       bool enable_snapping = true;
 

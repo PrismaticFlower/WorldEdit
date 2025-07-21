@@ -3426,19 +3426,6 @@ void renderer_impl::draw_interaction_targets(
                _meta_draw_batcher.add_line_solid(block.vertices[3],
                                                  block.vertices[0], color_packed);
             } break;
-            case world::block_type::cylinder: {
-               const world::block_description_cylinder& block =
-                  world.blocks.cylinders.description[*block_index];
-
-               float4x4 transform = to_matrix(block.rotation) *
-                                    float4x4{{block.size.x, 0.0f, 0.0f, 0.0f},
-                                             {0.0f, block.size.y, 0.0f, 0.0f},
-                                             {0.0f, 0.0f, block.size.z, 0.0f},
-                                             {0.0f, 0.0f, 0.0f, 1.0f}};
-               transform[3] = {block.position, 1.0f};
-
-               _meta_draw_batcher.add_alt_cylinder_wireframe(transform, color);
-            } break;
             case world::block_type::custom: {
                const uint32 color_packed =
                   utility::pack_srgb_bgra(float4{color, 1.0f});

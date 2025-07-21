@@ -585,18 +585,20 @@ Materials()
 
 TEST_CASE("world save blocks (cylinders)", "[World][IO]")
 {
-   const std::string_view expected_blk = R"(Cylinders(3)
+   const std::string_view expected_blk = R"(Custom(3)
 {
    Cylinder()
    {
       Rotation(0, 1, 0, 0);
       Position(8.5, 4.5, 2);
       Size(4, 4, 4);
-      SurfaceMaterials(0, 1, 2);
-      SurfaceTextureMode(0, 0, 0);
-      SurfaceTextureRotation(2, 2, 2);
-      SurfaceTextureScale(0, 0, -1, -2, 0, 0);
-      SurfaceTextureOffset(0, 0, 0, 0, 256, 256);
+      Segments(10);
+      TextureLoops(1);
+      SurfaceMaterials(0, 1, 2, 0, 0, 0);
+      SurfaceTextureMode(0, 0, 0, 0, 0, 0);
+      SurfaceTextureRotation(2, 2, 2, 0, 0, 0);
+      SurfaceTextureScale(0, 0, -1, -2, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(0, 0, 0, 0, 256, 256, 0, 0, 0, 0, 0, 0);
       Layer(2);
    }
    Cylinder()
@@ -604,22 +606,27 @@ TEST_CASE("world save blocks (cylinders)", "[World][IO]")
       Rotation(0.707106, 0, 0.707106, 0);
       Position(10, 16, 12);
       Size(8, 4, 8);
-      SurfaceMaterials(2, 2, 2);
-      SurfaceTextureMode(1, 1, 5);
-      SurfaceTextureRotation(1, 1, 1);
-      SurfaceTextureScale(0, 0, 0, 0, -2, -2);
-      SurfaceTextureOffset(1024, 0, 0, 0, 0, 0);
+      Segments(20);
+      FlatShading();
+      TextureLoops(2);
+      SurfaceMaterials(2, 2, 2, 0, 0, 0);
+      SurfaceTextureMode(1, 1, 5, 0, 0, 0);
+      SurfaceTextureRotation(1, 1, 1, 0, 0, 0);
+      SurfaceTextureScale(0, 0, 0, 0, -2, -2, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(1024, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
    }
    Cylinder()
    {
       Rotation(0, 0, 0, 1);
       Position(6, 6, 6);
       Size(5, 5, 5);
-      SurfaceMaterials(0, 0, 0);
-      SurfaceTextureMode(2, 2, 2);
-      SurfaceTextureRotation(0, 0, 0);
-      SurfaceTextureScale(0, 0, 0, 0, 0, 0);
-      SurfaceTextureOffset(0, 0, 0, 0, 0, 0);
+      Segments(30);
+      TextureLoops(3);
+      SurfaceMaterials(0, 0, 0, 0, 0, 0);
+      SurfaceTextureMode(2, 2, 2, 0, 0, 0);
+      SurfaceTextureRotation(0, 0, 0, 0, 0, 0);
+      SurfaceTextureScale(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
    }
 }
 
@@ -630,7 +637,7 @@ Materials()
 )";
 
    blocks blocks{
-      .cylinders =
+      .custom =
          {
             .bbox =
                {
@@ -647,10 +654,16 @@ Materials()
                {
                   world::blocks_init,
                   std::initializer_list{
-                     world::block_description_cylinder{
+                     world::block_description_custom{
                         .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                         .position = {8.5f, 4.5f, 2.0f},
-                        .size = {4.0f, 4.0f, 4.0f},
+                        .mesh_description =
+                           world::block_custom_mesh_description_cylinder{
+                              .size = {4.0f, 4.0f, 4.0f},
+                              .segments = 10,
+                              .flat_shading = false,
+                              .texture_loops = 1.0f,
+                           },
                         .surface_materials = {0, 1, 2},
                         .surface_texture_mode =
                            {
@@ -677,10 +690,16 @@ Materials()
                               std::array<uint16, 2>{256, 256},
                            },
                      },
-                     world::block_description_cylinder{
+                     world::block_description_custom{
                         .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                         .position = {10.0f, 16.0f, 12.0f},
-                        .size = {8.0f, 4.0f, 8.0f},
+                        .mesh_description =
+                           world::block_custom_mesh_description_cylinder{
+                              .size = {8.0f, 4.0f, 8.0f},
+                              .segments = 20,
+                              .flat_shading = true,
+                              .texture_loops = 2.0f,
+                           },
                         .surface_materials = {2, 2, 2},
                         .surface_texture_mode =
                            {
@@ -707,10 +726,16 @@ Materials()
                               std::array<uint16, 2>{0, 0},
                            },
                      },
-                     world::block_description_cylinder{
+                     world::block_description_custom{
                         .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                         .position = {6.0f, 6.0f, 6.0f},
-                        .size = {5.0f, 5.0f, 5.0f},
+                        .mesh_description =
+                           world::block_custom_mesh_description_cylinder{
+                              .size = {5.0f, 5.0f, 5.0f},
+                              .segments = 30,
+                              .flat_shading = false,
+                              .texture_loops = 3.0f,
+                           },
                         .surface_materials = {0, 0, 0},
                         .surface_texture_mode =
                            {
@@ -739,8 +764,15 @@ Materials()
                      },
                   },
                },
+            .mesh = {world::blocks_init,
+                     std::initializer_list{
+                        blocks_custom_mesh_library::null_handle(),
+                        blocks_custom_mesh_library::null_handle(),
+                        blocks_custom_mesh_library::null_handle(),
+                     }},
             .ids = {world::blocks_init,
-                    std::initializer_list{block_cylinder_id{0}, block_cylinder_id{1}, block_cylinder_id{2}}},
+                    std::initializer_list{block_custom_id{0}, block_custom_id{1},
+                                          block_custom_id{2}}},
 
          },
    };

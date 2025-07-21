@@ -44,6 +44,12 @@ enum curve_surface {
    curve_surface_neg_z,
 };
 
+enum cylinder_surface {
+   cylinder_surface_pos_y,
+   cylinder_surface_neg_y,
+   cylinder_surface_wall
+};
+
 auto calculate_normal(const float3& v0, const float3& v1, const float3& v2) noexcept
    -> float3
 {
@@ -3285,6 +3291,486 @@ auto generate_mesh(const block_custom_mesh_description_curve& curve) noexcept ->
                               static_cast<uint16>(segments * 4 + 3)});
    mesh.snap_edges.push_back({static_cast<uint16>(segments * 4 + 2),
                               static_cast<uint16>(segments * 4 + 0)});
+
+   return mesh;
+}
+
+auto generate_mesh(const block_custom_mesh_description_cylinder& cylinder) noexcept
+   -> block_custom_mesh
+{
+
+   world::block_custom_mesh mesh;
+
+   const float pi2 = std::numbers::pi_v<float> * 2.0f;
+   const int segments = cylinder.segments;
+   const float texture_loops = cylinder.texture_loops;
+   const float cap_aspect = 1.0f / (cylinder.size.x / cylinder.size.z);
+   const float3 size = cylinder.size;
+
+   const float3x3 local_from_circle_adjugate = adjugate({
+      {size.x, 0.0f, 0.0f, 0.0f},
+      {0.0f, size.y, 0.0f, 0.0f},
+      {0.0f, 0.0f, size.z, 0.0f},
+      {0.0f, 0.0f, 0.0f, 1.0f},
+   });
+
+   // Visible Mesh
+   {
+      uint16 vertex_index = 0;
+
+      mesh.triangles.reserve(segments * 4);
+      mesh.occluders.reserve(segments);
+
+      // Wall
+      if (cylinder.flat_shading) {
+         mesh.vertices.reserve((segments * 4) + 2 + (segments * 2));
+
+         for (int i = 0; i < segments; ++i) {
+            const float start_circle_t = i / static_cast<float>(segments);
+            const float segment_start = start_circle_t * pi2;
+            const float mid_circle_t = (i + 0.5f) / static_cast<float>(segments);
+            const float segment_mid = mid_circle_t * pi2;
+            const float end_circle_t = (i + 1) / static_cast<float>(segments);
+            const float segment_end = end_circle_t * pi2;
+
+            const float3 startLS = {
+               cosf(segment_start) * size.x,
+               0.0f,
+               sinf(segment_start) * size.z,
+            };
+            const float3 endLS = {
+               cosf(segment_end) * size.x,
+               0.0f,
+               sinf(segment_end) * size.z,
+            };
+
+            const float3 normalCS = {
+               cosf(segment_mid),
+               0.0f,
+               sinf(segment_mid),
+            };
+            const float3 normalLS = local_from_circle_adjugate * normalCS;
+
+            const uint16 i0 = vertex_index++;
+            const uint16 i1 = vertex_index++;
+            const uint16 i2 = vertex_index++;
+            const uint16 i3 = vertex_index++;
+
+            const float start_texcoord_x = start_circle_t * texture_loops;
+            const float end_texcoord_x = end_circle_t * texture_loops;
+
+            mesh.vertices.push_back({
+               .position = endLS + float3{0.0f, size.y, 0.0f},
+               .normal = normalLS,
+               .texcoords = {end_texcoord_x, 1.0f},
+               .surface_index = cylinder_surface_wall,
+            });
+            mesh.vertices.push_back({
+               .position = endLS - float3{0.0f, size.y, 0.0f},
+               .normal = normalLS,
+               .texcoords = {end_texcoord_x, 0.0f},
+               .surface_index = cylinder_surface_wall,
+            });
+            mesh.vertices.push_back({
+               .position = startLS - float3{0.0f, size.y, 0.0f},
+               .normal = normalLS,
+               .texcoords = {start_texcoord_x, 0.0f},
+               .surface_index = cylinder_surface_wall,
+            });
+            mesh.vertices.push_back({
+               .position = startLS + float3{0.0f, size.y, 0.0f},
+               .normal = normalLS,
+               .texcoords = {start_texcoord_x, 1.0f},
+               .surface_index = cylinder_surface_wall,
+            });
+
+            mesh.triangles.push_back({i0, i1, i2});
+            mesh.triangles.push_back({i0, i2, i3});
+            mesh.occluders.push_back({i0, i1, i2, i3});
+         }
+      }
+      else {
+         mesh.vertices.reserve(2 + (segments * 2) + 2 + (segments * 2));
+
+         uint16 last_bottom_index = vertex_index++;
+         uint16 last_top_index = vertex_index++;
+
+         mesh.vertices.push_back({
+            .position = float3{1.0f, 0.0f, 0.0f} * size.x - float3{0.0f, size.y, 0.0f},
+            .normal = local_from_circle_adjugate * float3{1.0f, 0.0f, 0.0f},
+            .texcoords = {0.0f, 0.0f},
+            .surface_index = cylinder_surface_wall,
+         });
+         mesh.vertices.push_back({
+            .position = float3{1.0f, 0.0f, 0.0f} * size.x + float3{0.0f, size.y, 0.0f},
+            .normal = local_from_circle_adjugate * float3{1.0f, 0.0f, 0.0f},
+            .texcoords = {0.0f, 1.0f},
+            .surface_index = cylinder_surface_wall,
+         });
+
+         for (int i = 1; i <= segments; ++i) {
+            const float circle_t = i / static_cast<float>(segments);
+            const float segment_end = circle_t * pi2;
+
+            const float3 endCS = {
+               cosf(segment_end),
+               0.0f,
+               sinf(segment_end),
+            };
+            const float3 endLS = endCS * float3{size.x, 0.0f, size.z};
+
+            const float3 normalLS = local_from_circle_adjugate * endCS;
+
+            const uint16 i0 = vertex_index++;
+            const uint16 i1 = vertex_index++;
+            const uint16 i2 = last_bottom_index;
+            const uint16 i3 = last_top_index;
+
+            const float texcoord_x = circle_t * texture_loops;
+
+            mesh.vertices.push_back({
+               .position = endLS + float3{0.0f, size.y, 0.0f},
+               .normal = normalLS,
+               .texcoords = {texcoord_x, 1.0f},
+               .surface_index = cylinder_surface_wall,
+            });
+            mesh.vertices.push_back({
+               .position = endLS - float3{0.0f, size.y, 0.0f},
+               .normal = normalLS,
+               .texcoords = {texcoord_x, 0.0f},
+               .surface_index = cylinder_surface_wall,
+            });
+
+            mesh.triangles.push_back({i0, i1, i2});
+            mesh.triangles.push_back({i0, i2, i3});
+            mesh.occluders.push_back({i0, i1, i2, i3});
+
+            last_top_index = i0;
+            last_bottom_index = i1;
+         }
+      }
+
+      // Top
+      {
+         const uint16 centre_index = vertex_index++;
+         const uint16 start_index = vertex_index++;
+         uint16 last_index = start_index;
+
+         mesh.vertices.push_back({
+            .position = float3{0.0f, size.y, 0.0f},
+            .normal = float3{0.0f, 1.0f, 0.0f},
+            .texcoords = {0.5f, 0.5f},
+            .surface_index = cylinder_surface_pos_y,
+         });
+         mesh.vertices.push_back({
+            .position = float3{1.0f, 0.0f, 0.0f} * size.x + float3{0.0f, size.y, 0.0f},
+            .normal = float3{0.0f, 1.0f, 0.0f},
+            .texcoords = {1.0f, 0.5f},
+            .surface_index = cylinder_surface_pos_y,
+         });
+
+         for (int i = 1; i < segments; ++i) {
+            const float circle_t = i / static_cast<float>(segments);
+            const float tri_end = circle_t * pi2;
+
+            const float3 pointCS = {
+               cosf(tri_end),
+               0.0f,
+               sinf(tri_end),
+            };
+            const float3 pointLS = {
+               pointCS.x * size.x,
+               size.y,
+               pointCS.z * size.z,
+            };
+
+            const uint16 i0 = vertex_index++;
+            const uint16 i1 = last_index;
+            const uint16 i2 = centre_index;
+
+            const float2 texcoords = {
+               pointCS.x * 0.5f + 0.5f,
+               (pointCS.z * cap_aspect * 0.5f + 0.5f),
+            };
+
+            mesh.vertices.push_back({
+               .position = pointLS,
+               .normal = float3{0.0f, 1.0f, 0.0f},
+               .texcoords = texcoords,
+               .surface_index = cylinder_surface_pos_y,
+            });
+
+            mesh.triangles.push_back({i0, i1, i2});
+
+            last_index = i0;
+         }
+
+         mesh.triangles.push_back({start_index, last_index, centre_index});
+      }
+
+      // Bottom
+      {
+         const uint16 centre_index = vertex_index++;
+         const uint16 start_index = vertex_index++;
+         uint16 last_index = start_index;
+
+         mesh.vertices.push_back({
+            .position = float3{0.0f, -size.y, 0.0f},
+            .normal = float3{0.0f, -1.0f, 0.0f},
+            .texcoords = {0.5f, 0.5f},
+            .surface_index = cylinder_surface_neg_y,
+         });
+         mesh.vertices.push_back({
+            .position = float3{1.0f, 0.0f, 0.0f} * size.x - float3{0.0f, size.y, 0.0f},
+            .normal = float3{0.0f, -1.0f, 0.0f},
+            .texcoords = {1.0f, 0.5f},
+            .surface_index = cylinder_surface_neg_y,
+         });
+
+         for (int i = 1; i < segments; ++i) {
+            const float circle_t = i / static_cast<float>(segments);
+            const float tri_end = circle_t * pi2;
+
+            const float3 pointCS = {
+               cosf(tri_end),
+               0.0f,
+               sinf(tri_end),
+            };
+            const float3 pointLS = {
+               pointCS.x * size.x,
+               -size.y,
+               pointCS.z * size.z,
+            };
+
+            const uint16 i0 = centre_index;
+            const uint16 i1 = last_index;
+            const uint16 i2 = vertex_index++;
+
+            const float2 texcoords = {
+               pointCS.x * 0.5f + 0.5f,
+               (pointCS.z * cap_aspect * 0.5f + 0.5f),
+            };
+
+            mesh.vertices.push_back({
+               .position = pointLS,
+               .normal = float3{0.0f, -1.0f, 0.0f},
+               .texcoords = texcoords,
+               .surface_index = cylinder_surface_neg_y,
+            });
+
+            mesh.triangles.push_back({i0, i1, i2});
+
+            last_index = i2;
+         }
+
+         mesh.triangles.push_back({centre_index, last_index, start_index});
+      }
+   }
+
+   // Collision Mesh
+   {
+      uint16 vertex_index = 0;
+
+      mesh.collision_triangles.reserve(segments * 4);
+      mesh.collision_occluders.reserve(segments);
+      mesh.collision_vertices.reserve((segments * 2) + 2 + (segments * 2));
+
+      // Wall
+      {
+         const uint16 start_bottom_index = vertex_index++;
+         const uint16 start_top_index = vertex_index++;
+
+         uint16 last_bottom_index = start_bottom_index;
+         uint16 last_top_index = start_top_index;
+
+         mesh.collision_vertices.push_back({
+            .position = float3{1.0f, 0.0f, 0.0f} * size.x - float3{0.0f, size.y, 0.0f},
+            .surface_index = cylinder_surface_wall,
+         });
+         mesh.collision_vertices.push_back({
+            .position = float3{1.0f, 0.0f, 0.0f} * size.x + float3{0.0f, size.y, 0.0f},
+            .surface_index = cylinder_surface_wall,
+         });
+
+         for (int i = 1; i < segments; ++i) {
+            const float circle_t = i / static_cast<float>(segments);
+            const float segment_end = circle_t * pi2;
+
+            const float3 endCS = {
+               cosf(segment_end),
+               0.0f,
+               sinf(segment_end),
+            };
+            const float3 endLS = endCS * float3{size.x, 0.0f, size.z};
+
+            const uint16 i0 = vertex_index++;
+            const uint16 i1 = vertex_index++;
+            const uint16 i2 = last_bottom_index;
+            const uint16 i3 = last_top_index;
+
+            mesh.collision_vertices.push_back({
+               .position = endLS + float3{0.0f, size.y, 0.0f},
+               .surface_index = cylinder_surface_wall,
+            });
+            mesh.collision_vertices.push_back({
+               .position = endLS - float3{0.0f, size.y, 0.0f},
+               .surface_index = cylinder_surface_wall,
+            });
+
+            mesh.collision_triangles.push_back({i0, i1, i2});
+            mesh.collision_triangles.push_back({i0, i2, i3});
+            mesh.collision_occluders.push_back({i0, i1, i2, i3});
+
+            last_top_index = i0;
+            last_bottom_index = i1;
+         }
+
+         const uint16 i0 = start_top_index;
+         const uint16 i1 = start_bottom_index;
+         const uint16 i2 = last_bottom_index;
+         const uint16 i3 = last_top_index;
+
+         mesh.collision_triangles.push_back({i0, i1, i2});
+         mesh.collision_triangles.push_back({i0, i2, i3});
+         mesh.collision_occluders.push_back({i0, i1, i2, i3});
+      }
+
+      // Top
+      {
+         const uint16 centre_index = vertex_index++;
+         const uint16 start_index = vertex_index++;
+         uint16 last_index = start_index;
+
+         mesh.collision_vertices.push_back({
+            .position = float3{0.0f, size.y, 0.0f},
+            .surface_index = cylinder_surface_pos_y,
+         });
+         mesh.collision_vertices.push_back({
+            .position = float3{1.0f, 0.0f, 0.0f} * size.x + float3{0.0f, size.y, 0.0f},
+            .surface_index = cylinder_surface_pos_y,
+         });
+
+         for (int i = 1; i < segments; ++i) {
+            const float circle_t = i / static_cast<float>(segments);
+            const float tri_end = circle_t * pi2;
+
+            const float3 pointLS = {
+               cosf(tri_end) * size.x,
+               size.y,
+               sinf(tri_end) * size.z,
+            };
+
+            const uint16 i0 = vertex_index++;
+            const uint16 i1 = last_index;
+            const uint16 i2 = centre_index;
+
+            mesh.collision_vertices.push_back({
+               .position = pointLS,
+               .surface_index = cylinder_surface_pos_y,
+            });
+
+            mesh.collision_triangles.push_back({i0, i1, i2});
+
+            last_index = i0;
+         }
+
+         mesh.collision_triangles.push_back({start_index, last_index, centre_index});
+      }
+
+      // Bottom
+      {
+         const uint16 centre_index = vertex_index++;
+         const uint16 start_index = vertex_index++;
+         uint16 last_index = start_index;
+
+         mesh.collision_vertices.push_back({
+            .position = float3{0.0f, -size.y, 0.0f},
+            .surface_index = cylinder_surface_neg_y,
+         });
+         mesh.collision_vertices.push_back({
+            .position = float3{1.0f, 0.0f, 0.0f} * size.x - float3{0.0f, size.y, 0.0f},
+            .surface_index = cylinder_surface_neg_y,
+         });
+
+         for (int i = 1; i < segments; ++i) {
+            const float circle_t = i / static_cast<float>(segments);
+            const float tri_end = circle_t * pi2;
+
+            const float3 pointLS = {
+               cosf(tri_end) * size.x,
+               -size.y,
+               sinf(tri_end) * size.z,
+            };
+
+            const uint16 i0 = centre_index;
+            const uint16 i1 = last_index;
+            const uint16 i2 = vertex_index++;
+
+            mesh.collision_vertices.push_back({
+               .position = pointLS,
+               .surface_index = cylinder_surface_neg_y,
+            });
+
+            mesh.collision_triangles.push_back({i0, i1, i2});
+
+            last_index = i2;
+         }
+
+         mesh.collision_triangles.push_back({centre_index, last_index, start_index});
+      }
+   }
+
+   // Snapping Mesh
+   {
+      uint16 vertex_index = 0;
+
+      mesh.snap_points.reserve(segments * 2);
+      mesh.snap_edges.reserve(segments * 3);
+
+      // Wall
+      {
+         const uint16 start_bottom_index = vertex_index++;
+         const uint16 start_top_index = vertex_index++;
+
+         uint16 last_bottom_index = start_bottom_index;
+         uint16 last_top_index = start_top_index;
+
+         mesh.snap_points.push_back(
+            {float3{1.0f, 0.0f, 0.0f} * size.x - float3{0.0f, size.y, 0.0f}});
+         mesh.snap_points.push_back(
+            {float3{1.0f, 0.0f, 0.0f} * size.x + float3{0.0f, size.y, 0.0f}});
+
+         for (int i = 1; i < segments; ++i) {
+
+            const float circle_t = i / static_cast<float>(segments);
+            const float segment_end = circle_t * pi2;
+
+            const float3 endCS = {
+               cosf(segment_end),
+               0.0f,
+               sinf(segment_end),
+            };
+            const float3 endLS = endCS * float3{size.x, 0.0f, size.z};
+
+            const uint16 i0 = vertex_index++;
+            const uint16 i1 = vertex_index++;
+
+            mesh.snap_points.push_back({endLS + float3{0.0f, size.y, 0.0f}});
+            mesh.snap_points.push_back({endLS - float3{0.0f, size.y, 0.0f}});
+
+            mesh.snap_edges.push_back({i0, i1});
+            mesh.snap_edges.push_back({i0, last_top_index});
+            mesh.snap_edges.push_back({i1, last_bottom_index});
+
+            last_top_index = i0;
+            last_bottom_index = i1;
+         }
+
+         mesh.snap_edges.push_back({start_top_index, start_bottom_index});
+         mesh.snap_edges.push_back({start_top_index, last_top_index});
+         mesh.snap_edges.push_back({start_bottom_index, last_bottom_index});
+      }
+   }
 
    return mesh;
 }

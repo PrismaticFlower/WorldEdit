@@ -12,9 +12,6 @@ auto get_bounding_box(const block_description_ramp& ramp) noexcept -> math::boun
 
 auto get_bounding_box(const block_description_quad& quad) noexcept -> math::bounding_box;
 
-auto get_bounding_box(const block_description_cylinder& cylinder) noexcept
-   -> math::bounding_box;
-
 auto get_bounding_box(const block_description_custom& custom_block) noexcept
    -> math::bounding_box;
 

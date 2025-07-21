@@ -41,7 +41,6 @@ struct entity_group {
       std::vector<block_description_box> boxes;
       std::vector<block_description_ramp> ramps;
       std::vector<block_description_quad> quads;
-      std::vector<block_description_cylinder> cylinders;
 
       struct custom {
          std::vector<block_description_custom> description;

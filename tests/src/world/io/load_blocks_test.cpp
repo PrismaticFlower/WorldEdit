@@ -470,9 +470,9 @@ TEST_CASE("world load blocks (cylinders)", "[World][IO]")
 
    const blocks blocks = load_blocks("data/blocks/cylinders.blk", layer_remap, output);
 
-   REQUIRE(blocks.cylinders.size() == 3);
+   REQUIRE(blocks.custom.size() == 3);
 
-   const blocks_cylinders& cylinders = blocks.cylinders;
+   const blocks_custom& cylinders = blocks.custom;
 
    CHECK(cylinders.bbox.min_x[0] == 4.5f);
    CHECK(cylinders.bbox.min_y[0] == 0.5f);
@@ -484,32 +484,53 @@ TEST_CASE("world load blocks (cylinders)", "[World][IO]")
    CHECK(cylinders.layer[0] == 2);
    CHECK(cylinders.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
    CHECK(cylinders.description[0].position == float3{8.5f, 4.5f, 2.0f});
-   CHECK(cylinders.description[0].size == float3{4.0f, 4.0f, 4.0f});
-   CHECK(cylinders.description[0].surface_materials == std::array<uint8, 3>{0, 1, 2});
+   CHECK(cylinders.description[0].mesh_description.cylinder.size ==
+         float3{4.0f, 4.0f, 4.0f});
+   CHECK(cylinders.description[0].mesh_description.cylinder.segments == 10);
+   CHECK(not cylinders.description[0].mesh_description.cylinder.flat_shading);
+   CHECK(cylinders.description[0].mesh_description.cylinder.texture_loops == 1.0f);
+   CHECK(cylinders.description[0].surface_materials ==
+         std::array<uint8, 6>{0, 1, 2, 0, 0, 0});
    CHECK(cylinders.description[0].surface_texture_mode ==
-         std::array<block_texture_mode, 3>{
+         std::array<block_texture_mode, 6>{
             block_texture_mode::world_space_zy,
             block_texture_mode::world_space_zy,
             block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
          });
    CHECK(cylinders.description[0].surface_texture_rotation ==
-         std::array<block_texture_rotation, 3>{
+         std::array<block_texture_rotation, 6>{
             block_texture_rotation::d180,
             block_texture_rotation::d180,
             block_texture_rotation::d180,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
          });
    CHECK(cylinders.description[0].surface_texture_scale ==
-         std::array<std::array<int8, 2>, 3>{
+         std::array<std::array<int8, 2>, 6>{
             std::array<int8, 2>{0, 0},
             std::array<int8, 2>{-1, -2},
             std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
          });
    CHECK(cylinders.description[0].surface_texture_offset ==
-         std::array<std::array<uint16, 2>, 3>{
+         std::array<std::array<uint16, 2>, 6>{
             std::array<uint16, 2>{0, 0},
             std::array<uint16, 2>{0, 0},
             std::array<uint16, 2>{256, 256},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
          });
+   CHECK(blocks.custom_meshes.debug_ref_count(
+            cylinders.description[0].mesh_description) == 1);
+   CHECK(cylinders.mesh[0] == blocks.custom_meshes.debug_query_handle(
+                                 cylinders.description[0].mesh_description));
    CHECK(is_unique_id(0, cylinders.ids));
 
    CHECK(cylinders.bbox.min_x[1] == 2.00001764f);
@@ -522,32 +543,53 @@ TEST_CASE("world load blocks (cylinders)", "[World][IO]")
    CHECK(cylinders.description[1].rotation ==
          quaternion{0.707106f, 0.0f, 0.707106f, 0.0f});
    CHECK(cylinders.description[1].position == float3{10.0f, 16.0f, 12.0f});
-   CHECK(cylinders.description[1].size == float3{8.0f, 4.0f, 8.0f});
-   CHECK(cylinders.description[1].surface_materials == std::array<uint8, 3>{2, 2, 2});
+   CHECK(cylinders.description[1].mesh_description.cylinder.size ==
+         float3{8.0f, 4.0f, 8.0f});
+   CHECK(cylinders.description[1].mesh_description.cylinder.segments == 20);
+   CHECK(cylinders.description[1].mesh_description.cylinder.flat_shading);
+   CHECK(cylinders.description[1].mesh_description.cylinder.texture_loops == 2.0f);
+   CHECK(cylinders.description[1].surface_materials ==
+         std::array<uint8, 6>{2, 2, 2, 0, 0, 0});
    CHECK(cylinders.description[1].surface_texture_mode ==
-         std::array<block_texture_mode, 3>{
+         std::array<block_texture_mode, 6>{
             block_texture_mode::world_space_xz,
             block_texture_mode::world_space_xz,
             block_texture_mode::local_space_zy,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
          });
    CHECK(cylinders.description[1].surface_texture_rotation ==
-         std::array<block_texture_rotation, 3>{
+         std::array<block_texture_rotation, 6>{
             block_texture_rotation::d90,
             block_texture_rotation::d90,
             block_texture_rotation::d90,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
          });
    CHECK(cylinders.description[1].surface_texture_scale ==
-         std::array<std::array<int8, 2>, 3>{
+         std::array<std::array<int8, 2>, 6>{
             std::array<int8, 2>{0, 0},
             std::array<int8, 2>{0, 0},
             std::array<int8, 2>{-2, -2},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
          });
    CHECK(cylinders.description[1].surface_texture_offset ==
-         std::array<std::array<uint16, 2>, 3>{
+         std::array<std::array<uint16, 2>, 6>{
             std::array<uint16, 2>{1024, 0},
             std::array<uint16, 2>{0, 0},
             std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
          });
+   CHECK(blocks.custom_meshes.debug_ref_count(
+            cylinders.description[1].mesh_description) == 1);
+   CHECK(cylinders.mesh[1] == blocks.custom_meshes.debug_query_handle(
+                                 cylinders.description[1].mesh_description));
    CHECK(is_unique_id(1, cylinders.ids));
 
    CHECK(cylinders.bbox.min_x[2] == 1.0f);
@@ -559,32 +601,53 @@ TEST_CASE("world load blocks (cylinders)", "[World][IO]")
    CHECK(cylinders.hidden[2] == false);
    CHECK(cylinders.description[2].rotation == quaternion{0.0f, 0.0f, 0.0f, 1.0f});
    CHECK(cylinders.description[2].position == float3{6.0f, 6.0f, 6.0f});
-   CHECK(cylinders.description[2].size == float3{5.0f, 5.0f, 5.0f});
-   CHECK(cylinders.description[2].surface_materials == std::array<uint8, 3>{0, 0, 0});
+   CHECK(cylinders.description[2].mesh_description.cylinder.size ==
+         float3{5.0f, 5.0f, 5.0f});
+   CHECK(cylinders.description[2].mesh_description.cylinder.segments == 30);
+   CHECK(not cylinders.description[2].mesh_description.cylinder.flat_shading);
+   CHECK(cylinders.description[2].mesh_description.cylinder.texture_loops == 3.0f);
+   CHECK(cylinders.description[2].surface_materials ==
+         std::array<uint8, 6>{0, 0, 0, 0, 0, 0});
    CHECK(cylinders.description[2].surface_texture_mode ==
-         std::array<block_texture_mode, 3>{
+         std::array<block_texture_mode, 6>{
             block_texture_mode::world_space_auto,
             block_texture_mode::world_space_zy,
             block_texture_mode::world_space_xz,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
          });
    CHECK(cylinders.description[2].surface_texture_rotation ==
-         std::array<block_texture_rotation, 3>{
+         std::array<block_texture_rotation, 6>{
             block_texture_rotation::d0,
             block_texture_rotation::d90,
             block_texture_rotation::d180,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
          });
    CHECK(cylinders.description[2].surface_texture_scale ==
-         std::array<std::array<int8, 2>, 3>{
+         std::array<std::array<int8, 2>, 6>{
             std::array<int8, 2>{-7, -6},
             std::array<int8, 2>{-5, -4},
             std::array<int8, 2>{-3, -2},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
          });
    CHECK(cylinders.description[2].surface_texture_offset ==
-         std::array<std::array<uint16, 2>, 3>{
+         std::array<std::array<uint16, 2>, 6>{
             std::array<uint16, 2>{0, 1},
             std::array<uint16, 2>{2, 3},
             std::array<uint16, 2>{4, 5},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
          });
+   CHECK(blocks.custom_meshes.debug_ref_count(
+            cylinders.description[2].mesh_description) == 1);
+   CHECK(cylinders.mesh[2] == blocks.custom_meshes.debug_query_handle(
+                                 cylinders.description[2].mesh_description));
    CHECK(is_unique_id(2, cylinders.ids));
 
    REQUIRE(cylinders.dirty.size() == 1);

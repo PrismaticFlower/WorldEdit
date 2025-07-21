@@ -160,10 +160,6 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                } break;
                case world::block_type::quad: {
                } break;
-               case world::block_type::cylinder: {
-                  gizmo_rotation =
-                     _world.blocks.cylinders.description[*block_index].rotation;
-               } break;
                case world::block_type::custom: {
                   gizmo_rotation =
                      _world.blocks.custom.description[*block_index].rotation;
@@ -406,16 +402,6 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                          (rotation * (quad.vertices[1] - centre)) + centre,
                          (rotation * (quad.vertices[2] - centre)) + centre,
                          (rotation * (quad.vertices[3] - centre)) + centre}));
-                  } break;
-                  case world::block_type::cylinder: {
-                     const world::block_description_cylinder& cylinder =
-                        _world.blocks.cylinders.description[*block_index];
-
-                     bundled_edits.push_back(edits::make_set_block_cylinder_metrics(
-                        *block_index,
-                        local_space ? cylinder.rotation * rotation
-                                    : rotation * cylinder.rotation,
-                        cylinder.position, cylinder.size));
                   } break;
                   case world::block_type::custom: {
                      const world::block_description_custom& block =

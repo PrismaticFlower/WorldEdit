@@ -178,13 +178,6 @@ auto make_add_block(world::block_description_quad quad, int8 layer,
    return std::make_unique<add_block<&world::blocks::quads>>(quad, layer, id);
 }
 
-auto make_add_block(world::block_description_cylinder cylinder, int8 layer,
-                    world::block_cylinder_id id)
-   -> std::unique_ptr<edit<world::edit_context>>
-{
-   return std::make_unique<add_block<&world::blocks::cylinders>>(cylinder, layer, id);
-}
-
 auto make_add_block(world::block_description_custom block, int8 layer,
                     world::block_custom_id id)
    -> std::unique_ptr<edit<world::edit_context>>

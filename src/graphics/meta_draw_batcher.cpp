@@ -77,7 +77,6 @@ meta_draw_batcher::meta_draw_batcher()
    _boxes_wireframe.reserve(16);
    _spheres_wireframe.reserve(16);
    _cylinders_wireframe.reserve(16);
-   _alt_cylinders_wireframe.reserve(16);
    _cones_wireframe.reserve(16);
    _ramps_wireframe.reserve(16);
    _hemispheres_wireframe.reserve(8);
@@ -108,7 +107,6 @@ void meta_draw_batcher::clear()
    _boxes_wireframe.clear();
    _spheres_wireframe.clear();
    _cylinders_wireframe.clear();
-   _alt_cylinders_wireframe.clear();
    _cones_wireframe.clear();
    _ramps_wireframe.clear();
    _hemispheres_wireframe.clear();
@@ -227,12 +225,6 @@ void meta_draw_batcher::add_cylinder_wireframe(const float4x4& transform,
                                                const float3& color)
 {
    _cylinders_wireframe.emplace_back(transform, float4{color, 1.0f});
-}
-
-void meta_draw_batcher::add_alt_cylinder_wireframe(const float4x4& transform,
-                                                   const float3& color)
-{
-   _alt_cylinders_wireframe.emplace_back(transform, float4{color, 1.0f});
 }
 
 void meta_draw_batcher::add_cone_wireframe(const float4x4& transform, const float3& color)
@@ -413,12 +405,6 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
                   shapes.cylinder());
    }
 
-   if (not _alt_cylinders_wireframe.empty()) {
-      draw_shapes(_alt_cylinders_wireframe,
-                  pipeline_library.meta_draw_shape_wireframe.get(),
-                  shapes.alt_cylinder());
-   }
-
    if (not _cones_wireframe.empty()) {
       draw_shapes(_cones_wireframe,
                   pipeline_library.meta_draw_shape_wireframe.get(), shapes.cone());
@@ -514,7 +500,6 @@ bool meta_draw_batcher::all_empty() const noexcept
           _boxes_wireframe.empty() and            //
           _spheres_wireframe.empty() and          //
           _cylinders_wireframe.empty() and        //
-          _alt_cylinders_wireframe.empty() and    //
           _cones_wireframe.empty() and            //
           _ramps_wireframe.empty() and            //
           _hemispheres_wireframe.empty() and      //

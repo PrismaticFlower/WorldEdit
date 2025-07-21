@@ -36,6 +36,10 @@ static H AbslHashValue(H h, const block_custom_mesh_description& desc)
                         desc.curve.p1.x, desc.curve.p1.y, desc.curve.p1.z,
                         desc.curve.p2.x, desc.curve.p2.y, desc.curve.p2.z,
                         desc.curve.p3.x, desc.curve.p3.y, desc.curve.p3.z);
+   case block_custom_mesh_type::cylinder:
+      return H::combine(std::move(h), desc.type, desc.cylinder.size.x,
+                        desc.cylinder.size.y, desc.cylinder.size.z, desc.ring.segments,
+                        desc.cylinder.flat_shading, desc.cylinder.texture_loops);
    }
 
    std::unreachable();
@@ -54,6 +58,8 @@ auto generate_mesh(const block_custom_mesh_description& mesh) noexcept -> block_
       return generate_mesh(mesh.beveled_box);
    case block_custom_mesh_type::curve:
       return generate_mesh(mesh.curve);
+   case block_custom_mesh_type::cylinder:
+      return generate_mesh(mesh.cylinder);
    }
 
    std::unreachable();

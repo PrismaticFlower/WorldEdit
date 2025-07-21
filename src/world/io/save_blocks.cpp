@@ -178,57 +178,6 @@ void save_quads(io::output_file& out, const blocks_quads& quads) noexcept
    out.write_ln("}\n");
 }
 
-void save_cylinders(io::output_file& out, const blocks_cylinders& cylinders) noexcept
-{
-   if (cylinders.size() == 0) return;
-
-   out.write_ln("Cylinders({})", cylinders.size());
-   out.write_ln("{");
-
-   for (uint32 box_index = 0; box_index < cylinders.size(); ++box_index) {
-      const block_description_cylinder& cylinder = cylinders.description[box_index];
-      const int8 cylinder_layer = cylinders.layer[box_index];
-
-      out.write_ln("   Cylinder()");
-      out.write_ln("   {");
-
-      out.write_ln("      Rotation({}, {}, {}, {});", cylinder.rotation.w,
-                   cylinder.rotation.x, cylinder.rotation.y, cylinder.rotation.z);
-      out.write_ln("      Position({}, {}, {});", cylinder.position.x,
-                   cylinder.position.y, cylinder.position.z);
-      out.write_ln("      Size({}, {}, {});", cylinder.size.x, cylinder.size.y,
-                   cylinder.size.z);
-      out.write_ln("      SurfaceMaterials({}, {}, {});",
-                   cylinder.surface_materials[0], cylinder.surface_materials[1],
-                   cylinder.surface_materials[2]);
-      out.write_ln("      SurfaceTextureMode({}, {}, {});",
-                   cylinder.surface_texture_mode[0], cylinder.surface_texture_mode[1],
-                   cylinder.surface_texture_mode[2]);
-      out.write_ln("      SurfaceTextureRotation({}, {}, {});",
-                   cylinder.surface_texture_rotation[0],
-                   cylinder.surface_texture_rotation[1],
-                   cylinder.surface_texture_rotation[2]);
-      out.write_ln("      SurfaceTextureScale({}, {}, {}, {}, {}, {});",
-                   cylinder.surface_texture_scale[0][0],
-                   cylinder.surface_texture_scale[0][1],
-                   cylinder.surface_texture_scale[1][0],
-                   cylinder.surface_texture_scale[1][1],
-                   cylinder.surface_texture_scale[2][0],
-                   cylinder.surface_texture_scale[2][1]);
-      out.write_ln("      SurfaceTextureOffset({}, {}, {}, {}, {}, {});",
-                   cylinder.surface_texture_offset[0][0],
-                   cylinder.surface_texture_offset[0][1],
-                   cylinder.surface_texture_offset[1][0],
-                   cylinder.surface_texture_offset[1][1],
-                   cylinder.surface_texture_offset[2][0],
-                   cylinder.surface_texture_offset[2][1]);
-      if (cylinder_layer != 0) out.write_ln("      Layer({});", cylinder_layer);
-      out.write_ln("   }");
-   }
-
-   out.write_ln("}\n");
-}
-
 void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
 {
    if (blocks.size() == 0) return;
@@ -252,6 +201,9 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
       } break;
       case block_custom_mesh_type::curve: {
          out.write_ln("   CubicCurve()");
+      } break;
+      case block_custom_mesh_type::cylinder: {
+         out.write_ln("   Cylinder()");
       } break;
       }
       out.write_ln("   {");
@@ -306,6 +258,16 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
          out.write_ln("      P1({}, {}, {});", curve.p1.x, curve.p1.y, curve.p1.z);
          out.write_ln("      P2({}, {}, {});", curve.p2.x, curve.p2.y, curve.p2.z);
          out.write_ln("      P3({}, {}, {});", curve.p3.x, curve.p3.y, curve.p3.z);
+      } break;
+      case block_custom_mesh_type::cylinder: {
+         const world::block_custom_mesh_description_cylinder& cylinder =
+            block.mesh_description.cylinder;
+
+         out.write_ln("      Size({}, {}, {});", cylinder.size.x,
+                      cylinder.size.y, cylinder.size.z);
+         out.write_ln("      Segments({});", cylinder.segments);
+         if (cylinder.flat_shading) out.write_ln("      FlatShading();");
+         out.write_ln("      TextureLoops({});", cylinder.texture_loops);
       } break;
       }
 
@@ -538,7 +500,6 @@ void save_blocks(const io::path& path, const blocks& blocks)
    save_boxes(out, blocks.boxes);
    save_ramps(out, blocks.ramps);
    save_quads(out, blocks.quads);
-   save_cylinders(out, blocks.cylinders);
    save_custom(out, blocks.custom);
    save_cones(out, blocks.cones);
    save_hemispheres(out, blocks.hemispheres);

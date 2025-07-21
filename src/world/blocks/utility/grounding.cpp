@@ -120,13 +120,6 @@ auto ground_block(const block_id id, const uint32 block_index,
       return ground_block((bbox.min + bbox.max) / 2.0f, bbox, id, world,
                           object_classes, blocks_bvh_library, active_layers);
    } break;
-   case block_type::cylinder: {
-      const block_description_cylinder& cylinder =
-         world.blocks.cylinders.description[block_index];
-
-      return ground_block(cylinder.position, bbox, id, world, object_classes,
-                          blocks_bvh_library, active_layers);
-   } break;
    case block_type::custom: {
       const block_description_custom& block =
          world.blocks.custom.description[block_index];

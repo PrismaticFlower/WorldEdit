@@ -102,8 +102,6 @@ struct meta_draw_batcher {
 
    void add_cylinder_wireframe(const float4x4& transform, const float3& color);
 
-   void add_alt_cylinder_wireframe(const float4x4& transform, const float3& color);
-
    void add_cone_wireframe(const float4x4& transform, const float3& color);
 
    void add_hemisphere_wireframe(const float4x4& transform, const float3& color);
@@ -146,7 +144,6 @@ private:
    std::vector<meta_draw_object> _boxes_wireframe;
    std::vector<meta_draw_sphere> _spheres_wireframe;
    std::vector<meta_draw_object> _cylinders_wireframe;
-   std::vector<meta_draw_object> _alt_cylinders_wireframe;
    std::vector<meta_draw_object> _cones_wireframe;
    std::vector<meta_draw_object> _ramps_wireframe;
    std::vector<meta_draw_object> _hemispheres_wireframe;

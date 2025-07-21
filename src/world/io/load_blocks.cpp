@@ -323,100 +323,6 @@ void load_quads(assets::config::node& node, const layer_remap& layer_remap,
    }
 }
 
-void load_cylinders(assets::config::node& node, const layer_remap& layer_remap,
-                    blocks& blocks_out)
-{
-   for (const auto& key_node : node) {
-      if (not iequals(key_node.key, "Cylinder")) continue;
-
-      if (blocks_out.cylinders.size() == max_blocks) {
-         throw load_failure{fmt::format(
-            "Too many blocks (of type cylinder) for WorldEdit to handle. \n   "
-            "Max Supported Count: {}\n",
-            max_blocks)};
-      }
-
-      block_description_cylinder cylinder;
-      int8 layer = 0;
-
-      for (const auto& prop : key_node) {
-         if (iequals(prop.key, "Rotation")) {
-            cylinder.rotation = {prop.values.get<float>(0),
-                                 prop.values.get<float>(1),
-                                 prop.values.get<float>(2),
-                                 prop.values.get<float>(3)};
-         }
-         else if (iequals(prop.key, "Position")) {
-            cylinder.position = {prop.values.get<float>(0),
-                                 prop.values.get<float>(1),
-                                 prop.values.get<float>(2)};
-         }
-         else if (iequals(prop.key, "Size")) {
-            cylinder.size = {prop.values.get<float>(0), prop.values.get<float>(1),
-                             prop.values.get<float>(2)};
-         }
-         else if (iequals(prop.key, "SurfaceMaterials")) {
-            for (uint32 i = 0; i < cylinder.surface_materials.size(); ++i) {
-               cylinder.surface_materials[i] = prop.values.get<uint8>(i);
-            }
-         }
-         else if (iequals(prop.key, "SurfaceTextureMode")) {
-            for (uint32 i = 0; i < cylinder.surface_texture_mode.size(); ++i) {
-               cylinder.surface_texture_mode[i] =
-                  read_texture_mode(prop.values.get<uint8>(i));
-            }
-         }
-         else if (iequals(prop.key, "SurfaceTextureRotation")) {
-            for (uint32 i = 0; i < cylinder.surface_texture_rotation.size(); ++i) {
-               const uint8 rotation = prop.values.get<uint8>(i);
-
-               switch (rotation) {
-               case static_cast<uint8>(block_texture_rotation::d0):
-               case static_cast<uint8>(block_texture_rotation::d90):
-               case static_cast<uint8>(block_texture_rotation::d180):
-               case static_cast<uint8>(block_texture_rotation::d270):
-                  cylinder.surface_texture_rotation[i] =
-                     block_texture_rotation{rotation};
-                  break;
-               }
-            }
-         }
-         else if (iequals(prop.key, "SurfaceTextureScale")) {
-            for (uint32 i = 0; i < cylinder.surface_texture_scale.size(); ++i) {
-               cylinder.surface_texture_scale[i] =
-                  {std::clamp(prop.values.get<int8>(i * 2 + 0),
-                              block_min_texture_scale, block_max_texture_scale),
-                   std::clamp(prop.values.get<int8>(i * 2 + 1),
-                              block_min_texture_scale, block_max_texture_scale)};
-            }
-         }
-         else if (iequals(prop.key, "SurfaceTextureOffset")) {
-            for (uint32 i = 0; i < cylinder.surface_texture_offset.size(); ++i) {
-               cylinder.surface_texture_offset[i] =
-                  {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
-                   std::min(prop.values.get<uint16>(i * 2 + 1), block_max_texture_offset)};
-            }
-         }
-         else if (iequals(prop.key, "Layer")) {
-            layer = layer_remap[prop.values.get<int>(0)];
-         }
-      }
-
-      const math::bounding_box bbox = get_bounding_box(cylinder);
-
-      blocks_out.cylinders.bbox.min_x.push_back(bbox.min.x);
-      blocks_out.cylinders.bbox.min_y.push_back(bbox.min.y);
-      blocks_out.cylinders.bbox.min_z.push_back(bbox.min.z);
-      blocks_out.cylinders.bbox.max_x.push_back(bbox.max.x);
-      blocks_out.cylinders.bbox.max_y.push_back(bbox.max.y);
-      blocks_out.cylinders.bbox.max_z.push_back(bbox.max.z);
-      blocks_out.cylinders.hidden.push_back(false);
-      blocks_out.cylinders.layer.push_back(layer);
-      blocks_out.cylinders.description.push_back(cylinder);
-      blocks_out.cylinders.ids.push_back(blocks_out.next_id.cylinders.aquire());
-   }
-}
-
 void load_custom(assets::config::node& node, const layer_remap& layer_remap,
                  blocks& blocks_out)
 {
@@ -713,6 +619,84 @@ void load_custom(assets::config::node& node, const layer_remap& layer_remap,
             else if (iequals(prop.key, "P3")) {
                curve.p3 = {prop.values.get<float>(0), prop.values.get<float>(1),
                            prop.values.get<float>(2)};
+            }
+            else if (iequals(prop.key, "SurfaceMaterials")) {
+               for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
+                  block.surface_materials[i] = prop.values.get<uint8>(i);
+               }
+            }
+            else if (iequals(prop.key, "SurfaceTextureMode")) {
+               for (uint32 i = 0; i < block.surface_texture_mode.size(); ++i) {
+                  block.surface_texture_mode[i] =
+                     read_texture_mode(prop.values.get<uint8>(i));
+               }
+            }
+            else if (iequals(prop.key, "SurfaceTextureRotation")) {
+               for (uint32 i = 0; i < block.surface_texture_rotation.size(); ++i) {
+                  const uint8 rotation = prop.values.get<uint8>(i);
+
+                  switch (rotation) {
+                  case static_cast<uint8>(block_texture_rotation::d0):
+                  case static_cast<uint8>(block_texture_rotation::d90):
+                  case static_cast<uint8>(block_texture_rotation::d180):
+                  case static_cast<uint8>(block_texture_rotation::d270):
+                     block.surface_texture_rotation[i] =
+                        block_texture_rotation{rotation};
+                     break;
+                  }
+               }
+            }
+            else if (iequals(prop.key, "SurfaceTextureScale")) {
+               for (uint32 i = 0; i < block.surface_texture_scale.size(); ++i) {
+                  block.surface_texture_scale[i] =
+                     {std::clamp(prop.values.get<int8>(i * 2 + 0),
+                                 block_min_texture_scale, block_max_texture_scale),
+                      std::clamp(prop.values.get<int8>(i * 2 + 1),
+                                 block_min_texture_scale, block_max_texture_scale)};
+               }
+            }
+            else if (iequals(prop.key, "SurfaceTextureOffset")) {
+               for (uint32 i = 0; i < block.surface_texture_offset.size(); ++i) {
+                  block.surface_texture_offset[i] =
+                     {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
+                      std::min(prop.values.get<uint16>(i * 2 + 1),
+                               block_max_texture_offset)};
+               }
+            }
+            else if (iequals(prop.key, "Layer")) {
+               layer = layer_remap[prop.values.get<int>(0)];
+            }
+         }
+      }
+      else if (iequals(key_node.key, "Cylinder")) {
+         block.mesh_description = block_custom_mesh_description_cylinder{};
+         block_custom_mesh_description_cylinder& cylinder =
+            block.mesh_description.cylinder;
+
+         for (const auto& prop : key_node) {
+            if (iequals(prop.key, "Rotation")) {
+               block.rotation = {prop.values.get<float>(0),
+                                 prop.values.get<float>(1),
+                                 prop.values.get<float>(2),
+                                 prop.values.get<float>(3)};
+            }
+            else if (iequals(prop.key, "Position")) {
+               block.position = {prop.values.get<float>(0),
+                                 prop.values.get<float>(1),
+                                 prop.values.get<float>(2)};
+            }
+            else if (iequals(prop.key, "Size")) {
+               cylinder.size = {prop.values.get<float>(0), prop.values.get<float>(1),
+                                prop.values.get<float>(2)};
+            }
+            else if (iequals(prop.key, "Segments")) {
+               cylinder.segments = prop.values.get<uint16>(0);
+            }
+            else if (iequals(prop.key, "FlatShading")) {
+               cylinder.flat_shading = true;
+            }
+            else if (iequals(prop.key, "TextureLoops")) {
+               cylinder.texture_loops = prop.values.get<float>(0);
             }
             else if (iequals(prop.key, "SurfaceMaterials")) {
                for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
@@ -1157,13 +1141,6 @@ auto load_blocks(const io::path& path, const layer_remap& layer_remap,
             blocks.quads.reserve(quad_reservation);
 
             load_quads(key_node, layer_remap, blocks);
-         }
-         else if (iequals(key_node.key, "Cylinders")) {
-            const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
-
-            blocks.cylinders.reserve(box_reservation);
-
-            load_cylinders(key_node, layer_remap, blocks);
          }
          else if (iequals(key_node.key, "Custom")) {
             const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
