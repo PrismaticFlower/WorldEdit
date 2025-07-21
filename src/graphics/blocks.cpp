@@ -96,10 +96,6 @@ struct blocks_ia_buffer {
    std::array<std::array<uint16, 3>, 12> cube_indices = world::block_cube_triangles;
    std::array<world::block_vertex, 18> ramp_vertices = world::block_ramp_vertices;
    std::array<std::array<uint16, 3>, 8> ramp_indices = world::block_ramp_triangles;
-   std::array<world::block_vertex, 192> cylinder_vertices =
-      world::block_cylinder_vertices;
-   std::array<std::array<uint16, 3>, 124> cylinder_indices =
-      world::block_cylinder_triangles;
    std::array<world::block_vertex, 128> cone_vertices = world::block_cone_vertices;
    std::array<std::array<uint16, 3>, 62> cone_indices = world::block_cone_triangles;
    std::array<world::block_vertex, 328> hemisphere_vertices =
