@@ -29,11 +29,6 @@ public:
       return _cylinder;
    }
 
-   auto alt_cylinder() const noexcept -> const geometric_shape&
-   {
-      return _alt_cylinder;
-   }
-
    auto icosphere() const noexcept -> const geometric_shape&
    {
       return _icosphere;
@@ -79,7 +74,6 @@ private:
 
    geometric_shape _icosphere;
    geometric_shape _cylinder;
-   geometric_shape _alt_cylinder;
    geometric_shape _cube;
    geometric_shape _octahedron;
    geometric_shape _hint_hexahedron;
