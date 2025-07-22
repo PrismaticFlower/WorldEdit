@@ -109,19 +109,6 @@ struct block_description_custom {
    bool operator==(const block_description_custom&) const noexcept = default;
 };
 
-struct block_description_cone {
-   quaternion rotation;
-   float3 position;
-   float3 size;
-   std::array<uint8, 2> surface_materials = {};
-   std::array<block_texture_mode, 2> surface_texture_mode = {};
-   std::array<block_texture_rotation, 2> surface_texture_rotation = {};
-   std::array<std::array<int8, 2>, 2> surface_texture_scale = {};
-   std::array<std::array<uint16, 2>, 2> surface_texture_offset = {};
-
-   bool operator==(const block_description_cone&) const noexcept = default;
-};
-
 struct block_description_hemisphere {
    quaternion rotation;
    float3 position;
@@ -239,26 +226,6 @@ struct blocks_custom {
    bool is_balanced() const noexcept;
 };
 
-struct blocks_cones {
-   blocks_bbox_soa bbox;
-
-   pinned_vector<bool> hidden = blocks_init;
-
-   pinned_vector<int8> layer = blocks_init;
-
-   pinned_vector<block_description_cone> description = blocks_init;
-
-   pinned_vector<id<block_description_cone>> ids = blocks_init;
-
-   blocks_dirty_range_tracker dirty;
-
-   void reserve(const std::size_t size) noexcept;
-
-   auto size() const noexcept -> std::size_t;
-
-   bool is_balanced() const noexcept;
-};
-
 struct blocks_hemispheres {
    blocks_bbox_soa bbox;
 
@@ -322,7 +289,6 @@ struct blocks {
    blocks_ramps ramps;
    blocks_quads quads;
    blocks_custom custom;
-   blocks_cones cones;
    blocks_hemispheres hemispheres;
    blocks_pyramids pyramids;
 
@@ -336,7 +302,6 @@ struct blocks {
       id_generator<block_description_ramp> ramps;
       id_generator<block_description_quad> quads;
       id_generator<block_description_custom> custom;
-      id_generator<block_description_cone> cones;
       id_generator<block_description_hemisphere> hemispheres;
       id_generator<block_description_pyramid> pyramids;
    } next_id;
@@ -354,7 +319,6 @@ using block_box_id = id<block_description_box>;
 using block_ramp_id = id<block_description_ramp>;
 using block_quad_id = id<block_description_quad>;
 using block_custom_id = id<block_description_custom>;
-using block_cone_id = id<block_description_cone>;
 using block_hemisphere_id = id<block_description_hemisphere>;
 using block_pyramid_id = id<block_description_pyramid>;
 
@@ -363,7 +327,6 @@ enum class block_type {
    ramp,
    quad,
    custom,
-   cone,
    hemisphere,
    pyramid,
 };
@@ -378,8 +341,6 @@ struct block_id {
    block_id(block_quad_id id) noexcept;
 
    block_id(block_custom_id id) noexcept;
-
-   block_id(block_cone_id id) noexcept;
 
    block_id(block_hemisphere_id id) noexcept;
 
@@ -400,10 +361,6 @@ struct block_id {
    bool is_custom() const noexcept;
 
    auto get_custom() const noexcept -> block_custom_id;
-
-   bool is_cone() const noexcept;
-
-   auto get_cone() const noexcept -> block_cone_id;
 
    bool is_hemisphere() const noexcept;
 
@@ -428,7 +385,6 @@ private:
       block_ramp_id ramp;
       block_quad_id quad;
       block_custom_id custom;
-      block_cone_id cone;
       block_hemisphere_id hemisphere;
       block_pyramid_id pyramid;
    } id;

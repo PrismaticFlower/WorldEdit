@@ -57,12 +57,21 @@ struct block_custom_mesh_description_cylinder {
    bool operator==(const block_custom_mesh_description_cylinder&) const noexcept = default;
 };
 
+struct block_custom_mesh_description_cone {
+   float3 size = {1.0f, 1.0f, 1.0f};
+   uint16 segments = 16;
+   bool flat_shading = false;
+
+   bool operator==(const block_custom_mesh_description_cone&) const noexcept = default;
+};
+
 enum class block_custom_mesh_type {
    stairway,
    ring,
    beveled_box,
    curve,
    cylinder,
+   cone,
 };
 
 struct block_custom_mesh_description {
@@ -80,6 +89,8 @@ struct block_custom_mesh_description {
 
    block_custom_mesh_description(const block_custom_mesh_description_cylinder& cylinder) noexcept;
 
+   block_custom_mesh_description(const block_custom_mesh_description_cone& cone) noexcept;
+
    auto operator=(const block_custom_mesh_description& other) noexcept
       -> block_custom_mesh_description&;
 
@@ -91,6 +102,7 @@ struct block_custom_mesh_description {
       block_custom_mesh_description_beveled_box beveled_box;
       block_custom_mesh_description_curve curve;
       block_custom_mesh_description_cylinder cylinder;
+      block_custom_mesh_description_cone cone;
    };
 };
 

@@ -80,6 +80,9 @@ auto get_bounding_box_local_space(const block_custom_mesh_description& mesh) noe
    case block_custom_mesh_type::cylinder: {
       return {.min = {-mesh.cylinder.size}, .max = {mesh.cylinder.size}};
    }
+   case block_custom_mesh_type::cone: {
+      return {.min = {-mesh.cone.size}, .max = {mesh.cone.size}};
+   }
    }
 
    std::unreachable();
@@ -119,11 +122,6 @@ auto get_bounding_box(const block_description_custom& custom_block) noexcept
           custom_block.position;
 }
 
-auto get_bounding_box(const block_description_cone& cone) noexcept -> math::bounding_box
-{
-   return get_bounding_box(cone.rotation, cone.position, cone.size);
-}
-
 auto get_bounding_box(const block_description_hemisphere& hemisphere) noexcept
    -> math::bounding_box
 {
@@ -153,9 +151,6 @@ auto get_bounding_box(const blocks& blocks, const block_type type,
    } break;
    case world::block_type::custom: {
       return get_bounding_box(blocks.custom.description[block_index]);
-   } break;
-   case world::block_type::cone: {
-      return get_bounding_box(blocks.cones.description[block_index]);
    } break;
    case world::block_type::hemisphere: {
       return get_bounding_box(blocks.hemispheres.description[block_index]);

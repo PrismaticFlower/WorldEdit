@@ -287,14 +287,6 @@ auto make_set_block_custom_metrics(
                                                      mesh_description);
 }
 
-auto make_set_block_cone_metrics(const uint32 index, const quaternion& rotation,
-                                 const float3& position, const float3& size) noexcept
-   -> std::unique_ptr<edit<world::edit_context>>
-{
-   return std::make_unique<set_block_metrics<&world::blocks::cones>>(index, rotation,
-                                                                     position, size);
-}
-
 auto make_set_block_hemisphere_metrics(const uint32 index, const quaternion& rotation,
                                        const float3& position, const float3& size) noexcept
    -> std::unique_ptr<edit<world::edit_context>>

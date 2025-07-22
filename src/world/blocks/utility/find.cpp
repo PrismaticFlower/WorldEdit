@@ -37,8 +37,6 @@ auto find_block(const blocks& blocks, const block_id id) -> std::optional<uint32
       return find_block_impl(blocks.quads.ids, id.get_quad());
    case block_type::custom:
       return find_block_impl(blocks.custom.ids, id.get_custom());
-   case block_type::cone:
-      return find_block_impl(blocks.cones.ids, id.get_cone());
    case block_type::hemisphere:
       return find_block_impl(blocks.hemispheres.ids, id.get_hemisphere());
    case block_type::pyramid:

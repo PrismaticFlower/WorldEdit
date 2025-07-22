@@ -205,6 +205,9 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
       case block_custom_mesh_type::cylinder: {
          out.write_ln("   Cylinder()");
       } break;
+      case block_custom_mesh_type::cone: {
+         out.write_ln("   Cone()");
+      } break;
       }
       out.write_ln("   {");
 
@@ -269,6 +272,15 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
          if (cylinder.flat_shading) out.write_ln("      FlatShading();");
          out.write_ln("      TextureLoops({});", cylinder.texture_loops);
       } break;
+      case block_custom_mesh_type::cone: {
+         const world::block_custom_mesh_description_cone& cone =
+            block.mesh_description.cone;
+
+         out.write_ln("      Size({}, {}, {});", cone.size.x, cone.size.y,
+                      cone.size.z);
+         out.write_ln("      Segments({});", cone.segments);
+         if (cone.flat_shading) out.write_ln("      FlatShading();");
+      } break;
       }
 
       out.write_ln("      SurfaceMaterials({}, {}, {}, {}, {}, {});",
@@ -305,50 +317,6 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
          block.surface_texture_offset[4][0], block.surface_texture_offset[4][1],
          block.surface_texture_offset[5][0], block.surface_texture_offset[5][1]);
       if (block_layer != 0) out.write_ln("      Layer({});", block_layer);
-      out.write_ln("   }");
-   }
-
-   out.write_ln("}\n");
-}
-
-void save_cones(io::output_file& out, const blocks_cones& cones) noexcept
-{
-   if (cones.size() == 0) return;
-
-   out.write_ln("Cones({})", cones.size());
-   out.write_ln("{");
-
-   for (uint32 box_index = 0; box_index < cones.size(); ++box_index) {
-      const block_description_cone& cone = cones.description[box_index];
-      const int8 cone_layer = cones.layer[box_index];
-
-      out.write_ln("   Cone()");
-      out.write_ln("   {");
-
-      out.write_ln("      Rotation({}, {}, {}, {});", cone.rotation.w,
-                   cone.rotation.x, cone.rotation.y, cone.rotation.z);
-      out.write_ln("      Position({}, {}, {});", cone.position.x,
-                   cone.position.y, cone.position.z);
-      out.write_ln("      Size({}, {}, {});", cone.size.x, cone.size.y,
-                   cone.size.z);
-      out.write_ln("      SurfaceMaterials({}, {});", cone.surface_materials[0],
-                   cone.surface_materials[1]);
-      out.write_ln("      SurfaceTextureMode({}, {});",
-                   cone.surface_texture_mode[0], cone.surface_texture_mode[1]);
-      out.write_ln("      SurfaceTextureRotation({}, {});",
-                   cone.surface_texture_rotation[0],
-                   cone.surface_texture_rotation[1]);
-      out.write_ln("      SurfaceTextureScale({}, {}, {}, {});",
-                   cone.surface_texture_scale[0][0],
-                   cone.surface_texture_scale[0][1],
-                   cone.surface_texture_scale[1][0],
-                   cone.surface_texture_scale[1][1]);
-      out.write_ln("      SurfaceTextureOffset({}, {}, {}, {});",
-                   cone.surface_texture_offset[0][0],
-                   cone.surface_texture_offset[0][1],
-                   cone.surface_texture_offset[1][0],
-                   cone.surface_texture_offset[1][1]);
-      if (cone_layer != 0) out.write_ln("      Layer({});", cone_layer);
       out.write_ln("   }");
    }
 
@@ -501,7 +469,6 @@ void save_blocks(const io::path& path, const blocks& blocks)
    save_ramps(out, blocks.ramps);
    save_quads(out, blocks.quads);
    save_custom(out, blocks.custom);
-   save_cones(out, blocks.cones);
    save_hemispheres(out, blocks.hemispheres);
    save_pyramids(out, blocks.pyramids);
    save_materials(out, blocks);

@@ -49,7 +49,6 @@ struct entity_group {
          bool operator==(const custom&) const noexcept = default;
       } custom;
 
-      std::vector<block_description_cone> cones;
       std::vector<block_description_hemisphere> hemispheres;
       std::vector<block_description_pyramid> pyramids;
 

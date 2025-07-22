@@ -132,19 +132,6 @@ void fill_entity_group_block_materials(entity_group& group, const blocks& blocks
       }
    }
 
-   for (block_description_cone& cone : group.blocks.cones) {
-      for (uint8& material : cone.surface_materials) {
-         if (not materials_remap[material]) {
-            materials_remap[material] =
-               static_cast<uint8>(group.blocks.materials.size());
-
-            group.blocks.materials.push_back(blocks.materials[material]);
-         }
-
-         material = *materials_remap[material];
-      }
-   }
-
    for (block_description_hemisphere& hemisphere : group.blocks.hemispheres) {
       for (uint8& material : hemisphere.surface_materials) {
          if (not materials_remap[material]) {
@@ -357,13 +344,6 @@ auto entity_group_metrics(const entity_group& group,
       ground_distance = std::min(ground_distance, bboxGS.min.y);
    }
 
-   for (const block_description_cone& cone : group.blocks.cones) {
-      const math::bounding_box bboxGS = get_bounding_box(cone);
-
-      group_bbox = math::combine(group_bbox, get_bounding_box(cone));
-      ground_distance = std::min(ground_distance, bboxGS.min.y);
-   }
-
    for (const block_description_hemisphere& hemisphere : group.blocks.hemispheres) {
       const math::bounding_box bboxGS = get_bounding_box(hemisphere);
 
@@ -468,11 +448,6 @@ void centre_entity_group(entity_group& group) noexcept
       count += 1.0f;
    }
 
-   for (const block_description_cone& cone : group.blocks.cones) {
-      position += cone.position;
-      count += 1.0f;
-   }
-
    for (const block_description_hemisphere& hemisphere : group.blocks.hemispheres) {
       position += hemisphere.position;
       count += 1.0f;
@@ -551,10 +526,6 @@ void centre_entity_group(entity_group& group) noexcept
 
    for (block_description_custom& block : group.blocks.custom.description) {
       block.position -= centre;
-   }
-
-   for (block_description_cone& cone : group.blocks.cones) {
-      cone.position -= centre;
    }
 
    for (block_description_hemisphere& hemisphere : group.blocks.hemispheres) {
@@ -736,9 +707,6 @@ auto make_entity_group_from_selection(const world& world,
                group.blocks.custom.mesh.push_back(
                   blocks_custom_mesh_library::null_handle());
             } break;
-            case block_type::cone: {
-               group.blocks.cones.push_back(world.blocks.cones.description[*block_index]);
-            } break;
             case block_type::hemisphere: {
                group.blocks.hemispheres.push_back(
                   world.blocks.hemispheres.description[*block_index]);
@@ -873,9 +841,6 @@ auto make_entity_group_from_block_id(const blocks& blocks, const block_id id) no
       group.blocks.custom.description.push_back(blocks.custom.description[*block_index]);
       group.blocks.custom.mesh.push_back(blocks_custom_mesh_library::null_handle());
    } break;
-   case block_type::cone: {
-      group.blocks.cones.push_back(blocks.cones.description[*block_index]);
-   } break;
    case block_type::hemisphere: {
       group.blocks.hemispheres.push_back(blocks.hemispheres.description[*block_index]);
    } break;
@@ -941,12 +906,6 @@ auto make_entity_group_from_layer(const world& world, const int32 layer) noexcep
       }
    }
 
-   for (uint32 block_index = 0; block_index < world.blocks.cones.size(); ++block_index) {
-      if (world.blocks.cones.layer[block_index] == layer) {
-         group.blocks.cones.push_back(world.blocks.cones.description[block_index]);
-      }
-   }
-
    for (uint32 block_index = 0; block_index < world.blocks.hemispheres.size();
         ++block_index) {
       if (world.blocks.hemispheres.layer[block_index] == layer) {
@@ -999,8 +958,6 @@ auto make_entity_group_from_world(const world& world) noexcept -> entity_group
                   .mesh = {world.blocks.custom.size(),
                            blocks_custom_mesh_library::null_handle()},
                },
-            .cones = {world.blocks.cones.description.begin(),
-                      world.blocks.cones.description.end()},
             .hemispheres = {world.blocks.hemispheres.description.begin(),
                             world.blocks.hemispheres.description.end()},
             .pyramids = {world.blocks.pyramids.description.begin(),
@@ -1040,7 +997,6 @@ bool is_entity_group_blocks_empty(const entity_group& group) noexcept
    empty &= group.blocks.ramps.empty();
    empty &= group.blocks.quads.empty();
    empty &= group.blocks.custom.description.empty();
-   empty &= group.blocks.cones.empty();
    empty &= group.blocks.hemispheres.empty();
    empty &= group.blocks.pyramids.empty();
 

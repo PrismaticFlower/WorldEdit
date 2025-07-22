@@ -1236,79 +1236,83 @@ void read_blocks_custom(const assets::config::node& node, entity_group& group_ou
             }
          }
       }
+      else if (string::iequals(key_node.key, "Cone")) {
+         block.mesh_description = block_custom_mesh_description_ring{};
+         block_custom_mesh_description_cone& cone = block.mesh_description.cone;
+
+         for (const auto& prop : key_node) {
+            if (string::iequals(prop.key, "Rotation")) {
+               block.rotation = {prop.values.get<float>(0),
+                                 prop.values.get<float>(1),
+                                 prop.values.get<float>(2),
+                                 prop.values.get<float>(3)};
+            }
+            else if (string::iequals(prop.key, "Position")) {
+               block.position = {prop.values.get<float>(0),
+                                 prop.values.get<float>(1),
+                                 prop.values.get<float>(2)};
+            }
+            else if (string::iequals(prop.key, "Size")) {
+               cone.size = {prop.values.get<float>(0), prop.values.get<float>(1),
+                            prop.values.get<float>(2)};
+            }
+            else if (string::iequals(prop.key, "Segments")) {
+               cone.segments = prop.values.get<uint16>(0);
+            }
+            else if (string::iequals(prop.key, "FlatShading")) {
+               cone.flat_shading = true;
+            }
+            else if (string::iequals(prop.key, "SurfaceMaterials")) {
+               for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
+                  block.surface_materials[i] = prop.values.get<uint8>(i);
+               }
+            }
+            else if (string::iequals(prop.key, "SurfaceTextureMode")) {
+               for (uint32 i = 0; i < block.surface_texture_mode.size(); ++i) {
+                  block.surface_texture_mode[i] =
+                     read_block_texture_mode(prop.values.get<uint8>(i));
+               }
+            }
+            else if (string::iequals(prop.key, "SurfaceTextureRotation")) {
+               for (uint32 i = 0; i < block.surface_texture_rotation.size(); ++i) {
+                  const uint8 rotation = prop.values.get<uint8>(i);
+
+                  switch (rotation) {
+                  case static_cast<uint8>(block_texture_rotation::d0):
+                  case static_cast<uint8>(block_texture_rotation::d90):
+                  case static_cast<uint8>(block_texture_rotation::d180):
+                  case static_cast<uint8>(block_texture_rotation::d270):
+                     block.surface_texture_rotation[i] =
+                        block_texture_rotation{rotation};
+                     break;
+                  }
+               }
+            }
+            else if (string::iequals(prop.key, "SurfaceTextureScale")) {
+               for (uint32 i = 0; i < block.surface_texture_scale.size(); ++i) {
+                  block.surface_texture_scale[i] =
+                     {std::clamp(prop.values.get<int8>(i * 2 + 0),
+                                 block_min_texture_scale, block_max_texture_scale),
+                      std::clamp(prop.values.get<int8>(i * 2 + 1),
+                                 block_min_texture_scale, block_max_texture_scale)};
+               }
+            }
+            else if (string::iequals(prop.key, "SurfaceTextureOffset")) {
+               for (uint32 i = 0; i < block.surface_texture_offset.size(); ++i) {
+                  block.surface_texture_offset[i] =
+                     {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
+                      std::min(prop.values.get<uint16>(i * 2 + 1),
+                               block_max_texture_offset)};
+               }
+            }
+         }
+      }
       else {
          continue;
       }
 
       group_out.blocks.custom.description.push_back(block);
       group_out.blocks.custom.mesh.push_back(blocks_custom_mesh_library::null_handle());
-   }
-}
-
-void read_blocks_cones(const assets::config::node& node, entity_group& group_out)
-{
-   for (const auto& key_node : node) {
-      if (not string::iequals(key_node.key, "Cone")) continue;
-
-      block_description_cone cone;
-
-      for (const auto& prop : key_node) {
-         if (string::iequals(prop.key, "Rotation")) {
-            cone.rotation = {prop.values.get<float>(0), prop.values.get<float>(1),
-                             prop.values.get<float>(2), prop.values.get<float>(3)};
-         }
-         else if (string::iequals(prop.key, "Position")) {
-            cone.position = {prop.values.get<float>(0), prop.values.get<float>(1),
-                             prop.values.get<float>(2)};
-         }
-         else if (string::iequals(prop.key, "Size")) {
-            cone.size = {prop.values.get<float>(0), prop.values.get<float>(1),
-                         prop.values.get<float>(2)};
-         }
-         else if (string::iequals(prop.key, "SurfaceMaterials")) {
-            for (uint32 i = 0; i < cone.surface_materials.size(); ++i) {
-               cone.surface_materials[i] = prop.values.get<uint8>(i);
-            }
-         }
-         else if (string::iequals(prop.key, "SurfaceTextureMode")) {
-            for (uint32 i = 0; i < cone.surface_texture_mode.size(); ++i) {
-               cone.surface_texture_mode[i] =
-                  read_block_texture_mode(prop.values.get<uint8>(i));
-            }
-         }
-         else if (string::iequals(prop.key, "SurfaceTextureRotation")) {
-            for (uint32 i = 0; i < cone.surface_texture_rotation.size(); ++i) {
-               const uint8 rotation = prop.values.get<uint8>(i);
-
-               switch (rotation) {
-               case static_cast<uint8>(block_texture_rotation::d0):
-               case static_cast<uint8>(block_texture_rotation::d90):
-               case static_cast<uint8>(block_texture_rotation::d180):
-               case static_cast<uint8>(block_texture_rotation::d270):
-                  cone.surface_texture_rotation[i] = block_texture_rotation{rotation};
-                  break;
-               }
-            }
-         }
-         else if (string::iequals(prop.key, "SurfaceTextureScale")) {
-            for (uint32 i = 0; i < cone.surface_texture_scale.size(); ++i) {
-               cone.surface_texture_scale[i] =
-                  {std::clamp(prop.values.get<int8>(i * 2 + 0),
-                              block_min_texture_scale, block_max_texture_scale),
-                   std::clamp(prop.values.get<int8>(i * 2 + 1),
-                              block_min_texture_scale, block_max_texture_scale)};
-            }
-         }
-         else if (string::iequals(prop.key, "SurfaceTextureOffset")) {
-            for (uint32 i = 0; i < cone.surface_texture_offset.size(); ++i) {
-               cone.surface_texture_offset[i] =
-                  {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
-                   std::min(prop.values.get<uint16>(i * 2 + 1), block_max_texture_offset)};
-            }
-         }
-      }
-
-      group_out.blocks.cones.push_back(cone);
    }
 }
 
@@ -1739,21 +1743,6 @@ void clamp_block_material_indices(entity_group& group_out, output_stream& output
       }
    }
 
-   for (uint32 block_index = 0; block_index < group_out.blocks.cones.size();
-        ++block_index) {
-      block_description_cone& cone = group_out.blocks.cones[block_index];
-
-      for (uint8& material : cone.surface_materials) {
-         if (material >= max_material) {
-            output.write("Warning! Cone block '{}' has out of range material "
-                         "index. Setting to zero.\n",
-                         block_index);
-
-            material = 0;
-         }
-      }
-   }
-
    for (uint32 block_index = 0;
         block_index < group_out.blocks.hemispheres.size(); ++block_index) {
       block_description_hemisphere& hemisphere =
@@ -1857,11 +1846,6 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
             group.blocks.custom.mesh.reserve(key_node.values.get<uint32>(0));
 
             read_blocks_custom(key_node, group);
-         }
-         else if (string::iequals(key_node.key, "BlocksCones"sv)) {
-            group.blocks.cones.reserve(key_node.values.get<uint32>(0));
-
-            read_blocks_cones(key_node, group);
          }
          else if (string::iequals(key_node.key, "BlocksHemispheres"sv)) {
             group.blocks.hemispheres.reserve(key_node.values.get<uint32>(0));

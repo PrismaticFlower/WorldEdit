@@ -1,37 +1,41 @@
-BlocksCones(3)
+BlocksCustom(3)
 {
    Cone()
    {
       Rotation(0, 1, 0, 0);
       Position(8.5, 4.5, 2);
       Size(4, 4, 4);
-      SurfaceMaterials(1, 2);
-      SurfaceTextureMode(1, 1);
-      SurfaceTextureRotation(2, 2);
-      SurfaceTextureScale(-1, -2, 0, 0);
-      SurfaceTextureOffset(0, 0, 256, 256);
+      Segments(10);
+      SurfaceMaterials(1, 2, 0, 0, 0, 0);
+      SurfaceTextureMode(1, 1, 0, 0, 0, 0);
+      SurfaceTextureRotation(2, 2, 0, 0, 0, 0);
+      SurfaceTextureScale(-1, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(0, 0, 256, 256, 0, 0, 0, 0, 0, 0, 0, 0);
    }
    Cone()
    {
       Rotation(0.707106, 0, 0.707106, 0);
       Position(10, 16, 12);
       Size(8, 4, 8);
-      SurfaceMaterials(1, 1);
-      SurfaceTextureMode(2, 5);
-      SurfaceTextureRotation(1, 1);
-      SurfaceTextureScale(0, 0, -2, -2);
-      SurfaceTextureOffset(1024, 0, 0, 0);
+      Segments(20);
+      FlatShading();
+      SurfaceMaterials(1, 1, 0, 0, 0, 0);
+      SurfaceTextureMode(2, 5, 0, 0, 0, 0);
+      SurfaceTextureRotation(1, 1, 0, 0, 0, 0);
+      SurfaceTextureScale(0, 0, -2, -2, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(1024, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
    }
    Cone()
    {
       Rotation(0, 0, 0, 1);
       Position(6, 6, 6);
       Size(5, 5, 5);
-      SurfaceMaterials(0, 0);
-      SurfaceTextureMode(1, 2);
-      SurfaceTextureRotation(1, 2);
-      SurfaceTextureScale(-5, -4, -3, -2);
-      SurfaceTextureOffset(2, 3, 4, 5);
+      Segments(30);
+      SurfaceMaterials(0, 0, 0, 0, 0, 0);
+      SurfaceTextureMode(1, 2, 0, 0, 0, 0);
+      SurfaceTextureRotation(1, 2, 0, 0, 0, 0);
+      SurfaceTextureScale(-5, -4, -3, -2, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0);
    }
 }
 

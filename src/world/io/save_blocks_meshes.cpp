@@ -409,7 +409,6 @@ auto save_blocks_meshes(const io::path& output_directory,
    mesh_count += blocks.ramps.size();
    mesh_count += blocks.quads.size();
    mesh_count += blocks.custom.size();
-   mesh_count += blocks.cones.size();
    mesh_count += blocks.hemispheres.size();
    mesh_count += blocks.pyramids.size();
 
@@ -417,7 +416,6 @@ auto save_blocks_meshes(const io::path& output_directory,
 
    occluder_count += blocks.boxes.size() * block_cube_occluders.size();
    occluder_count += blocks.ramps.size() * block_ramp_occluders.size();
-   occluder_count += blocks.cones.size() * block_cone_occluders.size();
    occluder_count += blocks.hemispheres.size() * block_hemisphere_occluders.size();
    occluder_count += blocks.pyramids.size() * block_pyramid_occluders.size();
 
@@ -440,8 +438,6 @@ auto save_blocks_meshes(const io::path& output_directory,
                   block_ramp_occluders, mesh_list, occluder_list);
    process_blocks(blocks.quads, mesh_list);
    process_blocks(blocks.custom, blocks.custom_meshes, mesh_list, occluder_list);
-   process_blocks(blocks.cones, block_cone_vertices, block_cone_triangles,
-                  block_cone_occluders, mesh_list, occluder_list);
    process_blocks(blocks.hemispheres, block_hemisphere_vertices,
                   block_hemisphere_triangles, block_hemisphere_occluders,
                   mesh_list, occluder_list);

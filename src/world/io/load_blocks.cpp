@@ -746,6 +746,80 @@ void load_custom(assets::config::node& node, const layer_remap& layer_remap,
             }
          }
       }
+      else if (iequals(key_node.key, "Cone")) {
+         block.mesh_description = block_custom_mesh_description_cone{};
+         block_custom_mesh_description_cone& cone = block.mesh_description.cone;
+
+         for (const auto& prop : key_node) {
+            if (iequals(prop.key, "Rotation")) {
+               block.rotation = {prop.values.get<float>(0),
+                                 prop.values.get<float>(1),
+                                 prop.values.get<float>(2),
+                                 prop.values.get<float>(3)};
+            }
+            else if (iequals(prop.key, "Position")) {
+               block.position = {prop.values.get<float>(0),
+                                 prop.values.get<float>(1),
+                                 prop.values.get<float>(2)};
+            }
+            else if (iequals(prop.key, "Size")) {
+               cone.size = {prop.values.get<float>(0), prop.values.get<float>(1),
+                            prop.values.get<float>(2)};
+            }
+            else if (iequals(prop.key, "Segments")) {
+               cone.segments = prop.values.get<uint16>(0);
+            }
+            else if (iequals(prop.key, "FlatShading")) {
+               cone.flat_shading = true;
+            }
+            else if (iequals(prop.key, "SurfaceMaterials")) {
+               for (uint32 i = 0; i < block.surface_materials.size(); ++i) {
+                  block.surface_materials[i] = prop.values.get<uint8>(i);
+               }
+            }
+            else if (iequals(prop.key, "SurfaceTextureMode")) {
+               for (uint32 i = 0; i < block.surface_texture_mode.size(); ++i) {
+                  block.surface_texture_mode[i] =
+                     read_texture_mode(prop.values.get<uint8>(i));
+               }
+            }
+            else if (iequals(prop.key, "SurfaceTextureRotation")) {
+               for (uint32 i = 0; i < block.surface_texture_rotation.size(); ++i) {
+                  const uint8 rotation = prop.values.get<uint8>(i);
+
+                  switch (rotation) {
+                  case static_cast<uint8>(block_texture_rotation::d0):
+                  case static_cast<uint8>(block_texture_rotation::d90):
+                  case static_cast<uint8>(block_texture_rotation::d180):
+                  case static_cast<uint8>(block_texture_rotation::d270):
+                     block.surface_texture_rotation[i] =
+                        block_texture_rotation{rotation};
+                     break;
+                  }
+               }
+            }
+            else if (iequals(prop.key, "SurfaceTextureScale")) {
+               for (uint32 i = 0; i < block.surface_texture_scale.size(); ++i) {
+                  block.surface_texture_scale[i] =
+                     {std::clamp(prop.values.get<int8>(i * 2 + 0),
+                                 block_min_texture_scale, block_max_texture_scale),
+                      std::clamp(prop.values.get<int8>(i * 2 + 1),
+                                 block_min_texture_scale, block_max_texture_scale)};
+               }
+            }
+            else if (iequals(prop.key, "SurfaceTextureOffset")) {
+               for (uint32 i = 0; i < block.surface_texture_offset.size(); ++i) {
+                  block.surface_texture_offset[i] =
+                     {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
+                      std::min(prop.values.get<uint16>(i * 2 + 1),
+                               block_max_texture_offset)};
+               }
+            }
+            else if (iequals(prop.key, "Layer")) {
+               layer = layer_remap[prop.values.get<int>(0)];
+            }
+         }
+      }
       else {
          continue;
       }
@@ -764,96 +838,6 @@ void load_custom(assets::config::node& node, const layer_remap& layer_remap,
       blocks_out.custom.mesh.push_back(
          blocks_out.custom_meshes.add(block.mesh_description));
       blocks_out.custom.ids.push_back(blocks_out.next_id.custom.aquire());
-   }
-}
-
-void load_cones(assets::config::node& node, const layer_remap& layer_remap,
-                blocks& blocks_out)
-{
-   for (const auto& key_node : node) {
-      if (not iequals(key_node.key, "Cone")) continue;
-
-      if (blocks_out.cones.size() == max_blocks) {
-         throw load_failure{fmt::format(
-            "Too many blocks (of type cone) for WorldEdit to handle. \n   "
-            "Max Supported Count: {}\n",
-            max_blocks)};
-      }
-
-      block_description_cone cone;
-      int8 layer = 0;
-
-      for (const auto& prop : key_node) {
-         if (iequals(prop.key, "Rotation")) {
-            cone.rotation = {prop.values.get<float>(0), prop.values.get<float>(1),
-                             prop.values.get<float>(2), prop.values.get<float>(3)};
-         }
-         else if (iequals(prop.key, "Position")) {
-            cone.position = {prop.values.get<float>(0), prop.values.get<float>(1),
-                             prop.values.get<float>(2)};
-         }
-         else if (iequals(prop.key, "Size")) {
-            cone.size = {prop.values.get<float>(0), prop.values.get<float>(1),
-                         prop.values.get<float>(2)};
-         }
-         else if (iequals(prop.key, "SurfaceMaterials")) {
-            for (uint32 i = 0; i < cone.surface_materials.size(); ++i) {
-               cone.surface_materials[i] = prop.values.get<uint8>(i);
-            }
-         }
-         else if (iequals(prop.key, "SurfaceTextureMode")) {
-            for (uint32 i = 0; i < cone.surface_texture_mode.size(); ++i) {
-               cone.surface_texture_mode[i] =
-                  read_texture_mode(prop.values.get<uint8>(i));
-            }
-         }
-         else if (iequals(prop.key, "SurfaceTextureRotation")) {
-            for (uint32 i = 0; i < cone.surface_texture_rotation.size(); ++i) {
-               const uint8 rotation = prop.values.get<uint8>(i);
-
-               switch (rotation) {
-               case static_cast<uint8>(block_texture_rotation::d0):
-               case static_cast<uint8>(block_texture_rotation::d90):
-               case static_cast<uint8>(block_texture_rotation::d180):
-               case static_cast<uint8>(block_texture_rotation::d270):
-                  cone.surface_texture_rotation[i] = block_texture_rotation{rotation};
-                  break;
-               }
-            }
-         }
-         else if (iequals(prop.key, "SurfaceTextureScale")) {
-            for (uint32 i = 0; i < cone.surface_texture_scale.size(); ++i) {
-               cone.surface_texture_scale[i] =
-                  {std::clamp(prop.values.get<int8>(i * 2 + 0),
-                              block_min_texture_scale, block_max_texture_scale),
-                   std::clamp(prop.values.get<int8>(i * 2 + 1),
-                              block_min_texture_scale, block_max_texture_scale)};
-            }
-         }
-         else if (iequals(prop.key, "SurfaceTextureOffset")) {
-            for (uint32 i = 0; i < cone.surface_texture_offset.size(); ++i) {
-               cone.surface_texture_offset[i] =
-                  {std::min(prop.values.get<uint16>(i * 2 + 0), block_max_texture_offset),
-                   std::min(prop.values.get<uint16>(i * 2 + 1), block_max_texture_offset)};
-            }
-         }
-         else if (iequals(prop.key, "Layer")) {
-            layer = layer_remap[prop.values.get<int>(0)];
-         }
-      }
-
-      const math::bounding_box bbox = get_bounding_box(cone);
-
-      blocks_out.cones.bbox.min_x.push_back(bbox.min.x);
-      blocks_out.cones.bbox.min_y.push_back(bbox.min.y);
-      blocks_out.cones.bbox.min_z.push_back(bbox.min.z);
-      blocks_out.cones.bbox.max_x.push_back(bbox.max.x);
-      blocks_out.cones.bbox.max_y.push_back(bbox.max.y);
-      blocks_out.cones.bbox.max_z.push_back(bbox.max.z);
-      blocks_out.cones.hidden.push_back(false);
-      blocks_out.cones.layer.push_back(layer);
-      blocks_out.cones.description.push_back(cone);
-      blocks_out.cones.ids.push_back(blocks_out.next_id.cones.aquire());
    }
 }
 
@@ -1148,13 +1132,6 @@ auto load_blocks(const io::path& path, const layer_remap& layer_remap,
             blocks.custom.reserve(box_reservation);
 
             load_custom(key_node, layer_remap, blocks);
-         }
-         else if (iequals(key_node.key, "Cones")) {
-            const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
-
-            blocks.cones.reserve(box_reservation);
-
-            load_cones(key_node, layer_remap, blocks);
          }
          else if (iequals(key_node.key, "Hemispheres")) {
             const std::size_t box_reservation = key_node.values.get<std::size_t>(0);

@@ -64,6 +64,8 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
+#include <world/blocks/mesh_generate.hpp>
+
 using namespace std::literals;
 
 namespace we {
@@ -1915,11 +1917,6 @@ void world_edit::place_creation_entity() noexcept
 
          return;
       }
-      else if (_world.blocks.cones.size() + group.blocks.cones.size() > world::max_blocks) {
-         report_limit_reached("Max blocks (cones, {}) Reached", world::max_blocks);
-
-         return;
-      }
       else if (_world.blocks.hemispheres.size() + group.blocks.hemispheres.size() >
                world::max_blocks) {
          report_limit_reached("Max blocks (hemispheres, {}) Reached", world::max_blocks);
@@ -2285,28 +2282,6 @@ void world_edit::place_creation_entity() noexcept
          _edit_stack_world
             .apply(edits::make_add_block(new_block, group.layer,
                                          _world.blocks.next_id.custom.aquire()),
-                   _edit_context,
-                   {.transparent = std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::block_description_cone& cone : group.blocks.cones) {
-         world::block_description_cone new_cone = cone;
-
-         new_cone.rotation = group.rotation * new_cone.rotation;
-         new_cone.position = group.rotation * new_cone.position + group.position;
-
-         for (uint8& material : new_cone.surface_materials) {
-            if (block_material_remap[material]) {
-               material = *block_material_remap[material];
-            }
-            else {
-               material = 0;
-            }
-         }
-
-         _edit_stack_world
-            .apply(edits::make_add_block(new_cone, group.layer,
-                                         _world.blocks.next_id.cones.aquire()),
                    _edit_context,
                    {.transparent = std::exchange(is_transparent_edit, true)});
       }
@@ -3006,15 +2981,6 @@ void world_edit::align_selection(const float alignment) noexcept
                                                        align_position(block.position),
                                                        block.mesh_description));
             } break;
-            case world::block_type::cone: {
-               const world::block_description_cone& cone =
-                  _world.blocks.cones.description[*block_index];
-
-               bundle.push_back(
-                  edits::make_set_block_cone_metrics(*block_index, cone.rotation,
-                                                     align_position(cone.position),
-                                                     cone.size));
-            } break;
             case world::block_type::hemisphere: {
                const world::block_description_hemisphere& hemisphere =
                   _world.blocks.hemispheres.description[*block_index];
@@ -3420,14 +3386,6 @@ void world_edit::ground_selection() noexcept
                                                           *grounded_position,
                                                           block.mesh_description));
                } break;
-               case world::block_type::cone: {
-                  const world::block_description_cone& cone =
-                     _world.blocks.cones.description[*block_index];
-
-                  bundle.push_back(
-                     edits::make_set_block_cone_metrics(*block_index, cone.rotation,
-                                                        *grounded_position, cone.size));
-               } break;
                case world::block_type::hemisphere: {
                   const world::block_description_hemisphere& hemisphere =
                      _world.blocks.hemispheres.description[*block_index];
@@ -3749,7 +3707,6 @@ void world_edit::unhide_all() noexcept
    unhide_blocks(_world.blocks.ramps.hidden);
    unhide_blocks(_world.blocks.quads.hidden);
    unhide_blocks(_world.blocks.custom.hidden);
-   unhide_blocks(_world.blocks.cones.hidden);
    unhide_blocks(_world.blocks.hemispheres.hidden);
    unhide_blocks(_world.blocks.pyramids.hidden);
 

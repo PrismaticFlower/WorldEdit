@@ -1043,6 +1043,11 @@ private:
          float texture_loops = 1.0f;
       } cylinder;
 
+      struct cone {
+         uint16 segments = 16;
+         bool flat_shading = false;
+      } cone;
+
       bool enable_alignment = true;
       bool enable_snapping = true;
 

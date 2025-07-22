@@ -3445,19 +3445,6 @@ void renderer_impl::draw_interaction_targets(
                      world_from_local * mesh.vertices[tri[2]].position, color_packed);
                }
             } break;
-            case world::block_type::cone: {
-               const world::block_description_cone& block =
-                  world.blocks.cones.description[*block_index];
-
-               float4x4 transform = to_matrix(block.rotation) *
-                                    float4x4{{block.size.x, 0.0f, 0.0f, 0.0f},
-                                             {0.0f, block.size.y, 0.0f, 0.0f},
-                                             {0.0f, 0.0f, block.size.z, 0.0f},
-                                             {0.0f, 0.0f, 0.0f, 1.0f}};
-               transform[3] = {block.position, 1.0f};
-
-               _meta_draw_batcher.add_cone_wireframe(transform, color);
-            } break;
             case world::block_type::hemisphere: {
                const world::block_description_hemisphere& block =
                   world.blocks.hemispheres.description[*block_index];

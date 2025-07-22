@@ -164,10 +164,6 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                   gizmo_rotation =
                      _world.blocks.custom.description[*block_index].rotation;
                } break;
-               case world::block_type::cone: {
-                  gizmo_rotation =
-                     _world.blocks.cones.description[*block_index].rotation;
-               } break;
                case world::block_type::hemisphere: {
                   gizmo_rotation =
                      _world.blocks.hemispheres.description[*block_index].rotation;
@@ -412,17 +408,6 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                         local_space ? block.rotation * rotation
                                     : rotation * block.rotation,
                         block.position, block.mesh_description));
-                  } break;
-                  case world::block_type::cone: {
-                     const world::block_description_cone& cone =
-                        _world.blocks.cones.description[*block_index];
-
-                     bundled_edits.push_back(
-                        edits::make_set_block_cone_metrics(*block_index,
-                                                           local_space
-                                                              ? cone.rotation * rotation
-                                                              : rotation * cone.rotation,
-                                                           cone.position, cone.size));
                   } break;
                   case world::block_type::hemisphere: {
                      const world::block_description_hemisphere& hemisphere =

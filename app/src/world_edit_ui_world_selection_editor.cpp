@@ -2122,6 +2122,33 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      _edit_stack_world.close_last();
                   }
                } break;
+               case world::block_custom_mesh_type::cone: {
+                  world::block_custom_mesh_description_cone cone =
+                     block.mesh_description.cone;
+
+                  const uint16 min_segments = 3;
+                  const uint16 max_segments = 256;
+
+                  bool edited = false;
+
+                  edited |= ImGui::SliderScalar("Segments", ImGuiDataType_U16,
+                                                &cone.segments, &min_segments,
+                                                &max_segments);
+                  edited |= ImGui::Checkbox("Flat Shading", &cone.flat_shading);
+
+                  if (edited) {
+                     cone.segments = std::max(cone.segments, min_segments);
+
+                     _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                                *block_index, block.rotation,
+                                                block.position, cone),
+                                             _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivated()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
                }
             }
          }

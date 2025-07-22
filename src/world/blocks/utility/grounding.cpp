@@ -127,12 +127,6 @@ auto ground_block(const block_id id, const uint32 block_index,
       return ground_block(block.position, bbox, id, world, object_classes,
                           blocks_bvh_library, active_layers);
    } break;
-   case block_type::cone: {
-      const block_description_cone& cone = world.blocks.cones.description[block_index];
-
-      return ground_block(cone.position, bbox, id, world, object_classes,
-                          blocks_bvh_library, active_layers);
-   } break;
    case block_type::hemisphere: {
       const block_description_hemisphere& hemisphere =
          world.blocks.hemispheres.description[block_index];

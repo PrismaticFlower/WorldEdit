@@ -34,4 +34,10 @@ auto generate_mesh(const block_custom_mesh_description_curve& curve) noexcept
 /// @return The resulting block_custom_mesh.
 auto generate_mesh(const block_custom_mesh_description_cylinder& cylinder) noexcept
    -> block_custom_mesh;
+
+/// @brief Generates the mesh for a cone.
+/// @param cone The cone.
+/// @return The resulting block_custom_mesh.
+auto generate_mesh(const block_custom_mesh_description_cone& cone) noexcept
+   -> block_custom_mesh;
 }

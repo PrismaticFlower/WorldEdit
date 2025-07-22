@@ -857,9 +857,9 @@ TEST_CASE("world load blocks (cones)", "[World][IO]")
 
    const blocks blocks = load_blocks("data/blocks/cones.blk", layer_remap, output);
 
-   REQUIRE(blocks.cones.size() == 3);
+   REQUIRE(blocks.custom.size() == 3);
 
-   const blocks_cones& cones = blocks.cones;
+   const blocks_custom& cones = blocks.custom;
 
    CHECK(cones.bbox.min_x[0] == 4.5f);
    CHECK(cones.bbox.min_y[0] == 0.5f);
@@ -871,28 +871,49 @@ TEST_CASE("world load blocks (cones)", "[World][IO]")
    CHECK(cones.layer[0] == 2);
    CHECK(cones.description[0].rotation == quaternion{0.0f, 1.0f, 0.0f, 0.0f});
    CHECK(cones.description[0].position == float3{8.5f, 4.5f, 2.0f});
-   CHECK(cones.description[0].size == float3{4.0f, 4.0f, 4.0f});
-   CHECK(cones.description[0].surface_materials == std::array<uint8, 2>{0, 1});
+   CHECK(cones.description[0].mesh_description.cone.size == float3{4.0f, 4.0f, 4.0f});
+   CHECK(cones.description[0].mesh_description.cone.segments == 10);
+   CHECK(not cones.description[0].mesh_description.cone.flat_shading);
+   CHECK(cones.description[0].surface_materials ==
+         std::array<uint8, 6>{0, 1, 0, 0, 0, 0});
    CHECK(cones.description[0].surface_texture_mode ==
-         std::array<block_texture_mode, 2>{
+         std::array<block_texture_mode, 6>{
             block_texture_mode::world_space_zy,
             block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
          });
    CHECK(cones.description[0].surface_texture_rotation ==
-         std::array<block_texture_rotation, 2>{
+         std::array<block_texture_rotation, 6>{
             block_texture_rotation::d180,
             block_texture_rotation::d180,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
          });
    CHECK(cones.description[0].surface_texture_scale ==
-         std::array<std::array<int8, 2>, 2>{
+         std::array<std::array<int8, 2>, 6>{
             std::array<int8, 2>{0, 0},
             std::array<int8, 2>{-1, -2},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
          });
    CHECK(cones.description[0].surface_texture_offset ==
-         std::array<std::array<uint16, 2>, 2>{
+         std::array<std::array<uint16, 2>, 6>{
             std::array<uint16, 2>{0, 0},
             std::array<uint16, 2>{256, 256},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
          });
+   CHECK(cones.mesh[0] == blocks.custom_meshes.debug_query_handle(
+                             cones.description[0].mesh_description));
    CHECK(is_unique_id(0, cones.ids));
 
    CHECK(cones.bbox.min_x[1] == 2.00001764f);
@@ -904,28 +925,49 @@ TEST_CASE("world load blocks (cones)", "[World][IO]")
    CHECK(cones.hidden[1] == false);
    CHECK(cones.description[1].rotation == quaternion{0.707106f, 0.0f, 0.707106f, 0.0f});
    CHECK(cones.description[1].position == float3{10.0f, 16.0f, 12.0f});
-   CHECK(cones.description[1].size == float3{8.0f, 4.0f, 8.0f});
-   CHECK(cones.description[1].surface_materials == std::array<uint8, 2>{2, 2});
+   CHECK(cones.description[1].mesh_description.cone.size == float3{8.0f, 4.0f, 8.0f});
+   CHECK(cones.description[1].mesh_description.cone.segments == 20);
+   CHECK(cones.description[1].mesh_description.cone.flat_shading);
+   CHECK(cones.description[1].surface_materials ==
+         std::array<uint8, 6>{2, 2, 0, 0, 0, 0});
    CHECK(cones.description[1].surface_texture_mode ==
-         std::array<block_texture_mode, 2>{
+         std::array<block_texture_mode, 6>{
             block_texture_mode::world_space_xz,
             block_texture_mode::local_space_zy,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
          });
    CHECK(cones.description[1].surface_texture_rotation ==
-         std::array<block_texture_rotation, 2>{
+         std::array<block_texture_rotation, 6>{
             block_texture_rotation::d90,
             block_texture_rotation::d90,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
          });
    CHECK(cones.description[1].surface_texture_scale ==
-         std::array<std::array<int8, 2>, 2>{
+         std::array<std::array<int8, 2>, 6>{
             std::array<int8, 2>{0, 0},
             std::array<int8, 2>{-2, -2},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
          });
    CHECK(cones.description[1].surface_texture_offset ==
-         std::array<std::array<uint16, 2>, 2>{
+         std::array<std::array<uint16, 2>, 6>{
             std::array<uint16, 2>{1024, 0},
             std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
          });
+   CHECK(cones.mesh[1] == blocks.custom_meshes.debug_query_handle(
+                             cones.description[1].mesh_description));
    CHECK(is_unique_id(1, cones.ids));
 
    CHECK(cones.bbox.min_x[2] == 1.0f);
@@ -937,28 +979,49 @@ TEST_CASE("world load blocks (cones)", "[World][IO]")
    CHECK(cones.hidden[2] == false);
    CHECK(cones.description[2].rotation == quaternion{0.0f, 0.0f, 0.0f, 1.0f});
    CHECK(cones.description[2].position == float3{6.0f, 6.0f, 6.0f});
-   CHECK(cones.description[2].size == float3{5.0f, 5.0f, 5.0f});
-   CHECK(cones.description[2].surface_materials == std::array<uint8, 2>{0, 0});
+   CHECK(cones.description[2].mesh_description.cone.size == float3{5.0f, 5.0f, 5.0f});
+   CHECK(cones.description[2].mesh_description.cone.segments == 30);
+   CHECK(not cones.description[2].mesh_description.cone.flat_shading);
+   CHECK(cones.description[2].surface_materials ==
+         std::array<uint8, 6>{0, 0, 0, 0, 0, 0});
    CHECK(cones.description[2].surface_texture_mode ==
-         std::array<block_texture_mode, 2>{
+         std::array<block_texture_mode, 6>{
             block_texture_mode::world_space_auto,
             block_texture_mode::world_space_zy,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
+            block_texture_mode::world_space_auto,
          });
    CHECK(cones.description[2].surface_texture_rotation ==
-         std::array<block_texture_rotation, 2>{
+         std::array<block_texture_rotation, 6>{
             block_texture_rotation::d0,
             block_texture_rotation::d90,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
+            block_texture_rotation::d0,
          });
    CHECK(cones.description[2].surface_texture_scale ==
-         std::array<std::array<int8, 2>, 2>{
+         std::array<std::array<int8, 2>, 6>{
             std::array<int8, 2>{-7, -6},
             std::array<int8, 2>{-5, -4},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
+            std::array<int8, 2>{0, 0},
          });
    CHECK(cones.description[2].surface_texture_offset ==
-         std::array<std::array<uint16, 2>, 2>{
+         std::array<std::array<uint16, 2>, 6>{
             std::array<uint16, 2>{0, 1},
             std::array<uint16, 2>{2, 3},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
+            std::array<uint16, 2>{0, 0},
          });
+   CHECK(cones.mesh[2] == blocks.custom_meshes.debug_query_handle(
+                             cones.description[2].mesh_description));
    CHECK(is_unique_id(2, cones.ids));
 
    REQUIRE(cones.dirty.size() == 1);

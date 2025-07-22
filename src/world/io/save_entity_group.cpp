@@ -645,6 +645,9 @@ void save_entity_group_impl(File& file, const entity_group& group)
          case block_custom_mesh_type::cylinder: {
             file.write_ln("   Cylinder()");
          } break;
+         case block_custom_mesh_type::cone: {
+            file.write_ln("   Cone()");
+         } break;
          }
 
          file.write_ln("   {");
@@ -714,6 +717,15 @@ void save_entity_group_impl(File& file, const entity_group& group)
             if (cylinder.flat_shading) file.write_ln("      FlatShading();");
             file.write_ln("      TextureLoops({});", cylinder.texture_loops);
          } break;
+         case block_custom_mesh_type::cone: {
+            const world::block_custom_mesh_description_cone& cone =
+               block.mesh_description.cone;
+
+            file.write_ln("      Size({}, {}, {});", cone.size.x, cone.size.y,
+                          cone.size.z);
+            file.write_ln("      Segments({});", cone.segments);
+            if (cone.flat_shading) file.write_ln("      FlatShading();");
+         } break;
          }
 
          file.write_ln("      SurfaceMaterials({}, {}, {}, {}, {}, {});",
@@ -752,44 +764,6 @@ void save_entity_group_impl(File& file, const entity_group& group)
             block.surface_texture_offset[3][0], block.surface_texture_offset[3][1],
             block.surface_texture_offset[4][0], block.surface_texture_offset[4][1],
             block.surface_texture_offset[5][0], block.surface_texture_offset[5][1]);
-         file.write_ln("   }");
-      }
-
-      file.write_ln("}\n");
-   }
-
-   if (not group.blocks.cones.empty()) {
-      file.write_ln("BlocksCones({})", group.blocks.cones.size());
-      file.write_ln("{");
-
-      for (const block_description_cone& cone : group.blocks.cones) {
-         file.write_ln("   Cone()");
-         file.write_ln("   {");
-
-         file.write_ln("      Rotation({}, {}, {}, {});", cone.rotation.w,
-                       cone.rotation.x, cone.rotation.y, cone.rotation.z);
-         file.write_ln("      Position({}, {}, {});", cone.position.x,
-                       cone.position.y, cone.position.z);
-         file.write_ln("      Size({}, {}, {});", cone.size.x, cone.size.y,
-                       cone.size.z);
-         file.write_ln("      SurfaceMaterials({}, {});",
-                       cone.surface_materials[0], cone.surface_materials[1]);
-         file.write_ln("      SurfaceTextureMode({}, {});",
-                       std::to_underlying(cone.surface_texture_mode[0]),
-                       std::to_underlying(cone.surface_texture_mode[1]));
-         file.write_ln("      SurfaceTextureRotation({}, {});",
-                       std::to_underlying(cone.surface_texture_rotation[0]),
-                       std::to_underlying(cone.surface_texture_rotation[1]));
-         file.write_ln("      SurfaceTextureScale({}, {}, {}, {});",
-                       cone.surface_texture_scale[0][0],
-                       cone.surface_texture_scale[0][1],
-                       cone.surface_texture_scale[1][0],
-                       cone.surface_texture_scale[1][1]);
-         file.write_ln("      SurfaceTextureOffset({}, {}, {}, {});",
-                       cone.surface_texture_offset[0][0],
-                       cone.surface_texture_offset[0][1],
-                       cone.surface_texture_offset[1][0],
-                       cone.surface_texture_offset[1][1]);
          file.write_ln("   }");
       }
 

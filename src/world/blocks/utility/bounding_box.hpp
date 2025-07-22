@@ -15,8 +15,6 @@ auto get_bounding_box(const block_description_quad& quad) noexcept -> math::boun
 auto get_bounding_box(const block_description_custom& custom_block) noexcept
    -> math::bounding_box;
 
-auto get_bounding_box(const block_description_cone& cone) noexcept -> math::bounding_box;
-
 auto get_bounding_box(const block_description_hemisphere& hemisphere) noexcept
    -> math::bounding_box;
 
