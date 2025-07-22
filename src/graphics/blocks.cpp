@@ -18,6 +18,9 @@
 
 #include <bit>
 
+#pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+#pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
+
 namespace we::graphics {
 
 namespace {
@@ -1595,6 +1598,114 @@ void blocks::draw(blocks_draw draw, const view& view,
                                        view.dynamic_custom.draw_buffer_offset);
       }
    }
+}
+
+auto blocks::get_block_mesh(const world::block_type type) const noexcept -> mesh
+{
+   const gpu_virtual_address ia_address =
+      _device.get_gpu_virtual_address(_blocks_ia_buffer.get());
+
+   switch (type) {
+   case world::block_type::box:
+      return {
+         .index_buffer_view =
+            {
+               .buffer_location = ia_address + offsetof(blocks_ia_buffer, cube_indices),
+               .size_in_bytes = sizeof(blocks_ia_buffer::cube_indices),
+            },
+         .vertex_buffer_view =
+            {
+               .buffer_location = ia_address + offsetof(blocks_ia_buffer, cube_vertices),
+               .size_in_bytes = sizeof(blocks_ia_buffer::cube_vertices),
+               .stride_in_bytes = sizeof(world::block_vertex),
+            },
+         .index_count = sizeof(blocks_ia_buffer::cube_indices) / 2,
+      };
+   case world::block_type::ramp:
+      return {
+         .index_buffer_view =
+            {
+               .buffer_location = ia_address + offsetof(blocks_ia_buffer, ramp_indices),
+               .size_in_bytes = sizeof(blocks_ia_buffer::ramp_indices),
+            },
+         .vertex_buffer_view =
+            {
+               .buffer_location = ia_address + offsetof(blocks_ia_buffer, ramp_vertices),
+               .size_in_bytes = sizeof(blocks_ia_buffer::ramp_vertices),
+               .stride_in_bytes = sizeof(world::block_vertex),
+            },
+         .index_count = sizeof(blocks_ia_buffer::ramp_indices) / 2,
+      };
+   case world::block_type::quad:
+      return {};
+   case world::block_type::custom:
+      return {};
+   case world::block_type::hemisphere:
+      return {
+         .index_buffer_view =
+            {
+               .buffer_location =
+                  ia_address + offsetof(blocks_ia_buffer, hemisphere_indices),
+               .size_in_bytes = sizeof(blocks_ia_buffer::hemisphere_indices),
+            },
+         .vertex_buffer_view =
+            {
+               .buffer_location =
+                  ia_address + offsetof(blocks_ia_buffer, hemisphere_vertices),
+               .size_in_bytes = sizeof(blocks_ia_buffer::hemisphere_vertices),
+               .stride_in_bytes = sizeof(world::block_vertex),
+            },
+         .index_count = sizeof(blocks_ia_buffer::hemisphere_indices) / 2,
+      };
+   case world::block_type::pyramid:
+      return {
+         .index_buffer_view =
+            {
+               .buffer_location = ia_address + offsetof(blocks_ia_buffer, pyramid_indices),
+               .size_in_bytes = sizeof(blocks_ia_buffer::pyramid_indices),
+            },
+         .vertex_buffer_view =
+            {
+               .buffer_location = ia_address + offsetof(blocks_ia_buffer, pyramid_vertices),
+               .size_in_bytes = sizeof(blocks_ia_buffer::pyramid_vertices),
+               .stride_in_bytes = sizeof(world::block_vertex),
+            },
+         .index_count = sizeof(blocks_ia_buffer::pyramid_indices) / 2,
+      };
+   }
+
+   std::unreachable();
+}
+
+auto blocks::get_block_mesh(const world::block_custom_mesh_handle handle) const noexcept
+   -> mesh
+{
+   const uint32 index = world::blocks_custom_mesh_library::unpack_pool_index(handle);
+
+   if (index >= _custom_meshes.size()) return {};
+   if (not _custom_meshes[index].ia_allocation) return {};
+
+   const gpu_virtual_address ia_address =
+      _device.get_gpu_virtual_address(_custom_mesh_buffer.get());
+
+   const custom_mesh& mesh = _custom_meshes[index];
+
+   return {
+      .index_buffer_view =
+         {
+            .buffer_location = ia_address + mesh.start_index_location * sizeof(uint16),
+            .size_in_bytes = static_cast<uint32>(mesh.index_count * sizeof(uint16)),
+         },
+      .vertex_buffer_view =
+         {
+            .buffer_location = ia_address + mesh.base_vertex_location *
+                                               sizeof(world::block_vertex),
+            .size_in_bytes =
+               static_cast<uint32>(mesh.vertex_count * sizeof(world::block_vertex)),
+            .stride_in_bytes = sizeof(world::block_vertex),
+         },
+      .index_count = mesh.index_count,
+   };
 }
 
 void blocks::process_updated_textures(gpu::copy_command_list& command_list,

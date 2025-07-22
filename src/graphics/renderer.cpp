@@ -39,6 +39,7 @@
 #include "utility/srgb_conversion.hpp"
 
 #include "world/blocks/custom_mesh.hpp"
+#include "world/blocks/utility/bounding_box.hpp"
 #include "world/blocks/utility/find.hpp"
 #include "world/object_class_library.hpp"
 #include "world/utility/boundary_nodes.hpp"
@@ -3382,6 +3383,13 @@ void renderer_impl::draw_interaction_targets(
             find_block(world.blocks, target.get<world::block_id>());
 
          if (block_index) {
+            if (not intersects(view_frustum,
+                               world::get_bounding_box(
+                                  world.blocks, target.get<world::block_id>().type(),
+                                  *block_index))) {
+               return;
+            }
+
             switch (target.get<world::block_id>().type()) {
             case world::block_type::box: {
 
@@ -3427,23 +3435,59 @@ void renderer_impl::draw_interaction_targets(
                                                  block.vertices[0], color_packed);
             } break;
             case world::block_type::custom: {
-               const uint32 color_packed =
-                  utility::pack_srgb_bgra(float4{color, 1.0f});
-
                const world::block_description_custom& block =
                   world.blocks.custom.description[*block_index];
-               const world::block_custom_mesh& mesh =
-                  world.blocks.custom_meshes[world.blocks.custom.mesh[*block_index]];
+               const blocks::mesh& mesh =
+                  _blocks.get_block_mesh(world.blocks.custom.mesh[*block_index]);
 
-               float4x4 world_from_local = to_matrix(block.rotation);
-               world_from_local[3] = {block.position, 1.0f};
+               if (mesh.index_count == 0) return;
 
-               for (const std::array<uint16, 3>& tri : mesh.triangles) {
-                  _meta_draw_batcher.add_triangle_wireframe(
-                     world_from_local * mesh.vertices[tri[0]].position,
-                     world_from_local * mesh.vertices[tri[1]].position,
-                     world_from_local * mesh.vertices[tri[2]].position, color_packed);
-               }
+               gpu_virtual_address wireframe_constants = [&] {
+                  auto allocation = _dynamic_buffer_allocator.allocate(
+                     sizeof(wireframe_constant_buffer));
+
+                  wireframe_constant_buffer constants{.color = color};
+
+                  std::memcpy(allocation.cpu_address, &constants,
+                              sizeof(wireframe_constant_buffer));
+
+                  return allocation.gpu_address;
+               }();
+
+               gpu_virtual_address transform_constants = [&] {
+                  auto allocation =
+                     _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
+
+                  world_mesh_constants constants{};
+
+                  constants.world_from_object = to_matrix(block.rotation);
+                  constants.world_from_object[3] = float4{block.position, 1.0f};
+
+                  std::memcpy(allocation.cpu_address, &constants,
+                              sizeof(world_mesh_constants));
+
+                  return allocation.gpu_address;
+               }();
+
+               command_list.set_graphics_root_signature(
+                  _root_signatures.mesh_wireframe.get());
+               command_list.set_graphics_cbv(rs::mesh_wireframe::object_cbv,
+                                             transform_constants);
+               command_list.set_graphics_cbv(rs::mesh_wireframe::wireframe_cbv,
+                                             wireframe_constants);
+               command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
+                                             _camera_constant_buffer_view);
+
+               command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
+
+               command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+
+               command_list.ia_set_index_buffer(mesh.index_buffer_view);
+               command_list.ia_set_vertex_buffers(0, mesh.vertex_buffer_view);
+
+               command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
+
+               command_list.draw_indexed_instanced(mesh.index_count, 1, 0, 0, 0);
             } break;
             case world::block_type::hemisphere: {
                const world::block_description_hemisphere& block =

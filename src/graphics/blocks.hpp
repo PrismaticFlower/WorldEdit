@@ -53,6 +53,13 @@ struct blocks {
       draw_list dynamic_custom;
    };
 
+   struct mesh {
+      gpu::index_buffer_view index_buffer_view;
+      gpu::vertex_buffer_view vertex_buffer_view;
+
+      uint32 index_count = 0;
+   };
+
    blocks(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
           dynamic_buffer_allocator& dynamic_buffer_allocator,
           texture_manager& texture_manager, root_signature_library& root_signatures);
@@ -72,6 +79,17 @@ struct blocks {
              gpu_virtual_address lights_constant_buffer_view,
              gpu::graphics_command_list& command_list,
              root_signature_library& root_signatures, pipeline_library& pipelines) const;
+
+   /// @brief Get the mesh for a block type.
+   /// @param type The type of block. Custom and quad will return an empty mesh.
+   /// @return The mesh.
+   auto get_block_mesh(const world::block_type type) const noexcept -> mesh;
+
+   /// @brief Get the mesh for a custom block.
+   /// @param type The handle to the custom mesh. Invalid handles will return an empty mesh.
+   /// @return The mesh.
+   auto get_block_mesh(const world::block_custom_mesh_handle handle) const noexcept
+      -> mesh;
 
    /// @brief Process updated material textures.
    /// @param command_list The copy command list to use to update the constant buffer.
