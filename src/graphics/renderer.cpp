@@ -3478,8 +3478,6 @@ void renderer_impl::draw_interaction_targets(
                command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
                                              _camera_constant_buffer_view);
 
-               command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
-
                command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
                command_list.ia_set_index_buffer(mesh.index_buffer_view);
