@@ -88,14 +88,13 @@ void highlight_surface(const blocks& blocks, const block_type type,
    case block_type::custom: {
       const world::block_description_custom& block =
          blocks.custom.description[block_index];
-      const block_custom_mesh& mesh =
-         blocks.custom_meshes[blocks.custom.mesh[block_index]];
 
       float4x4 world_from_local = to_matrix(block.rotation);
       world_from_local[3] = {block.position, 1.0f};
 
-      highlight_surface_generic(world_from_local, mesh.triangles, mesh.vertices,
-                                surface_index, visualizers);
+      visualizers.add_block_surface_highlight(world_from_local,
+                                              blocks.custom.mesh[block_index],
+                                              surface_index, 0.125f);
    } break;
    case block_type::hemisphere: {
       const world::block_description_hemisphere& hemisphere =

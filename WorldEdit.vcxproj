@@ -290,6 +290,7 @@
     <ClCompile Include="src\graphics\shaders\block_custom_meshVS.cpp" />
     <ClCompile Include="src\graphics\shaders\block_normalPS.cpp" />
     <ClCompile Include="src\graphics\shaders\block_quadVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\block_surface_highlightVS.cpp" />
     <ClCompile Include="src\graphics\shaders\depth_reduce_minmaxCS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_conePS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_coneVS.cpp" />

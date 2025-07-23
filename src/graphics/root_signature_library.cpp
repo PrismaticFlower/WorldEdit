@@ -253,6 +253,24 @@ const gpu::root_signature_desc block_custom_mesh_desc{
    .debug_name = "block_custom_mesh_root_signature",
 };
 
+const gpu::root_signature_desc block_surface_highlight_desc{
+   .parameters =
+      {
+         gpu::root_parameter{
+            .type = gpu::root_parameter_type::constant_buffer_view,
+            .shader_register = block_custom_mesh_cb_register,
+            .visibility = gpu::root_shader_visibility::vertex,
+         },
+         frame_constant_buffer,
+      },
+
+   .samplers = pixel_static_samplers,
+
+   .flags = {.allow_input_assembler_input_layout = true},
+
+   .debug_name = "block_surface_highlight",
+};
+
 const gpu::root_signature_desc grid_overlay_desc{
    .parameters =
       {
@@ -495,6 +513,8 @@ root_signature_library::root_signature_library(gpu::device& device)
    sky_mesh = {device.create_root_signature(sky_mesh_desc), device};
    block = {device.create_root_signature(block_desc), device};
    block_custom_mesh = {device.create_root_signature(block_custom_mesh_desc), device};
+   block_surface_highlight = {device.create_root_signature(block_surface_highlight_desc),
+                              device};
    grid_overlay = {device.create_root_signature(grid_overlay_desc), device};
    thumbnail_mesh = {device.create_root_signature(thumbnail_mesh_desc), device};
    thumbnail_downsample = {device.create_root_signature(thumbnail_downsample_mesh_desc),

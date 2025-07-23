@@ -98,6 +98,8 @@ struct pipeline_library {
    gpu::unique_pipeline_handle block_custom_mesh_normal;
    gpu::unique_pipeline_handle block_custom_mesh_shadow;
 
+   gpu::unique_pipeline_handle block_surface_highlight;
+
    gpu::unique_pipeline_handle terrain_depth_prepass;
    gpu::unique_pipeline_handle terrain_basic;
    gpu::unique_pipeline_handle terrain_lighting;

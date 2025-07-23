@@ -62,21 +62,12 @@ void highlight_block(const blocks& blocks, const block_type type,
    case block_type::custom: {
       const world::block_description_custom& block =
          blocks.custom.description[block_index];
-      const block_custom_mesh& mesh =
-         blocks.custom_meshes[blocks.custom.mesh[block_index]];
 
       float4x4 world_from_local = to_matrix(block.rotation);
       world_from_local[3] = {block.position, 1.0f};
 
-      for (const std::array<uint16, 3>& tri : mesh.triangles) {
-         visualizers.add_triangle_additive(world_from_local *
-                                              mesh.vertices[tri[0]].position,
-                                           world_from_local *
-                                              mesh.vertices[tri[1]].position,
-                                           world_from_local *
-                                              mesh.vertices[tri[2]].position,
-                                           0x20'ff'ff'ffu);
-      }
+      visualizers.add_block_highlight(world_from_local,
+                                      blocks.custom.mesh[block_index], 0.125f);
    } break;
    case block_type::hemisphere: {
       const world::block_description_hemisphere& hemisphere =

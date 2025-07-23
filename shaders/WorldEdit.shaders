@@ -42,6 +42,7 @@ block_custom_meshVS .entrypoint = main_custom_mesh .file = blockVS.hlsl
 block_basicPS
 block_basic_lightingPS
 block_normalPS
+block_surface_highlightVS
 
 thumbnail_meshVS
 thumbnail_meshPS

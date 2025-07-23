@@ -270,6 +270,7 @@
     <ClCompile Include="src\math\curves.cpp" />
     <ClCompile Include="src\world\blocks\bvh.cpp" />
     <ClCompile Include="src\world\blocks\custom_mesh_bvh_library.cpp" />
+    <ClCompile Include="src\graphics\shaders\block_surface_highlightVS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />

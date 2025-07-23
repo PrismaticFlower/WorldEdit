@@ -3,6 +3,8 @@
 #include "id.hpp"
 #include "types.hpp"
 
+#include "blocks/custom_mesh_library.hpp"
+
 #include <span>
 #include <vector>
 
@@ -46,6 +48,21 @@ struct tool_visualizers_connection_highlight {
    float3 color;
 };
 
+struct tool_visualizers_block_highlight {
+   float4x4 transform;
+
+   block_custom_mesh_handle mesh;
+   float alpha;
+};
+
+struct tool_visualizers_block_surface_highlight {
+   float4x4 transform;
+
+   block_custom_mesh_handle mesh;
+   uint32 surface_index = 0;
+   float alpha;
+};
+
 struct tool_visualizers_mini_grid {
    float3 positionWS;
    float size = 1.0f;
@@ -77,6 +94,13 @@ struct tool_visualizers {
 
    void add_highlight(id<planning_connection> connection_id, float3 color);
 
+   void add_block_highlight(const float4x4& transform,
+                            block_custom_mesh_handle mesh, float alpha);
+
+   void add_block_surface_highlight(const float4x4& transform,
+                                    block_custom_mesh_handle mesh,
+                                    uint32 surface_index, float alpha);
+
    void add_mini_grid(const tool_visualizers_mini_grid& grid);
 
    void add_triangle_additive(const float3& v0, const float3& v1,
@@ -85,10 +109,6 @@ struct tool_visualizers {
    void add_box_additive(const float4x4& transform, const float4& color);
 
    void add_ramp_additive(const float4x4& transform, const float4& color);
-
-   void add_cylinder_additive(const float4x4& transform, const float4& color);
-
-   void add_cone_additive(const float4x4& transform, const float4& color);
 
    void add_hemisphere_additive(const float4x4& transform, const float4& color);
 
@@ -115,6 +135,12 @@ struct tool_visualizers {
    auto connection_highlights() const noexcept
       -> std::span<const tool_visualizers_connection_highlight>;
 
+   auto block_highlights() const noexcept
+      -> std::span<const tool_visualizers_block_highlight>;
+
+   auto block_surface_highlights() const noexcept
+      -> std::span<const tool_visualizers_block_surface_highlight>;
+
    auto mini_grids() const noexcept -> std::span<const tool_visualizers_mini_grid>;
 
    auto triangles_additive() const noexcept
@@ -123,10 +149,6 @@ struct tool_visualizers {
    auto boxes_additive() const noexcept -> std::span<const tool_visualizers_shape>;
 
    auto ramps_additive() const noexcept -> std::span<const tool_visualizers_shape>;
-
-   auto cylinders_additive() const noexcept -> std::span<const tool_visualizers_shape>;
-
-   auto cones_additive() const noexcept -> std::span<const tool_visualizers_shape>;
 
    auto hemispheres_additive() const noexcept
       -> std::span<const tool_visualizers_shape>;
@@ -142,6 +164,8 @@ private:
    std::vector<tool_visualizers_ghost> _ghost_objects;
    std::vector<tool_visualizers_hub_highlight> _hub_highlights;
    std::vector<tool_visualizers_connection_highlight> _connection_highlights;
+   std::vector<tool_visualizers_block_highlight> _block_highlights;
+   std::vector<tool_visualizers_block_surface_highlight> _block_surface_highlights;
    std::vector<tool_visualizers_mini_grid> _mini_grids;
    std::vector<tool_visualizers_triangle> _triangles_additive;
    std::vector<tool_visualizers_shape> _boxes_additive;

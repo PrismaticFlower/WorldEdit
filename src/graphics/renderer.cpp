@@ -176,6 +176,9 @@ private:
                                  const settings::graphics& settings,
                                  gpu::graphics_command_list& command_list);
 
+   void draw_block_highlights(const world::tool_visualizers& tool_visualizers,
+                              gpu::graphics_command_list& command_list);
+
    void draw_gizmos(const camera& camera, const gizmo_draw_lists& draw_lists,
                     gpu::graphics_command_list& command_list);
 
@@ -551,6 +554,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    draw_interaction_targets(view_frustum, world, interaction_targets, world_classes,
                             tool_visualizers, settings, command_list);
+
+   draw_block_highlights(tool_visualizers, command_list);
 
    _meta_draw_batcher.draw(command_list, _camera_constant_buffer_view,
                            _root_signatures, _pipelines, _geometric_shapes,
@@ -2507,14 +2512,6 @@ void renderer_impl::draw_world_meta_objects(
       _meta_draw_batcher.add_ramp(ramp.transform, ramp.color);
    }
 
-   for (const auto& cylinder : tool_visualizers.cylinders_additive()) {
-      _meta_draw_batcher.add_cylinder(cylinder.transform, cylinder.color);
-   }
-
-   for (const auto& cone : tool_visualizers.cones_additive()) {
-      _meta_draw_batcher.add_cone(cone.transform, cone.color);
-   }
-
    for (const auto& hemisphere : tool_visualizers.hemispheres_additive()) {
       _meta_draw_batcher.add_hemisphere(hemisphere.transform, hemisphere.color);
    }
@@ -3587,6 +3584,80 @@ void renderer_impl::draw_interaction_targets(
 
    for (const auto& [entity, color] : tool_visualizers.connection_highlights()) {
       draw_target(entity, color);
+   }
+}
+
+void renderer_impl::draw_block_highlights(const world::tool_visualizers& tool_visualizers,
+                                          gpu::graphics_command_list& command_list)
+{
+   if (tool_visualizers.block_highlights().empty() and
+       tool_visualizers.block_surface_highlights().empty()) {
+      return;
+   }
+
+   command_list.set_graphics_root_signature(
+      _root_signatures.block_surface_highlight.get());
+   command_list.set_graphics_cbv(rs::block_surface_highlight::frame_cbv,
+                                 _camera_constant_buffer_view);
+
+   command_list.set_pipeline_state(_pipelines.block_surface_highlight.get());
+
+   command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+
+   const uint32 highlight_all = 0xff'ff'ff'ffu;
+
+   struct alignas(16) block_hightlight_constants {
+      uint32 surface_index;
+      float alpha;
+      alignas(16) float4x4 world_from_local;
+   };
+
+   static_assert(sizeof(block_hightlight_constants) == 80);
+
+   for (const world::tool_visualizers_block_highlight& highlight :
+        tool_visualizers.block_highlights()) {
+      const blocks::mesh& mesh = _blocks.get_block_mesh(highlight.mesh);
+
+      if (mesh.index_count == 0) return;
+
+      const gpu_virtual_address constants =
+         _dynamic_buffer_allocator
+            .allocate_and_copy(
+               block_hightlight_constants{.surface_index = highlight_all,
+                                          .alpha = highlight.alpha,
+                                          .world_from_local = highlight.transform})
+            .gpu_address;
+
+      command_list.set_graphics_cbv(rs::block_surface_highlight::constants_cbv,
+                                    constants);
+
+      command_list.ia_set_index_buffer(mesh.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, mesh.vertex_buffer_view);
+
+      command_list.draw_indexed_instanced(mesh.index_count, 1, 0, 0, 0);
+   }
+
+   for (const world::tool_visualizers_block_surface_highlight& highlight :
+        tool_visualizers.block_surface_highlights()) {
+      const blocks::mesh& mesh = _blocks.get_block_mesh(highlight.mesh);
+
+      if (mesh.index_count == 0) return;
+
+      const gpu_virtual_address constants =
+         _dynamic_buffer_allocator
+            .allocate_and_copy(
+               block_hightlight_constants{.surface_index = highlight.surface_index,
+                                          .alpha = highlight.alpha,
+                                          .world_from_local = highlight.transform})
+            .gpu_address;
+
+      command_list.set_graphics_cbv(rs::block_surface_highlight::constants_cbv,
+                                    constants);
+
+      command_list.ia_set_index_buffer(mesh.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, mesh.vertex_buffer_view);
+
+      command_list.draw_indexed_instanced(mesh.index_count, 1, 0, 0, 0);
    }
 }
 

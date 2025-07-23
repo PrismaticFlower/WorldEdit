@@ -12,12 +12,12 @@ tool_visualizers::tool_visualizers() noexcept
    _ghost_objects.reserve(64);
    _hub_highlights.reserve(8);
    _connection_highlights.reserve(8);
+   _block_highlights.reserve(1);
+   _block_surface_highlights.reserve(1);
    _mini_grids.reserve(8);
    _triangles_additive.reserve(64);
    _boxes_additive.reserve(8);
    _ramps_additive.reserve(8);
-   _cylinders_additive.reserve(8);
-   _cones_additive.reserve(8);
    _hemispheres_additive.reserve(8);
    _pyramids_additive.reserve(8);
 }
@@ -73,6 +73,19 @@ void tool_visualizers::add_highlight(id<planning_connection> connection_id, floa
    _connection_highlights.emplace_back(connection_id, color);
 }
 
+void tool_visualizers::add_block_highlight(const float4x4& transform,
+                                           block_custom_mesh_handle mesh, float alpha)
+{
+   _block_highlights.emplace_back(transform, mesh, alpha);
+}
+
+void tool_visualizers::add_block_surface_highlight(const float4x4& transform,
+                                                   block_custom_mesh_handle mesh,
+                                                   uint32 surface_index, float alpha)
+{
+   _block_surface_highlights.emplace_back(transform, mesh, surface_index, alpha);
+}
+
 void tool_visualizers::add_mini_grid(const tool_visualizers_mini_grid& grid)
 {
    _mini_grids.push_back(grid);
@@ -92,17 +105,6 @@ void tool_visualizers::add_box_additive(const float4x4& transform, const float4&
 void tool_visualizers::add_ramp_additive(const float4x4& transform, const float4& color)
 {
    _ramps_additive.emplace_back(transform, color);
-}
-
-void tool_visualizers::add_cylinder_additive(const float4x4& transform,
-                                             const float4& color)
-{
-   _cylinders_additive.emplace_back(transform, color);
-}
-
-void tool_visualizers::add_cone_additive(const float4x4& transform, const float4& color)
-{
-   _cones_additive.emplace_back(transform, color);
 }
 
 void tool_visualizers::add_hemisphere_additive(const float4x4& transform,
@@ -126,12 +128,12 @@ void tool_visualizers::clear() noexcept
    _ghost_objects.clear();
    _hub_highlights.clear();
    _connection_highlights.clear();
+   _block_highlights.clear();
+   _block_surface_highlights.clear();
    _mini_grids.clear();
    _triangles_additive.clear();
    _boxes_additive.clear();
    _ramps_additive.clear();
-   _cylinders_additive.clear();
-   _cones_additive.clear();
    _hemispheres_additive.clear();
    _pyramids_additive.clear();
 }
@@ -183,6 +185,18 @@ auto tool_visualizers::connection_highlights() const noexcept
    return _connection_highlights;
 }
 
+auto tool_visualizers::block_highlights() const noexcept
+   -> std::span<const tool_visualizers_block_highlight>
+{
+   return _block_highlights;
+}
+
+auto tool_visualizers::block_surface_highlights() const noexcept
+   -> std::span<const tool_visualizers_block_surface_highlight>
+{
+   return _block_surface_highlights;
+}
+
 auto tool_visualizers::mini_grids() const noexcept
    -> std::span<const tool_visualizers_mini_grid>
 {
@@ -205,18 +219,6 @@ auto tool_visualizers::ramps_additive() const noexcept
    -> std::span<const tool_visualizers_shape>
 {
    return _ramps_additive;
-}
-
-auto tool_visualizers::cylinders_additive() const noexcept
-   -> std::span<const tool_visualizers_shape>
-{
-   return _cylinders_additive;
-}
-
-auto tool_visualizers::cones_additive() const noexcept
-   -> std::span<const tool_visualizers_shape>
-{
-   return _cones_additive;
 }
 
 auto tool_visualizers::hemispheres_additive() const noexcept
