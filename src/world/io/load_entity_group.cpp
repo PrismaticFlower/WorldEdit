@@ -1456,6 +1456,36 @@ void read_blocks_pyramids(const assets::config::node& node, entity_group& group_
    }
 }
 
+void read_blocks_terrain_cut_boxes(const assets::config::node& node, entity_group& group_out)
+{
+   for (const auto& key_node : node) {
+      if (not string::iequals(key_node.key, "TerrainCutBox")) continue;
+
+      block_description_terrain_cut_box terrain_cut_box;
+
+      for (const auto& prop : key_node) {
+         if (string::iequals(prop.key, "Rotation")) {
+            terrain_cut_box.rotation = {prop.values.get<float>(0),
+                                        prop.values.get<float>(1),
+                                        prop.values.get<float>(2),
+                                        prop.values.get<float>(3)};
+         }
+         else if (string::iequals(prop.key, "Position")) {
+            terrain_cut_box.position = {prop.values.get<float>(0),
+                                        prop.values.get<float>(1),
+                                        prop.values.get<float>(2)};
+         }
+         else if (string::iequals(prop.key, "Size")) {
+            terrain_cut_box.size = {prop.values.get<float>(0),
+                                    prop.values.get<float>(1),
+                                    prop.values.get<float>(2)};
+         }
+      }
+
+      group_out.blocks.terrain_cut_boxes.push_back(terrain_cut_box);
+   }
+}
+
 void read_blocks_materials(const assets::config::node& node, entity_group& group_out)
 {
    for (const auto& key_node : node) {
@@ -1775,6 +1805,23 @@ void clamp_block_material_indices(entity_group& group_out, output_stream& output
          }
       }
    }
+
+   for (uint32 block_index = 0;
+        block_index < group_out.blocks.terrain_cut_boxes.size(); ++block_index) {
+      block_description_terrain_cut_box& terrain_cut_box =
+         group_out.blocks.terrain_cut_boxes[block_index];
+
+      for (uint8& material : terrain_cut_box.surface_materials) {
+         if (material >= max_material) {
+            output.write("Warning! Terrain Cutter Box block '{}' has out of "
+                         "range material "
+                         "index. Setting to zero.\n",
+                         block_index);
+
+            material = 0;
+         }
+      }
+   }
 }
 
 }
@@ -1856,6 +1903,11 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
             group.blocks.pyramids.reserve(key_node.values.get<uint32>(0));
 
             read_blocks_pyramids(key_node, group);
+         }
+         else if (string::iequals(key_node.key, "BlocksTerrainCutBoxes"sv)) {
+            group.blocks.terrain_cut_boxes.reserve(key_node.values.get<uint32>(0));
+
+            read_blocks_terrain_cut_boxes(key_node, group);
          }
          else if (string::iequals(key_node.key, "BlocksMaterials"sv)) {
             group.blocks.materials.reserve(key_node.values.get<uint32>(0));

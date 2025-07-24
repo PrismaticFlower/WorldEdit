@@ -1908,6 +1908,91 @@ TEST_CASE("world load blocks (curves)", "[World][IO]")
    CHECK(curves.dirty[0] == blocks_dirty_range{0, 3});
 }
 
+TEST_CASE("world load blocks (terrain cut boxes)", "[World][IO]")
+{
+   null_output_stream output;
+   layer_remap layer_remap;
+
+   layer_remap.set(2, 2);
+
+   const blocks blocks =
+      load_blocks("data/blocks/terrain_cut_boxes.blk", layer_remap, output);
+
+   REQUIRE(blocks.terrain_cut_boxes.size() == 3);
+
+   const blocks_terrain_cut_boxes& terrain_cut_boxes = blocks.terrain_cut_boxes;
+
+   CHECK(terrain_cut_boxes.bbox.min_x[0] == 4.5f);
+   CHECK(terrain_cut_boxes.bbox.min_y[0] == 0.5f);
+   CHECK(terrain_cut_boxes.bbox.min_z[0] == -2.0f);
+   CHECK(terrain_cut_boxes.bbox.max_x[0] == 12.5f);
+   CHECK(terrain_cut_boxes.bbox.max_y[0] == 8.5f);
+   CHECK(terrain_cut_boxes.bbox.max_z[0] == 6.0f);
+   CHECK(terrain_cut_boxes.hidden[0] == false);
+   CHECK(terrain_cut_boxes.layer[0] == 2);
+   CHECK(terrain_cut_boxes.description[0].rotation ==
+         quaternion{0.0f, 1.0f, 0.0f, 0.0f});
+   CHECK(terrain_cut_boxes.description[0].position == float3{8.5f, 4.5f, 2.0f});
+   CHECK(terrain_cut_boxes.description[0].size == float3{4.0f, 4.0f, 4.0f});
+   CHECK(terrain_cut_boxes.description[0].surface_materials == std::array<uint8, 1>{});
+   CHECK(terrain_cut_boxes.description[0].surface_texture_mode ==
+         std::array<block_texture_mode, 1>{});
+   CHECK(terrain_cut_boxes.description[0].surface_texture_rotation ==
+         std::array<block_texture_rotation, 1>{});
+   CHECK(terrain_cut_boxes.description[0].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 1>{});
+   CHECK(terrain_cut_boxes.description[0].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 1>{});
+   CHECK(is_unique_id(0, terrain_cut_boxes.ids));
+
+   CHECK(terrain_cut_boxes.bbox.min_x[1] == 2.00001764f);
+   CHECK(terrain_cut_boxes.bbox.min_y[1] == 12.0000086f);
+   CHECK(terrain_cut_boxes.bbox.min_z[1] == 4.00001764f);
+   CHECK(terrain_cut_boxes.bbox.max_x[1] == 17.9999828f);
+   CHECK(terrain_cut_boxes.bbox.max_y[1] == 19.9999905f);
+   CHECK(terrain_cut_boxes.bbox.max_z[1] == 19.9999828f);
+   CHECK(terrain_cut_boxes.hidden[1] == false);
+   CHECK(terrain_cut_boxes.description[1].rotation ==
+         quaternion{0.707106f, 0.0f, 0.707106f, 0.0f});
+   CHECK(terrain_cut_boxes.description[1].position == float3{10.0f, 16.0f, 12.0f});
+   CHECK(terrain_cut_boxes.description[1].size == float3{8.0f, 4.0f, 8.0f});
+   CHECK(terrain_cut_boxes.description[1].surface_materials == std::array<uint8, 1>{});
+   CHECK(terrain_cut_boxes.description[1].surface_texture_mode ==
+         std::array<block_texture_mode, 1>{});
+   CHECK(terrain_cut_boxes.description[1].surface_texture_rotation ==
+         std::array<block_texture_rotation, 1>{});
+   CHECK(terrain_cut_boxes.description[1].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 1>{});
+   CHECK(terrain_cut_boxes.description[1].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 1>{});
+   CHECK(is_unique_id(1, terrain_cut_boxes.ids));
+
+   CHECK(terrain_cut_boxes.bbox.min_x[2] == 1.0f);
+   CHECK(terrain_cut_boxes.bbox.min_y[2] == 1.0f);
+   CHECK(terrain_cut_boxes.bbox.min_z[2] == 1.0f);
+   CHECK(terrain_cut_boxes.bbox.max_x[2] == 11.0f);
+   CHECK(terrain_cut_boxes.bbox.max_y[2] == 11.0f);
+   CHECK(terrain_cut_boxes.bbox.max_z[2] == 11.0f);
+   CHECK(terrain_cut_boxes.hidden[2] == false);
+   CHECK(terrain_cut_boxes.description[2].rotation ==
+         quaternion{0.0f, 0.0f, 0.0f, 1.0f});
+   CHECK(terrain_cut_boxes.description[2].position == float3{6.0f, 6.0f, 6.0f});
+   CHECK(terrain_cut_boxes.description[2].size == float3{5.0f, 5.0f, 5.0f});
+   CHECK(terrain_cut_boxes.description[2].surface_materials == std::array<uint8, 1>{});
+   CHECK(terrain_cut_boxes.description[2].surface_texture_mode ==
+         std::array<block_texture_mode, 1>{});
+   CHECK(terrain_cut_boxes.description[2].surface_texture_rotation ==
+         std::array<block_texture_rotation, 1>{});
+   CHECK(terrain_cut_boxes.description[2].surface_texture_scale ==
+         std::array<std::array<int8, 2>, 1>{});
+   CHECK(terrain_cut_boxes.description[2].surface_texture_offset ==
+         std::array<std::array<uint16, 2>, 1>{});
+   CHECK(is_unique_id(2, terrain_cut_boxes.ids));
+
+   REQUIRE(terrain_cut_boxes.dirty.size() == 1);
+   CHECK(terrain_cut_boxes.dirty[0] == blocks_dirty_range{0, 3});
+}
+
 TEST_CASE("world load blocks (materials)", "[World][IO]")
 {
    null_output_stream output;

@@ -1,0 +1,22 @@
+TerrainCutBoxes(3)
+{
+   TerrainCutBox()
+   {
+      Rotation(0, 1, 0, 0);
+      Position(8.5, 4.5, 2);
+      Size(4, 4, 4);
+      Layer(2);
+   }
+   TerrainCutBox()
+   {
+      Rotation(0.707106, 0, 0.707106, 0);
+      Position(10, 16, 12);
+      Size(8, 4, 8);
+   }
+   TerrainCutBox()
+   {
+      Rotation(0, 0, 0, 1);
+      Position(6, 6, 6);
+      Size(5, 5, 5);
+   }
+}

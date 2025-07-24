@@ -870,6 +870,29 @@ void save_entity_group_impl(File& file, const entity_group& group)
       file.write_ln("}\n");
    }
 
+   if (not group.blocks.terrain_cut_boxes.empty()) {
+      file.write_ln("BlocksTerrainCutBoxes({})",
+                    group.blocks.terrain_cut_boxes.size());
+      file.write_ln("{");
+
+      for (const block_description_terrain_cut_box& terrain_cut_box :
+           group.blocks.terrain_cut_boxes) {
+         file.write_ln("   TerrainCutBox()");
+         file.write_ln("   {");
+
+         file.write_ln("      Rotation({}, {}, {}, {});",
+                       terrain_cut_box.rotation.w, terrain_cut_box.rotation.x,
+                       terrain_cut_box.rotation.y, terrain_cut_box.rotation.z);
+         file.write_ln("      Position({}, {}, {});", terrain_cut_box.position.x,
+                       terrain_cut_box.position.y, terrain_cut_box.position.z);
+         file.write_ln("      Size({}, {}, {});", terrain_cut_box.size.x,
+                       terrain_cut_box.size.y, terrain_cut_box.size.z);
+         file.write_ln("   }");
+      }
+
+      file.write_ln("}\n");
+   }
+
    if (not group.blocks.materials.empty()) {
       file.write_ln("BlocksMaterials({})", group.blocks.materials.size());
       file.write_ln("{");

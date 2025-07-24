@@ -1027,6 +1027,61 @@ void load_pyramids(assets::config::node& node, const layer_remap& layer_remap,
    }
 }
 
+void load_terrain_cut_boxes(assets::config::node& node,
+                            const layer_remap& layer_remap, blocks& blocks_out)
+{
+   for (const auto& key_node : node) {
+      if (not iequals(key_node.key, "TerrainCutBox")) continue;
+
+      if (blocks_out.terrain_cut_boxes.size() == max_blocks) {
+         throw load_failure{
+            fmt::format("Too many blocks (of type terrain cutter box) for "
+                        "WorldEdit to handle. \n   "
+                        "Max Supported Count: {}\n",
+                        max_blocks)};
+      }
+
+      block_description_terrain_cut_box terrain_cut_box;
+      int8 layer = 0;
+
+      for (const auto& prop : key_node) {
+         if (iequals(prop.key, "Rotation")) {
+            terrain_cut_box.rotation = {prop.values.get<float>(0),
+                                        prop.values.get<float>(1),
+                                        prop.values.get<float>(2),
+                                        prop.values.get<float>(3)};
+         }
+         else if (iequals(prop.key, "Position")) {
+            terrain_cut_box.position = {prop.values.get<float>(0),
+                                        prop.values.get<float>(1),
+                                        prop.values.get<float>(2)};
+         }
+         else if (iequals(prop.key, "Size")) {
+            terrain_cut_box.size = {prop.values.get<float>(0),
+                                    prop.values.get<float>(1),
+                                    prop.values.get<float>(2)};
+         }
+         else if (iequals(prop.key, "Layer")) {
+            layer = layer_remap[prop.values.get<int>(0)];
+         }
+      }
+
+      const math::bounding_box bbox = get_bounding_box(terrain_cut_box);
+
+      blocks_out.terrain_cut_boxes.bbox.min_x.push_back(bbox.min.x);
+      blocks_out.terrain_cut_boxes.bbox.min_y.push_back(bbox.min.y);
+      blocks_out.terrain_cut_boxes.bbox.min_z.push_back(bbox.min.z);
+      blocks_out.terrain_cut_boxes.bbox.max_x.push_back(bbox.max.x);
+      blocks_out.terrain_cut_boxes.bbox.max_y.push_back(bbox.max.y);
+      blocks_out.terrain_cut_boxes.bbox.max_z.push_back(bbox.max.z);
+      blocks_out.terrain_cut_boxes.hidden.push_back(false);
+      blocks_out.terrain_cut_boxes.layer.push_back(layer);
+      blocks_out.terrain_cut_boxes.description.push_back(terrain_cut_box);
+      blocks_out.terrain_cut_boxes.ids.push_back(
+         blocks_out.next_id.terrain_cut_boxes.aquire());
+   }
+}
+
 void load_materials(assets::config::node& node, blocks& blocks_out,
                     output_stream& output) noexcept
 {
@@ -1146,6 +1201,13 @@ auto load_blocks(const io::path& path, const layer_remap& layer_remap,
             blocks.pyramids.reserve(box_reservation);
 
             load_pyramids(key_node, layer_remap, blocks);
+         }
+         else if (iequals(key_node.key, "TerrainCutBoxes")) {
+            const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
+
+            blocks.terrain_cut_boxes.reserve(box_reservation);
+
+            load_terrain_cut_boxes(key_node, layer_remap, blocks);
          }
          else if (iequals(key_node.key, "Materials")) {
             load_materials(key_node, blocks, output);

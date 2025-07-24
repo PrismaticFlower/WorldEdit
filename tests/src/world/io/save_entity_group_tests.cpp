@@ -2937,6 +2937,70 @@ TEST_CASE("world save entity group (blocks, curves)", "[World][IO]")
    CHECK(written_eng == expected_eng);
 }
 
+TEST_CASE("world save entity group (blocks, terrain_cut_boxes)", "[World][IO]")
+{
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_blocks_terrain_cut_boxes.eng";
+
+   const std::string_view expected_eng =
+      R"(BlocksTerrainCutBoxes(3)
+{
+   TerrainCutBox()
+   {
+      Rotation(0, 1, 0, 0);
+      Position(8.5, 4.5, 2);
+      Size(4, 4, 4);
+   }
+   TerrainCutBox()
+   {
+      Rotation(0.707106, 0, 0.707106, 0);
+      Position(10, 16, 12);
+      Size(8, 4, 8);
+   }
+   TerrainCutBox()
+   {
+      Rotation(0, 0, 0, 1);
+      Position(6, 6, 6);
+      Size(5, 5, 5);
+   }
+}
+
+)";
+
+   world::entity_group
+      group =
+         {
+            .blocks =
+               {
+                  .terrain_cut_boxes =
+                     {
+                        world::block_description_terrain_cut_box{
+                           .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
+                           .position = {8.5f, 4.5f, 2.0f},
+                           .size = {4.0f, 4.0f, 4.0f},
+                        },
+                        world::block_description_terrain_cut_box{
+                           .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
+                           .position = {10.0f, 16.0f, 12.0f},
+                           .size = {8.0f, 4.0f, 8.0f},
+                        },
+                        world::block_description_terrain_cut_box{
+                           .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
+                           .position = {6.0f, 6.0f, 6.0f},
+                           .size = {5.0f, 5.0f, 5.0f},
+                        },
+                     },
+
+               },
+         };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
 TEST_CASE("world save entity group (blocks, materials)", "[World][IO]")
 {
    (void)io::create_directory("temp/entity_groups");

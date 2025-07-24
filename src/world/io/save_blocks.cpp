@@ -426,6 +426,38 @@ void save_pyramids(io::output_file& out, const blocks_pyramids& pyramids) noexce
    out.write_ln("}\n");
 }
 
+void save_terrain_cut_boxes(io::output_file& out,
+                            const blocks_terrain_cut_boxes& terrain_cut_boxes) noexcept
+{
+   if (terrain_cut_boxes.size() == 0) return;
+
+   out.write_ln("TerrainCutBoxes({})", terrain_cut_boxes.size());
+   out.write_ln("{");
+
+   for (uint32 box_index = 0; box_index < terrain_cut_boxes.size(); ++box_index) {
+      const block_description_terrain_cut_box& terrain_cut_box =
+         terrain_cut_boxes.description[box_index];
+      const int8 terrain_cut_box_layer = terrain_cut_boxes.layer[box_index];
+
+      out.write_ln("   TerrainCutBox()");
+      out.write_ln("   {");
+
+      out.write_ln("      Rotation({}, {}, {}, {});",
+                   terrain_cut_box.rotation.w, terrain_cut_box.rotation.x,
+                   terrain_cut_box.rotation.y, terrain_cut_box.rotation.z);
+      out.write_ln("      Position({}, {}, {});", terrain_cut_box.position.x,
+                   terrain_cut_box.position.y, terrain_cut_box.position.z);
+      out.write_ln("      Size({}, {}, {});", terrain_cut_box.size.x,
+                   terrain_cut_box.size.y, terrain_cut_box.size.z);
+      if (terrain_cut_box_layer != 0) {
+         out.write_ln("      Layer({});", terrain_cut_box_layer);
+      }
+      out.write_ln("   }");
+   }
+
+   out.write_ln("}\n");
+}
+
 void save_materials(io::output_file& out, const blocks& blocks) noexcept
 {
    const block_material empty_material;
@@ -471,6 +503,7 @@ void save_blocks(const io::path& path, const blocks& blocks)
    save_custom(out, blocks.custom);
    save_hemispheres(out, blocks.hemispheres);
    save_pyramids(out, blocks.pyramids);
+   save_terrain_cut_boxes(out, blocks.terrain_cut_boxes);
    save_materials(out, blocks);
 }
 

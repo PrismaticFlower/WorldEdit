@@ -2339,6 +2339,90 @@ Materials()
    CHECK(written_blk == expected_blk);
 }
 
+TEST_CASE("world save blocks (terrain cut boxes)", "[World][IO]")
+{
+   const std::string_view expected_blk = R"(TerrainCutBoxes(3)
+{
+   TerrainCutBox()
+   {
+      Rotation(0, 1, 0, 0);
+      Position(8.5, 4.5, 2);
+      Size(4, 4, 4);
+      Layer(2);
+   }
+   TerrainCutBox()
+   {
+      Rotation(0.707106, 0, 0.707106, 0);
+      Position(10, 16, 12);
+      Size(8, 4, 8);
+   }
+   TerrainCutBox()
+   {
+      Rotation(0, 0, 0, 1);
+      Position(6, 6, 6);
+      Size(5, 5, 5);
+   }
+}
+
+Materials()
+{
+}
+
+)";
+
+   blocks blocks{
+      .terrain_cut_boxes =
+         {
+            .bbox =
+               {
+                  .min_x = {world::blocks_init, std::initializer_list{-1.0f, -1.0f, -1.0f}},
+                  .min_y = {world::blocks_init, std::initializer_list{-1.0f, -1.0f, -1.0f}},
+                  .min_z = {world::blocks_init, std::initializer_list{-1.0f, -1.0f, -1.0f}},
+                  .max_x = {world::blocks_init, std::initializer_list{1.0f, 1.0f, 1.0f}},
+                  .max_y = {world::blocks_init, std::initializer_list{1.0f, 1.0f, 1.0f}},
+                  .max_z = {world::blocks_init, std::initializer_list{1.0f, 1.0f, 1.0f}},
+               },
+            .hidden = {world::blocks_init, std::initializer_list{true, true, true}},
+            .layer = {world::blocks_init, std::initializer_list<int8>{2, 0, 0}},
+            .description =
+               {
+                  world::blocks_init,
+                  std::initializer_list{
+                     world::block_description_terrain_cut_box{
+                        .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
+                        .position = {8.5f, 4.5f, 2.0f},
+                        .size = {4.0f, 4.0f, 4.0f},
+                     },
+                     world::block_description_terrain_cut_box{
+                        .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
+                        .position = {10.0f, 16.0f, 12.0f},
+                        .size = {8.0f, 4.0f, 8.0f},
+                     },
+                     world::block_description_terrain_cut_box{
+                        .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
+                        .position = {6.0f, 6.0f, 6.0f},
+                        .size = {5.0f, 5.0f, 5.0f},
+                     },
+                  },
+               },
+            .ids = {world::blocks_init,
+                    std::initializer_list{block_terrain_cut_box_id{0},
+                                          block_terrain_cut_box_id{1},
+                                          block_terrain_cut_box_id{2}}},
+
+         },
+   };
+
+   (void)io::create_directory("temp/blocks");
+
+   save_blocks("temp/blocks/test_terrain_cut_boxes.blk", blocks);
+
+   const auto written_blk =
+      io::read_file_to_string("temp/blocks/test_terrain_cut_boxes.blk");
+
+   CHECK(written_blk == expected_blk);
+}
+
 TEST_CASE("world save blocks (materials)", "[World][IO]")
 {
    const std::string_view expected_blk = R"(Materials()
