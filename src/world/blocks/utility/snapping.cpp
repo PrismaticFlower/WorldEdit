@@ -165,7 +165,7 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       float4x4 world_from_local = rotation * scale;
       world_from_local[3] = {ramp.position, 1.0f};
 
-      std::array<float3, 8> verticesWS;
+      std::array<float3, 6> verticesWS;
 
       for (std::size_t i = 0; i < block_ramp_points.size(); ++i) {
          verticesWS[i] = world_from_local * block_ramp_points[i];
@@ -389,7 +389,7 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       float4x4 world_from_local = rotation * scale;
       world_from_local[3] = {hemisphere.position, 1.0f};
 
-      std::array<float3, 64> verticesWS;
+      std::array<float3, 1> verticesWS;
 
       for (std::size_t i = 0; i < block_hemisphere_points.size(); ++i) {
          verticesWS[i] = world_from_local * block_hemisphere_points[i];
@@ -471,7 +471,7 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       float4x4 world_from_local = rotation * scale;
       world_from_local[3] = {pyramid.position, 1.0f};
 
-      std::array<float3, 64> verticesWS;
+      std::array<float3, 5> verticesWS;
 
       for (std::size_t i = 0; i < block_pyramid_points.size(); ++i) {
          verticesWS[i] = world_from_local * block_pyramid_points[i];
