@@ -1929,6 +1929,14 @@ void world_edit::place_creation_entity() noexcept
 
          return;
       }
+      else if (_world.blocks.terrain_cut_boxes.size() +
+                  group.blocks.terrain_cut_boxes.size() >
+               world::max_blocks) {
+         report_limit_reached("Max blocks (terrain cut boxes, {}) Reached",
+                              world::max_blocks);
+
+         return;
+      }
 
       const uint32 object_base_index = static_cast<uint32>(_world.objects.size());
       const uint32 path_base_index = static_cast<uint32>(_world.paths.size());
@@ -2336,6 +2344,29 @@ void world_edit::place_creation_entity() noexcept
                                          _world.blocks.next_id.pyramids.aquire()),
                    _edit_context,
                    {.transparent = std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::block_description_terrain_cut_box& terrain_cut_box :
+           group.blocks.terrain_cut_boxes) {
+         world::block_description_terrain_cut_box new_terrain_cut_box = terrain_cut_box;
+
+         new_terrain_cut_box.rotation = group.rotation * new_terrain_cut_box.rotation;
+         new_terrain_cut_box.position =
+            group.rotation * new_terrain_cut_box.position + group.position;
+
+         for (uint8& material : new_terrain_cut_box.surface_materials) {
+            if (block_material_remap[material]) {
+               material = *block_material_remap[material];
+            }
+            else {
+               material = 0;
+            }
+         }
+
+         _edit_stack_world.apply(
+            edits::make_add_block(new_terrain_cut_box, group.layer,
+                                  _world.blocks.next_id.terrain_cut_boxes.aquire()),
+            _edit_context, {.transparent = std::exchange(is_transparent_edit, true)});
       }
 
       for (uint32 object_index = object_base_index;
@@ -3026,6 +3057,14 @@ void world_edit::align_selection(const float alignment) noexcept
                                                         align_position(pyramid.position),
                                                         pyramid.size));
             } break;
+            case world::block_type::terrain_cut_box: {
+               const world::block_description_terrain_cut_box& terrain_cut_box =
+                  _world.blocks.terrain_cut_boxes.description[*block_index];
+
+               bundle.push_back(edits::make_set_block_terrain_cut_box_metrics(
+                  *block_index, terrain_cut_box.rotation,
+                  align_position(terrain_cut_box.position), terrain_cut_box.size));
+            } break;
             }
          }
 
@@ -3433,6 +3472,14 @@ void world_edit::ground_selection() noexcept
                                                            *grounded_position,
                                                            pyramid.size));
                } break;
+               case world::block_type::terrain_cut_box: {
+                  const world::block_description_terrain_cut_box& terrain_cut_box =
+                     _world.blocks.terrain_cut_boxes.description[*block_index];
+
+                  bundle.push_back(edits::make_set_block_terrain_cut_box_metrics(
+                     *block_index, terrain_cut_box.rotation, *grounded_position,
+                     terrain_cut_box.size));
+               } break;
                }
             }
          }
@@ -3737,6 +3784,7 @@ void world_edit::unhide_all() noexcept
    unhide_blocks(_world.blocks.custom.hidden);
    unhide_blocks(_world.blocks.hemispheres.hidden);
    unhide_blocks(_world.blocks.pyramids.hidden);
+   unhide_blocks(_world.blocks.terrain_cut_boxes.hidden);
 
    if (bundle.size() == 1) {
       _edit_stack_world.apply(std::move(bundle.back()), _edit_context,

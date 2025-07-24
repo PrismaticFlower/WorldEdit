@@ -87,17 +87,18 @@ auto block_type_name(draw_block_type type) noexcept -> const char*
 
    // clang-format off
    switch (type) {
-   case draw_block_type::box:         return "Box";
-   case draw_block_type::ramp:        return "Ramp";
-   case draw_block_type::quad:        return "Quadrilateral";
-   case draw_block_type::cylinder:    return "Cylinder";
-   case draw_block_type::stairway:    return "Stairs";
-   case draw_block_type::cone:        return "Cone";
-   case draw_block_type::hemisphere:  return "Hemisphere";
-   case draw_block_type::pyramid:     return "Pyramid";
-   case draw_block_type::ring:        return "Ring";
-   case draw_block_type::beveled_box: return "Beveled Box";
-   case draw_block_type::curve:       return "Curve";
+   case draw_block_type::box:             return "Box";
+   case draw_block_type::ramp:            return "Ramp";
+   case draw_block_type::quad:            return "Quadrilateral";
+   case draw_block_type::cylinder:        return "Cylinder";
+   case draw_block_type::stairway:        return "Stairs";
+   case draw_block_type::cone:            return "Cone";
+   case draw_block_type::hemisphere:      return "Hemisphere";
+   case draw_block_type::pyramid:         return "Pyramid";
+   case draw_block_type::ring:            return "Ring";
+   case draw_block_type::beveled_box:     return "Beveled Box";
+   case draw_block_type::curve:           return "Curve";
+   case draw_block_type::terrain_cut_box: return "Terrain Cutter (Box)";
    }
    // clang-format on
 
@@ -137,6 +138,7 @@ void world_edit::ui_show_block_editor() noexcept
                  draw_block_type::ring,
                  draw_block_type::beveled_box,
                  draw_block_type::curve,
+                 draw_block_type::terrain_cut_box,
               }) {
 
             if (ImGui::Selectable(block_type_name(type),
@@ -821,6 +823,11 @@ void world_edit::ui_show_block_editor() noexcept
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
+      if (ImGui::MenuItem("Draw Terrain Cutter (Box)")) {
+         _block_editor_config.draw_type = draw_block_type::terrain_cut_box;
+         _block_editor_context = {.activate_tool = block_edit_tool::draw};
+      }
+
       ImGui::EndPopup();
    }
 
@@ -1247,6 +1254,12 @@ void world_edit::ui_show_block_editor() noexcept
                _block_editor_context.draw_block.height_plane = std::nullopt;
                _block_editor_context.draw_block.curve.p0 = cursor_positionWS;
                _block_editor_context.draw_block.step = draw_block_step::curve_p3;
+            } break;
+            case draw_block_type::terrain_cut_box: {
+               _block_editor_context.draw_block.terrain_cut_box.start =
+                  cursor_positionWS;
+               _block_editor_context.draw_block.step =
+                  draw_block_step::terrain_cut_box_depth;
             } break;
             }
          }
@@ -2959,6 +2972,203 @@ void world_edit::ui_show_block_editor() noexcept
          }
 
       } break;
+      case draw_block_step::terrain_cut_box_depth: {
+         _tool_visualizers.add_line_overlay(
+            _block_editor_context.draw_block.terrain_cut_box.start,
+            {cursor_positionWS.x,
+             _block_editor_context.draw_block.terrain_cut_box.start.y,
+             cursor_positionWS.z},
+            line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            _block_editor_context.draw_block.terrain_cut_box.depth_x =
+               cursor_positionWS.x;
+            _block_editor_context.draw_block.terrain_cut_box.depth_z =
+               cursor_positionWS.z;
+            _block_editor_context.draw_block.step =
+               draw_block_step::terrain_cut_box_width;
+         }
+
+      } break;
+      case draw_block_step::terrain_cut_box_width: {
+         const float3 draw_block_start =
+            _block_editor_context.draw_block.terrain_cut_box.start;
+         const float3 draw_block_depth =
+            {_block_editor_context.draw_block.terrain_cut_box.depth_x,
+             draw_block_start.y,
+             _block_editor_context.draw_block.terrain_cut_box.depth_z};
+
+         const float3 cursor_direction =
+            normalize(cursor_positionWS - draw_block_depth);
+
+         const float3 extend_normal =
+            normalize(float3{draw_block_depth.z, 0.0f, draw_block_depth.x} -
+                      float3{draw_block_start.z, 0.0f, draw_block_start.x}) *
+            float3{-1.0, 0.0f, 1.0};
+
+         float rotation_angle = std::atan2(draw_block_start.x - draw_block_depth.x,
+                                           draw_block_start.z - draw_block_depth.z);
+
+         if (draw_block_start.z - draw_block_depth.z < 0.0f) {
+            rotation_angle += std::numbers::pi_v<float>;
+         }
+
+         const quaternion rotation =
+            make_quat_from_euler({0.0f, rotation_angle, 0.0f});
+         const quaternion inv_rotation = conjugate(rotation);
+
+         const float normal_sign =
+            dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
+
+         const float cursor_distance =
+            std::fabs((inv_rotation * draw_block_depth).x -
+                      (inv_rotation * cursor_positionWS).x);
+
+         const float3 draw_block_width =
+            draw_block_depth + extend_normal * cursor_distance * normal_sign;
+
+         _tool_visualizers.add_line_overlay(draw_block_start, draw_block_depth,
+                                            line_color);
+         _tool_visualizers.add_line_overlay(draw_block_depth, draw_block_width,
+                                            line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            const world::block_terrain_cut_box_id id =
+               _world.blocks.next_id.terrain_cut_boxes.aquire();
+
+            _block_editor_context.draw_block.height_plane = std::nullopt;
+            _block_editor_context.draw_block.terrain_cut_box.width_x =
+               draw_block_width.x;
+            _block_editor_context.draw_block.terrain_cut_box.width_z =
+               draw_block_width.z;
+            _block_editor_context.draw_block.terrain_cut_box.rotation = rotation;
+            _block_editor_context.draw_block.step =
+               draw_block_step::terrain_cut_box_height;
+            _block_editor_context.draw_block.index =
+               static_cast<uint32>(_world.blocks.terrain_cut_boxes.size());
+            _block_editor_context.draw_block.block_id = id;
+
+            const std::array<float3, 2> cornersWS{draw_block_start, draw_block_width};
+            std::array<float3, 2> cornersLS{};
+
+            for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+               cornersLS[i] = inv_rotation * cornersWS[i];
+            }
+
+            const float3 block_max = max(cornersLS[0], cornersLS[1]);
+            const float3 block_min = min(cornersLS[0], cornersLS[1]);
+
+            const float3 size = float3{std::fabs(block_max.x - block_min.x), 2.0f,
+                                       std::fabs(block_max.z - block_min.z)} /
+                                2.0f;
+
+            const float3 position = (draw_block_start + draw_block_width) / 2.0f;
+
+            if (_world.blocks.custom.size() < world::max_blocks) {
+               _edit_stack_world.apply(edits::make_add_block(
+                                          world::block_description_terrain_cut_box{
+                                             .rotation = rotation,
+                                             .position = position,
+                                             .size = size,
+                                          },
+                                          _block_editor_config.new_block_layer, id),
+                                       _edit_context);
+            }
+            else {
+               MessageBoxA(_window,
+                           fmt::format("Max Terrain Cutter Blocks ({}) Reached",
+                                       world::max_blocks)
+                              .c_str(),
+                           "Limit Reached", MB_OK);
+
+               _block_editor_context.tool = block_edit_tool::none;
+            }
+         }
+      } break;
+      case draw_block_step::terrain_cut_box_height: {
+         const float3 draw_block_start =
+            _block_editor_context.draw_block.terrain_cut_box.start;
+         const float3 draw_block_depth =
+            {_block_editor_context.draw_block.terrain_cut_box.depth_x,
+             draw_block_start.y,
+             _block_editor_context.draw_block.terrain_cut_box.depth_z};
+         const float3 draw_block_width =
+            {_block_editor_context.draw_block.terrain_cut_box.width_x,
+             draw_block_start.y,
+             _block_editor_context.draw_block.terrain_cut_box.width_z};
+
+         const quaternion rotation =
+            _block_editor_context.draw_block.terrain_cut_box.rotation;
+         const quaternion inv_rotation = conjugate(rotation);
+
+         const std::array<float3, 2> cornersWS{draw_block_start, draw_block_width};
+         std::array<float3, 2> cornersLS{};
+
+         for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+            cornersLS[i] = inv_rotation * cornersWS[i];
+         }
+
+         const float3 block_max = max(cornersLS[0], cornersLS[1]);
+         const float3 block_min = min(cornersLS[0], cornersLS[1]);
+
+         const float4 height_plane =
+            make_plane_from_point(draw_block_width,
+                                  normalize(draw_block_width - _camera.position()));
+
+         graphics::camera_ray ray =
+            make_camera_ray(_camera,
+                            {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                            {ImGui::GetMainViewport()->Size.x,
+                             ImGui::GetMainViewport()->Size.y});
+
+         float3 cursor_position = cursor_positionWS;
+
+         if (float hit = 0.0f;
+             intersect_aabb(inv_rotation * ray.origin,
+                            1.0f / (inv_rotation * ray.direction),
+                            {.min = {block_min.x, -FLT_MAX, block_min.z},
+                             .max = {block_max.x, FLT_MAX, block_max.z}},
+                            FLT_MAX, hit) and
+             hit < distance(_camera.position(), cursor_positionWS)) {
+            cursor_position = ray.origin + hit * ray.direction;
+         }
+
+         const float unaligned_terrain_cut_box_height =
+            cursor_position.y - draw_block_start.y;
+         const float terrain_cut_box_height =
+            align ? std::round(unaligned_terrain_cut_box_height / alignment.y) *
+                       alignment.y
+                  : unaligned_terrain_cut_box_height;
+
+         const float3 position = {(draw_block_start.x + draw_block_width.x) / 2.0f,
+                                  draw_block_start.y + (terrain_cut_box_height / 2.0f),
+                                  (draw_block_start.z + draw_block_width.z) / 2.0f};
+         const float3 size =
+            abs(float3{block_max.x - block_min.x, terrain_cut_box_height,
+                       block_max.z - block_min.z}) /
+            2.0f;
+
+         if (const uint32 index = _block_editor_context.draw_block.index;
+             index < _world.blocks.terrain_cut_boxes.size() and
+             _world.blocks.terrain_cut_boxes.ids[index] ==
+                _block_editor_context.draw_block.block_id) {
+            _edit_stack_world.apply(edits::make_set_block_terrain_cut_box_metrics(
+                                       index, rotation, position, size),
+                                    _edit_context, {.transparent = true});
+         }
+
+         _tool_visualizers.add_line_overlay(
+            position - float3{0.0f, terrain_cut_box_height * 0.5f, 0.0f},
+            position + float3{0.0f, terrain_cut_box_height * 0.5f, 0.0f}, line_color);
+
+         if (click) {
+            _block_editor_context.draw_block = {};
+
+            _edit_stack_world.close_last();
+         }
+      } break;
       }
    }
    else if (_block_editor_context.tool == block_edit_tool::rotate_texture) {
@@ -3539,6 +3749,24 @@ void world_edit::ui_show_block_editor() noexcept
                                                                pyramid.rotation,
                                                                positionWS, size),
                          _edit_context);
+            }
+         } break;
+         case world::block_type::terrain_cut_box: {
+            const world::block_description_terrain_cut_box& terrain_cut_box =
+               _world.blocks.terrain_cut_boxes.description[*selected_index];
+
+            float3 size = terrain_cut_box.size;
+            float3 positionWS = terrain_cut_box.position;
+
+            if (_gizmos.gizmo_size({.name = "Resize Block (Terrain Cut Box)",
+                                    .instance = *selected_index,
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation = terrain_cut_box.rotation},
+                                   positionWS, size)) {
+               _edit_stack_world.apply(edits::make_set_block_terrain_cut_box_metrics(
+                                          *selected_index, terrain_cut_box.rotation,
+                                          positionWS, size),
+                                       _edit_context);
             }
          } break;
          }

@@ -210,6 +210,40 @@ bool blocks_pyramids::is_balanced() const noexcept
           bbox.min_x.size() == ids.size();
 }
 
+void blocks_terrain_cut_boxes::reserve(const std::size_t size) noexcept
+{
+   bbox.min_x.reserve(size);
+   bbox.min_y.reserve(size);
+   bbox.min_z.reserve(size);
+   bbox.max_x.reserve(size);
+   bbox.max_y.reserve(size);
+   bbox.max_z.reserve(size);
+   hidden.reserve(size);
+   layer.reserve(size);
+   description.reserve(size);
+   ids.reserve(size);
+}
+
+auto blocks_terrain_cut_boxes::size() const noexcept -> std::size_t
+{
+   assert(is_balanced());
+
+   return bbox.min_x.size();
+}
+
+bool blocks_terrain_cut_boxes::is_balanced() const noexcept
+{
+   return bbox.min_x.size() == bbox.min_y.size() and
+          bbox.min_x.size() == bbox.min_z.size() and
+          bbox.min_x.size() == bbox.max_x.size() and
+          bbox.min_x.size() == bbox.max_y.size() and
+          bbox.min_x.size() == bbox.max_z.size() and
+          bbox.min_x.size() == hidden.size() and
+          bbox.min_x.size() == layer.size() and //
+          bbox.min_x.size() == description.size() and
+          bbox.min_x.size() == ids.size();
+}
+
 bool blocks::empty() const noexcept
 {
    return boxes.size() == 0 and       //
@@ -217,7 +251,8 @@ bool blocks::empty() const noexcept
           quads.size() == 0 and       //
           custom.size() == 0 and      //
           hemispheres.size() == 0 and //
-          pyramids.size() == 0;
+          pyramids.size() == 0 and    //
+          terrain_cut_boxes.size() == 0;
 }
 
 void blocks::untracked_fill_dirty_ranges() noexcept
@@ -246,6 +281,10 @@ void blocks::untracked_fill_dirty_ranges() noexcept
       pyramids.dirty.add({0, static_cast<uint32>(pyramids.size())});
    }
 
+   if (terrain_cut_boxes.size() != 0) {
+      terrain_cut_boxes.dirty.add({0, static_cast<uint32>(terrain_cut_boxes.size())});
+   }
+
    materials_dirty.add({0, static_cast<uint32>(materials.size())});
 }
 
@@ -257,6 +296,7 @@ void blocks::untracked_clear_dirty_ranges() noexcept
    custom.dirty.clear();
    hemispheres.dirty.clear();
    pyramids.dirty.clear();
+   terrain_cut_boxes.dirty.clear();
    materials_dirty.clear();
 }
 
@@ -297,6 +337,11 @@ block_id::block_id(block_hemisphere_id id) noexcept
 
 block_id::block_id(block_pyramid_id id) noexcept
    : id_type{block_type::pyramid}, id{.pyramid = id}
+{
+}
+
+block_id::block_id(block_terrain_cut_box_id id) noexcept
+   : id_type{block_type::terrain_cut_box}, id{.terrain_cut_box = id}
 {
 }
 
@@ -370,6 +415,18 @@ auto block_id::get_pyramid() const noexcept -> block_pyramid_id
    assert(id_type == block_type::pyramid);
 
    return id.pyramid;
+}
+
+bool block_id::is_terrain_cut_box() const noexcept
+{
+   return id_type == block_type::terrain_cut_box;
+}
+
+auto block_id::get_terrain_cut_box() const noexcept -> block_terrain_cut_box_id
+{
+   assert(id_type == block_type::terrain_cut_box);
+
+   return id.terrain_cut_box;
 }
 
 auto block_id::type() const noexcept -> block_type

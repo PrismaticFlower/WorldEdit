@@ -51,6 +51,7 @@ struct entity_group {
 
       std::vector<block_description_hemisphere> hemispheres;
       std::vector<block_description_pyramid> pyramids;
+      std::vector<block_description_terrain_cut_box> terrain_cut_boxes;
 
       std::vector<block_material> materials;
 

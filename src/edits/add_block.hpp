@@ -29,4 +29,8 @@ auto make_add_block(world::block_description_hemisphere hemisphere, int8 layer,
 auto make_add_block(world::block_description_pyramid pyramid, int8 layer,
                     world::block_pyramid_id id)
    -> std::unique_ptr<edit<world::edit_context>>;
+
+auto make_add_block(world::block_description_terrain_cut_box terrain_cut_box, int8 layer,
+                    world::block_terrain_cut_box_id id)
+   -> std::unique_ptr<edit<world::edit_context>>;
 }

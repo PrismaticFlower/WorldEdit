@@ -200,4 +200,12 @@ auto make_add_block(world::block_description_pyramid pyramid, int8 layer,
    return std::make_unique<add_block<&world::blocks::pyramids>>(pyramid, layer, id);
 }
 
+auto make_add_block(world::block_description_terrain_cut_box terrain_cut_box,
+                    int8 layer, world::block_terrain_cut_box_id id)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<add_block<&world::blocks::terrain_cut_boxes>>(terrain_cut_box,
+                                                                         layer, id);
+}
+
 }

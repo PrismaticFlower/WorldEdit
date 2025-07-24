@@ -436,6 +436,47 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
    return std::nullopt;
 }
 
+auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
+             const active_layers active_layers,
+             const blocks_terrain_cut_boxes& boxes, const float max_distance,
+             function_ptr<bool(const block_id id) noexcept> filter) noexcept
+   -> std::optional<raycast_block_result_local>
+{
+   float closest = max_distance;
+   uint32 closest_index = UINT32_MAX;
+
+   for (uint32 box_index = 0; box_index < boxes.size(); ++box_index) {
+      if (not active_layers[boxes.layer[box_index]]) continue;
+      if (boxes.hidden[box_index]) continue;
+
+      const block_description_terrain_cut_box& box = boxes.description[box_index];
+
+      const quaternion local_from_world = conjugate(box.rotation);
+
+      const float3 ray_originLS = local_from_world * (ray_originWS - box.position);
+      const float3 ray_directionLS = normalize(local_from_world * ray_directionWS);
+
+      if (float hit; intersect_aabb(ray_originLS, 1.0f / ray_directionLS,
+                                    {-box.size, box.size}, closest, hit) and
+                     hit >= 0.0f) {
+         if (filter and not filter(boxes.ids[box_index])) continue;
+
+         closest = hit;
+         closest_index = box_index;
+      }
+   }
+
+   if (closest_index != UINT32_MAX) {
+      return raycast_block_result_local{
+         .distance = closest,
+         .index = closest_index,
+         .surface_index = 0,
+      };
+   }
+
+   return std::nullopt;
+}
+
 }
 
 auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
@@ -505,6 +546,16 @@ auto raycast(const float3 ray_originWS, const float3 ray_directionWS,
        hit) {
       closest = hit->distance;
       closest_id = blocks.pyramids.ids[hit->index];
+      closest_index = hit->index;
+      closest_surface_index = hit->surface_index;
+   }
+
+   if (std::optional<raycast_block_result_local> hit =
+          raycast(ray_originWS, ray_directionWS, active_layers,
+                  blocks.terrain_cut_boxes, closest, filter);
+       hit) {
+      closest = hit->distance;
+      closest_id = blocks.terrain_cut_boxes.ids[hit->index];
       closest_index = hit->index;
       closest_surface_index = hit->surface_index;
    }

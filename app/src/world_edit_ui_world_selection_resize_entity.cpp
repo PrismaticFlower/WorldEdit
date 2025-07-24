@@ -791,6 +791,29 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                   }
 
                } break;
+               case world::block_type::terrain_cut_box: {
+                  const world::block_description_terrain_cut_box& terrain_cut_box =
+                     _world.blocks.terrain_cut_boxes.description[*block_index];
+
+                  float3 new_position = terrain_cut_box.position;
+                  float3 new_size = terrain_cut_box.size;
+
+                  if (_gizmos.gizmo_size(
+                         {
+                            .name = "Block Terrain Cut Box Size",
+                            .instance = static_cast<int64>(
+                               _world.blocks.terrain_cut_boxes.ids[*block_index]),
+                            .alignment = _editor_grid_size,
+                            .gizmo_rotation = terrain_cut_box.rotation,
+                         },
+                         new_position, new_size)) {
+                     _edit_stack_world.apply(edits::make_set_block_terrain_cut_box_metrics(
+                                                *block_index, terrain_cut_box.rotation,
+                                                new_position, new_size),
+                                             _edit_context);
+                  }
+
+               } break;
                }
             }
 

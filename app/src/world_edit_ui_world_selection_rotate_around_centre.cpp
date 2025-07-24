@@ -310,6 +310,15 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                         (rotation * (pyramid.position - centre)) + centre,
                         pyramid.size));
                   } break;
+                  case world::block_type::terrain_cut_box: {
+                     const world::block_description_terrain_cut_box& terrain_cut_box =
+                        _world.blocks.terrain_cut_boxes.description[*block_index];
+
+                     bundled_edits.push_back(edits::make_set_block_terrain_cut_box_metrics(
+                        *block_index, rotation * terrain_cut_box.rotation,
+                        (rotation * (terrain_cut_box.position - centre)) + centre,
+                        terrain_cut_box.size));
+                  } break;
                   }
                }
             }

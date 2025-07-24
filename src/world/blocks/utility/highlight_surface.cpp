@@ -132,6 +132,24 @@ void highlight_surface(const blocks& blocks, const block_type type,
       highlight_surface_generic(world_from_object, block_pyramid_triangles,
                                 block_pyramid_vertices, surface_index, visualizers);
    } break;
+   case block_type::terrain_cut_box: {
+      const world::block_description_terrain_cut_box& terrain_cut_box =
+         blocks.terrain_cut_boxes.description[block_index];
+
+      const float4x4 scale = {
+         {terrain_cut_box.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, terrain_cut_box.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, terrain_cut_box.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(terrain_cut_box.rotation);
+
+      float4x4 world_from_object = rotation * scale;
+      world_from_object[3] = {terrain_cut_box.position, 1.0f};
+
+      highlight_surface_generic(world_from_object, block_cube_triangles,
+                                block_cube_vertices, surface_index, visualizers);
+   } break;
    }
 }
 }

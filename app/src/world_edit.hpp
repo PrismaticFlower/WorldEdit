@@ -210,6 +210,7 @@ enum class draw_block_type {
    ring,
    beveled_box,
    curve,
+   terrain_cut_box,
 };
 
 enum class draw_block_step : uint8 {
@@ -242,6 +243,9 @@ enum class draw_block_step : uint8 {
    beveled_box_height,
    curve_p3,
    curve_finalize,
+   terrain_cut_box_depth,
+   terrain_cut_box_width,
+   terrain_cut_box_height,
 };
 
 enum class draw_block_cursor_plane : uint8 { none, x, y, z };
@@ -1152,6 +1156,15 @@ private:
             float3 p2;
             float3 p3;
          } curve;
+
+         struct terrain_cut_box {
+            float3 start;
+            float depth_x = 0.0f;
+            float depth_z = 0.0f;
+            float width_x = 0.0f;
+            float width_z = 0.0f;
+            quaternion rotation;
+         } terrain_cut_box;
 
          uint32 index = 0;
          world::block_id block_id = world::block_id::none;

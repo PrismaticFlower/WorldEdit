@@ -172,6 +172,10 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                   gizmo_rotation =
                      _world.blocks.pyramids.description[*block_index].rotation;
                } break;
+               case world::block_type::terrain_cut_box: {
+                  gizmo_rotation =
+                     _world.blocks.terrain_cut_boxes.description[*block_index].rotation;
+               } break;
                }
             }
          }
@@ -428,6 +432,16 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                         local_space ? pyramid.rotation * rotation
                                     : rotation * pyramid.rotation,
                         pyramid.position, pyramid.size));
+                  } break;
+                  case world::block_type::terrain_cut_box: {
+                     const world::block_description_terrain_cut_box& terrain_cut_box =
+                        _world.blocks.terrain_cut_boxes.description[*block_index];
+
+                     bundled_edits.push_back(edits::make_set_block_terrain_cut_box_metrics(
+                        *block_index,
+                        local_space ? terrain_cut_box.rotation * rotation
+                                    : rotation * terrain_cut_box.rotation,
+                        terrain_cut_box.position, terrain_cut_box.size));
                   } break;
                   }
                }

@@ -141,6 +141,13 @@ auto ground_block(const block_id id, const uint32 block_index,
       return ground_block(pyramid.position, bbox, id, world, object_classes,
                           blocks_bvh_library, active_layers);
    } break;
+   case block_type::terrain_cut_box: {
+      const block_description_terrain_cut_box& terrain_cut_box =
+         world.blocks.terrain_cut_boxes.description[block_index];
+
+      return ground_block(terrain_cut_box.position, bbox, id, world,
+                          object_classes, blocks_bvh_library, active_layers);
+   } break;
    }
 
    std::unreachable();

@@ -23,6 +23,8 @@ bool valid_index(const blocks& blocks, const block_type type,
       return block_index < blocks.hemispheres.size();
    case block_type::pyramid:
       return block_index < blocks.pyramids.size();
+   case block_type::terrain_cut_box:
+      return block_index < blocks.terrain_cut_boxes.size();
    }
 
    std::unreachable();
@@ -46,6 +48,8 @@ auto get_dirty_tracker(blocks& blocks, const block_type type) noexcept
       return blocks.hemispheres.dirty;
    case block_type::pyramid:
       return blocks.pyramids.dirty;
+   case block_type::terrain_cut_box:
+      return blocks.terrain_cut_boxes.dirty;
    }
 
    std::unreachable();
@@ -69,6 +73,8 @@ auto get_block_hidden(blocks& blocks, const block_type type,
       return blocks.hemispheres.hidden[block_index];
    case block_type::pyramid:
       return blocks.pyramids.hidden[block_index];
+   case block_type::terrain_cut_box:
+      return blocks.terrain_cut_boxes.hidden[block_index];
    }
 
    std::unreachable();
@@ -92,6 +98,8 @@ auto get_block_layer(blocks& blocks, const block_type type,
       return blocks.hemispheres.layer[block_index];
    case block_type::pyramid:
       return blocks.pyramids.layer[block_index];
+   case block_type::terrain_cut_box:
+      return blocks.terrain_cut_boxes.layer[block_index];
    }
 
    std::unreachable();
@@ -140,6 +148,12 @@ auto get_block_surface_material(blocks& blocks, const block_type type,
 
       std::array<uint8, 5>& surface_materials =
          blocks.pyramids.description[block_index].surface_materials;
+
+      return surface_materials[surface_index % surface_materials.size()];
+   }
+   case block_type::terrain_cut_box: {
+      std::array<uint8, 1>& surface_materials =
+         blocks.terrain_cut_boxes.description[block_index].surface_materials;
 
       return surface_materials[surface_index % surface_materials.size()];
    }
@@ -192,6 +206,12 @@ auto get_block_surface_texture_mode(blocks& blocks, const block_type type,
 
       return surface_texture_mode[surface_index % surface_texture_mode.size()];
    }
+   case block_type::terrain_cut_box: {
+      std::array<block_texture_mode, 1>& surface_texture_mode =
+         blocks.terrain_cut_boxes.description[block_index].surface_texture_mode;
+
+      return surface_texture_mode[surface_index % surface_texture_mode.size()];
+   }
    }
 
    std::unreachable();
@@ -238,6 +258,12 @@ auto get_block_surface_texture_rotation(blocks& blocks, const block_type type,
    case block_type::pyramid: {
       std::array<block_texture_rotation, 5>& surface_texture_rotation =
          blocks.pyramids.description[block_index].surface_texture_rotation;
+
+      return surface_texture_rotation[surface_index % surface_texture_rotation.size()];
+   }
+   case block_type::terrain_cut_box: {
+      std::array<block_texture_rotation, 1>& surface_texture_rotation =
+         blocks.terrain_cut_boxes.description[block_index].surface_texture_rotation;
 
       return surface_texture_rotation[surface_index % surface_texture_rotation.size()];
    }
@@ -290,6 +316,12 @@ auto get_block_surface_texture_scale(blocks& blocks, const block_type type,
 
       return surface_texture_scale[surface_index % surface_texture_scale.size()];
    }
+   case block_type::terrain_cut_box: {
+      std::array<std::array<int8, 2>, 1>& surface_texture_scale =
+         blocks.terrain_cut_boxes.description[block_index].surface_texture_scale;
+
+      return surface_texture_scale[surface_index % surface_texture_scale.size()];
+   }
    }
 
    std::unreachable();
@@ -336,6 +368,12 @@ auto get_block_surface_texture_offset(blocks& blocks, const block_type type,
    case block_type::pyramid: {
       std::array<std::array<uint16, 2>, 5>& surface_texture_offset =
          blocks.pyramids.description[block_index].surface_texture_offset;
+
+      return surface_texture_offset[surface_index % surface_texture_offset.size()];
+   }
+   case block_type::terrain_cut_box: {
+      std::array<std::array<uint16, 2>, 1>& surface_texture_offset =
+         blocks.terrain_cut_boxes.description[block_index].surface_texture_offset;
 
       return surface_texture_offset[surface_index % surface_texture_offset.size()];
    }

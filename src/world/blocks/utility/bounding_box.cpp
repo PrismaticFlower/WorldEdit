@@ -136,6 +136,13 @@ auto get_bounding_box(const block_description_pyramid& pyramid) noexcept -> math
    return get_bounding_box(pyramid.rotation, pyramid.position, pyramid.size);
 }
 
+auto get_bounding_box(const block_description_terrain_cut_box& terrain_cut_box) noexcept
+   -> math::bounding_box
+{
+   return get_bounding_box(terrain_cut_box.rotation, terrain_cut_box.position,
+                           terrain_cut_box.size);
+}
+
 auto get_bounding_box(const blocks& blocks, const block_type type,
                       const uint32 block_index) noexcept -> math::bounding_box
 {
@@ -157,6 +164,9 @@ auto get_bounding_box(const blocks& blocks, const block_type type,
    } break;
    case world::block_type::pyramid: {
       return get_bounding_box(blocks.pyramids.description[block_index]);
+   } break;
+   case world::block_type::terrain_cut_box: {
+      return get_bounding_box(blocks.terrain_cut_boxes.description[block_index]);
    } break;
    }
 

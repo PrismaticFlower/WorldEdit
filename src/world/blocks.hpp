@@ -135,6 +135,19 @@ struct block_description_pyramid {
    bool operator==(const block_description_pyramid&) const noexcept = default;
 };
 
+struct block_description_terrain_cut_box {
+   quaternion rotation;
+   float3 position;
+   float3 size;
+   std::array<uint8, 1> surface_materials = {};
+   std::array<block_texture_mode, 1> surface_texture_mode = {};
+   std::array<block_texture_rotation, 1> surface_texture_rotation = {};
+   std::array<std::array<int8, 2>, 1> surface_texture_scale = {};
+   std::array<std::array<uint16, 2>, 1> surface_texture_offset = {};
+
+   bool operator==(const block_description_terrain_cut_box&) const noexcept = default;
+};
+
 struct blocks_bbox_soa {
    pinned_vector<float> min_x = blocks_init;
    pinned_vector<float> min_y = blocks_init;
@@ -265,6 +278,27 @@ struct blocks_pyramids {
 
    bool is_balanced() const noexcept;
 };
+
+struct blocks_terrain_cut_boxes {
+   blocks_bbox_soa bbox;
+
+   pinned_vector<bool> hidden = blocks_init;
+
+   pinned_vector<int8> layer = blocks_init;
+
+   pinned_vector<block_description_terrain_cut_box> description = blocks_init;
+
+   pinned_vector<id<block_description_terrain_cut_box>> ids = blocks_init;
+
+   blocks_dirty_range_tracker dirty;
+
+   void reserve(const std::size_t size) noexcept;
+
+   auto size() const noexcept -> std::size_t;
+
+   bool is_balanced() const noexcept;
+};
+
 struct block_material {
    std::string name;
 
@@ -291,6 +325,7 @@ struct blocks {
    blocks_custom custom;
    blocks_hemispheres hemispheres;
    blocks_pyramids pyramids;
+   blocks_terrain_cut_boxes terrain_cut_boxes;
 
    pinned_vector<block_material> materials = get_blank_materials();
    blocks_dirty_range_tracker materials_dirty;
@@ -304,6 +339,7 @@ struct blocks {
       id_generator<block_description_custom> custom;
       id_generator<block_description_hemisphere> hemispheres;
       id_generator<block_description_pyramid> pyramids;
+      id_generator<block_description_terrain_cut_box> terrain_cut_boxes;
    } next_id;
 
    bool empty() const noexcept;
@@ -321,6 +357,7 @@ using block_quad_id = id<block_description_quad>;
 using block_custom_id = id<block_description_custom>;
 using block_hemisphere_id = id<block_description_hemisphere>;
 using block_pyramid_id = id<block_description_pyramid>;
+using block_terrain_cut_box_id = id<block_description_terrain_cut_box>;
 
 enum class block_type {
    box,
@@ -329,6 +366,7 @@ enum class block_type {
    custom,
    hemisphere,
    pyramid,
+   terrain_cut_box,
 };
 
 struct block_id {
@@ -345,6 +383,8 @@ struct block_id {
    block_id(block_hemisphere_id id) noexcept;
 
    block_id(block_pyramid_id id) noexcept;
+
+   block_id(block_terrain_cut_box_id id) noexcept;
 
    bool is_box() const noexcept;
 
@@ -370,6 +410,10 @@ struct block_id {
 
    auto get_pyramid() const noexcept -> block_pyramid_id;
 
+   bool is_terrain_cut_box() const noexcept;
+
+   auto get_terrain_cut_box() const noexcept -> block_terrain_cut_box_id;
+
    auto type() const noexcept -> block_type;
 
    bool operator==(const block_id& other) const noexcept;
@@ -387,6 +431,7 @@ private:
       block_custom_id custom;
       block_hemisphere_id hemisphere;
       block_pyramid_id pyramid;
+      block_terrain_cut_box_id terrain_cut_box;
    } id;
 };
 

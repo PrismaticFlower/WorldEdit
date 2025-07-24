@@ -1672,6 +1672,21 @@ auto blocks::get_block_mesh(const world::block_type type) const noexcept -> mesh
             },
          .index_count = sizeof(blocks_ia_buffer::pyramid_indices) / 2,
       };
+   case world::block_type::terrain_cut_box:
+      return {
+         .index_buffer_view =
+            {
+               .buffer_location = ia_address + offsetof(blocks_ia_buffer, cube_indices),
+               .size_in_bytes = sizeof(blocks_ia_buffer::cube_indices),
+            },
+         .vertex_buffer_view =
+            {
+               .buffer_location = ia_address + offsetof(blocks_ia_buffer, cube_vertices),
+               .size_in_bytes = sizeof(blocks_ia_buffer::cube_vertices),
+               .stride_in_bytes = sizeof(world::block_vertex),
+            },
+         .index_count = sizeof(blocks_ia_buffer::cube_indices) / 2,
+      };
    }
 
    std::unreachable();

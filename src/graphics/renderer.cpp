@@ -191,6 +191,11 @@ private:
 
    void build_world_mesh_render_list(const frustum& view_frustum);
 
+   void add_block_terrain_cuts(gpu::copy_command_list& command_list,
+                               const world::world& world,
+                               const world::active_layers active_layers,
+                               const world::creation_entity* const creation_entity);
+
    void clear_depth_minmax(gpu::copy_command_list& command_list);
 
    void reduce_depth_minmax(gpu::graphics_command_list& command_list);
@@ -408,6 +413,11 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
       else {
          _world_mesh_list.clear();
          _terrain_cut_list.clear();
+      }
+
+      if (active_entity_types.blocks) {
+         add_block_terrain_cuts(_pre_render_command_list, world, active_layers,
+                                &interaction_targets.creation_entity);
       }
 
       update_frame_constant_buffer(camera, viewport, true, frame_options.delta_time,
@@ -2476,6 +2486,52 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
+   if (active_entity_types.blocks and not settings.visualize_terrain_cutters) {
+      for (std::size_t i = 0; i < world.blocks.terrain_cut_boxes.size(); ++i) {
+         if (not active_layers[world.blocks.terrain_cut_boxes.layer[i]] or
+             world.blocks.terrain_cut_boxes.hidden[i]) {
+            continue;
+         }
+
+         const world::block_description_terrain_cut_box& box =
+            world.blocks.terrain_cut_boxes.description[i];
+
+         const float4x4 scale = {
+            {box.size.x, 0.0f, 0.0f, 0.0f},
+            {0.0f, box.size.y, 0.0f, 0.0f},
+            {0.0f, 0.0f, box.size.z, 0.0f},
+            {0.0f, 0.0f, 0.0f, 1.0f},
+         };
+         const float4x4 rotation = to_matrix(box.rotation);
+         float4x4 world_from_local = rotation * scale;
+         world_from_local[3] = {box.position, 1.0f};
+
+         _meta_draw_batcher.add_box_wireframe(world_from_local,
+                                              settings.terrain_cutter_color);
+      }
+
+      if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         const world::entity_group& group =
+            interaction_targets.creation_entity.get<world::entity_group>();
+
+         for (const world::block_description_terrain_cut_box& box :
+              group.blocks.terrain_cut_boxes) {
+            const float4x4 scale = {
+               {box.size.x, 0.0f, 0.0f, 0.0f},
+               {0.0f, box.size.y, 0.0f, 0.0f},
+               {0.0f, 0.0f, box.size.z, 0.0f},
+               {0.0f, 0.0f, 0.0f, 1.0f},
+            };
+            const float4x4 rotation = to_matrix(box.rotation);
+            float4x4 world_from_local = rotation * scale;
+            world_from_local[3] = {box.position, 1.0f};
+
+            _meta_draw_batcher.add_box_wireframe(world_from_local,
+                                                 settings.terrain_cutter_color);
+         }
+      }
+   }
+
    for (const auto& line : tool_visualizers.lines_overlay()) {
       _meta_draw_batcher.add_line_overlay(line.v0, line.v0_color, line.v1, line.v1_color);
    }
@@ -3510,6 +3566,20 @@ void renderer_impl::draw_interaction_targets(
 
                _meta_draw_batcher.add_pyramid_wireframe(transform, color);
             } break;
+            case world::block_type::terrain_cut_box: {
+
+               const world::block_description_terrain_cut_box& block =
+                  world.blocks.terrain_cut_boxes.description[*block_index];
+
+               float4x4 transform = to_matrix(block.rotation) *
+                                    float4x4{{block.size.x, 0.0f, 0.0f, 0.0f},
+                                             {0.0f, block.size.y, 0.0f, 0.0f},
+                                             {0.0f, 0.0f, block.size.z, 0.0f},
+                                             {0.0f, 0.0f, 0.0f, 1.0f}};
+               transform[3] = {block.position, 1.0f};
+
+               _meta_draw_batcher.add_box_wireframe(transform, color);
+            } break;
             }
          }
 
@@ -4112,6 +4182,82 @@ void renderer_impl::build_world_mesh_render_list(const frustum& view_frustum)
                        dot(view_frustum.planes[frustum_planes::near_],
                            float4{_world_mesh_list.transparent.position[r], 1.0f});
              });
+}
+
+void renderer_impl::add_block_terrain_cuts(gpu::copy_command_list& command_list,
+                                           const world::world& world,
+                                           const world::active_layers active_layers,
+                                           const world::creation_entity* const creation_entity)
+{
+   const blocks::mesh mesh = _blocks.get_block_mesh(world::block_type::box);
+
+   (void)command_list;
+
+   for (std::size_t i = 0; i < world.blocks.terrain_cut_boxes.size(); ++i) {
+      if (not active_layers[world.blocks.terrain_cut_boxes.layer[i]]) continue;
+      if (world.blocks.terrain_cut_boxes.hidden[i]) continue;
+
+      const world::block_description_terrain_cut_box& box =
+         world.blocks.terrain_cut_boxes.description[i];
+
+      const float4x4 scale = {
+         {box.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, box.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, box.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(box.rotation);
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {box.position, 1.0f};
+
+      _terrain_cut_list.push_back(terrain_cut{
+         .bbox =
+            {
+               .min = {world.blocks.terrain_cut_boxes.bbox.min_x[i],
+                       world.blocks.terrain_cut_boxes.bbox.min_y[i],
+                       world.blocks.terrain_cut_boxes.bbox.min_z[i]},
+               .max = {world.blocks.terrain_cut_boxes.bbox.max_x[i],
+                       world.blocks.terrain_cut_boxes.bbox.max_y[i],
+                       world.blocks.terrain_cut_boxes.bbox.max_z[i]},
+            },
+
+         .constant_buffer = _dynamic_buffer_allocator
+                               .allocate_and_copy(world_mesh_constants{world_from_local})
+                               .gpu_address,
+         .index_buffer_view = mesh.index_buffer_view,
+         .position_vertex_buffer_view = mesh.vertex_buffer_view,
+         .index_count = mesh.index_count,
+      });
+   }
+
+   if (creation_entity and creation_entity->is<world::entity_group>()) {
+      const world::entity_group& group = creation_entity->get<world::entity_group>();
+
+      for (std::size_t i = 0; i < group.blocks.terrain_cut_boxes.size(); ++i) {
+         const world::block_description_terrain_cut_box& box =
+            group.blocks.terrain_cut_boxes[i];
+
+         const float4x4 scale = {
+            {box.size.x, 0.0f, 0.0f, 0.0f},
+            {0.0f, box.size.y, 0.0f, 0.0f},
+            {0.0f, 0.0f, box.size.z, 0.0f},
+            {0.0f, 0.0f, 0.0f, 1.0f},
+         };
+         const float4x4 rotation = to_matrix(box.rotation);
+         float4x4 world_from_local = rotation * scale;
+         world_from_local[3] = {box.position, 1.0f};
+
+         _terrain_cut_list.push_back(terrain_cut{
+            .bbox = world::get_bounding_box(box),
+
+            .constant_buffer =
+               _dynamic_buffer_allocator.allocate_and_copy(world_from_local).gpu_address,
+            .index_buffer_view = mesh.index_buffer_view,
+            .position_vertex_buffer_view = mesh.vertex_buffer_view,
+            .index_count = mesh.index_count,
+         });
+      }
+   }
 }
 
 void renderer_impl::clear_depth_minmax(gpu::copy_command_list& command_list)

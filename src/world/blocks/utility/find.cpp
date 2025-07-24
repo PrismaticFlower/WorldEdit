@@ -41,6 +41,8 @@ auto find_block(const blocks& blocks, const block_id id) -> std::optional<uint32
       return find_block_impl(blocks.hemispheres.ids, id.get_hemisphere());
    case block_type::pyramid:
       return find_block_impl(blocks.pyramids.ids, id.get_pyramid());
+   case block_type::terrain_cut_box:
+      return find_block_impl(blocks.terrain_cut_boxes.ids, id.get_terrain_cut_box());
    }
 
    std::unreachable();

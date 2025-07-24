@@ -187,6 +187,8 @@ auto make_delete_block(world::block_type type, uint32 index)
       return std::make_unique<delete_block<&world::blocks::hemispheres>>(index);
    case world::block_type::pyramid:
       return std::make_unique<delete_block<&world::blocks::pyramids>>(index);
+   case world::block_type::terrain_cut_box:
+      return std::make_unique<delete_block<&world::blocks::terrain_cut_boxes>>(index);
    }
 
    std::unreachable();

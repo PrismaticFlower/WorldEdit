@@ -504,6 +504,90 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
    }
 
+   for (uint32 terrain_cut_box_index = 0;
+        terrain_cut_box_index < blocks.terrain_cut_boxes.size();
+        ++terrain_cut_box_index) {
+      if (not config.active_layers[blocks.terrain_cut_boxes.layer[terrain_cut_box_index]])
+         continue;
+      if (blocks.terrain_cut_boxes.hidden[terrain_cut_box_index]) continue;
+      if (blocks.terrain_cut_boxes.ids[terrain_cut_box_index] == config.filter_id)
+         continue;
+
+      const math::bounding_box bboxWS = {
+         .min =
+            {
+               blocks.terrain_cut_boxes.bbox.min_x[terrain_cut_box_index],
+               blocks.terrain_cut_boxes.bbox.min_y[terrain_cut_box_index],
+               blocks.terrain_cut_boxes.bbox.min_z[terrain_cut_box_index],
+            },
+
+         .max =
+            {
+               blocks.terrain_cut_boxes.bbox.max_x[terrain_cut_box_index],
+               blocks.terrain_cut_boxes.bbox.max_y[terrain_cut_box_index],
+               blocks.terrain_cut_boxes.bbox.max_z[terrain_cut_box_index],
+            },
+      };
+
+      const float3 terrain_cut_box_centreLS = (bboxWS.min + bboxWS.max) * 0.5f;
+      const float3 terrain_cut_box_size = (bboxWS.max - bboxWS.min) * 0.5f;
+
+      const float3 positionAS = positionWS - terrain_cut_box_centreLS;
+      const float3 distances = abs(positionAS) - terrain_cut_box_size;
+
+      const float terrain_cut_box_distance =
+         length(max(distances, float3{0.0f, 0.0f, 0.0f})) +
+         std::min(std::max(std::max(distances.x, distances.y), distances.z), 0.0f);
+
+      if (terrain_cut_box_distance > config.snap_radius) continue;
+
+      const block_description_terrain_cut_box& terrain_cut_box =
+         blocks.terrain_cut_boxes.description[terrain_cut_box_index];
+
+      const float4x4 scale = {
+         {terrain_cut_box.size.x, 0.0f, 0.0f, 0.0f},
+         {0.0f, terrain_cut_box.size.y, 0.0f, 0.0f},
+         {0.0f, 0.0f, terrain_cut_box.size.z, 0.0f},
+         {0.0f, 0.0f, 0.0f, 1.0f},
+      };
+      const float4x4 rotation = to_matrix(terrain_cut_box.rotation);
+
+      float4x4 world_from_local = rotation * scale;
+      world_from_local[3] = {terrain_cut_box.position, 1.0f};
+
+      std::array<float3, 8> verticesWS;
+
+      for (std::size_t i = 0; i < block_cube_points.size(); ++i) {
+         verticesWS[i] = world_from_local * block_cube_points[i];
+      }
+
+      for (const float3& vertex_positionWS : verticesWS) {
+         const float corner_distance = distance(positionWS, vertex_positionWS);
+
+         if (corner_distance < closest_distance) {
+            closest_pointWS = vertex_positionWS;
+            closest_distance = corner_distance;
+         }
+
+         draw_point(visualizers, vertex_positionWS, colors.corner);
+      }
+
+      for (const auto& [i0, i1] : block_cube_edges) {
+         for (int i = 1; i < edge_point_count; ++i) {
+            const float3 pointWS =
+               lerp(verticesWS[i0], verticesWS[i1], i / flt_edge_point_count);
+            const float point_distance = distance(positionWS, pointWS);
+
+            if (point_distance < closest_distance) {
+               closest_pointWS = pointWS;
+               closest_distance = point_distance;
+            }
+
+            draw_point(visualizers, pointWS, colors.edge);
+         }
+      }
+   }
+
    float3 new_positionWS;
 
    if (closest_distance > 0.0f and closest_distance <= config.snap_radius) {
