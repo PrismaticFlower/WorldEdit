@@ -212,11 +212,12 @@ bool blocks_pyramids::is_balanced() const noexcept
 
 bool blocks::empty() const noexcept
 {
-   return boxes.size() == 0 and  //
-          ramps.size() == 0 and  //
-          quads.size() == 0 and  //
-          custom.size() == 0 and //
-          hemispheres.size() == 0;
+   return boxes.size() == 0 and       //
+          ramps.size() == 0 and       //
+          quads.size() == 0 and       //
+          custom.size() == 0 and      //
+          hemispheres.size() == 0 and //
+          pyramids.size() == 0;
 }
 
 void blocks::untracked_fill_dirty_ranges() noexcept
