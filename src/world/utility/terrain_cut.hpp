@@ -9,8 +9,7 @@
 namespace we::world {
 
 bool point_inside_terrain_cut(const float3 point, const float3 ray_direction,
-                              const active_layers active_layers,
-                              std::span<const object> objects,
+                              const active_layers active_layers, const world& world,
                               const object_class_library& object_classes) noexcept;
 
 auto gather_terrain_cuts(const world& world, const object_class_library& object_classes)

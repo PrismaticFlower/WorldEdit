@@ -174,8 +174,7 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                if (not raycast_mask.objects or
                    not world::point_inside_terrain_cut(ray.origin + ray.direction * *hit,
                                                        ray.direction, _world_layers_hit_mask,
-                                                       _world.objects,
-                                                       _object_classes)) {
+                                                       _world, _object_classes)) {
                   _interaction_targets.hovered_entity = std::nullopt;
                   cursor_distance = *hit;
                }

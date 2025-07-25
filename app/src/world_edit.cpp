@@ -551,10 +551,9 @@ void world_edit::update_hovered_entity() noexcept
    if (raycast_mask.terrain and _world.terrain.active_flags.terrain) {
       if (auto hit = world::raycast(ray.origin, ray.direction, _world.terrain); hit) {
          if (*hit < hovered_entity_distance or *hit < cursor_distance) {
-            if (not raycast_mask.objects or
-                not world::point_inside_terrain_cut(ray.origin + ray.direction * *hit,
+            if (not world::point_inside_terrain_cut(ray.origin + ray.direction * *hit,
                                                     ray.direction, _world_layers_hit_mask,
-                                                    _world.objects, _object_classes)) {
+                                                    _world, _object_classes)) {
                if (*hit < hovered_entity_distance) {
                   _interaction_targets.hovered_entity = std::nullopt;
                   hovered_entity_distance = *hit;

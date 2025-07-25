@@ -12,13 +12,12 @@
 namespace we::world {
 
 bool point_inside_terrain_cut(const float3 point, const float3 ray_direction,
-                              const active_layers active_layers,
-                              std::span<const object> objects,
+                              const active_layers active_layers, const world& world,
                               const object_class_library& object_classes) noexcept
 {
    using namespace assets;
 
-   for (auto& object : objects) {
+   for (const object& object : world.objects) {
       if (not active_layers[object.layer]) continue;
       if (object.hidden) continue;
 
@@ -26,10 +25,10 @@ bool point_inside_terrain_cut(const float3 point, const float3 ray_direction,
 
       if (model.terrain_cuts.empty()) continue;
 
-      const quaternion inverse_rotation = conjugate(object.rotation);
+      const quaternion object_from_world = conjugate(object.rotation);
 
-      const float3 pointOS = inverse_rotation * (point - object.position);
-      const float3 ray_directionOS = inverse_rotation * ray_direction;
+      const float3 pointOS = object_from_world * (point - object.position);
+      const float3 ray_directionOS = object_from_world * ray_direction;
 
       const float3 box_centre =
          (model.terrain_cuts_bounding_box.min + model.terrain_cuts_bounding_box.max) * 0.5f;
@@ -45,6 +44,16 @@ bool point_inside_terrain_cut(const float3 point, const float3 ray_direction,
          model.terrain_cut_bvh.count_intersections(pointOS, ray_directionOS);
 
       if ((intersections % 2) == 1) {
+         return true;
+      }
+   }
+
+   for (const block_description_terrain_cut_box& box :
+        world.blocks.terrain_cut_boxes.description) {
+      const quaternion local_from_world = conjugate(box.rotation);
+      const float3 pointLS = local_from_world * (point - box.position);
+
+      if (length(max(abs(pointLS) - box.size, float3{0.0f, 0.0f, 0.0f})) == 0.0f) {
          return true;
       }
    }
