@@ -60,17 +60,16 @@ auto gather_terrain_cuts(const world& world, const object_class_library& object_
    std::vector<terrain_cut> terrain_cuts;
    terrain_cuts.reserve(128);
 
-   for (auto& object : world.objects) {
+   for (const object& object : world.objects) {
       const msh::flat_model& model = *object_classes[object.class_handle].model;
 
       if (model.terrain_cuts.empty()) continue;
 
-      float4x4 transform = to_matrix(normalize(object.rotation));
-      transform[3] = {object.position, 1.0f};
+      float4x4 world_from_object_ti = to_matrix(normalize(object.rotation));
+      world_from_object_ti[3] = {object.position, 1.0f};
+      world_from_object_ti = transpose(inverse(world_from_object_ti));
 
-      transform = transpose(inverse(transform));
-
-      for (auto& cut : model.terrain_cuts) {
+      for (const msh::flat_model_terrain_cut& cut : model.terrain_cuts) {
          math::bounding_box bbox = {.min =
                                        float3{std::numeric_limits<float>::max(),
                                               std::numeric_limits<float>::max(),
@@ -80,18 +79,18 @@ auto gather_terrain_cuts(const world& world, const object_class_library& object_
                                               std::numeric_limits<float>::lowest(),
                                               std::numeric_limits<float>::lowest()}};
 
-         for (const auto& pos : cut.positions) {
+         for (const float3& pos : cut.positions) {
             bbox = math::integrate(bbox, object.rotation * pos + object.position);
          }
 
          std::vector<float4> planes = cut.planes;
 
          for (float4& plane : planes) {
-            const float4 new_plane = transform * plane;
-            const float3 normal =
-               normalize(float3{new_plane.x, new_plane.y, new_plane.z});
+            const float4 new_planeWS = world_from_object_ti * plane;
+            const float3 normalWS =
+               normalize(float3{new_planeWS.x, new_planeWS.y, new_planeWS.z});
 
-            plane = float4{normal, new_plane.w};
+            plane = float4{normalWS, new_planeWS.w};
          }
 
          terrain_cuts.emplace_back(bbox, std::move(planes));
