@@ -1,7 +1,12 @@
 #include "terrain_cut.hpp"
+
+#include "../blocks/mesh_geometry.hpp"
 #include "../object_class.hpp"
+
 #include "assets/msh/flat_model.hpp"
+
 #include "math/iq_intersectors.hpp"
+#include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 
 namespace we::world {
@@ -47,8 +52,7 @@ bool point_inside_terrain_cut(const float3 point, const float3 ray_direction,
    return false;
 }
 
-auto gather_terrain_cuts(std::span<const object> objects,
-                         const object_class_library& object_classes)
+auto gather_terrain_cuts(const world& world, const object_class_library& object_classes)
    -> std::vector<terrain_cut>
 {
    using namespace assets;
@@ -56,7 +60,7 @@ auto gather_terrain_cuts(std::span<const object> objects,
    std::vector<terrain_cut> terrain_cuts;
    terrain_cuts.reserve(128);
 
-   for (auto& object : objects) {
+   for (auto& object : world.objects) {
       const msh::flat_model& model = *object_classes[object.class_handle].model;
 
       if (model.terrain_cuts.empty()) continue;
@@ -92,6 +96,39 @@ auto gather_terrain_cuts(std::span<const object> objects,
 
          terrain_cuts.emplace_back(bbox, std::move(planes));
       }
+   }
+
+   for (std::size_t i = 0; i < world.blocks.terrain_cut_boxes.size(); ++i) {
+      const block_description_terrain_cut_box& box =
+         world.blocks.terrain_cut_boxes.description[i];
+
+      const math::bounding_box bbox =
+         {.min = float3{world.blocks.terrain_cut_boxes.bbox.min_x[i],
+                        world.blocks.terrain_cut_boxes.bbox.min_y[i],
+                        world.blocks.terrain_cut_boxes.bbox.min_z[i]},
+          .max = float3{world.blocks.terrain_cut_boxes.bbox.max_x[i],
+                        world.blocks.terrain_cut_boxes.bbox.max_y[i],
+                        world.blocks.terrain_cut_boxes.bbox.max_z[i]}};
+
+      float4x4 world_from_local_ti = to_matrix(box.rotation);
+      world_from_local_ti[3] = {box.position, 1.0f};
+      world_from_local_ti = transpose(inverse(world_from_local_ti));
+
+      std::vector<float4> planes = {
+         {1.0f, 0.0f, 0.0f, -box.size.x}, {-1.0f, 0.0f, 0.0f, -box.size.x},
+         {0.0f, 1.0f, 0.0f, -box.size.y}, {0.0f, -1.0f, 0.0f, -box.size.y},
+         {0.0f, 0.0f, 1.0f, -box.size.z}, {0.0f, 0.0f, -1.0f, -box.size.z},
+      };
+
+      for (float4& plane : planes) {
+         const float4 plane_unormWS = world_from_local_ti * plane;
+         const float3 normalWS =
+            normalize(float3{plane_unormWS.x, plane_unormWS.y, plane_unormWS.z});
+
+         plane = float4{normalWS, plane_unormWS.w};
+      }
+
+      terrain_cuts.emplace_back(bbox, std::move(planes));
    }
 
    return terrain_cuts;

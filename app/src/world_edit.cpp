@@ -3949,8 +3949,7 @@ void world_edit::save_world(const io::path& path) noexcept
           .save_effects = not _settings.preferences.dont_save_world_effects};
 
       world::save_world(path, _world,
-                        world::gather_terrain_cuts(_world.objects, _object_classes),
-                        flags);
+                        world::gather_terrain_cuts(_world, _object_classes), flags);
 
       _edit_stack_world.clear_modified_flag();
    }
