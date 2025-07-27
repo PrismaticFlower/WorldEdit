@@ -268,7 +268,7 @@ output_vertex main_quad(uint invocation_id : SV_VertexID)
    output.positionWS = positionWS;
    output.normalWS = normalWS;
    output.texcoords = texcoords;
-   output.material_index = 0;
+   output.material_index = surface.material_index;
    output.positionPS = positionPS;
 
    return output;
