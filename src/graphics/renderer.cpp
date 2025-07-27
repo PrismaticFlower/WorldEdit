@@ -2514,6 +2514,9 @@ void renderer_impl::draw_world_meta_objects(
          const world::entity_group& group =
             interaction_targets.creation_entity.get<world::entity_group>();
 
+         float4x4 world_from_group = to_matrix(group.rotation);
+         world_from_group[3] = {group.position, 1.0f};
+
          for (const world::block_description_terrain_cut_box& box :
               group.blocks.terrain_cut_boxes) {
             const float4x4 scale = {
@@ -2523,8 +2526,10 @@ void renderer_impl::draw_world_meta_objects(
                {0.0f, 0.0f, 0.0f, 1.0f},
             };
             const float4x4 rotation = to_matrix(box.rotation);
-            float4x4 world_from_local = rotation * scale;
-            world_from_local[3] = {box.position, 1.0f};
+            float4x4 group_from_local = rotation * scale;
+            group_from_local[3] = {box.position, 1.0f};
+
+            const float4x4 world_from_local = world_from_group * group_from_local;
 
             _meta_draw_batcher.add_box_wireframe(world_from_local,
                                                  settings.terrain_cutter_color);
@@ -4233,6 +4238,9 @@ void renderer_impl::add_block_terrain_cuts(gpu::copy_command_list& command_list,
    if (creation_entity and creation_entity->is<world::entity_group>()) {
       const world::entity_group& group = creation_entity->get<world::entity_group>();
 
+      float4x4 world_from_group = to_matrix(group.rotation);
+      world_from_group[3] = {group.position, 1.0f};
+
       for (std::size_t i = 0; i < group.blocks.terrain_cut_boxes.size(); ++i) {
          const world::block_description_terrain_cut_box& box =
             group.blocks.terrain_cut_boxes[i];
@@ -4244,11 +4252,13 @@ void renderer_impl::add_block_terrain_cuts(gpu::copy_command_list& command_list,
             {0.0f, 0.0f, 0.0f, 1.0f},
          };
          const float4x4 rotation = to_matrix(box.rotation);
-         float4x4 world_from_local = rotation * scale;
-         world_from_local[3] = {box.position, 1.0f};
+         float4x4 group_from_local = rotation * scale;
+         group_from_local[3] = {box.position, 1.0f};
+
+         const float4x4 world_from_local = world_from_group * group_from_local;
 
          _terrain_cut_list.push_back(terrain_cut{
-            .bbox = world::get_bounding_box(box),
+            .bbox = group.rotation * world::get_bounding_box(box) + group.position,
 
             .constant_buffer =
                _dynamic_buffer_allocator.allocate_and_copy(world_from_local).gpu_address,
