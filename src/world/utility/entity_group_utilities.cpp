@@ -331,10 +331,8 @@ auto entity_group_metrics(const entity_group& group,
    }
 
    for (const block_description_box& box : group.blocks.boxes) {
-      const math::bounding_box bboxGS = get_bounding_box(box);
-
       group_bbox = math::combine(group_bbox, get_bounding_box(box));
-      ground_distance = std::min(ground_distance, bboxGS.min.y);
+      ground_distance = std::min(ground_distance, -box.size.y);
    }
 
    for (const block_description_ramp& ramp : group.blocks.ramps) {
@@ -347,37 +345,31 @@ auto entity_group_metrics(const entity_group& group,
    for (const block_description_quad& quad : group.blocks.quads) {
       const math::bounding_box bboxGS = get_bounding_box(quad);
 
-      group_bbox = math::combine(group_bbox, get_bounding_box(quad));
+      group_bbox = math::combine(group_bbox, bboxGS);
       ground_distance = std::min(ground_distance, bboxGS.min.y);
    }
 
    for (const block_description_custom& block : group.blocks.custom.description) {
-      const math::bounding_box bboxGS = get_bounding_box(block);
+      const math::bounding_box bboxLS = get_bounding_box_local_space(block);
 
       group_bbox = math::combine(group_bbox, get_bounding_box(block));
-      ground_distance = std::min(ground_distance, bboxGS.min.y);
+      ground_distance = std::min(ground_distance, bboxLS.min.y);
    }
 
    for (const block_description_hemisphere& hemisphere : group.blocks.hemispheres) {
-      const math::bounding_box bboxGS = get_bounding_box(hemisphere);
-
       group_bbox = math::combine(group_bbox, get_bounding_box(hemisphere));
-      ground_distance = std::min(ground_distance, bboxGS.min.y);
+      ground_distance = std::min(ground_distance, 0.0f);
    }
 
    for (const block_description_pyramid& pyramid : group.blocks.pyramids) {
-      const math::bounding_box bboxGS = get_bounding_box(pyramid);
-
       group_bbox = math::combine(group_bbox, get_bounding_box(pyramid));
-      ground_distance = std::min(ground_distance, bboxGS.min.y);
+      ground_distance = std::min(ground_distance, -pyramid.size.y);
    }
 
    for (const block_description_terrain_cut_box& terrain_cut_box :
         group.blocks.terrain_cut_boxes) {
-      const math::bounding_box terrain_cut_boxGS = get_bounding_box(terrain_cut_box);
-
       group_bbox = math::combine(group_bbox, get_bounding_box(terrain_cut_box));
-      ground_distance = std::min(ground_distance, terrain_cut_boxGS.min.y);
+      ground_distance = std::min(ground_distance, -terrain_cut_box.size.y);
    }
 
    if (ground_distance == FLT_MAX) ground_distance = 0.0f;

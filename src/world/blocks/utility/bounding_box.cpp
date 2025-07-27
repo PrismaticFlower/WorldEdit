@@ -90,6 +90,12 @@ auto get_bounding_box_local_space(const block_custom_mesh_description& mesh) noe
 
 }
 
+auto get_bounding_box_local_space(const block_description_custom& custom_block) noexcept
+   -> math::bounding_box
+{
+   return get_bounding_box_local_space(custom_block.mesh_description);
+}
+
 auto get_bounding_box(const block_description_box& box) noexcept -> math::bounding_box
 {
    return get_bounding_box(box.rotation, box.position, box.size);

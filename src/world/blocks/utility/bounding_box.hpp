@@ -6,6 +6,9 @@
 
 namespace we::world {
 
+auto get_bounding_box_local_space(const block_description_custom& custom_block) noexcept
+   -> math::bounding_box;
+
 auto get_bounding_box(const block_description_box& box) noexcept -> math::bounding_box;
 
 auto get_bounding_box(const block_description_ramp& ramp) noexcept -> math::bounding_box;
