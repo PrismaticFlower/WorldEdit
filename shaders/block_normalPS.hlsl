@@ -51,6 +51,9 @@ float4 main(input_vertex input) : SV_TARGET
    Texture2D diffuse_map = Texture2DHeap[NonUniformResourceIndex(material.diffuse_map_index)];
 
    float4 diffuse_color = diffuse_map.Sample(sampler_anisotropic_wrap, texcoords);
+   float specular_visibility = 1.0;
+
+   if (material.flags & block_material_none_has_gloss) specular_visibility = diffuse_color.a;
 
    if (material.flags & block_material_has_detail_map) {
       Texture2D detail_map = Texture2DHeap[NonUniformResourceIndex(material.detail_map_index)];
@@ -59,7 +62,6 @@ float4 main(input_vertex input) : SV_TARGET
          (detail_map.Sample(sampler_anisotropic_wrap, texcoords * material.detail_scale).rgb * 2.0);
    }
    
-   float specular_visibility = diffuse_color.a;
    float3 normalWS;
 
    if (material.flags & block_material_has_normal_map) {
@@ -77,7 +79,8 @@ float4 main(input_vertex input) : SV_TARGET
 
       const float3 normalTS = normal_map_sample.xyz * 2.0 - 1.0;
       normalWS = transform_normalWS(input, normalTS);
-      specular_visibility = normal_map_sample.a;
+
+      if (material.flags & block_material_none_has_gloss) specular_visibility = normal_map_sample.a;
    }
    else {
       normalWS = normalize(input.normalWS);

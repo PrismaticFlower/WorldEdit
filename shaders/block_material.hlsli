@@ -6,6 +6,7 @@
 
 enum block_material_flags {
    block_material_none = 0b0,
+   block_material_none_has_gloss = 0b1,
    block_material_has_normal_map = 0b10,
    block_material_has_detail_map = 0b100,
    block_material_has_env_map = 0b1000,

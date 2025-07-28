@@ -61,6 +61,7 @@ static_assert(sizeof(block_quad_description) == 80);
 
 enum class block_material_flags : uint32 {
    none = 0b0,
+   has_gloss = 0b1,
    has_normal_map = 0b10,
    has_detail_map = 0b100,
    has_env_map = 0b1000,
@@ -154,6 +155,8 @@ auto select_pipeline_custom_mesh(const blocks_draw draw, pipeline_library& pipel
 auto material_flags(const blocks::material& material) noexcept -> block_material_flags
 {
    block_material_flags flags = block_material_flags::none;
+
+   if (material.specular_lighting) flags |= block_material_flags::has_gloss;
 
    if (not material.normal_map.name.empty()) {
       flags |= block_material_flags::has_normal_map;
