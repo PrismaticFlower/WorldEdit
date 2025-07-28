@@ -479,224 +479,102 @@ void world_edit::ui_show_block_editor() noexcept
          ImGui::EndCombo();
       }
 
-      {
+      if (ImGui::BeginChild("##material", {}, ImGuiChildFlags_Border)) {
          const uint32 material_index = _block_editor_config.paint_material_index;
          world::block_material& material = _world.blocks.materials[material_index];
 
-         const float image_width = 20.0f * _display_scale;
+         ImGui::InputText("Name", &material.name, _edit_stack_world, _edit_context);
 
-         if (ImGui::BeginTable("##material", 2, ImGuiTableFlags_BordersOuter)) {
-            ImGui::TableSetupColumn("Preview", ImGuiTableColumnFlags_WidthFixed,
-                                    image_width);
-            ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_None);
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-
-            ImGui::Dummy({image_width, image_width});
-
-            ImGui::TableNextColumn();
-
-            ImGui::InputText("Name", &material.name, _edit_stack_world, _edit_context);
-
-            ImGui::TableNextRow();
-
-            ImGui::TableNextColumn();
-
-            ImGui::Image(_renderer->request_imgui_texture_id(material.diffuse_map,
-                                                             graphics::fallback_imgui_texture::missing_diffuse),
-                         {image_width, image_width});
-
-            ImGui::TableNextColumn();
-
-            if (absl::InlinedVector<char, 256> diffuse_map{material.diffuse_map.begin(),
-                                                           material.diffuse_map.end()};
-                ImGui::InputText("Diffuse Map", &diffuse_map)) {
-               _edit_stack_world.apply(
-                  edits::make_set_block_material(&material.diffuse_map,
-                                                 std::string{diffuse_map.begin(),
-                                                             diffuse_map.end()},
-                                                 material_index,
-                                                 &_world.blocks.materials_dirty),
-                  _edit_context);
-            }
-
-            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-
-            ImGui::Image(_renderer->request_imgui_texture_id(material.normal_map,
-                                                             graphics::fallback_imgui_texture::missing_diffuse),
-                         {image_width, image_width});
-
-            ImGui::TableNextColumn();
-
-            if (absl::InlinedVector<char, 256> normal_map{material.normal_map.begin(),
-                                                          material.normal_map.end()};
-                ImGui::InputText("Normal Map", &normal_map)) {
-               _edit_stack_world.apply(
-                  edits::make_set_block_material(&material.normal_map,
-                                                 std::string{normal_map.begin(),
-                                                             normal_map.end()},
-                                                 material_index,
-                                                 &_world.blocks.materials_dirty),
-                  _edit_context);
-            }
-
-            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-
-            ImGui::Image(_renderer->request_imgui_texture_id(material.detail_map,
-                                                             graphics::fallback_imgui_texture::missing_diffuse),
-                         {image_width, image_width});
-
-            ImGui::TableNextColumn();
-
-            if (absl::InlinedVector<char, 256> detail_map{material.detail_map.begin(),
-                                                          material.detail_map.end()};
-                ImGui::InputText("Detail Map", &detail_map)) {
-               _edit_stack_world.apply(
-                  edits::make_set_block_material(&material.detail_map,
-                                                 std::string{detail_map.begin(),
-                                                             detail_map.end()},
-                                                 material_index,
-                                                 &_world.blocks.materials_dirty),
-                  _edit_context);
-            }
-
-            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-
-            ImGui::Dummy({image_width, image_width});
-
-            ImGui::TableNextColumn();
-
-            if (absl::InlinedVector<char, 256> env_map{material.env_map.begin(),
-                                                       material.env_map.end()};
-                ImGui::InputText("Env Map", &env_map)) {
-               _edit_stack_world.apply(edits::make_set_block_material(
-                                          &material.env_map,
-                                          std::string{env_map.begin(), env_map.end()},
-                                          material_index, &_world.blocks.materials_dirty),
-                                       _edit_context);
-            }
-
-            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-
-            ImGui::Dummy({image_width, image_width});
-
-            ImGui::TableNextColumn();
-
-            if (std::array<uint8, 2> detail_tiling = material.detail_tiling;
-                ImGui::DragScalarN("Detail Tiling", ImGuiDataType_U8,
-                                   detail_tiling.data(), 2)) {
-               _edit_stack_world
-                  .apply(edits::make_set_block_material(&material.detail_tiling,
-                                                        detail_tiling, material_index,
-                                                        &_world.blocks.materials_dirty),
-                         _edit_context);
-            }
-
-            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-
-            ImGui::Dummy({image_width, image_width});
-
-            ImGui::TableNextColumn();
-
-            if (bool tile_normal_map = material.tile_normal_map;
-                ImGui::Checkbox("Tile Normal Map", &tile_normal_map)) {
-               _edit_stack_world.apply(
-                  edits::make_set_block_material(&material.tile_normal_map,
-                                                 tile_normal_map, material_index,
-                                                 &_world.blocks.materials_dirty),
-                  _edit_context, {.closed = true});
-            }
-
-            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-
-            ImGui::Dummy({image_width, image_width});
-
-            ImGui::TableNextColumn();
-
-            if (bool specular_lighting = material.specular_lighting;
-                ImGui::Checkbox("Specular Lighting", &specular_lighting)) {
-               _edit_stack_world.apply(
-                  edits::make_set_block_material(&material.specular_lighting,
-                                                 specular_lighting, material_index,
-                                                 &_world.blocks.materials_dirty),
-                  _edit_context, {.closed = true});
-            }
-
-            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-
-            ImGui::Dummy({image_width, image_width});
-
-            ImGui::TableNextColumn();
-
-            if (float3 specular_color = material.specular_color;
-                ImGui::ColorEdit3("Specular Lighting", &specular_color.x)) {
-               _edit_stack_world
-                  .apply(edits::make_set_block_material(&material.specular_color,
-                                                        specular_color, material_index,
-                                                        &_world.blocks.materials_dirty),
-                         _edit_context);
-            }
-
-            if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-
-            ImGui::Dummy({image_width, image_width});
-
-            ImGui::TableNextColumn();
-
-            if (ImGui::BeginCombo("Foley FX Group",
-                                  foley_group_name(material.foley_group))) {
-               for (world::block_foley_group group : {
-                       world::block_foley_group::stone,
-                       world::block_foley_group::dirt,
-                       world::block_foley_group::grass,
-                       world::block_foley_group::metal,
-                       world::block_foley_group::snow,
-                       world::block_foley_group::terrain,
-                       world::block_foley_group::water,
-                       world::block_foley_group::wood,
-                    }) {
-                  if (ImGui::Selectable(foley_group_name(group),
-                                        material.foley_group == group)) {
-                     _edit_stack_world.apply(edits::make_set_value(&material.foley_group,
-                                                                   group),
-                                             _edit_context, {.closed = true});
-                  }
-               }
-
-               ImGui::EndCombo();
-            }
-
-            ImGui::SetItemTooltip("Not all foley groups may be availible, "
-                                  "depending on the sound .lvl your map uses.");
-
-            ImGui::EndTable();
+         if (absl::InlinedVector<char, 256> diffuse_map{material.diffuse_map.begin(),
+                                                        material.diffuse_map.end()};
+             ImGui::InputText("Diffuse Map", &diffuse_map)) {
+            _edit_stack_world.apply(edits::make_set_block_material(
+                                       &material.diffuse_map,
+                                       std::string{diffuse_map.begin(),
+                                                   diffuse_map.end()},
+                                       material_index, &_world.blocks.materials_dirty),
+                                    _edit_context);
          }
+
+         ui_block_texture_pick_widget("Diffuse Map", &material.diffuse_map,
+                                      material_index);
+         ui_block_texture_pick_widget("Normal Map", &material.normal_map, material_index);
+         ui_block_texture_pick_widget("Detail Map", &material.detail_map, material_index);
+         ui_block_texture_pick_widget("Env Map", &material.env_map, material_index);
+
+         if (std::array<uint8, 2> detail_tiling = material.detail_tiling;
+             ImGui::DragScalarN("Detail Tiling", ImGuiDataType_U8,
+                                detail_tiling.data(), 2)) {
+            _edit_stack_world
+               .apply(edits::make_set_block_material(&material.detail_tiling,
+                                                     detail_tiling, material_index,
+                                                     &_world.blocks.materials_dirty),
+                      _edit_context);
+         }
+
+         if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+         if (bool tile_normal_map = material.tile_normal_map;
+             ImGui::Checkbox("Tile Normal Map", &tile_normal_map)) {
+            _edit_stack_world
+               .apply(edits::make_set_block_material(&material.tile_normal_map,
+                                                     tile_normal_map, material_index,
+                                                     &_world.blocks.materials_dirty),
+                      _edit_context, {.closed = true});
+         }
+
+         if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+         if (bool specular_lighting = material.specular_lighting;
+             ImGui::Checkbox("Specular Lighting", &specular_lighting)) {
+            _edit_stack_world
+               .apply(edits::make_set_block_material(&material.specular_lighting,
+                                                     specular_lighting, material_index,
+                                                     &_world.blocks.materials_dirty),
+                      _edit_context, {.closed = true});
+         }
+
+         if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+         if (float3 specular_color = material.specular_color;
+             ImGui::ColorEdit3("Specular Lighting", &specular_color.x)) {
+            _edit_stack_world
+               .apply(edits::make_set_block_material(&material.specular_color,
+                                                     specular_color, material_index,
+                                                     &_world.blocks.materials_dirty),
+                      _edit_context);
+         }
+
+         if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+         if (ImGui::BeginCombo("Foley FX Group",
+                               foley_group_name(material.foley_group))) {
+            for (world::block_foley_group group : {
+                    world::block_foley_group::stone,
+                    world::block_foley_group::dirt,
+                    world::block_foley_group::grass,
+                    world::block_foley_group::metal,
+                    world::block_foley_group::snow,
+                    world::block_foley_group::terrain,
+                    world::block_foley_group::water,
+                    world::block_foley_group::wood,
+                 }) {
+               if (ImGui::Selectable(foley_group_name(group),
+                                     material.foley_group == group)) {
+                  _edit_stack_world.apply(edits::make_set_value(&material.foley_group,
+                                                                group),
+                                          _edit_context, {.closed = true});
+               }
+            }
+
+            ImGui::EndCombo();
+         }
+
+         ImGui::SetItemTooltip("Not all foley groups may be availible, "
+                               "depending on the sound .lvl your map uses.");
       }
+
+      ImGui::EndChild();
    }
 
    ImGui::End();

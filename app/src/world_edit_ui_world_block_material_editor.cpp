@@ -140,60 +140,14 @@ void world_edit::ui_show_block_material_editor() noexcept
 
          ImGui::InputText("Name", &material.name, _edit_stack_world, _edit_context);
 
-         if (absl::InlinedVector<char, 256> diffuse_map{material.diffuse_map.begin(),
-                                                        material.diffuse_map.end()};
-             ImGui::InputText("Diffuse Map", &diffuse_map)) {
-            _edit_stack_world.apply(edits::make_set_block_material(
-                                       &material.diffuse_map,
-                                       std::string{diffuse_map.begin(),
-                                                   diffuse_map.end()},
-                                       _block_material_editor_context.selected_index,
-                                       &_world.blocks.materials_dirty),
-                                    _edit_context);
-         }
-
-         if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
-
-         if (absl::InlinedVector<char, 256> normal_map{material.normal_map.begin(),
-                                                       material.normal_map.end()};
-             ImGui::InputText("Normal Map", &normal_map)) {
-            _edit_stack_world.apply(edits::make_set_block_material(
-                                       &material.normal_map,
-                                       std::string{normal_map.begin(),
-                                                   normal_map.end()},
-                                       _block_material_editor_context.selected_index,
-                                       &_world.blocks.materials_dirty),
-                                    _edit_context);
-         }
-
-         if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
-
-         if (absl::InlinedVector<char, 256> detail_map{material.detail_map.begin(),
-                                                       material.detail_map.end()};
-             ImGui::InputText("Detail Map", &detail_map)) {
-            _edit_stack_world.apply(edits::make_set_block_material(
-                                       &material.detail_map,
-                                       std::string{detail_map.begin(),
-                                                   detail_map.end()},
-                                       _block_material_editor_context.selected_index,
-                                       &_world.blocks.materials_dirty),
-                                    _edit_context);
-         }
-
-         if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
-
-         if (absl::InlinedVector<char, 256> env_map{material.env_map.begin(),
-                                                    material.env_map.end()};
-             ImGui::InputText("Env Map", &env_map)) {
-            _edit_stack_world.apply(edits::make_set_block_material(
-                                       &material.env_map,
-                                       std::string{env_map.begin(), env_map.end()},
-                                       _block_material_editor_context.selected_index,
-                                       &_world.blocks.materials_dirty),
-                                    _edit_context);
-         }
-
-         if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+         ui_block_texture_pick_widget("Diffuse Map", &material.diffuse_map,
+                                      _block_material_editor_context.selected_index);
+         ui_block_texture_pick_widget("Normal Map", &material.normal_map,
+                                      _block_material_editor_context.selected_index);
+         ui_block_texture_pick_widget("Detail Map", &material.detail_map,
+                                      _block_material_editor_context.selected_index);
+         ui_block_texture_pick_widget("Env Map", &material.env_map,
+                                      _block_material_editor_context.selected_index);
 
          if (std::array<uint8, 2> detail_tiling = material.detail_tiling;
              ImGui::DragScalarN("Detail Tiling", ImGuiDataType_U8,
@@ -267,6 +221,197 @@ void world_edit::ui_show_block_material_editor() noexcept
    }
 
    ImGui::End();
+}
+
+bool world_edit::ui_block_texture_pick_widget(const char* label, std::string* texture,
+                                              uint32 material_index) noexcept
+{
+   assert(_edit_context.is_memory_valid(texture));
+   assert(material_index < world::max_block_materials);
+
+   bool modified = false;
+
+   const float tiny_preview_size = ImGui::GetFrameHeight();
+   const float combo_width =
+      ImGui::CalcItemWidth() - ImGui::GetStyle().ItemInnerSpacing.x - tiny_preview_size;
+
+   ImGui::PushID(texture->c_str());
+
+   ImGui::SetNextItemWidth(combo_width);
+
+   if (ImGui::BeginCombo("##combo", texture->c_str(),
+                         ImGuiComboFlags_HeightLargest | ImGuiComboFlags_NoArrowButton)) {
+      if (ImGui::IsWindowAppearing()) {
+         _block_texture_pick_filter = *texture;
+         _block_texture_pick_keyboard_hover = -1;
+
+         ImGui::SetKeyboardFocusHere();
+      }
+
+      ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+      if (ImGui::InputText("##name", &_block_texture_pick_filter,
+                           ImGuiInputTextFlags_EnterReturnsTrue)) {
+         _edit_stack_world.apply(edits::make_set_block_material(texture, _block_texture_pick_filter,
+                                                                material_index,
+                                                                &_world.blocks.materials_dirty),
+                                 _edit_context, {.closed = true});
+
+         modified = true;
+
+         ImGui::CloseCurrentPopup();
+      }
+
+      if (ImGui::IsItemFocused()) _block_texture_pick_keyboard_hover = -1;
+
+      bool new_keyboard_input = false;
+
+      if (ImGui::IsKeyPressed(ImGuiKey_UpArrow)) {
+         _block_texture_pick_keyboard_hover -= 1;
+         new_keyboard_input = true;
+      }
+
+      if (ImGui::IsKeyPressed(ImGuiKey_DownArrow)) {
+         _block_texture_pick_keyboard_hover += 1;
+         new_keyboard_input = true;
+      }
+
+      const float thumbnail_size = 128.0f * _display_scale;
+      const float visible_classes = 8.0f;
+      const ImVec2 text_offset = {ImGui::GetStyle().FramePadding.x,
+                                  ImGui::GetStyle().FramePadding.y};
+      const float text_background_offset = 2.0f * _display_scale;
+      const float text_wrap_length =
+         thumbnail_size - ImGui::GetStyle().FramePadding.x;
+      const ImVec2 button_size = {ImGui::GetContentRegionAvail().x,
+                                  thumbnail_size +
+                                     ImGui::GetStyle().FramePadding.x};
+
+      ImGui::BeginChild("Textures",
+                        {0.0f, (thumbnail_size + ImGui::GetStyle().ItemSpacing.y) *
+                                  visible_classes});
+
+      _asset_libraries.textures.view_existing([&](const std::span<const assets::stable_string> assets) noexcept {
+         int32 asset_index = 0;
+
+         for (const std::string_view asset : assets) {
+            if (not _block_texture_pick_filter.empty() and
+                not string::icontains(asset, _block_texture_pick_filter)) {
+               continue;
+            }
+
+            const bool is_hovered_from_keyboard =
+               _block_texture_pick_keyboard_hover == asset_index;
+
+            if (new_keyboard_input and is_hovered_from_keyboard) {
+               ImGui::SetScrollHereY();
+               ImGui::SetKeyboardFocusHere();
+            }
+
+            if (ImGui::IsRectVisible({thumbnail_size, thumbnail_size})) {
+               ImGui::PushID(asset.data(), asset.data() + asset.size());
+
+               const ImVec2 image_cursor_pos = {
+                  ImGui::GetCursorScreenPos().x + ImGui::GetStyle().FramePadding.x,
+                  ImGui::GetCursorScreenPos().y + ImGui::GetStyle().FramePadding.y};
+
+               const bool pick_with_keyboard =
+                  is_hovered_from_keyboard and ImGui::IsKeyPressed(ImGuiKey_Enter);
+
+               if (ImGui::Selectable("##pick",
+                                     is_hovered_from_keyboard or
+                                        string::iequals(asset, *texture),
+                                     is_hovered_from_keyboard
+                                        ? ImGuiSelectableFlags_Highlight
+                                        : ImGuiSelectableFlags_None,
+                                     button_size) or
+                   pick_with_keyboard) {
+                  _edit_stack_world.apply(edits::make_set_block_material(
+                                             texture, std::string{asset}, material_index,
+                                             &_world.blocks.materials_dirty),
+                                          _edit_context, {.closed = true});
+
+                  modified = true;
+
+                  ImGui::CloseCurrentPopup();
+               }
+
+               ImGui::GetWindowDrawList()->AddImage(
+                  _renderer->request_imgui_texture_id(asset, graphics::fallback_imgui_texture::missing_diffuse),
+                  image_cursor_pos,
+                  {image_cursor_pos.x + thumbnail_size,
+                   image_cursor_pos.y + thumbnail_size});
+
+               if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
+                  ImGui::TextUnformatted(asset.data(), asset.data() + asset.size());
+
+                  ImGui::EndTooltip();
+               }
+
+               const ImVec2 text_cursor_pos = {image_cursor_pos.x + text_offset.x,
+                                               image_cursor_pos.y + text_offset.y};
+               const ImVec2 text_cursor_pos_background = {text_cursor_pos.x + text_background_offset,
+                                                          text_cursor_pos.y +
+                                                             text_background_offset};
+               const ImVec2 text_size =
+                  ImGui::CalcTextSize(asset.data(), asset.data() + asset.size(),
+                                      false, text_wrap_length);
+
+               ImGui::GetWindowDrawList()
+                  ->AddRectFilled(image_cursor_pos,
+                                  {text_cursor_pos.x + text_size.x +
+                                      ImGui::GetStyle().FramePadding.x,
+                                   text_cursor_pos.y + text_size.y +
+                                      ImGui::GetStyle().FramePadding.y},
+                                  ImGui::GetColorU32(ImGuiCol_WindowBg));
+
+               ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(),
+                                                   ImGui::GetFontSize(),
+                                                   text_cursor_pos_background,
+                                                   ~ImGui::GetColorU32(ImGuiCol_Text) |
+                                                      0xff'00'00'00u,
+                                                   asset.data(),
+                                                   asset.data() + asset.size(),
+                                                   text_wrap_length);
+
+               ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(),
+                                                   ImGui::GetFontSize(), text_cursor_pos,
+                                                   ImGui::GetColorU32(ImGuiCol_Text),
+                                                   asset.data(),
+                                                   asset.data() + asset.size(),
+                                                   text_wrap_length);
+
+               ImGui::PopID();
+            }
+            else {
+               ImGui::Dummy(button_size);
+            }
+
+            asset_index += 1;
+         }
+
+         _block_texture_pick_keyboard_hover =
+            std::clamp(_block_texture_pick_keyboard_hover, -1, asset_index);
+      });
+
+      ImGui::EndChild();
+
+      ImGui::EndCombo();
+   };
+
+   ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+   ImGui::Image(_renderer->request_imgui_texture_id(*texture,
+                                                    graphics::fallback_imgui_texture::missing_diffuse),
+                {tiny_preview_size, tiny_preview_size}, {0.0f, 0.0f}, {1.0f, 1.0f});
+
+   ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+   ImGui::TextUnformatted(label);
+
+   ImGui::PopID();
+
+   return modified;
 }
 
 }

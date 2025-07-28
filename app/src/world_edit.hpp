@@ -403,6 +403,9 @@ private:
 
    bool ui_object_class_pick_widget(world::object* object) noexcept;
 
+   bool ui_block_texture_pick_widget(const char* label, std::string* texture,
+                                     uint32 material_index) noexcept;
+
    void setup_orbit_camera() noexcept;
 
    bool edit_stack_gizmo_position(const gizmo_position_desc& desc, float3* value) noexcept;
@@ -608,6 +611,8 @@ private:
    std::vector<uint32> _world_explorer_sort_map;
    std::string _object_class_pick_filter;
    int32 _object_class_pick_keyboard_hover = -1;
+   std::string _block_texture_pick_filter;
+   int32 _block_texture_pick_keyboard_hover = -1;
 
    bool _world_explorer_path_show_all_nodes = false;
    world::active_layers _world_explorer_layers_mask{true};
