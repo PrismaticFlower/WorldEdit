@@ -55,6 +55,9 @@ struct thumbnail_manager {
    [[nodiscard]] auto request_object_class_thumbnail(const std::string_view name)
       -> object_class_thumbnail;
 
+   [[nodiscard]] auto request_texture_thumbnail(const std::string_view name)
+      -> object_class_thumbnail;
+
    void update_cpu_cache();
 
    void update_gpu(model_manager& model_manager,
@@ -76,7 +79,7 @@ struct thumbnail_manager {
 private:
    struct impl;
 
-   implementation_storage<impl, 1200> _impl;
+   implementation_storage<impl, 2048> _impl;
 };
 
 }

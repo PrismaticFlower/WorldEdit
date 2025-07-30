@@ -1,17 +1,23 @@
 #include "thumbnail_manager.hpp"
-#include "assets/asset_libraries.hpp"
-#include "assets/odf/definition.hpp"
-#include "async/thread_pool.hpp"
+
 #include "dynamic_buffer_allocator.hpp"
 #include "gpu/resource.hpp"
-#include "io/error.hpp"
-#include "io/memory_mapped_file.hpp"
-#include "io/read_file.hpp"
-#include "math/align.hpp"
-#include "math/matrix_funcs.hpp"
 #include "model_manager.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
+
+#include "assets/asset_libraries.hpp"
+#include "assets/odf/definition.hpp"
+
+#include "async/thread_pool.hpp"
+
+#include "io/error.hpp"
+#include "io/memory_mapped_file.hpp"
+#include "io/read_file.hpp"
+
+#include "math/align.hpp"
+#include "math/matrix_funcs.hpp"
+
 #include "utility/binary_reader.hpp"
 #include "utility/string_icompare.hpp"
 
@@ -588,6 +594,182 @@ auto load_disk_cache(const io::path& path) noexcept -> loaded_cache
    }
 }
 
+struct thumbnail_index {
+   uint16 x = 0;
+   uint16 y = 0;
+};
+
+struct thumbnail_manager_atlas_allocator {
+   /// @brief Reset the allocator.
+   /// @param width The new atlas width.
+   /// @param height The new atlas height.
+   void reset(uint32 width, uint32 height) noexcept
+   {
+      _free_items.clear();
+      _recycle_objects.clear();
+
+      _free_items.reserve(width * height);
+      _recycle_objects.reserve(width * height);
+
+      for (uint16 y = 0; y < height; ++y) {
+         for (uint16 x = 0; x < width; ++x) {
+            _free_items.push_back({x, y});
+         }
+      }
+   }
+
+   /// @brief Allocate an index from the atlas.
+   /// @return The index or nullopt if the atlas is full.
+   auto allocate() noexcept -> std::optional<thumbnail_index>
+   {
+      if (not _free_items.empty()) {
+         const thumbnail_index thumbnail_index = _free_items.back();
+
+         _free_items.pop_back();
+
+         return thumbnail_index;
+      }
+
+      if (not _recycle_objects.empty()) {
+         uint64 oldest_frame = UINT64_MAX;
+         decltype(_recycle_objects)::iterator recycle_it = _recycle_objects.begin();
+
+         for (auto it = _recycle_objects.begin(); it != _recycle_objects.end(); ++it) {
+            const auto& [_, item] = *it;
+
+            if (item.last_used_frame < oldest_frame) {
+               oldest_frame = item.last_used_frame;
+               recycle_it = it;
+            }
+         }
+
+         const thumbnail_index thumbnail_index = recycle_it->second.index;
+
+         _recycle_objects.erase(recycle_it);
+
+         return thumbnail_index;
+      }
+
+      return std::nullopt;
+   }
+
+   /// @brief Free an index in the atlas.
+   /// @param index The atlas to free.
+   void free(thumbnail_index index) noexcept
+   {
+      _free_items.push_back(index);
+   }
+
+   /// @brief Try to restore a previously recycled object.
+   /// @param name The name of the object.
+   /// @return The index of the object's thumbnail or nullopt if it has already been overwritten.
+   auto try_restore_object(const std::string_view name) noexcept
+      -> std::optional<thumbnail_index>
+   {
+      if (auto it = _recycle_objects.find(name); it != _recycle_objects.end()) {
+         const thumbnail_index thumbnail_index = it->second.index;
+
+         _recycle_objects.erase(it);
+
+         return thumbnail_index;
+      }
+
+      return std::nullopt;
+   }
+
+   /// @brief Recycle an object thumbnail. Allowing it to be reused but potentially restored at later date/
+   /// @param name The name of the object.
+   /// @param index The index of the thumbnail.
+   /// @param last_used_frame The frame the thumbnail was last used on.
+   void recycle_object(const std::string_view name, thumbnail_index index,
+                       uint64 last_used_frame) noexcept
+   {
+      if (not _recycle_objects
+                 .emplace(name, recycle_item{index, last_used_frame})
+                 .second) {
+         _free_items.push_back(index);
+      }
+   }
+
+   /// @brief Invalidate a previously recycled thumbnail.
+   /// @param name The name of the object whose thumbnail to invalidate.
+   void invalidate_recycling_object(const std::string_view name) noexcept
+   {
+      if (auto it = _recycle_objects.find(name); it != _recycle_objects.end()) {
+         const thumbnail_index index = it->second.index;
+
+         _free_items.push_back(index);
+         _recycle_objects.erase(it);
+      }
+   }
+
+private:
+   std::vector<thumbnail_index> _free_items;
+
+   struct recycle_item {
+      thumbnail_index index;
+      uint64 last_used_frame;
+   };
+
+   absl::flat_hash_map<std::string, recycle_item> _recycle_objects;
+};
+
+struct thumbnail_manager_type_items {
+   absl::flat_hash_map<std::string, thumbnail_index> front;
+   absl::flat_hash_map<std::string, thumbnail_index> back;
+   absl::flat_hash_map<std::string, std::unique_ptr<std::byte[]>> cpu_memory_cache;
+
+   /// @brief Gets the thumbnail index for an item or allocates one if needed. Returns nullopt if there was no space in the atlas.
+   /// @param name The name of the item.
+   /// @param atlas_allocator The allocator for the atlas.
+   /// @return The thumbnail index for the item or nullopt if the atlas is full.
+   auto get_or_allocate_thumbnail_index(const std::string_view name,
+                                        thumbnail_manager_atlas_allocator& atlas_allocator) noexcept
+      -> std::optional<thumbnail_index>
+   {
+      if (auto it = back.find(name); it != back.end()) {
+         return it->second;
+      }
+
+      if (auto it = front.find(name); it != front.end()) {
+         return it->second;
+      }
+
+      if (const std::optional<thumbnail_index> thumbnail_index =
+             atlas_allocator.allocate();
+          thumbnail_index) {
+         front.emplace(name, *thumbnail_index);
+
+         return thumbnail_index;
+      }
+
+      return std::nullopt;
+   }
+
+   void clear()
+   {
+      front.clear();
+      back.clear();
+      cpu_memory_cache.clear();
+   }
+
+   /// @brief Swaps back and front then recycle all thumbnails that were unused this frame.
+   /// @param atlas_allocator The allocator for the atlas.
+   /// @param frame The current frame.
+   void end_frame(thumbnail_manager_atlas_allocator& atlas_allocator, uint64 frame) noexcept
+   {
+      std::swap(back, front);
+
+      for (const auto& [name, index] : front) {
+         if (not back.contains(name)) {
+            atlas_allocator.recycle_object(name, index, frame);
+         }
+      }
+
+      front.clear();
+   }
+};
+
 }
 
 struct thumbnail_manager::impl {
@@ -598,9 +780,8 @@ struct thumbnail_manager::impl {
         _device{init.device},
         _display_scale{init.display_scale}
    {
-      _back_items.reserve(atlas_thumbnails);
-      _recycle_items.reserve(atlas_thumbnails);
-      _cpu_memory_cache.reserve(2048);
+      _objects.back.reserve(atlas_thumbnails);
+      _objects.cpu_memory_cache.reserve(2048);
 
       create_gpu_resources();
    }
@@ -612,10 +793,10 @@ struct thumbnail_manager::impl {
 
    auto request_object_class_thumbnail(const std::string_view name) -> object_class_thumbnail
    {
-      if (auto it = _back_items.find(name); it != _back_items.end()) {
+      if (auto it = _objects.back.find(name); it != _objects.back.end()) {
          const thumbnail_index index = it->second;
 
-         _front_items.emplace(name, index);
+         _objects.front.emplace(name, index);
 
          return {.imgui_texture_id =
                     reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
@@ -625,25 +806,25 @@ struct thumbnail_manager::impl {
                  .uv_bottom = (index.y + 1) / _atlas_items_height};
       }
 
-      if (auto it = _recycle_items.find(name); it != _recycle_items.end()) {
-         const thumbnail_index index = it->second.index;
-
-         _back_items.emplace(name, index);
-         _front_items.emplace(name, index);
-         _recycle_items.erase(it);
+      if (const std::optional<thumbnail_index> index =
+             _atlas_allocator.try_restore_object(name);
+          index) {
+         _objects.back.emplace(name, *index);
+         _objects.front.emplace(name, *index);
 
          return {.imgui_texture_id =
                     reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
-                 .uv_left = index.x / _atlas_items_width,
-                 .uv_top = index.y / _atlas_items_height,
-                 .uv_right = (index.x + 1) / _atlas_items_width,
-                 .uv_bottom = (index.y + 1) / _atlas_items_height};
+                 .uv_left = index->x / _atlas_items_width,
+                 .uv_top = index->y / _atlas_items_height,
+                 .uv_right = (index->x + 1) / _atlas_items_width,
+                 .uv_bottom = (index->y + 1) / _atlas_items_height};
       }
 
       if (not _cache_upload_item) {
-         if (auto it = _cpu_memory_cache.find(name); it != _cpu_memory_cache.end()) {
+         if (auto it = _objects.cpu_memory_cache.find(name);
+             it != _objects.cpu_memory_cache.end()) {
             if (const std::optional<thumbnail_index> index =
-                   get_or_allocate_thumbnail_index(name);
+                   _objects.get_or_allocate_thumbnail_index(name, _atlas_allocator);
                 index) {
                _cache_upload_item.emplace(*index);
 
@@ -664,7 +845,21 @@ struct thumbnail_manager::impl {
          }
       }
 
-      if (not _cpu_memory_cache.contains(name)) enqueue_create_thumbnail(name);
+      if (not _objects.cpu_memory_cache.contains(name)) {
+         enqueue_create_thumbnail(name);
+      }
+
+      return {.imgui_texture_id =
+                 reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+              .uv_left = 0.0f,
+              .uv_top = 0.0f,
+              .uv_right = 0.0f,
+              .uv_bottom = 0.0f};
+   }
+
+   auto request_texture_thumbnail(const std::string_view name) -> object_class_thumbnail
+   {
+      (void)name;
 
       return {.imgui_texture_id =
                  reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
@@ -680,7 +875,7 @@ struct thumbnail_manager::impl {
          const uint32 size = _thumbnail_length * _thumbnail_length * sizeof(uint32);
 
          std::unique_ptr<std::byte[]>& memory =
-            _cpu_memory_cache[_readback_names[_device.frame_index()]];
+            _objects.cpu_memory_cache[_readback_names[_device.frame_index()]];
 
          if (not memory) {
             memory = std::make_unique_for_overwrite<std::byte[]>(size);
@@ -704,7 +899,7 @@ struct thumbnail_manager::impl {
          _load_disk_cache_task = std::nullopt;
 
          if (loaded.thumbnail_length == _thumbnail_length) {
-            _cpu_memory_cache = std::move(loaded.cpu_memory_cache);
+            _objects.cpu_memory_cache = std::move(loaded.cpu_memory_cache);
             _cpu_cache_dirty = false;
 
             if (_restore_invalidation_tracker_task) {
@@ -748,7 +943,7 @@ struct thumbnail_manager::impl {
       if (status == model_status::ready or status == model_status::ready_textures_missing or
           status == model_status::ready_textures_loading) {
          const std::optional<thumbnail_index> thumbnail_index =
-            get_or_allocate_thumbnail_index(_rendering->name);
+            _objects.get_or_allocate_thumbnail_index(_rendering->name, _atlas_allocator);
 
          if (not thumbnail_index) return;
 
@@ -781,36 +976,20 @@ struct thumbnail_manager::impl {
 
    void end_frame()
    {
-      std::swap(_back_items, _front_items);
-
-      for (const auto& [name, index] : _front_items) {
-         if (not _back_items.contains(name)) {
-            if (not _recycle_items.emplace(name, recycle_item{index, _frame}).second) {
-               _free_items.push_back(index);
-            }
-         }
-      }
-
-      _front_items.clear();
+      _objects.end_frame(_atlas_allocator, _frame);
 
       _frame += 1;
 
       for (const auto& name : _invalidation_tracker.get_invalidated()) {
-         if (auto it = _back_items.find(name); it != _back_items.end()) {
+         if (auto it = _objects.back.find(name); it != _objects.back.end()) {
             const thumbnail_index index = it->second;
 
-            _free_items.push_back(index);
-            _back_items.erase(it);
+            _atlas_allocator.free(index);
+            _objects.back.erase(it);
          }
 
-         if (auto it = _recycle_items.find(name); it != _recycle_items.end()) {
-            const thumbnail_index index = it->second.index;
-
-            _free_items.push_back(index);
-            _recycle_items.erase(it);
-         }
-
-         _cpu_memory_cache.erase(name);
+         _atlas_allocator.invalidate_recycling_object(name);
+         _objects.cpu_memory_cache.erase(name);
       }
    }
 
@@ -822,11 +1001,7 @@ struct thumbnail_manager::impl {
 
       _thumbnail_length = static_cast<uint32>(128 * _display_scale);
 
-      _free_items.clear();
-      _front_items.clear();
-      _back_items.clear();
-      _recycle_items.clear();
-      _cpu_memory_cache.clear();
+      _objects.clear();
 
       create_gpu_resources();
    }
@@ -834,13 +1009,13 @@ struct thumbnail_manager::impl {
    void async_save_disk_cache(const char* path) noexcept
    {
       if (not _cpu_cache_dirty) return;
-      if (_cpu_memory_cache.empty()) return;
+      if (_objects.cpu_memory_cache.empty()) return;
 
       if (_save_disk_cache_task) _save_disk_cache_task->wait();
 
       _save_disk_cache_task =
          _thread_pool->exec([disk_cache_path = io::path{path},
-                             cpu_memory_cache = std::move(_cpu_memory_cache),
+                             cpu_memory_cache = std::move(_objects.cpu_memory_cache),
                              thumbnail_length = _thumbnail_length,
                              &invalidation_tracker = _invalidation_tracker] {
             save_disk_cache(disk_cache_path, cpu_memory_cache, thumbnail_length,
@@ -861,10 +1036,7 @@ struct thumbnail_manager::impl {
    {
       create_gpu_resources();
 
-      _front_items.clear();
-      _back_items.clear();
-      _recycle_items.clear();
-      _cpu_memory_cache.clear();
+      _objects.clear();
 
       {
          std::scoped_lock lock{_pending_odfs_mutex, _pending_render_mutex,
@@ -879,11 +1051,6 @@ struct thumbnail_manager::impl {
    }
 
 private:
-   struct thumbnail_index {
-      uint16 x = 0;
-      uint16 y = 0;
-   };
-
    void copy_cache_upload_item(const thumbnail_index index,
                                gpu::graphics_command_list& command_list)
    {
@@ -1174,50 +1341,6 @@ private:
       _missing_model_odfs.erase(name);
    }
 
-   auto get_or_allocate_thumbnail_index(const std::string_view name) noexcept
-      -> std::optional<thumbnail_index>
-   {
-      if (auto it = _back_items.find(name); it != _back_items.end()) {
-         return it->second;
-      }
-
-      if (auto it = _front_items.find(name); it != _front_items.end()) {
-         return it->second;
-      }
-
-      if (not _free_items.empty()) {
-         const thumbnail_index thumbnail_index = _free_items.back();
-
-         _free_items.pop_back();
-         _front_items.emplace(name, thumbnail_index);
-
-         return thumbnail_index;
-      }
-
-      if (not _recycle_items.empty()) {
-         uint64 oldest_frame = UINT64_MAX;
-         decltype(_recycle_items)::iterator recycle_it = _recycle_items.begin();
-
-         for (auto it = _recycle_items.begin(); it != _recycle_items.end(); ++it) {
-            const auto& [_, item] = *it;
-
-            if (item.last_used_frame < oldest_frame) {
-               oldest_frame = item.last_used_frame;
-               recycle_it = it;
-            }
-         }
-
-         const thumbnail_index thumbnail_index = recycle_it->second.index;
-
-         _recycle_items.erase(recycle_it);
-         _front_items.emplace(name, thumbnail_index);
-
-         return thumbnail_index;
-      }
-
-      return std::nullopt;
-   }
-
    void create_gpu_resources()
    {
       const uint32 atlas_items_width = max_texture_length / _thumbnail_length;
@@ -1238,14 +1361,7 @@ private:
                                                         {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB}),
                     _device};
 
-      _free_items.clear();
-      _free_items.reserve(atlas_items_width * atlas_items_height);
-
-      for (uint16 y = 0; y < atlas_items_height; ++y) {
-         for (uint16 x = 0; x < atlas_items_width; ++x) {
-            _free_items.push_back({x, y});
-         }
-      }
+      _atlas_allocator.reset(atlas_items_width, atlas_items_height);
 
       _atlas_items_width = static_cast<float>(atlas_items_width);
       _atlas_items_height = static_cast<float>(atlas_items_height);
@@ -1400,18 +1516,8 @@ private:
 
    std::optional<rendering> _rendering;
 
-   std::vector<thumbnail_index> _free_items;
-   absl::flat_hash_map<std::string, thumbnail_index> _front_items;
-   absl::flat_hash_map<std::string, thumbnail_index> _back_items;
-
-   struct recycle_item {
-      thumbnail_index index;
-      uint64 last_used_frame;
-   };
-
-   absl::flat_hash_map<std::string, recycle_item> _recycle_items;
-
-   absl::flat_hash_map<std::string, std::unique_ptr<std::byte[]>> _cpu_memory_cache;
+   thumbnail_manager_type_items _objects;
+   thumbnail_manager_atlas_allocator _atlas_allocator;
 
    std::shared_mutex _pending_odfs_mutex;
    absl::flat_hash_map<std::string, asset_ref<assets::odf::definition>> _pending_odfs;
@@ -1453,6 +1559,12 @@ auto thumbnail_manager::request_object_class_thumbnail(const std::string_view na
    -> object_class_thumbnail
 {
    return _impl->request_object_class_thumbnail(name);
+}
+
+auto thumbnail_manager::request_texture_thumbnail(const std::string_view name)
+   -> object_class_thumbnail
+{
+   return _impl->request_texture_thumbnail(name);
 }
 
 void thumbnail_manager::update_cpu_cache()
