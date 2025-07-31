@@ -8,6 +8,7 @@
 
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/definition.hpp"
+#include "assets/texture/texture.hpp"
 
 #include "async/thread_pool.hpp"
 
@@ -34,9 +35,10 @@ namespace we::graphics {
 
 namespace {
 
-constexpr uint32 cache_save_version = 1;
+constexpr uint32 cache_save_version = 2;
 constexpr uint32 max_texture_length = 16384;
 constexpr uint32 atlas_thumbnails = 256;
+constexpr uint32 cpu_cache_reservation = 2048;
 constexpr uint32 aa_factor = 4;
 
 struct camera_info {
@@ -87,7 +89,7 @@ auto make_camera_info(const model& model) -> camera_info
    return {.projection_from_world = projection_from_world, .camera_position = position};
 }
 
-struct invalidation_save_entry {
+struct objects_invalidation_save_entry {
    struct name_time {
       template<typename T>
       name_time(lowercase_string init_name, assets::library<T>& assets)
@@ -130,8 +132,8 @@ struct invalidation_save_entry {
    std::vector<name_time> textures;
 };
 
-struct invalidation_tracker {
-   explicit invalidation_tracker(assets::libraries_manager& asset_libraries)
+struct objects_invalidation_tracker {
+   explicit objects_invalidation_tracker(assets::libraries_manager& asset_libraries)
       : _odf_change_listener{asset_libraries.odfs.listen_for_changes(
            [this](const lowercase_string& name) { odf_changed(name); })},
         _msh_change_listener{asset_libraries.models.listen_for_changes(
@@ -213,15 +215,15 @@ struct invalidation_tracker {
       return _invalidated;
    }
 
-   auto get_save_data() noexcept -> std::vector<invalidation_save_entry>
+   auto get_save_data() noexcept -> std::vector<objects_invalidation_save_entry>
    {
       std::scoped_lock lock{_mutex};
 
-      std::vector<invalidation_save_entry> save_data;
+      std::vector<objects_invalidation_save_entry> save_data;
       save_data.reserve(_odfs.size());
 
       for (const auto& [name, entry] : _odfs) {
-         using name_time = invalidation_save_entry::name_time;
+         using name_time = objects_invalidation_save_entry::name_time;
 
          std::vector<name_time> textures;
          textures.reserve(entry.textures.size());
@@ -238,7 +240,7 @@ struct invalidation_tracker {
       return save_data;
    }
 
-   void restore_from_save_data(const std::span<const invalidation_save_entry> save_data) noexcept
+   void restore_from_save_data(const std::span<const objects_invalidation_save_entry> save_data) noexcept
    {
       {
          std::scoped_lock lock{_mutex};
@@ -246,7 +248,7 @@ struct invalidation_tracker {
          _odfs.reserve(save_data.size());
       }
 
-      for (const invalidation_save_entry& entry : save_data) {
+      for (const objects_invalidation_save_entry& entry : save_data) {
          if (entry.invalidated(_asset_libraries)) {
             std::scoped_lock lock{_mutex, _invalidated_background_mutex};
 
@@ -404,6 +406,110 @@ private:
    event_listener<void(const lowercase_string&)> _texture_change_listener;
 };
 
+using textures_invalidation_save_entry = objects_invalidation_save_entry::name_time;
+
+struct textures_invalidation_tracker {
+   explicit textures_invalidation_tracker(assets::libraries_manager& asset_libraries)
+      : _texture_change_listener{asset_libraries.textures.listen_for_changes(
+           [this](const lowercase_string& name) { texture_changed(name); })},
+        _asset_libraries{asset_libraries}
+   {
+   }
+
+   void track(std::string_view texture_name) noexcept
+   {
+      std::scoped_lock lock{_mutex};
+
+      _textures.emplace(texture_name);
+   }
+
+   auto get_invalidated() -> std::span<std::string>
+   {
+      _invalidated.clear();
+
+      std::scoped_lock lock{_invalidated_background_mutex};
+
+      std::swap(_invalidated, _invalidated_background);
+
+      return _invalidated;
+   }
+
+   auto get_save_data() noexcept -> std::vector<textures_invalidation_save_entry>
+   {
+      std::scoped_lock lock{_mutex};
+
+      std::vector<textures_invalidation_save_entry> save_data;
+      save_data.reserve(_textures.size());
+
+      for (const lowercase_string& name : _textures) {
+         save_data.emplace_back(name, _asset_libraries.textures);
+      }
+
+      return save_data;
+   }
+
+   void restore_from_save_data(const std::span<const textures_invalidation_save_entry> save_data) noexcept
+   {
+      {
+         std::scoped_lock lock{_mutex};
+
+         _textures.reserve(save_data.size());
+      }
+
+      for (const textures_invalidation_save_entry& entry : save_data) {
+         if (entry.invalidated(_asset_libraries.textures)) {
+            std::scoped_lock lock{_mutex, _invalidated_background_mutex};
+
+            if (not _textures.contains(entry.name)) {
+               _invalidated_background.push_back(entry.name);
+            }
+
+            continue;
+         }
+
+         std::scoped_lock lock{_mutex};
+
+         _textures.emplace(entry.name);
+      }
+   }
+
+   void clear() noexcept
+   {
+      _invalidated.clear();
+
+      std::scoped_lock lock{_mutex, _invalidated_background_mutex};
+
+      _textures.clear();
+      _invalidated_background.clear();
+   }
+
+private:
+   void texture_changed(const lowercase_string& name) noexcept
+   {
+      {
+         std::shared_lock lock{_mutex};
+
+         if (not _textures.contains(name)) return;
+      }
+
+      std::scoped_lock lock{_invalidated_background_mutex};
+
+      _invalidated_background.push_back(name);
+   }
+
+   std::vector<std::string> _invalidated;
+
+   std::shared_mutex _mutex;
+   absl::flat_hash_set<lowercase_string> _textures;
+
+   std::shared_mutex _invalidated_background_mutex;
+   std::vector<std::string> _invalidated_background;
+
+   assets::libraries_manager& _asset_libraries;
+
+   event_listener<void(const lowercase_string&)> _texture_change_listener;
+};
+
 void texture_copy(std::byte* dest, const std::size_t dest_pitch,
                   const std::byte* src, std::size_t src_pitch,
                   const std::size_t length, const std::size_t elem_byte_size)
@@ -416,11 +522,17 @@ void texture_copy(std::byte* dest, const std::size_t dest_pitch,
    }
 }
 
-void save_disk_cache(
-   const io::path& path,
-   const absl::flat_hash_map<std::string, std::unique_ptr<std::byte[]>>& cpu_memory_cache,
-   const uint32 thumbnail_length,
-   std::span<const invalidation_save_entry> invalidation_save_data) noexcept
+struct disk_cache {
+   uint32 thumbnail_length = 0;
+
+   absl::flat_hash_map<std::string, std::unique_ptr<std::byte[]>> objects_cpu_memory_cache;
+   std::vector<objects_invalidation_save_entry> objects_invalidation_save_data;
+
+   absl::flat_hash_map<std::string, std::unique_ptr<std::byte[]>> textures_cpu_memory_cache;
+   std::vector<textures_invalidation_save_entry> textures_invalidation_save_data;
+};
+
+void save_disk_cache(const io::path& path, const disk_cache& cache) noexcept
 {
    try {
       const auto output_to_memory = [&](std::byte* const output_data) {
@@ -453,21 +565,22 @@ void save_disk_cache(
          };
 
          write_object(cache_save_version);
-         write_object(thumbnail_length);
+         write_object(cache.thumbnail_length);
          write_object(static_cast<uint32>(sizeof(std::size_t)));
 
-         write_object(cpu_memory_cache.size());
+         write_object(cache.objects_cpu_memory_cache.size());
 
-         for (const auto& [name, data] : cpu_memory_cache) {
+         for (const auto& [name, data] : cache.objects_cpu_memory_cache) {
             write_object(name.size());
             write_string(name);
-            write_bytes(std::span{data.get(), thumbnail_length * thumbnail_length *
+            write_bytes(std::span{data.get(), cache.thumbnail_length * cache.thumbnail_length *
                                                  sizeof(uint32)});
          }
 
-         write_object(invalidation_save_data.size());
+         write_object(cache.objects_invalidation_save_data.size());
 
-         for (const auto& entry : invalidation_save_data) {
+         for (const objects_invalidation_save_entry& entry :
+              cache.objects_invalidation_save_data) {
             write_object(entry.odf.name.size());
             write_string(entry.odf.name);
             write_object(entry.odf.time);
@@ -484,6 +597,24 @@ void save_disk_cache(
             }
          }
 
+         write_object(cache.textures_cpu_memory_cache.size());
+
+         for (const auto& [name, data] : cache.textures_cpu_memory_cache) {
+            write_object(name.size());
+            write_string(name);
+            write_bytes(std::span{data.get(), cache.thumbnail_length * cache.thumbnail_length *
+                                                 sizeof(uint32)});
+         }
+
+         write_object(cache.textures_invalidation_save_data.size());
+
+         for (const textures_invalidation_save_entry& entry :
+              cache.textures_invalidation_save_data) {
+            write_object(entry.name.size());
+            write_string(entry.name);
+            write_object(entry.time);
+         }
+
          return write_head;
       };
 
@@ -498,16 +629,10 @@ void save_disk_cache(
    }
 }
 
-struct loaded_cache {
-   absl::flat_hash_map<std::string, std::unique_ptr<std::byte[]>> cpu_memory_cache;
-   uint32 thumbnail_length = 0;
-   std::vector<invalidation_save_entry> invalidation_save_data;
-};
-
-auto load_disk_cache(const io::path& path) noexcept -> loaded_cache
+auto load_disk_cache(const io::path& path) noexcept -> disk_cache
 {
    try {
-      loaded_cache loaded;
+      disk_cache loaded;
 
       const std::vector<std::byte> bytes = io::read_file_to_bytes(path);
 
@@ -522,11 +647,13 @@ auto load_disk_cache(const io::path& path) noexcept -> loaded_cache
       if (version != cache_save_version) return {};
       if (size_t_size != sizeof(std::size_t)) return {};
 
-      const std::size_t cached_thumbnails = cache.read<std::size_t>();
+      loaded.thumbnail_length = thumbnail_length;
 
-      loaded.cpu_memory_cache.reserve(cached_thumbnails);
+      const std::size_t cached_object_thumbnails = cache.read<std::size_t>();
 
-      for (std::size_t i = 0; i < cached_thumbnails; ++i) {
+      loaded.objects_cpu_memory_cache.reserve(cached_object_thumbnails);
+
+      for (std::size_t i = 0; i < cached_object_thumbnails; ++i) {
          const std::span<const std::byte> name_bytes =
             cache.read_bytes(cache.read<std::size_t>());
          const std::string_view name{reinterpret_cast<const char*>(name_bytes.data()),
@@ -534,7 +661,7 @@ auto load_disk_cache(const io::path& path) noexcept -> loaded_cache
 
          const std::span<const std::byte> thumbnail = cache.read_bytes(thumbnail_size);
 
-         std::unique_ptr<std::byte[]>& memory = loaded.cpu_memory_cache[name];
+         std::unique_ptr<std::byte[]>& memory = loaded.objects_cpu_memory_cache[name];
 
          if (not memory) {
             memory = std::make_unique_for_overwrite<std::byte[]>(thumbnail_size);
@@ -543,12 +670,13 @@ auto load_disk_cache(const io::path& path) noexcept -> loaded_cache
          std::memcpy(memory.get(), thumbnail.data(), thumbnail_size);
       }
 
-      const std::size_t cached_invalidation_entries = cache.read<std::size_t>();
+      const std::size_t cached_object_invalidation_entries =
+         cache.read<std::size_t>();
 
-      loaded.invalidation_save_data.reserve(cached_invalidation_entries);
+      loaded.objects_invalidation_save_data.reserve(cached_object_invalidation_entries);
 
       for (std::size_t entry_index = 0;
-           entry_index < cached_invalidation_entries; ++entry_index) {
+           entry_index < cached_object_invalidation_entries; ++entry_index) {
          const std::span<const std::byte> odf_bytes =
             cache.read_bytes(cache.read<std::size_t>());
          const std::string_view odf{reinterpret_cast<const char*>(odf_bytes.data()),
@@ -563,7 +691,7 @@ auto load_disk_cache(const io::path& path) noexcept -> loaded_cache
 
          const std::size_t texture_count = cache.read<std::size_t>();
 
-         using name_time = invalidation_save_entry::name_time;
+         using name_time = objects_invalidation_save_entry::name_time;
 
          std::vector<name_time> textures;
          textures.reserve(texture_count);
@@ -580,12 +708,50 @@ auto load_disk_cache(const io::path& path) noexcept -> loaded_cache
             textures.emplace_back(texture, texture_last_write_time);
          }
 
-         loaded.invalidation_save_data.emplace_back(name_time{odf, odf_last_write_time},
-                                                    name_time{model, model_last_write_time},
-                                                    std::move(textures));
+         loaded.objects_invalidation_save_data
+            .emplace_back(name_time{odf, odf_last_write_time},
+                          name_time{model, model_last_write_time},
+                          std::move(textures));
       }
 
-      loaded.thumbnail_length = thumbnail_length;
+      const std::size_t cached_texture_thumbnails = cache.read<std::size_t>();
+
+      loaded.textures_cpu_memory_cache.reserve(cached_texture_thumbnails);
+
+      for (std::size_t i = 0; i < cached_texture_thumbnails; ++i) {
+         const std::span<const std::byte> name_bytes =
+            cache.read_bytes(cache.read<std::size_t>());
+         const std::string_view name{reinterpret_cast<const char*>(name_bytes.data()),
+                                     name_bytes.size()};
+
+         const std::span<const std::byte> thumbnail = cache.read_bytes(thumbnail_size);
+
+         std::unique_ptr<std::byte[]>& memory =
+            loaded.textures_cpu_memory_cache[name];
+
+         if (not memory) {
+            memory = std::make_unique_for_overwrite<std::byte[]>(thumbnail_size);
+         }
+
+         std::memcpy(memory.get(), thumbnail.data(), thumbnail_size);
+      }
+
+      const std::size_t cached_texture_invalidation_entries =
+         cache.read<std::size_t>();
+
+      loaded.textures_invalidation_save_data.reserve(cached_texture_invalidation_entries);
+
+      for (std::size_t entry_index = 0;
+           entry_index < cached_texture_invalidation_entries; ++entry_index) {
+         const std::span<const std::byte> name_bytes =
+            cache.read_bytes(cache.read<std::size_t>());
+         const std::string_view name{reinterpret_cast<const char*>(name_bytes.data()),
+                                     name_bytes.size()};
+         const uint64 last_write_time = cache.read<uint64>();
+
+         loaded.textures_invalidation_save_data.emplace_back(std::string{name},
+                                                             last_write_time);
+      }
 
       return loaded;
    }
@@ -597,6 +763,43 @@ auto load_disk_cache(const io::path& path) noexcept -> loaded_cache
 struct thumbnail_index {
    uint16 x = 0;
    uint16 y = 0;
+};
+
+struct thumbnail_manager_memory_cache {
+   explicit thumbnail_manager_memory_cache(uint32 thumbnail_length)
+      : _thumbnail_length{thumbnail_length} {};
+
+   void store_object(const std::string_view name,
+                     std::unique_ptr<std::byte[]> thumbnail) noexcept
+   {
+      if (auto existing = _objects.find(name); existing != _objects.end()) {
+         existing->second = std::move(thumbnail);
+      }
+      else {
+         _objects.emplace(std::move(name), std::move(thumbnail));
+      }
+   }
+
+   auto load_object(const std::string_view name) const noexcept
+      -> std::span<const std::byte>
+   {
+      if (auto existing = _objects.find(name); existing != _objects.end()) {
+         return {existing->second.get(),
+                 _thumbnail_length * _thumbnail_length * sizeof(uint32)};
+      }
+
+      return {};
+   }
+
+   void clear()
+   {
+      _objects.clear();
+   }
+
+private:
+   uint32 _thumbnail_length = 0;
+
+   absl::flat_hash_map<std::string, std::unique_ptr<std::byte[]>> _objects;
 };
 
 struct thumbnail_manager_atlas_allocator {
@@ -703,6 +906,49 @@ struct thumbnail_manager_atlas_allocator {
       }
    }
 
+   /// @brief Try to restore a previously recycled texture.
+   /// @param name The name of the texture.
+   /// @return The index of the texture's thumbnail or nullopt if it has already been overwritten.
+   auto try_restore_texture(const std::string_view name) noexcept
+      -> std::optional<thumbnail_index>
+   {
+      if (auto it = _recycle_textures.find(name); it != _recycle_textures.end()) {
+         const thumbnail_index thumbnail_index = it->second.index;
+
+         _recycle_textures.erase(it);
+
+         return thumbnail_index;
+      }
+
+      return std::nullopt;
+   }
+
+   /// @brief Recycle an texture thumbnail. Allowing it to be reused but potentially restored at later date/
+   /// @param name The name of the texture.
+   /// @param index The index of the thumbnail.
+   /// @param last_used_frame The frame the thumbnail was last used on.
+   void recycle_texture(const std::string_view name, thumbnail_index index,
+                        uint64 last_used_frame) noexcept
+   {
+      if (not _recycle_textures
+                 .emplace(name, recycle_item{index, last_used_frame})
+                 .second) {
+         _free_items.push_back(index);
+      }
+   }
+
+   /// @brief Invalidate a previously recycled thumbnail.
+   /// @param name The name of the texture whose thumbnail to invalidate.
+   void invalidate_recycling_texture(const std::string_view name) noexcept
+   {
+      if (auto it = _recycle_textures.find(name); it != _recycle_textures.end()) {
+         const thumbnail_index index = it->second.index;
+
+         _free_items.push_back(index);
+         _recycle_textures.erase(it);
+      }
+   }
+
 private:
    std::vector<thumbnail_index> _free_items;
 
@@ -712,12 +958,20 @@ private:
    };
 
    absl::flat_hash_map<std::string, recycle_item> _recycle_objects;
+   absl::flat_hash_map<std::string, recycle_item> _recycle_textures;
 };
 
 struct thumbnail_manager_type_items {
    absl::flat_hash_map<std::string, thumbnail_index> front;
    absl::flat_hash_map<std::string, thumbnail_index> back;
    absl::flat_hash_map<std::string, std::unique_ptr<std::byte[]>> cpu_memory_cache;
+
+   thumbnail_manager_type_items() noexcept
+   {
+      front.reserve(atlas_thumbnails);
+      back.reserve(atlas_thumbnails);
+      cpu_memory_cache.reserve(cpu_cache_reservation);
+   }
 
    /// @brief Gets the thumbnail index for an item or allocates one if needed. Returns nullopt if there was no space in the atlas.
    /// @param name The name of the item.
@@ -780,9 +1034,6 @@ struct thumbnail_manager::impl {
         _device{init.device},
         _display_scale{init.display_scale}
    {
-      _objects.back.reserve(atlas_thumbnails);
-      _objects.cpu_memory_cache.reserve(2048);
-
       create_gpu_resources();
    }
 
@@ -846,7 +1097,7 @@ struct thumbnail_manager::impl {
       }
 
       if (not _objects.cpu_memory_cache.contains(name)) {
-         enqueue_create_thumbnail(name);
+         enqueue_create_object_thumbnail(name);
       }
 
       return {.imgui_texture_id =
@@ -859,7 +1110,61 @@ struct thumbnail_manager::impl {
 
    auto request_texture_thumbnail(const std::string_view name) -> object_class_thumbnail
    {
-      (void)name;
+      if (auto it = _textures.back.find(name); it != _textures.back.end()) {
+         const thumbnail_index index = it->second;
+
+         _textures.front.emplace(name, index);
+
+         return {.imgui_texture_id =
+                    reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+                 .uv_left = index.x / _atlas_items_width,
+                 .uv_top = index.y / _atlas_items_height,
+                 .uv_right = (index.x + 1) / _atlas_items_width,
+                 .uv_bottom = (index.y + 1) / _atlas_items_height};
+      }
+
+      if (const std::optional<thumbnail_index> index =
+             _atlas_allocator.try_restore_texture(name);
+          index) {
+         _textures.back.emplace(name, *index);
+         _textures.front.emplace(name, *index);
+
+         return {.imgui_texture_id =
+                    reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+                 .uv_left = index->x / _atlas_items_width,
+                 .uv_top = index->y / _atlas_items_height,
+                 .uv_right = (index->x + 1) / _atlas_items_width,
+                 .uv_bottom = (index->y + 1) / _atlas_items_height};
+      }
+
+      if (not _cache_upload_item) {
+         if (auto it = _textures.cpu_memory_cache.find(name);
+             it != _textures.cpu_memory_cache.end()) {
+            if (const std::optional<thumbnail_index> index =
+                   _textures.get_or_allocate_thumbnail_index(name, _atlas_allocator);
+                index) {
+               _cache_upload_item.emplace(*index);
+
+               const std::byte* const src_data = it->second.get();
+
+               texture_copy(_upload_pointers[_device.frame_index()],
+                            _upload_readback_pitch, src_data,
+                            _thumbnail_length * sizeof(uint32),
+                            _thumbnail_length, sizeof(uint32));
+
+               return {.imgui_texture_id =
+                          reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+                       .uv_left = index->x / _atlas_items_width,
+                       .uv_top = index->y / _atlas_items_height,
+                       .uv_right = (index->x + 1) / _atlas_items_width,
+                       .uv_bottom = (index->y + 1) / _atlas_items_height};
+            }
+         }
+      }
+
+      if (not _textures.cpu_memory_cache.contains(name)) {
+         enqueue_create_texture_thumbnail(name);
+      }
 
       return {.imgui_texture_id =
                  reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
@@ -894,21 +1199,37 @@ struct thumbnail_manager::impl {
       }
 
       if (_load_disk_cache_task and _load_disk_cache_task->ready()) {
-         loaded_cache loaded = _load_disk_cache_task->get();
+         disk_cache loaded = _load_disk_cache_task->get();
 
          _load_disk_cache_task = std::nullopt;
 
          if (loaded.thumbnail_length == _thumbnail_length) {
-            _objects.cpu_memory_cache = std::move(loaded.cpu_memory_cache);
             _cpu_cache_dirty = false;
 
-            if (_restore_invalidation_tracker_task) {
-               _restore_invalidation_tracker_task->wait();
+            _objects.cpu_memory_cache = std::move(loaded.objects_cpu_memory_cache);
+
+            if (_restore_objects_invalidation_tracker_task) {
+               _restore_objects_invalidation_tracker_task->wait();
             }
 
-            _restore_invalidation_tracker_task = _thread_pool->exec(
-               [this, invalidation_save_data = std::move(loaded.invalidation_save_data)] {
-                  _invalidation_tracker.restore_from_save_data(invalidation_save_data);
+            _restore_objects_invalidation_tracker_task = _thread_pool->exec(
+               [this, objects_invalidation_save_data =
+                         std::move(loaded.objects_invalidation_save_data)] {
+                  _objects_invalidation_tracker.restore_from_save_data(
+                     objects_invalidation_save_data);
+               });
+
+            _textures.cpu_memory_cache = std::move(loaded.textures_cpu_memory_cache);
+
+            if (_restore_textures_invalidation_tracker_task) {
+               _restore_textures_invalidation_tracker_task->wait();
+            }
+
+            _restore_textures_invalidation_tracker_task = _thread_pool->exec(
+               [this, textures_invalidation_save_data =
+                         std::move(loaded.textures_invalidation_save_data)] {
+                  _textures_invalidation_tracker.restore_from_save_data(
+                     textures_invalidation_save_data);
                });
          }
       }
@@ -919,6 +1240,8 @@ struct thumbnail_manager::impl {
                    dynamic_buffer_allocator& dynamic_buffer_allocator,
                    gpu::graphics_command_list& command_list)
    {
+      update_pending_textures();
+
       if (_cache_upload_item) {
          copy_cache_upload_item(_cache_upload_item->index, command_list);
 
@@ -957,7 +1280,8 @@ struct thumbnail_manager::impl {
             std::scoped_lock lock{_pending_render_mutex};
 
             _pending_render.erase(_rendering->name);
-            _invalidation_tracker.track(_rendering->name, _rendering->model_name, model);
+            _objects_invalidation_tracker.track(_rendering->name,
+                                                _rendering->model_name, model);
             _rendering = std::nullopt;
          }
       }
@@ -977,10 +1301,11 @@ struct thumbnail_manager::impl {
    void end_frame()
    {
       _objects.end_frame(_atlas_allocator, _frame);
+      _textures.end_frame(_atlas_allocator, _frame);
 
       _frame += 1;
 
-      for (const auto& name : _invalidation_tracker.get_invalidated()) {
+      for (const auto& name : _objects_invalidation_tracker.get_invalidated()) {
          if (auto it = _objects.back.find(name); it != _objects.back.end()) {
             const thumbnail_index index = it->second;
 
@@ -991,6 +1316,18 @@ struct thumbnail_manager::impl {
          _atlas_allocator.invalidate_recycling_object(name);
          _objects.cpu_memory_cache.erase(name);
       }
+
+      for (const auto& name : _textures_invalidation_tracker.get_invalidated()) {
+         if (auto it = _textures.back.find(name); it != _textures.back.end()) {
+            const thumbnail_index index = it->second;
+
+            _atlas_allocator.free(index);
+            _textures.back.erase(it);
+         }
+
+         _atlas_allocator.invalidate_recycling_texture(name);
+         _textures.cpu_memory_cache.erase(name);
+      }
    }
 
    void display_scale_changed(const float new_display_scale)
@@ -1000,26 +1337,32 @@ struct thumbnail_manager::impl {
       _display_scale = new_display_scale;
 
       _thumbnail_length = static_cast<uint32>(128 * _display_scale);
+      _pending_textures_thumbnail_length.store(_thumbnail_length,
+                                               std::memory_order_relaxed);
 
-      _objects.clear();
-
-      create_gpu_resources();
+      reset();
    }
 
    void async_save_disk_cache(const char* path) noexcept
    {
       if (not _cpu_cache_dirty) return;
-      if (_objects.cpu_memory_cache.empty()) return;
+      if (_objects.cpu_memory_cache.empty() and _textures.cpu_memory_cache.empty()) {
+         return;
+      }
 
       if (_save_disk_cache_task) _save_disk_cache_task->wait();
 
-      _save_disk_cache_task =
-         _thread_pool->exec([disk_cache_path = io::path{path},
-                             cpu_memory_cache = std::move(_objects.cpu_memory_cache),
-                             thumbnail_length = _thumbnail_length,
-                             &invalidation_tracker = _invalidation_tracker] {
-            save_disk_cache(disk_cache_path, cpu_memory_cache, thumbnail_length,
-                            invalidation_tracker.get_save_data());
+      _save_disk_cache_task = _thread_pool->exec(
+         [disk_cache_path = io::path{path},
+          cache = disk_cache{.thumbnail_length = _thumbnail_length,
+                             .objects_cpu_memory_cache = std::move(_objects.cpu_memory_cache),
+                             .objects_invalidation_save_data =
+                                _objects_invalidation_tracker.get_save_data(),
+
+                             .textures_cpu_memory_cache = std::move(_textures.cpu_memory_cache),
+                             .textures_invalidation_save_data =
+                                _textures_invalidation_tracker.get_save_data()}] {
+            save_disk_cache(disk_cache_path, cache);
          });
    }
 
@@ -1037,6 +1380,7 @@ struct thumbnail_manager::impl {
       create_gpu_resources();
 
       _objects.clear();
+      _textures.clear();
 
       {
          std::scoped_lock lock{_pending_odfs_mutex, _pending_render_mutex,
@@ -1047,10 +1391,57 @@ struct thumbnail_manager::impl {
          _missing_model_odfs.clear();
       }
 
-      _invalidation_tracker.clear();
+      {
+         std::scoped_lock lock{_pending_textures_mutex, _pending_textures_upload_mutex,
+                               _failed_textures_mutex};
+
+         _pending_textures.clear();
+         _pending_textures_upload.clear();
+         _failed_textures.clear();
+      }
+
+      _objects_invalidation_tracker.clear();
    }
 
 private:
+   void update_pending_textures() noexcept
+   {
+      if (_cache_upload_item) return;
+
+      std::scoped_lock lock{_pending_textures_upload_mutex};
+
+      for (auto it = _pending_textures_upload.begin();
+           it != _pending_textures_upload.end();) {
+         auto pending_it = it++;
+         auto& [name, pending] = *pending_it;
+
+         if (pending.thumbnail_length != _thumbnail_length) {
+            _pending_textures_upload.erase(pending_it);
+
+            continue;
+         }
+
+         if (const std::optional<thumbnail_index> thumbnail_index =
+                _textures.get_or_allocate_thumbnail_index(name, _atlas_allocator);
+             thumbnail_index) {
+            _cache_upload_item.emplace(*thumbnail_index);
+
+            const std::byte* const src_data = pending.data.get();
+
+            texture_copy(_upload_pointers[_device.frame_index()], _upload_readback_pitch,
+                         src_data, _thumbnail_length * sizeof(uint32),
+                         _thumbnail_length, sizeof(uint32));
+
+            _cpu_cache_dirty = true;
+            _textures.cpu_memory_cache.emplace(name, std::move(pending.data));
+            _textures_invalidation_tracker.track(name);
+            _pending_textures_upload.erase(pending_it);
+         }
+
+         return;
+      }
+   }
+
    void copy_cache_upload_item(const thumbnail_index index,
                                gpu::graphics_command_list& command_list)
    {
@@ -1285,7 +1676,7 @@ private:
       }
    }
 
-   void enqueue_create_thumbnail(const std::string_view name)
+   void enqueue_create_object_thumbnail(const std::string_view name)
    {
       {
          std::scoped_lock lock{_missing_model_odfs_mutex, _pending_render_mutex};
@@ -1307,6 +1698,36 @@ private:
          std::scoped_lock lock{_pending_odfs_mutex};
 
          _pending_odfs.emplace(std::string{name}, std::move(odf_asset_ref));
+      }
+   }
+
+   void enqueue_create_texture_thumbnail(const std::string_view name)
+   {
+      {
+         std::shared_lock lock{_failed_textures_mutex};
+
+         if (_failed_textures.contains(name)) return;
+      }
+
+      {
+         std::shared_lock lock{_pending_textures_upload_mutex};
+
+         if (_pending_textures_upload.contains(name)) return;
+      }
+
+      asset_ref texture_asset_ref = _asset_libraries.textures[lowercase_string{name}];
+
+      if (not texture_asset_ref.exists()) return;
+
+      asset_data texture_data = texture_asset_ref.get_if();
+
+      if (texture_data) {
+         texture_loaded(name, texture_asset_ref, texture_data);
+      }
+      else {
+         std::scoped_lock lock{_pending_textures_mutex};
+
+         _pending_textures.emplace(std::string{name}, std::move(texture_asset_ref));
       }
    }
 
@@ -1339,6 +1760,52 @@ private:
                               pending_render{model_name,
                                              _asset_libraries.models[model_name]});
       _missing_model_odfs.erase(name);
+   }
+
+   void texture_loaded(const std::string_view name,
+                       [[maybe_unused]] const asset_ref<assets::texture::texture>& ref,
+                       const asset_data<assets::texture::texture>& texture) noexcept
+   {
+      const uint32 thumbnail_length =
+         _pending_textures_thumbnail_length.load(std::memory_order_relaxed);
+
+      pending_texture_upload upload{
+         .thumbnail_length = thumbnail_length,
+         .data = std::make_unique<std::byte[]>(
+            thumbnail_length * thumbnail_length * sizeof(uint32)),
+      };
+
+      uint32 mip_level = 0;
+
+      for (; mip_level < texture->mip_levels(); ++mip_level) {
+         assets::texture::texture_subresource_view view =
+            texture->subresource({.mip_level = mip_level});
+
+         if (thumbnail_length >= std::max(view.width(), view.height())) {
+            break;
+         }
+      }
+
+      assets::texture::texture_subresource_view view =
+         texture->subresource({.mip_level = mip_level});
+
+      const uint32 y_dest_offset = (thumbnail_length - view.height()) / 2;
+      const uint32 x_dest_offset = (thumbnail_length - view.width()) / 2;
+      const uint32 dest_row_pitch = thumbnail_length * sizeof(uint32);
+
+      for (uint32 y = 0; y < view.height(); ++y) {
+         const uint32 dest_y = y + y_dest_offset;
+
+         std::memcpy(upload.data.get() + (dest_y * dest_row_pitch) +
+                        (x_dest_offset * sizeof(uint32)),
+                     view.data() + y * view.row_pitch(),
+                     view.width() * sizeof(uint32));
+      }
+
+      std::scoped_lock lock{_pending_textures_mutex, _pending_textures_upload_mutex};
+
+      _pending_textures.erase(name);
+      _pending_textures_upload.emplace(std::string{name}, std::move(upload));
    }
 
    void create_gpu_resources()
@@ -1517,6 +1984,7 @@ private:
    std::optional<rendering> _rendering;
 
    thumbnail_manager_type_items _objects;
+   thumbnail_manager_type_items _textures;
    thumbnail_manager_atlas_allocator _atlas_allocator;
 
    std::shared_mutex _pending_odfs_mutex;
@@ -1533,15 +2001,33 @@ private:
    std::shared_mutex _missing_model_odfs_mutex;
    absl::flat_hash_set<std::string> _missing_model_odfs;
 
-   invalidation_tracker _invalidation_tracker{_asset_libraries};
+   std::atomic_uint32_t _pending_textures_thumbnail_length = _thumbnail_length;
+
+   std::shared_mutex _pending_textures_mutex;
+   absl::flat_hash_map<std::string, asset_ref<assets::texture::texture>> _pending_textures;
+
+   struct pending_texture_upload {
+      uint32 thumbnail_length;
+      std::unique_ptr<std::byte[]> data;
+   };
+
+   std::shared_mutex _pending_textures_upload_mutex;
+   absl::flat_hash_map<std::string, pending_texture_upload> _pending_textures_upload;
+
+   std::shared_mutex _failed_textures_mutex;
+   absl::flat_hash_set<std::string> _failed_textures;
+
+   objects_invalidation_tracker _objects_invalidation_tracker{_asset_libraries};
+   textures_invalidation_tracker _textures_invalidation_tracker{_asset_libraries};
 
    std::optional<async::task<void>> _save_disk_cache_task;
-   std::optional<async::task<loaded_cache>> _load_disk_cache_task;
-   std::optional<async::task<void>> _restore_invalidation_tracker_task;
+   std::optional<async::task<disk_cache>> _load_disk_cache_task;
+   std::optional<async::task<void>> _restore_objects_invalidation_tracker_task;
+   std::optional<async::task<void>> _restore_textures_invalidation_tracker_task;
 
    event_listener<void(const lowercase_string&, asset_ref<assets::odf::definition>,
                        asset_data<assets::odf::definition>)>
-      _asset_load_listener = _asset_libraries.odfs.listen_for_loads(
+      _odf_load_listener = _asset_libraries.odfs.listen_for_loads(
          [this](const lowercase_string& name,
                 const asset_ref<assets::odf::definition>& ref,
                 const asset_data<assets::odf::definition>& data) {
@@ -1553,6 +2039,34 @@ private:
 
             odf_loaded(name, ref, data);
          });
+   event_listener<void(const lowercase_string&, asset_ref<assets::texture::texture>,
+                       asset_data<assets::texture::texture>)>
+      _texture_load_listener = _asset_libraries.textures.listen_for_loads(
+         [this](const lowercase_string& name,
+                const asset_ref<assets::texture::texture>& ref,
+                const asset_data<assets::texture::texture>& data) {
+            {
+               std::shared_lock lock{_pending_textures_mutex};
+
+               if (not _pending_textures.contains(name)) return;
+            }
+
+            texture_loaded(name, ref, data);
+         });
+   event_listener<void(const lowercase_string&, asset_ref<assets::texture::texture>)> _texture_load_failure_listener =
+      _asset_libraries.textures.listen_for_load_failures([this](const lowercase_string& name,
+                                                                const asset_ref<assets::texture::texture>&) {
+         std::scoped_lock lock{_pending_textures_mutex, _failed_textures_mutex};
+
+         _pending_textures.erase(name);
+         _failed_textures.emplace(std::string{name});
+      });
+   event_listener<void(const lowercase_string&)> _texture_change_listener =
+      _asset_libraries.textures.listen_for_changes([this](const lowercase_string& name) {
+         std::scoped_lock lock{_failed_textures_mutex};
+
+         _failed_textures.erase(name);
+      });
 };
 
 auto thumbnail_manager::request_object_class_thumbnail(const std::string_view name)
