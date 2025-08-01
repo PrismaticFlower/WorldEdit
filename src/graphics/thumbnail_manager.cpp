@@ -1102,7 +1102,7 @@ struct thumbnail_manager::impl {
       }
 
       return {.imgui_texture_id =
-                 reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+                 reinterpret_cast<void*>(uint64{_missing_thumbnail_srv.get().index}),
               .uv_left = 0.0f,
               .uv_top = 0.0f,
               .uv_right = 0.0f,
@@ -1168,7 +1168,7 @@ struct thumbnail_manager::impl {
       }
 
       return {.imgui_texture_id =
-                 reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+                 reinterpret_cast<void*>(uint64{_missing_thumbnail_srv.get().index}),
               .uv_left = 0.0f,
               .uv_top = 0.0f,
               .uv_right = 0.0f,
@@ -1949,6 +1949,11 @@ private:
 
    gpu::unique_resource_handle _atlas_texture;
    gpu::unique_resource_view _atlas_srv;
+
+   gpu::unique_resource_view _missing_thumbnail_srv =
+      {_device.create_null_shader_resource_view(gpu::srv_dimension::texture2d,
+                                                {.format = DXGI_FORMAT_R8G8B8A8_UNORM}),
+       _device};
 
    gpu::unique_resource_handle _render_texture;
    gpu::unique_rtv_handle _render_rtv;

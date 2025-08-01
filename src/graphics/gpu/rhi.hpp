@@ -44,6 +44,20 @@ enum class heap_type {
 
 enum class texture_dimension { t_1d = 2, t_2d = 3, t_3d = 4 };
 
+enum class srv_dimension {
+   buffer = 1,
+   texture1d = 2,
+   texture1d_array = 3,
+   texture2d = 4,
+   texture2d_array = 5,
+   texture2d_ms = 6,
+   texture2d_ms_array = 7,
+   texture3d = 8,
+   texture_cube = 9,
+   texture_cube_array = 10,
+   raytracing_acceleration_structure = 11
+};
+
 enum class uav_dimension {
    buffer = 1,
    texture1d = 2,
@@ -1357,6 +1371,10 @@ public:
    [[nodiscard]] auto create_depth_stencil_view(resource_handle resource,
                                                 const depth_stencil_view_desc& desc)
       -> dsv_handle;
+
+   [[nodiscard]] auto create_null_shader_resource_view(const srv_dimension dimension,
+                                                       const shader_resource_view_desc& desc)
+      -> resource_view;
 
    /// Query Functions ///
 

@@ -1478,6 +1478,30 @@ auto device::create_depth_stencil_view(resource_handle resource,
    return pack_dsv_handle(descriptor);
 }
 
+auto device::create_null_shader_resource_view(const srv_dimension dimension,
+                                              const shader_resource_view_desc& desc)
+   -> resource_view
+{
+   const D3D12_SHADER_RESOURCE_VIEW_DESC d3d12_desc{
+      .Format = desc.format,
+      .ViewDimension = static_cast<D3D12_SRV_DIMENSION>(dimension),
+      .Shader4ComponentMapping = D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(
+         std::to_underlying(desc.shader_4_component_mapping.component_0),
+         std::to_underlying(desc.shader_4_component_mapping.component_1),
+         std::to_underlying(desc.shader_4_component_mapping.component_2),
+         std::to_underlying(desc.shader_4_component_mapping.component_3))};
+
+   descriptor_heap& descriptor_heap = state->srv_uav_descriptor_heap;
+
+   resource_view view{.index = descriptor_heap.allocator.allocate()};
+
+   D3D12_CPU_DESCRIPTOR_HANDLE descriptor = descriptor_heap.index_cpu(view.index);
+
+   state->device->CreateShaderResourceView(nullptr, &d3d12_desc, descriptor);
+
+   return view;
+}
+
 auto device::create_timestamp_query_heap(const uint32 count) -> query_heap_handle
 {
    const D3D12_QUERY_HEAP_DESC desc{.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
