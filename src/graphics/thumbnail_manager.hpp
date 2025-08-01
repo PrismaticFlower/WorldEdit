@@ -81,7 +81,7 @@ struct thumbnail_manager {
 private:
    struct impl;
 
-   implementation_storage<impl, 2048> _impl;
+   implementation_storage<impl, 1640> _impl;
 };
 
 }
