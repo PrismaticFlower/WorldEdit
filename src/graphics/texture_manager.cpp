@@ -161,7 +161,8 @@ struct texture_manager::impl {
             const auto& [_, state] = *state_entry;
 
             if (auto texture = state.texture.lock(); texture) {
-               if (texture->dimension == expected_dimension) return texture;
+               return texture->dimension == expected_dimension ? texture
+                                                               : default_texture;
             }
          }
 
