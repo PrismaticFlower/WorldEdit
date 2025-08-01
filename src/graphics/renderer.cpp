@@ -100,6 +100,12 @@ struct renderer_impl final : renderer {
       return _thumbnail_manager.request_object_class_thumbnail(name);
    }
 
+   auto request_texture_thumbnail(const std::string_view name)
+      -> object_class_thumbnail override
+   {
+      return _thumbnail_manager.request_texture_thumbnail(name);
+   }
+
    void async_save_thumbnail_disk_cache(const char* path) noexcept override
    {
       _thumbnail_manager.async_save_disk_cache(path);

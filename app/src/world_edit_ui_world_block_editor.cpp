@@ -485,17 +485,6 @@ void world_edit::ui_show_block_editor() noexcept
 
          ImGui::InputText("Name", &material.name, _edit_stack_world, _edit_context);
 
-         if (absl::InlinedVector<char, 256> diffuse_map{material.diffuse_map.begin(),
-                                                        material.diffuse_map.end()};
-             ImGui::InputText("Diffuse Map", &diffuse_map)) {
-            _edit_stack_world.apply(edits::make_set_block_material(
-                                       &material.diffuse_map,
-                                       std::string{diffuse_map.begin(),
-                                                   diffuse_map.end()},
-                                       material_index, &_world.blocks.materials_dirty),
-                                    _edit_context);
-         }
-
          ui_block_texture_pick_widget("Diffuse Map", &material.diffuse_map,
                                       material_index);
          ui_block_texture_pick_widget("Normal Map", &material.normal_map, material_index);

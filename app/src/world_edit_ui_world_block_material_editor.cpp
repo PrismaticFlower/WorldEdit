@@ -14,6 +14,8 @@ namespace we {
 
 namespace {
 
+constexpr float thumbnail_base_size = 128.0f;
+
 auto foley_group_name(world::block_foley_group group) noexcept -> const char*
 {
    // clang-format off
@@ -276,20 +278,18 @@ bool world_edit::ui_block_texture_pick_widget(const char* label, std::string* te
          new_keyboard_input = true;
       }
 
-      const float thumbnail_size = 128.0f * _display_scale;
-      const float visible_classes = 8.0f;
-      const ImVec2 text_offset = {ImGui::GetStyle().FramePadding.x,
-                                  ImGui::GetStyle().FramePadding.y};
-      const float text_background_offset = 2.0f * _display_scale;
+      const float thumbnail_size = thumbnail_base_size * _display_scale;
+      const ImVec2 text_offset = {thumbnail_size + ImGui::GetStyle().ItemSpacing.x,
+                                  floorf((thumbnail_size - ImGui::GetFontSize()) * 0.5f)};
       const float text_wrap_length =
-         thumbnail_size - ImGui::GetStyle().FramePadding.x;
+         ImGui::GetContentRegionAvail().x - text_offset.x -
+         ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::GetStyle().ScrollbarSize;
       const ImVec2 button_size = {ImGui::GetContentRegionAvail().x,
                                   thumbnail_size +
                                      ImGui::GetStyle().FramePadding.x};
 
-      ImGui::BeginChild("Textures",
-                        {0.0f, (thumbnail_size + ImGui::GetStyle().ItemSpacing.y) *
-                                  visible_classes});
+      ImGui::BeginChild("##scrolling",
+                        {0.0f, ImGui::GetMainViewport()->WorkSize.y / 2.0f});
 
       _asset_libraries.textures.view_existing([&](const std::span<const assets::stable_string> assets) noexcept {
          int32 asset_index = 0;
@@ -336,11 +336,26 @@ bool world_edit::ui_block_texture_pick_widget(const char* label, std::string* te
                   ImGui::CloseCurrentPopup();
                }
 
-               ImGui::GetWindowDrawList()->AddImage(
-                  _renderer->request_imgui_texture_id(asset, graphics::fallback_imgui_texture::missing_diffuse),
-                  image_cursor_pos,
-                  {image_cursor_pos.x + thumbnail_size,
-                   image_cursor_pos.y + thumbnail_size});
+               const std::optional<graphics::object_class_thumbnail> thumbnail =
+                  [&]() -> std::optional<graphics::object_class_thumbnail> {
+                  try {
+                     return _renderer->request_texture_thumbnail(asset);
+                  }
+                  catch (graphics::gpu::exception& e) {
+                     handle_gpu_error(e);
+
+                     return std::nullopt;
+                  }
+               }();
+
+               if (thumbnail) {
+                  ImGui::GetWindowDrawList()
+                     ->AddImage(thumbnail->imgui_texture_id, image_cursor_pos,
+                                {image_cursor_pos.x + thumbnail_size,
+                                 image_cursor_pos.y + thumbnail_size},
+                                {thumbnail->uv_left, thumbnail->uv_top},
+                                {thumbnail->uv_right, thumbnail->uv_bottom});
+               }
 
                if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
                   ImGui::TextUnformatted(asset.data(), asset.data() + asset.size());
@@ -350,29 +365,6 @@ bool world_edit::ui_block_texture_pick_widget(const char* label, std::string* te
 
                const ImVec2 text_cursor_pos = {image_cursor_pos.x + text_offset.x,
                                                image_cursor_pos.y + text_offset.y};
-               const ImVec2 text_cursor_pos_background = {text_cursor_pos.x + text_background_offset,
-                                                          text_cursor_pos.y +
-                                                             text_background_offset};
-               const ImVec2 text_size =
-                  ImGui::CalcTextSize(asset.data(), asset.data() + asset.size(),
-                                      false, text_wrap_length);
-
-               ImGui::GetWindowDrawList()
-                  ->AddRectFilled(image_cursor_pos,
-                                  {text_cursor_pos.x + text_size.x +
-                                      ImGui::GetStyle().FramePadding.x,
-                                   text_cursor_pos.y + text_size.y +
-                                      ImGui::GetStyle().FramePadding.y},
-                                  ImGui::GetColorU32(ImGuiCol_WindowBg));
-
-               ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(),
-                                                   ImGui::GetFontSize(),
-                                                   text_cursor_pos_background,
-                                                   ~ImGui::GetColorU32(ImGuiCol_Text) |
-                                                      0xff'00'00'00u,
-                                                   asset.data(),
-                                                   asset.data() + asset.size(),
-                                                   text_wrap_length);
 
                ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(),
                                                    ImGui::GetFontSize(), text_cursor_pos,
@@ -413,5 +405,4 @@ bool world_edit::ui_block_texture_pick_widget(const char* label, std::string* te
 
    return modified;
 }
-
 }

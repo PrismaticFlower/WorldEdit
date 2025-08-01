@@ -119,6 +119,9 @@ struct renderer {
    virtual auto request_object_class_thumbnail(const std::string_view name)
       -> object_class_thumbnail = 0;
 
+   virtual auto request_texture_thumbnail(const std::string_view name)
+      -> object_class_thumbnail = 0;
+
    virtual void async_save_thumbnail_disk_cache(const char* path) noexcept = 0;
 
    virtual void async_load_thumbnail_disk_cache(const char* path) noexcept = 0;
