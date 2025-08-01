@@ -40,6 +40,7 @@ constexpr uint32 max_texture_length = 16384;
 constexpr uint32 atlas_thumbnails = 256;
 constexpr uint32 cpu_cache_reservation = 2048;
 constexpr uint32 aa_factor = 4;
+constexpr float thumbnail_base_length = 128.0f;
 
 struct camera_info {
    float4x4 projection_from_world;
@@ -1941,7 +1942,8 @@ private:
    float _atlas_items_height = 1;
    float _display_scale = 1.0f;
 
-   uint32 _thumbnail_length = static_cast<uint32>(128 * _display_scale);
+   uint32 _thumbnail_length =
+      static_cast<uint32>(thumbnail_base_length * _display_scale);
 
    uint64 _frame = 0;
 
@@ -2068,6 +2070,9 @@ private:
          _failed_textures.erase(name);
       });
 };
+
+const float thumbnail_manager::thumbnail_base_length =
+   we::graphics::thumbnail_base_length;
 
 auto thumbnail_manager::request_object_class_thumbnail(const std::string_view name)
    -> object_class_thumbnail

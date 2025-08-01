@@ -4389,8 +4389,11 @@ void renderer_impl::update_textures(gpu::copy_command_list& command_list)
    });
 }
 
+const float renderer::thumbnail_base_length = thumbnail_manager::thumbnail_base_length;
+
 auto make_renderer(const renderer_init& init) -> std::unique_ptr<renderer>
 {
    return std::make_unique<renderer_impl>(init);
 }
+
 }

@@ -13,8 +13,6 @@ namespace we {
 
 namespace {
 
-constexpr float thumbnail_base_size = 128.0f;
-
 void show_tree_branch(const assets::library_tree_branch& branch,
                       std::vector<uint32>& traversal_stack,
                       std::vector<uint32>& selected_stack,
@@ -147,7 +145,8 @@ void world_edit::ui_show_object_class_browser() noexcept
 
       ImGui::BeginChild("Classes", ImGui::GetContentRegionAvail());
 
-      const float button_size = thumbnail_base_size * _display_scale;
+      const float button_size =
+         graphics::renderer::thumbnail_base_length * _display_scale;
       const float item_size = button_size + ImGui::GetStyle().ItemSpacing.x;
       const float window_space =
          ImGui::GetWindowWidth() - ImGui::GetStyle().ScrollbarSize;
@@ -424,7 +423,8 @@ bool world_edit::ui_object_class_pick_widget(world::object* object) noexcept
          new_keyboard_input = true;
       }
 
-      const float thumbnail_size = thumbnail_base_size * 0.5f * _display_scale;
+      const float thumbnail_size =
+         graphics::renderer::thumbnail_base_length * 0.5f * _display_scale;
       const float visible_classes = 8.0f;
       const ImVec2 text_offset = {thumbnail_size + ImGui::GetStyle().ItemSpacing.x,
                                   floorf((thumbnail_size - ImGui::GetFontSize()) * 0.5f)};

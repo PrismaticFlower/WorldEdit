@@ -76,6 +76,8 @@ struct thumbnail_manager {
 
    void reset() noexcept;
 
+   const static float thumbnail_base_length;
+
 private:
    struct impl;
 

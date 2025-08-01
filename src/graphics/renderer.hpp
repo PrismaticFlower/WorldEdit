@@ -131,6 +131,8 @@ struct renderer {
    virtual auto request_imgui_texture_id(const std::string_view name,
                                          const fallback_imgui_texture fallback) noexcept
       -> void* = 0;
+
+   const static float thumbnail_base_length;
 };
 
 auto make_renderer(const renderer_init& init) -> std::unique_ptr<renderer>;

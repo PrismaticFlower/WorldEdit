@@ -14,8 +14,6 @@ namespace we {
 
 namespace {
 
-constexpr float thumbnail_base_size = 128.0f;
-
 auto foley_group_name(world::block_foley_group group) noexcept -> const char*
 {
    // clang-format off
@@ -278,7 +276,8 @@ bool world_edit::ui_block_texture_pick_widget(const char* label, std::string* te
          new_keyboard_input = true;
       }
 
-      const float thumbnail_size = thumbnail_base_size * _display_scale;
+      const float thumbnail_size =
+         graphics::renderer::thumbnail_base_length * _display_scale;
       const ImVec2 text_offset = {thumbnail_size + ImGui::GetStyle().ItemSpacing.x,
                                   floorf((thumbnail_size - ImGui::GetFontSize()) * 0.5f)};
       const float text_wrap_length =
