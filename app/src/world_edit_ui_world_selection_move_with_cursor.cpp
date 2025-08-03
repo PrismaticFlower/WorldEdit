@@ -19,6 +19,9 @@
 #include "world/utility/terrain_cut.hpp"
 #include "world/utility/world_utilities.hpp"
 
+#pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+#pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
+
 namespace we {
 
 void world_edit::ui_show_world_selection_move_with_cursor() noexcept
@@ -189,7 +192,6 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
              hit) {
             cursor_distance = std::min(cursor_distance, hit->distance);
          }
-         /* Raycast Blocks */
       }
 
       if (cursor_distance == std::numeric_limits<float>::max()) {
@@ -421,6 +423,62 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                      edits::make_set_block_box_metrics(*block_index, box.rotation,
                                                        create_new_position(box.position),
                                                        box.size));
+               } break;
+               case world::block_type::ramp: {
+                  const world::block_description_ramp& ramp =
+                     _world.blocks.ramps.description[*block_index];
+
+                  bundled_edits.push_back(
+                     edits::make_set_block_ramp_metrics(*block_index, ramp.rotation,
+                                                        create_new_position(ramp.position),
+                                                        ramp.size));
+               } break;
+               case world::block_type::quad: {
+                  const world::block_description_quad& quad =
+                     _world.blocks.quads.description[*block_index];
+
+                  bundled_edits.push_back(edits::make_set_block_quad_metrics(
+                     *block_index, {
+                                      create_new_position(quad.vertices[0]),
+                                      create_new_position(quad.vertices[1]),
+                                      create_new_position(quad.vertices[2]),
+                                      create_new_position(quad.vertices[3]),
+                                   }));
+               } break;
+               case world::block_type::custom: {
+                  const world::block_description_custom& custom =
+                     _world.blocks.custom.description[*block_index];
+
+                  bundled_edits.push_back(
+                     edits::make_set_block_custom_metrics(*block_index, custom.rotation,
+                                                          create_new_position(
+                                                             custom.position),
+                                                          custom.mesh_description));
+               } break;
+               case world::block_type::hemisphere: {
+                  const world::block_description_hemisphere& hemisphere =
+                     _world.blocks.hemispheres.description[*block_index];
+
+                  bundled_edits.push_back(edits::make_set_block_hemisphere_metrics(
+                     *block_index, hemisphere.rotation,
+                     create_new_position(hemisphere.position), hemisphere.size));
+               } break;
+               case world::block_type::pyramid: {
+                  const world::block_description_pyramid& pyramid =
+                     _world.blocks.pyramids.description[*block_index];
+
+                  bundled_edits.push_back(edits::make_set_block_pyramid_metrics(
+                     *block_index, pyramid.rotation,
+                     create_new_position(pyramid.position), pyramid.size));
+               } break;
+               case world::block_type::terrain_cut_box: {
+                  const world::block_description_terrain_cut_box& terrain_cut_box =
+                     _world.blocks.terrain_cut_boxes.description[*block_index];
+
+                  bundled_edits.push_back(edits::make_set_block_terrain_cut_box_metrics(
+                     *block_index, terrain_cut_box.rotation,
+                     create_new_position(terrain_cut_box.position),
+                     terrain_cut_box.size));
                } break;
                }
             }
@@ -767,6 +825,70 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                   bundled_edits.push_back(edits::make_set_block_box_metrics(
                      *block_index, rotation * box.rotation,
                      (rotation * (box.position - centreWS)) + centreWS, box.size));
+               } break;
+               case world::block_type::ramp: {
+                  const world::block_description_ramp& ramp =
+                     _world.blocks.ramps.description[*block_index];
+
+                  bundled_edits.push_back(edits::make_set_block_ramp_metrics(
+                     *block_index, rotation * ramp.rotation,
+                     (rotation * (ramp.position - centreWS)) + centreWS, ramp.size));
+               } break;
+               case world::block_type::quad: {
+                  const world::block_description_quad& quad =
+                     _world.blocks.quads.description[*block_index];
+
+                  const float3 quad_centre = (quad.vertices[0] + quad.vertices[1] +
+                                              quad.vertices[2] + quad.vertices[3]) /
+                                             4.0f;
+
+                  const float3 rotated_sector_centre =
+                     (rotation * (quad_centre - centreWS)) + centreWS;
+
+                  std::array<float3, 4> new_vertices = quad.vertices;
+
+                  for (float3& vertex : new_vertices) {
+                     vertex = (rotation * (vertex - centreWS)) + centreWS;
+                  }
+
+                  bundled_edits.push_back(
+                     edits::make_set_block_quad_metrics(*block_index, new_vertices));
+               } break;
+               case world::block_type::custom: {
+                  const world::block_description_custom& custom =
+                     _world.blocks.custom.description[*block_index];
+
+                  bundled_edits.push_back(edits::make_set_block_custom_metrics(
+                     *block_index, rotation * custom.rotation,
+                     (rotation * (custom.position - centreWS)) + centreWS,
+                     custom.mesh_description));
+               } break;
+               case world::block_type::hemisphere: {
+                  const world::block_description_hemisphere& hemisphere =
+                     _world.blocks.hemispheres.description[*block_index];
+
+                  bundled_edits.push_back(edits::make_set_block_hemisphere_metrics(
+                     *block_index, rotation * hemisphere.rotation,
+                     (rotation * (hemisphere.position - centreWS)) + centreWS,
+                     hemisphere.size));
+               } break;
+               case world::block_type::pyramid: {
+                  const world::block_description_pyramid& pyramid =
+                     _world.blocks.pyramids.description[*block_index];
+
+                  bundled_edits.push_back(edits::make_set_block_pyramid_metrics(
+                     *block_index, rotation * pyramid.rotation,
+                     (rotation * (pyramid.position - centreWS)) + centreWS,
+                     pyramid.size));
+               } break;
+               case world::block_type::terrain_cut_box: {
+                  const world::block_description_terrain_cut_box& terrain_cut_box =
+                     _world.blocks.terrain_cut_boxes.description[*block_index];
+
+                  bundled_edits.push_back(edits::make_set_block_terrain_cut_box_metrics(
+                     *block_index, rotation * terrain_cut_box.rotation,
+                     (rotation * (terrain_cut_box.position - centreWS)) + centreWS,
+                     terrain_cut_box.size));
                } break;
                }
             }
