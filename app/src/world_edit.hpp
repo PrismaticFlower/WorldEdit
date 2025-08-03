@@ -1016,7 +1016,6 @@ private:
    struct block_editor_config {
       int xz_alignment_exponent = 0;
       int y_alignment_exponent = 0;
-      int snap_edge_points = 3;
 
       draw_block_type draw_type = draw_block_type::box;
 
@@ -1059,6 +1058,7 @@ private:
 
       bool enable_alignment = true;
       bool enable_snapping = true;
+      bool snapping_odd = true;
 
       int8 new_block_layer = 0;
 

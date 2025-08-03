@@ -32,13 +32,14 @@ void draw_point(tool_visualizers& visualizers, const float3& point,
 auto get_snapped_position(const float3 positionWS, const blocks& blocks,
                           const blocks_snapping_config& config,
                           tool_visualizers& visualizers,
-                          const blocks_snapping_visualizer_colors& colors) noexcept -> float3
+                          const blocks_snapping_visualizer_colors& colors) noexcept
+   -> std::optional<float3>
 {
    float3 closest_pointWS;
    float closest_distance = FLT_MAX;
 
-   const int edge_point_count = config.edge_snap_points + 1;
-   const float flt_edge_point_count = static_cast<float>(edge_point_count);
+   const int snap_odd = config.snap_odd;
+   const float snap_diameter = config.snap_radius * 2.0f;
 
    for (uint32 box_index = 0; box_index < blocks.boxes.size(); ++box_index) {
       if (not config.active_layers[blocks.boxes.layer[box_index]]) continue;
@@ -104,6 +105,17 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
 
       for (const auto& [i0, i1] : block_cube_edges) {
+         const float edge_length = distance(verticesWS[i0], verticesWS[i1]);
+
+         if (edge_length <= snap_diameter) continue;
+
+         int edge_point_count = static_cast<int>(edge_length / snap_diameter);
+
+         if (edge_point_count % 2 == snap_odd) edge_point_count -= 1;
+         if (edge_point_count < 0) edge_point_count = 0;
+
+         const float flt_edge_point_count = static_cast<float>(edge_point_count);
+
          for (int i = 1; i < edge_point_count; ++i) {
             const float3 pointWS =
                lerp(verticesWS[i0], verticesWS[i1], i / flt_edge_point_count);
@@ -183,6 +195,17 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
 
       for (const auto& [i0, i1] : block_ramp_edges) {
+         const float edge_length = distance(verticesWS[i0], verticesWS[i1]);
+
+         if (edge_length <= snap_diameter) continue;
+
+         int edge_point_count = static_cast<int>(edge_length / snap_diameter);
+
+         if (edge_point_count % 2 == snap_odd) edge_point_count -= 1;
+         if (edge_point_count < 0) edge_point_count = 0;
+
+         const float flt_edge_point_count = static_cast<float>(edge_point_count);
+
          for (int i = 1; i < edge_point_count; ++i) {
             const float3 pointWS =
                lerp(verticesWS[i0], verticesWS[i1], i / flt_edge_point_count);
@@ -250,6 +273,17 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
               std::array<int8, 2>{2, 3},
               std::array<int8, 2>{3, 0},
            }) {
+         const float edge_length = distance(quad.vertices[i0], quad.vertices[i1]);
+
+         if (edge_length <= snap_diameter) continue;
+
+         int edge_point_count = static_cast<int>(edge_length / snap_diameter);
+
+         if (edge_point_count % 2 == snap_odd) edge_point_count -= 1;
+         if (edge_point_count < 0) edge_point_count = 0;
+
+         const float flt_edge_point_count = static_cast<float>(edge_point_count);
+
          for (int i = 1; i < edge_point_count; ++i) {
             const float3 pointWS =
                lerp(quad.vertices[i0], quad.vertices[i1], i / flt_edge_point_count);
@@ -323,6 +357,18 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
 
       for (const auto& [i0, i1] : mesh.snap_edges) {
+         const float edge_length =
+            distance(mesh.snap_points[i0], mesh.snap_points[i1]);
+
+         if (edge_length <= snap_diameter) continue;
+
+         int edge_point_count = static_cast<int>(edge_length / snap_diameter);
+
+         if (edge_point_count % 2 == snap_odd) edge_point_count -= 1;
+         if (edge_point_count < 0) edge_point_count = 0;
+
+         const float flt_edge_point_count = static_cast<float>(edge_point_count);
+
          for (int i = 1; i < edge_point_count; ++i) {
             const float3 pointWS =
                world_from_local * lerp(mesh.snap_points[i0], mesh.snap_points[i1],
@@ -407,6 +453,17 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
 
       for (const auto& [i0, i1] : block_hemisphere_edges) {
+         const float edge_length = distance(verticesWS[i0], verticesWS[i1]);
+
+         if (edge_length <= snap_diameter) continue;
+
+         int edge_point_count = static_cast<int>(edge_length / snap_diameter);
+
+         if (edge_point_count % 2 == snap_odd) edge_point_count -= 1;
+         if (edge_point_count < 0) edge_point_count = 0;
+
+         const float flt_edge_point_count = static_cast<float>(edge_point_count);
+
          for (int i = 1; i < edge_point_count; ++i) {
             const float3 pointWS =
                lerp(verticesWS[i0], verticesWS[i1], i / flt_edge_point_count);
@@ -489,6 +546,17 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
 
       for (const auto& [i0, i1] : block_pyramid_edges) {
+         const float edge_length = distance(verticesWS[i0], verticesWS[i1]);
+
+         if (edge_length <= snap_diameter) continue;
+
+         int edge_point_count = static_cast<int>(edge_length / snap_diameter);
+
+         if (edge_point_count % 2 == snap_odd) edge_point_count -= 1;
+         if (edge_point_count < 0) edge_point_count = 0;
+
+         const float flt_edge_point_count = static_cast<float>(edge_point_count);
+
          for (int i = 1; i < edge_point_count; ++i) {
             const float3 pointWS =
                lerp(verticesWS[i0], verticesWS[i1], i / flt_edge_point_count);
@@ -573,6 +641,17 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
 
       for (const auto& [i0, i1] : block_cube_edges) {
+         const float edge_length = distance(verticesWS[i0], verticesWS[i1]);
+
+         if (edge_length <= snap_diameter) continue;
+
+         int edge_point_count = static_cast<int>(edge_length / snap_diameter);
+
+         if (edge_point_count % 2 == snap_odd) edge_point_count -= 1;
+         if (edge_point_count < 0) edge_point_count = 0;
+
+         const float flt_edge_point_count = static_cast<float>(edge_point_count);
+
          for (int i = 1; i < edge_point_count; ++i) {
             const float3 pointWS =
                lerp(verticesWS[i0], verticesWS[i1], i / flt_edge_point_count);
@@ -588,29 +667,25 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
       }
    }
 
-   float3 new_positionWS;
-
    if (closest_distance > 0.0f and closest_distance <= config.snap_radius) {
+      if (closest_distance <= config.snap_radius) {
+         visualizers.add_octahedron(
+            float4x4{
+               float4{visualizer_size * 2.0f, 0.0f, 0.0f, 0.0f},
+               float4{0.0f, visualizer_size * 2.0f, 0.0f, 0.0f},
+               float4{0.0f, 0.0f, visualizer_size * 2.0f, 0.0f},
+               float4{closest_pointWS.x, closest_pointWS.y, closest_pointWS.z, 1.0f},
+            },
+            colors.snapped);
+      }
+
       const float3 snap_directionWS = normalize(closest_pointWS - positionWS);
 
-      new_positionWS = positionWS + snap_directionWS * closest_distance;
+      return positionWS + snap_directionWS * closest_distance;
    }
    else {
-      new_positionWS = positionWS;
+      return std::nullopt;
    }
-
-   if (closest_distance <= config.snap_radius) {
-      visualizers.add_octahedron(
-         float4x4{
-            float4{visualizer_size * 2.0f, 0.0f, 0.0f, 0.0f},
-            float4{0.0f, visualizer_size * 2.0f, 0.0f, 0.0f},
-            float4{0.0f, 0.0f, visualizer_size * 2.0f, 0.0f},
-            float4{closest_pointWS.x, closest_pointWS.y, closest_pointWS.z, 1.0f},
-         },
-         colors.snapped);
-   }
-
-   return new_positionWS;
 }
 
 }

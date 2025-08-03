@@ -10,7 +10,7 @@ namespace we::world {
 
 struct blocks_snapping_config {
    float snap_radius;
-   int edge_snap_points = 1;
+   bool snap_odd = true;
    block_id filter_id;
    active_layers active_layers;
 };
@@ -25,6 +25,6 @@ auto get_snapped_position(const float3 positionWS, const blocks& blocks,
                           const blocks_snapping_config& config,
                           tool_visualizers& visualizers,
                           const blocks_snapping_visualizer_colors& colors) noexcept
-   -> float3;
+   -> std::optional<float3>;
 
 }

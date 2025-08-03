@@ -286,11 +286,27 @@ void world_edit::ui_show_block_editor() noexcept
 
       ImGui::BeginDisabled(not _block_editor_config.enable_snapping);
 
-      ImGui::SliderInt("Snapping Edge Points", &_block_editor_config.snap_edge_points,
-                       1, 17, nullptr, ImGuiSliderFlags_AlwaysClamp);
+      const ImVec2 cursor_pos = ImGui::GetCursorPos();
+
+      ImGui::LabelText("Snapping Mode", "");
+
+      ImGui::SetCursorPos(cursor_pos);
+
+      if (ImGui::RadioButton("Even", not _block_editor_config.snapping_odd)) {
+         _block_editor_config.snapping_odd = false;
+      }
 
       ImGui::SetItemTooltip(
-         "How many snapping points to create along block edges.");
+         "Create an even number of snapping points along edges.");
+
+      ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+      if (ImGui::RadioButton("Odd", _block_editor_config.snapping_odd)) {
+         _block_editor_config.snapping_odd = true;
+      }
+
+      ImGui::SetItemTooltip(
+         "Create an odd number of snapping points along edges.");
 
       ImGui::EndDisabled();
 
@@ -773,25 +789,27 @@ void world_edit::ui_show_block_editor() noexcept
           std::exp2f(static_cast<float>(_block_editor_config.y_alignment_exponent)),
           std::exp2f(static_cast<float>(_block_editor_config.xz_alignment_exponent))};
 
-      if (align) {
-         cursor_positionWS = round(cursor_positionWS / alignment) * alignment;
+      if (std::optional<float3> snapped_positionWS =
+             snap ? world::get_snapped_position(
+                       cursor_positionWS, _world.blocks,
+                       {
+                          .snap_radius = alignment.x * 0.5f,
+                          .snap_odd = _block_editor_config.snapping_odd,
+                          .filter_id = _block_editor_context.draw_block.block_id,
+                          .active_layers = _world_layers_hit_mask,
+                       },
+                       _tool_visualizers,
+                       {
+                          .snapped = _settings.graphics.snapping_snapped_color,
+                          .corner = _settings.graphics.snapping_corner_color,
+                          .edge = _settings.graphics.snapping_edge_color,
+                       })
+                  : std::nullopt;
+          snapped_positionWS) {
+         cursor_positionWS = *snapped_positionWS;
       }
-
-      if (snap) {
-         cursor_positionWS = world::get_snapped_position(
-            cursor_positionWS, _world.blocks,
-            {
-               .snap_radius = alignment.x * 0.5f,
-               .edge_snap_points = _block_editor_config.snap_edge_points,
-               .filter_id = _block_editor_context.draw_block.block_id,
-               .active_layers = _world_layers_hit_mask,
-            },
-            _tool_visualizers,
-            {
-               .snapped = _settings.graphics.snapping_snapped_color,
-               .corner = _settings.graphics.snapping_corner_color,
-               .edge = _settings.graphics.snapping_edge_color,
-            });
+      else if (align) {
+         cursor_positionWS = round(cursor_positionWS / alignment) * alignment;
       }
 
       if (_block_editor_context.draw_block.cursor_plane !=
