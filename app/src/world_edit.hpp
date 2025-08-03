@@ -1190,7 +1190,7 @@ private:
    } _block_material_editor_config;
 
    struct block_material_editor_context {
-      uint32 selected_index = UINT32_MAX;
+      uint32 selected_index = 0;
    } _block_material_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};

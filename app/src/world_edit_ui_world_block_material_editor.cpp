@@ -46,15 +46,21 @@ void world_edit::ui_show_block_material_editor() noexcept
 
    if (ImGui::Begin("Block Materials", &_block_material_editor_open,
                     ImGuiWindowFlags_NoCollapse)) {
-      if (ImGui::BeginChild("Materials", {160.0f * _display_scale, 0.0f},
-                            ImGuiChildFlags_ResizeX)) {
+      const std::string& material_name =
+         _world.blocks.materials[_block_material_editor_context.selected_index].name;
 
-         ImGui::BeginChild("##scrolling",
-                           {0.0f, ImGui::GetContentRegionAvail().y -
-                                     ImGui::GetTextLineHeightWithSpacing() -
-                                     ImGui::GetStyle().ItemSpacing.y * 2.0f});
+      if (ImGui::BeginCombo("Material",
+                            material_name.empty() ? "<unnamed material>"
+                                                  : material_name.c_str(),
+                            ImGuiComboFlags_HeightLargest |
+                               ImGuiComboFlags_NoArrowButton)) {
+         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+         ImGui::InputTextWithHint("##name", "filter e.g. tiles",
+                                  &_block_material_editor_config.filter);
 
          const float thumbnail_size = 64.0f * _display_scale;
+         const float visible_thumbnails = 12.0f;
          const ImVec2 text_offset = {thumbnail_size +
                                         ImGui::GetStyle().ItemSpacing.x,
                                      floorf((thumbnail_size - ImGui::GetFontSize()) *
@@ -62,6 +68,10 @@ void world_edit::ui_show_block_material_editor() noexcept
          const float button_width = ImGui::GetContentRegionAvail().x;
          const float button_height =
             thumbnail_size + ImGui::GetStyle().ItemInnerSpacing.y;
+
+         ImGui::BeginChild("##scrolling", {0.0f, (thumbnail_size +
+                                                  ImGui::GetStyle().ItemSpacing.y) *
+                                                    visible_thumbnails});
 
          for (uint32 material_index = 0;
               material_index < _world.blocks.materials.size(); ++material_index) {
@@ -83,7 +93,10 @@ void world_edit::ui_show_block_material_editor() noexcept
                                      _block_material_editor_context.selected_index == material_index,
                                      ImGuiSelectableFlags_None,
                                      {button_width, button_height})) {
-                  _block_material_editor_context.selected_index = material_index;
+                  _block_material_editor_context.selected_index =
+                     static_cast<uint8>(material_index);
+
+                  ImGui::CloseCurrentPopup();
                }
 
                const ImTextureID texture =
@@ -123,99 +136,94 @@ void world_edit::ui_show_block_material_editor() noexcept
 
          ImGui::EndChild();
 
-         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-
-         ImGui::InputTextWithHint("##name", "filter e.g. tiles",
-                                  &_block_material_editor_config.filter);
+         ImGui::EndCombo();
       }
 
-      ImGui::EndChild();
+      if (_block_material_editor_context.selected_index >=
+          _world.blocks.materials.size()) {
+         _block_material_editor_context.selected_index = 0;
+      }
 
-      ImGui::SameLine();
+      ImGui::BeginChild("Material", {}, ImGuiChildFlags_Border);
 
-      if (ImGui::BeginChild("##selected") and _block_material_editor_context.selected_index <
-                                                 _world.blocks.materials.size()) {
-         world::block_material& material =
-            _world.blocks.materials[_block_material_editor_context.selected_index];
+      world::block_material& material =
+         _world.blocks.materials[_block_material_editor_context.selected_index];
 
-         ImGui::InputText("Name", &material.name, _edit_stack_world, _edit_context);
+      ImGui::InputText("Name", &material.name, _edit_stack_world, _edit_context);
 
-         ui_block_texture_pick_widget("Diffuse Map", &material.diffuse_map,
-                                      _block_material_editor_context.selected_index);
-         ui_block_texture_pick_widget("Normal Map", &material.normal_map,
-                                      _block_material_editor_context.selected_index);
-         ui_block_texture_pick_widget("Detail Map", &material.detail_map,
-                                      _block_material_editor_context.selected_index);
-         ui_block_texture_pick_widget("Env Map", &material.env_map,
-                                      _block_material_editor_context.selected_index);
+      ui_block_texture_pick_widget("Diffuse Map", &material.diffuse_map,
+                                   _block_material_editor_context.selected_index);
+      ui_block_texture_pick_widget("Normal Map", &material.normal_map,
+                                   _block_material_editor_context.selected_index);
+      ui_block_texture_pick_widget("Detail Map", &material.detail_map,
+                                   _block_material_editor_context.selected_index);
+      ui_block_texture_pick_widget("Env Map", &material.env_map,
+                                   _block_material_editor_context.selected_index);
 
-         if (std::array<uint8, 2> detail_tiling = material.detail_tiling;
-             ImGui::DragScalarN("Detail Tiling", ImGuiDataType_U8,
-                                detail_tiling.data(), 2)) {
-            _edit_stack_world.apply(edits::make_set_block_material(
-                                       &material.detail_tiling, detail_tiling,
-                                       _block_material_editor_context.selected_index,
-                                       &_world.blocks.materials_dirty),
-                                    _edit_context);
-         }
+      if (std::array<uint8, 2> detail_tiling = material.detail_tiling;
+          ImGui::DragScalarN("Detail Tiling", ImGuiDataType_U8,
+                             detail_tiling.data(), 2)) {
+         _edit_stack_world.apply(edits::make_set_block_material(
+                                    &material.detail_tiling, detail_tiling,
+                                    _block_material_editor_context.selected_index,
+                                    &_world.blocks.materials_dirty),
+                                 _edit_context);
+      }
 
-         if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+      if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
 
-         if (bool tile_normal_map = material.tile_normal_map;
-             ImGui::Checkbox("Tile Normal Map", &tile_normal_map)) {
-            _edit_stack_world.apply(edits::make_set_block_material(
-                                       &material.tile_normal_map, tile_normal_map,
-                                       _block_material_editor_context.selected_index,
-                                       &_world.blocks.materials_dirty),
-                                    _edit_context, {.closed = true});
-         }
+      if (bool tile_normal_map = material.tile_normal_map;
+          ImGui::Checkbox("Tile Normal Map", &tile_normal_map)) {
+         _edit_stack_world.apply(edits::make_set_block_material(
+                                    &material.tile_normal_map, tile_normal_map,
+                                    _block_material_editor_context.selected_index,
+                                    &_world.blocks.materials_dirty),
+                                 _edit_context, {.closed = true});
+      }
 
-         if (bool specular_lighting = material.specular_lighting;
-             ImGui::Checkbox("Specular Lighting", &specular_lighting)) {
-            _edit_stack_world.apply(edits::make_set_block_material(
-                                       &material.specular_lighting, specular_lighting,
-                                       _block_material_editor_context.selected_index,
-                                       &_world.blocks.materials_dirty),
-                                    _edit_context, {.closed = true});
-         }
+      if (bool specular_lighting = material.specular_lighting;
+          ImGui::Checkbox("Specular Lighting", &specular_lighting)) {
+         _edit_stack_world.apply(edits::make_set_block_material(
+                                    &material.specular_lighting, specular_lighting,
+                                    _block_material_editor_context.selected_index,
+                                    &_world.blocks.materials_dirty),
+                                 _edit_context, {.closed = true});
+      }
 
-         if (float3 specular_color = material.specular_color;
-             ImGui::ColorEdit3("Specular Lighting", &specular_color.x)) {
-            _edit_stack_world.apply(edits::make_set_block_material(
-                                       &material.specular_color, specular_color,
-                                       _block_material_editor_context.selected_index,
-                                       &_world.blocks.materials_dirty),
-                                    _edit_context);
-         }
+      if (float3 specular_color = material.specular_color;
+          ImGui::ColorEdit3("Specular Lighting", &specular_color.x)) {
+         _edit_stack_world.apply(edits::make_set_block_material(
+                                    &material.specular_color, specular_color,
+                                    _block_material_editor_context.selected_index,
+                                    &_world.blocks.materials_dirty),
+                                 _edit_context);
+      }
 
-         if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+      if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
 
-         if (ImGui::BeginCombo("Foley FX Group",
-                               foley_group_name(material.foley_group))) {
-            for (world::block_foley_group group : {
-                    world::block_foley_group::stone,
-                    world::block_foley_group::dirt,
-                    world::block_foley_group::grass,
-                    world::block_foley_group::metal,
-                    world::block_foley_group::snow,
-                    world::block_foley_group::terrain,
-                    world::block_foley_group::water,
-                    world::block_foley_group::wood,
-                 }) {
-               if (ImGui::Selectable(foley_group_name(group),
-                                     material.foley_group == group)) {
-                  _edit_stack_world.apply(edits::make_set_value(&material.foley_group,
-                                                                group),
-                                          _edit_context, {.closed = true});
-               }
+      if (ImGui::BeginCombo("Foley FX Group", foley_group_name(material.foley_group))) {
+         for (world::block_foley_group group : {
+                 world::block_foley_group::stone,
+                 world::block_foley_group::dirt,
+                 world::block_foley_group::grass,
+                 world::block_foley_group::metal,
+                 world::block_foley_group::snow,
+                 world::block_foley_group::terrain,
+                 world::block_foley_group::water,
+                 world::block_foley_group::wood,
+              }) {
+            if (ImGui::Selectable(foley_group_name(group),
+                                  material.foley_group == group)) {
+               _edit_stack_world.apply(edits::make_set_value(&material.foley_group, group),
+                                       _edit_context, {.closed = true});
             }
-
-            ImGui::EndCombo();
          }
 
-         ImGui::SetItemTooltip("Not all foley groups may be availible, "
-                               "depending on the sound .lvl your map uses.");
+         ImGui::EndCombo();
       }
+
+      ImGui::SetItemTooltip("Not all foley groups may be availible, "
+                            "depending on the sound .lvl your map uses.");
 
       ImGui::EndChild();
    }
