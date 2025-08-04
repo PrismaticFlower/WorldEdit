@@ -1357,9 +1357,6 @@ void world_edit::ui_show_block_editor() noexcept
          const float3 draw_block_width = {_block_editor_context.draw_block.ramp.width_x,
                                           draw_block_start.y,
                                           _block_editor_context.draw_block.ramp.width_z};
-         const float3 draw_block_edge_midpoint =
-            {(draw_block_start.x + draw_block_width.x) / 2.0f, draw_block_start.y,
-             (draw_block_start.z + draw_block_width.z) / 2.0f};
 
          const float3 cursor_direction =
             normalize(cursor_positionWS - draw_block_width);
@@ -1372,9 +1369,15 @@ void world_edit::ui_show_block_editor() noexcept
          const float normal_sign =
             dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
 
+         float rotation_angle = std::atan2(draw_block_start.x - draw_block_width.x,
+                                           draw_block_start.z - draw_block_width.z);
+
+         rotation_angle += std::numbers::pi_v<float> * 0.5f;
+
+         if (normal_sign > 0.0f) rotation_angle += std::numbers::pi_v<float>;
+
          const quaternion rotation =
-            look_at_quat(draw_block_edge_midpoint - extend_normal * normal_sign,
-                         draw_block_edge_midpoint);
+            make_quat_from_euler({0.0f, rotation_angle, 0.0f});
          const quaternion inv_rotation = conjugate(rotation);
 
          const float cursor_distance =
@@ -1736,9 +1739,6 @@ void world_edit::ui_show_block_editor() noexcept
          const float3 draw_block_width =
             {_block_editor_context.draw_block.stairway.width_x, draw_block_start.y,
              _block_editor_context.draw_block.stairway.width_z};
-         const float3 draw_block_edge_midpoint =
-            {(draw_block_start.x + draw_block_width.x) / 2.0f, draw_block_start.y,
-             (draw_block_start.z + draw_block_width.z) / 2.0f};
 
          const float3 cursor_direction =
             normalize(cursor_positionWS - draw_block_width);
@@ -1751,9 +1751,15 @@ void world_edit::ui_show_block_editor() noexcept
          const float normal_sign =
             dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
 
+         float rotation_angle = std::atan2(draw_block_start.x - draw_block_width.x,
+                                           draw_block_start.z - draw_block_width.z);
+
+         rotation_angle += std::numbers::pi_v<float> * 0.5f;
+
+         if (normal_sign > 0.0f) rotation_angle += std::numbers::pi_v<float>;
+
          const quaternion rotation =
-            look_at_quat(draw_block_edge_midpoint - extend_normal * normal_sign,
-                         draw_block_edge_midpoint);
+            make_quat_from_euler({0.0f, rotation_angle, 0.0f});
          const quaternion inv_rotation = conjugate(rotation);
 
          const float cursor_distance =
