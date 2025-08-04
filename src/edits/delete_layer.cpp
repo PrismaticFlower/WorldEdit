@@ -54,13 +54,14 @@ struct delete_entry_req_game_mode {
    std::string entry;
 };
 
+template<typename T>
 struct delete_entry_block {
    uint32 index = 0;
 
    bool hidden = false;
    int8 layer = 0;
-   world::block_description_box description;
-   world::id<world::block_description_box> id;
+   T description;
+   world::id<T> id;
 };
 
 struct delete_layer_data {
@@ -76,6 +77,12 @@ struct delete_layer_data {
    std::vector<remap_entry_common_layer> remap_common_layers;
 
    std::vector<remap_entry_block> remap_blocks_boxes;
+   std::vector<remap_entry_block> remap_blocks_ramps;
+   std::vector<remap_entry_block> remap_blocks_quads;
+   std::vector<remap_entry_block> remap_blocks_custom;
+   std::vector<remap_entry_block> remap_blocks_hemispheres;
+   std::vector<remap_entry_block> remap_blocks_pyramids;
+   std::vector<remap_entry_block> remap_blocks_terrain_cut_boxes;
 
    std::vector<delete_entry<world::object>> delete_objects;
    std::vector<delete_entry<world::light>> delete_lights;
@@ -87,7 +94,13 @@ struct delete_layer_data {
    std::vector<delete_entry_req_game_mode> delete_game_mode_requirements;
    std::vector<int> delete_common_layers;
 
-   std::vector<delete_entry_block> delete_blocks_boxes;
+   std::vector<delete_entry_block<world::block_description_box>> delete_blocks_boxes;
+   std::vector<delete_entry_block<world::block_description_ramp>> delete_blocks_ramps;
+   std::vector<delete_entry_block<world::block_description_quad>> delete_blocks_quads;
+   std::vector<delete_entry_block<world::block_description_custom>> delete_blocks_custom;
+   std::vector<delete_entry_block<world::block_description_hemisphere>> delete_blocks_hemispheres;
+   std::vector<delete_entry_block<world::block_description_pyramid>> delete_blocks_pyramids;
+   std::vector<delete_entry_block<world::block_description_terrain_cut_box>> delete_blocks_terrain_cut_boxes;
 };
 
 template<typename T>
@@ -395,16 +408,19 @@ auto makee_common_layers_delete_entries(const int layer_index,
    return entries;
 }
 
-auto make_delete_entries(int layer_index, const world::blocks_boxes& blocks)
-   -> std::vector<delete_entry_block>
+template<typename Blocks>
+auto make_delete_entries(int layer_index, const Blocks& blocks)
+   -> std::vector<delete_entry_block<typename decltype(Blocks::description)::value_type>>
 {
+   using block_type = decltype(Blocks::description)::value_type;
+
    std::size_t count = 0;
 
    for (const int8 block_layer : blocks.layer) {
       if (block_layer == layer_index) count += 1;
    }
 
-   std::vector<delete_entry_block> entries;
+   std::vector<delete_entry_block<block_type>> entries;
    entries.reserve(count);
 
    uint32 delete_offset = 0;
@@ -550,49 +566,125 @@ void revert_delete_entries(std::vector<int>& common_layers, int layer_index,
    }
 }
 
-void apply_delete_entries(world::blocks_boxes& boxes,
-                          std::span<const delete_entry_block> entries)
+template<typename Blocks>
+void apply_delete_entries(
+   Blocks& blocks,
+   std::span<const delete_entry_block<typename decltype(Blocks::description)::value_type>> entries)
 {
-   for (const delete_entry_block& entry : entries) {
-      boxes.bbox.min_x.erase(boxes.bbox.min_x.begin() + entry.index);
-      boxes.bbox.min_y.erase(boxes.bbox.min_y.begin() + entry.index);
-      boxes.bbox.min_z.erase(boxes.bbox.min_z.begin() + entry.index);
-      boxes.bbox.max_x.erase(boxes.bbox.max_x.begin() + entry.index);
-      boxes.bbox.max_y.erase(boxes.bbox.max_y.begin() + entry.index);
-      boxes.bbox.max_z.erase(boxes.bbox.max_z.begin() + entry.index);
+   using block_type = decltype(Blocks::description)::value_type;
 
-      boxes.hidden.erase(boxes.hidden.begin() + entry.index);
-      boxes.layer.erase(boxes.layer.begin() + entry.index);
-      boxes.description.erase(boxes.description.begin() + entry.index);
-      boxes.ids.erase(boxes.ids.begin() + entry.index);
+   for (const delete_entry_block<block_type>& entry : entries) {
+      blocks.bbox.min_x.erase(blocks.bbox.min_x.begin() + entry.index);
+      blocks.bbox.min_y.erase(blocks.bbox.min_y.begin() + entry.index);
+      blocks.bbox.min_z.erase(blocks.bbox.min_z.begin() + entry.index);
+      blocks.bbox.max_x.erase(blocks.bbox.max_x.begin() + entry.index);
+      blocks.bbox.max_y.erase(blocks.bbox.max_y.begin() + entry.index);
+      blocks.bbox.max_z.erase(blocks.bbox.max_z.begin() + entry.index);
 
-      boxes.dirty.remove_index(entry.index);
-      boxes.dirty.add({entry.index, static_cast<uint32>(boxes.size())});
+      blocks.hidden.erase(blocks.hidden.begin() + entry.index);
+      blocks.layer.erase(blocks.layer.begin() + entry.index);
+      blocks.description.erase(blocks.description.begin() + entry.index);
+      blocks.ids.erase(blocks.ids.begin() + entry.index);
+
+      blocks.dirty.remove_index(entry.index);
+      blocks.dirty.add({entry.index, static_cast<uint32>(blocks.size())});
    }
+
+   assert(blocks.is_balanced());
 }
 
-void revert_delete_entries(world::blocks_boxes& boxes,
-                           std::span<const delete_entry_block> entries)
+template<typename Blocks>
+void revert_delete_entries(
+   Blocks& blocks,
+   std::span<const delete_entry_block<typename decltype(Blocks::description)::value_type>> entries)
+{
+   using block_type = decltype(Blocks::description)::value_type;
+
+   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
+      const delete_entry_block<block_type>& entry = entries[i];
+
+      const math::bounding_box bbox = world::get_bounding_box(entry.description);
+
+      blocks.bbox.min_x.insert(blocks.bbox.min_x.begin() + entry.index, bbox.min.x);
+      blocks.bbox.min_y.insert(blocks.bbox.min_y.begin() + entry.index, bbox.min.y);
+      blocks.bbox.min_z.insert(blocks.bbox.min_z.begin() + entry.index, bbox.min.z);
+      blocks.bbox.max_x.insert(blocks.bbox.max_x.begin() + entry.index, bbox.max.x);
+      blocks.bbox.max_y.insert(blocks.bbox.max_y.begin() + entry.index, bbox.max.y);
+      blocks.bbox.max_z.insert(blocks.bbox.max_z.begin() + entry.index, bbox.max.z);
+
+      blocks.hidden.insert(blocks.hidden.begin() + entry.index, entry.hidden);
+      blocks.layer.insert(blocks.layer.begin() + entry.index, entry.layer);
+      blocks.description.insert(blocks.description.begin() + entry.index,
+                                entry.description);
+      blocks.ids.insert(blocks.ids.begin() + entry.index, entry.id);
+
+      blocks.dirty.add({entry.index, static_cast<uint32>(blocks.size())});
+   }
+
+   assert(blocks.is_balanced());
+}
+
+void apply_delete_entries(
+   world::blocks& blocks,
+   std::span<const delete_entry_block<world::block_description_custom>> entries)
+{
+   for (const delete_entry_block<world::block_description_custom>& entry : entries) {
+      blocks.custom_meshes.remove(blocks.custom.mesh[entry.index]);
+
+      blocks.custom.bbox.min_x.erase(blocks.custom.bbox.min_x.begin() + entry.index);
+      blocks.custom.bbox.min_y.erase(blocks.custom.bbox.min_y.begin() + entry.index);
+      blocks.custom.bbox.min_z.erase(blocks.custom.bbox.min_z.begin() + entry.index);
+      blocks.custom.bbox.max_x.erase(blocks.custom.bbox.max_x.begin() + entry.index);
+      blocks.custom.bbox.max_y.erase(blocks.custom.bbox.max_y.begin() + entry.index);
+      blocks.custom.bbox.max_z.erase(blocks.custom.bbox.max_z.begin() + entry.index);
+
+      blocks.custom.hidden.erase(blocks.custom.hidden.begin() + entry.index);
+      blocks.custom.layer.erase(blocks.custom.layer.begin() + entry.index);
+      blocks.custom.description.erase(blocks.custom.description.begin() + entry.index);
+      blocks.custom.mesh.erase(blocks.custom.mesh.begin() + entry.index);
+      blocks.custom.ids.erase(blocks.custom.ids.begin() + entry.index);
+
+      blocks.custom.dirty.remove_index(entry.index);
+      blocks.custom.dirty.add({entry.index, static_cast<uint32>(blocks.custom.size())});
+   }
+
+   assert(blocks.custom.is_balanced());
+}
+
+void revert_delete_entries(
+   world::blocks& blocks,
+   std::span<const delete_entry_block<world::block_description_custom>> entries)
 {
    for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
-      const delete_entry_block& entry = entries[i];
+      const delete_entry_block<world::block_description_custom>& entry = entries[i];
 
-      const math::bounding_box bbox = get_bounding_box(entry.description);
+      const math::bounding_box bbox = world::get_bounding_box(entry.description);
 
-      boxes.bbox.min_x.insert(boxes.bbox.min_x.begin() + entry.index, bbox.min.x);
-      boxes.bbox.min_y.insert(boxes.bbox.min_y.begin() + entry.index, bbox.min.y);
-      boxes.bbox.min_z.insert(boxes.bbox.min_z.begin() + entry.index, bbox.min.z);
-      boxes.bbox.max_x.insert(boxes.bbox.max_x.begin() + entry.index, bbox.max.x);
-      boxes.bbox.max_y.insert(boxes.bbox.max_y.begin() + entry.index, bbox.max.y);
-      boxes.bbox.max_z.insert(boxes.bbox.max_z.begin() + entry.index, bbox.max.z);
+      blocks.custom.bbox.min_x.insert(blocks.custom.bbox.min_x.begin() + entry.index,
+                                      bbox.min.x);
+      blocks.custom.bbox.min_y.insert(blocks.custom.bbox.min_y.begin() + entry.index,
+                                      bbox.min.y);
+      blocks.custom.bbox.min_z.insert(blocks.custom.bbox.min_z.begin() + entry.index,
+                                      bbox.min.z);
+      blocks.custom.bbox.max_x.insert(blocks.custom.bbox.max_x.begin() + entry.index,
+                                      bbox.max.x);
+      blocks.custom.bbox.max_y.insert(blocks.custom.bbox.max_y.begin() + entry.index,
+                                      bbox.max.y);
+      blocks.custom.bbox.max_z.insert(blocks.custom.bbox.max_z.begin() + entry.index,
+                                      bbox.max.z);
 
-      boxes.hidden.insert(boxes.hidden.begin() + entry.index, entry.hidden);
-      boxes.layer.insert(boxes.layer.begin() + entry.index, entry.layer);
-      boxes.description.insert(boxes.description.begin() + entry.index,
-                               entry.description);
-      boxes.ids.insert(boxes.ids.begin() + entry.index, entry.id);
+      blocks.custom.hidden.insert(blocks.custom.hidden.begin() + entry.index,
+                                  entry.hidden);
+      blocks.custom.layer.insert(blocks.custom.layer.begin() + entry.index,
+                                 entry.layer);
+      blocks.custom.description.insert(blocks.custom.description.begin() + entry.index,
+                                       entry.description);
+      blocks.custom.mesh.insert(blocks.custom.mesh.begin() + entry.index,
+                                blocks.custom_meshes.add(
+                                   entry.description.mesh_description));
+      blocks.custom.ids.insert(blocks.custom.ids.begin() + entry.index, entry.id);
 
-      boxes.dirty.add({entry.index, static_cast<uint32>(boxes.size())});
+      blocks.custom.dirty.add({entry.index, static_cast<uint32>(blocks.custom.size())});
    }
 }
 
@@ -616,7 +708,15 @@ struct delete_layer final : edit<world::edit_context> {
       apply_remap_entries(world.hintnodes, _data.remap_hintnodes);
       apply_remap_entries(world.game_modes, _data.remap_game_modes);
       apply_remap_entries(world.common_layers, _data.remap_common_layers);
+
       apply_remap_entries(world.blocks.boxes.layer, _data.remap_blocks_boxes);
+      apply_remap_entries(world.blocks.ramps.layer, _data.remap_blocks_ramps);
+      apply_remap_entries(world.blocks.quads.layer, _data.remap_blocks_quads);
+      apply_remap_entries(world.blocks.custom.layer, _data.remap_blocks_custom);
+      apply_remap_entries(world.blocks.hemispheres.layer, _data.remap_blocks_hemispheres);
+      apply_remap_entries(world.blocks.pyramids.layer, _data.remap_blocks_pyramids);
+      apply_remap_entries(world.blocks.pyramids.layer,
+                          _data.remap_blocks_terrain_cut_boxes);
 
       apply_delete_entries(world.objects, _data.delete_objects, _object_class_library);
       apply_delete_entries(world.lights, _data.delete_lights);
@@ -627,7 +727,14 @@ struct delete_layer final : edit<world::edit_context> {
       apply_delete_entries(world.game_modes, _data.delete_game_mode_entries);
       apply_delete_entries(world.game_modes, _data.delete_game_mode_requirements);
       apply_delete_entries(world.common_layers, _data.delete_common_layers);
+
       apply_delete_entries(world.blocks.boxes, _data.delete_blocks_boxes);
+      apply_delete_entries(world.blocks.ramps, _data.delete_blocks_ramps);
+      apply_delete_entries(world.blocks.quads, _data.delete_blocks_quads);
+      apply_delete_entries(world.blocks, _data.delete_blocks_custom);
+      apply_delete_entries(world.blocks.pyramids, _data.delete_blocks_pyramids);
+      apply_delete_entries(world.blocks.terrain_cut_boxes,
+                           _data.delete_blocks_terrain_cut_boxes);
    }
 
    void revert(world::edit_context& context) noexcept override
@@ -648,7 +755,14 @@ struct delete_layer final : edit<world::edit_context> {
                             _data.index);
       revert_delete_entries(world.game_modes, _data.delete_game_mode_requirements);
       revert_delete_entries(world.common_layers, _data.index, _data.delete_common_layers);
+
       revert_delete_entries(world.blocks.boxes, _data.delete_blocks_boxes);
+      revert_delete_entries(world.blocks.ramps, _data.delete_blocks_ramps);
+      revert_delete_entries(world.blocks.quads, _data.delete_blocks_quads);
+      revert_delete_entries(world.blocks, _data.delete_blocks_custom);
+      revert_delete_entries(world.blocks.pyramids, _data.delete_blocks_pyramids);
+      revert_delete_entries(world.blocks.terrain_cut_boxes,
+                            _data.delete_blocks_terrain_cut_boxes);
 
       revert_remap_entries(world.objects, _data.remap_objects);
       revert_remap_entries(world.lights, _data.remap_lights);
@@ -657,7 +771,16 @@ struct delete_layer final : edit<world::edit_context> {
       revert_remap_entries(world.hintnodes, _data.remap_hintnodes);
       revert_remap_entries(world.game_modes, _data.remap_game_modes);
       revert_remap_entries(world.common_layers, _data.remap_common_layers);
+
       revert_remap_entries(world.blocks.boxes.layer, _data.remap_blocks_boxes);
+      revert_remap_entries(world.blocks.ramps.layer, _data.remap_blocks_ramps);
+      revert_remap_entries(world.blocks.quads.layer, _data.remap_blocks_quads);
+      revert_remap_entries(world.blocks.custom.layer, _data.remap_blocks_custom);
+      revert_remap_entries(world.blocks.hemispheres.layer,
+                           _data.remap_blocks_hemispheres);
+      revert_remap_entries(world.blocks.pyramids.layer, _data.remap_blocks_pyramids);
+      revert_remap_entries(world.blocks.pyramids.layer,
+                           _data.remap_blocks_terrain_cut_boxes);
    }
 
    bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
@@ -697,6 +820,18 @@ auto make_delete_layer(int layer_index, const world::world& world,
 
          .remap_blocks_boxes =
             make_block_remap_entries(layer_index, world.blocks.boxes.layer),
+         .remap_blocks_ramps =
+            make_block_remap_entries(layer_index, world.blocks.ramps.layer),
+         .remap_blocks_quads =
+            make_block_remap_entries(layer_index, world.blocks.quads.layer),
+         .remap_blocks_custom =
+            make_block_remap_entries(layer_index, world.blocks.custom.layer),
+         .remap_blocks_hemispheres =
+            make_block_remap_entries(layer_index, world.blocks.hemispheres.layer),
+         .remap_blocks_pyramids =
+            make_block_remap_entries(layer_index, world.blocks.pyramids.layer),
+         .remap_blocks_terrain_cut_boxes =
+            make_block_remap_entries(layer_index, world.blocks.terrain_cut_boxes.layer),
 
          .delete_objects = make_delete_entries(layer_index, world.objects),
          .delete_lights = make_delete_entries(layer_index, world.lights),
@@ -713,6 +848,14 @@ auto make_delete_layer(int layer_index, const world::world& world,
             makee_common_layers_delete_entries(layer_index, world.common_layers),
 
          .delete_blocks_boxes = make_delete_entries(layer_index, world.blocks.boxes),
+         .delete_blocks_ramps = make_delete_entries(layer_index, world.blocks.ramps),
+         .delete_blocks_quads = make_delete_entries(layer_index, world.blocks.quads),
+         .delete_blocks_custom = make_delete_entries(layer_index, world.blocks.custom),
+         .delete_blocks_hemispheres =
+            make_delete_entries(layer_index, world.blocks.hemispheres),
+         .delete_blocks_pyramids = make_delete_entries(layer_index, world.blocks.pyramids),
+         .delete_blocks_terrain_cut_boxes =
+            make_delete_entries(layer_index, world.blocks.terrain_cut_boxes),
       },
       object_class_library);
 }
