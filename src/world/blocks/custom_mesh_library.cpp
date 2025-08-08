@@ -38,11 +38,12 @@ static H AbslHashValue(H h, const block_custom_mesh_description& desc)
                         desc.curve.p3.x, desc.curve.p3.y, desc.curve.p3.z);
    case block_custom_mesh_type::cylinder:
       return H::combine(std::move(h), desc.type, desc.cylinder.size.x,
-                        desc.cylinder.size.y, desc.cylinder.size.z, desc.ring.segments,
-                        desc.cylinder.flat_shading, desc.cylinder.texture_loops);
+                        desc.cylinder.size.y, desc.cylinder.size.z,
+                        desc.cylinder.segments, desc.cylinder.flat_shading,
+                        desc.cylinder.texture_loops);
    case block_custom_mesh_type::cone:
       return H::combine(std::move(h), desc.type, desc.cone.size.x,
-                        desc.cone.size.y, desc.cone.size.z, desc.ring.segments,
+                        desc.cone.size.y, desc.cone.size.z, desc.cone.segments,
                         desc.cone.flat_shading);
    }
 
