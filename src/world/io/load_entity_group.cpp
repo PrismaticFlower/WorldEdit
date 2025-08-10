@@ -1162,7 +1162,7 @@ void read_blocks_custom(const assets::config::node& node, entity_group& group_ou
          }
       }
       else if (string::iequals(key_node.key, "Cylinder")) {
-         block.mesh_description = block_custom_mesh_description_ring{};
+         block.mesh_description = block_custom_mesh_description_cylinder{};
          block_custom_mesh_description_cylinder& cylinder =
             block.mesh_description.cylinder;
 
@@ -1237,7 +1237,7 @@ void read_blocks_custom(const assets::config::node& node, entity_group& group_ou
          }
       }
       else if (string::iequals(key_node.key, "Cone")) {
-         block.mesh_description = block_custom_mesh_description_ring{};
+         block.mesh_description = block_custom_mesh_description_cone{};
          block_custom_mesh_description_cone& cone = block.mesh_description.cone;
 
          for (const auto& prop : key_node) {
