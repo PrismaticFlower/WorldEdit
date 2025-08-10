@@ -208,6 +208,9 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
       case block_custom_mesh_type::cone: {
          out.write_ln("   Cone()");
       } break;
+      case block_custom_mesh_type::arch: {
+         out.write_ln("   Arch()");
+      } break;
       }
       out.write_ln("   {");
 
@@ -280,6 +283,18 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
                       cone.size.z);
          out.write_ln("      Segments({});", cone.segments);
          if (cone.flat_shading) out.write_ln("      FlatShading();");
+      } break;
+      case block_custom_mesh_type::arch: {
+         const world::block_custom_mesh_description_arch& arch =
+            block.mesh_description.arch;
+
+         out.write_ln("      Size({}, {}, {});", arch.size.x, arch.size.y,
+                      arch.size.z);
+         out.write_ln("      CrownLength({});", arch.crown_length);
+         out.write_ln("      CrownHeight({});", arch.crown_height);
+         out.write_ln("      CurveHeight({});", arch.curve_height);
+         out.write_ln("      SpanLength({});", arch.span_length);
+         out.write_ln("      Segments({});", arch.segments);
       } break;
       }
 

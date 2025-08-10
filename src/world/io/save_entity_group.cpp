@@ -648,6 +648,9 @@ void save_entity_group_impl(File& file, const entity_group& group)
          case block_custom_mesh_type::cone: {
             file.write_ln("   Cone()");
          } break;
+         case block_custom_mesh_type::arch: {
+            file.write_ln("   Arch()");
+         } break;
          }
 
          file.write_ln("   {");
@@ -725,6 +728,18 @@ void save_entity_group_impl(File& file, const entity_group& group)
                           cone.size.z);
             file.write_ln("      Segments({});", cone.segments);
             if (cone.flat_shading) file.write_ln("      FlatShading();");
+         } break;
+         case block_custom_mesh_type::arch: {
+            const world::block_custom_mesh_description_arch& arch =
+               block.mesh_description.arch;
+
+            file.write_ln("      Size({}, {}, {});", arch.size.x, arch.size.y,
+                          arch.size.z);
+            file.write_ln("      CrownLength({});", arch.crown_length);
+            file.write_ln("      CrownHeight({});", arch.crown_height);
+            file.write_ln("      CurveHeight({});", arch.curve_height);
+            file.write_ln("      SpanLength({});", arch.span_length);
+            file.write_ln("      Segments({});", arch.segments);
          } break;
          }
 

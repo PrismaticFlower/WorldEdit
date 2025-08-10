@@ -98,6 +98,7 @@ auto block_type_name(draw_block_type type) noexcept -> const char*
    case draw_block_type::ring:            return "Ring";
    case draw_block_type::beveled_box:     return "Beveled Box";
    case draw_block_type::curve:           return "Curve";
+   case draw_block_type::arch:            return "Arch";
    case draw_block_type::terrain_cut_box: return "Terrain Cutter (Box)";
    }
    // clang-format on
@@ -138,6 +139,7 @@ void world_edit::ui_show_block_editor() noexcept
                  draw_block_type::ring,
                  draw_block_type::beveled_box,
                  draw_block_type::curve,
+                 draw_block_type::arch,
                  draw_block_type::terrain_cut_box,
               }) {
 
@@ -255,6 +257,25 @@ void world_edit::ui_show_block_editor() noexcept
 
          _block_editor_config.cone.segments =
             std::max(_block_editor_config.cone.segments, min_segments);
+      }
+      else if (_block_editor_config.draw_type == draw_block_type::arch) {
+         const uint16 min_segments = 1;
+         const uint16 max_segments = 64;
+
+         ImGui::DragFloat("Crown Length", &_block_editor_config.arch.crown_length,
+                          0.5f, 0.0f, 1e10f);
+         ImGui::DragFloat("Crown Height", &_block_editor_config.arch.crown_height,
+                          0.125f, 0.0f, 1e10f);
+         ImGui::DragFloat("Curve Height", &_block_editor_config.arch.curve_height,
+                          0.5f, 0.0f, 1e10f);
+         ImGui::DragFloat("Span Length", &_block_editor_config.arch.span_length,
+                          0.5f, 0.0f, 1e10f);
+         ImGui::SliderScalar("Segments", ImGuiDataType_U16,
+                             &_block_editor_config.arch.segments, &min_segments,
+                             &max_segments);
+
+         _block_editor_config.arch.segments =
+            std::max(_block_editor_config.arch.segments, min_segments);
       }
 
       ImGui::Checkbox("Enable Alignment", &_block_editor_config.enable_alignment);
@@ -706,6 +727,11 @@ void world_edit::ui_show_block_editor() noexcept
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
+      if (ImGui::MenuItem("Draw Arch")) {
+         _block_editor_config.draw_type = draw_block_type::arch;
+         _block_editor_context = {.activate_tool = block_edit_tool::draw};
+      }
+
       if (ImGui::MenuItem("Draw Terrain Cutter (Box)")) {
          _block_editor_config.draw_type = draw_block_type::terrain_cut_box;
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
@@ -1139,6 +1165,10 @@ void world_edit::ui_show_block_editor() noexcept
                _block_editor_context.draw_block.height_plane = std::nullopt;
                _block_editor_context.draw_block.curve.p0 = cursor_positionWS;
                _block_editor_context.draw_block.step = draw_block_step::curve_p3;
+            } break;
+            case draw_block_type::arch: {
+               _block_editor_context.draw_block.arch.start = cursor_positionWS;
+               _block_editor_context.draw_block.step = draw_block_step::arch_length;
             } break;
             case draw_block_type::terrain_cut_box: {
                _block_editor_context.draw_block.terrain_cut_box.start =
@@ -2863,6 +2893,222 @@ void world_edit::ui_show_block_editor() noexcept
          }
 
       } break;
+      case draw_block_step::arch_length: {
+         _tool_visualizers
+            .add_line_overlay(_block_editor_context.draw_block.arch.start,
+                              {cursor_positionWS.x,
+                               _block_editor_context.draw_block.arch.start.y,
+                               cursor_positionWS.z},
+                              line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            _block_editor_context.draw_block.arch.length_x = cursor_positionWS.x;
+            _block_editor_context.draw_block.arch.length_z = cursor_positionWS.z;
+            _block_editor_context.draw_block.step = draw_block_step::arch_depth;
+         }
+
+      } break;
+      case draw_block_step::arch_depth: {
+         const float3 draw_block_start = _block_editor_context.draw_block.arch.start;
+         const float3 draw_block_length = {_block_editor_context.draw_block.arch.length_x,
+                                           draw_block_start.y,
+                                           _block_editor_context.draw_block.arch.length_z};
+
+         const float3 cursor_direction =
+            normalize(cursor_positionWS - draw_block_length);
+
+         const float3 extend_normal =
+            normalize(float3{draw_block_length.z, 0.0f, draw_block_length.x} -
+                      float3{draw_block_start.z, 0.0f, draw_block_start.x}) *
+            float3{-1.0, 0.0f, 1.0};
+
+         const float normal_sign =
+            dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
+
+         float rotation_angle =
+            std::atan2(draw_block_start.x - draw_block_length.x,
+                       draw_block_start.z - draw_block_length.z);
+
+         rotation_angle += std::numbers::pi_v<float> * 0.5f;
+
+         if (normal_sign > 0.0f) rotation_angle += std::numbers::pi_v<float>;
+
+         const quaternion rotation =
+            make_quat_from_euler({0.0f, rotation_angle, 0.0f});
+         const quaternion inv_rotation = conjugate(rotation);
+
+         const float cursor_distance =
+            std::fabs((inv_rotation * draw_block_length).z -
+                      (inv_rotation * cursor_positionWS).z);
+
+         const float3 draw_block_depth =
+            draw_block_length + extend_normal * cursor_distance * normal_sign;
+
+         _tool_visualizers.add_line_overlay(draw_block_start, draw_block_length,
+                                            line_color);
+         _tool_visualizers.add_line_overlay(draw_block_length, draw_block_depth,
+                                            line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            const world::block_custom_id id = _world.blocks.next_id.custom.aquire();
+
+            _block_editor_context.draw_block.height_plane = std::nullopt;
+            _block_editor_context.draw_block.arch.depth_x = draw_block_depth.x;
+            _block_editor_context.draw_block.arch.depth_z = draw_block_depth.z;
+            _block_editor_context.draw_block.arch.rotation = rotation;
+            _block_editor_context.draw_block.step = draw_block_step::arch_height;
+            _block_editor_context.draw_block.index =
+               static_cast<uint32>(_world.blocks.custom.size());
+            _block_editor_context.draw_block.block_id = id;
+
+            const std::array<float3, 2> cornersWS{draw_block_start, draw_block_depth};
+            std::array<float3, 2> cornersLS{};
+
+            for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+               cornersLS[i] = inv_rotation * cornersWS[i];
+            }
+
+            const float3 block_max = max(cornersLS[0], cornersLS[1]);
+            const float3 block_min = min(cornersLS[0], cornersLS[1]);
+
+            const float3 size = float3{std::fabs(block_max.x - block_min.x), 0.0f,
+                                       std::fabs(block_max.z - block_min.z)} /
+                                2.0f;
+
+            const float3 position = (draw_block_start + draw_block_depth) / 2.0f;
+
+            const uint8 material_index = _block_editor_config.paint_material_index;
+
+            if (_world.blocks.custom.size() < world::max_blocks) {
+               _edit_stack_world.apply(
+                  edits::make_add_block(
+                     world::block_description_custom{
+                        .rotation = rotation,
+                        .position = position,
+                        .mesh_description =
+                           world::block_custom_mesh_description_arch{
+                              .size = size,
+                              .crown_length = _block_editor_config.arch.crown_length,
+                              .crown_height = _block_editor_config.arch.crown_height,
+                              .curve_height = _block_editor_config.arch.curve_height,
+                              .span_length = _block_editor_config.arch.span_length,
+                              .segments = _block_editor_config.arch.segments,
+                           },
+                        .surface_materials = {material_index, material_index,
+                                              material_index, material_index,
+                                              material_index, material_index},
+                        .surface_texture_mode =
+                           {world::block_texture_mode::world_space_auto,
+                            world::block_texture_mode::world_space_auto,
+                            world::block_texture_mode::world_space_auto,
+                            world::block_texture_mode::unwrapped,
+                            world::block_texture_mode::world_space_auto,
+                            world::block_texture_mode::world_space_auto}},
+                     _block_editor_config.new_block_layer, id),
+                  _edit_context);
+            }
+            else {
+               MessageBoxA(_window,
+                           fmt::format("Max Custom Blocks ({}) Reached", world::max_blocks)
+                              .c_str(),
+                           "Limit Reached", MB_OK);
+
+               _block_editor_context.tool = block_edit_tool::none;
+            }
+         }
+      } break;
+      case draw_block_step::arch_height: {
+         const float3 draw_block_start = _block_editor_context.draw_block.arch.start;
+         const float3 draw_block_length = {_block_editor_context.draw_block.arch.length_x,
+                                           draw_block_start.y,
+                                           _block_editor_context.draw_block.arch.length_z};
+         const float3 draw_block_depth = {_block_editor_context.draw_block.arch.depth_x,
+                                          draw_block_start.y,
+                                          _block_editor_context.draw_block.arch.depth_z};
+
+         quaternion rotation = _block_editor_context.draw_block.arch.rotation;
+         quaternion inv_rotation = conjugate(rotation);
+
+         const std::array<float3, 2> cornersWS{draw_block_start, draw_block_depth};
+         std::array<float3, 2> cornersLS{};
+
+         for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+            cornersLS[i] = inv_rotation * cornersWS[i];
+         }
+
+         const float3 block_max = max(cornersLS[0], cornersLS[1]);
+         const float3 block_min = min(cornersLS[0], cornersLS[1]);
+
+         const float4 height_plane =
+            make_plane_from_point(draw_block_length,
+                                  normalize(draw_block_length - _camera.position()));
+
+         graphics::camera_ray ray =
+            make_camera_ray(_camera,
+                            {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                            {ImGui::GetMainViewport()->Size.x,
+                             ImGui::GetMainViewport()->Size.y});
+
+         float3 cursor_position = cursor_positionWS;
+
+         if (float hit = 0.0f;
+             intersect_aabb(inv_rotation * ray.origin,
+                            1.0f / (inv_rotation * ray.direction),
+                            {.min = {block_min.x, -FLT_MAX, block_min.z},
+                             .max = {block_max.x, FLT_MAX, block_max.z}},
+                            FLT_MAX, hit) and
+             hit < distance(_camera.position(), cursor_positionWS)) {
+            cursor_position = ray.origin + hit * ray.direction;
+         }
+
+         const float unaligned_arch_height =
+            cursor_position.y - draw_block_start.y;
+         const float arch_height =
+            align ? std::round(unaligned_arch_height / alignment.y) * alignment.y
+                  : unaligned_arch_height;
+
+         const float3 position = {(draw_block_start.x + draw_block_depth.x) / 2.0f,
+                                  draw_block_start.y + (arch_height / 2.0f),
+                                  (draw_block_start.z + draw_block_depth.z) / 2.0f};
+         const float3 size = abs(float3{block_max.x - block_min.x, arch_height,
+                                        block_max.z - block_min.z}) /
+                             2.0f;
+
+         if (arch_height < 0.0f) {
+            rotation = normalize(rotation * quaternion{0.0f, 0.0f, 1.0f, 0.0f});
+            inv_rotation = conjugate(rotation);
+         }
+
+         if (const uint32 index = _block_editor_context.draw_block.index;
+             index < _world.blocks.custom.size() and
+             _world.blocks.custom.ids[index] == _block_editor_context.draw_block.block_id) {
+            _edit_stack_world
+               .apply(edits::make_set_block_custom_metrics(
+                         index, rotation, position,
+                         world::block_custom_mesh_description_arch{
+                            .size = size,
+                            .crown_length = _block_editor_config.arch.crown_length,
+                            .crown_height = _block_editor_config.arch.crown_height,
+                            .curve_height = _block_editor_config.arch.curve_height,
+                            .span_length = _block_editor_config.arch.span_length,
+                            .segments = _block_editor_config.arch.segments,
+                         }),
+                      _edit_context, {.transparent = true});
+         }
+
+         _tool_visualizers
+            .add_line_overlay(position - float3{0.0f, arch_height * 0.5f, 0.0f},
+                              position + float3{0.0f, arch_height * 0.5f, 0.0f},
+                              line_color);
+
+         if (click) {
+            _block_editor_context.draw_block = {};
+
+            _edit_stack_world.close_last();
+         }
+      } break;
       case draw_block_step::terrain_cut_box_depth: {
          _tool_visualizers.add_line_overlay(
             _block_editor_context.draw_block.terrain_cut_box.start,
@@ -3590,6 +3836,30 @@ void world_edit::ui_show_block_editor() noexcept
                   _edit_stack_world.apply(edits::make_set_block_custom_metrics(
                                              *selected_index, block.rotation,
                                              positionWS, new_cone),
+                                          _edit_context);
+               }
+            } break;
+            case world::block_custom_mesh_type::arch: {
+               const world::block_custom_mesh_description_arch& arch =
+                  block.mesh_description.arch;
+
+               float3 size = arch.size;
+               float3 positionWS = block.position;
+
+               if (_gizmos.gizmo_size(
+                      {
+                         .name = "Resize Block (Arch)",
+                         .alignment = _editor_grid_size,
+                         .gizmo_rotation = block.rotation,
+                      },
+                      positionWS, size)) {
+                  world::block_custom_mesh_description_arch new_arch = arch;
+
+                  new_arch.size = size;
+
+                  _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                             *selected_index, block.rotation,
+                                             positionWS, new_arch),
                                           _edit_context);
                }
             } break;

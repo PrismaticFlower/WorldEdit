@@ -442,6 +442,12 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 
+         if (ImGui::MenuItem("Draw Arch")) {
+            _block_editor_open = true;
+            _block_editor_config.draw_type = draw_block_type::arch;
+            _block_editor_context = {.activate_tool = block_edit_tool::draw};
+         }
+
          if (ImGui::MenuItem("Draw Terrain Cutter (Box)")) {
             _block_editor_open = true;
             _block_editor_config.draw_type = draw_block_type::terrain_cut_box;

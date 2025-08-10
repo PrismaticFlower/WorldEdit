@@ -52,6 +52,15 @@ enum cylinder_surface {
 
 enum cone_surface { cone_surface_neg_y, cone_surface_wall };
 
+enum arch_surface {
+   arch_surface_pos_x,
+   arch_surface_neg_x,
+   arch_surface_pos_y,
+   arch_surface_neg_y,
+   arch_surface_pos_z,
+   arch_surface_neg_z
+};
+
 auto calculate_normal(const float3& v0, const float3& v1, const float3& v2) noexcept
    -> float3
 {
@@ -4124,6 +4133,1073 @@ auto generate_mesh(const block_custom_mesh_description_cone& cone) noexcept -> b
       mesh.snap_edges.push_back({start_index, last_index});
       mesh.snap_edges.push_back({start_index, centre_index});
    }
+
+   return mesh;
+}
+
+auto generate_mesh(const block_custom_mesh_description_arch& arch) noexcept -> block_custom_mesh
+{
+   const float half_pi = std::numbers::pi_v<float> / 2.0f;
+
+   const float arch_length = arch.size.x * 2.0f;
+   const float arch_height = arch.size.y * 2.0f;
+   const float arch_depth = arch.size.z * 2.0f;
+
+   const float segments_flt = static_cast<float>(arch.segments);
+
+   const float extrados_length = std::max(arch_length - arch.span_length, 0.0f);
+   const float span_length = std::min(arch_length, arch.span_length);
+
+   const float curves_length = std::max(span_length - arch.crown_length, 0.0f);
+   const float crown_length = std::min(arch.crown_length, span_length);
+
+   const float spare_height = std::max(arch_height - arch.curve_height, 0.0f);
+   const float curve_height = std::min(arch.curve_height, arch_height);
+
+   const float rise_height = std::max(spare_height - arch.crown_height, 0.0f);
+   const float crown_height = std::min(arch.crown_height, spare_height);
+
+   const float yz_texcoord_scale = 1.0f / std::max(arch_height, arch_depth);
+   const float xz_texcoord_scale = 1.0f / std::max(arch_length, arch_depth);
+   const float xy_texcoord_scale = 1.0f / std::max(arch_length, arch_height);
+
+   const float3 curve_offset = {extrados_length / 2.0f,
+                                rise_height - curve_height, 0.0f};
+
+   uint32 front_vertex_count = 2 + 2 * arch.segments;
+   uint32 front_quad_count = arch.segments;
+
+   if (extrados_length > 0.0f) {
+      front_vertex_count += 2;
+      front_quad_count += 1;
+   }
+
+   front_vertex_count *= 2;
+   front_quad_count *= 2;
+
+   if (crown_height > 0.0f) {
+      front_vertex_count += 2;
+      front_quad_count += 1;
+   }
+
+   uint32 bottom_vertex_count = 2 + 2 * arch.segments;
+   uint32 bottom_quad_count = arch.segments;
+
+   if (rise_height > 0.0f) {
+      bottom_vertex_count += 2;
+      bottom_quad_count += 1;
+   }
+
+   bottom_vertex_count *= 2;
+   bottom_quad_count *= 2;
+
+   if (crown_length > 0.0f) {
+      bottom_quad_count += 1;
+   }
+
+   if (extrados_length > 0.0f) {
+      bottom_vertex_count += 8;
+      bottom_quad_count += 2;
+   }
+
+   const uint32 vertex_count = front_vertex_count * 2 + bottom_vertex_count + 12;
+   const uint32 quad_count = front_quad_count * 2 + bottom_quad_count + 3;
+
+   world::block_custom_mesh mesh;
+
+   mesh.vertices.reserve(vertex_count);
+   mesh.occluders.reserve(quad_count);
+
+   uint16 vertex_index = 0;
+
+   // Front
+   {
+      uint16 curve_top_left;
+      uint16 curve_top_right;
+
+      // Left Front Curve
+      {
+         uint16 last_left_index = vertex_index++;
+         uint16 last_right_index = vertex_index++;
+
+         curve_top_left = last_left_index;
+
+         {
+            const float3 pointCS = {
+               cosf(half_pi) * 0.5f + 0.5f,
+               sinf(half_pi) * 0.5f + 0.5f,
+               0.0f,
+            };
+
+            const float3 pointLS =
+               pointCS * float3{curves_length, curve_height * 2.0f, 0.0f} +
+               float3{0.0f, 0.0f, arch_depth} + curve_offset;
+
+            mesh.vertices.push_back({
+               .position = {0.0f, pointLS.y, arch_depth},
+               .normal = {0.0f, 0.0f, 1.0f},
+               .texcoords = float2{0.0f, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_pos_z,
+            });
+            mesh.vertices.push_back({
+               .position = pointLS,
+               .normal = {0.0f, 0.0f, 1.0f},
+               .texcoords = float2{pointLS.x, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_pos_z,
+            });
+         }
+
+         for (int i = 1; i <= arch.segments; ++i) {
+            const float t = i / segments_flt * half_pi + half_pi;
+
+            const float3 pointCS = {
+               cosf(t) * 0.5f + 0.5f,
+               sinf(t) * 0.5f + 0.5f,
+               0.0f,
+            };
+
+            const uint16 i0 = last_right_index;
+            const uint16 i1 = last_left_index;
+            const uint16 i2 = vertex_index++;
+            const uint16 i3 = vertex_index++;
+
+            const float3 pointLS =
+               pointCS * float3{curves_length, curve_height * 2.0f, 0.0f} +
+               float3{0.0f, 0.0f, arch_depth} + curve_offset;
+
+            mesh.vertices.push_back({
+               .position = {0.0f, pointLS.y, arch_depth},
+               .normal = {0.0f, 0.0f, 1.0f},
+               .texcoords = float2{0.0f, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_pos_z,
+            });
+            mesh.vertices.push_back({
+               .position = pointLS,
+               .normal = {0.0f, 0.0f, 1.0f},
+               .texcoords = float2{pointLS.x, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_pos_z,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+
+            last_left_index = i2;
+            last_right_index = i3;
+         }
+
+         // Wall
+         if (extrados_length > 0.0f) {
+            const uint16 i0 = last_right_index;
+            const uint16 i1 = last_left_index;
+            const uint16 i2 = vertex_index++;
+            const uint16 i3 = vertex_index++;
+
+            mesh.vertices.push_back({
+               .position = {0.0f, 0.0f, arch_depth},
+               .normal = {0.0f, 0.0f, 1.0f},
+               .texcoords = {0.0f, 0.0f},
+               .surface_index = arch_surface_pos_z,
+            });
+            mesh.vertices.push_back({
+               .position = {mesh.vertices[last_right_index].position.x, 0.0f, arch_depth},
+               .normal = {0.0f, 0.0f, 1.0f},
+               .texcoords = float2{mesh.vertices[last_right_index].position.x, 0.0f} *
+                            xy_texcoord_scale,
+               .surface_index = arch_surface_pos_z,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+         }
+      }
+
+      // Right Front Curve
+      {
+         uint16 last_right_index = vertex_index++;
+         uint16 last_left_index = vertex_index++;
+
+         {
+            const float3 pointCS = {
+               1.0f,
+               0.5f,
+               0.0f,
+            };
+
+            const float3 pointLS =
+               pointCS * float3{curves_length, curve_height * 2.0f, 0.0f} +
+               float3{crown_length, 0.0f, arch_depth} + curve_offset;
+
+            mesh.vertices.push_back({
+               .position = {arch_length, pointLS.y, arch_depth},
+               .normal = {0.0f, 0.0f, 1.0f},
+               .texcoords = float2{arch_length, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_pos_z,
+            });
+            mesh.vertices.push_back({
+               .position = pointLS,
+               .normal = {0.0f, 0.0f, 1.0f},
+               .texcoords = float2{pointLS.x, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_pos_z,
+            });
+         }
+
+         // Wall
+         if (extrados_length > 0.0f) {
+            const uint16 i0 = vertex_index++;
+            const uint16 i1 = vertex_index++;
+            const uint16 i2 = last_right_index;
+            const uint16 i3 = last_left_index;
+
+            mesh.vertices.push_back({
+               .position = {mesh.vertices[last_left_index].position.x, 0.0f, arch_depth},
+               .normal = {0.0f, 0.0f, 1.0f},
+               .texcoords = float2{mesh.vertices[last_left_index].position.x, 0.0f} *
+                            xy_texcoord_scale,
+               .surface_index = arch_surface_pos_z,
+            });
+            mesh.vertices.push_back({
+               .position = {arch_length, 0.0f, arch_depth},
+               .normal = {0.0f, 0.0f, 1.0f},
+               .texcoords = float2{arch_length, 0.0f} * xy_texcoord_scale,
+               .surface_index = arch_surface_pos_z,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+         }
+
+         for (int i = 1; i <= arch.segments; ++i) {
+            const float t = i / segments_flt * half_pi;
+
+            const float3 pointCS = {
+               cosf(t) * 0.5f + 0.5f,
+               sinf(t) * 0.5f + 0.5f,
+               0.0f,
+            };
+
+            const uint16 i0 = vertex_index++;
+            const uint16 i1 = vertex_index++;
+            const uint16 i2 = last_left_index;
+            const uint16 i3 = last_right_index;
+
+            const float3 pointLS =
+               pointCS * float3{curves_length, curve_height * 2.0f, 0.0f} +
+               float3{crown_length, 0.0f, arch_depth} + curve_offset;
+
+            mesh.vertices.push_back({
+               .position = {arch_length, pointLS.y, arch_depth},
+               .normal = {0.0f, 0.0f, 1.0f},
+               .texcoords = float2{arch_length, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_pos_z,
+            });
+            mesh.vertices.push_back({
+               .position = pointLS,
+               .normal = {0.0f, 0.0f, 1.0f},
+               .texcoords = float2{pointLS.x, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_pos_z,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+
+            last_right_index = i0;
+            last_left_index = i1;
+         }
+
+         curve_top_right = last_right_index;
+      }
+
+      // Crown Front
+      if (crown_height > 0.0f) {
+         const uint16 i0 = curve_top_left;
+         const uint16 i1 = curve_top_right;
+         const uint16 i2 = vertex_index++;
+         const uint16 i3 = vertex_index++;
+
+         mesh.vertices.push_back({
+            .position = {arch_length, arch_height, arch_depth},
+            .normal = {0.0f, 0.0f, 1.0f},
+            .texcoords = float2{arch_length, arch_height} * xy_texcoord_scale,
+            .surface_index = arch_surface_pos_z,
+         });
+         mesh.vertices.push_back({
+            .position = {0.0f, arch_height, arch_depth},
+            .normal = {0.0f, 0.0f, 1.0f},
+            .texcoords = float2{0.0f, arch_height} * xy_texcoord_scale,
+            .surface_index = arch_surface_pos_z,
+         });
+
+         mesh.occluders.push_back({i0, i1, i2, i3});
+      }
+   }
+
+   // Back
+   {
+      uint16 curve_top_right;
+      uint16 curve_top_left;
+
+      // Left Back Curve
+      {
+         uint16 last_right_index = vertex_index++;
+         uint16 last_left_index = vertex_index++;
+
+         curve_top_left = last_left_index;
+
+         {
+            const float3 pointCS = {
+               cosf(half_pi) * 0.5f + 0.5f,
+               sinf(half_pi) * 0.5f + 0.5f,
+               0.0f,
+            };
+
+            const float3 pointLS =
+               pointCS * float3{curves_length, curve_height * 2.0f, 0.0f} + curve_offset;
+
+            mesh.vertices.push_back({
+               .position = pointLS,
+               .normal = {0.0f, 0.0f, -1.0f},
+               .texcoords = float2{pointLS.x, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_neg_z,
+            });
+            mesh.vertices.push_back({
+               .position = {0.0f, pointLS.y, 0.0f},
+               .normal = {0.0f, 0.0f, -1.0f},
+               .texcoords = float2{0.0f, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_neg_z,
+            });
+         }
+
+         for (int i = 1; i <= arch.segments; ++i) {
+            const float t = i / segments_flt * half_pi + half_pi;
+
+            const float3 pointCS = {
+               cosf(t) * 0.5f + 0.5f,
+               sinf(t) * 0.5f + 0.5f,
+               0.0f,
+            };
+
+            const uint16 i0 = vertex_index++;
+            const uint16 i1 = vertex_index++;
+            const uint16 i2 = last_left_index;
+            const uint16 i3 = last_right_index;
+
+            const float3 pointLS =
+               pointCS * float3{curves_length, curve_height * 2.0f, 0.0f} + curve_offset;
+
+            mesh.vertices.push_back({
+               .position = pointLS,
+               .normal = {0.0f, 0.0f, -1.0f},
+               .texcoords = float2{pointLS.x, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_neg_z,
+            });
+            mesh.vertices.push_back({
+               .position = {0.0f, pointLS.y, 0.0f},
+               .normal = {0.0f, 0.0f, -1.0f},
+               .texcoords = float2{0.0f, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_neg_z,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+
+            last_right_index = i0;
+            last_left_index = i1;
+         }
+
+         // Wall
+         if (extrados_length > 0.0f) {
+            const uint16 i0 = vertex_index++;
+            const uint16 i1 = vertex_index++;
+            const uint16 i2 = last_left_index;
+            const uint16 i3 = last_right_index;
+
+            mesh.vertices.push_back({
+               .position = {mesh.vertices[last_right_index].position.x, 0.0f, 0.0f},
+               .normal = {0.0f, 0.0f, -1.0f},
+               .texcoords = float2{mesh.vertices[last_right_index].position.x, 0.0f} *
+                            xy_texcoord_scale,
+               .surface_index = arch_surface_neg_z,
+            });
+            mesh.vertices.push_back({
+               .position = {0.0f, 0.0f, 0.0f},
+               .normal = {0.0f, 0.0f, -1.0f},
+               .texcoords = {0.0f, 0.0f},
+               .surface_index = arch_surface_neg_z,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+         }
+      }
+
+      // Right Back Curve
+      {
+         uint16 last_left_index = vertex_index++;
+         uint16 last_right_index = vertex_index++;
+
+         {
+            const float3 pointCS = {
+               1.0f,
+               0.5f,
+               0.0f,
+            };
+
+            const float3 pointLS =
+               pointCS * float3{curves_length, curve_height * 2.0f, 0.0f} +
+               float3{crown_length, 0.0f, 0.0f} + curve_offset;
+
+            mesh.vertices.push_back({
+               .position = pointLS,
+               .normal = {0.0f, 0.0f, -1.0f},
+               .texcoords = float2{pointLS.x, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_neg_z,
+            });
+            mesh.vertices.push_back({
+               .position = {arch_length, pointLS.y, 0.0f},
+               .normal = {0.0f, 0.0f, -1.0f},
+               .texcoords = float2{arch_length, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_neg_z,
+            });
+         }
+
+         // Wall
+         if (extrados_length > 0.0f) {
+            const uint16 i0 = last_left_index;
+            const uint16 i1 = last_right_index;
+            const uint16 i2 = vertex_index++;
+            const uint16 i3 = vertex_index++;
+
+            mesh.vertices.push_back({
+               .position = {arch_length, 0.0f, 0.0f},
+               .normal = {0.0f, 0.0f, -1.0f},
+               .texcoords = float2{arch_length, 0.0f} * xy_texcoord_scale,
+               .surface_index = arch_surface_neg_z,
+            });
+            mesh.vertices.push_back({
+               .position = {mesh.vertices[last_left_index].position.x, 0.0f, 0.0f},
+               .normal = {0.0f, 0.0f, -1.0f},
+               .texcoords = float2{mesh.vertices[last_left_index].position.x, 0.0f} *
+                            xy_texcoord_scale,
+               .surface_index = arch_surface_neg_z,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+         }
+
+         for (int i = 1; i <= arch.segments; ++i) {
+            const float t = i / segments_flt * half_pi;
+
+            const float3 pointCS = {
+               cosf(t) * 0.5f + 0.5f,
+               sinf(t) * 0.5f + 0.5f,
+               0.0f,
+            };
+
+            const uint16 i0 = last_right_index;
+            const uint16 i1 = last_left_index;
+            const uint16 i2 = vertex_index++;
+            const uint16 i3 = vertex_index++;
+
+            const float3 pointLS =
+               pointCS * float3{curves_length, curve_height * 2.0f, 0.0f} +
+               float3{crown_length, 0.0f, 0.0f} + curve_offset;
+
+            mesh.vertices.push_back({
+               .position = pointLS,
+               .normal = {0.0f, 0.0f, -1.0f},
+               .texcoords = float2{pointLS.x, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_neg_z,
+            });
+            mesh.vertices.push_back({
+               .position = {arch_length, pointLS.y, 0.0f},
+               .normal = {0.0f, 0.0f, -1.0f},
+               .texcoords = float2{arch_length, pointLS.y} * xy_texcoord_scale,
+               .surface_index = arch_surface_neg_z,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+
+            last_left_index = i2;
+            last_right_index = i3;
+         }
+
+         curve_top_right = last_right_index;
+      }
+
+      // Crown Back
+      if (crown_height > 0.0f) {
+         const uint16 i0 = vertex_index++;
+         const uint16 i1 = vertex_index++;
+         const uint16 i2 = curve_top_right;
+         const uint16 i3 = curve_top_left;
+
+         mesh.vertices.push_back({
+            .position = {0.0f, arch_height, 0.0f},
+            .normal = {0.0f, 0.0f, -1.0f},
+            .texcoords = float2{0.0f, arch_height} * xy_texcoord_scale,
+            .surface_index = arch_surface_neg_z,
+         });
+         mesh.vertices.push_back({
+            .position = {arch_length, arch_height, 0.0f},
+            .normal = {0.0f, 0.0f, -1.0f},
+            .texcoords = float2{arch_length, arch_height} * xy_texcoord_scale,
+            .surface_index = arch_surface_neg_z,
+         });
+
+         mesh.occluders.push_back({i0, i1, i2, i3});
+      }
+   }
+
+   // Top
+   {
+      const uint16 i0 = vertex_index++;
+      const uint16 i1 = vertex_index++;
+      const uint16 i2 = vertex_index++;
+      const uint16 i3 = vertex_index++;
+
+      mesh.vertices.push_back({
+         .position = {0.0f, arch_height, arch_depth},
+         .normal = {0.0f, 1.0f, 0.0f},
+         .texcoords = float2{0.0f, arch_depth} * xz_texcoord_scale,
+         .surface_index = arch_surface_pos_y,
+      });
+      mesh.vertices.push_back({
+         .position = {arch_length, arch_height, arch_depth},
+         .normal = {0.0f, 1.0f, 0.0f},
+         .texcoords = float2{arch_length, arch_depth} * xz_texcoord_scale,
+         .surface_index = arch_surface_pos_y,
+      });
+      mesh.vertices.push_back({
+         .position = {arch_length, arch_height, 0.0f},
+         .normal = {0.0f, 1.0f, 0.0f},
+         .texcoords = float2{arch_length, 0.0f} * xz_texcoord_scale,
+         .surface_index = arch_surface_pos_y,
+      });
+      mesh.vertices.push_back({
+         .position = {0.0f, arch_height, 0.0f},
+         .normal = {0.0f, 1.0f, 0.0f},
+         .texcoords = {0.0f, 0.0f},
+         .surface_index = arch_surface_pos_y,
+      });
+
+      mesh.occluders.push_back({i0, i1, i2, i3});
+   }
+
+   // Bottom
+   {
+      float intrados_half_length = 0.0f;
+
+      {
+         float3 last_pointLS = float3{1.0f, 0.5f, 0.0f} *
+                               float3{curves_length, curve_height * 2.0f, 0.0f};
+
+         for (int i = 1; i <= arch.segments; ++i) {
+            const float t = i / segments_flt * half_pi;
+
+            const float3 pointCS = {
+               cosf(t) * 0.5f + 0.5f,
+               sinf(t) * 0.5f + 0.5f,
+               0.0f,
+            };
+
+            const float3 pointLS =
+               pointCS * float3{curves_length, curve_height * 2.0f, 0.0f};
+
+            intrados_half_length += distance(last_pointLS, pointLS);
+
+            last_pointLS = pointLS;
+         }
+      }
+
+      const float interior_total_length =
+         intrados_half_length * 2.0f + crown_length + rise_height * 2.0f;
+      const float interior_texture_scale =
+         1.0f / std::max(interior_total_length, arch_depth);
+
+      uint16 curve_front_left;
+      uint16 curve_back_left;
+
+      const float3x3 local_from_circle_adjugate =
+         adjugate(float4x4{{curves_length, 0.0f, 0.0f, 0.0f},
+                           {0.0f, curve_height * 2.0f, 0.0f, 0.0f},
+                           {0.0f, 0.0f, 1.0f, 0.0f},
+                           {0.0f, 0.0f, 0.0f, 1.0f}});
+
+      // Left Bottom Curve
+      {
+         uint16 last_back_index = vertex_index++;
+         uint16 last_front_index = vertex_index++;
+
+         float texture_x_offset = intrados_half_length + crown_length + rise_height;
+
+         {
+            const float3 normalCS = {
+               cosf(half_pi),
+               sinf(half_pi),
+               0.0f,
+            };
+
+            const float3 pointCS = {
+               normalCS.x * 0.5f + 0.5f,
+               normalCS.y * 0.5f + 0.5f,
+               0.0f,
+            };
+
+            const float3 backLS =
+               pointCS * float3{curves_length, curve_height * 2.0f, 0.0f} + curve_offset;
+            const float3 frontLS = backLS + float3{0.0f, 0.0f, arch_depth};
+
+            const float3 normalLS = normalize(local_from_circle_adjugate * -normalCS);
+
+            mesh.vertices.push_back({
+               .position = backLS,
+               .normal = normalLS,
+               .texcoords = float2{texture_x_offset, 0.0f} * interior_texture_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+            mesh.vertices.push_back({
+               .position = frontLS,
+               .normal = normalLS,
+               .texcoords = float2{texture_x_offset, arch_depth} * interior_texture_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+         }
+
+         curve_front_left = last_front_index;
+         curve_back_left = last_back_index;
+
+         for (int i = 1; i <= arch.segments; ++i) {
+            const float t = i / segments_flt * half_pi + half_pi;
+
+            const float3 normalCS = {
+               cosf(t),
+               sinf(t),
+               0.0f,
+            };
+
+            const float3 pointCS = {
+               normalCS.x * 0.5f + 0.5f,
+               normalCS.y * 0.5f + 0.5f,
+               0.0f,
+            };
+
+            const float3 backLS =
+               pointCS * float3{curves_length, curve_height * 2.0f, 0.0f} + curve_offset;
+            const float3 frontLS = backLS + float3{0.0f, 0.0f, arch_depth};
+
+            const float3 normalLS = normalize(local_from_circle_adjugate * -normalCS);
+
+            texture_x_offset +=
+               distance(backLS, mesh.vertices[last_back_index].position);
+
+            const uint16 i0 = last_back_index;
+            const uint16 i1 = last_front_index;
+            const uint16 i2 = vertex_index++;
+            const uint16 i3 = vertex_index++;
+
+            mesh.vertices.push_back({
+               .position = frontLS,
+               .normal = normalLS,
+               .texcoords = float2{texture_x_offset, arch_depth} * interior_texture_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+            mesh.vertices.push_back({
+               .position = backLS,
+               .normal = normalLS,
+               .texcoords = float2{texture_x_offset, 0.0f} * interior_texture_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+
+            last_back_index = i3;
+            last_front_index = i2;
+         }
+
+         // Wall
+         if (rise_height > 0.0f) {
+            const uint16 i0 = last_back_index;
+            const uint16 i1 = last_front_index;
+            const uint16 i2 = vertex_index++;
+            const uint16 i3 = vertex_index++;
+
+            float3 frontLS = mesh.vertices[last_front_index].position;
+            float3 backLS = mesh.vertices[last_back_index].position;
+
+            frontLS.y = 0.0f;
+            backLS.y = 0.0f;
+
+            mesh.vertices.push_back({
+               .position = frontLS,
+               .normal = {1.0f, 0.0f, 0.0f},
+               .texcoords = float2{interior_total_length, arch_depth} * interior_texture_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+            mesh.vertices.push_back({
+               .position = backLS,
+               .normal = {1.0f, 0.0f, 0.0f},
+               .texcoords = float2{interior_total_length, 0.0f} * interior_texture_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+         }
+      }
+
+      uint16 curve_front_right;
+      uint16 curve_back_right;
+
+      // Right Bottom Curve
+      {
+         uint16 last_back_index = vertex_index++;
+         uint16 last_front_index = vertex_index++;
+
+         float texture_x_offset = rise_height;
+
+         {
+            const float3 normalCS = {
+               1.0f,
+               0.0f,
+               0.0f,
+            };
+
+            const float3 pointCS = {
+               normalCS.x * 0.5f + 0.5f,
+               normalCS.y * 0.5f + 0.5f,
+               0.0f,
+            };
+
+            const float3 backLS =
+               pointCS * float3{curves_length, curve_height * 2.0f, 0.0f} +
+               float3{crown_length, 0.0f, 0.0f} + curve_offset;
+            const float3 frontLS = backLS + float3{0.0f, 0.0f, arch_depth};
+
+            const float3 normalLS = local_from_circle_adjugate * -normalCS;
+
+            mesh.vertices.push_back({
+               .position = backLS,
+               .normal = normalLS,
+               .texcoords = float2{texture_x_offset, 0.0f} * interior_texture_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+            mesh.vertices.push_back({
+               .position = frontLS,
+               .normal = normalLS,
+               .texcoords = float2{texture_x_offset, arch_depth} * interior_texture_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+         }
+
+         // Wall
+         if (rise_height > 0.0f) {
+            const uint16 i0 = vertex_index++;
+            const uint16 i1 = vertex_index++;
+            const uint16 i2 = last_front_index;
+            const uint16 i3 = last_back_index;
+
+            float3 frontLS = mesh.vertices[last_front_index].position;
+            float3 backLS = mesh.vertices[last_back_index].position;
+
+            frontLS.y = 0.0f;
+            backLS.y = 0.0f;
+
+            mesh.vertices.push_back({
+               .position = backLS,
+               .normal = {-1.0f, 0.0f, 0.0f},
+               .texcoords = {0.0f, 0.0f},
+               .surface_index = arch_surface_neg_y,
+            });
+            mesh.vertices.push_back({
+               .position = frontLS,
+               .normal = {-1.0f, 0.0f, 0.0f},
+               .texcoords = float2{0.0f, arch_depth} * interior_texture_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+         }
+
+         for (int i = 1; i <= arch.segments; ++i) {
+            const float t = i / segments_flt * half_pi;
+
+            const float3 normalCS = {
+               cosf(t),
+               sinf(t),
+               0.0f,
+            };
+
+            const float3 pointCS = {
+               normalCS.x * 0.5f + 0.5f,
+               normalCS.y * 0.5f + 0.5f,
+               0.0f,
+            };
+
+            const float3 backLS =
+               pointCS * float3{curves_length, curve_height * 2.0f, 0.0f} +
+               float3{crown_length, 0.0f, 0.0f} + curve_offset;
+
+            const float3 frontLS = backLS + float3{0.0f, 0.0f, arch_depth};
+
+            const float3 normalLS = local_from_circle_adjugate * -normalCS;
+
+            texture_x_offset +=
+               distance(backLS, mesh.vertices[last_back_index].position);
+
+            const uint16 i0 = last_back_index;
+            const uint16 i1 = last_front_index;
+            const uint16 i2 = vertex_index++;
+            const uint16 i3 = vertex_index++;
+
+            mesh.vertices.push_back({
+               .position = frontLS,
+               .normal = normalLS,
+               .texcoords = float2{texture_x_offset, arch_depth} * interior_texture_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+            mesh.vertices.push_back({
+               .position = backLS,
+               .normal = normalLS,
+               .texcoords = float2{texture_x_offset, 0.0f} * interior_texture_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+
+            last_front_index = i2;
+            last_back_index = i3;
+         }
+
+         curve_front_right = last_front_index;
+         curve_back_right = last_back_index;
+      }
+
+      // Crown Bottom
+      if (crown_length > 0.0f) {
+         const uint16 i0 = curve_back_right;
+         const uint16 i1 = curve_front_right;
+         const uint16 i2 = curve_front_left;
+         const uint16 i3 = curve_back_left;
+
+         mesh.occluders.push_back({i0, i1, i2, i3});
+      }
+
+      // Extrados Bottom
+      if (extrados_length > 0.0f) {
+         const float bottom_length = extrados_length / 2.0f;
+
+         // Left
+         {
+            const uint16 i0 = vertex_index++;
+            const uint16 i1 = vertex_index++;
+            const uint16 i2 = vertex_index++;
+            const uint16 i3 = vertex_index++;
+
+            mesh.vertices.push_back({
+               .position = {0.0f, 0.0f, 0.0f},
+               .normal = {0.0f, -1.0f, 0.0f},
+               .texcoords = {0.0f, 0.0f},
+               .surface_index = arch_surface_neg_y,
+            });
+            mesh.vertices.push_back({
+               .position = {bottom_length, 0.0f, 0.0f},
+               .normal = {0.0f, -1.0f, 0.0f},
+               .texcoords = float2{bottom_length, 0.0f} * xz_texcoord_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+            mesh.vertices.push_back({
+               .position = {bottom_length, 0.0f, arch_depth},
+               .normal = {0.0f, -1.0f, 0.0f},
+               .texcoords = float2{bottom_length, arch_depth} * xz_texcoord_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+            mesh.vertices.push_back({
+               .position = {0.0f, 0.0f, arch_depth},
+               .normal = {0.0f, -1.0f, 0.0f},
+               .texcoords = float2{0.0f, arch_depth} * xz_texcoord_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+         }
+
+         // Right
+         {
+            const float right_offset = bottom_length + span_length;
+
+            const uint16 i0 = vertex_index++;
+            const uint16 i1 = vertex_index++;
+            const uint16 i2 = vertex_index++;
+            const uint16 i3 = vertex_index++;
+
+            mesh.vertices.push_back({
+               .position = {right_offset, 0.0f, 0.0f},
+               .normal = {0.0f, -1.0f, 0.0f},
+               .texcoords = float2{right_offset, 0.0f} * xz_texcoord_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+            mesh.vertices.push_back({
+               .position = {right_offset + bottom_length, 0.0f, 0.0f},
+               .normal = {0.0f, -1.0f, 0.0f},
+               .texcoords = float2{right_offset + bottom_length, 0.0f} * xz_texcoord_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+            mesh.vertices.push_back({
+               .position = {right_offset + bottom_length, 0.0f, arch_depth},
+               .normal = {0.0f, -1.0f, 0.0f},
+               .texcoords = float2{right_offset + bottom_length, arch_depth} * xz_texcoord_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+            mesh.vertices.push_back({
+               .position = {right_offset, 0.0f, arch_depth},
+               .normal = {0.0f, -1.0f, 0.0f},
+               .texcoords = float2{right_offset, arch_depth} * xz_texcoord_scale,
+               .surface_index = arch_surface_neg_y,
+            });
+
+            mesh.occluders.push_back({i0, i1, i2, i3});
+         }
+      }
+   }
+
+   // Left
+   {
+      const uint16 i0 = vertex_index++;
+      const uint16 i1 = vertex_index++;
+      const uint16 i2 = vertex_index++;
+      const uint16 i3 = vertex_index++;
+
+      mesh.vertices.push_back({
+         .position = {0.0f, 0.0f, arch_depth},
+         .normal = {-1.0f, 0.0f, 0.0f},
+         .texcoords = float2{0.0f, arch_depth} * yz_texcoord_scale,
+         .surface_index = arch_surface_neg_x,
+      });
+      mesh.vertices.push_back({
+         .position = {0.0f, arch_height, arch_depth},
+         .normal = {-1.0f, 0.0f, 0.0f},
+         .texcoords = float2{arch_height, arch_depth} * yz_texcoord_scale,
+         .surface_index = arch_surface_neg_x,
+      });
+      mesh.vertices.push_back({
+         .position = {0.0f, arch_height, 0.0f},
+         .normal = {-1.0f, 0.0f, 0.0f},
+         .texcoords = float2{arch_height, 0.0f} * yz_texcoord_scale,
+         .surface_index = arch_surface_neg_x,
+      });
+      mesh.vertices.push_back({
+         .position = {0.0f, 0.0f, 0.0f},
+         .normal = {-1.0f, 0.0f, 0.0f},
+         .texcoords = {0.0f, 0.0f},
+         .surface_index = arch_surface_neg_x,
+      });
+
+      mesh.occluders.push_back({i0, i1, i2, i3});
+   }
+
+   // Right
+   {
+      const uint16 i0 = vertex_index++;
+      const uint16 i1 = vertex_index++;
+      const uint16 i2 = vertex_index++;
+      const uint16 i3 = vertex_index++;
+
+      mesh.vertices.push_back({
+         .position = {arch_length, 0.0f, 0.0f},
+         .normal = {1.0f, 0.0f, 0.0f},
+         .texcoords = {0.0f, 0.0f},
+         .surface_index = arch_surface_pos_x,
+      });
+      mesh.vertices.push_back({
+         .position = {arch_length, arch_height, 0.0f},
+         .normal = {1.0f, 0.0f, 0.0f},
+         .texcoords = float2{arch_height, 0.0f} * yz_texcoord_scale,
+         .surface_index = arch_surface_pos_x,
+      });
+      mesh.vertices.push_back({
+         .position = {arch_length, arch_height, arch_depth},
+         .normal = {1.0f, 0.0f, 0.0f},
+         .texcoords = float2{arch_height, arch_depth} * yz_texcoord_scale,
+         .surface_index = arch_surface_pos_x,
+      });
+      mesh.vertices.push_back({
+         .position = {arch_length, 0.0f, arch_depth},
+         .normal = {1.0f, 0.0f, 0.0f},
+         .texcoords = float2{0.0f, arch_depth} * yz_texcoord_scale,
+         .surface_index = arch_surface_pos_x,
+      });
+
+      mesh.occluders.push_back({i0, i1, i2, i3});
+   }
+
+   mesh.triangles.reserve(mesh.occluders.size() * 2);
+
+   for (const auto& [i0, i1, i2, i3] : mesh.occluders) {
+      mesh.triangles.push_back({i0, i1, i2});
+      mesh.triangles.push_back({i0, i2, i3});
+   }
+
+   uint32 snap_point_count = 8;
+   uint32 snap_edge_count = 10;
+
+   if (extrados_length > 0.0f) {
+      snap_point_count += 4;
+      snap_edge_count += 6;
+   }
+
+   mesh.snap_points.reserve(snap_point_count);
+   mesh.snap_edges.reserve(snap_edge_count);
+
+   mesh.snap_points.push_back({0.0f, 0.0f, 0.0f});
+   mesh.snap_points.push_back({0.0f, 0.0f, arch_depth});
+   mesh.snap_points.push_back({arch_length, 0.0f, arch_depth});
+   mesh.snap_points.push_back({arch_length, 0.0f, 0.0f});
+
+   mesh.snap_points.push_back({0.0f, arch_height, 0.0f});
+   mesh.snap_points.push_back({0.0f, arch_height, arch_depth});
+   mesh.snap_points.push_back({arch_length, arch_height, arch_depth});
+   mesh.snap_points.push_back({arch_length, arch_height, 0.0f});
+
+   mesh.snap_edges.push_back({0, 1});
+   mesh.snap_edges.push_back({2, 3});
+
+   mesh.snap_edges.push_back({4, 5});
+   mesh.snap_edges.push_back({5, 6});
+   mesh.snap_edges.push_back({6, 7});
+   mesh.snap_edges.push_back({7, 4});
+
+   mesh.snap_edges.push_back({0, 4});
+   mesh.snap_edges.push_back({1, 5});
+   mesh.snap_edges.push_back({2, 6});
+   mesh.snap_edges.push_back({3, 7});
+
+   if (extrados_length > 0.0f) {
+      const float offset = extrados_length / 2.0f;
+
+      mesh.snap_points.push_back({offset, 0.0f, 0.0f});
+      mesh.snap_points.push_back({offset, 0.0f, arch_depth});
+      mesh.snap_points.push_back({offset + span_length, 0.0f, arch_depth});
+      mesh.snap_points.push_back({offset + span_length, 0.0f, 0.0f});
+
+      mesh.snap_edges.push_back({8, 9});
+      mesh.snap_edges.push_back({10, 11});
+
+      mesh.snap_edges.push_back({0, 8});
+      mesh.snap_edges.push_back({1, 9});
+      mesh.snap_edges.push_back({2, 10});
+      mesh.snap_edges.push_back({3, 11});
+   }
+
+   const float3 centre_offset = arch.size;
+
+   for (block_vertex& vertex : mesh.vertices) {
+      vertex.position -= centre_offset;
+   }
+
+   for (float3& position : mesh.snap_points) position -= centre_offset;
+
+   mesh.collision_vertices.reserve(mesh.vertices.size());
+
+   for (block_vertex& vertex : mesh.vertices) {
+      mesh.collision_vertices.push_back(
+         {.position = vertex.position, .surface_index = vertex.surface_index});
+   }
+
+   mesh.collision_triangles = mesh.triangles;
+   mesh.collision_occluders = mesh.occluders;
 
    return mesh;
 }

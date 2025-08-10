@@ -40,4 +40,10 @@ auto generate_mesh(const block_custom_mesh_description_cylinder& cylinder) noexc
 /// @return The resulting block_custom_mesh.
 auto generate_mesh(const block_custom_mesh_description_cone& cone) noexcept
    -> block_custom_mesh;
+
+/// @brief Generates the mesh for a arch.
+/// @param arch The arch.
+/// @return The resulting block_custom_mesh.
+auto generate_mesh(const block_custom_mesh_description_arch& arch) noexcept
+   -> block_custom_mesh;
 }

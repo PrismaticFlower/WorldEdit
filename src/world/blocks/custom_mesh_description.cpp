@@ -49,6 +49,12 @@ block_custom_mesh_description::block_custom_mesh_description(
 {
 }
 
+block_custom_mesh_description::block_custom_mesh_description(
+   const block_custom_mesh_description_arch& arch) noexcept
+   : type{block_custom_mesh_type::arch}, arch{arch}
+{
+}
+
 auto block_custom_mesh_description::operator=(const block_custom_mesh_description& other) noexcept
    -> block_custom_mesh_description&
 {
@@ -73,6 +79,9 @@ auto block_custom_mesh_description::operator=(const block_custom_mesh_descriptio
    case block_custom_mesh_type::cone: {
       this->cone = other.cone;
    } break;
+   case block_custom_mesh_type::arch: {
+      this->arch = other.arch;
+   } break;
    }
 
    return *this;
@@ -96,6 +105,8 @@ bool operator==(const block_custom_mesh_description& left,
       return left.cylinder == right.cylinder;
    case block_custom_mesh_type::cone:
       return left.cone == right.cone;
+   case block_custom_mesh_type::arch:
+      return left.arch == right.arch;
    }
 
    std::unreachable();

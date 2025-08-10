@@ -65,6 +65,17 @@ struct block_custom_mesh_description_cone {
    bool operator==(const block_custom_mesh_description_cone&) const noexcept = default;
 };
 
+struct block_custom_mesh_description_arch {
+   float3 size = {8.0f, 8.0f, 8.0f};
+   float crown_length = 2.0f;
+   float crown_height = 0.25f;
+   float curve_height = 1.0f;
+   float span_length = 8.0f;
+   uint16 segments = 6;
+
+   bool operator==(const block_custom_mesh_description_arch&) const noexcept = default;
+};
+
 enum class block_custom_mesh_type {
    stairway,
    ring,
@@ -72,6 +83,7 @@ enum class block_custom_mesh_type {
    curve,
    cylinder,
    cone,
+   arch,
 };
 
 struct block_custom_mesh_description {
@@ -91,6 +103,8 @@ struct block_custom_mesh_description {
 
    block_custom_mesh_description(const block_custom_mesh_description_cone& cone) noexcept;
 
+   block_custom_mesh_description(const block_custom_mesh_description_arch& arch) noexcept;
+
    auto operator=(const block_custom_mesh_description& other) noexcept
       -> block_custom_mesh_description&;
 
@@ -103,6 +117,7 @@ struct block_custom_mesh_description {
       block_custom_mesh_description_curve curve;
       block_custom_mesh_description_cylinder cylinder;
       block_custom_mesh_description_cone cone;
+      block_custom_mesh_description_arch arch;
    };
 };
 

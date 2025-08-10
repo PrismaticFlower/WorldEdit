@@ -732,6 +732,32 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                                                 _edit_context);
                      }
                   } break;
+                  case world::block_custom_mesh_type::arch: {
+                     const world::block_custom_mesh_description_arch& arch =
+                        block.mesh_description.arch;
+
+                     float3 new_position = block.position;
+                     float3 new_size = arch.size;
+
+                     if (_gizmos.gizmo_size(
+                            {
+                               .name = "Block Arch Size",
+                               .instance = static_cast<int64>(
+                                  _world.blocks.custom.ids[*block_index]),
+                               .alignment = _editor_grid_size,
+                               .gizmo_rotation = block.rotation,
+                            },
+                            new_position, new_size)) {
+                        world::block_custom_mesh_description_arch new_arch = arch;
+
+                        new_arch.size = new_size;
+
+                        _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                                   *block_index, block.rotation,
+                                                   new_position, new_arch),
+                                                _edit_context);
+                     }
+                  } break;
                   }
 
                } break;

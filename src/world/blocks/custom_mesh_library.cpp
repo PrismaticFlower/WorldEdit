@@ -45,6 +45,11 @@ static H AbslHashValue(H h, const block_custom_mesh_description& desc)
       return H::combine(std::move(h), desc.type, desc.cone.size.x,
                         desc.cone.size.y, desc.cone.size.z, desc.cone.segments,
                         desc.cone.flat_shading);
+   case block_custom_mesh_type::arch:
+      return H::combine(std::move(h), desc.type, desc.arch.size.x,
+                        desc.arch.size.y, desc.arch.size.z, desc.arch.crown_length,
+                        desc.arch.crown_height, desc.arch.curve_height,
+                        desc.arch.span_length, desc.arch.segments);
    }
 
    std::unreachable();
@@ -67,6 +72,8 @@ auto generate_mesh(const block_custom_mesh_description& mesh) noexcept -> block_
       return generate_mesh(mesh.cylinder);
    case block_custom_mesh_type::cone:
       return generate_mesh(mesh.cone);
+   case block_custom_mesh_type::arch:
+      return generate_mesh(mesh.arch);
    }
 
    std::unreachable();

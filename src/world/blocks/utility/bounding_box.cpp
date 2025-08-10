@@ -83,6 +83,9 @@ auto get_bounding_box_local_space(const block_custom_mesh_description& mesh) noe
    case block_custom_mesh_type::cone: {
       return {.min = {-mesh.cone.size}, .max = {mesh.cone.size}};
    }
+   case block_custom_mesh_type::arch: {
+      return {.min = {-mesh.arch.size}, .max = {mesh.arch.size}};
+   }
    }
 
    std::unreachable();

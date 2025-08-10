@@ -2937,6 +2937,196 @@ TEST_CASE("world save entity group (blocks, curves)", "[World][IO]")
    CHECK(written_eng == expected_eng);
 }
 
+TEST_CASE("world save entity group (blocks, arches)", "[World][IO]")
+{
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_blocks_arches.eng";
+
+   const std::string_view expected_eng =
+      R"(BlocksCustom(3)
+{
+   Arch()
+   {
+      Rotation(0, 1, 0, 0);
+      Position(8.5, 4.5, 2);
+      Size(4, 4, 4);
+      CrownLength(0.125);
+      CrownHeight(0.25);
+      CurveHeight(0.5);
+      SpanLength(2);
+      Segments(4);
+      SurfaceMaterials(0, 1, 0, 0, 0, 0);
+      SurfaceTextureMode(0, 0, 0, 0, 0, 0);
+      SurfaceTextureRotation(2, 2, 0, 0, 0, 0);
+      SurfaceTextureScale(0, 0, -1, -2, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(0, 0, 256, 256, 0, 0, 0, 0, 0, 0, 0, 0);
+   }
+   Arch()
+   {
+      Rotation(0.707106, 0, 0.707106, 0);
+      Position(10, 16, 12);
+      Size(8, 8, 8);
+      CrownLength(0.25);
+      CrownHeight(0.5);
+      CurveHeight(1);
+      SpanLength(4);
+      Segments(8);
+      SurfaceMaterials(2, 2, 0, 0, 0, 0);
+      SurfaceTextureMode(1, 5, 0, 0, 0, 0);
+      SurfaceTextureRotation(1, 1, 0, 0, 0, 0);
+      SurfaceTextureScale(0, 0, -2, -2, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(1024, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+   }
+   Arch()
+   {
+      Rotation(0, 0, 0, 1);
+      Position(6, 6, 6);
+      Size(16, 16, 16);
+      CrownLength(0.5);
+      CrownHeight(1);
+      CurveHeight(2);
+      SpanLength(8);
+      Segments(16);
+      SurfaceMaterials(0, 0, 0, 0, 0, 0);
+      SurfaceTextureMode(2, 2, 0, 0, 0, 0);
+      SurfaceTextureRotation(0, 0, 0, 0, 0, 0);
+      SurfaceTextureScale(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+   }
+}
+
+)";
+
+   world::entity_group
+      group =
+         {
+            .blocks =
+               {
+                  .custom =
+                     {
+                        .description =
+                           {
+                              world::block_description_custom{
+                                 .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
+                                 .position = {8.5f, 4.5f, 2.0f},
+                                 .mesh_description =
+                                    world::block_custom_mesh_description_arch{
+                                       .size = {4.0f, 4.0f, 4.0f},
+                                       .crown_length = 0.125f,
+                                       .crown_height = 0.25f,
+                                       .curve_height = 0.5f,
+                                       .span_length = 2.0f,
+                                       .segments = 4,
+                                    },
+                                 .surface_materials = {0, 1},
+                                 .surface_texture_mode =
+                                    {
+                                       block_texture_mode::world_space_auto,
+                                       block_texture_mode::world_space_auto,
+                                    },
+                                 .surface_texture_rotation =
+                                    {
+                                       block_texture_rotation::d180,
+                                       block_texture_rotation::d180,
+                                    },
+                                 .surface_texture_scale =
+                                    {
+                                       std::array<int8, 2>{0, 0},
+                                       std::array<int8, 2>{-1, -2},
+                                    },
+                                 .surface_texture_offset =
+                                    {
+                                       std::array<uint16, 2>{0, 0},
+                                       std::array<uint16, 2>{256, 256},
+                                    },
+                              },
+                              world::block_description_custom{
+                                 .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
+                                 .position = {10.0f, 16.0f, 12.0f},
+                                 .mesh_description =
+                                    world::block_custom_mesh_description_arch{
+                                       .size = {8.0f, 8.0f, 8.0f},
+                                       .crown_length = 0.25f,
+                                       .crown_height = 0.5f,
+                                       .curve_height = 1.0f,
+                                       .span_length = 4.0f,
+                                       .segments = 8,
+                                    },
+                                 .surface_materials = {2, 2},
+                                 .surface_texture_mode =
+                                    {
+                                       block_texture_mode::world_space_zy,
+                                       block_texture_mode::local_space_zy,
+                                    },
+                                 .surface_texture_rotation =
+                                    {
+                                       block_texture_rotation::d90,
+                                       block_texture_rotation::d90,
+                                    },
+                                 .surface_texture_scale =
+                                    {
+                                       std::array<int8, 2>{0, 0},
+                                       std::array<int8, 2>{-2, -2},
+                                    },
+                                 .surface_texture_offset =
+                                    {
+                                       std::array<uint16, 2>{1024, 0},
+                                       std::array<uint16, 2>{0, 0},
+                                    },
+                              },
+                              world::block_description_custom{
+                                 .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
+                                 .position = {6.0f, 6.0f, 6.0f},
+                                 .mesh_description =
+                                    world::block_custom_mesh_description_arch{
+                                       .size = {16.0f, 16.0f, 16.0f},
+                                       .crown_length = 0.5f,
+                                       .crown_height = 1.0f,
+                                       .curve_height = 2.0f,
+                                       .span_length = 8.0f,
+                                       .segments = 16,
+                                    },
+                                 .surface_materials = {0, 0},
+                                 .surface_texture_mode =
+                                    {
+                                       block_texture_mode::world_space_xz,
+                                       block_texture_mode::world_space_xz,
+                                    },
+                                 .surface_texture_rotation =
+                                    {
+                                       block_texture_rotation::d0,
+                                       block_texture_rotation::d0,
+                                    },
+                                 .surface_texture_scale =
+                                    {
+                                       std::array<int8, 2>{0, 0},
+                                       std::array<int8, 2>{0, 0},
+                                    },
+                                 .surface_texture_offset =
+                                    {
+                                       std::array<uint16, 2>{0, 0},
+                                       std::array<uint16, 2>{0, 0},
+                                    },
+                              },
+
+                           },
+                        .mesh =
+                           {
+                              blocks_custom_mesh_library::null_handle(),
+                              blocks_custom_mesh_library::null_handle(),
+                              blocks_custom_mesh_library::null_handle(),
+                           },
+                     },
+               },
+         };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
 TEST_CASE("world save entity group (blocks, terrain_cut_boxes)", "[World][IO]")
 {
    (void)io::create_directory("temp/entity_groups");

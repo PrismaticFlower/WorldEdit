@@ -210,6 +210,7 @@ enum class draw_block_type {
    ring,
    beveled_box,
    curve,
+   arch,
    terrain_cut_box,
 };
 
@@ -243,6 +244,9 @@ enum class draw_block_step : uint8 {
    beveled_box_height,
    curve_p3,
    curve_finalize,
+   arch_length,
+   arch_depth,
+   arch_height,
    terrain_cut_box_depth,
    terrain_cut_box_width,
    terrain_cut_box_height,
@@ -1056,6 +1060,14 @@ private:
          bool flat_shading = false;
       } cone;
 
+      struct arch {
+         float crown_length = 2.0f;
+         float crown_height = 0.25f;
+         float curve_height = 1.0f;
+         float span_length = 7.0f;
+         uint16 segments = 6;
+      } arch;
+
       bool enable_alignment = true;
       bool enable_snapping = true;
       bool snapping_odd = true;
@@ -1161,6 +1173,15 @@ private:
             float3 p2;
             float3 p3;
          } curve;
+
+         struct arch {
+            float3 start;
+            float length_x = 0.0f;
+            float length_z = 0.0f;
+            float depth_x = 0.0f;
+            float depth_z = 0.0f;
+            quaternion rotation;
+         } arch;
 
          struct terrain_cut_box {
             float3 start;
