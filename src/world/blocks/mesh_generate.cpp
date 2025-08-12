@@ -83,6 +83,9 @@ auto calculate_curve_axis_normal(const float3& tangent, const float3& axis) noex
 auto generate_mesh(const block_custom_mesh_description_stairway& stairway) noexcept
    -> block_custom_mesh
 {
+   if (stairway.size.y <= 0.0f) return {};
+   if (stairway.step_height <= 0.0f) return {};
+
    block_custom_mesh mesh;
 
    const float step_height = stairway.step_height;
