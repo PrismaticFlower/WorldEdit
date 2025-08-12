@@ -20,6 +20,12 @@ block_custom_mesh_description::block_custom_mesh_description(
 }
 
 block_custom_mesh_description::block_custom_mesh_description(
+   const block_custom_mesh_description_stairway_floating& stairway) noexcept
+   : type{block_custom_mesh_type::stairway_floating}, stairway_floating{stairway}
+{
+}
+
+block_custom_mesh_description::block_custom_mesh_description(
    const block_custom_mesh_description_ring& ring) noexcept
    : type{block_custom_mesh_type::ring}, ring{ring}
 {
@@ -64,6 +70,9 @@ auto block_custom_mesh_description::operator=(const block_custom_mesh_descriptio
    case block_custom_mesh_type::stairway: {
       this->stairway = other.stairway;
    } break;
+   case block_custom_mesh_type::stairway_floating: {
+      this->stairway_floating = other.stairway_floating;
+   } break;
    case block_custom_mesh_type::ring: {
       this->ring = other.ring;
    } break;
@@ -95,6 +104,8 @@ bool operator==(const block_custom_mesh_description& left,
    switch (left.type) {
    case block_custom_mesh_type::stairway:
       return left.stairway == right.stairway;
+   case block_custom_mesh_type::stairway_floating:
+      return left.stairway_floating == right.stairway_floating;
    case block_custom_mesh_type::ring:
       return left.ring == right.ring;
    case block_custom_mesh_type::beveled_box:

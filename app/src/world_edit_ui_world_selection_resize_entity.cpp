@@ -554,6 +554,44 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                                   _edit_context);
                      }
                   } break;
+                  case world::block_custom_mesh_type::stairway_floating: {
+                     const world::block_custom_mesh_description_stairway_floating& stairway =
+                        block.mesh_description.stairway_floating;
+
+                     float3 new_size = stairway.size;
+                     new_size.y += stairway.first_step_offset;
+                     new_size /= 2.0f;
+
+                     float3 new_position =
+                        block.rotation * (conjugate(block.rotation) * block.position +
+                                          float3{0.0f, new_size.y, 0.0f});
+
+                     if (_gizmos.gizmo_size(
+                            {
+                               .name = "Block Floating Stairway Size",
+                               .instance = static_cast<int64>(
+                                  _world.blocks.custom.ids[*block_index]),
+                               .alignment = _editor_grid_size,
+                               .gizmo_rotation = block.rotation,
+                            },
+                            new_position, new_size)) {
+                        new_position = block.rotation *
+                                       (conjugate(block.rotation) * new_position -
+                                        float3{0.0f, new_size.y, 0.0f});
+                        new_size *= 2.0f;
+                        new_size.y -= stairway.first_step_offset;
+
+                        _edit_stack_world
+                           .apply(edits::make_set_block_custom_metrics(
+                                     *block_index, block.rotation, new_position,
+                                     world::block_custom_mesh_description_stairway_floating{
+                                        .size = new_size,
+                                        .step_height = stairway.step_height,
+                                        .first_step_offset = stairway.first_step_offset,
+                                     }),
+                                  _edit_context);
+                     }
+                  } break;
                   case world::block_custom_mesh_type::ring: {
                      const world::block_custom_mesh_description_ring& ring =
                         block.mesh_description.ring;

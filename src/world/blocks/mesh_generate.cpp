@@ -1078,6 +1078,968 @@ auto generate_mesh(const block_custom_mesh_description_stairway& stairway) noexc
    return mesh;
 }
 
+auto generate_mesh(const block_custom_mesh_description_stairway_floating& stairway) noexcept
+   -> block_custom_mesh
+{
+   if (stairway.step_height <= 0.0f) return {};
+   if (stairway.size.y <= 0.0f) return {};
+
+   world::block_custom_mesh mesh;
+
+   const float step_height = stairway.step_height;
+
+   const float steps_width = stairway.size.x;
+   const float steps_height = stairway.size.y;
+   const float steps_length = stairway.size.z;
+
+   const int steps = static_cast<int>(ceilf(steps_height / step_height));
+   const float adjusted_step_height = steps_height / steps;
+   const float step_length = steps_length / steps;
+   const float inv_steps = 1.0f / steps;
+
+   const float first_step_offset =
+      std::max(stairway.first_step_offset, -adjusted_step_height);
+
+   const float half_steps_width = steps_width / 2.0f;
+   const float half_steps_length = steps_length / 2.0f;
+
+   const float top_tex_scale = steps_length / steps_width;
+   const float side_tex_scale = 1.0f / std::max(adjusted_step_height, step_length);
+   const float front_tex_scale = steps_height / steps_width;
+
+   // Visible Mesh
+   {
+      const std::size_t step_vertex_count = 24;
+      const std::size_t step_quad_count = 6;
+
+      const std::size_t vertex_count = step_vertex_count * steps;
+      const std::size_t occluder_count = step_quad_count * steps;
+
+      mesh.vertices.reserve(vertex_count);
+      mesh.occluders.reserve(occluder_count);
+
+      uint16 vertex_index = 0;
+
+      for (int i = 0; i < steps; ++i) {
+         float step_base = i * adjusted_step_height;
+         float step_top = (i + 1) * adjusted_step_height;
+
+         step_top += first_step_offset;
+         if (i != 0) step_base += first_step_offset;
+
+         if (i + 1 == steps) step_top = steps_height + first_step_offset;
+
+         float step_back = i * step_length - half_steps_length;
+         float step_front = (i + 1) * step_length - half_steps_length;
+
+         if (i + 1 == steps) step_front = half_steps_length;
+
+         const uint16 top_i0 = vertex_index++;
+         const uint16 top_i1 = vertex_index++;
+         const uint16 top_i2 = vertex_index++;
+         const uint16 top_i3 = vertex_index++;
+
+         const float2 texcoords_y_min = {0.0f, i * inv_steps * top_tex_scale};
+         const float2 texcoords_y_max = {1.0f, (i + 1) * inv_steps * top_tex_scale};
+
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_top,
+                   step_back,
+                },
+             .normal = {0.0f, 1.0f, 0.0f},
+             .texcoords = {texcoords_y_min.x, texcoords_y_min.y},
+             .surface_index = stairway_surface_pos_y});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_top,
+                   step_back,
+                },
+             .normal = {0.0f, 1.0f, 0.0f},
+             .texcoords = {texcoords_y_max.x, texcoords_y_min.y},
+             .surface_index = stairway_surface_pos_y});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_top,
+                   step_front,
+                },
+             .normal = {0.0f, 1.0f, 0.0f},
+             .texcoords = {texcoords_y_max.x, texcoords_y_max.y},
+             .surface_index = stairway_surface_pos_y});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_top,
+                   step_front,
+                },
+             .normal = {0.0f, 1.0f, 0.0f},
+             .texcoords = {texcoords_y_min.x, texcoords_y_max.y},
+             .surface_index = stairway_surface_pos_y});
+
+         const uint16 bottom_i0 = vertex_index++;
+         const uint16 bottom_i1 = vertex_index++;
+         const uint16 bottom_i2 = vertex_index++;
+         const uint16 bottom_i3 = vertex_index++;
+
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_base,
+                   step_front,
+                },
+             .normal = {0.0f, -1.0f, 0.0f},
+             .texcoords = {texcoords_y_min.x, texcoords_y_max.y},
+             .surface_index = stairway_surface_pos_y});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_base,
+                   step_front,
+                },
+             .normal = {0.0f, -1.0f, 0.0f},
+             .texcoords = {texcoords_y_max.x, texcoords_y_max.y},
+             .surface_index = stairway_surface_pos_y});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_base,
+                   step_back,
+                },
+             .normal = {0.0f, -1.0f, 0.0f},
+             .texcoords = {texcoords_y_max.x, texcoords_y_min.y},
+             .surface_index = stairway_surface_pos_y});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_base,
+                   step_back,
+                },
+             .normal = {0.0f, -1.0f, 0.0f},
+             .texcoords = {texcoords_y_min.x, texcoords_y_min.y},
+             .surface_index = stairway_surface_pos_y});
+
+         const uint16 front_i0 = vertex_index++;
+         const uint16 front_i1 = vertex_index++;
+         const uint16 front_i2 = vertex_index++;
+         const uint16 front_i3 = vertex_index++;
+
+         const float2 texcoords_z_min = {0.0f, step_base / steps_height * front_tex_scale};
+         const float2 texcoords_z_max = {1.0f, step_top / steps_height * front_tex_scale};
+
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_top,
+                   step_back,
+                },
+             .normal = {0.0f, 0.0f, -1.0f},
+             .texcoords = {texcoords_z_min.x, texcoords_z_min.y},
+             .surface_index = stairway_surface_neg_z});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_top,
+                   step_back,
+                },
+             .normal = {0.0f, 0.0f, -1.0f},
+             .texcoords = {texcoords_z_max.x, texcoords_z_min.y},
+             .surface_index = stairway_surface_neg_z});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_base,
+                   step_back,
+                },
+             .normal = {0.0f, 0.0f, -1.0f},
+             .texcoords = {texcoords_z_max.x, texcoords_z_max.y},
+             .surface_index = stairway_surface_neg_z});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_base,
+                   step_back,
+                },
+             .normal = {0.0f, 0.0f, -1.0f},
+             .texcoords = {texcoords_z_min.x, texcoords_z_max.y},
+             .surface_index = stairway_surface_neg_z});
+
+         const uint16 back_i0 = vertex_index++;
+         const uint16 back_i1 = vertex_index++;
+         const uint16 back_i2 = vertex_index++;
+         const uint16 back_i3 = vertex_index++;
+
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_base,
+                   step_front,
+                },
+             .normal = {0.0f, 0.0f, 1.0f},
+             .texcoords = {texcoords_z_min.x, texcoords_z_max.y},
+             .surface_index = stairway_surface_pos_z});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_base,
+                   step_front,
+                },
+             .normal = {0.0f, 0.0f, 1.0f},
+             .texcoords = {texcoords_z_max.x, texcoords_z_max.y},
+             .surface_index = stairway_surface_pos_z});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   half_steps_width,
+                   step_top,
+                   step_front,
+                },
+             .normal = {0.0f, 0.0f, 1.0f},
+             .texcoords = {texcoords_z_max.x, texcoords_z_min.y},
+             .surface_index = stairway_surface_pos_z});
+         mesh.vertices.push_back(
+            {.position =
+                {
+                   -half_steps_width,
+                   step_top,
+                   step_front,
+                },
+             .normal = {0.0f, 0.0f, 1.0f},
+             .texcoords = {texcoords_z_min.x, texcoords_z_min.y},
+             .surface_index = stairway_surface_pos_z});
+
+         const uint16 left_i0 = vertex_index++;
+         const uint16 left_i1 = vertex_index++;
+         const uint16 left_i2 = vertex_index++;
+         const uint16 left_i3 = vertex_index++;
+
+         mesh.vertices.push_back({.position =
+                                     {
+                                        -half_steps_width,
+                                        step_top,
+                                        step_front,
+                                     },
+                                  .normal = {-1.0f, 0.0f, 0.0f},
+                                  .texcoords = {0.0f, 0.0f},
+                                  .surface_index = stairway_surface_neg_x});
+         mesh.vertices.push_back({.position =
+                                     {
+                                        -half_steps_width,
+                                        step_top,
+                                        step_back,
+                                     },
+                                  .normal = {-1.0f, 0.0f, 0.0f},
+                                  .texcoords = {1.0f * side_tex_scale, 0.0f},
+                                  .surface_index = stairway_surface_neg_x});
+         mesh.vertices.push_back({.position =
+                                     {
+                                        -half_steps_width,
+                                        step_base,
+                                        step_back,
+                                     },
+                                  .normal = {-1.0f, 0.0f, 0.0f},
+                                  .texcoords = float2{1.0f, 1.0f} * side_tex_scale,
+                                  .surface_index = stairway_surface_neg_x});
+         mesh.vertices.push_back({.position =
+                                     {
+                                        -half_steps_width,
+                                        step_base,
+                                        step_front,
+                                     },
+                                  .normal = {-1.0f, 0.0f, 0.0f},
+                                  .texcoords = {0.0f, 1.0f * side_tex_scale},
+                                  .surface_index = stairway_surface_neg_x});
+
+         const uint16 right_i0 = vertex_index++;
+         const uint16 right_i1 = vertex_index++;
+         const uint16 right_i2 = vertex_index++;
+         const uint16 right_i3 = vertex_index++;
+
+         mesh.vertices.push_back({.position =
+                                     {
+                                        half_steps_width,
+                                        step_base,
+                                        step_front,
+                                     },
+                                  .normal = {1.0f, 0.0f, 0.0f},
+                                  .texcoords = {0.0f, 1.0f * side_tex_scale},
+                                  .surface_index = stairway_surface_pos_x});
+         mesh.vertices.push_back({.position =
+                                     {
+                                        half_steps_width,
+                                        step_base,
+                                        step_back,
+                                     },
+                                  .normal = {1.0f, 0.0f, 0.0f},
+                                  .texcoords = float2{1.0f, 1.0f} * side_tex_scale,
+                                  .surface_index = stairway_surface_pos_x});
+         mesh.vertices.push_back({.position =
+                                     {
+                                        half_steps_width,
+                                        step_top,
+                                        step_back,
+                                     },
+                                  .normal = {1.0f, 0.0f, 0.0f},
+                                  .texcoords = {1.0f * side_tex_scale, 0.0f},
+                                  .surface_index = stairway_surface_pos_x});
+         mesh.vertices.push_back({.position =
+                                     {
+                                        half_steps_width,
+                                        step_top,
+                                        step_front,
+                                     },
+                                  .normal = {1.0f, 0.0f, 0.0f},
+                                  .texcoords = {0.0f, 0.0f},
+                                  .surface_index = stairway_surface_pos_x});
+
+         mesh.occluders.push_back({top_i0, top_i1, top_i2, top_i3});
+         mesh.occluders.push_back({bottom_i0, bottom_i1, bottom_i2, bottom_i3});
+         mesh.occluders.push_back({front_i0, front_i1, front_i2, front_i3});
+         mesh.occluders.push_back({back_i0, back_i1, back_i2, back_i3});
+         mesh.occluders.push_back({left_i0, left_i1, left_i2, left_i3});
+         mesh.occluders.push_back({right_i0, right_i1, right_i2, right_i3});
+      }
+
+      mesh.triangles.reserve(mesh.occluders.size() * 2);
+
+      for (const auto& [i0, i1, i2, i3] : mesh.occluders) {
+         mesh.triangles.push_back({i0, i1, i2});
+         mesh.triangles.push_back({i0, i2, i3});
+      }
+   }
+
+   // Collision Mesh
+   {
+      const std::size_t vertex_count = 48;
+      const std::size_t tri_count = 26;
+      const std::size_t occluder_count = 11;
+
+      mesh.collision_vertices.reserve(vertex_count);
+      mesh.collision_triangles.reserve(tri_count);
+      mesh.collision_occluders.reserve(occluder_count);
+
+      uint16 vertex_index = 0;
+
+      // Ramp Top
+      {
+         const float ramp_base = first_step_offset + adjusted_step_height;
+         const float ramp_top = steps_height + first_step_offset;
+         const float ramp_front = (steps - 1) * step_length - half_steps_length;
+
+         const uint16 ramp_i0 = vertex_index++;
+         const uint16 ramp_i1 = vertex_index++;
+         const uint16 ramp_i2 = vertex_index++;
+         const uint16 ramp_i3 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  ramp_base,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_y,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+
+                  -half_steps_width,
+                  ramp_base,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_y,
+
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  ramp_top,
+                  ramp_front,
+               },
+            .surface_index = stairway_surface_pos_y,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  ramp_top,
+                  ramp_front,
+               },
+            .surface_index = stairway_surface_pos_y,
+         });
+
+         mesh.collision_triangles.push_back({ramp_i0, ramp_i1, ramp_i2});
+         mesh.collision_triangles.push_back({ramp_i0, ramp_i2, ramp_i3});
+         mesh.collision_occluders.push_back({ramp_i0, ramp_i1, ramp_i2, ramp_i3});
+      }
+
+      // Ramp Bottom
+      {
+         const uint16 ramp_i0 = vertex_index++;
+         const uint16 ramp_i1 = vertex_index++;
+         const uint16 ramp_i2 = vertex_index++;
+         const uint16 ramp_i3 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  first_step_offset + adjusted_step_height,
+                  -half_steps_length + step_length * 2.0f,
+               },
+            .surface_index = stairway_surface_neg_y,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  steps_height + first_step_offset - adjusted_step_height,
+                  half_steps_length,
+               },
+            .surface_index = stairway_surface_neg_y,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  steps_height + first_step_offset - adjusted_step_height,
+                  half_steps_length,
+               },
+            .surface_index = stairway_surface_neg_y,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  first_step_offset + adjusted_step_height,
+                  -half_steps_length + step_length * 2.0f,
+               },
+            .surface_index = stairway_surface_neg_y,
+         });
+
+         mesh.collision_triangles.push_back({ramp_i0, ramp_i1, ramp_i2});
+         mesh.collision_triangles.push_back({ramp_i0, ramp_i2, ramp_i3});
+         mesh.collision_occluders.push_back({ramp_i0, ramp_i1, ramp_i2, ramp_i3});
+      }
+
+      // Ramp Sides
+      {
+         const uint16 left_i0 = vertex_index++;
+         const uint16 left_i1 = vertex_index++;
+         const uint16 left_i2 = vertex_index++;
+         const uint16 left_i3 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  first_step_offset + adjusted_step_height * 2.0f,
+                  -half_steps_length + step_length,
+               },
+            .surface_index = stairway_surface_neg_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  first_step_offset + adjusted_step_height,
+                  -half_steps_length + step_length * 2.0f,
+               },
+            .surface_index = stairway_surface_neg_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  steps_height + first_step_offset - adjusted_step_height,
+                  half_steps_length,
+               },
+            .surface_index = stairway_surface_neg_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  steps_height + first_step_offset,
+                  (steps - 1) * step_length - half_steps_length,
+               },
+            .surface_index = stairway_surface_neg_x,
+         });
+
+         mesh.collision_triangles.push_back({left_i0, left_i1, left_i2});
+         mesh.collision_triangles.push_back({left_i0, left_i2, left_i3});
+         mesh.collision_occluders.push_back({left_i0, left_i1, left_i2, left_i3});
+
+         const uint16 bottom_left_i0 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  first_step_offset + adjusted_step_height,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_neg_x,
+         });
+
+         mesh.collision_triangles.push_back({bottom_left_i0, left_i1, left_i0});
+
+         const uint16 top_left_i0 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  steps_height + first_step_offset,
+                  half_steps_length,
+               },
+            .surface_index = stairway_surface_neg_x,
+         });
+
+         mesh.collision_triangles.push_back({top_left_i0, left_i3, left_i2});
+
+         const uint16 right_i0 = vertex_index++;
+         const uint16 right_i1 = vertex_index++;
+         const uint16 right_i2 = vertex_index++;
+         const uint16 right_i3 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  steps_height + first_step_offset,
+                  (steps - 1) * step_length - half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  steps_height + first_step_offset - adjusted_step_height,
+                  half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  first_step_offset + adjusted_step_height,
+                  -half_steps_length + step_length * 2.0f,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  first_step_offset + adjusted_step_height * 2.0f,
+                  -half_steps_length + step_length,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+
+         mesh.collision_triangles.push_back({right_i0, right_i1, right_i2});
+         mesh.collision_triangles.push_back({right_i0, right_i2, right_i3});
+         mesh.collision_occluders.push_back({right_i0, right_i1, right_i2, right_i3});
+
+         const uint16 bottom_right_i0 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  first_step_offset + adjusted_step_height,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+
+         mesh.collision_triangles.push_back({bottom_right_i0, right_i3, right_i2});
+
+         const uint16 top_right_i0 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  steps_height + first_step_offset,
+                  half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+
+         mesh.collision_triangles.push_back({top_right_i0, right_i1, right_i0});
+      }
+
+      // Top Step Parts
+      {
+         const uint16 top_i0 = vertex_index++;
+         const uint16 top_i1 = vertex_index++;
+         const uint16 top_i2 = vertex_index++;
+         const uint16 top_i3 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  steps_height + first_step_offset,
+                  (steps - 1) * step_length - half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_y,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  steps_height + first_step_offset,
+                  (steps - 1) * step_length - half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_y,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  steps_height + first_step_offset,
+                  half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_y,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  steps_height + first_step_offset,
+                  half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_y,
+         });
+
+         mesh.collision_triangles.push_back({top_i0, top_i1, top_i2});
+         mesh.collision_triangles.push_back({top_i0, top_i2, top_i3});
+         mesh.collision_occluders.push_back({top_i0, top_i1, top_i2, top_i3});
+
+         const uint16 back_i0 = vertex_index++;
+         const uint16 back_i1 = vertex_index++;
+         const uint16 back_i2 = vertex_index++;
+         const uint16 back_i3 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  steps_height + first_step_offset,
+                  half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_z,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  steps_height + first_step_offset,
+                  half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_z,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  steps_height + first_step_offset - adjusted_step_height,
+                  half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_z,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  steps_height + first_step_offset - adjusted_step_height,
+                  half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_z,
+         });
+
+         mesh.collision_triangles.push_back({back_i0, back_i1, back_i2});
+         mesh.collision_triangles.push_back({back_i0, back_i2, back_i3});
+         mesh.collision_occluders.push_back({back_i0, back_i1, back_i2, back_i3});
+      }
+
+      // First Step
+      {
+         const uint16 front_i0 = vertex_index++;
+         const uint16 front_i1 = vertex_index++;
+         const uint16 front_i2 = vertex_index++;
+         const uint16 front_i3 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  0.0f,
+                  -half_steps_length + step_length,
+               },
+            .surface_index = stairway_surface_pos_z,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  0.0f,
+                  -half_steps_length + step_length,
+               },
+            .surface_index = stairway_surface_pos_z,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  adjusted_step_height + first_step_offset,
+                  -half_steps_length + step_length * 2.0f,
+               },
+            .surface_index = stairway_surface_pos_z,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  adjusted_step_height + first_step_offset,
+                  -half_steps_length + step_length * 2.0f,
+               },
+            .surface_index = stairway_surface_pos_z,
+         });
+
+         mesh.collision_triangles.push_back({front_i0, front_i1, front_i2});
+         mesh.collision_triangles.push_back({front_i0, front_i2, front_i3});
+         mesh.collision_occluders.push_back({front_i0, front_i1, front_i2, front_i3});
+
+         const uint16 back_i0 = vertex_index++;
+         const uint16 back_i1 = vertex_index++;
+         const uint16 back_i2 = vertex_index++;
+         const uint16 back_i3 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  first_step_offset + adjusted_step_height,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_neg_z,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  first_step_offset + adjusted_step_height,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_neg_z,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  0.0f,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_neg_z,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  0.0f,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_neg_z,
+         });
+
+         mesh.collision_triangles.push_back({back_i0, back_i1, back_i2});
+         mesh.collision_triangles.push_back({back_i0, back_i2, back_i3});
+         mesh.collision_occluders.push_back({back_i0, back_i1, back_i2, back_i3});
+
+         const uint16 bottom_i0 = vertex_index++;
+         const uint16 bottom_i1 = vertex_index++;
+         const uint16 bottom_i2 = vertex_index++;
+         const uint16 bottom_i3 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  0.0f,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  0.0f,
+                  -half_steps_length + step_length,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  0.0f,
+                  -half_steps_length + step_length,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  0.0f,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+
+         mesh.collision_triangles.push_back({bottom_i0, bottom_i1, bottom_i2});
+         mesh.collision_triangles.push_back({bottom_i0, bottom_i2, bottom_i3});
+         mesh.collision_occluders.push_back({bottom_i0, bottom_i1, bottom_i2, bottom_i3});
+
+         const uint16 left_i0 = vertex_index++;
+         const uint16 left_i1 = vertex_index++;
+         const uint16 left_i2 = vertex_index++;
+         const uint16 left_i3 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  adjusted_step_height + first_step_offset,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  adjusted_step_height + first_step_offset,
+                  -half_steps_length + step_length * 2.0f,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  0.0f,
+                  -half_steps_length + step_length,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  half_steps_width,
+                  0.0f,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_pos_x,
+         });
+
+         mesh.collision_triangles.push_back({left_i0, left_i1, left_i2});
+         mesh.collision_triangles.push_back({left_i0, left_i2, left_i3});
+         mesh.collision_occluders.push_back({left_i0, left_i1, left_i2, left_i3});
+
+         const uint16 right_i0 = vertex_index++;
+         const uint16 right_i1 = vertex_index++;
+         const uint16 right_i2 = vertex_index++;
+         const uint16 right_i3 = vertex_index++;
+
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  0.0f,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_neg_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  0.0f,
+                  -half_steps_length + step_length,
+               },
+            .surface_index = stairway_surface_neg_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  adjusted_step_height + first_step_offset,
+                  -half_steps_length + step_length * 2.0f,
+               },
+            .surface_index = stairway_surface_neg_x,
+         });
+         mesh.collision_vertices.push_back({
+            .position =
+               {
+                  -half_steps_width,
+                  adjusted_step_height + first_step_offset,
+                  -half_steps_length,
+               },
+            .surface_index = stairway_surface_neg_x,
+         });
+
+         mesh.collision_triangles.push_back({right_i0, right_i1, right_i2});
+         mesh.collision_triangles.push_back({right_i0, right_i2, right_i3});
+         mesh.collision_occluders.push_back({right_i0, right_i1, right_i2, right_i3});
+      }
+   }
+
+   // Snapping Mesh
+   {
+      mesh.snap_points.reserve(4);
+      mesh.snap_edges.reserve(2);
+
+      mesh.snap_points.push_back({-half_steps_width, 0.0f, -half_steps_length});
+      mesh.snap_points.push_back({half_steps_width, 0.0f, -half_steps_length});
+
+      mesh.snap_points.push_back(
+         {-half_steps_width, steps_height + first_step_offset, half_steps_length});
+      mesh.snap_points.push_back(
+         {half_steps_width, steps_height + first_step_offset, half_steps_length});
+
+      mesh.snap_edges.push_back({0, 1});
+      mesh.snap_edges.push_back({2, 3});
+   }
+
+   return mesh;
+}
+
 auto generate_mesh(const block_custom_mesh_description_ring& ring) noexcept -> block_custom_mesh
 {
    const float pi2 = std::numbers::pi_v<float> * 2.0f;

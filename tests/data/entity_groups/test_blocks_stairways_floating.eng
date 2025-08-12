@@ -1,0 +1,72 @@
+BlocksCustom(3)
+{
+   StairwayFloating()
+   {
+      Rotation(0, 1, 0, 0);
+      Position(8.5, 4.5, 2);
+      Size(4, 4, 4);
+      StepHeight(0.1);
+      FirstStepOffset(0);
+      SurfaceMaterials(0, 1, 2, 3, 4, 5);
+      SurfaceTextureMode(0, 0, 0, 0, 0, 0);
+      SurfaceTextureRotation(2, 2, 2, 2, 2, 2);
+      SurfaceTextureScale(0, 0, -1, -2, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(0, 0, 0, 0, 0, 0, 0, 0, 256, 256, 0, 0);
+   }
+   StairwayFloating()
+   {
+      Rotation(0.707106, 0, 0.707106, 0);
+      Position(10, 16, 12);
+      Size(8, 4, 8);
+      StepHeight(0.25);
+      FirstStepOffset(0.125);
+      SurfaceMaterials(1, 1, 1, 1, 1, 1);
+      SurfaceTextureMode(1, 1, 1, 1, 5, 1);
+      SurfaceTextureRotation(1, 1, 1, 1, 1, 1);
+      SurfaceTextureScale(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, -2);
+      SurfaceTextureOffset(1024, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+   }
+   StairwayFloating()
+   {
+      Rotation(0, 0, 0, 1);
+      Position(6, 6, 6);
+      Size(5, 5, 5);
+      StepHeight(1);
+      FirstStepOffset(0);
+      SurfaceMaterials(2, 2, 2, 2, 2, 2);
+      SurfaceTextureMode(2, 2, 2, 2, 2, 2);
+      SurfaceTextureRotation(0, 0, 0, 0, 0, 0);
+      SurfaceTextureScale(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+   }
+}
+
+
+BlocksMaterials(2)
+{
+   Material()
+   {
+      Name("");
+      DiffuseMap("");
+      NormalMap("");
+      DetailMap("");
+      EnvMap("");
+      DetailTiling(0, 0);
+      TileNormalMap(0);
+      SpecularLighting(0);
+      SpecularColor(0.5, 0.5, 0.5);
+   }
+   Material()
+   {
+      Name("");
+      DiffuseMap("");
+      NormalMap("");
+      DetailMap("");
+      EnvMap("");
+      DetailTiling(0, 0);
+      TileNormalMap(0);
+      SpecularLighting(0);
+      SpecularColor(0.5, 0.5, 0.5);
+   }
+}
+

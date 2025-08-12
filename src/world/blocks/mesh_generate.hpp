@@ -11,6 +11,12 @@ namespace we::world {
 auto generate_mesh(const block_custom_mesh_description_stairway& stairway) noexcept
    -> block_custom_mesh;
 
+/// @brief Generates the mesh for a floating stairway.
+/// @param stairway The stairway.
+/// @return The resulting block_custom_mesh.
+auto generate_mesh(const block_custom_mesh_description_stairway_floating& stairway) noexcept
+   -> block_custom_mesh;
+
 /// @brief Generates the mesh for a ring.
 /// @param ring The ring.
 /// @return The resulting block_custom_mesh.

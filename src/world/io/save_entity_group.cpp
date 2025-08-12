@@ -633,6 +633,9 @@ void save_entity_group_impl(File& file, const entity_group& group)
          case block_custom_mesh_type::stairway: {
             file.write_ln("   Stairway()");
          } break;
+         case block_custom_mesh_type::stairway_floating: {
+            file.write_ln("   StairwayFloating()");
+         } break;
          case block_custom_mesh_type::ring: {
             file.write_ln("   Ring()");
          } break;
@@ -664,6 +667,15 @@ void save_entity_group_impl(File& file, const entity_group& group)
          case block_custom_mesh_type::stairway: {
             const block_custom_mesh_description_stairway& stairway =
                block.mesh_description.stairway;
+
+            file.write_ln("      Size({}, {}, {});", stairway.size.x,
+                          stairway.size.y, stairway.size.z);
+            file.write_ln("      StepHeight({});", stairway.step_height);
+            file.write_ln("      FirstStepOffset({});", stairway.first_step_offset);
+         } break;
+         case block_custom_mesh_type::stairway_floating: {
+            const block_custom_mesh_description_stairway_floating& stairway =
+               block.mesh_description.stairway_floating;
 
             file.write_ln("      Size({}, {}, {});", stairway.size.x,
                           stairway.size.y, stairway.size.z);

@@ -12,6 +12,14 @@ struct block_custom_mesh_description_stairway {
    bool operator==(const block_custom_mesh_description_stairway&) const noexcept = default;
 };
 
+struct block_custom_mesh_description_stairway_floating {
+   float3 size = {1.0f, 1.0f, 1.0f};
+   float step_height = 0.125f;
+   float first_step_offset = 0.0f;
+
+   bool operator==(const block_custom_mesh_description_stairway_floating&) const noexcept = default;
+};
+
 struct block_custom_mesh_description_ring {
    float inner_radius = 16.0f;
    float outer_radius = 4.0f;
@@ -78,6 +86,7 @@ struct block_custom_mesh_description_arch {
 
 enum class block_custom_mesh_type {
    stairway,
+   stairway_floating,
    ring,
    beveled_box,
    curve,
@@ -92,6 +101,9 @@ struct block_custom_mesh_description {
    block_custom_mesh_description(const block_custom_mesh_description& other) noexcept;
 
    block_custom_mesh_description(const block_custom_mesh_description_stairway& stairway) noexcept;
+
+   block_custom_mesh_description(
+      const block_custom_mesh_description_stairway_floating& stairway) noexcept;
 
    block_custom_mesh_description(const block_custom_mesh_description_ring& ring) noexcept;
 
@@ -112,6 +124,7 @@ struct block_custom_mesh_description {
 
    union {
       block_custom_mesh_description_stairway stairway = {};
+      block_custom_mesh_description_stairway_floating stairway_floating;
       block_custom_mesh_description_ring ring;
       block_custom_mesh_description_beveled_box beveled_box;
       block_custom_mesh_description_curve curve;

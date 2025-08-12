@@ -406,6 +406,12 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _block_editor_context = {.activate_tool = block_edit_tool::draw};
          }
 
+         if (ImGui::MenuItem("Draw Stairs (Floating)")) {
+            _block_editor_open = true;
+            _block_editor_config.draw_type = draw_block_type::stairway_floating;
+            _block_editor_context = {.activate_tool = block_edit_tool::draw};
+         }
+
          if (ImGui::MenuItem("Draw Cone")) {
             _block_editor_open = true;
             _block_editor_config.draw_type = draw_block_type::cone;

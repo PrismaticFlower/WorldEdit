@@ -193,6 +193,9 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
       case block_custom_mesh_type::stairway: {
          out.write_ln("   Stairway()");
       } break;
+      case block_custom_mesh_type::stairway_floating: {
+         out.write_ln("   StairwayFloating()");
+      } break;
       case block_custom_mesh_type::ring: {
          out.write_ln("   Ring()");
       } break;
@@ -223,6 +226,15 @@ void save_custom(io::output_file& out, const blocks_custom& blocks) noexcept
       case block_custom_mesh_type::stairway: {
          const world::block_custom_mesh_description_stairway& stairway =
             block.mesh_description.stairway;
+
+         out.write_ln("      Size({}, {}, {});", stairway.size.x,
+                      stairway.size.y, stairway.size.z);
+         out.write_ln("      StepHeight({});", stairway.step_height);
+         out.write_ln("      FirstStepOffset({});", stairway.first_step_offset);
+      } break;
+      case block_custom_mesh_type::stairway_floating: {
+         const world::block_custom_mesh_description_stairway_floating& stairway =
+            block.mesh_description.stairway_floating;
 
          out.write_ln("      Size({}, {}, {});", stairway.size.x,
                       stairway.size.y, stairway.size.z);

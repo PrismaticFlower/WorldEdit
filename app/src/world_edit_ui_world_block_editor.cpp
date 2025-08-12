@@ -87,19 +87,20 @@ auto block_type_name(draw_block_type type) noexcept -> const char*
 
    // clang-format off
    switch (type) {
-   case draw_block_type::box:             return "Box";
-   case draw_block_type::ramp:            return "Ramp";
-   case draw_block_type::quad:            return "Quadrilateral";
-   case draw_block_type::cylinder:        return "Cylinder";
-   case draw_block_type::stairway:        return "Stairs";
-   case draw_block_type::cone:            return "Cone";
-   case draw_block_type::hemisphere:      return "Hemisphere";
-   case draw_block_type::pyramid:         return "Pyramid";
-   case draw_block_type::ring:            return "Ring";
-   case draw_block_type::beveled_box:     return "Beveled Box";
-   case draw_block_type::curve:           return "Curve";
-   case draw_block_type::arch:            return "Arch";
-   case draw_block_type::terrain_cut_box: return "Terrain Cutter (Box)";
+   case draw_block_type::box:               return "Box";
+   case draw_block_type::ramp:              return "Ramp";
+   case draw_block_type::quad:              return "Quadrilateral";
+   case draw_block_type::cylinder:          return "Cylinder";
+   case draw_block_type::stairway:          return "Stairs";
+   case draw_block_type::stairway_floating: return "Stairs (Floating)";
+   case draw_block_type::cone:              return "Cone";
+   case draw_block_type::hemisphere:        return "Hemisphere";
+   case draw_block_type::pyramid:           return "Pyramid";
+   case draw_block_type::ring:              return "Ring";
+   case draw_block_type::beveled_box:       return "Beveled Box";
+   case draw_block_type::curve:             return "Curve";
+   case draw_block_type::arch:              return "Arch";
+   case draw_block_type::terrain_cut_box:   return "Terrain Cutter (Box)";
    }
    // clang-format on
 
@@ -133,6 +134,7 @@ void world_edit::ui_show_block_editor() noexcept
                  draw_block_type::quad,
                  draw_block_type::cylinder,
                  draw_block_type::stairway,
+                 draw_block_type::stairway_floating,
                  draw_block_type::cone,
                  draw_block_type::hemisphere,
                  draw_block_type::pyramid,
@@ -172,7 +174,8 @@ void world_edit::ui_show_block_editor() noexcept
             _block_editor_config.quad_split = draw_block_quad_split::shortest;
          }
       }
-      else if (_block_editor_config.draw_type == draw_block_type::stairway) {
+      else if (_block_editor_config.draw_type == draw_block_type::stairway or
+               _block_editor_config.draw_type == draw_block_type::stairway_floating) {
          ImGui::DragFloat("Step Height", &_block_editor_config.step_height,
                           0.125f * 0.25f, 0.125f, 1.0f, "%.3f",
                           ImGuiSliderFlags_NoRoundToFormat);
@@ -697,6 +700,11 @@ void world_edit::ui_show_block_editor() noexcept
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
       }
 
+      if (ImGui::MenuItem("Draw Stairs (Floating)")) {
+         _block_editor_config.draw_type = draw_block_type::stairway_floating;
+         _block_editor_context = {.activate_tool = block_edit_tool::draw};
+      }
+
       if (ImGui::MenuItem("Draw Cone")) {
          _block_editor_config.draw_type = draw_block_type::cone;
          _block_editor_context = {.activate_tool = block_edit_tool::draw};
@@ -1071,6 +1079,11 @@ void world_edit::ui_show_block_editor() noexcept
             case draw_block_type::stairway: {
                _block_editor_context.draw_block.stairway.start = cursor_positionWS;
                _block_editor_context.draw_block.step = draw_block_step::stairway_width;
+            } break;
+            case draw_block_type::stairway_floating: {
+               _block_editor_context.draw_block.stairway.start = cursor_positionWS;
+               _block_editor_context.draw_block.step =
+                  draw_block_step::stairway_floating_width;
             } break;
             case draw_block_type::cone: {
                const uint8 material_index = _block_editor_config.paint_material_index;
@@ -1937,6 +1950,219 @@ void world_edit::ui_show_block_editor() noexcept
             _edit_stack_world.apply(edits::make_set_block_custom_metrics(
                                        index, rotation, position,
                                        world::block_custom_mesh_description_stairway{
+                                          .size = size,
+                                          .step_height = _block_editor_config.step_height,
+                                          .first_step_offset =
+                                             _block_editor_config.first_step_offset,
+                                       }),
+                                    _edit_context, {.transparent = true});
+         }
+
+         _tool_visualizers.add_line_overlay(position,
+                                            position +
+                                               float3{0.0f, stairway_height * 0.5f, 0.0f},
+                                            line_color);
+
+         if (click) {
+            _block_editor_context.draw_block = {};
+
+            _edit_stack_world.close_last();
+         }
+      } break;
+      case draw_block_step::stairway_floating_width: {
+         _tool_visualizers
+            .add_line_overlay(_block_editor_context.draw_block.stairway.start,
+                              {cursor_positionWS.x,
+                               _block_editor_context.draw_block.stairway.start.y,
+                               cursor_positionWS.z},
+                              line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            _block_editor_context.draw_block.stairway.width_x =
+               cursor_positionWS.x;
+            _block_editor_context.draw_block.stairway.width_z =
+               cursor_positionWS.z;
+            _block_editor_context.draw_block.step =
+               draw_block_step::stairway_floating_length;
+         }
+
+      } break;
+      case draw_block_step::stairway_floating_length: {
+         const float3 draw_block_start =
+            _block_editor_context.draw_block.stairway.start;
+         const float3 draw_block_width =
+            {_block_editor_context.draw_block.stairway.width_x, draw_block_start.y,
+             _block_editor_context.draw_block.stairway.width_z};
+
+         const float3 cursor_direction =
+            normalize(cursor_positionWS - draw_block_width);
+
+         const float3 extend_normal =
+            normalize(float3{draw_block_width.z, 0.0f, draw_block_width.x} -
+                      float3{draw_block_start.z, 0.0f, draw_block_start.x}) *
+            float3{-1.0, 0.0f, 1.0};
+
+         const float normal_sign =
+            dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
+
+         float rotation_angle = std::atan2(draw_block_start.x - draw_block_width.x,
+                                           draw_block_start.z - draw_block_width.z);
+
+         rotation_angle += std::numbers::pi_v<float> * 0.5f;
+
+         if (normal_sign > 0.0f) rotation_angle += std::numbers::pi_v<float>;
+
+         const quaternion rotation =
+            make_quat_from_euler({0.0f, rotation_angle, 0.0f});
+         const quaternion inv_rotation = conjugate(rotation);
+
+         const float cursor_distance =
+            std::fabs((inv_rotation * draw_block_width).z -
+                      (inv_rotation * cursor_positionWS).z);
+
+         const float3 draw_block_length =
+            draw_block_width + extend_normal * cursor_distance * normal_sign;
+
+         _tool_visualizers.add_line_overlay(draw_block_start, draw_block_width,
+                                            line_color);
+         _tool_visualizers.add_line_overlay(draw_block_width, draw_block_length,
+                                            line_color);
+         _tool_visualizers.add_mini_grid(xz_grid_desc);
+
+         if (click) {
+            const world::block_custom_id id = _world.blocks.next_id.custom.aquire();
+
+            _block_editor_context.draw_block.height_plane = std::nullopt;
+            _block_editor_context.draw_block.stairway.length_x =
+               draw_block_length.x;
+            _block_editor_context.draw_block.stairway.length_z =
+               draw_block_length.z;
+            _block_editor_context.draw_block.stairway.rotation = rotation;
+            _block_editor_context.draw_block.step =
+               draw_block_step::stairway_floating_height;
+            _block_editor_context.draw_block.index =
+               static_cast<uint32>(_world.blocks.custom.size());
+            _block_editor_context.draw_block.block_id = id;
+
+            const std::array<float3, 2> cornersWS{draw_block_start, draw_block_length};
+            std::array<float3, 2> cornersLS{};
+
+            for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+               cornersLS[i] = inv_rotation * cornersWS[i];
+            }
+
+            const float3 block_max = max(cornersLS[0], cornersLS[1]);
+            const float3 block_min = min(cornersLS[0], cornersLS[1]);
+
+            const float3 size = float3{std::fabs(block_max.x - block_min.x), 0.0f,
+                                       std::fabs(block_max.z - block_min.z)} /
+                                2.0f;
+
+            const float3 position = (draw_block_start + draw_block_length) / 2.0f;
+
+            const uint8 material_index = _block_editor_config.paint_material_index;
+
+            if (_world.blocks.custom.size() < world::max_blocks) {
+               _edit_stack_world.apply(
+                  edits::make_add_block(
+                     world::block_description_custom{
+                        .rotation = rotation,
+                        .position = position,
+                        .mesh_description =
+                           world::block_custom_mesh_description_stairway_floating{
+                              .size = size,
+                              .step_height = _block_editor_config.step_height,
+                              .first_step_offset = _block_editor_config.first_step_offset,
+                           },
+                        .surface_materials = {material_index, material_index, material_index,
+                                              material_index, material_index},
+                     },
+                     _block_editor_config.new_block_layer, id),
+                  _edit_context);
+            }
+            else {
+               MessageBoxA(_window,
+                           fmt::format("Max Custom Blocks ({}) Reached", world::max_blocks)
+                              .c_str(),
+                           "Limit Reached", MB_OK);
+
+               _block_editor_context.tool = block_edit_tool::none;
+            }
+         }
+      } break;
+      case draw_block_step::stairway_floating_height: {
+         const float3 draw_block_start =
+            _block_editor_context.draw_block.stairway.start;
+         const float3 draw_block_width =
+            {_block_editor_context.draw_block.stairway.width_x, draw_block_start.y,
+             _block_editor_context.draw_block.stairway.width_z};
+         const float3 draw_block_length =
+            {_block_editor_context.draw_block.stairway.length_x,
+             draw_block_start.y, _block_editor_context.draw_block.stairway.length_z};
+
+         quaternion rotation = _block_editor_context.draw_block.stairway.rotation;
+         quaternion inv_rotation = conjugate(rotation);
+
+         const std::array<float3, 2> cornersWS{draw_block_start, draw_block_length};
+         std::array<float3, 2> cornersLS{};
+
+         for (std::size_t i = 0; i < cornersLS.size(); ++i) {
+            cornersLS[i] = inv_rotation * cornersWS[i];
+         }
+
+         const float3 block_max = max(cornersLS[0], cornersLS[1]);
+         const float3 block_min = min(cornersLS[0], cornersLS[1]);
+
+         const float4 height_plane =
+            make_plane_from_point(draw_block_width,
+                                  normalize(draw_block_width - _camera.position()));
+
+         graphics::camera_ray ray =
+            make_camera_ray(_camera,
+                            {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                            {ImGui::GetMainViewport()->Size.x,
+                             ImGui::GetMainViewport()->Size.y});
+
+         float3 cursor_position = cursor_positionWS;
+
+         if (float hit = 0.0f;
+             intersect_aabb(inv_rotation * ray.origin,
+                            1.0f / (inv_rotation * ray.direction),
+                            {.min = {block_min.x, -FLT_MAX, block_min.z},
+                             .max = {block_max.x, FLT_MAX, block_max.z}},
+                            FLT_MAX, hit) and
+             hit < distance(_camera.position(), cursor_positionWS)) {
+            cursor_position = ray.origin + hit * ray.direction;
+         }
+
+         const float unaligned_stairway_height =
+            cursor_position.y - draw_block_start.y;
+         const float stairway_height =
+            align
+               ? std::round(unaligned_stairway_height / alignment.y) * alignment.y
+               : unaligned_stairway_height;
+
+         float3 position = {(draw_block_start.x + draw_block_length.x) / 2.0f,
+                            draw_block_start.y,
+                            (draw_block_start.z + draw_block_length.z) / 2.0f};
+         const float3 size = abs(float3{block_max.x - block_min.x, stairway_height,
+                                        block_max.z - block_min.z});
+
+         if (stairway_height < 0.0f) {
+            position.y += stairway_height;
+         }
+         else {
+            rotation = normalize(rotation * quaternion{0.0f, 0.0f, 1.0f, 0.0f});
+            inv_rotation = conjugate(rotation);
+         }
+
+         if (const uint32 index = _block_editor_context.draw_block.index;
+             index < _world.blocks.custom.size() and
+             _world.blocks.custom.ids[index] == _block_editor_context.draw_block.block_id) {
+            _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                       index, rotation, position,
+                                       world::block_custom_mesh_description_stairway_floating{
                                           .size = size,
                                           .step_height = _block_editor_config.step_height,
                                           .first_step_offset =
@@ -3669,6 +3895,39 @@ void world_edit::ui_show_block_editor() noexcept
                   _edit_stack_world.apply(edits::make_set_block_custom_metrics(
                                              *selected_index, block.rotation, positionWS,
                                              world::block_custom_mesh_description_stairway{
+                                                .size = size,
+                                                .step_height = stairway.step_height,
+                                                .first_step_offset = stairway.first_step_offset,
+                                             }),
+                                          _edit_context);
+               }
+            } break;
+            case world::block_custom_mesh_type::stairway_floating: {
+               const world::block_custom_mesh_description_stairway_floating& stairway =
+                  block.mesh_description.stairway_floating;
+
+               float3 size = stairway.size;
+               size.y += stairway.first_step_offset;
+               size /= 2.0f;
+
+               float3 positionWS =
+                  block.rotation * (conjugate(block.rotation) * block.position +
+                                    float3{0.0f, size.y, 0.0f});
+
+               if (_gizmos.gizmo_size({.name =
+                                          "Resize Block (Floating Stairway)",
+                                       .instance = *selected_index,
+                                       .alignment = _editor_grid_size,
+                                       .gizmo_rotation = block.rotation},
+                                      positionWS, size)) {
+                  positionWS = block.rotation * (conjugate(block.rotation) * positionWS -
+                                                 float3{0.0f, size.y, 0.0f});
+                  size *= 2.0f;
+                  size.y -= stairway.first_step_offset;
+
+                  _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                             *selected_index, block.rotation, positionWS,
+                                             world::block_custom_mesh_description_stairway_floating{
                                                 .size = size,
                                                 .step_height = stairway.step_height,
                                                 .first_step_offset = stairway.first_step_offset,

@@ -20,6 +20,11 @@ static H AbslHashValue(H h, const block_custom_mesh_description& desc)
       return H::combine(std::move(h), desc.type, desc.stairway.size.x,
                         desc.stairway.size.y, desc.stairway.size.z,
                         desc.stairway.step_height, desc.stairway.first_step_offset);
+   case block_custom_mesh_type::stairway_floating:
+      return H::combine(std::move(h), desc.type, desc.stairway_floating.size.x,
+                        desc.stairway_floating.size.y,
+                        desc.stairway_floating.size.z, desc.stairway_floating.step_height,
+                        desc.stairway_floating.first_step_offset);
    case block_custom_mesh_type::ring:
       return H::combine(std::move(h), desc.type, desc.ring.inner_radius,
                         desc.ring.outer_radius, desc.ring.height, desc.ring.segments,
@@ -62,6 +67,8 @@ auto generate_mesh(const block_custom_mesh_description& mesh) noexcept -> block_
    switch (mesh.type) {
    case block_custom_mesh_type::stairway:
       return generate_mesh(mesh.stairway);
+   case block_custom_mesh_type::stairway_floating:
+      return generate_mesh(mesh.stairway_floating);
    case block_custom_mesh_type::ring:
       return generate_mesh(mesh.ring);
    case block_custom_mesh_type::beveled_box:

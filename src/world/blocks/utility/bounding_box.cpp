@@ -28,6 +28,15 @@ auto get_bounding_box_local_space(const block_custom_mesh_description& mesh) noe
               .max = {half_width, mesh.stairway.size.y + mesh.stairway.first_step_offset,
                       half_length}};
    }
+   case block_custom_mesh_type::stairway_floating: {
+      const float half_width = mesh.stairway_floating.size.x / 2.0f;
+      const float half_length = mesh.stairway_floating.size.z / 2.0f;
+
+      return {.min = {-half_width, 0.0f, -half_length},
+              .max = {half_width,
+                      mesh.stairway_floating.size.y + mesh.stairway_floating.first_step_offset,
+                      half_length}};
+   }
    case block_custom_mesh_type::ring: {
       const float radius = mesh.ring.inner_radius + mesh.ring.outer_radius * 2.0f;
 
