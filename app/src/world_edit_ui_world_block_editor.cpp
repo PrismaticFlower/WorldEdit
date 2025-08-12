@@ -154,133 +154,6 @@ void world_edit::ui_show_block_editor() noexcept
          ImGui::EndCombo();
       }
 
-      if (_block_editor_config.draw_type == draw_block_type::quad) {
-         const ImVec2 cursor_pos = ImGui::GetCursorPos();
-
-         ImGui::LabelText("Triangulation", "");
-
-         ImGui::SetCursorPos(cursor_pos);
-
-         if (ImGui::RadioButton("Longest Diagonal", _block_editor_config.quad_split ==
-                                                       draw_block_quad_split::longest)) {
-            _block_editor_config.quad_split = draw_block_quad_split::longest;
-         }
-
-         ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-
-         if (ImGui::RadioButton("Shortest Diagonal",
-                                _block_editor_config.quad_split ==
-                                   draw_block_quad_split::shortest)) {
-            _block_editor_config.quad_split = draw_block_quad_split::shortest;
-         }
-      }
-      else if (_block_editor_config.draw_type == draw_block_type::stairway or
-               _block_editor_config.draw_type == draw_block_type::stairway_floating) {
-         ImGui::DragFloat("Step Height", &_block_editor_config.step_height,
-                          0.125f * 0.25f, 0.125f, 1.0f, "%.3f",
-                          ImGuiSliderFlags_NoRoundToFormat);
-
-         _block_editor_config.step_height =
-            std::max(_block_editor_config.step_height, 0.015625f);
-
-         ImGui::DragFloat("First Step Offset",
-                          &_block_editor_config.first_step_offset, 0.125f);
-      }
-      else if (_block_editor_config.draw_type == draw_block_type::ring) {
-         const uint16 min_segments = 3;
-         const uint16 max_segments = 256;
-
-         ImGui::SliderScalar("Segments", ImGuiDataType_U16,
-                             &_block_editor_config.ring.segments, &min_segments,
-                             &max_segments);
-         ImGui::Checkbox("Flat Shading", &_block_editor_config.ring.flat_shading);
-         ImGui::DragFloat("Texture Loops", &_block_editor_config.ring.texture_loops);
-
-         ImGui::SetItemTooltip(
-            "How many times the texture wraps around the ring in the "
-            "Unwrapped Texture Mode.");
-
-         _block_editor_config.ring.segments =
-            std::max(_block_editor_config.ring.segments, min_segments);
-      }
-      else if (_block_editor_config.draw_type == draw_block_type::beveled_box) {
-         ImGui::DragFloat("Bevel Amount", &_block_editor_config.beveled_box.amount,
-                          0.0625f, 0.0f, 1e10f, "%.4f", ImGuiSliderFlags_AlwaysClamp);
-         ImGui::Checkbox("Bevel Top", &_block_editor_config.beveled_box.bevel_top);
-         ImGui::Checkbox("Bevel Sides", &_block_editor_config.beveled_box.bevel_sides);
-         ImGui::Checkbox("Bevel Bottom", &_block_editor_config.beveled_box.bevel_bottom);
-      }
-      else if (_block_editor_config.draw_type == draw_block_type::curve) {
-         ImGui::DragFloat("Width", &_block_editor_config.curve.width, 1.0f,
-                          0.0f, 1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-         ImGui::DragFloat("Height", &_block_editor_config.curve.height, 1.0f,
-                          0.0f, 1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-
-         const uint16 min_segments = 3;
-         const uint16 max_segments = 256;
-
-         ImGui::SliderScalar("Segments", ImGuiDataType_U16,
-                             &_block_editor_config.curve.segments,
-                             &min_segments, &max_segments);
-
-         ImGui::DragFloat("Texture Loops", &_block_editor_config.curve.texture_loops);
-
-         _block_editor_config.curve.segments =
-            std::max(_block_editor_config.curve.segments, min_segments);
-      }
-      else if (_block_editor_config.draw_type == draw_block_type::cylinder) {
-         const uint16 min_segments = 3;
-         const uint16 max_segments = 256;
-
-         ImGui::SliderScalar("Segments", ImGuiDataType_U16,
-                             &_block_editor_config.cylinder.segments,
-                             &min_segments, &max_segments);
-         ImGui::Checkbox("Flat Shading", &_block_editor_config.cylinder.flat_shading);
-         ImGui::DragFloat("Texture Loops", &_block_editor_config.cylinder.texture_loops);
-
-         ImGui::SetItemTooltip(
-            "How many times the texture wraps around the ring in the "
-            "Unwrapped Texture Mode.");
-
-         _block_editor_config.cylinder.segments =
-            std::max(_block_editor_config.cylinder.segments, min_segments);
-      }
-      else if (_block_editor_config.draw_type == draw_block_type::cone) {
-         const uint16 min_segments = 3;
-         const uint16 max_segments = 256;
-
-         ImGui::SliderScalar("Segments", ImGuiDataType_U16,
-                             &_block_editor_config.cone.segments, &min_segments,
-                             &max_segments);
-         ImGui::Checkbox("Flat Shading", &_block_editor_config.cone.flat_shading);
-
-         ImGui::SetItemTooltip(
-            "How many times the texture wraps around the ring in the "
-            "Unwrapped Texture Mode.");
-
-         _block_editor_config.cone.segments =
-            std::max(_block_editor_config.cone.segments, min_segments);
-      }
-      else if (_block_editor_config.draw_type == draw_block_type::arch) {
-         const uint16 min_segments = 1;
-         const uint16 max_segments = 64;
-
-         ImGui::DragFloat("Crown Length", &_block_editor_config.arch.crown_length,
-                          0.5f, 0.0f, 1e10f);
-         ImGui::DragFloat("Crown Height", &_block_editor_config.arch.crown_height,
-                          0.125f, 0.0f, 1e10f);
-         ImGui::DragFloat("Curve Height", &_block_editor_config.arch.curve_height,
-                          0.5f, 0.0f, 1e10f);
-         ImGui::DragFloat("Span Length", &_block_editor_config.arch.span_length,
-                          0.5f, 0.0f, 1e10f);
-         ImGui::SliderScalar("Segments", ImGuiDataType_U16,
-                             &_block_editor_config.arch.segments, &min_segments,
-                             &max_segments);
-
-         _block_editor_config.arch.segments =
-            std::max(_block_editor_config.arch.segments, min_segments);
-      }
-
       ImGui::Checkbox("Enable Alignment", &_block_editor_config.enable_alignment);
       ImGui::SameLine();
       ImGui::Checkbox("Enable Snapping", &_block_editor_config.enable_snapping);
@@ -606,6 +479,8 @@ void world_edit::ui_show_block_editor() noexcept
       ImGui::EndChild();
    }
 
+   const float blocks_editor_width = ImGui::GetWindowWidth();
+
    ImGui::End();
 
    if (_hotkeys_view_show) {
@@ -792,6 +667,208 @@ void world_edit::ui_show_block_editor() noexcept
    }
 
    if (_block_editor_context.tool == block_edit_tool::draw) {
+      // Parameters Window
+
+      const ImVec2 parameters_window_pos = {tool_window_start_x * _display_scale +
+                                               blocks_editor_width +
+                                               ImGui::GetStyle().ItemSpacing.x,
+                                            32.0f * _display_scale};
+
+      switch (_block_editor_config.draw_type) {
+      case draw_block_type::box:
+      case draw_block_type::ramp:
+         break;
+      case draw_block_type::quad: {
+         ImGui::SetNextWindowPos(parameters_window_pos, ImGuiCond_Once);
+
+         if (ImGui::Begin("Quadrilateral Parameters###draw_block_paramaters",
+                          nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::SeparatorText("Triangulation");
+
+            if (ImGui::RadioButton("Longest Diagonal",
+                                   _block_editor_config.quad_split ==
+                                      draw_block_quad_split::longest)) {
+               _block_editor_config.quad_split = draw_block_quad_split::longest;
+            }
+
+            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+            if (ImGui::RadioButton("Shortest Diagonal",
+                                   _block_editor_config.quad_split ==
+                                      draw_block_quad_split::shortest)) {
+               _block_editor_config.quad_split = draw_block_quad_split::shortest;
+            }
+         }
+
+         ImGui::End();
+      } break;
+      case draw_block_type::cylinder: {
+         ImGui::SetNextWindowPos(parameters_window_pos, ImGuiCond_Once);
+
+         if (ImGui::Begin("Cylinder Parameters###draw_block_paramaters",
+                          nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            const uint16 min_segments = 3;
+            const uint16 max_segments = 256;
+
+            ImGui::SliderScalar("Segments", ImGuiDataType_U16,
+                                &_block_editor_config.cylinder.segments,
+                                &min_segments, &max_segments);
+            ImGui::Checkbox("Flat Shading", &_block_editor_config.cylinder.flat_shading);
+            ImGui::DragFloat("Texture Loops",
+                             &_block_editor_config.cylinder.texture_loops);
+
+            ImGui::SetItemTooltip(
+               "How many times the texture wraps around the cylinder in the "
+               "Unwrapped Texture Mode.");
+
+            _block_editor_config.cylinder.segments =
+               std::max(_block_editor_config.cylinder.segments, min_segments);
+         }
+
+         ImGui::End();
+      } break;
+      case draw_block_type::stairway:
+      case draw_block_type::stairway_floating: {
+         ImGui::SetNextWindowPos(parameters_window_pos, ImGuiCond_Once);
+
+         if (ImGui::Begin("Stairway Parameters###draw_block_paramaters",
+                          nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::DragFloat("Step Height", &_block_editor_config.step_height,
+                             0.125f * 0.25f, 0.125f, 1.0f, "%.3f",
+                             ImGuiSliderFlags_NoRoundToFormat);
+
+            _block_editor_config.step_height =
+               std::max(_block_editor_config.step_height, 0.015625f);
+
+            ImGui::DragFloat("First Step Offset",
+                             &_block_editor_config.first_step_offset, 0.125f);
+         }
+
+         ImGui::End();
+      } break;
+      case draw_block_type::cone: {
+         ImGui::SetNextWindowPos(parameters_window_pos, ImGuiCond_Once);
+
+         if (ImGui::Begin("Cone Parameters###draw_block_paramaters", nullptr,
+                          ImGuiWindowFlags_AlwaysAutoResize)) {
+            const uint16 min_segments = 3;
+            const uint16 max_segments = 256;
+
+            ImGui::SliderScalar("Segments", ImGuiDataType_U16,
+                                &_block_editor_config.cone.segments,
+                                &min_segments, &max_segments);
+            ImGui::Checkbox("Flat Shading", &_block_editor_config.cone.flat_shading);
+
+            ImGui::SetItemTooltip(
+               "How many times the texture wraps around the ring in the "
+               "Unwrapped Texture Mode.");
+
+            _block_editor_config.cone.segments =
+               std::max(_block_editor_config.cone.segments, min_segments);
+         }
+
+         ImGui::End();
+      } break;
+      case draw_block_type::hemisphere:
+      case draw_block_type::pyramid:
+         break;
+      case draw_block_type::ring: {
+         ImGui::SetNextWindowPos(parameters_window_pos, ImGuiCond_Once);
+
+         if (ImGui::Begin("Beveled Box Parameters###draw_block_paramaters",
+                          nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            const uint16 min_segments = 3;
+            const uint16 max_segments = 256;
+
+            ImGui::SliderScalar("Segments", ImGuiDataType_U16,
+                                &_block_editor_config.ring.segments,
+                                &min_segments, &max_segments);
+            ImGui::Checkbox("Flat Shading", &_block_editor_config.ring.flat_shading);
+            ImGui::DragFloat("Texture Loops", &_block_editor_config.ring.texture_loops);
+
+            ImGui::SetItemTooltip(
+               "How many times the texture wraps around the ring in the "
+               "Unwrapped Texture Mode.");
+
+            _block_editor_config.ring.segments =
+               std::max(_block_editor_config.ring.segments, min_segments);
+         }
+
+         ImGui::End();
+      } break;
+      case draw_block_type::beveled_box: {
+         ImGui::SetNextWindowPos(parameters_window_pos, ImGuiCond_Once);
+
+         if (ImGui::Begin("Ring Parameters###draw_block_paramaters", nullptr,
+                          ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::DragFloat("Bevel Amount",
+                             &_block_editor_config.beveled_box.amount, 0.0625f,
+                             0.0f, 1e10f, "%.4f", ImGuiSliderFlags_AlwaysClamp);
+            ImGui::Checkbox("Bevel Top", &_block_editor_config.beveled_box.bevel_top);
+            ImGui::Checkbox("Bevel Sides", &_block_editor_config.beveled_box.bevel_sides);
+            ImGui::Checkbox("Bevel Bottom",
+                            &_block_editor_config.beveled_box.bevel_bottom);
+         }
+
+         ImGui::End();
+      } break;
+      case draw_block_type::curve: {
+         ImGui::SetNextWindowPos(parameters_window_pos, ImGuiCond_Once);
+
+         if (ImGui::Begin("Curve Parameters###draw_block_paramaters", nullptr,
+                          ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::DragFloat("Width", &_block_editor_config.curve.width, 1.0f,
+                             0.0f, 1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+            ImGui::DragFloat("Height", &_block_editor_config.curve.height, 1.0f,
+                             0.0f, 1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+
+            const uint16 min_segments = 3;
+            const uint16 max_segments = 256;
+
+            ImGui::SliderScalar("Segments", ImGuiDataType_U16,
+                                &_block_editor_config.curve.segments,
+                                &min_segments, &max_segments);
+
+            ImGui::DragFloat("Texture Loops", &_block_editor_config.curve.texture_loops);
+
+            _block_editor_config.curve.segments =
+               std::max(_block_editor_config.curve.segments, min_segments);
+         }
+
+         ImGui::End();
+      } break;
+      case draw_block_type::arch: {
+         ImGui::SetNextWindowPos(parameters_window_pos, ImGuiCond_Once);
+
+         if (ImGui::Begin("Arch Parameters###draw_block_paramaters", nullptr,
+                          ImGuiWindowFlags_AlwaysAutoResize)) {
+            const uint16 min_segments = 1;
+            const uint16 max_segments = 64;
+
+            ImGui::DragFloat("Crown Length", &_block_editor_config.arch.crown_length,
+                             0.5f, 0.0f, 1e10f);
+            ImGui::DragFloat("Crown Height", &_block_editor_config.arch.crown_height,
+                             0.125f, 0.0f, 1e10f);
+            ImGui::DragFloat("Curve Height", &_block_editor_config.arch.curve_height,
+                             0.5f, 0.0f, 1e10f);
+            ImGui::DragFloat("Span Length", &_block_editor_config.arch.span_length,
+                             0.5f, 0.0f, 1e10f);
+            ImGui::SliderScalar("Segments", ImGuiDataType_U16,
+                                &_block_editor_config.arch.segments,
+                                &min_segments, &max_segments);
+
+            _block_editor_config.arch.segments =
+               std::max(_block_editor_config.arch.segments, min_segments);
+         }
+
+         ImGui::End();
+      } break;
+      case draw_block_type::terrain_cut_box:
+         break;
+      }
+
+      // Cursor Input, Snapping and Alignment
+
       const bool click = std::exchange(_block_editor_context.tool_click, false);
       const bool align = _block_editor_config.enable_alignment;
       const bool snap = _block_editor_config.enable_snapping;
@@ -995,6 +1072,14 @@ void world_edit::ui_show_block_editor() noexcept
          .divisions = 3.0f,
          .color = float3{1.0f, 1.0f, 1.0f},
       });
+
+      // Main Draw Block Switch
+      //
+      // When the cursor is clicked in the start step the step is changed to the
+      // first step of the currently set draw type.
+      //
+      // When the cursor is clicked in these states they move onto the next state for their
+      // shape. The final step clears the draw block context, putting the step back to start.
 
       switch (_block_editor_context.draw_block.step) {
       case draw_block_step::start: {
