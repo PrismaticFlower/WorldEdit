@@ -989,12 +989,12 @@ void world_edit::ui_show_block_editor() noexcept
       const uint32 line_color =
          utility::pack_srgb_bgra({_settings.graphics.creation_color, 1.0f});
 
-      const world::tool_visualizers_mini_grid xz_grid_desc = {
+      _tool_visualizers.add_mini_grid({
          .positionWS = cursor_positionWS,
          .size = alignment.x,
          .divisions = 3.0f,
          .color = float3{1.0f, 1.0f, 1.0f},
-      };
+      });
 
       switch (_block_editor_context.draw_block.step) {
       case draw_block_step::start: {
@@ -1015,8 +1015,6 @@ void world_edit::ui_show_block_editor() noexcept
                                           float3{0.0f, 0.0f, alignment.z},
                                        line_color);
          }
-
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             _block_editor_context.draw_block.height_plane = cursor_positionWS.y;
@@ -1199,7 +1197,6 @@ void world_edit::ui_show_block_editor() noexcept
                                _block_editor_context.draw_block.box.start.y,
                                cursor_positionWS.z},
                               line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             _block_editor_context.draw_block.box.depth_x = cursor_positionWS.x;
@@ -1247,7 +1244,6 @@ void world_edit::ui_show_block_editor() noexcept
                                             line_color);
          _tool_visualizers.add_line_overlay(draw_block_depth, draw_block_width,
                                             line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             const world::block_box_id id = _world.blocks.next_id.boxes.aquire();
@@ -1386,7 +1382,6 @@ void world_edit::ui_show_block_editor() noexcept
                                _block_editor_context.draw_block.ramp.start.y,
                                cursor_positionWS.z},
                               line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             _block_editor_context.draw_block.ramp.width_x = cursor_positionWS.x;
@@ -1434,7 +1429,6 @@ void world_edit::ui_show_block_editor() noexcept
                                             line_color);
          _tool_visualizers.add_line_overlay(draw_block_width, draw_block_length,
                                             line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             const world::block_ramp_id id = _world.blocks.next_id.ramps.aquire();
@@ -1574,7 +1568,6 @@ void world_edit::ui_show_block_editor() noexcept
          _tool_visualizers
             .add_line_overlay(_block_editor_context.draw_block.quad.vertices[0],
                               cursor_positionWS, line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             _block_editor_context.draw_block.quad.vertices[1] = cursor_positionWS;
@@ -1590,7 +1583,6 @@ void world_edit::ui_show_block_editor() noexcept
          _tool_visualizers
             .add_line_overlay(_block_editor_context.draw_block.quad.vertices[1],
                               cursor_positionWS, line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             _block_editor_context.draw_block.quad.vertices[2] = cursor_positionWS;
@@ -1614,7 +1606,6 @@ void world_edit::ui_show_block_editor() noexcept
             .add_line_overlay(cursor_positionWS,
                               _block_editor_context.draw_block.quad.vertices[0],
                               line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             std::array<float3, 4> vertices = {
@@ -1674,7 +1665,6 @@ void world_edit::ui_show_block_editor() noexcept
                                              draw_block_start.y,
                                              cursor_positionWS.z},
                                             line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          const float radius =
             distance(float2{draw_block_start.x, draw_block_start.z},
@@ -1765,7 +1755,6 @@ void world_edit::ui_show_block_editor() noexcept
                                _block_editor_context.draw_block.stairway.start.y,
                                cursor_positionWS.z},
                               line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             _block_editor_context.draw_block.stairway.width_x =
@@ -1816,7 +1805,6 @@ void world_edit::ui_show_block_editor() noexcept
                                             line_color);
          _tool_visualizers.add_line_overlay(draw_block_width, draw_block_length,
                                             line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             const world::block_custom_id id = _world.blocks.next_id.custom.aquire();
@@ -1976,7 +1964,6 @@ void world_edit::ui_show_block_editor() noexcept
                                _block_editor_context.draw_block.stairway.start.y,
                                cursor_positionWS.z},
                               line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             _block_editor_context.draw_block.stairway.width_x =
@@ -2028,7 +2015,6 @@ void world_edit::ui_show_block_editor() noexcept
                                             line_color);
          _tool_visualizers.add_line_overlay(draw_block_width, draw_block_length,
                                             line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             const world::block_custom_id id = _world.blocks.next_id.custom.aquire();
@@ -2190,7 +2176,6 @@ void world_edit::ui_show_block_editor() noexcept
                                              draw_block_start.y,
                                              cursor_positionWS.z},
                                             line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          const float radius =
             distance(float2{draw_block_start.x, draw_block_start.z},
@@ -2284,7 +2269,6 @@ void world_edit::ui_show_block_editor() noexcept
                                              draw_block_start.y,
                                              cursor_positionWS.z},
                                             line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          const float radius =
             distance(float2{draw_block_start.x, draw_block_start.z},
@@ -2313,7 +2297,6 @@ void world_edit::ui_show_block_editor() noexcept
                                _block_editor_context.draw_block.pyramid.start.y,
                                cursor_positionWS.z},
                               line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             _block_editor_context.draw_block.pyramid.depth_x = cursor_positionWS.x;
@@ -2362,7 +2345,6 @@ void world_edit::ui_show_block_editor() noexcept
                                             line_color);
          _tool_visualizers.add_line_overlay(draw_block_depth, draw_block_width,
                                             line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             const world::block_pyramid_id id =
@@ -2500,8 +2482,6 @@ void world_edit::ui_show_block_editor() noexcept
       case draw_block_step::ring_inner_radius: {
          const float3 positionWS = _block_editor_context.draw_block.ring.start;
 
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
-
          const float inner_radius =
             distance(float2{positionWS.x, positionWS.z},
                      float2{cursor_positionWS.x, cursor_positionWS.z});
@@ -2625,8 +2605,6 @@ void world_edit::ui_show_block_editor() noexcept
             _tool_visualizers.add_triangle_additive(v0, v2, v3,
                                                     line_color & 0x20'ff'ff'ff);
          }
-
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
       } break;
       case draw_block_step::ring_height: {
          const float3 draw_block_start = _block_editor_context.draw_block.ring.start;
@@ -2694,7 +2672,6 @@ void world_edit::ui_show_block_editor() noexcept
              _block_editor_context.draw_block.beveled_box.start.y,
              cursor_positionWS.z},
             line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             _block_editor_context.draw_block.beveled_box.depth_x =
@@ -2745,7 +2722,6 @@ void world_edit::ui_show_block_editor() noexcept
                                             line_color);
          _tool_visualizers.add_line_overlay(draw_block_depth, draw_block_width,
                                             line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             const world::block_custom_id id = _world.blocks.next_id.custom.aquire();
@@ -2901,7 +2877,6 @@ void world_edit::ui_show_block_editor() noexcept
          _tool_visualizers
             .add_line_overlay(_block_editor_context.draw_block.curve.p0,
                               cursor_positionWS, line_color & 0x7f'ff'ff'ffu);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             _block_editor_context.draw_block.curve.p3 = cursor_positionWS;
@@ -2973,8 +2948,6 @@ void world_edit::ui_show_block_editor() noexcept
 
             _block_editor_context.draw_block = {};
          }
-
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          {
 
@@ -3126,7 +3099,6 @@ void world_edit::ui_show_block_editor() noexcept
                                _block_editor_context.draw_block.arch.start.y,
                                cursor_positionWS.z},
                               line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             _block_editor_context.draw_block.arch.length_x = cursor_positionWS.x;
@@ -3175,7 +3147,6 @@ void world_edit::ui_show_block_editor() noexcept
                                             line_color);
          _tool_visualizers.add_line_overlay(draw_block_length, draw_block_depth,
                                             line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             const world::block_custom_id id = _world.blocks.next_id.custom.aquire();
@@ -3342,7 +3313,6 @@ void world_edit::ui_show_block_editor() noexcept
              _block_editor_context.draw_block.terrain_cut_box.start.y,
              cursor_positionWS.z},
             line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             _block_editor_context.draw_block.terrain_cut_box.depth_x =
@@ -3395,7 +3365,6 @@ void world_edit::ui_show_block_editor() noexcept
                                             line_color);
          _tool_visualizers.add_line_overlay(draw_block_depth, draw_block_width,
                                             line_color);
-         _tool_visualizers.add_mini_grid(xz_grid_desc);
 
          if (click) {
             const world::block_terrain_cut_box_id id =
