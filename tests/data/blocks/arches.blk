@@ -1,0 +1,52 @@
+Custom(3)
+{
+   Arch()
+   {
+      Rotation(0, 1, 0, 0);
+      Position(8.5, 4.5, 2);
+      Size(4, 4, 4);
+      CrownLength(0.125);
+      CrownHeight(0.25);
+      CurveHeight(0.5);
+      SpanLength(2);
+      Segments(4);
+      SurfaceMaterials(0, 1, 0, 0, 0, 0);
+      SurfaceTextureMode(1, 1, 0, 0, 0, 0);
+      SurfaceTextureRotation(2, 2, 0, 0, 0, 0);
+      SurfaceTextureScale(0, 0, -1, -2, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(0, 0, 256, 256, 0, 0, 0, 0, 0, 0, 0, 0);
+      Layer(2);
+   }
+   Arch()
+   {
+      Rotation(0.707106, 0, 0.707106, 0);
+      Position(10, 16, 12);
+      Size(8, 8, 8);
+      CrownLength(0.25);
+      CrownHeight(0.5);
+      CurveHeight(1);
+      SpanLength(4);
+      Segments(8);
+      SurfaceMaterials(2, 2, 0, 0, 0, 0);
+      SurfaceTextureMode(2, 5, 0, 0, 0, 0);
+      SurfaceTextureRotation(1, 1, 0, 0, 0, 0);
+      SurfaceTextureScale(0, 0, -2, -2, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(1024, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+   }
+   Arch()
+   {
+      Rotation(0, 0, 0, 1);
+      Position(6, 6, 6);
+      Size(16, 16, 16);
+      CrownLength(0.5);
+      CrownHeight(1);
+      CurveHeight(2);
+      SpanLength(8);
+      Segments(16);
+      SurfaceMaterials(0, 0, 0, 0, 0, 0);
+      SurfaceTextureMode(0, 1, 0, 0, 0, 0);
+      SurfaceTextureRotation(0, 1, 0, 0, 0, 0);
+      SurfaceTextureScale(-7, -6, -5, -4, 0, 0, 0, 0, 0, 0, 0, 0);
+      SurfaceTextureOffset(0, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0);
+   }
+}
