@@ -1990,23 +1990,27 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   const uint16 min_segments = 3;
                   const uint16 max_segments = 256;
 
-                  bool edited = false;
+                  bool checkbox_clicked = false;
 
-                  edited |= ImGui::DragFloat("Inner Radius", &ring.inner_radius,
-                                             1.0f, 0.0f, 1e10f);
-                  edited |= ImGui::DragFloat("Outer Radius", &ring.outer_radius,
-                                             1.0f, 0.0f, 1e10f);
-                  edited |= ImGui::SliderScalar("Segments", ImGuiDataType_U16,
-                                                &ring.segments, &min_segments,
-                                                &max_segments);
-                  edited |= ImGui::Checkbox("Flat Shading", &ring.flat_shading);
-                  edited |= ImGui::DragFloat("Texture Loops", &ring.texture_loops);
+                  ImGui::BeginGroup();
+
+                  ImGui::DragFloat("Inner Radius", &ring.inner_radius, 1.0f,
+                                   0.0f, 1e10f);
+                  ImGui::DragFloat("Outer Radius", &ring.outer_radius, 1.0f,
+                                   0.0f, 1e10f);
+                  ImGui::SliderScalar("Segments", ImGuiDataType_U16, &ring.segments,
+                                      &min_segments, &max_segments);
+                  checkbox_clicked |=
+                     ImGui::Checkbox("Flat Shading", &ring.flat_shading);
+                  ImGui::DragFloat("Texture Loops", &ring.texture_loops);
+
+                  ImGui::EndGroup();
 
                   ImGui::SetItemTooltip(
                      "How many times the texture wraps around the ring in the "
                      "Unwrapped Texture Mode.");
 
-                  if (edited) {
+                  if (ImGui::IsItemEdited() or checkbox_clicked) {
                      ring.inner_radius = std::max(ring.inner_radius, 0.0f);
                      ring.outer_radius = std::max(ring.outer_radius, 0.0f);
                      ring.segments = std::max(ring.segments, min_segments);
@@ -2021,7 +2025,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                              _edit_context);
                   }
 
-                  if (ImGui::IsItemDeactivated()) {
+                  if (ImGui::IsItemDeactivated() or checkbox_clicked) {
                      _edit_stack_world.close_last();
                   }
                } break;
@@ -2029,17 +2033,21 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   world::block_custom_mesh_description_beveled_box box =
                      block.mesh_description.beveled_box;
 
-                  bool edited = false;
+                  bool checkbox_clicked = false;
 
-                  edited |=
-                     ImGui::DragFloat("Bevel Amount", &box.amount, 0.0625f, 0.0f,
-                                      std::min(std::min(box.size.x, box.size.y),
-                                               box.size.z));
-                  edited |= ImGui::Checkbox("Bevel Top", &box.bevel_top);
-                  edited |= ImGui::Checkbox("Bevel Sides", &box.bevel_sides);
-                  edited |= ImGui::Checkbox("Bevel Bottom", &box.bevel_bottom);
+                  ImGui::BeginGroup();
 
-                  if (edited) {
+                  ImGui::DragFloat("Bevel Amount", &box.amount, 0.0625f, 0.0f,
+                                   std::min(std::min(box.size.x, box.size.y),
+                                            box.size.z));
+                  checkbox_clicked |= ImGui::Checkbox("Bevel Top", &box.bevel_top);
+                  checkbox_clicked |= ImGui::Checkbox("Bevel Sides", &box.bevel_sides);
+                  checkbox_clicked |=
+                     ImGui::Checkbox("Bevel Bottom", &box.bevel_bottom);
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemEdited() or checkbox_clicked) {
                      box.amount = std::max(box.amount, 0.0f);
 
                      _edit_stack_world.apply(edits::make_set_block_custom_metrics(
@@ -2048,7 +2056,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                              _edit_context);
                   }
 
-                  if (ImGui::IsItemDeactivated()) {
+                  if (ImGui::IsItemDeactivated() or checkbox_clicked) {
                      _edit_stack_world.close_last();
                   }
                } break;
@@ -2059,21 +2067,21 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   const uint16 min_segments = 3;
                   const uint16 max_segments = 256;
 
-                  bool edited = false;
+                  ImGui::BeginGroup();
 
-                  edited |= ImGui::DragFloat("Width", &curve.width, 1.0f, 0.0f, 1e10f);
-                  edited |=
-                     ImGui::DragFloat("Height", &curve.height, 1.0f, 0.0f, 1e10f);
-                  edited |= ImGui::SliderScalar("Segments", ImGuiDataType_U16,
-                                                &curve.segments, &min_segments,
-                                                &max_segments);
-                  edited |= ImGui::DragFloat("Texture Loops", &curve.texture_loops);
+                  ImGui::DragFloat("Width", &curve.width, 1.0f, 0.0f, 1e10f);
+                  ImGui::DragFloat("Height", &curve.height, 1.0f, 0.0f, 1e10f);
+                  ImGui::SliderScalar("Segments", ImGuiDataType_U16, &curve.segments,
+                                      &min_segments, &max_segments);
+                  ImGui::DragFloat("Texture Loops", &curve.texture_loops);
 
                   ImGui::SetItemTooltip(
                      "How many times the texture wraps around the ring in the "
                      "Unwrapped Texture Mode.");
 
-                  if (edited) {
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemEdited()) {
                      curve.segments = std::max(curve.segments, min_segments);
 
                      if (curve.width == 0.0f and curve.height == 0.0f) {
@@ -2097,19 +2105,23 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   const uint16 min_segments = 3;
                   const uint16 max_segments = 256;
 
-                  bool edited = false;
+                  bool checkbox_clicked = false;
 
-                  edited |= ImGui::SliderScalar("Segments", ImGuiDataType_U16,
-                                                &cylinder.segments,
-                                                &min_segments, &max_segments);
-                  edited |= ImGui::Checkbox("Flat Shading", &cylinder.flat_shading);
-                  edited |= ImGui::DragFloat("Texture Loops", &cylinder.texture_loops);
+                  ImGui::BeginGroup();
+
+                  ImGui::SliderScalar("Segments", ImGuiDataType_U16, &cylinder.segments,
+                                      &min_segments, &max_segments);
+                  checkbox_clicked |=
+                     ImGui::Checkbox("Flat Shading", &cylinder.flat_shading);
+                  ImGui::DragFloat("Texture Loops", &cylinder.texture_loops);
 
                   ImGui::SetItemTooltip(
                      "How many times the texture wraps around the ring in the "
                      "Unwrapped Texture Mode.");
 
-                  if (edited) {
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemEdited() or checkbox_clicked) {
                      cylinder.segments = std::max(cylinder.segments, min_segments);
 
                      _edit_stack_world.apply(edits::make_set_block_custom_metrics(
@@ -2118,7 +2130,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                              _edit_context);
                   }
 
-                  if (ImGui::IsItemDeactivated()) {
+                  if (ImGui::IsItemDeactivated() or checkbox_clicked) {
                      _edit_stack_world.close_last();
                   }
                } break;
@@ -2129,14 +2141,18 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   const uint16 min_segments = 3;
                   const uint16 max_segments = 256;
 
-                  bool edited = false;
+                  bool checkbox_clicked = false;
 
-                  edited |= ImGui::SliderScalar("Segments", ImGuiDataType_U16,
-                                                &cone.segments, &min_segments,
-                                                &max_segments);
-                  edited |= ImGui::Checkbox("Flat Shading", &cone.flat_shading);
+                  ImGui::BeginGroup();
 
-                  if (edited) {
+                  ImGui::SliderScalar("Segments", ImGuiDataType_U16, &cone.segments,
+                                      &min_segments, &max_segments);
+                  checkbox_clicked |=
+                     ImGui::Checkbox("Flat Shading", &cone.flat_shading);
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemEdited() or checkbox_clicked) {
                      cone.segments = std::max(cone.segments, min_segments);
 
                      _edit_stack_world.apply(edits::make_set_block_custom_metrics(
@@ -2145,7 +2161,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                              _edit_context);
                   }
 
-                  if (ImGui::IsItemDeactivated()) {
+                  if (ImGui::IsItemDeactivated() or checkbox_clicked) {
                      _edit_stack_world.close_last();
                   }
                } break;
