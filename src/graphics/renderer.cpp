@@ -779,6 +779,10 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       const gpu::viewport viewport{.width = static_cast<float>(super_sample_length),
                                    .height = static_cast<float>(super_sample_length)};
 
+      const blocks::view blocks_view =
+         _blocks.prepare_view(blocks_draw::depth_prepass, world.blocks, nullptr,
+                              view_frustum, active_layers, _dynamic_buffer_allocator);
+
       build_world_mesh_render_list(view_frustum);
 
       command_list.reset();
@@ -848,6 +852,13 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                                        depth_prepass_pipeline_flags::doublesided]
                                    .get(),
                                 command_list);
+      }
+
+      if (active_entity_types.blocks) {
+         _blocks.draw(blocks_draw::depth_prepass, blocks_view,
+                      _camera_constant_buffer_view,
+                      _light_clusters.lights_constant_buffer_view(),
+                      command_list, _root_signatures, _pipelines);
       }
 
       [[likely]] if (_device.supports_enhanced_barriers()) {
@@ -963,6 +974,11 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       const frustum view_frustum{camera.world_from_projection()};
       const gpu::viewport viewport{.width = static_cast<float>(super_sample_length),
                                    .height = static_cast<float>(super_sample_length)};
+
+      const blocks::view blocks_view =
+         _blocks.prepare_view(blocks_draw::depth_prepass, world.blocks, nullptr,
+                              view_frustum, active_layers, _dynamic_buffer_allocator);
+
       // Pre-Render Work
       {
          pre_render_command_list.reset();
@@ -1009,7 +1025,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       command_list.om_set_render_targets(env_map_super_sample_rtv.get(),
                                          env_map_depth_stencil_view.get());
 
-      draw_world(view_frustum, active_entity_types, blocks::view{}, command_list);
+      draw_world(view_frustum, active_entity_types, blocks_view, command_list);
 
       // Downsample to desired size.
 

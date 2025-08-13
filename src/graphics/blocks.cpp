@@ -1308,6 +1308,8 @@ void blocks::draw(blocks_draw draw, const view& view,
                   root_signature_library& root_signatures,
                   pipeline_library& pipelines) const
 {
+   command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+
    command_list.set_graphics_root_signature(root_signatures.block.get());
 
    command_list.set_graphics_cbv(rs::block::frame_cbv, frame_constant_buffer_view);
