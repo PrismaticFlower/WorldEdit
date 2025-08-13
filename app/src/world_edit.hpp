@@ -195,7 +195,7 @@ enum class block_edit_tool : uint8 {
    paint_material,
    set_texture_mode,
    offset_texture,
-   resize_block,
+   tweak_block,
 };
 
 enum class draw_block_type {

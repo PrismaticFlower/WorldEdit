@@ -231,8 +231,8 @@ void world_edit::ui_show_block_editor() noexcept
 
       ImGui::Separator();
 
-      if (ImGui::Button("Resize Block", {ImGui::CalcItemWidth(), 0.0f})) {
-         _block_editor_context.activate_tool = block_edit_tool::resize_block;
+      if (ImGui::Button("Tweak Block", {ImGui::CalcItemWidth(), 0.0f})) {
+         _block_editor_context.activate_tool = block_edit_tool::tweak_block;
       }
 
       if (ImGui::Button("Set Texture Mode", {ImGui::CalcItemWidth(), 0.0f})) {
@@ -658,10 +658,10 @@ void world_edit::ui_show_block_editor() noexcept
       _block_editor_context.tool = block_edit_tool::offset_texture;
       _block_editor_context.offset_texture = {};
    } break;
-   case block_edit_tool::resize_block: {
+   case block_edit_tool::tweak_block: {
       _block_editor_context.tool_click = false;
       _block_editor_context.tool_ctrl_click = false;
-      _block_editor_context.tool = block_edit_tool::resize_block;
+      _block_editor_context.tool = block_edit_tool::tweak_block;
       _block_editor_context.resize_block = {};
    } break;
    }
@@ -3813,7 +3813,7 @@ void world_edit::ui_show_block_editor() noexcept
          ImGui::End();
       }
    }
-   else if (_block_editor_context.tool == block_edit_tool::resize_block) {
+   else if (_block_editor_context.tool == block_edit_tool::tweak_block) {
       const bool click = std::exchange(_block_editor_context.tool_click, false);
 
       const graphics::camera_ray rayWS =
@@ -4246,6 +4246,328 @@ void world_edit::ui_show_block_editor() noexcept
          }
 
          if (_gizmos.can_close_last_edit()) _edit_stack_world.close_last();
+
+         ImGui::SetNextWindowPos(ImGui::GetMousePos(), ImGuiCond_Appearing);
+
+         if (ImGui::Begin("Tweak Block", nullptr,
+                          ImGuiWindowFlags_NoDecoration |
+                             ImGuiWindowFlags_AlwaysAutoResize)) {
+            switch (_block_editor_context.resize_block.block_id.type()) {
+            case world::block_type::box: {
+               world::block_description_box box =
+                  _world.blocks.boxes.description[*selected_index];
+
+               ImGui::BeginGroup();
+
+               ImGui::DragQuat("Rotation", &box.rotation);
+               ImGui::DragFloat3("Position", &box.position);
+               ImGui::DragFloat3("Size", &box.size, 1.0f, 0.0f, 1e10f);
+
+               ImGui::EndGroup();
+
+               if (ImGui::IsItemEdited()) {
+                  _edit_stack_world.apply(edits::make_set_block_box_metrics(*selected_index,
+                                                                            box.rotation,
+                                                                            box.position,
+                                                                            box.size),
+                                          _edit_context);
+               }
+
+               if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+            } break;
+            case world::block_type::ramp: {
+               world::block_description_ramp ramp =
+                  _world.blocks.ramps.description[*selected_index];
+
+               ImGui::BeginGroup();
+
+               ImGui::DragQuat("Rotation", &ramp.rotation);
+               ImGui::DragFloat3("Position", &ramp.position);
+               ImGui::DragFloat3("Size", &ramp.size, 1.0f, 0.0f, 1e10f);
+
+               ImGui::EndGroup();
+
+               if (ImGui::IsItemEdited()) {
+                  _edit_stack_world.apply(edits::make_set_block_ramp_metrics(
+                                             *selected_index, ramp.rotation,
+                                             ramp.position, ramp.size),
+                                          _edit_context);
+               }
+
+               if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+            } break;
+            case world::block_type::quad: {
+               world::block_description_quad quad =
+                  _world.blocks.quads.description[*selected_index];
+
+               ImGui::BeginGroup();
+
+               ImGui::DragFloat3("V0", &quad.vertices[0]);
+               ImGui::DragFloat3("V1", &quad.vertices[1]);
+               ImGui::DragFloat3("V2", &quad.vertices[2]);
+               ImGui::DragFloat3("V3", &quad.vertices[3]);
+
+               ImGui::EndGroup();
+
+               if (ImGui::IsItemEdited()) {
+                  _edit_stack_world
+                     .apply(edits::make_set_block_quad_metrics(*selected_index,
+                                                               quad.vertices),
+                            _edit_context);
+               }
+
+               if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+            } break;
+            case world::block_type::custom: {
+               world::block_description_custom block =
+                  _world.blocks.custom.description[*selected_index];
+
+               bool checkbox_clicked = false;
+
+               ImGui::BeginGroup();
+
+               ImGui::DragQuat("Rotation", &block.rotation);
+               ImGui::DragFloat3("Position", &block.position);
+
+               switch (block.mesh_description.type) {
+               case world::block_custom_mesh_type::stairway: {
+                  world::block_custom_mesh_description_stairway& stairway =
+                     block.mesh_description.stairway;
+
+                  ImGui::DragFloat3("Size", &stairway.size, 1.0f,
+                                    stairway.step_height, 1e10f);
+
+                  ImGui::Separator();
+
+                  ImGui::DragFloat("Step Height", &stairway.step_height,
+                                   0.125f * 0.25f, 0.125f, 1.0f, "%.3f",
+                                   ImGuiSliderFlags_NoRoundToFormat);
+                  ImGui::DragFloat("First Step Offset",
+                                   &stairway.first_step_offset, 0.125f);
+
+                  stairway.size.y = std::max(stairway.size.y, stairway.step_height);
+               } break;
+               case world::block_custom_mesh_type::stairway_floating: {
+                  world::block_custom_mesh_description_stairway_floating& stairway =
+                     block.mesh_description.stairway_floating;
+
+                  ImGui::DragFloat3("Size", &stairway.size, 1.0f,
+                                    stairway.step_height, 1e10f);
+
+                  ImGui::Separator();
+
+                  ImGui::DragFloat("Step Height", &stairway.step_height,
+                                   0.125f * 0.25f, 0.125f, 1.0f, "%.3f",
+                                   ImGuiSliderFlags_NoRoundToFormat);
+                  ImGui::DragFloat("First Step Offset",
+                                   &stairway.first_step_offset, 0.125f);
+
+                  stairway.size.y = std::max(stairway.size.y, stairway.step_height);
+               } break;
+               case world::block_custom_mesh_type::ring: {
+                  world::block_custom_mesh_description_ring& ring =
+                     block.mesh_description.ring;
+
+                  const uint16 min_segments = 3;
+                  const uint16 max_segments = 256;
+
+                  ImGui::Separator();
+
+                  ImGui::DragFloat("Inner Radius", &ring.inner_radius, 1.0f,
+                                   0.0f, 1e10f);
+                  ImGui::DragFloat("Outer Radius", &ring.outer_radius, 1.0f,
+                                   0.0f, 1e10f);
+                  ImGui::DragFloat("Height", &ring.height, 1.0f, 0.0f, 1e10f);
+
+                  ImGui::Separator();
+
+                  ImGui::SliderScalar("Segments", ImGuiDataType_U16, &ring.segments,
+                                      &min_segments, &max_segments);
+                  checkbox_clicked |=
+                     ImGui::Checkbox("Flat Shading", &ring.flat_shading);
+                  ImGui::DragFloat("Texture Loops", &ring.texture_loops);
+
+                  ImGui::SetItemTooltip(
+                     "How many times the texture wraps around the ring in the "
+                     "Unwrapped Texture Mode.");
+               } break;
+               case world::block_custom_mesh_type::beveled_box: {
+                  world::block_custom_mesh_description_beveled_box& box =
+                     block.mesh_description.beveled_box;
+
+                  ImGui::DragFloat3("Size", &box.size, 1.0f, 0.0f, 1e10f);
+
+                  ImGui::Separator();
+
+                  ImGui::DragFloat("Bevel Amount", &box.amount, 0.0625f, 0.0f,
+                                   std::min(std::min(box.size.x, box.size.y),
+                                            box.size.z));
+                  checkbox_clicked |= ImGui::Checkbox("Bevel Top", &box.bevel_top);
+                  checkbox_clicked |= ImGui::Checkbox("Bevel Sides", &box.bevel_sides);
+                  checkbox_clicked |=
+                     ImGui::Checkbox("Bevel Bottom", &box.bevel_bottom);
+               } break;
+               case world::block_custom_mesh_type::curve: {
+                  world::block_custom_mesh_description_curve& curve =
+                     block.mesh_description.curve;
+
+                  const uint16 min_segments = 3;
+                  const uint16 max_segments = 256;
+
+                  ImGui::Separator();
+
+                  ImGui::DragFloat3("P0", &curve.p0);
+                  ImGui::DragFloat3("P1", &curve.p1);
+                  ImGui::DragFloat3("P2", &curve.p2);
+                  ImGui::DragFloat3("P3", &curve.p3);
+
+                  ImGui::Separator();
+
+                  ImGui::DragFloat("Width", &curve.width, 1.0f, 0.0f, 1e10f);
+                  ImGui::DragFloat("Height", &curve.height, 1.0f, 0.0f, 1e10f);
+                  ImGui::SliderScalar("Segments", ImGuiDataType_U16, &curve.segments,
+                                      &min_segments, &max_segments);
+                  ImGui::DragFloat("Texture Loops", &curve.texture_loops);
+               } break;
+               case world::block_custom_mesh_type::cylinder: {
+                  world::block_custom_mesh_description_cylinder& cylinder =
+                     block.mesh_description.cylinder;
+
+                  ImGui::DragFloat3("Size", &cylinder.size, 1.0f, 0.0f, 1e10f);
+
+                  ImGui::Separator();
+
+                  const uint16 min_segments = 3;
+                  const uint16 max_segments = 256;
+
+                  ImGui::SliderScalar("Segments", ImGuiDataType_U16, &cylinder.segments,
+                                      &min_segments, &max_segments);
+                  checkbox_clicked |=
+                     ImGui::Checkbox("Flat Shading", &cylinder.flat_shading);
+                  ImGui::DragFloat("Texture Loops", &cylinder.texture_loops);
+               } break;
+               case world::block_custom_mesh_type::cone: {
+                  world::block_custom_mesh_description_cone& cone =
+                     block.mesh_description.cone;
+
+                  const uint16 min_segments = 3;
+                  const uint16 max_segments = 256;
+
+                  ImGui::DragFloat3("Size", &cone.size, 1.0f, 0.0f, 1e10f);
+
+                  ImGui::Separator();
+
+                  ImGui::SliderScalar("Segments", ImGuiDataType_U16, &cone.segments,
+                                      &min_segments, &max_segments);
+                  checkbox_clicked |=
+                     ImGui::Checkbox("Flat Shading", &cone.flat_shading);
+               } break;
+               case world::block_custom_mesh_type::arch: {
+                  world::block_custom_mesh_description_arch& arch =
+                     block.mesh_description.arch;
+
+                  const uint16 min_segments = 1;
+                  const uint16 max_segments = 64;
+
+                  ImGui::DragFloat3("Size", &arch.size, 1.0f, 0.0f, 1e10f);
+
+                  ImGui::Separator();
+
+                  ImGui::DragFloat("Crown Length", &arch.crown_length, 0.5f,
+                                   0.0f, arch.span_length);
+                  ImGui::DragFloat("Crown Height", &arch.crown_height, 0.125f,
+                                   0.0f, arch.size.y * 2.0f - arch.curve_height);
+                  ImGui::DragFloat("Curve Height", &arch.curve_height, 0.5f,
+                                   0.0f, arch.size.y * 2.0f);
+                  ImGui::DragFloat("Span Length", &arch.span_length, 0.5f, 0.0f,
+                                   arch.size.x * 2.0f);
+                  ImGui::SliderScalar("Segments", ImGuiDataType_U16, &arch.segments,
+                                      &min_segments, &max_segments);
+               } break;
+               }
+
+               ImGui::EndGroup();
+
+               if (ImGui::IsItemEdited() or checkbox_clicked) {
+                  _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                             *selected_index, block.rotation,
+                                             block.position, block.mesh_description),
+                                          _edit_context);
+               }
+
+               if (ImGui::IsItemDeactivated() or checkbox_clicked) {
+                  _edit_stack_world.close_last();
+               }
+            } break;
+            case world::block_type::hemisphere: {
+               world::block_description_hemisphere hemisphere =
+                  _world.blocks.hemispheres.description[*selected_index];
+
+               ImGui::BeginGroup();
+
+               ImGui::DragQuat("Rotation", &hemisphere.rotation);
+               ImGui::DragFloat3("Position", &hemisphere.position);
+               ImGui::DragFloat3("Size", &hemisphere.size, 1.0f, 0.0f, 1e10f);
+
+               ImGui::EndGroup();
+
+               if (ImGui::IsItemEdited()) {
+                  _edit_stack_world.apply(edits::make_set_block_hemisphere_metrics(
+                                             *selected_index, hemisphere.rotation,
+                                             hemisphere.position, hemisphere.size),
+                                          _edit_context);
+               }
+
+               if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+            } break;
+            case world::block_type::pyramid: {
+               world::block_description_pyramid pyramid =
+                  _world.blocks.pyramids.description[*selected_index];
+
+               ImGui::BeginGroup();
+
+               ImGui::DragQuat("Rotation", &pyramid.rotation);
+               ImGui::DragFloat3("Position", &pyramid.position);
+               ImGui::DragFloat3("Size", &pyramid.size, 1.0f, 0.0f, 1e10f);
+
+               ImGui::EndGroup();
+
+               if (ImGui::IsItemEdited()) {
+                  _edit_stack_world.apply(edits::make_set_block_hemisphere_metrics(
+                                             *selected_index, pyramid.rotation,
+                                             pyramid.position, pyramid.size),
+                                          _edit_context);
+               }
+
+               if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+            } break;
+            case world::block_type::terrain_cut_box: {
+               world::block_description_terrain_cut_box terrain_cut_box =
+                  _world.blocks.terrain_cut_boxes.description[*selected_index];
+               ;
+
+               ImGui::BeginGroup();
+
+               ImGui::DragQuat("Rotation", &terrain_cut_box.rotation);
+               ImGui::DragFloat3("Position", &terrain_cut_box.position);
+               ImGui::DragFloat3("Size", &terrain_cut_box.size, 1.0f, 0.0f, 1e10f);
+
+               ImGui::EndGroup();
+
+               if (ImGui::IsItemEdited()) {
+                  _edit_stack_world.apply(edits::make_set_block_terrain_cut_box_metrics(
+                                             *selected_index, terrain_cut_box.rotation,
+                                             terrain_cut_box.position,
+                                             terrain_cut_box.size),
+                                          _edit_context);
+               }
+
+               if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+            } break;
+            }
+         }
+
+         ImGui::End();
       }
    }
 }
