@@ -2165,6 +2165,41 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      _edit_stack_world.close_last();
                   }
                } break;
+               case world::block_custom_mesh_type::arch: {
+                  world::block_custom_mesh_description_arch arch =
+                     block.mesh_description.arch;
+
+                  const uint16 min_segments = 1;
+                  const uint16 max_segments = 64;
+
+                  ImGui::BeginGroup();
+
+                  ImGui::DragFloat("Crown Length", &arch.crown_length, 0.5f,
+                                   0.0f, arch.span_length);
+                  ImGui::DragFloat("Crown Height", &arch.crown_height, 0.125f,
+                                   0.0f, arch.size.y * 2.0f - arch.curve_height);
+                  ImGui::DragFloat("Curve Height", &arch.curve_height, 0.5f,
+                                   0.0f, arch.size.y * 2.0f);
+                  ImGui::DragFloat("Span Length", &arch.span_length, 0.5f, 0.0f,
+                                   arch.size.x * 2.0f);
+                  ImGui::SliderScalar("Segments", ImGuiDataType_U16, &arch.segments,
+                                      &min_segments, &max_segments);
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemEdited()) {
+                     arch.segments = std::max(arch.segments, min_segments);
+
+                     _edit_stack_world.apply(edits::make_set_block_custom_metrics(
+                                                *block_index, block.rotation,
+                                                block.position, arch),
+                                             _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivated()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
                }
             }
          }
