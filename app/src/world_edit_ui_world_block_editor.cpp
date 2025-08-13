@@ -4428,6 +4428,8 @@ void world_edit::ui_show_block_editor() noexcept
                   ImGui::SliderScalar("Segments", ImGuiDataType_U16, &curve.segments,
                                       &min_segments, &max_segments);
                   ImGui::DragFloat("Texture Loops", &curve.texture_loops);
+
+                  curve.segments = std::max(curve.segments, min_segments);
                } break;
                case world::block_custom_mesh_type::cylinder: {
                   world::block_custom_mesh_description_cylinder& cylinder =
@@ -4445,6 +4447,8 @@ void world_edit::ui_show_block_editor() noexcept
                   checkbox_clicked |=
                      ImGui::Checkbox("Flat Shading", &cylinder.flat_shading);
                   ImGui::DragFloat("Texture Loops", &cylinder.texture_loops);
+
+                  cylinder.segments = std::max(cylinder.segments, min_segments);
                } break;
                case world::block_custom_mesh_type::cone: {
                   world::block_custom_mesh_description_cone& cone =
@@ -4461,6 +4465,8 @@ void world_edit::ui_show_block_editor() noexcept
                                       &min_segments, &max_segments);
                   checkbox_clicked |=
                      ImGui::Checkbox("Flat Shading", &cone.flat_shading);
+
+                  cone.segments = std::max(cone.segments, min_segments);
                } break;
                case world::block_custom_mesh_type::arch: {
                   world::block_custom_mesh_description_arch& arch =
@@ -4483,6 +4489,8 @@ void world_edit::ui_show_block_editor() noexcept
                                    arch.size.x * 2.0f);
                   ImGui::SliderScalar("Segments", ImGuiDataType_U16, &arch.segments,
                                       &min_segments, &max_segments);
+
+                  arch.segments = std::max(arch.segments, min_segments);
                } break;
                }
 
