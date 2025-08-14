@@ -24,6 +24,7 @@ struct object_class_library;
 
 struct terrain_light_map_baker_config {
    bool include_object_shadows = true;
+   bool include_block_shadows = true;
    bool ambient_occlusion = true;
    bool bake_ps2_light_map = false;
 

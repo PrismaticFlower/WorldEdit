@@ -34,6 +34,12 @@ void world_edit::ui_show_terrain_light_baker() noexcept
          "Bake Shadows from objects (in the active layers) into the terrain. "
          "Applies to static lights and Ambient Occlusion.");
 
+      ImGui::Checkbox("Block Shadows", &config.include_block_shadows);
+
+      ImGui::SetItemTooltip(
+         "Bake Shadows from blocks (in the active layers) into the terrain. "
+         "Applies to static lights and Ambient Occlusion.");
+
       ImGui::Checkbox("Ambient Occlusion", &config.ambient_occlusion);
 
       ImGui::SetItemTooltip(

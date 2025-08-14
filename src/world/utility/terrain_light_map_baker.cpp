@@ -1,5 +1,8 @@
 #include "terrain_light_map_baker.hpp"
 
+#include "../blocks/custom_mesh.hpp"
+#include "../blocks/mesh_geometry.hpp"
+
 #include "../active_elements.hpp"
 #include "../object_class.hpp"
 #include "../object_class_library.hpp"
@@ -7,12 +10,15 @@
 
 #include "assets/asset_ref.hpp"
 #include "assets/msh/flat_model.hpp"
+
 #include "async/thread_pool.hpp"
+
 #include "math/bvh.hpp"
 #include "math/intersectors.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/sampling.hpp"
 #include "math/vector_funcs.hpp"
+
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 
@@ -26,7 +32,7 @@ namespace {
 
 constexpr uint32 directional_light_patch_size = 8;
 
-struct terrain_mesh_chunk {
+struct generated_mesh_chunk {
    std::vector<float3> positions;
    std::vector<std::array<uint16, 3>> triangles;
    bvh bvh;
@@ -62,7 +68,7 @@ struct scene {
       gather_lights(world);
 
       _models.reserve(world.objects.size());
-      _bvh_instances.reserve(world.objects.size() * 8 + _terrain_mesh.size());
+      _bvh_instances.reserve(world.objects.size() * 8 + _generated_meshes.size());
 
       if (config.include_object_shadows) {
          for (const object& object : world.objects) {
@@ -92,7 +98,21 @@ struct scene {
          }
       }
 
-      for (const terrain_mesh_chunk& mesh : _terrain_mesh) {
+      if (config.include_block_shadows) {
+         build_block_meshes(world.blocks.boxes, block_cube_vertices,
+                            block_cube_triangles, active_layers);
+         build_block_meshes(world.blocks.custom, world.blocks.custom_meshes,
+                            active_layers);
+         build_block_meshes(world.blocks.ramps, block_ramp_vertices,
+                            block_ramp_triangles, active_layers);
+         build_block_meshes(world.blocks.quads, active_layers);
+         build_block_meshes(world.blocks.hemispheres, block_hemisphere_vertices,
+                            block_hemisphere_triangles, active_layers);
+         build_block_meshes(world.blocks.pyramids, block_pyramid_vertices,
+                            block_pyramid_triangles, active_layers);
+      }
+
+      for (const generated_mesh_chunk& mesh : _generated_meshes) {
          _bvh_instances.push_back(
             top_level_bvh::instance{.inverse_rotation = quaternion{},
                                     .inverse_position = float3{},
@@ -158,7 +178,7 @@ private:
 
    std::vector<asset_data<assets::msh::flat_model>> _models;
    std::vector<top_level_bvh::instance> _bvh_instances;
-   std::vector<terrain_mesh_chunk> _terrain_mesh;
+   std::vector<generated_mesh_chunk> _generated_meshes;
    top_level_bvh _bvh;
 
    directional_lights _static_directional_lights;
@@ -177,11 +197,12 @@ private:
       const int32 chunk_length = std::min(terrain.length, 256);
       const int32 length_in_chunks = terrain.length / chunk_length;
 
-      _terrain_mesh.reserve(length_in_chunks * length_in_chunks);
+      _generated_meshes.reserve(_generated_meshes.capacity() +
+                                length_in_chunks * length_in_chunks);
 
       for (int32 z_chunk = 0; z_chunk < length_in_chunks; ++z_chunk) {
          for (int32 x_chunk = 0; x_chunk < length_in_chunks; ++x_chunk) {
-            terrain_mesh_chunk& mesh = _terrain_mesh.emplace_back();
+            generated_mesh_chunk& mesh = _generated_meshes.emplace_back();
 
             mesh.positions.resize(chunk_length * chunk_length);
 
@@ -229,6 +250,182 @@ private:
 
             mesh.bvh = bvh{mesh.triangles, mesh.positions, {.backface_cull = false}};
          }
+      }
+   }
+
+   template<typename T>
+   void build_block_meshes(const T& blocks, std::span<const block_vertex> block_vertices,
+                           std::span<const std::array<uint16, 3>> block_triangles,
+                           const active_layers active_layers) noexcept
+   {
+      if (blocks.size() == 0) return;
+
+      const uint32 max_chunk_vertices = UINT16_MAX;
+
+      generated_mesh_chunk chunk;
+
+      chunk.positions.reserve(max_chunk_vertices);
+      chunk.triangles.reserve(max_chunk_vertices / 3);
+
+      using description_type = decltype(T::description)::value_type;
+
+      for (std::size_t i = 0; i < blocks.size(); ++i) {
+         if (not active_layers[blocks.layer[i]]) continue;
+         if (blocks.hidden[i]) continue;
+
+         const description_type& block = blocks.description[i];
+
+         const float4x4 scale = {
+            {block.size.x, 0.0f, 0.0f, 0.0f},
+            {0.0f, block.size.y, 0.0f, 0.0f},
+            {0.0f, 0.0f, block.size.z, 0.0f},
+            {0.0f, 0.0f, 0.0f, 1.0f},
+         };
+         const float4x4 rotation = to_matrix(block.rotation);
+
+         float4x4 world_from_local = rotation * scale;
+         world_from_local[3] = {block.position, 1.0f};
+
+         if (chunk.positions.size() + block_vertices.size() > max_chunk_vertices) {
+            chunk.bvh =
+               bvh{chunk.triangles, chunk.positions, {.backface_cull = false}};
+
+            _generated_meshes.push_back(std::move(chunk));
+
+            chunk = {};
+            chunk.positions.reserve(max_chunk_vertices);
+            chunk.triangles.reserve(max_chunk_vertices / 3);
+         }
+
+         const std::size_t vertex_offset = chunk.positions.size();
+
+         for (const block_vertex& vertex : block_vertices) {
+            chunk.positions.push_back(world_from_local * vertex.position);
+         }
+
+         for (const auto& [i0, i1, i2] : block_triangles) {
+            chunk.triangles.push_back({
+               static_cast<uint16>(i0 + vertex_offset),
+               static_cast<uint16>(i1 + vertex_offset),
+               static_cast<uint16>(i2 + vertex_offset),
+            });
+         }
+      }
+
+      if (not chunk.positions.empty()) {
+         chunk.bvh = bvh{chunk.triangles, chunk.positions, {.backface_cull = false}};
+
+         _generated_meshes.push_back(std::move(chunk));
+      }
+   }
+
+   void build_block_meshes(const blocks_quads& blocks,
+                           const active_layers active_layers) noexcept
+   {
+      if (blocks.size() == 0) return;
+
+      const uint32 max_chunk_vertices = UINT16_MAX;
+
+      generated_mesh_chunk chunk;
+
+      chunk.positions.reserve(max_chunk_vertices);
+      chunk.triangles.reserve(max_chunk_vertices / 3);
+
+      for (std::size_t i = 0; i < blocks.size(); ++i) {
+         if (not active_layers[blocks.layer[i]]) continue;
+         if (blocks.hidden[i]) continue;
+
+         const block_description_quad& block = blocks.description[i];
+
+         if (chunk.positions.size() + block.vertices.size() > max_chunk_vertices) {
+            chunk.bvh =
+               bvh{chunk.triangles, chunk.positions, {.backface_cull = false}};
+
+            _generated_meshes.push_back(std::move(chunk));
+
+            chunk = {};
+            chunk.positions.reserve(max_chunk_vertices);
+            chunk.triangles.reserve(max_chunk_vertices / 3);
+         }
+
+         const std::size_t vertex_offset = chunk.positions.size();
+
+         chunk.positions.append_range(block.vertices);
+
+         for (const auto& [i0, i1, i2] : block.quad_split == block_quad_split::regular
+                                            ? block_quad_triangles
+                                            : block_quad_alternate_triangles) {
+            chunk.triangles.push_back({
+               static_cast<uint16>(i0 + vertex_offset),
+               static_cast<uint16>(i1 + vertex_offset),
+               static_cast<uint16>(i2 + vertex_offset),
+            });
+         }
+      }
+
+      if (not chunk.positions.empty()) {
+         chunk.bvh = bvh{chunk.triangles, chunk.positions, {.backface_cull = false}};
+
+         _generated_meshes.push_back(std::move(chunk));
+      }
+   }
+
+   void build_block_meshes(const blocks_custom& blocks,
+                           const blocks_custom_mesh_library& meshes,
+                           const active_layers active_layers) noexcept
+   {
+      if (blocks.size() == 0) return;
+
+      const uint32 max_chunk_vertices = UINT16_MAX;
+
+      generated_mesh_chunk chunk;
+
+      chunk.positions.reserve(max_chunk_vertices);
+      chunk.triangles.reserve(max_chunk_vertices / 3);
+
+      for (std::size_t i = 0; i < blocks.size(); ++i) {
+         if (not active_layers[blocks.layer[i]]) continue;
+         if (blocks.hidden[i]) continue;
+
+         const block_description_custom& block = blocks.description[i];
+
+         float4x4 world_from_local = to_matrix(block.rotation);
+         world_from_local[3] = {block.position, 1.0f};
+
+         const block_custom_mesh& mesh = meshes[blocks.mesh[i]];
+
+         if (mesh.vertices.empty()) continue;
+
+         if (chunk.positions.size() + mesh.vertices.size() > max_chunk_vertices) {
+            chunk.bvh =
+               bvh{chunk.triangles, chunk.positions, {.backface_cull = false}};
+
+            _generated_meshes.push_back(std::move(chunk));
+
+            chunk = {};
+            chunk.positions.reserve(max_chunk_vertices);
+            chunk.triangles.reserve(max_chunk_vertices / 3);
+         }
+
+         const std::size_t vertex_offset = chunk.positions.size();
+
+         for (const block_vertex& vertex : mesh.vertices) {
+            chunk.positions.push_back(world_from_local * vertex.position);
+         }
+
+         for (const auto& [i0, i1, i2] : mesh.triangles) {
+            chunk.triangles.push_back({
+               static_cast<uint16>(i0 + vertex_offset),
+               static_cast<uint16>(i1 + vertex_offset),
+               static_cast<uint16>(i2 + vertex_offset),
+            });
+         }
+      }
+
+      if (not chunk.positions.empty()) {
+         chunk.bvh = bvh{chunk.triangles, chunk.positions, {.backface_cull = false}};
+
+         _generated_meshes.push_back(std::move(chunk));
       }
    }
 
