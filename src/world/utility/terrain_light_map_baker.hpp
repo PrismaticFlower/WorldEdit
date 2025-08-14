@@ -33,6 +33,7 @@ struct terrain_light_map_baker_config {
 };
 
 enum class terrain_light_map_baker_status {
+   preparing,
    sampling,
    filtering,
    sampling_ps2,

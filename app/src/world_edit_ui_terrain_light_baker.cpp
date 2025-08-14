@@ -86,6 +86,10 @@ void world_edit::ui_show_terrain_light_bake_progress() noexcept
                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize)) {
 
       switch (_terrain_light_map_baker->progress_status()) {
+      case world::terrain_light_map_baker_status::preparing: {
+         ImGui::ProgressBar(-0.5f * (float)ImGui::GetTime(), {-1.0f, 0.0f},
+                            "Preparing...");
+      } break;
       case world::terrain_light_map_baker_status::sampling: {
          ImGui::ProgressBar(_terrain_light_map_baker->sampling_progress(),
                             {-1.0f, 0.0f}, "Sampling lighting...");

@@ -12,6 +12,7 @@
 #include "assets/msh/flat_model.hpp"
 
 #include "async/thread_pool.hpp"
+#include "async/wait_all.hpp"
 
 #include "math/bvh.hpp"
 #include "math/intersectors.hpp"
@@ -35,7 +36,6 @@ constexpr uint32 directional_light_patch_size = 8;
 struct generated_mesh_chunk {
    std::vector<float3> positions;
    std::vector<std::array<uint16, 3>> triangles;
-   bvh bvh;
 };
 
 struct directional_light {
@@ -60,15 +60,18 @@ struct spot_light {
    float3 color;
 };
 
-struct scene {
-   scene(const world& world, const object_class_library& object_class_library,
-         const active_layers active_layers, const terrain_light_map_baker_config& config)
+struct scene_input {
+   scene_input() = default;
+
+   scene_input(const world& world, const object_class_library& object_class_library,
+               const active_layers active_layers,
+               const terrain_light_map_baker_config& config)
    {
       build_terrain_mesh(world.terrain);
       gather_lights(world);
 
-      _models.reserve(world.objects.size());
-      _bvh_instances.reserve(world.objects.size() * 8 + _generated_meshes.size());
+      models.reserve(world.objects.size());
+      object_instances.reserve(world.objects.size() * 8 + generated_meshes.size());
 
       if (config.include_object_shadows) {
          for (const object& object : world.objects) {
@@ -86,7 +89,7 @@ struct scene {
             float3 inverse_position = inverse_rotation * -object.position;
 
             for (const bvh& bvh : model->bvh.get_child_bvhs()) {
-               _bvh_instances.push_back(
+               object_instances.push_back(
                   top_level_bvh::instance{.inverse_rotation = inverse_rotation,
                                           .inverse_position = inverse_position,
                                           .bvh = &bvh,
@@ -94,7 +97,7 @@ struct scene {
                                           .position = object.position});
             }
 
-            _models.emplace_back(std::move(model));
+            models.emplace_back(std::move(model));
          }
       }
 
@@ -111,85 +114,27 @@ struct scene {
          build_block_meshes(world.blocks.pyramids, block_pyramid_vertices,
                             block_pyramid_triangles, active_layers);
       }
-
-      for (const generated_mesh_chunk& mesh : _generated_meshes) {
-         _bvh_instances.push_back(
-            top_level_bvh::instance{.inverse_rotation = quaternion{},
-                                    .inverse_position = float3{},
-                                    .bvh = &mesh.bvh,
-                                    .rotation = quaternion{},
-                                    .position = float3{}});
-      }
-
-      _bvh = top_level_bvh{_bvh_instances};
    }
 
-   bool raycast_shadow(const float3& ray_directionWS, const float3& ray_originWS) const noexcept
-   {
-      return _bvh
-         .raycast(ray_directionWS, ray_originWS, FLT_MAX,
-                  {.allow_backface_cull = false, .accept_first_hit = true})
-         .has_value();
-   }
-
-   auto raycast(const float3& ray_directionWS, const float3& ray_originWS,
-                float max_distance) const noexcept -> std::optional<float>
-   {
-      return _bvh.raycast(ray_directionWS, ray_originWS, max_distance);
-   }
-
-   auto static_directional_lights() const noexcept -> std::span<const directional_light>
-   {
-      return std::span{_static_directional_lights.lights.data(),
-                       _static_directional_lights.count};
-   }
-
-   auto dynamic_directional_lights() const noexcept -> std::span<const directional_light>
-   {
-      return std::span{_dynamic_directional_lights.lights.data(),
-                       _dynamic_directional_lights.count};
-   }
-
-   auto static_point_lights() const noexcept -> std::span<const point_light>
-   {
-      return _static_point_lights;
-   }
-
-   auto dynamic_point_lights() const noexcept -> std::span<const point_light>
-   {
-      return _dynamic_point_lights;
-   }
-
-   auto static_spot_lights() const noexcept -> std::span<const spot_light>
-   {
-      return _static_spot_lights;
-   }
-
-   auto dynamic_spot_lights() const noexcept -> std::span<const spot_light>
-   {
-      return _dynamic_spot_lights;
-   }
-
-private:
    struct directional_lights {
       uint32 count = 0;
       std::array<directional_light, 2> lights;
    };
 
-   std::vector<asset_data<assets::msh::flat_model>> _models;
-   std::vector<top_level_bvh::instance> _bvh_instances;
-   std::vector<generated_mesh_chunk> _generated_meshes;
-   top_level_bvh _bvh;
+   std::vector<asset_data<assets::msh::flat_model>> models;
+   std::vector<top_level_bvh::instance> object_instances;
+   std::vector<generated_mesh_chunk> generated_meshes;
 
-   directional_lights _static_directional_lights;
-   directional_lights _dynamic_directional_lights;
+   directional_lights static_directional_lights;
+   directional_lights dynamic_directional_lights;
 
-   std::vector<point_light> _static_point_lights;
-   std::vector<point_light> _dynamic_point_lights;
+   std::vector<point_light> static_point_lights;
+   std::vector<point_light> dynamic_point_lights;
 
-   std::vector<spot_light> _static_spot_lights;
-   std::vector<spot_light> _dynamic_spot_lights;
+   std::vector<spot_light> static_spot_lights;
+   std::vector<spot_light> dynamic_spot_lights;
 
+private:
    void build_terrain_mesh(const terrain& terrain) noexcept
    {
       const float terrain_half_length = terrain.length / 2.0f;
@@ -197,12 +142,12 @@ private:
       const int32 chunk_length = std::min(terrain.length, 256);
       const int32 length_in_chunks = terrain.length / chunk_length;
 
-      _generated_meshes.reserve(_generated_meshes.capacity() +
-                                length_in_chunks * length_in_chunks);
+      generated_meshes.reserve(generated_meshes.capacity() +
+                               length_in_chunks * length_in_chunks);
 
       for (int32 z_chunk = 0; z_chunk < length_in_chunks; ++z_chunk) {
          for (int32 x_chunk = 0; x_chunk < length_in_chunks; ++x_chunk) {
-            generated_mesh_chunk& mesh = _generated_meshes.emplace_back();
+            generated_mesh_chunk& mesh = generated_meshes.emplace_back();
 
             mesh.positions.resize(chunk_length * chunk_length);
 
@@ -247,8 +192,6 @@ private:
                   }
                }
             }
-
-            mesh.bvh = bvh{mesh.triangles, mesh.positions, {.backface_cull = false}};
          }
       }
    }
@@ -287,10 +230,7 @@ private:
          world_from_local[3] = {block.position, 1.0f};
 
          if (chunk.positions.size() + block_vertices.size() > max_chunk_vertices) {
-            chunk.bvh =
-               bvh{chunk.triangles, chunk.positions, {.backface_cull = false}};
-
-            _generated_meshes.push_back(std::move(chunk));
+            generated_meshes.push_back(std::move(chunk));
 
             chunk = {};
             chunk.positions.reserve(max_chunk_vertices);
@@ -313,9 +253,7 @@ private:
       }
 
       if (not chunk.positions.empty()) {
-         chunk.bvh = bvh{chunk.triangles, chunk.positions, {.backface_cull = false}};
-
-         _generated_meshes.push_back(std::move(chunk));
+         generated_meshes.push_back(std::move(chunk));
       }
    }
 
@@ -338,10 +276,7 @@ private:
          const block_description_quad& block = blocks.description[i];
 
          if (chunk.positions.size() + block.vertices.size() > max_chunk_vertices) {
-            chunk.bvh =
-               bvh{chunk.triangles, chunk.positions, {.backface_cull = false}};
-
-            _generated_meshes.push_back(std::move(chunk));
+            generated_meshes.push_back(std::move(chunk));
 
             chunk = {};
             chunk.positions.reserve(max_chunk_vertices);
@@ -364,9 +299,7 @@ private:
       }
 
       if (not chunk.positions.empty()) {
-         chunk.bvh = bvh{chunk.triangles, chunk.positions, {.backface_cull = false}};
-
-         _generated_meshes.push_back(std::move(chunk));
+         generated_meshes.push_back(std::move(chunk));
       }
    }
 
@@ -397,10 +330,7 @@ private:
          if (mesh.vertices.empty()) continue;
 
          if (chunk.positions.size() + mesh.vertices.size() > max_chunk_vertices) {
-            chunk.bvh =
-               bvh{chunk.triangles, chunk.positions, {.backface_cull = false}};
-
-            _generated_meshes.push_back(std::move(chunk));
+            generated_meshes.push_back(std::move(chunk));
 
             chunk = {};
             chunk.positions.reserve(max_chunk_vertices);
@@ -423,26 +353,23 @@ private:
       }
 
       if (not chunk.positions.empty()) {
-         chunk.bvh = bvh{chunk.triangles, chunk.positions, {.backface_cull = false}};
-
-         _generated_meshes.push_back(std::move(chunk));
+         generated_meshes.push_back(std::move(chunk));
       }
    }
 
    void gather_lights(const world& world) noexcept
    {
-      _static_point_lights.reserve(world.lights.size());
-      _dynamic_point_lights.reserve(world.lights.size());
+      static_point_lights.reserve(world.lights.size());
+      dynamic_point_lights.reserve(world.lights.size());
 
-      _static_spot_lights.reserve(world.lights.size());
-      _dynamic_spot_lights.reserve(world.lights.size());
+      static_spot_lights.reserve(world.lights.size());
+      dynamic_spot_lights.reserve(world.lights.size());
 
       for (const light& light : world.lights) {
          switch (light.light_type) {
          case light_type::directional: {
-            directional_lights& out_lights = light.static_
-                                                ? _static_directional_lights
-                                                : _dynamic_directional_lights;
+            directional_lights& out_lights =
+               light.static_ ? static_directional_lights : dynamic_directional_lights;
 
             if (out_lights.count == 2) continue;
 
@@ -458,8 +385,8 @@ private:
          } break;
          case light_type::point: {
             point_light& point_light = light.static_
-                                          ? _static_point_lights.emplace_back()
-                                          : _dynamic_point_lights.emplace_back();
+                                          ? static_point_lights.emplace_back()
+                                          : dynamic_point_lights.emplace_back();
 
             point_light.positionWS = light.position;
             point_light.range_sq = light.range * light.range;
@@ -468,8 +395,8 @@ private:
          } break;
          case light_type::spot: {
             spot_light& spot_light = light.static_
-                                        ? _static_spot_lights.emplace_back()
-                                        : _dynamic_spot_lights.emplace_back();
+                                        ? static_spot_lights.emplace_back()
+                                        : dynamic_spot_lights.emplace_back();
 
             spot_light.positionWS = light.position;
             spot_light.range_sq = light.range * light.range;
@@ -486,13 +413,105 @@ private:
    }
 };
 
+struct scene {
+   scene() = default;
+
+   scene(scene_input scene_input, async::thread_pool& thread_pool)
+      : _scene_input{std::move(scene_input)}
+   {
+      if (not _scene_input.generated_meshes.empty()) {
+         _generated_mesh_bvhs.resize(_scene_input.generated_meshes.size());
+
+         thread_pool.for_each_n(async::task_priority::low,
+                                _scene_input.generated_meshes.size(),
+                                [&](const std::size_t i) noexcept {
+                                   _generated_mesh_bvhs[i] =
+                                      bvh{_scene_input.generated_meshes[i].triangles,
+                                          _scene_input.generated_meshes[i].positions,
+                                          {.backface_cull = false}};
+                                });
+      }
+
+      _bvh_instances.reserve(_scene_input.generated_meshes.size() +
+                             _scene_input.object_instances.size());
+      _bvh_instances.append_range(_scene_input.object_instances);
+
+      for (const bvh& bvh : _generated_mesh_bvhs) {
+         _bvh_instances.push_back(top_level_bvh::instance{.bvh = &bvh});
+      }
+
+      _bvh = top_level_bvh{_bvh_instances};
+   }
+
+   bool raycast_shadow(const float3& ray_directionWS, const float3& ray_originWS) const noexcept
+   {
+      return _bvh
+         .raycast(ray_directionWS, ray_originWS, FLT_MAX,
+                  {.allow_backface_cull = false, .accept_first_hit = true})
+         .has_value();
+   }
+
+   auto raycast(const float3& ray_directionWS, const float3& ray_originWS,
+                float max_distance) const noexcept -> std::optional<float>
+   {
+      return _bvh.raycast(ray_directionWS, ray_originWS, max_distance);
+   }
+
+   auto static_directional_lights() const noexcept -> std::span<const directional_light>
+   {
+      return std::span{_scene_input.static_directional_lights.lights.data(),
+                       _scene_input.static_directional_lights.count};
+   }
+
+   auto dynamic_directional_lights() const noexcept -> std::span<const directional_light>
+   {
+      return std::span{_scene_input.dynamic_directional_lights.lights.data(),
+                       _scene_input.dynamic_directional_lights.count};
+   }
+
+   auto static_point_lights() const noexcept -> std::span<const point_light>
+   {
+      return _scene_input.static_point_lights;
+   }
+
+   auto dynamic_point_lights() const noexcept -> std::span<const point_light>
+   {
+      return _scene_input.dynamic_point_lights;
+   }
+
+   auto static_spot_lights() const noexcept -> std::span<const spot_light>
+   {
+      return _scene_input.static_spot_lights;
+   }
+
+   auto dynamic_spot_lights() const noexcept -> std::span<const spot_light>
+   {
+      return _scene_input.dynamic_spot_lights;
+   }
+
+private:
+   scene_input _scene_input;
+   std::vector<bvh> _generated_mesh_bvhs;
+
+   std::vector<top_level_bvh::instance> _bvh_instances;
+   top_level_bvh _bvh;
+};
+
+struct terrain_view {
+   int32 length = 0;
+   float grid_scale = 0.0f;
+   float height_scale = 0.0f;
+
+   const container::dynamic_array_2d<int16>& height_map;
+};
+
 struct terrain_point {
    int16 x;
    int16 z;
 };
 
 struct bake_triangle {
-   bake_triangle(std::array<terrain_point, 3> points, const terrain& terrain,
+   bake_triangle(std::array<terrain_point, 3> points, const terrain_view& terrain,
                  const container::dynamic_array_2d<float3>& normal_map)
    {
       const float terrain_half_length = terrain.length / 2.0f;
@@ -515,7 +534,7 @@ struct bake_triangle {
    std::span<float3> samples;
 };
 
-auto build_normal_map(const terrain& terrain) noexcept
+auto build_normal_map(const terrain_view terrain) noexcept
    -> container::dynamic_array_2d<float3>
 {
    const float terrain_half_length = terrain.length / 2.0f;
@@ -577,7 +596,7 @@ auto build_normal_map(const terrain& terrain) noexcept
    return normal_map;
 }
 
-auto build_triangles(const terrain& terrain,
+auto build_triangles(const terrain_view terrain,
                      const container::dynamic_array_2d<float3>& normal_map) noexcept
    -> std::vector<bake_triangle>
 {
@@ -700,7 +719,7 @@ struct detail::terrain_light_map_baker_impl {
                                 const active_layers active_layers,
                                 async::thread_pool& thread_pool,
                                 const terrain_light_map_baker_config& config) noexcept
-      : _scene{world, library, active_layers, config}
+      : _scene_input{world, library, active_layers, config}, _config{config}
    {
       if (not std::has_single_bit(static_cast<uint32>(world.terrain.length))) {
          std::terminate();
@@ -722,47 +741,11 @@ struct detail::terrain_light_map_baker_impl {
       _total_points = static_cast<float>(_terrain_length_quads * _terrain_length_tris);
 
       _height_map = world.terrain.height_map;
-      _normal_map = build_normal_map(world.terrain);
 
-      _triangle_sample_coords.resize(config.triangle_samples);
-
-      for (int32 i = 0; i < std::ssize(_triangle_sample_coords); ++i) {
-         const float3 coords = uniform_sample_triangle(R2(i));
-
-         _triangle_sample_coords[i] = {coords.x, coords.y, coords.z};
-      }
-
-      _bake_triangles = build_triangles(world.terrain, _normal_map);
-      _bake_triangle_sample_storage.resize(_bake_triangles.size() *
-                                           _triangle_sample_coords.size());
-
-      for (std::size_t i = 0; i < _bake_triangles.size(); ++i) {
-         _bake_triangles[i].samples = std::span{_bake_triangle_sample_storage}
-                                         .subspan(i * _triangle_sample_coords.size(),
-                                                  _triangle_sample_coords.size());
-      }
-
-      if (config.ambient_occlusion) {
-         _ao_sample_count = std::max(config.ambient_occlusion_samples, 1);
-         _ao_sample_count_flt = static_cast<float>(_ao_sample_count);
-         _inv_ao_sample_count_flt = 1.0f / _ao_sample_count_flt;
-
-         _ao_sample_directions.resize(_triangle_sample_coords.size() * _ao_sample_count);
-
-         for (int32 i = 0; i < std::ssize(_ao_sample_directions); ++i) {
-            _ao_sample_directions[i] = cosine_sample_hemisphere(R2(i));
-         }
-      }
-      else {
-         _ao_sample_count = 0;
-         _ao_sample_count_flt = 0.0f;
-         _inv_ao_sample_count_flt = 0.0f;
-      }
-
-      _task = thread_pool.exec(async::task_priority::low,
-                               [&, bake_ps2_light_map = config.bake_ps2_light_map] {
-                                  start_bake(thread_pool, bake_ps2_light_map);
-                               });
+      _task = thread_pool.exec(async::task_priority::low, [this, &thread_pool] {
+         prepare_bake(thread_pool);
+         start_bake(thread_pool);
+      });
    }
 
    bool ready() const noexcept
@@ -799,12 +782,14 @@ struct detail::terrain_light_map_baker_impl {
 
 private:
    std::atomic<terrain_light_map_baker_status> _status =
-      terrain_light_map_baker_status::sampling;
+      terrain_light_map_baker_status::preparing;
    std::atomic_int32_t _tris_sampled = 0;
    std::atomic_int32_t _tris_ps2_sampled = 0;
    float _total_points = 0.0f;
 
    constexpr static int32 _bake_patch_length = 8;
+
+   terrain_light_map_baker_config _config;
 
    int32 _terrain_length = 0;
    int32 _terrain_length_quads = 0;
@@ -833,9 +818,71 @@ private:
    float3 _ambient_ground_color;
    float3 _ambient_sky_color;
 
+   // Prepared on the main thread and then moved into and used by _scene in the background.
+   scene_input _scene_input;
+
    async::task<void> _task;
 
-   void start_bake(async::thread_pool& thread_pool, bool bake_ps2_dynamic_light_map) noexcept
+   void prepare_bake(async::thread_pool& thread_pool) noexcept
+   {
+      async::task<void> build_terrain_data_task =
+         thread_pool.exec(async::task_priority::low, [this] {
+            const terrain_view terrain{.length = _terrain_length,
+                                       .grid_scale = _terrain_grid_scale,
+                                       .height_scale = _terrain_height_scale,
+                                       .height_map = _height_map};
+
+            _normal_map = build_normal_map(terrain);
+            _bake_triangles = build_triangles(terrain, _normal_map);
+
+            _bake_triangle_sample_storage.resize(_bake_triangles.size() *
+                                                 _triangle_sample_coords.size());
+
+            for (std::size_t i = 0; i < _bake_triangles.size(); ++i) {
+               _bake_triangles[i].samples =
+                  std::span{_bake_triangle_sample_storage}
+                     .subspan(i * _triangle_sample_coords.size(),
+                              _triangle_sample_coords.size());
+            }
+         });
+      async::task<void> build_samples_task =
+         thread_pool.exec(async::task_priority::low, [this] {
+            _triangle_sample_coords.resize(_config.triangle_samples);
+
+            for (int32 i = 0; i < std::ssize(_triangle_sample_coords); ++i) {
+               const float3 coords = uniform_sample_triangle(R2(i));
+
+               _triangle_sample_coords[i] = {coords.x, coords.y, coords.z};
+            }
+
+            if (_config.ambient_occlusion) {
+               _ao_sample_count = std::max(_config.ambient_occlusion_samples, 1);
+               _ao_sample_count_flt = static_cast<float>(_ao_sample_count);
+               _inv_ao_sample_count_flt = 1.0f / _ao_sample_count_flt;
+
+               _ao_sample_directions.resize(_triangle_sample_coords.size() *
+                                            _ao_sample_count);
+
+               for (int32 i = 0; i < std::ssize(_ao_sample_directions); ++i) {
+                  _ao_sample_directions[i] = cosine_sample_hemisphere(R2(i));
+               }
+            }
+            else {
+               _ao_sample_count = 0;
+               _ao_sample_count_flt = 0.0f;
+               _inv_ao_sample_count_flt = 0.0f;
+            }
+         });
+
+      _scene = {std::move(_scene_input), thread_pool};
+
+      build_terrain_data_task.wait();
+      build_samples_task.wait();
+
+      wait_all(build_terrain_data_task, build_samples_task);
+   }
+
+   void start_bake(async::thread_pool& thread_pool) noexcept
    {
       std::vector<async::task<void>> tasks;
       tasks.reserve(thread_pool.thread_count(async::task_priority::low) - 1);
@@ -875,7 +922,7 @@ private:
                                                            _triangle_sample_coords,
                                                            _bake_triangles));
 
-      if (bake_ps2_dynamic_light_map) {
+      if (_config.bake_ps2_light_map) {
          _status.store(terrain_light_map_baker_status::sampling_ps2,
                        std::memory_order_relaxed);
 
