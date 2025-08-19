@@ -728,6 +728,13 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("blocks.show_quick_tools"s,
                  [this] { ImGui::OpenPopup("Block Quick Tools"); });
+
+   _commands.add("export_selection.confirm"s, [this] {
+      export_selection_with_picker();
+      _export_selection_open = false;
+   });
+   _commands.add("export_selection.cancel"s,
+                 [this] { _export_selection_open = false; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -1475,6 +1482,18 @@ void world_edit::initialize_hotkeys() noexcept
                         },
 
                      .hidden = true});
+
+   _hotkeys.add_set(
+      {.name = "Export Selection",
+       .description = "Active while the block editor is open."s,
+       .activated = [this] { return _export_selection_open; },
+       .default_hotkeys =
+          {
+             {"Click", "export_selection.confirm", {.key = key::enter}},
+             {"Cancel", "export_selection.cancel", {.key = key::escape}},
+          },
+
+       .hidden = true});
 }
 
 }

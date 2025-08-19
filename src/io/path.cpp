@@ -345,6 +345,11 @@ bool create_directory(const path& path) noexcept
    return CreateDirectoryW(wide_path{path}.c_str(), nullptr) != 0;
 }
 
+bool copy_file(const path& src, const path& dest) noexcept
+{
+   return CopyFileW(io::wide_path{src}.c_str(), io::wide_path{dest}.c_str(), false) != 0;
+}
+
 struct directory_iterator::impl {
    impl(const path& directory) noexcept;
 

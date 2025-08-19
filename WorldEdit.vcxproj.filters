@@ -271,6 +271,8 @@
     <ClCompile Include="src\world\blocks\bvh.cpp" />
     <ClCompile Include="src\world\blocks\custom_mesh_bvh_library.cpp" />
     <ClCompile Include="src\graphics\shaders\block_surface_highlightVS.cpp" />
+    <ClCompile Include="src\world\io\export_selection.cpp" />
+    <ClCompile Include="src\world\blocks\export\mesh_gather.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -598,6 +600,8 @@
     <ClInclude Include="src\math\curves.hpp" />
     <ClInclude Include="src\world\blocks\bvh.hpp" />
     <ClInclude Include="src\world\blocks\custom_mesh_bvh_library.hpp" />
+    <ClInclude Include="src\world\io\export_selection.hpp" />
+    <ClInclude Include="src\world\blocks\export\mesh_gather.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

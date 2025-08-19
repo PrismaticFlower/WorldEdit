@@ -407,6 +407,8 @@ private:
 
    void ui_show_block_material_editor() noexcept;
 
+   void ui_show_export_selection() noexcept;
+
    void ui_draw_select_box() noexcept;
 
    bool ui_object_class_pick_widget(world::object* object) noexcept;
@@ -479,6 +481,8 @@ private:
    void close_world() noexcept;
 
    void save_entity_group_with_picker(const world::entity_group& group) noexcept;
+
+   void export_selection_with_picker() noexcept;
 
    void enumerate_project_worlds() noexcept;
 
@@ -597,6 +601,7 @@ private:
    bool _animation_hierarchy_editor_open = false;
    bool _block_editor_open = false;
    bool _block_material_editor_open = false;
+   bool _export_selection_open = false;
    terrain_edit_tool _terrain_edit_tool = terrain_edit_tool::none;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
@@ -1217,6 +1222,11 @@ private:
    struct block_material_editor_context {
       uint32 selected_index = 0;
    } _block_material_editor_context;
+
+   struct export_selection_config {
+      bool copy_textures = false;
+      bool include_terrain = false;
+   } _export_selection_config;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;

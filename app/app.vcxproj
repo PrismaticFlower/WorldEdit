@@ -225,6 +225,7 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
     <ClCompile Include="src\dx_agility_sdk_exports.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\new_delete_override.cpp" />
+    <ClCompile Include="src\world_edit_ui_export_selection.cpp" />
     <ClCompile Include="src\world_edit_ui_world_block_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_world_block_material_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_world_selection_resize_entity.cpp" />

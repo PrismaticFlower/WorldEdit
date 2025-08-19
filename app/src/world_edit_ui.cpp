@@ -173,6 +173,10 @@ void world_edit::update_ui() noexcept
       ui_show_block_material_editor();
    }
 
+   if (_export_selection_open) {
+      ui_show_export_selection();
+   }
+
    if (ImGui::BeginPopup("Create Entity", ImGuiWindowFlags_AlwaysAutoResize |
                                              ImGuiWindowFlags_NoDecoration)) {
       ui_show_create_menu_items();

@@ -39,6 +39,7 @@
 #include "world/blocks/utility/find.hpp"
 #include "world/blocks/utility/grounding.hpp"
 #include "world/blocks/utility/raycast.hpp"
+#include "world/io/export_selection.hpp"
 #include "world/io/load.hpp"
 #include "world/io/load_entity_group.hpp"
 #include "world/io/save.hpp"
@@ -4035,6 +4036,47 @@ void world_edit::save_entity_group_with_picker(const world::entity_group& group)
       _stream->write(message);
 
       MessageBoxA(_window, message.data(), "Failed to save entity group!", MB_OK);
+   }
+}
+
+void world_edit::export_selection_with_picker() noexcept
+{
+   if (_interaction_targets.selection.empty() and
+       not _export_selection_config.include_terrain) {
+      return;
+   }
+
+   static constexpr GUID export_selection_picker_guid =
+      {0x72609b8d, 0x2452, 0x45e4, {0x97, 0xa0, 0x13, 0xd, 0xb6, 0x8c, 0x56, 0x35}};
+
+   auto path = utility::show_file_save_picker(
+      {.title = L"Save Entity Group"s,
+       .ok_button_label = L"Save"s,
+       .forced_start_folder = _world_path,
+       .filters = {utility::file_picker_filter{.name = L"Wavefront .obj file"s,
+                                               .filter = L"*.obj"s}},
+       .picker_guid = export_selection_picker_guid,
+       .window = _window,
+       .must_exist = true});
+
+   if (not path) return;
+   if (path->extension().empty()) *path += ".obj";
+
+   try {
+      world::export_selection_to_obj(*path,
+                                     {.copy_textures = _export_selection_config.copy_textures,
+                                      .include_terrain =
+                                         _export_selection_config.include_terrain},
+                                     _interaction_targets.selection, _world,
+                                     _object_classes, _asset_libraries, *_stream);
+   }
+   catch (std::exception& e) {
+      auto message = fmt::format("Failed to export selection!\n   Reason: \n{}",
+                                 string::indent(2, e.what()));
+
+      _stream->write(message);
+
+      MessageBoxA(_window, message.data(), "Failed to export selection!", MB_OK);
    }
 }
 

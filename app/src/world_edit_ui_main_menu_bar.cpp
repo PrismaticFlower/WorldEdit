@@ -95,6 +95,10 @@ void world_edit::ui_show_main_menu_bar() noexcept
             ImGui::EndMenu();
          }
 
+         ImGui::Separator();
+
+         if (ImGui::MenuItem("Export Selection")) _export_selection_open = true;
+
          ImGui::EndMenu();
       }
 

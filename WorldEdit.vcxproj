@@ -394,6 +394,7 @@
     <ClCompile Include="src\world\blocks\dirty_range_tracker.cpp" />
     <ClCompile Include="src\world\blocks\export\mesh_clusters.cpp" />
     <ClCompile Include="src\world\blocks\export\mesh_cull.cpp" />
+    <ClCompile Include="src\world\blocks\export\mesh_gather.cpp" />
     <ClCompile Include="src\world\blocks\export\mesh_scenes.cpp" />
     <ClCompile Include="src\world\blocks\mesh_generate.cpp" />
     <ClCompile Include="src\world\blocks\mesh_geometry.cpp" />
@@ -407,6 +408,7 @@
     <ClCompile Include="src\world\blocks\utility\raycast.cpp" />
     <ClCompile Include="src\world\blocks\utility\snapping.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
+    <ClCompile Include="src\world\io\export_selection.cpp" />
     <ClCompile Include="src\world\io\layer_remap.cpp" />
     <ClCompile Include="src\world\io\load.cpp" />
     <ClCompile Include="src\world\io\load_blocks.cpp" />
@@ -718,6 +720,7 @@
     <ClInclude Include="src\world\blocks\custom_mesh_library.hpp" />
     <ClInclude Include="src\world\blocks\export\mesh_clusters.hpp" />
     <ClInclude Include="src\world\blocks\export\mesh_cull.hpp" />
+    <ClInclude Include="src\world\blocks\export\mesh_gather.hpp" />
     <ClInclude Include="src\world\blocks\export\mesh_scenes.hpp" />
     <ClInclude Include="src\world\blocks\export\mesh.hpp" />
     <ClInclude Include="src\world\blocks\mesh_generate.hpp" />
@@ -738,6 +741,7 @@
     <ClInclude Include="src\world\id.hpp" />
     <ClInclude Include="src\world\game_mode_description.hpp" />
     <ClInclude Include="src\world\hintnode.hpp" />
+    <ClInclude Include="src\world\io\export_selection.hpp" />
     <ClInclude Include="src\world\io\layer_remap.hpp" />
     <ClInclude Include="src\world\io\load.hpp" />
     <ClInclude Include="src\world\io\load_blocks.hpp" />
