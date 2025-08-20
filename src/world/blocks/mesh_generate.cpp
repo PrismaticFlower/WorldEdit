@@ -83,9 +83,6 @@ auto calculate_curve_axis_normal(const float3& tangent, const float3& axis) noex
 auto generate_mesh(const block_custom_mesh_description_stairway& stairway) noexcept
    -> block_custom_mesh
 {
-   if (stairway.size.y <= 0.0f) return {};
-   if (stairway.step_height <= 0.0f) return {};
-
    block_custom_mesh mesh;
 
    const float step_height = stairway.step_height;
@@ -95,7 +92,9 @@ auto generate_mesh(const block_custom_mesh_description_stairway& stairway) noexc
    const float steps_height = stairway.size.y;
    const float steps_length = stairway.size.z;
 
-   const int steps = static_cast<int>(ceilf(steps_height / step_height));
+   const int steps = (steps_height <= 0.0f or step_height <= 0.0f)
+                        ? 1
+                        : static_cast<int>(ceilf(steps_height / step_height));
    const float adjusted_step_height = steps_height / steps;
    const float step_length = steps_length / steps;
    const float inv_steps = 1.0f / steps;
@@ -1084,9 +1083,6 @@ auto generate_mesh(const block_custom_mesh_description_stairway& stairway) noexc
 auto generate_mesh(const block_custom_mesh_description_stairway_floating& stairway) noexcept
    -> block_custom_mesh
 {
-   if (stairway.step_height <= 0.0f) return {};
-   if (stairway.size.y <= 0.0f) return {};
-
    world::block_custom_mesh mesh;
 
    const float step_height = stairway.step_height;
@@ -1095,7 +1091,9 @@ auto generate_mesh(const block_custom_mesh_description_stairway_floating& stairw
    const float steps_height = stairway.size.y;
    const float steps_length = stairway.size.z;
 
-   const int steps = static_cast<int>(ceilf(steps_height / step_height));
+   const int steps = (steps_height <= 0.0f or step_height <= 0.0f)
+                        ? 1
+                        : static_cast<int>(ceilf(steps_height / step_height));
    const float adjusted_step_height = steps_height / steps;
    const float step_length = steps_length / steps;
    const float inv_steps = 1.0f / steps;
