@@ -930,7 +930,9 @@ bvh::bvh() noexcept {}
 
 bvh::bvh(std::span<const std::array<uint16, 3>> indices,
          std::span<const float3> positions, bvh_flags flags) noexcept
-   : _impl{std::make_unique<detail::bvh_impl>(indices, positions, flags)}
+   : _impl{not indices.empty()
+              ? std::make_unique<detail::bvh_impl>(indices, positions, flags)
+              : nullptr}
 {
 }
 
