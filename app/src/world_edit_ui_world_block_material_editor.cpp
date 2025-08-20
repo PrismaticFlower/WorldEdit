@@ -243,7 +243,7 @@ bool world_edit::ui_block_texture_pick_widget(const char* label, std::string* te
    const float combo_width =
       ImGui::CalcItemWidth() - ImGui::GetStyle().ItemInnerSpacing.x - tiny_preview_size;
 
-   ImGui::PushID(texture->c_str());
+   ImGui::PushID(label);
 
    ImGui::SetNextItemWidth(combo_width);
 
