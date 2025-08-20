@@ -16,7 +16,7 @@ struct dynamic_buffer_allocator {
       gpu::constant_buffer_data_placement_alignment;
    constexpr static std::size_t max_pages = 256;
 
-   dynamic_buffer_allocator(const uint32 page_size, gpu::device& device);
+   dynamic_buffer_allocator(const uint32 start_page_size, gpu::device& device);
 
    ~dynamic_buffer_allocator();
 
@@ -56,13 +56,13 @@ private:
 
    std::shared_mutex _page_change_mutex;
 
-   const std::size_t _page_size = 0;
+   std::size_t _page_size = 0;
    std::size_t _frame_index = 0;
    std::size_t _page_index = 0;
 
    std::array<std::vector<page>, gpu::frame_pipeline_length> _frame_pages;
+   std::vector<std::array<std::vector<page>, gpu::frame_pipeline_length>> _deferred_release_frame_pages;
 
-   std::size_t _frame_section_size = 0;
    gpu::device& _device;
 };
 
