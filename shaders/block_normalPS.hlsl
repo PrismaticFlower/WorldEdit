@@ -21,8 +21,10 @@ float3x3 cotangent_frame(const input_vertex input)
    const float3 dp1 = ddx(input.positionWS);
    const float3 dp2 = ddy(input.positionWS);
 
-   const float2 duv1 = ddx(input.texcoords);
-   const float2 duv2 = ddy(input.texcoords);
+   const float2 texcoords = {input.texcoords.x, -input.texcoords.y};
+
+   const float2 duv1 = ddx(texcoords);
+   const float2 duv2 = ddy(texcoords);
 
    const float3 dp2perp = cross(dp2, normalWS);
    const float3 dp1perp = cross(normalWS, dp1);
