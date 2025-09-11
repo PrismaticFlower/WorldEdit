@@ -351,7 +351,7 @@ bool copy_file(const path& src, const path& dest) noexcept
 }
 
 struct directory_iterator::impl {
-   impl(const path& directory) noexcept;
+   impl(const path& directory, const bool) noexcept;
 
    ~impl();
 
@@ -369,7 +369,8 @@ struct directory_iterator::impl {
 
    directory_entry entry;
 
-   bool skip_directory = false;
+   bool recurse = true;
+   bool skip_directory = not recurse;
 
    std::vector<io::path> pending_directories;
 
@@ -384,9 +385,9 @@ struct directory_iterator::impl {
 
 directory_iterator::directory_iterator() noexcept = default;
 
-directory_iterator::directory_iterator(const path& directory) noexcept
+directory_iterator::directory_iterator(const path& directory, const bool recurse) noexcept
 {
-   _impl = new directory_iterator::impl{directory};
+   _impl = new directory_iterator::impl{directory, recurse};
 }
 
 directory_iterator::directory_iterator(const directory_iterator& other) noexcept
@@ -482,7 +483,8 @@ auto directory_iterator::impl::get_entry() noexcept -> const directory_entry&
    return entry;
 }
 
-directory_iterator::impl::impl(const path& directory) noexcept
+directory_iterator::impl::impl(const path& directory, const bool recurse) noexcept
+   : recurse{recurse}
 {
    open_directory(directory);
 }
@@ -498,7 +500,7 @@ void directory_iterator::impl::advance() noexcept
       pending_directories.push_back(entry.path);
    }
 
-   skip_directory = false;
+   skip_directory = not recurse;
 
 retry:
    const BOOL found_file = FindNextFileW(find_handle, &find_data);

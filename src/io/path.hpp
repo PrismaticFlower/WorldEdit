@@ -162,7 +162,7 @@ struct directory_entry {
 struct directory_iterator {
    directory_iterator() noexcept;
 
-   directory_iterator(const path& directory) noexcept;
+   directory_iterator(const path& directory, const bool recurse = true) noexcept;
 
    directory_iterator(const directory_iterator& other) noexcept;
 
