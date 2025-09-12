@@ -152,6 +152,15 @@ TEST_CASE("io create_directory and remove tests", "[IO]")
    CHECK(not io::exists("temp/create_directory"));
 }
 
+TEST_CASE("io create_directories and remove tests", "[IO]")
+{
+   CHECK(io::create_directories("temp/create_directories/hello/wow"));
+   CHECK(io::remove("temp/create_directories/hello/wow"));
+   CHECK(io::remove("temp/create_directories/hello"));
+   CHECK(io::remove("temp/create_directories"));
+   CHECK(not io::exists("temp/create_directories"));
+}
+
 // TODO: directory_iterator tests
 
 }

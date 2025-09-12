@@ -143,6 +143,11 @@ auto get_last_write_time(const path& path) noexcept -> uint64;
 /// @return True if successful, false otherwise.
 [[nodiscard]] bool create_directory(const path& path) noexcept;
 
+/// @brief Create a directory and any parent directories needed.
+/// @param path The directory to create.
+/// @return True if successful (or if the directory already exists), false otherwise.
+[[nodiscard]] bool create_directories(const path& path) noexcept;
+
 /// @brief Copy a file.
 /// @param src The source file path.
 /// @param dest The destination file path. If destination already exists it will be overwritten.

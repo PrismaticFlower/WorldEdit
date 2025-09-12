@@ -345,6 +345,42 @@ bool create_directory(const path& path) noexcept
    return CreateDirectoryW(wide_path{path}.c_str(), nullptr) != 0;
 }
 
+bool create_directories(const path& directory) noexcept
+{
+   if (const DWORD file_attributes = GetFileAttributesW(wide_path{directory}.c_str());
+       file_attributes != INVALID_FILE_ATTRIBUTES) {
+      return (file_attributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
+   }
+
+   std::vector<path> path_stack;
+   path_stack.push_back(directory);
+
+   path parent_path = directory.parent_path();
+
+   while (parent_path.string_view() != parent_path.parent_path()) {
+      if (const DWORD file_attributes =
+             GetFileAttributesW(wide_path{parent_path}.c_str());
+          file_attributes == INVALID_FILE_ATTRIBUTES) {
+         path_stack.emplace_back(std::move(parent_path));
+         parent_path = path_stack.back().parent_path();
+
+         continue;
+      }
+      else if (file_attributes & FILE_ATTRIBUTE_DIRECTORY) {
+         break;
+      }
+      else {
+         return false;
+      }
+   }
+
+   for (std::ptrdiff_t i = std::ssize(path_stack) - 1; i >= 0; --i) {
+      if (not create_directory(path_stack[i])) return false;
+   }
+
+   return true;
+}
+
 bool copy_file(const path& src, const path& dest) noexcept
 {
    return CopyFileW(io::wide_path{src}.c_str(), io::wide_path{dest}.c_str(), false) != 0;
