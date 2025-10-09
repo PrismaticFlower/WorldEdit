@@ -273,6 +273,9 @@
     <ClCompile Include="src\graphics\shaders\block_surface_highlightVS.cpp" />
     <ClCompile Include="src\world\io\export_selection.cpp" />
     <ClCompile Include="src\world\blocks\export\mesh_gather.cpp" />
+    <ClCompile Include="src\munge\manager.cpp" />
+    <ClCompile Include="src\os\process.cpp" />
+    <ClCompile Include="src\munge\output.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -602,6 +605,11 @@
     <ClInclude Include="src\world\blocks\custom_mesh_bvh_library.hpp" />
     <ClInclude Include="src\world\io\export_selection.hpp" />
     <ClInclude Include="src\world\blocks\export\mesh_gather.hpp" />
+    <ClInclude Include="src\munge\tool.hpp" />
+    <ClInclude Include="src\munge\project.hpp" />
+    <ClInclude Include="src\munge\manager.hpp" />
+    <ClInclude Include="src\os\process.hpp" />
+    <ClInclude Include="src\munge\output.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

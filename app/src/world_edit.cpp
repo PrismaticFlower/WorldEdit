@@ -3858,6 +3858,7 @@ void world_edit::open_project(const io::path& path) noexcept
 
    _renderer->async_load_thumbnail_disk_cache(
       io::compose_path(_project_dir, ".WorldEdit/thumbnails.bin").c_str());
+   _munge_manager.open_project(path);
 
    enumerate_project_worlds();
 }

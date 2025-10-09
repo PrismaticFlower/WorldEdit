@@ -467,6 +467,32 @@ void world_edit::ui_show_main_menu_bar() noexcept
          ImGui::EndMenu();
       }
 
+      if (ImGui::BeginMenu("Munge")) {
+         if (ImGui::MenuItem("Munge",
+                             get_display_string(_hotkeys.query_binding("Global", "Run Munge")),
+                             nullptr, not _munge_manager.is_busy())) {
+            _munge_manager_open = true;
+
+            if (not _munge_manager.is_busy()) _munge_manager.start_munge();
+         }
+
+         if (ImGui::MenuItem("Clean", nullptr, nullptr, not _munge_manager.is_busy())) {
+            _munge_manager_open = true;
+
+            if (not _munge_manager.is_busy()) _munge_manager.start_clean();
+         }
+
+         ImGui::Separator();
+
+         ImGui::MenuItem("Show Munge Manager",
+                         get_display_string(
+                            _hotkeys.query_binding("Global",
+                                                   "Show Munge Manager")),
+                         &_munge_manager_open);
+
+         ImGui::EndMenu();
+      }
+
       if (ImGui::BeginMenu("Settings")) {
          ImGui::MenuItem("Settings Editor", nullptr, &_settings_editor_open);
          ImGui::MenuItem("Hotkeys Editor", nullptr, &_hotkeys_editor_open);

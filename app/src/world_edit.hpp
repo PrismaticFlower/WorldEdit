@@ -1,22 +1,31 @@
 #pragma once
 
+#include "commands.hpp"
+#include "gizmos.hpp"
+#include "hotkeys.hpp"
+#include "output_stream.hpp"
+#include "scale_factor.hpp"
+
 #include "assets/asset_libraries.hpp"
 #include "async/thread_pool.hpp"
-#include "commands.hpp"
+
 #include "container/ring_set.hpp"
 #include "edits/stack.hpp"
-#include "gizmos.hpp"
+
 #include "graphics/camera.hpp"
 #include "graphics/gpu/exception.hpp"
 #include "graphics/renderer.hpp"
-#include "hotkeys.hpp"
+
 #include "io/path.hpp"
-#include "output_stream.hpp"
-#include "scale_factor.hpp"
+
+#include "munge/manager.hpp"
+
 #include "settings/io.hpp"
 #include "settings/settings.hpp"
+
 #include "utility/command_line.hpp"
 #include "utility/stopwatch.hpp"
+
 #include "world/blocks/custom_mesh_bvh_library.hpp"
 #include "world/object_class.hpp"
 #include "world/object_class_library.hpp"
@@ -409,6 +418,8 @@ private:
 
    void ui_show_export_selection() noexcept;
 
+   void ui_show_munge_manager() noexcept;
+
    void ui_draw_select_box() noexcept;
 
    bool ui_object_class_pick_widget(world::object* object) noexcept;
@@ -602,6 +613,7 @@ private:
    bool _block_editor_open = false;
    bool _block_material_editor_open = false;
    bool _export_selection_open = false;
+   bool _munge_manager_open = false;
    terrain_edit_tool _terrain_edit_tool = terrain_edit_tool::none;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
@@ -1228,6 +1240,13 @@ private:
       bool include_terrain = false;
    } _export_selection_config;
 
+   struct munge_context {
+      std::string new_sound_localization_language;
+      std::string new_sound_localization_directory;
+      std::vector<bool> selected_output_lines;
+      bool show_stdout = true;
+   } _munge_context;
+
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;
 
@@ -1270,6 +1289,7 @@ private:
    gizmos _gizmos;
    commands _commands;
    hotkeys _hotkeys{_commands, *_stream};
+   munge::manager _munge_manager{*_thread_pool};
 
    settings::saver _settings_saver{".settings", _settings};
 };

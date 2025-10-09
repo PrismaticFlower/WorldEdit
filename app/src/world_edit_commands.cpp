@@ -194,6 +194,7 @@ void world_edit::initialize_commands() noexcept
       _block_material_editor_open = true;
       _block_material_editor_context = {};
    });
+   _commands.add("show.munge_manager"s, [this] { _munge_manager_open = true; });
 
    _commands.add("show.overlay_grid"s, _draw_overlay_grid);
    _commands.add("show.terrain_grid"s, _draw_terrain_grid);
@@ -735,6 +736,15 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("export_selection.cancel"s,
                  [this] { _export_selection_open = false; });
+
+   _commands.add("munge_manager.munge"s, [this] {
+      if (not _munge_manager.is_busy()) {
+         _munge_manager.start_munge();
+      }
+
+      _munge_manager_open = true;
+   });
+   _commands.add("munge_manager.close"s, [this] { _munge_manager_open = false; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -866,6 +876,11 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show Animation Hierarchy Editor",
            "show.animation_hierarchy_editor",
            {.key = key::f3, .modifiers = {.shift = true}}},
+
+          {"Run Munge", "munge_manager.munge", {.key = key::f6, .modifiers = {.ctrl = true}}},
+          {"Show Munge Manager",
+           "show.munge_manager",
+           {.key = key::f7, .modifiers = {.ctrl = true}}},
 
           {"Show Blocks Editor",
            "show.block_editor",
@@ -1494,6 +1509,16 @@ void world_edit::initialize_hotkeys() noexcept
           },
 
        .hidden = true});
+
+   _hotkeys.add_set({.name = "Munge Manager",
+                     .description = "Active while the munge manager is open."s,
+                     .activated = [this] { return _munge_manager_open; },
+                     .default_hotkeys =
+                        {
+                           {"Close", "munge_manager.close", {.key = key::escape}},
+                        },
+
+                     .hidden = true});
 }
 
 }
