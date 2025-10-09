@@ -1245,6 +1245,10 @@ private:
       std::string new_sound_localization_directory;
       std::vector<bool> selected_output_lines;
       bool show_stdout = true;
+
+      bool tried_auto_find_toolsfl = false;
+      bool prompted_browse_modtools = false;
+      bool prompted_browse_failed = false;
    } _munge_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};

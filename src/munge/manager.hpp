@@ -15,6 +15,7 @@ class thread_pool;
 
 namespace we::munge {
 
+struct project_config;
 struct project;
 
 struct message {
@@ -60,7 +61,7 @@ struct manager {
 private:
    struct impl;
 
-   implementation_storage<impl, 1024> impl;
+   implementation_storage<impl, 1216> impl;
 };
 
 }

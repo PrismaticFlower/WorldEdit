@@ -1,6 +1,7 @@
 #include "world_edit.hpp"
 
 #include "munge/project.hpp"
+#include "utility/file_pickers.hpp"
 #include "utility/show_in_explorer.hpp"
 
 #include <imgui.h>
@@ -495,6 +496,90 @@ void world_edit::ui_show_munge_manager() noexcept
    }
 
    ImGui::End();
+
+   if (io::path& toolsfl_bin_path = _munge_manager.get_project().config.toolsfl_bin_path;
+       toolsfl_bin_path.empty()) {
+      if (not _munge_context.tried_auto_find_toolsfl) {
+         const io::path candidate_toolsfl_bin_path =
+            io::compose_path(_project_dir.parent_path(), R"(ToolsFL\bin)");
+
+         if (io::exists(io::compose_path(candidate_toolsfl_bin_path,
+                                         "LevelPack.exe"))) {
+            toolsfl_bin_path = candidate_toolsfl_bin_path;
+         }
+
+         _munge_context.tried_auto_find_toolsfl = true;
+      }
+      else if (not _munge_context.prompted_browse_modtools) {
+         ImGui::OpenPopup("Browse For Modtools");
+      }
+
+      if (ImGui::BeginPopupModal("Browse For Modtools")) {
+         if (_munge_context.prompted_browse_failed) {
+            ImGui::TextWrapped(
+               "The directory you selected does not appear to be your modtools "
+               "directory. Make sure you select the directory containing "
+               "\"ToolsFL\".\n\nBrowse again?");
+         }
+         else {
+            ImGui::TextWrapped(
+               "In order to use munge features WorldEdit must know where "
+               "your modtools are installed.\n\n\nBrowse for them?");
+         }
+
+         const float button_width =
+            (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2.0f;
+
+         if (ImGui::Button("Yes", {button_width, 0.0f})) {
+            const std::optional<io::path> selected_path = utility::show_folder_picker({
+               .title = L"Browse for Modtools",
+               .ok_button_label = L"Select",
+               .default_folder = _project_dir,
+               .window = _window,
+            });
+
+            if (selected_path) {
+               if (io::exists(io::compose_path(*selected_path,
+                                               R"(ToolsFL\bin\LevelPack.exe)"))) {
+                  toolsfl_bin_path =
+                     io::compose_path(*selected_path, R"(ToolsFL\bin)");
+
+                  _munge_context.prompted_browse_modtools = true;
+               }
+               else if (io::exists(io::compose_path(*selected_path,
+                                                    R"(bin\LevelPack.exe)"))) {
+                  toolsfl_bin_path = io::compose_path(*selected_path, R"(bin)");
+
+                  _munge_context.prompted_browse_modtools = true;
+               }
+               else if (io::exists(
+                           io::compose_path(*selected_path, "LevelPack.exe"))) {
+                  toolsfl_bin_path = *selected_path;
+
+                  _munge_context.prompted_browse_modtools = true;
+               }
+               else {
+                  _munge_context.prompted_browse_failed = true;
+               }
+            }
+            else {
+               _munge_context.prompted_browse_failed = true;
+            }
+         }
+
+         ImGui::SameLine();
+
+         if (ImGui::Button("No", {button_width, 0.0f})) {
+            _munge_context.prompted_browse_modtools = true;
+
+            ImGui::CloseCurrentPopup();
+         }
+
+         ImGui::SetItemTooltip("You will be unabled to use munge features.");
+
+         ImGui::EndPopup();
+      }
+   }
 }
 
 }

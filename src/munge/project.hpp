@@ -6,6 +6,8 @@
 namespace we::munge {
 
 struct project_config {
+   io::path toolsfl_bin_path;
+
    // Common file manifests to pass to side and world munge. Relative to the common output directory.
    std::vector<io::path> common_files = {
       "core.files",
@@ -250,6 +252,8 @@ struct project {
    std::vector<project_child_sound_shared> sound_shared;
    std::vector<project_child_sound_world> sound_worlds;
    std::vector<project_sound_localization> sound_localizations;
+
+   project_config config;
 };
 
 }
