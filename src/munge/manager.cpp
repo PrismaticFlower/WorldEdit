@@ -2134,6 +2134,10 @@ auto run_clean(munge_context context) noexcept -> report
    const std::string_view platform = context.platform;
    const io::path& project_directory = context.project.directory;
 
+   if (context.project.addme_active) {
+      clean_directory(R"(addme\munged)", project_directory, context.feedback);
+   }
+
    if (context.project.common_active) {
       clean_directory(fmt::format(R"(_BUILD\Common\MUNGED\{})", platform),
                       project_directory, context.feedback);
