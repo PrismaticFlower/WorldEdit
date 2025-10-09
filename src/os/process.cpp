@@ -74,7 +74,6 @@ bool create_overlapped_pipe(HANDLE* read_handle, HANDLE* write_handle,
 }
 
 struct process::storage {
-
    wil::unique_process_handle process_handle;
    wil::unique_handle thread_handle;
 
