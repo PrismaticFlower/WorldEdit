@@ -1,5 +1,7 @@
 #include "settings.hpp"
 
+#include "utility/file_pickers.hpp"
+
 #include <array>
 #include <cmath>
 
@@ -8,7 +10,8 @@
 
 namespace we::settings {
 
-void show_imgui_editor(settings& settings, bool& open, scale_factor display_scale) noexcept
+void show_imgui_editor(settings& settings, bool& open,
+                       scale_factor display_scale, void* window_handle) noexcept
 {
    ImGui::SetNextWindowPos({ImGui::GetIO().DisplaySize.x / 2.0f,
                             ImGui::GetIO().DisplaySize.y / 2.0f},
@@ -54,6 +57,40 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
                "files. The path can contain environment "
                "variables such as %%ProgramFiles%%. But may "
                "not contain quotes (\").");
+
+            ImGui::SetNextItemWidth(ImGui::CalcItemWidth() -
+                                    (ImGui::CalcTextSize("Browse").x +
+                                     ImGui::GetStyle().FramePadding.x * 2.0f) -
+                                    ImGui::GetStyle().ItemInnerSpacing.x);
+
+            ImGui::InputText("##Game Install Path", &preferences.game_install_path);
+
+            ImGui::SetItemTooltip(
+               "The path to the game install. Used for deploying munged maps.");
+
+            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+            if (ImGui::Button("Browse##Game Install Path")) {
+               static const GUID browse_for_game_install_guid = {0x7f3b89ad,
+                                                                 0xb6d,
+                                                                 0x47e8,
+                                                                 {0x9a, 0x2d, 0xcf,
+                                                                  0x5e, 0xc4, 0xb7,
+                                                                  0xd6, 0x3f}};
+
+               if (const std::optional<io::path> path = utility::show_folder_picker(
+                      {.title = L"Browse for Game Install",
+                       .ok_button_label = L"Select",
+                       .picker_guid = browse_for_game_install_guid,
+                       .window = static_cast<HWND>(window_handle)});
+                   path) {
+                  preferences.game_install_path = path->string_view();
+               }
+            }
+
+            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+            ImGui::Text("Game Install Path");
 
             ImGui::DragFloat("Gizmo Scale", &ui.gizmo_scale, 0.125f, 0.0f,
                              10.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
@@ -343,5 +380,4 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
 
    ImGui::End();
 }
-
 }

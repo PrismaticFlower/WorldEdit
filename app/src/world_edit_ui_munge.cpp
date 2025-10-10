@@ -24,11 +24,22 @@ void world_edit::ui_show_munge_manager() noexcept
                     ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
       ImGui::BeginDisabled(_munge_manager.is_busy());
 
-      if (ImGui::Button("Munge")) _munge_manager.start_munge();
+      const float header_button_width =
+         (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 3.0f) / 4.0f;
+
+      if (ImGui::Button("Munge", {header_button_width, 0.0f})) {
+         _munge_manager.start_munge();
+      }
 
       ImGui::SameLine();
 
-      if (ImGui::Button("Clean")) _munge_manager.start_clean();
+      if (ImGui::Button("Clean", {header_button_width, 0.0f})) {
+         _munge_manager.start_clean();
+      }
+
+      ImGui::SameLine();
+
+      ImGui::Checkbox("Deploy", &_munge_manager.get_project().deploy);
 
       ImGui::SeparatorText("Active");
 
@@ -497,8 +508,9 @@ void world_edit::ui_show_munge_manager() noexcept
 
    ImGui::End();
 
-   if (io::path& toolsfl_bin_path = _munge_manager.get_project().config.toolsfl_bin_path;
-       toolsfl_bin_path.empty()) {
+   if (_munge_manager.get_project().config.toolsfl_bin_path.empty()) {
+      io::path& toolsfl_bin_path = _munge_manager.get_project().config.toolsfl_bin_path;
+
       if (not _munge_context.tried_auto_find_toolsfl) {
          const io::path candidate_toolsfl_bin_path =
             io::compose_path(_project_dir.parent_path(), R"(ToolsFL\bin)");
@@ -511,11 +523,16 @@ void world_edit::ui_show_munge_manager() noexcept
          _munge_context.tried_auto_find_toolsfl = true;
       }
       else if (not _munge_context.prompted_browse_modtools) {
-         ImGui::OpenPopup("Browse For Modtools");
+         ImGui::OpenPopup("Browse for Modtools");
       }
 
-      if (ImGui::BeginPopupModal("Browse For Modtools")) {
-         if (_munge_context.prompted_browse_failed) {
+      ImGui::SetNextWindowSizeConstraints({415.0f * _display_scale, -1.0f},
+                                          {FLT_MAX, FLT_MAX});
+
+      if (ImGui::BeginPopupModal("Browse for Modtools", nullptr,
+                                 ImGuiWindowFlags_AlwaysAutoResize |
+                                    ImGuiWindowFlags_NoSavedSettings)) {
+         if (_munge_context.prompted_browse_modtools_failed) {
             ImGui::TextWrapped(
                "The directory you selected does not appear to be your modtools "
                "directory. Make sure you select the directory containing "
@@ -524,17 +541,26 @@ void world_edit::ui_show_munge_manager() noexcept
          else {
             ImGui::TextWrapped(
                "In order to use munge features WorldEdit must know where "
-               "your modtools are installed.\n\n\nBrowse for them?");
+               "your modtools are installed.\n\nBrowse for them?");
          }
 
          const float button_width =
             (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2.0f;
 
+         ImGui::SetItemDefaultFocus();
+
          if (ImGui::Button("Yes", {button_width, 0.0f})) {
+            static const GUID browse_for_modtools_guid = {0xb144b02,
+                                                          0x7537,
+                                                          0x4c6d,
+                                                          {0x9a, 0x6, 0x1f, 0x3b,
+                                                           0x67, 0x64, 0xc8, 0x1c}};
+
             const std::optional<io::path> selected_path = utility::show_folder_picker({
                .title = L"Browse for Modtools",
                .ok_button_label = L"Select",
                .default_folder = _project_dir,
+               .picker_guid = browse_for_modtools_guid,
                .window = _window,
             });
 
@@ -559,11 +585,11 @@ void world_edit::ui_show_munge_manager() noexcept
                   _munge_context.prompted_browse_modtools = true;
                }
                else {
-                  _munge_context.prompted_browse_failed = true;
+                  _munge_context.prompted_browse_modtools_failed = true;
                }
             }
             else {
-               _munge_context.prompted_browse_failed = true;
+               _munge_context.prompted_browse_modtools_failed = true;
             }
          }
 
@@ -576,6 +602,97 @@ void world_edit::ui_show_munge_manager() noexcept
          }
 
          ImGui::SetItemTooltip("You will be unabled to use munge features.");
+
+         ImGui::EndPopup();
+      }
+   }
+   else if (_munge_manager.get_project().deploy and
+            _settings.preferences.game_install_path.empty()) {
+      std::string& game_install_path = _settings.preferences.game_install_path;
+
+      if (not _munge_context.prompted_browse_game_install) {
+         ImGui::OpenPopup("Browse for Game Install");
+      }
+
+      ImGui::SetNextWindowSizeConstraints({415.0f * _display_scale, -1.0f},
+                                          {FLT_MAX, FLT_MAX});
+
+      if (ImGui::BeginPopupModal("Browse for Game Install", nullptr,
+                                 ImGuiWindowFlags_AlwaysAutoResize |
+                                    ImGuiWindowFlags_NoSavedSettings)) {
+         if (_munge_context.prompted_browse_game_install_failed) {
+            ImGui::Text(
+               "The directory you selected does not appear to be your game "
+               "install "
+               "directory. Make sure you select the directory containing "
+               "\"BattlefrontII.exe\". In almost all cases it will be the "
+               "\"GameData\" directory.\n\nBrowse again?");
+         }
+         else {
+            ImGui::Text("In order to automatically deploy your map for testing "
+                        "WorldEdit must know where "
+                        "your game is installed.\n\nBrowse for it?");
+         }
+
+         const float button_width =
+            (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2.0f;
+
+         ImGui::SetItemDefaultFocus();
+
+         if (ImGui::Button("Yes", {button_width, 0.0f})) {
+            static const GUID browse_for_game_install_guid = {0x7f3b89ad,
+                                                              0xb6d,
+                                                              0x47e8,
+                                                              {0x9a, 0x2d, 0xcf,
+                                                               0x5e, 0xc4, 0xb7,
+                                                               0xd6, 0x3f}};
+
+            const std::optional<io::path> selected_path = utility::show_folder_picker({
+               .title = L"Browse for Game Install",
+               .ok_button_label = L"Select",
+               .default_folder = _project_dir,
+               .picker_guid = browse_for_game_install_guid,
+               .window = _window,
+            });
+
+            if (selected_path) {
+               if (io::exists(io::compose_path(*selected_path,
+                                               R"(..\BattlefrontII.exe)"))) {
+                  game_install_path = selected_path->parent_path();
+
+                  _munge_context.prompted_browse_game_install = true;
+               }
+               else if (io::exists(io::compose_path(*selected_path,
+                                                    R"(GameData\BattlefrontII.exe)"))) {
+                  game_install_path =
+                     io::compose_path(*selected_path, R"(GameData)").string_view();
+
+                  _munge_context.prompted_browse_game_install = true;
+               }
+               else if (io::exists(io::compose_path(*selected_path,
+                                                    "BattlefrontII.exe"))) {
+                  game_install_path = selected_path->string_view();
+
+                  _munge_context.prompted_browse_game_install = true;
+               }
+               else {
+                  _munge_context.prompted_browse_game_install_failed = true;
+               }
+            }
+            else {
+               _munge_context.prompted_browse_game_install_failed = true;
+            }
+         }
+
+         ImGui::SameLine();
+
+         if (ImGui::Button("No", {button_width, 0.0f})) {
+            _munge_context.prompted_browse_game_install = true;
+
+            ImGui::CloseCurrentPopup();
+         }
+
+         ImGui::SetItemTooltip("Deploy will not work.");
 
          ImGui::EndPopup();
       }

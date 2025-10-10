@@ -15,6 +15,7 @@ struct settings {
    preferences preferences;
 };
 
-void show_imgui_editor(settings& settings, bool& open, scale_factor display_scale) noexcept;
+void show_imgui_editor(settings& settings, bool& open,
+                       scale_factor display_scale, void* window_handle) noexcept;
 
 }

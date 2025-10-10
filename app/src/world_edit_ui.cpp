@@ -58,7 +58,8 @@ void world_edit::update_ui() noexcept
    }
 
    if (_settings_editor_open) {
-      settings::show_imgui_editor(_settings, _settings_editor_open, _display_scale);
+      settings::show_imgui_editor(_settings, _settings_editor_open,
+                                  _display_scale, _window);
 
       if (not _settings_editor_open) {
          settings::save(".settings", _settings);

@@ -239,6 +239,8 @@ struct project {
    /// @brief Root directory of the project i.e. D:\BF2_ModTools\data_TST
    io::path directory;
 
+   bool deploy = true;
+
    bool addme_active = true;
    bool common_active = true;
    bool load_active = false;

@@ -1248,7 +1248,9 @@ private:
 
       bool tried_auto_find_toolsfl = false;
       bool prompted_browse_modtools = false;
-      bool prompted_browse_failed = false;
+      bool prompted_browse_modtools_failed = false;
+      bool prompted_browse_game_install = false;
+      bool prompted_browse_game_install_failed = false;
    } _munge_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};

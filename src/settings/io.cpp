@@ -167,6 +167,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(cursor_placement_reenable_distance);
             setting_entry(terrain_height_brush_stickiness);
             setting_entry(text_editor);
+            setting_entry(game_install_path);
             setting_entry(dont_save_world_gamemodes);
             setting_entry(save_world_boundary_bf1_format);
             setting_entry(dont_save_world_effects);
@@ -277,6 +278,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(cursor_placement_reenable_distance));
       write(file, name_value(terrain_height_brush_stickiness));
       write(file, name_value(text_editor));
+      write(file, name_value(game_install_path));
       write(file, name_value(dont_save_world_gamemodes));
       write(file, name_value(save_world_boundary_bf1_format));
       write(file, name_value(dont_save_world_effects));
