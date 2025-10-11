@@ -1924,7 +1924,7 @@ auto run_munge(munge_context context) -> report
 
          tool_context child_context = world_context;
 
-         world_context.source_path = entry.path;
+         child_context.source_path = entry.path;
 
          for (const tool& tool : context.project.config.world_pack) {
             execute_tool(tool, child_context);
