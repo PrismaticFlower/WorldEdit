@@ -473,7 +473,10 @@ void world_edit::ui_show_main_menu_bar() noexcept
                              nullptr, not _munge_manager.is_busy())) {
             _munge_manager_open = true;
 
-            if (not _munge_manager.is_busy()) _munge_manager.start_munge();
+            if (not _munge_manager.is_busy()) {
+               _munge_manager.start_munge(
+                  io::path{_settings.preferences.game_install_path});
+            }
          }
 
          if (ImGui::MenuItem("Clean", nullptr, nullptr, not _munge_manager.is_busy())) {

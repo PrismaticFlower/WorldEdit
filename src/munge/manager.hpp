@@ -36,7 +36,7 @@ struct manager {
 
    void open_project(const io::path& project_directory) noexcept;
 
-   void start_munge() noexcept;
+   void start_munge(const io::path& game_directory) noexcept;
 
    void start_clean() noexcept;
 

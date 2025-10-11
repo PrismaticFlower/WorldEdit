@@ -28,7 +28,7 @@ void world_edit::ui_show_munge_manager() noexcept
          (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 3.0f) / 4.0f;
 
       if (ImGui::Button("Munge", {header_button_width, 0.0f})) {
-         _munge_manager.start_munge();
+         _munge_manager.start_munge(io::path{_settings.preferences.game_install_path});
       }
 
       ImGui::SameLine();

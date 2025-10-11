@@ -339,6 +339,8 @@ struct munge_context {
 
    project project;
 
+   io::path game_directory;
+
    munge_feedback feedback;
 };
 
@@ -1594,6 +1596,123 @@ void clean_directory(const std::string_view relative_directory,
    }
 }
 
+void deploy_addon(munge_context& context)
+{
+   utility::stopwatch timer;
+
+   std::string_view addon_name = context.project.directory.stem();
+
+   using namespace std::literals;
+
+   for (std::string_view prefix : {"data_"sv, "data"sv}) {
+      if (addon_name.size() > prefix.size() and
+          string::istarts_with(addon_name, prefix)) {
+         addon_name.remove_prefix(prefix.size());
+
+         break;
+      }
+   }
+
+   const io::path addon_directory =
+      io::compose_path(context.game_directory, fmt::format(R"(Addon\{})", addon_name));
+
+   if (not io::create_directories(addon_directory)) {
+      context.feedback.add_error({
+         .file = addon_directory,
+         .tool = "Create Directory",
+         .message = "Failed to create directory for deploying addon.",
+      });
+
+      return;
+   }
+
+   context.feedback.print_output(
+      fmt::format("Deploying addon to {}", addon_directory.string_view()));
+
+   const io::path addme_src_path =
+      io::compose_path(context.project.directory, R"(addme\munged\addme.script)");
+   const io::path addme_dest_path =
+      io::compose_path(addon_directory, "addme.script");
+
+   if (not io::copy_file(addme_src_path, addme_dest_path)) {
+      context.feedback.add_error({
+         .file = addme_dest_path,
+         .tool = "Copy",
+         .message = fmt::format("Faile to copy file {}", addme_src_path.string_view()),
+      });
+
+      return;
+   }
+
+   const io::path addon_data_directory =
+      io::compose_path(addon_directory, "data");
+
+   if (not io::create_directories(addon_data_directory)) {
+      context.feedback.add_error({
+         .file = addon_data_directory,
+         .tool = "Create Directory",
+         .message = "Failed to create directory for deploying addon.",
+      });
+
+      return;
+   }
+
+   const io::path lvl_src_path =
+      io::compose_path(context.project.directory,
+                       fmt::format("_LVL_{}", context.platform));
+   const io::path lvl_dest_path =
+      io::compose_path(addon_data_directory, fmt::format("_LVL_{}", context.platform));
+
+   if (not io::create_directories(lvl_dest_path)) {
+      context.feedback.add_error({
+         .file = lvl_dest_path,
+         .tool = "Create Directory",
+         .message = "Failed to create directory for deploying addon.",
+      });
+
+      return;
+   }
+
+   for (const io::directory_entry& entry : io::directory_iterator{lvl_src_path}) {
+      const std::string_view relative_entry_path =
+         entry.path.string_view().substr(lvl_src_path.string_view().size() + 1);
+
+      if (entry.is_directory) {
+         const io::path new_directory =
+            io::compose_path(lvl_dest_path, relative_entry_path);
+
+         if (not io::create_directory(new_directory) and not io::exists(new_directory)) {
+            context.feedback.add_error({
+               .file = new_directory,
+               .tool = "Create Directory",
+               .message = "Failed to create directory for deploying addon.",
+            });
+
+            return;
+         }
+
+         context.feedback.print_output(fmt::format("Copying {}", relative_entry_path));
+      }
+      else if (entry.is_file) {
+         const io::path dest_file =
+            io::compose_path(lvl_dest_path, relative_entry_path);
+
+         if (not io::copy_file(entry.path, dest_file)) {
+            context.feedback.add_error({
+               .file = dest_file,
+               .tool = "Copy",
+               .message = fmt::format("Faile to copy file {}", entry.path.string_view()),
+            });
+
+            return;
+         }
+      }
+   }
+
+   context.feedback.print_output("Deploy Finished");
+   context.feedback.print_output(fmt::format("Time Taken: {:.3f}s", timer.elapsed()));
+}
+
 auto run_munge(munge_context context) -> report
 {
    utility::stopwatch timer;
@@ -2119,6 +2238,14 @@ auto run_munge(munge_context context) -> report
    context.feedback.print_output("Munge Finished");
    context.feedback.print_output(fmt::format("Time Taken: {:.3f}s", timer.elapsed()));
 
+   if (context.project.deploy and not context.game_directory.empty()) {
+      deploy_addon(context);
+   }
+   else if (context.project.deploy) {
+      context.feedback.print_output(
+         "Game install path is not configured. Can not deploy addon.");
+   }
+
    return {
       .warnings = std::move(context.feedback.warnings),
       .errors = std::move(context.feedback.errors),
@@ -2418,7 +2545,7 @@ struct manager::impl {
       }
    }
 
-   void start_munge() noexcept
+   void start_munge(const io::path& game_directory) noexcept
    {
       if (_munge_task.valid() and not _munge_task.ready()) {
          return;
@@ -2432,6 +2559,7 @@ struct manager::impl {
          [this, context = munge_context{
                    .platform = "PC",
                    .project = _project,
+                   .game_directory = game_directory,
                    .feedback = munge_feedback{_standard_output, _standard_error},
                 }] {
             try {
@@ -2537,9 +2665,9 @@ void manager::open_project(const io::path& project_directory) noexcept
    return impl->open_project(project_directory);
 }
 
-void manager::start_munge() noexcept
+void manager::start_munge(const io::path& game_directory) noexcept
 {
-   impl->start_munge();
+   impl->start_munge(game_directory);
 }
 
 void manager::start_clean() noexcept
