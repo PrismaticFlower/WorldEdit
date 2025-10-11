@@ -196,6 +196,9 @@ auto load_project(const io::path& path) noexcept -> project
    catch (io::error&) {
       return {};
    }
+   catch (std::runtime_error&) {
+      return {};
+   }
 }
 
 void merge_loaded_project(project& current_project, const project& loaded_project) noexcept
