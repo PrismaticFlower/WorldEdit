@@ -3889,6 +3889,8 @@ void world_edit::close_project() noexcept
    _project_dir = "";
 
    close_world();
+
+   _munge_manager.close_project();
 }
 
 void world_edit::load_world(const io::path& path) noexcept

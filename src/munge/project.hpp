@@ -193,6 +193,8 @@ struct project_config {
              .extra_input_directories = {R"(_BUILD\Worlds\Common\MUNGED)"},
           }},
    };
+
+   bool operator==(const project_config&) const noexcept = default;
 };
 
 /// @brief Represents a world or side in a project.
@@ -202,6 +204,8 @@ struct project_child {
 
    /// @brief If the child should be munged/cleaned.
    bool active = true;
+
+   bool operator==(const project_child&) const noexcept = default;
 };
 
 /// @brief Represents a sound directory in a project.
@@ -211,6 +215,8 @@ struct project_child_sound_shared {
 
    /// @brief If the child produces localized sound lvls.
    bool localized = false;
+
+   bool operator==(const project_child_sound_shared&) const noexcept = default;
 };
 
 /// @brief Represents a sound directory in a project.
@@ -223,6 +229,8 @@ struct project_child_sound_world {
 
    /// @brief If the child produces localized sound lvls.
    bool localized = false;
+
+   bool operator==(const project_child_sound_world&) const noexcept = default;
 };
 
 /// @brief Represents a localization for sound files.
@@ -233,6 +241,8 @@ struct project_sound_localization {
 
    /// @brief Output directory for localized sound lvls.
    std::string output_directory;
+
+   bool operator==(const project_sound_localization&) const noexcept = default;
 };
 
 struct project {
@@ -256,6 +266,14 @@ struct project {
    std::vector<project_sound_localization> sound_localizations;
 
    project_config config;
+
+   bool operator==(const project&) const noexcept = default;
 };
+
+void save_project(const project& project, const io::path& path) noexcept;
+
+auto load_project(const io::path& path) noexcept -> project;
+
+void merge_loaded_project(project& current_project, const project& loaded_project) noexcept;
 
 }

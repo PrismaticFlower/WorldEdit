@@ -379,6 +379,7 @@
     <ClCompile Include="src\math\scalar_funcs.cpp" />
     <ClCompile Include="src\munge\manager.cpp" />
     <ClCompile Include="src\munge\output.cpp" />
+    <ClCompile Include="src\munge\project.cpp" />
     <ClCompile Include="src\os\process.cpp" />
     <ClCompile Include="src\settings\io.cpp" />
     <ClCompile Include="src\settings\preferences.cpp" />

@@ -2498,6 +2498,12 @@ struct manager::impl {
 
    void open_project(const io::path& project_directory) noexcept
    {
+      async::task<project> load_task =
+         _thread_pool.exec(async::task_priority::low, [&] {
+            return load_project(
+               io::compose_path(project_directory, R"(.WorldEdit\munge.cfg)"));
+         });
+
       _project = {.directory = project_directory};
 
       for (const io::directory_entry& entry :
@@ -2542,6 +2548,21 @@ struct manager::impl {
          if (not entry.is_directory) continue;
 
          _project.sound_worlds.push_back({.name = std::string{entry.path.stem()}});
+      }
+
+      _loaded_project = load_task.get();
+      _loaded_project.directory = project_directory;
+
+      merge_loaded_project(_project, _loaded_project);
+   }
+
+   void close_project() noexcept
+   {
+      if (_project.directory.empty()) return;
+
+      if (_project != _loaded_project) {
+         save_project(_project, io::compose_path(_project.directory,
+                                                 R"(.WorldEdit\munge.cfg)"));
       }
    }
 
@@ -2646,6 +2667,7 @@ struct manager::impl {
 
 private:
    project _project;
+   project _loaded_project;
 
    report _report;
    output _standard_output;
@@ -2663,6 +2685,11 @@ manager::~manager() = default;
 void manager::open_project(const io::path& project_directory) noexcept
 {
    return impl->open_project(project_directory);
+}
+
+void manager::close_project() noexcept
+{
+   return impl->close_project();
 }
 
 void manager::start_munge(const io::path& game_directory) noexcept

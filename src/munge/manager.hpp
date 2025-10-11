@@ -36,6 +36,8 @@ struct manager {
 
    void open_project(const io::path& project_directory) noexcept;
 
+   void close_project() noexcept;
+
    void start_munge(const io::path& game_directory) noexcept;
 
    void start_clean() noexcept;
@@ -61,7 +63,7 @@ struct manager {
 private:
    struct impl;
 
-   implementation_storage<impl, 1216> impl;
+   implementation_storage<impl, 2088> impl;
 };
 
 }

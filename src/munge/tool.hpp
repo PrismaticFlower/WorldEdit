@@ -152,6 +152,8 @@ enum class tool_type {
 struct config_effects_munge_inputs {
    // Only munge .fx files in the Effects/ directory of the input directory.
    bool effects_directory_only = false;
+
+   bool operator==(const config_effects_munge_inputs&) const noexcept = default;
 };
 
 struct level_pack_inputs {
@@ -178,11 +180,15 @@ struct level_pack_inputs {
 
    // Extra input file manifests for common files. Relative to output directory.
    std::vector<io::path> extra_common_files;
+
+   bool operator==(const level_pack_inputs&) const noexcept = default;
 };
 
 struct world_munge_inputs {
    /// @brief Munge .lyr files instead of .wld files.
    bool layers = false;
+
+   bool operator==(const world_munge_inputs&) const noexcept = default;
 };
 
 struct sound_munge_inputs {
@@ -194,16 +200,22 @@ struct sound_munge_inputs {
 
    /// @brief Munge from the Sound/ directory (relative to source directory for the munge) only.
    bool sound_child_directory = false;
+
+   bool operator==(const sound_munge_inputs&) const noexcept = default;
 };
 
 struct script_munge_inputs {
    // Only munge .lua files in the Scripts/ directory of the input directory.
    bool scripts_directory_only = false;
+
+   bool operator==(const script_munge_inputs&) const noexcept = default;
 };
 
 struct font_munge_inputs {
    // Only munge .fff files in the Fonts/ directory of the input directory.
    bool fonts_directory_only = false;
+
+   bool operator==(const font_munge_inputs&) const noexcept = default;
 };
 
 struct tool {
@@ -215,6 +227,8 @@ struct tool {
    sound_munge_inputs sound_munge;
    script_munge_inputs script_munge;
    font_munge_inputs font_munge;
+
+   bool operator==(const tool&) const noexcept = default;
 };
 
 }

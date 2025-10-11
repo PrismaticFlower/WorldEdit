@@ -276,6 +276,7 @@
     <ClCompile Include="src\munge\manager.cpp" />
     <ClCompile Include="src\os\process.cpp" />
     <ClCompile Include="src\munge\output.cpp" />
+    <ClCompile Include="src\munge\project.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
