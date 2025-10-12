@@ -2,10 +2,13 @@
 
 #include "edits/set_terrain_area.hpp"
 #include "edits/set_value.hpp"
+
 #include "math/vector_funcs.hpp"
+
 #include "utility/file_pickers.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
+
 #include "world/utility/load_terrain_brush.hpp"
 #include "world/utility/raycast_terrain.hpp"
 
@@ -43,13 +46,15 @@ auto get_rotation_name(const terrain_brush_rotation rotation) -> const char*
 struct brush {
    brush(float2 centre, float radius, terrain_brush_falloff falloff,
          terrain_brush_rotation rotation, int32 brush_left, int32 brush_top,
+         const float3& visualizer_color,
          const container::dynamic_array_2d<uint8>* const custom_brush_falloff_map)
       : centre{centre},
         radius{radius},
         falloff{falloff},
         rotation{rotation},
         brush_left{brush_left},
-        brush_top{brush_top}
+        brush_top{brush_top},
+        brush_color{utility::pack_srgb_bgra(float4{visualizer_color, 0.0f})}
    {
       if (custom_brush_falloff_map) {
          this->custom_brush_falloff_map = {custom_brush_falloff_map->data(),
@@ -142,7 +147,7 @@ struct brush {
    {
       const uint32 brush_weight = static_cast<uint32>(weight(x, y) * 255.0f + 0.5f);
 
-      return (brush_weight << 24u) | 0x00ffffff;
+      return (brush_weight << 24u) | brush_color;
    }
 
 private:
@@ -156,6 +161,7 @@ private:
    int32 custom_brush_width_max = 0;
    int32 custom_brush_height_max = 0;
    int32 custom_brush_width = 0;
+   uint32 brush_color = 0x0;
 };
 
 struct texture_axis_name {
@@ -915,6 +921,14 @@ void world_edit::ui_show_terrain_editor() noexcept
       return terrain_brush_rotation::r0;
    }();
 
+   const float3 brush_visualizer_color = [&] {
+      if (_terrain_editor_config.edit_target == terrain_edit_target::color) {
+         return _terrain_editor_config.color.brush_color;
+      }
+
+      return _settings.graphics.terrain_brush_color;
+   }();
+
    const container::dynamic_array_2d<uint8>* const custom_brush_falloff_map =
       [&]() -> const container::dynamic_array_2d<uint8>* {
       if (brush_falloff != terrain_brush_falloff::custom) {
@@ -955,6 +969,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                      brush_rotation,
                      terrain_x - brush_size_x,
                      terrain_y - brush_size_y,
+                     brush_visualizer_color,
                      custom_brush_falloff_map};
 
    if (_terrain_editor_context.brush_active) {

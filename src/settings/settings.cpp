@@ -217,6 +217,9 @@ void show_imgui_editor(settings& settings, bool& open,
 
             ImGui::ColorEdit3("Terrain Grid Color", &graphics.terrain_grid_color.x);
 
+            ImGui::ColorEdit3("Terrain Brush Color",
+                              &graphics.terrain_brush_color.x);
+
             ImGui::ColorEdit3("Overlay Grid Color", &graphics.overlay_grid_color.x);
 
             ImGui::SliderFloat("Light Volume Transparency", &graphics.light_volume_alpha,
