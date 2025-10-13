@@ -1070,7 +1070,7 @@ void world_edit::ui_show_block_editor() noexcept
          .positionWS = cursor_positionWS,
          .size = alignment.x,
          .divisions = 3.0f,
-         .color = float3{1.0f, 1.0f, 1.0f},
+         .color = _settings.graphics.block_draw_grid_color,
       });
 
       // Main Draw Block Switch

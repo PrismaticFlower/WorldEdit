@@ -245,6 +245,9 @@ void show_imgui_editor(settings& settings, bool& open,
 
             ImGui::ColorEdit3("Water Brush Color", &graphics.water_brush_color.x);
 
+            ImGui::ColorEdit3("Block Draw Grid Color",
+                              &graphics.block_draw_grid_color.x);
+
             ImGui::ColorEdit4("Animation Position Key Color",
                               &graphics.animation_position_key_color.x);
 

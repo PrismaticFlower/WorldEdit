@@ -114,6 +114,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(foliage_overlay_layer3_color);
             setting_entry(colorize_foliage_brush);
             setting_entry(water_brush_color);
+            setting_entry(block_draw_grid_color);
             setting_entry(animation_position_key_color);
             setting_entry(animation_rotation_key_color);
             setting_entry(animation_spline_color);
@@ -228,6 +229,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(foliage_overlay_layer3_color));
       write(file, name_value(colorize_foliage_brush));
       write(file, name_value(water_brush_color));
+      write(file, name_value(block_draw_grid_color));
       write(file, name_value(animation_position_key_color));
       write(file, name_value(animation_rotation_key_color));
       write(file, name_value(animation_spline_color));
