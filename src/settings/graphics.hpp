@@ -97,6 +97,8 @@ struct graphics {
 
    float overlay_grid_major_grid_spacing = 8.0f;
 
+   bool colorize_foliage_brush = true;
+
    bool visualize_terrain_cutters = false;
 
    bool show_profiler = false;

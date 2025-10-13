@@ -330,6 +330,10 @@ void show_imgui_editor(settings& settings, bool& open,
             ImGui::Checkbox("Visualize Terrain Cutters",
                             &graphics.visualize_terrain_cutters);
 
+            ImGui::SeparatorText("Foliage Brush");
+
+            ImGui::Checkbox("Colorize Foliage Brush", &graphics.colorize_foliage_brush);
+
             ImGui::SeparatorText("Reset");
 
             if (ImGui::Button("Reset to Defaults", {ImGui::CalcItemWidth(), 0.0f})) {

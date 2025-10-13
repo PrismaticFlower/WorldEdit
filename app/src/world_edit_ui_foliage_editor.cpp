@@ -2,7 +2,11 @@
 
 #include "edits/imgui_ext.hpp"
 #include "edits/set_terrain_area.hpp"
+
 #include "math/vector_funcs.hpp"
+
+#include "utility/srgb_conversion.hpp"
+
 #include "world/utility/raycast_terrain.hpp"
 
 #include <imgui.h>
@@ -289,13 +293,36 @@ void world_edit::ui_show_foliage_editor() noexcept
          (y + 0.5f - (foliage_map_length / 2.0f)) * foliage_grid_scale};
    };
 
+   const uint32 brush_color = [&] {
+      if (_settings.graphics.colorize_foliage_brush) {
+         switch (_foliage_editor_config.layer) {
+         case 0:
+            return utility::pack_srgb_bgra(
+               {_settings.graphics.foliage_overlay_layer0_color, 1.0f});
+         case 1:
+            return utility::pack_srgb_bgra(
+               {_settings.graphics.foliage_overlay_layer1_color, 1.0f});
+         case 2:
+            return utility::pack_srgb_bgra(
+               {_settings.graphics.foliage_overlay_layer2_color, 1.0f});
+         case 3:
+            return utility::pack_srgb_bgra(
+               {_settings.graphics.foliage_overlay_layer3_color, 1.0f});
+         default:
+            return 0xff'ff'ff'ffu;
+         }
+      }
+
+      return 0xff'ff'ff'ffu;
+   }();
+
    if ((brush_size_x * 2) * (brush_size_y * 2) <= 1024) {
       for (int32 y = -brush_size_y; y <= brush_size_y + 1; ++y) {
          for (int32 x = -brush_size_x; x <= brush_size_x; ++x) {
             _tool_visualizers.add_line_overlay(get_position(foliage_x - x, foliage_y + y),
                                                get_position(foliage_x - x + 1,
                                                             foliage_y + y),
-                                               0xff'ff'ff'ffu);
+                                               brush_color);
          }
       }
 
@@ -304,7 +331,7 @@ void world_edit::ui_show_foliage_editor() noexcept
             _tool_visualizers.add_line_overlay(get_position(foliage_x + x, foliage_y - y),
                                                get_position(foliage_x + x,
                                                             foliage_y - y + 1),
-                                               0xff'ff'ff'ffu);
+                                               brush_color);
          }
       }
    }
@@ -314,7 +341,7 @@ void world_edit::ui_show_foliage_editor() noexcept
                                                          foliage_y - brush_size_y),
                                             get_position(foliage_x - x + 1,
                                                          foliage_y - brush_size_y),
-                                            0xff'ff'ff'ffu);
+                                            brush_color);
       }
 
       for (int32 x = -brush_size_x; x <= brush_size_x; ++x) {
@@ -322,7 +349,7 @@ void world_edit::ui_show_foliage_editor() noexcept
                                                          foliage_y + brush_size_y + 1),
                                             get_position(foliage_x - x + 1,
                                                          foliage_y + brush_size_y + 1),
-                                            0xff'ff'ff'ffu);
+                                            brush_color);
       }
 
       for (int32 y = -brush_size_y; y <= brush_size_y; ++y) {
@@ -330,7 +357,7 @@ void world_edit::ui_show_foliage_editor() noexcept
                                                          foliage_y - y),
                                             get_position(foliage_x - brush_size_x,
                                                          foliage_y - y + 1),
-                                            0xff'ff'ff'ffu);
+                                            brush_color);
       }
 
       for (int32 y = -brush_size_y; y <= brush_size_y; ++y) {
@@ -338,7 +365,7 @@ void world_edit::ui_show_foliage_editor() noexcept
                                                          foliage_y - y),
                                             get_position(foliage_x + brush_size_x + 1,
                                                          foliage_y - y + 1),
-                                            0xff'ff'ff'ffu);
+                                            brush_color);
       }
    }
 }
