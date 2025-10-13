@@ -281,5 +281,9 @@ void merge_loaded_project(project& current_project, const project& loaded_projec
          sound_world = loaded_project.sound_worlds[it->second];
       }
    }
+
+   if (current_project.config.toolsfl_bin_path.empty()) {
+      current_project.config.toolsfl_bin_path = loaded_project.config.toolsfl_bin_path;
+   }
 }
 }
