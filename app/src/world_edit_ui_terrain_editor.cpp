@@ -589,40 +589,7 @@ void world_edit::ui_show_terrain_editor() noexcept
 
          const uint32 texture = _terrain_editor_config.texture.edit_texture;
 
-         if (absl::InlinedVector<char, 256> texture_name =
-                {_world.terrain.texture_names[texture].begin(),
-                 _world.terrain.texture_names[texture].end()};
-             ImGui::InputTextAutoComplete("Name", &texture_name, [&]() noexcept {
-                std::array<std::string_view, 6> entries;
-                std::size_t matching_count = 0;
-
-                _asset_libraries.textures.view_existing(
-                   [&](const std::span<const assets::stable_string> assets) noexcept {
-                      for (const std::string_view asset : assets) {
-                         if (matching_count == entries.size()) break;
-                         if (not string::icontains(asset,
-                                                   _world.terrain.texture_names[texture])) {
-                            continue;
-                         }
-
-                         entries[matching_count] = asset;
-
-                         ++matching_count;
-                      }
-                   });
-
-                return entries;
-             })) {
-            _edit_stack_world.apply(
-               edits::make_set_memory_value(&_world.terrain.texture_names[texture],
-                                            std::string{texture_name.begin(),
-                                                        texture_name.end()}),
-               _edit_context);
-         }
-
-         if (ImGui::IsItemDeactivatedAfterEdit()) {
-            _edit_stack_world.close_last();
-         }
+         ui_texture_pick_widget("Texture", &_world.terrain.texture_names[texture]);
 
          if (ImGui::BeginCombo("Axis Mapping", [&] {
                 for (auto [axis, name] : texture_axis_names) {
@@ -698,39 +665,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                "Change the terrain version to SWBF2 (v22) to edit this.");
          }
 
-         if (absl::InlinedVector<char, 256> detail_texture =
-                {_world.terrain.detail_texture_name.begin(),
-                 _world.terrain.detail_texture_name.end()};
-             ImGui::InputTextAutoComplete("Detail Texture", &detail_texture, [&]() noexcept {
-                std::array<std::string_view, 6> entries;
-                std::size_t matching_count = 0;
-
-                _asset_libraries.textures.view_existing(
-                   [&](const std::span<const assets::stable_string> assets) noexcept {
-                      for (const std::string_view asset : assets) {
-                         if (matching_count == entries.size()) break;
-                         if (not string::icontains(asset, _world.terrain.detail_texture_name)) {
-                            continue;
-                         }
-
-                         entries[matching_count] = asset;
-
-                         ++matching_count;
-                      }
-                   });
-
-                return entries;
-             })) {
-            _edit_stack_world.apply(
-               edits::make_set_memory_value(&_world.terrain.detail_texture_name,
-                                            std::string{detail_texture.begin(),
-                                                        detail_texture.end()}),
-               _edit_context);
-         }
-
-         if (ImGui::IsItemDeactivatedAfterEdit()) {
-            _edit_stack_world.close_last();
-         }
+         ui_texture_pick_widget("Detail Texture", &_world.terrain.detail_texture_name);
 
          ImGui::SeparatorText("Advanced");
 

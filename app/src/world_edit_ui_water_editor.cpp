@@ -141,28 +141,7 @@ void world_edit::ui_show_water_editor() noexcept
          ImGui::DragFloat2("Velocity", &water.velocity_pc, _edit_stack_world,
                            _edit_context, 0.0125f);
 
-         ImGui::InputTextAutoComplete(
-            "Main Texture", &water.main_texture_pc, _edit_stack_world,
-            _edit_context, [&]() noexcept {
-               std::array<std::string_view, 6> entries;
-               std::size_t matching_count = 0;
-
-               _asset_libraries.textures.view_existing(
-                  [&](const std::span<const assets::stable_string> assets) noexcept {
-                     for (const std::string_view asset : assets) {
-                        if (matching_count == entries.size()) break;
-                        if (not string::icontains(asset, water.main_texture_pc)) {
-                           continue;
-                        }
-
-                        entries[matching_count] = asset;
-
-                        ++matching_count;
-                     }
-                  });
-
-               return entries;
-            });
+         ui_texture_pick_widget("Main Texture", &water.main_texture_pc);
 
          ImGui::BeginDisabled(water.ocean_enable_pc);
 

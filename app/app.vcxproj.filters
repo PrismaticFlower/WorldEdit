@@ -52,6 +52,7 @@
     <ClCompile Include="src\world_edit_ui_world_block_material_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_export_selection.cpp" />
     <ClCompile Include="src\world_edit_ui_munge.cpp" />
+    <ClCompile Include="src\world_edit_ui_texture_pick.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />
