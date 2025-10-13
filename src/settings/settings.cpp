@@ -243,6 +243,8 @@ void show_imgui_editor(settings& settings, bool& open,
                                &graphics.foliage_overlay_transparency, 0.0f,
                                1.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
+            ImGui::ColorEdit3("Water Brush Color", &graphics.water_brush_color.x);
+
             ImGui::ColorEdit4("Animation Position Key Color",
                               &graphics.animation_position_key_color.x);
 

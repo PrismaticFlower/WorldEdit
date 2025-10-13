@@ -2,7 +2,10 @@
 
 #include "edits/imgui_ext.hpp"
 #include "edits/set_terrain_area.hpp"
+
 #include "math/vector_funcs.hpp"
+
+#include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 
 #include <imgui.h>
@@ -473,20 +476,22 @@ void world_edit::ui_show_water_editor() noexcept
                        _world.terrain.water_settings.height,
                        (y - (water_map_length / 2.0f)) * water_grid_scale};
       };
+      const uint32 brush_color =
+         utility::pack_srgb_bgra({_settings.graphics.water_brush_color, 1.0f});
 
       for (int32 y = -brush_size_y; y <= brush_size_y + 1; ++y) {
          _tool_visualizers.add_line_overlay(get_position(water_x - brush_size_x,
                                                          water_y + y),
                                             get_position(water_x + brush_size_x + 1,
                                                          water_y + y),
-                                            0xff'ff'ff'ffu);
+                                            brush_color);
       }
 
       for (int32 x = -brush_size_x; x <= brush_size_x + 1; ++x) {
          _tool_visualizers.add_line_overlay(get_position(water_x + x, water_y - brush_size_y),
                                             get_position(water_x + x,
                                                          water_y + brush_size_y + 1),
-                                            0xff'ff'ff'ffu);
+                                            brush_color);
       }
    }
 }

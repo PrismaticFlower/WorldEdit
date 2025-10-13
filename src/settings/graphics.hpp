@@ -63,6 +63,8 @@ struct graphics {
 
    float3 foliage_overlay_layer3_color = {0.0f, 0.5f, 0.3f};
 
+   float3 water_brush_color = {1.0f, 1.0f, 1.0f};
+
    float4 animation_position_key_color = float4{0.0f, 0.125f, 0.5f, 0.5f};
 
    float3 animation_rotation_key_color = float3{0.0f, 0.25f, 0.0625f};
