@@ -82,11 +82,6 @@ struct renderer_impl final : renderer {
       _thumbnail_manager.display_scale_changed(display_scale);
    }
 
-   void recreate_imgui_font_atlas() override
-   {
-      _imgui_renderer.recreate_font_atlas(_copy_command_list_pool);
-   }
-
    void reload_shaders() noexcept override
    {
       _device.wait_for_idle();
@@ -123,7 +118,7 @@ struct renderer_impl final : renderer {
 
    auto request_imgui_texture_id(const std::string_view name,
                                  const fallback_imgui_texture fallback) noexcept
-      -> void* override
+      -> uint32 override
    {
       return _ui_texture_manager.request(name, fallback, _texture_manager);
    }
@@ -301,7 +296,7 @@ private:
    meta_draw_batcher _meta_draw_batcher;
    ai_overlay_batches _ai_overlay_batches;
 
-   imgui_renderer _imgui_renderer{_device, _copy_command_list_pool};
+   imgui_renderer _imgui_renderer{_device};
 
    float _texture_scroll_time = 0.0f;
 
@@ -583,8 +578,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    // Render ImGui
    ImGui::Render();
-   _imgui_renderer.render_draw_data(ImGui::GetDrawData(), _root_signatures,
-                                    _pipelines, command_list);
+   _imgui_renderer.render_draw_data(ImGui::GetDrawData(), _root_signatures, _pipelines,
+                                    _dynamic_buffer_allocator, command_list);
 
    reduce_depth_minmax(command_list);
 

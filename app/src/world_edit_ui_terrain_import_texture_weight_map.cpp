@@ -35,7 +35,7 @@ void world_edit::ui_show_terrain_import_texture_weight_map() noexcept
             _terrain_import_texture_weight_map_context.weight_map_index = i;
          }
 
-         void* const texture_id =
+         const uint32 texture_id =
             _renderer->request_imgui_texture_id(_world.terrain.texture_names[i],
                                                 graphics::fallback_imgui_texture::missing_diffuse);
 

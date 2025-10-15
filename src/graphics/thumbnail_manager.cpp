@@ -1050,8 +1050,7 @@ struct thumbnail_manager::impl {
 
          _objects.front.emplace(name, index);
 
-         return {.imgui_texture_id =
-                    reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+         return {.imgui_texture_id = _atlas_srv.get().index,
                  .uv_left = index.x / _atlas_items_width,
                  .uv_top = index.y / _atlas_items_height,
                  .uv_right = (index.x + 1) / _atlas_items_width,
@@ -1064,8 +1063,7 @@ struct thumbnail_manager::impl {
          _objects.back.emplace(name, *index);
          _objects.front.emplace(name, *index);
 
-         return {.imgui_texture_id =
-                    reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+         return {.imgui_texture_id = _atlas_srv.get().index,
                  .uv_left = index->x / _atlas_items_width,
                  .uv_top = index->y / _atlas_items_height,
                  .uv_right = (index->x + 1) / _atlas_items_width,
@@ -1087,8 +1085,7 @@ struct thumbnail_manager::impl {
                             _thumbnail_length * sizeof(uint32),
                             _thumbnail_length, sizeof(uint32));
 
-               return {.imgui_texture_id =
-                          reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+               return {.imgui_texture_id = _atlas_srv.get().index,
                        .uv_left = index->x / _atlas_items_width,
                        .uv_top = index->y / _atlas_items_height,
                        .uv_right = (index->x + 1) / _atlas_items_width,
@@ -1101,8 +1098,7 @@ struct thumbnail_manager::impl {
          enqueue_create_object_thumbnail(name);
       }
 
-      return {.imgui_texture_id =
-                 reinterpret_cast<void*>(uint64{_missing_thumbnail_srv.get().index}),
+      return {.imgui_texture_id = _missing_thumbnail_srv.get().index,
               .uv_left = 0.0f,
               .uv_top = 0.0f,
               .uv_right = 0.0f,
@@ -1116,8 +1112,7 @@ struct thumbnail_manager::impl {
 
          _textures.front.emplace(name, index);
 
-         return {.imgui_texture_id =
-                    reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+         return {.imgui_texture_id = _atlas_srv.get().index,
                  .uv_left = index.x / _atlas_items_width,
                  .uv_top = index.y / _atlas_items_height,
                  .uv_right = (index.x + 1) / _atlas_items_width,
@@ -1130,8 +1125,7 @@ struct thumbnail_manager::impl {
          _textures.back.emplace(name, *index);
          _textures.front.emplace(name, *index);
 
-         return {.imgui_texture_id =
-                    reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+         return {.imgui_texture_id = _atlas_srv.get().index,
                  .uv_left = index->x / _atlas_items_width,
                  .uv_top = index->y / _atlas_items_height,
                  .uv_right = (index->x + 1) / _atlas_items_width,
@@ -1153,8 +1147,7 @@ struct thumbnail_manager::impl {
                             _thumbnail_length * sizeof(uint32),
                             _thumbnail_length, sizeof(uint32));
 
-               return {.imgui_texture_id =
-                          reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+               return {.imgui_texture_id = _atlas_srv.get().index,
                        .uv_left = index->x / _atlas_items_width,
                        .uv_top = index->y / _atlas_items_height,
                        .uv_right = (index->x + 1) / _atlas_items_width,
@@ -1167,8 +1160,7 @@ struct thumbnail_manager::impl {
          enqueue_create_texture_thumbnail(name);
       }
 
-      return {.imgui_texture_id =
-                 reinterpret_cast<void*>(uint64{_missing_thumbnail_srv.get().index}),
+      return {.imgui_texture_id = _missing_thumbnail_srv.get().index,
               .uv_left = 0.0f,
               .uv_top = 0.0f,
               .uv_right = 0.0f,

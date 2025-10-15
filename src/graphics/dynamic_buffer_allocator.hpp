@@ -30,6 +30,9 @@ struct dynamic_buffer_allocator {
 
    [[nodiscard]] auto allocate(const std::size_t size) -> allocation;
 
+   [[nodiscard]] auto allocate_aligned(const std::size_t size,
+                                       const std::size_t alignment) -> allocation;
+
    template<typename T>
    [[nodiscard]] auto allocate_and_copy(const T& value) -> allocation
    {

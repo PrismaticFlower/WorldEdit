@@ -112,8 +112,6 @@ struct renderer {
 
    virtual void display_scale_changed(const float display_scale) = 0;
 
-   virtual void recreate_imgui_font_atlas() = 0;
-
    virtual void reload_shaders() noexcept = 0;
 
    virtual auto request_object_class_thumbnail(const std::string_view name)
@@ -130,7 +128,7 @@ struct renderer {
 
    virtual auto request_imgui_texture_id(const std::string_view name,
                                          const fallback_imgui_texture fallback) noexcept
-      -> void* = 0;
+      -> uint32 = 0;
 
    const static float thumbnail_base_length;
 };

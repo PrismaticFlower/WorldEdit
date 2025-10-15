@@ -22,7 +22,7 @@ struct ui_texture_manager {
    /// @param texture_manager The texture_manager.
    /// @return The texture ID to pass to ImGui.
    auto request(const std::string_view name, const fallback_imgui_texture fallback,
-                texture_manager& texture_manager) noexcept -> void*;
+                texture_manager& texture_manager) noexcept -> uint32;
 
    /// @brief Process any updated textures.
    /// @param updated

@@ -144,7 +144,7 @@ void world_edit::ui_show_block_material_editor() noexcept
          _block_material_editor_context.selected_index = 0;
       }
 
-      ImGui::BeginChild("Material", {}, ImGuiChildFlags_Border);
+      ImGui::BeginChild("Material", {}, ImGuiChildFlags_Borders);
 
       world::block_material& material =
          _world.blocks.materials[_block_material_editor_context.selected_index];

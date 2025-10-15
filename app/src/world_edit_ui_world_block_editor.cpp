@@ -392,7 +392,7 @@ void world_edit::ui_show_block_editor() noexcept
          ImGui::EndCombo();
       }
 
-      if (ImGui::BeginChild("##material", {}, ImGuiChildFlags_Border)) {
+      if (ImGui::BeginChild("##material", {}, ImGuiChildFlags_Borders)) {
          const uint32 material_index = _block_editor_config.paint_material_index;
          world::block_material& material = _world.blocks.materials[material_index];
 

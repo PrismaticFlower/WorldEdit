@@ -288,7 +288,6 @@ void world_edit::recreate_renderer() noexcept
    try {
       _renderer = nullptr;
       _renderer = graphics::make_renderer(get_renderer_init_params());
-      _renderer->recreate_imgui_font_atlas();
    }
    catch (graphics::gpu::exception& e) {
       if (e.error() != graphics::gpu::error::device_removed) {
@@ -4232,6 +4231,10 @@ auto world_edit::get_mouse_cursor() const noexcept -> mouse_cursor
          return mouse_cursor::size_nwse;
       case ImGuiMouseCursor_Hand:
          return mouse_cursor::hand;
+      case ImGuiMouseCursor_Wait:
+         return mouse_cursor::wait;
+      case ImGuiMouseCursor_Progress:
+         return mouse_cursor::app_starting;
       case ImGuiMouseCursor_NotAllowed:
          return mouse_cursor::no;
       }
@@ -4371,13 +4374,6 @@ void world_edit::initialize_imgui_font() noexcept
    ImGui::GetIO().Fonts->AddFontFromMemoryTTF(roboto_regular.data(),
                                               static_cast<int>(roboto_regular.size()),
                                               16.0f * _display_scale, &font_config);
-
-   try {
-      _renderer->recreate_imgui_font_atlas();
-   }
-   catch (graphics::gpu::exception& e) {
-      handle_gpu_error(e);
-   }
 }
 
 void world_edit::initialize_imgui_style() noexcept

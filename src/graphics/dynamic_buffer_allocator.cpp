@@ -52,7 +52,7 @@ dynamic_buffer_allocator::~dynamic_buffer_allocator()
    }
 }
 
-[[nodiscard]] auto dynamic_buffer_allocator::allocate(const std::size_t size) -> allocation
+auto dynamic_buffer_allocator::allocate(const std::size_t size) -> allocation
 {
 retry_allocate:
    const std::size_t aligned_size = math::align_up(size, alignment);
@@ -150,6 +150,24 @@ retry_allocate:
            .size = size,
            .resource = page.buffer,
            .offset = allocation_offset};
+}
+
+auto dynamic_buffer_allocator::allocate_aligned(const std::size_t size,
+                                                const std::size_t allocation_alignment)
+   -> allocation
+{
+   allocation alloc = allocate(
+      size + std::max(allocation_alignment - alignment, allocation_alignment));
+
+   const uint64 aligned_offset = math::align_up(alloc.offset, allocation_alignment);
+   const uint64 alignment_difference = aligned_offset - alloc.offset;
+
+   alloc.offset = aligned_offset;
+   alloc.gpu_address += alignment_difference;
+   alloc.cpu_address += alignment_difference;
+   alloc.size = size;
+
+   return alloc;
 }
 
 void dynamic_buffer_allocator::reset(const std::size_t new_frame_index)

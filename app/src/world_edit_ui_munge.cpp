@@ -288,7 +288,7 @@ void world_edit::ui_show_munge_manager() noexcept
          ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0.0f, 0.0f});
 
          ImGui::SetNextWindowBgAlpha(1.0f);
-         ImGui::BeginChild("##lines", {}, ImGuiChildFlags_Border);
+         ImGui::BeginChild("##lines", {}, ImGuiChildFlags_Borders);
 
          const std::span<const std::string_view> lines =
             _munge_context.show_stdout

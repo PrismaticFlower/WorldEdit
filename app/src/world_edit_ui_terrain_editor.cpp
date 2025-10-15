@@ -566,7 +566,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                config.edit_texture = i;
             }
 
-            void* const texture_id =
+            const uint32 texture_id =
                _renderer->request_imgui_texture_id(_world.terrain.texture_names[i],
                                                    graphics::fallback_imgui_texture::missing_diffuse);
 
