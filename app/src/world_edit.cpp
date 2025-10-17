@@ -197,11 +197,16 @@ void world_edit::update()
                                   {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
                                   {ImGui::GetMainViewport()->Size.x,
                                    ImGui::GetMainViewport()->Size.y}),
-                  {.left_mouse_down = ImGui::IsKeyDown(ImGuiKey_MouseLeft) and
-                                      not ImGui::GetIO().WantCaptureMouse,
-                   .ctrl_down = (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
-                                 ImGui::IsKeyDown(ImGuiKey_RightCtrl)) and
-                                not ImGui::GetIO().WantCaptureKeyboard},
+                  {
+                     .left_mouse_down = ImGui::IsKeyDown(ImGuiKey_MouseLeft) and
+                                        not ImGui::GetIO().WantCaptureMouse,
+                     .ctrl_down = (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
+                                   ImGui::IsKeyDown(ImGuiKey_RightCtrl)) and
+                                  not ImGui::GetIO().WantCaptureKeyboard,
+                     .alt_down = (ImGui::IsKeyDown(ImGuiKey_LeftAlt) or
+                                  ImGui::IsKeyDown(ImGuiKey_RightAlt)) and
+                                 not ImGui::GetIO().WantCaptureKeyboard,
+                  },
                   _camera, _settings.ui.gizmo_scale);
 
    // Input!
@@ -1817,605 +1822,10 @@ void world_edit::place_creation_entity() noexcept
       }
    }
    else if (_interaction_targets.creation_entity.is<world::entity_group>()) {
-
       const world::entity_group& group =
          _interaction_targets.creation_entity.get<world::entity_group>();
 
-      if (_world.objects.size() + group.objects.size() > _world.objects.max_size()) {
-         report_limit_reached("Max objects ({}) Reached", _world.objects.max_size());
-
-         return;
-      }
-      else if (_world.lights.size() + group.lights.size() > _world.lights.max_size()) {
-         report_limit_reached("Max lights ({}) Reached", _world.lights.max_size());
-
-         return;
-      }
-      else if (_world.paths.size() + group.paths.size() > _world.paths.max_size()) {
-         report_limit_reached("Max paths ({}) Reached", _world.paths.max_size());
-
-         return;
-      }
-      else if (_world.regions.size() + group.regions.size() >
-               _world.regions.max_size()) {
-         report_limit_reached("Max regions ({}) Reached", _world.regions.max_size());
-
-         return;
-      }
-      else if (_world.sectors.size() + group.sectors.size() >
-               _world.sectors.max_size()) {
-         report_limit_reached("Max sectors ({}) Reached", _world.sectors.max_size());
-
-         return;
-      }
-      else if (_world.portals.size() + group.portals.size() >
-               _world.portals.max_size()) {
-         report_limit_reached("Max portals ({}) Reached", _world.portals.max_size());
-
-         return;
-      }
-      else if (_world.hintnodes.size() + group.hintnodes.size() >
-               _world.hintnodes.max_size()) {
-         report_limit_reached("Max hintnodes ({}) Reached",
-                              _world.hintnodes.max_size());
-
-         return;
-      }
-      else if (_world.barriers.size() + group.barriers.size() >
-               _world.barriers.max_size()) {
-         report_limit_reached("Max barriers ({}) Reached", _world.barriers.max_size());
-
-         return;
-      }
-      else if (_world.planning_hubs.size() + group.planning_hubs.size() >
-               _world.planning_hubs.max_size()) {
-         report_limit_reached("Max AI planning hubs ({}) Reached",
-                              _world.planning_hubs.max_size());
-
-         return;
-      }
-      else if (_world.planning_connections.size() + group.planning_connections.size() >
-               _world.planning_connections.max_size()) {
-         report_limit_reached("Max AI planning connections ({}) Reached",
-                              _world.planning_connections.max_size());
-
-         return;
-      }
-      else if (_world.boundaries.size() + group.boundaries.size() >
-               _world.boundaries.max_size()) {
-         report_limit_reached("Max boundarys ({}) Reached",
-                              _world.boundaries.max_size());
-
-         return;
-      }
-      else if (_world.measurements.size() + group.measurements.size() >
-               _world.measurements.max_size()) {
-         report_limit_reached("Max measurements ({}) Reached",
-                              _world.measurements.max_size());
-
-         return;
-      }
-      else if (_world.blocks.boxes.size() + group.blocks.boxes.size() > world::max_blocks) {
-         report_limit_reached("Max blocks (boxes, {}) Reached", world::max_blocks);
-
-         return;
-      }
-      else if (_world.blocks.ramps.size() + group.blocks.ramps.size() > world::max_blocks) {
-         report_limit_reached("Max blocks (ramps, {}) Reached", world::max_blocks);
-
-         return;
-      }
-      else if (_world.blocks.quads.size() + group.blocks.quads.size() > world::max_blocks) {
-         report_limit_reached("Max blocks (quads, {}) Reached", world::max_blocks);
-
-         return;
-      }
-      else if (_world.blocks.custom.size() + group.blocks.custom.description.size() >
-               world::max_blocks) {
-         report_limit_reached("Max blocks (custom, {}) Reached", world::max_blocks);
-
-         return;
-      }
-      else if (_world.blocks.hemispheres.size() + group.blocks.hemispheres.size() >
-               world::max_blocks) {
-         report_limit_reached("Max blocks (hemispheres, {}) Reached", world::max_blocks);
-
-         return;
-      }
-      else if (_world.blocks.pyramids.size() + group.blocks.pyramids.size() >
-               world::max_blocks) {
-         report_limit_reached("Max blocks (pyramids, {}) Reached", world::max_blocks);
-
-         return;
-      }
-      else if (_world.blocks.terrain_cut_boxes.size() +
-                  group.blocks.terrain_cut_boxes.size() >
-               world::max_blocks) {
-         report_limit_reached("Max blocks (terrain cut boxes, {}) Reached",
-                              world::max_blocks);
-
-         return;
-      }
-
-      const uint32 object_base_index = static_cast<uint32>(_world.objects.size());
-      const uint32 path_base_index = static_cast<uint32>(_world.paths.size());
-      const uint32 region_base_index = static_cast<uint32>(_world.regions.size());
-      const uint32 sector_base_index = static_cast<uint32>(_world.sectors.size());
-      const uint32 planning_hub_base_index =
-         static_cast<uint32>(_world.planning_hubs.size());
-      const uint32 planning_connection_base_index =
-         static_cast<uint32>(_world.planning_connections.size());
-
-      bool is_transparent_edit = false;
-
-      for (const world::object& object : group.objects) {
-         world::object new_object = object;
-
-         new_object.layer = group.layer;
-         new_object.rotation = group.rotation * new_object.rotation;
-         new_object.position = group.rotation * new_object.position + group.position;
-         new_object.name = world::create_unique_name(_world.objects, new_object.name);
-         new_object.id = _world.next_id.objects.aquire();
-
-         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_object),
-                                                           _object_classes),
-                                 _edit_context,
-                                 {.transparent =
-                                     std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::light& light : group.lights) {
-         world::light new_light = light;
-
-         new_light.layer = group.layer;
-         new_light.rotation = group.rotation * new_light.rotation;
-         new_light.position = group.rotation * new_light.position + group.position;
-         new_light.region_rotation = group.rotation * new_light.region_rotation;
-         new_light.name = world::create_unique_name(_world.lights, new_light.name);
-         new_light.id = _world.next_id.lights.aquire();
-
-         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_light)),
-                                 _edit_context,
-                                 {.transparent =
-                                     std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::path& path : group.paths) {
-         world::path new_path = path;
-
-         for (world::path::node& node : new_path.nodes) {
-            node.rotation = group.rotation * node.rotation;
-            node.position = group.rotation * node.position + group.position;
-         }
-
-         new_path.layer = group.layer;
-         new_path.name = world::create_unique_name(_world.paths, new_path.name);
-         new_path.id = _world.next_id.paths.aquire();
-
-         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_path)),
-                                 _edit_context,
-                                 {.transparent =
-                                     std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::region& region : group.regions) {
-         world::region new_region = region;
-
-         new_region.layer = group.layer;
-         new_region.rotation = group.rotation * new_region.rotation;
-         new_region.position = group.rotation * new_region.position + group.position;
-         new_region.name = world::create_unique_name(_world.regions, _world.lights,
-                                                     new_region.name);
-         new_region.id = _world.next_id.regions.aquire();
-
-         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_region)),
-                                 _edit_context,
-                                 {.transparent =
-                                     std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::sector& sector : group.sectors) {
-         world::sector new_sector = sector;
-
-         float2 sector_centre = {0.0f, 0.0f};
-
-         for (const float2& point : new_sector.points) {
-            sector_centre += (point);
-         }
-
-         sector_centre /= static_cast<float>(new_sector.points.size());
-
-         const float3 rotated_sector_centre =
-            group.rotation * float3{sector_centre.x, 0.0f, sector_centre.y};
-
-         for (float2& point : new_sector.points) {
-            const float3 rotated_point =
-               group.rotation *
-               float3{point.x - sector_centre.x, 0.0f, point.y - sector_centre.y};
-
-            point = float2{rotated_point.x, rotated_point.z} +
-                    float2{rotated_sector_centre.x, rotated_sector_centre.z} +
-                    float2{group.position.x, group.position.z};
-         }
-
-         for (std::string& object : new_sector.objects) {
-            object = world::get_placed_entity_name(object, _world.objects,
-                                                   group, object_base_index);
-         }
-
-         new_sector.base += group.position.y;
-         new_sector.name = world::create_unique_name(_world.sectors, new_sector.name);
-         new_sector.id = _world.next_id.sectors.aquire();
-
-         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_sector)),
-                                 _edit_context,
-                                 {.transparent =
-                                     std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::portal& portal : group.portals) {
-         world::portal new_portal = portal;
-
-         if (not new_portal.sector1.empty()) {
-            new_portal.sector1 =
-               world::get_placed_entity_name(new_portal.sector1, _world.sectors,
-                                             group, sector_base_index);
-         }
-
-         if (not new_portal.sector2.empty()) {
-            new_portal.sector2 =
-               world::get_placed_entity_name(new_portal.sector2, _world.sectors,
-                                             group, sector_base_index);
-         }
-
-         new_portal.rotation = group.rotation * new_portal.rotation;
-         new_portal.position = group.rotation * new_portal.position + group.position;
-         new_portal.name = world::create_unique_name(_world.portals, new_portal.name);
-         new_portal.id = _world.next_id.portals.aquire();
-
-         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_portal)),
-                                 _edit_context,
-                                 {.transparent =
-                                     std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::hintnode& hintnode : group.hintnodes) {
-         world::hintnode new_hintnode = hintnode;
-
-         if (not new_hintnode.command_post.empty()) {
-            new_hintnode.command_post =
-               world::get_placed_entity_name(new_hintnode.command_post, _world.objects,
-                                             group, object_base_index);
-         }
-
-         new_hintnode.layer = group.layer;
-         new_hintnode.rotation = group.rotation * new_hintnode.rotation;
-         new_hintnode.position = group.rotation * new_hintnode.position + group.position;
-         new_hintnode.name =
-            world::create_unique_name(_world.hintnodes, new_hintnode.name);
-         new_hintnode.id = _world.next_id.hintnodes.aquire();
-
-         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hintnode)),
-                                 _edit_context,
-                                 {.transparent =
-                                     std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::barrier& barrier : group.barriers) {
-         world::barrier new_barrier = barrier;
-
-         new_barrier.rotation_angle = group.rotation_angle + new_barrier.rotation_angle;
-         new_barrier.position = group.rotation * new_barrier.position + group.position;
-         new_barrier.name =
-            world::create_unique_name(_world.barriers, new_barrier.name);
-         new_barrier.id = _world.next_id.barriers.aquire();
-
-         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_barrier)),
-                                 _edit_context,
-                                 {.transparent =
-                                     std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::planning_hub& hub : group.planning_hubs) {
-         world::planning_hub new_hub = hub;
-
-         for (world::planning_branch_weights& weight : new_hub.weights) {
-            weight.hub_index += planning_hub_base_index;
-            weight.connection_index += planning_connection_base_index;
-         }
-
-         new_hub.position = group.rotation * new_hub.position + group.position;
-         new_hub.name = world::create_unique_name(_world.planning_hubs, new_hub.name);
-         new_hub.id = _world.next_id.planning_hubs.aquire();
-
-         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hub)),
-                                 _edit_context,
-                                 {.transparent =
-                                     std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::planning_connection& connection : group.planning_connections) {
-         world::planning_connection new_connection = connection;
-
-         new_connection.start_hub_index += planning_hub_base_index;
-         new_connection.end_hub_index += planning_hub_base_index;
-         new_connection.name = world::create_unique_name(_world.planning_connections,
-                                                         new_connection.name);
-         new_connection.id = _world.next_id.planning_connections.aquire();
-
-         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_connection)),
-                                 _edit_context,
-                                 {.transparent =
-                                     std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::boundary& boundary : group.boundaries) {
-         world::boundary new_boundary = boundary;
-
-         new_boundary.position = group.rotation * new_boundary.position + group.position;
-         new_boundary.name =
-            world::create_unique_name(_world.boundaries, new_boundary.name);
-         new_boundary.id = _world.next_id.boundaries.aquire();
-
-         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_boundary)),
-                                 _edit_context,
-                                 {.transparent =
-                                     std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::measurement& measurement : group.measurements) {
-         world::measurement new_measurement = measurement;
-
-         new_measurement.start = group.rotation * new_measurement.start + group.position;
-         new_measurement.end = group.rotation * new_measurement.end + group.position;
-         new_measurement.id = _world.next_id.measurements.aquire();
-
-         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_measurement)),
-                                 _edit_context,
-                                 {.transparent =
-                                     std::exchange(is_transparent_edit, true)});
-      }
-
-      std::array<std::optional<uint8>, world::max_block_materials> block_material_remap;
-
-      for (uint32 material_index = 0;
-           material_index <
-           std::min(group.blocks.materials.size(), world::max_block_materials);
-           ++material_index) {
-         if (std::optional<uint8> equivalent_material =
-                world::find_block_equivalent_material(_world.blocks,
-                                                      group.blocks.materials[material_index]);
-             equivalent_material) {
-            block_material_remap[material_index] = *equivalent_material;
-
-            continue;
-         }
-
-         if (std::optional<uint8> empty_material =
-                world::find_block_empty_material(_world.blocks);
-             empty_material) {
-            block_material_remap[material_index] = *empty_material;
-
-            _edit_stack_world.apply(
-               edits::make_set_block_material(&_world.blocks.materials[*empty_material],
-                                              group.blocks.materials[material_index],
-                                              *empty_material,
-                                              &_world.blocks.materials_dirty),
-               _edit_context,
-               {.transparent = std::exchange(is_transparent_edit, true)});
-         }
-      }
-
-      for (const world::block_description_box& box : group.blocks.boxes) {
-         world::block_description_box new_box = box;
-
-         new_box.rotation = group.rotation * new_box.rotation;
-         new_box.position = group.rotation * new_box.position + group.position;
-
-         for (uint8& material : new_box.surface_materials) {
-            if (block_material_remap[material]) {
-               material = *block_material_remap[material];
-            }
-            else {
-               material = 0;
-            }
-         }
-
-         _edit_stack_world
-            .apply(edits::make_add_block(new_box, group.layer,
-                                         _world.blocks.next_id.boxes.aquire()),
-                   _edit_context,
-                   {.transparent = std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::block_description_ramp& ramp : group.blocks.ramps) {
-         world::block_description_ramp new_ramp = ramp;
-
-         new_ramp.rotation = group.rotation * new_ramp.rotation;
-         new_ramp.position = group.rotation * new_ramp.position + group.position;
-
-         for (uint8& material : new_ramp.surface_materials) {
-            if (block_material_remap[material]) {
-               material = *block_material_remap[material];
-            }
-            else {
-               material = 0;
-            }
-         }
-
-         _edit_stack_world
-            .apply(edits::make_add_block(new_ramp, group.layer,
-                                         _world.blocks.next_id.ramps.aquire()),
-                   _edit_context,
-                   {.transparent = std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::block_description_quad& quad : group.blocks.quads) {
-         world::block_description_quad new_quad = quad;
-
-         new_quad.vertices = {
-            group.rotation * quad.vertices[0] + group.position,
-            group.rotation * quad.vertices[1] + group.position,
-            group.rotation * quad.vertices[2] + group.position,
-            group.rotation * quad.vertices[3] + group.position,
-         };
-
-         for (uint8& material : new_quad.surface_materials) {
-            if (block_material_remap[material]) {
-               material = *block_material_remap[material];
-            }
-            else {
-               material = 0;
-            }
-         }
-
-         _edit_stack_world
-            .apply(edits::make_add_block(new_quad, group.layer,
-                                         _world.blocks.next_id.quads.aquire()),
-                   _edit_context,
-                   {.transparent = std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::block_description_custom& block :
-           group.blocks.custom.description) {
-         world::block_description_custom new_block = block;
-
-         new_block.rotation = group.rotation * new_block.rotation;
-         new_block.position = group.rotation * new_block.position + group.position;
-
-         for (uint8& material : new_block.surface_materials) {
-            if (block_material_remap[material]) {
-               material = *block_material_remap[material];
-            }
-            else {
-               material = 0;
-            }
-         }
-
-         _edit_stack_world
-            .apply(edits::make_add_block(new_block, group.layer,
-                                         _world.blocks.next_id.custom.aquire()),
-                   _edit_context,
-                   {.transparent = std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::block_description_hemisphere& hemisphere :
-           group.blocks.hemispheres) {
-         world::block_description_hemisphere new_hemisphere = hemisphere;
-
-         new_hemisphere.rotation = group.rotation * new_hemisphere.rotation;
-         new_hemisphere.position =
-            group.rotation * new_hemisphere.position + group.position;
-
-         for (uint8& material : new_hemisphere.surface_materials) {
-            if (block_material_remap[material]) {
-               material = *block_material_remap[material];
-            }
-            else {
-               material = 0;
-            }
-         }
-
-         _edit_stack_world
-            .apply(edits::make_add_block(new_hemisphere, group.layer,
-                                         _world.blocks.next_id.hemispheres.aquire()),
-                   _edit_context,
-                   {.transparent = std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::block_description_pyramid& pyramid : group.blocks.pyramids) {
-         world::block_description_pyramid new_pyramid = pyramid;
-
-         new_pyramid.rotation = group.rotation * new_pyramid.rotation;
-         new_pyramid.position = group.rotation * new_pyramid.position + group.position;
-
-         for (uint8& material : new_pyramid.surface_materials) {
-            if (block_material_remap[material]) {
-               material = *block_material_remap[material];
-            }
-            else {
-               material = 0;
-            }
-         }
-
-         _edit_stack_world
-            .apply(edits::make_add_block(new_pyramid, group.layer,
-                                         _world.blocks.next_id.pyramids.aquire()),
-                   _edit_context,
-                   {.transparent = std::exchange(is_transparent_edit, true)});
-      }
-
-      for (const world::block_description_terrain_cut_box& terrain_cut_box :
-           group.blocks.terrain_cut_boxes) {
-         world::block_description_terrain_cut_box new_terrain_cut_box = terrain_cut_box;
-
-         new_terrain_cut_box.rotation = group.rotation * new_terrain_cut_box.rotation;
-         new_terrain_cut_box.position =
-            group.rotation * new_terrain_cut_box.position + group.position;
-
-         for (uint8& material : new_terrain_cut_box.surface_materials) {
-            if (block_material_remap[material]) {
-               material = *block_material_remap[material];
-            }
-            else {
-               material = 0;
-            }
-         }
-
-         _edit_stack_world.apply(
-            edits::make_add_block(new_terrain_cut_box, group.layer,
-                                  _world.blocks.next_id.terrain_cut_boxes.aquire()),
-            _edit_context, {.transparent = std::exchange(is_transparent_edit, true)});
-      }
-
-      for (uint32 object_index = object_base_index;
-           object_index < _world.objects.size(); ++object_index) {
-         world::object& object = _world.objects[object_index];
-
-         for (uint32 prop_index = 0;
-              prop_index < object.instance_properties.size(); ++prop_index) {
-            const world::instance_property& prop =
-               object.instance_properties[prop_index];
-
-            if (prop.value.empty()) continue;
-
-            std::string_view new_value;
-
-            if (string::iequals("ControlZone", prop.key)) {
-               new_value = world::get_placed_entity_name(prop.value, _world.objects,
-                                                         group, object_base_index);
-            }
-            else if (string::icontains(prop.key, "Path")) {
-               new_value = world::get_placed_entity_name(prop.value, _world.paths,
-                                                         group, path_base_index);
-            }
-            else if (string::icontains(prop.key, "Region")) {
-               for (uint32 i = 0; i < group.regions.size(); ++i) {
-                  if (not string::iequals(prop.value, group.regions[i].description)) {
-                     continue;
-                  }
-
-                  world::region& region = _world.regions[region_base_index + i];
-
-                  if (not string::iequals(region.name, region.description)) {
-                     _edit_stack_world.apply(edits::make_set_value(&region.description,
-                                                                   region.name),
-                                             _edit_context, {.transparent = true});
-                  }
-
-                  new_value = region.description;
-               }
-            }
-
-            if (not new_value.empty()) {
-               _edit_stack_world
-                  .apply(edits::make_set_vector_value(&object.instance_properties, prop_index,
-                                                      &world::instance_property::value,
-                                                      std::string{new_value}),
-                         _edit_context, {.transparent = true});
-            }
-         }
-      }
+      place_entity_group(group, false);
 
       _last_created_entities.last_layer = group.layer;
    }
@@ -2515,6 +1925,686 @@ void world_edit::place_creation_entity_at_camera() noexcept
    }
 
    place_creation_entity();
+}
+
+void world_edit::place_entity_group(const world::entity_group& group,
+                                    const bool select_placed) noexcept
+{
+   const auto report_limit_reached =
+      [this]<typename... Args>(fmt::format_string<Args...> string, const Args&... args) {
+         std::string display = fmt::vformat(string, fmt::make_format_args(args...));
+
+         MessageBoxA(_window, display.c_str(), "Limit Reached", MB_OK);
+      };
+
+   if (_world.objects.size() + group.objects.size() > _world.objects.max_size()) {
+      report_limit_reached("Max objects ({}) Reached", _world.objects.max_size());
+
+      return;
+   }
+   else if (_world.lights.size() + group.lights.size() > _world.lights.max_size()) {
+      report_limit_reached("Max lights ({}) Reached", _world.lights.max_size());
+
+      return;
+   }
+   else if (_world.paths.size() + group.paths.size() > _world.paths.max_size()) {
+      report_limit_reached("Max paths ({}) Reached", _world.paths.max_size());
+
+      return;
+   }
+   else if (_world.regions.size() + group.regions.size() > _world.regions.max_size()) {
+      report_limit_reached("Max regions ({}) Reached", _world.regions.max_size());
+
+      return;
+   }
+   else if (_world.sectors.size() + group.sectors.size() > _world.sectors.max_size()) {
+      report_limit_reached("Max sectors ({}) Reached", _world.sectors.max_size());
+
+      return;
+   }
+   else if (_world.portals.size() + group.portals.size() > _world.portals.max_size()) {
+      report_limit_reached("Max portals ({}) Reached", _world.portals.max_size());
+
+      return;
+   }
+   else if (_world.hintnodes.size() + group.hintnodes.size() >
+            _world.hintnodes.max_size()) {
+      report_limit_reached("Max hintnodes ({}) Reached", _world.hintnodes.max_size());
+
+      return;
+   }
+   else if (_world.barriers.size() + group.barriers.size() >
+            _world.barriers.max_size()) {
+      report_limit_reached("Max barriers ({}) Reached", _world.barriers.max_size());
+
+      return;
+   }
+   else if (_world.planning_hubs.size() + group.planning_hubs.size() >
+            _world.planning_hubs.max_size()) {
+      report_limit_reached("Max AI planning hubs ({}) Reached",
+                           _world.planning_hubs.max_size());
+
+      return;
+   }
+   else if (_world.planning_connections.size() + group.planning_connections.size() >
+            _world.planning_connections.max_size()) {
+      report_limit_reached("Max AI planning connections ({}) Reached",
+                           _world.planning_connections.max_size());
+
+      return;
+   }
+   else if (_world.boundaries.size() + group.boundaries.size() >
+            _world.boundaries.max_size()) {
+      report_limit_reached("Max boundarys ({}) Reached", _world.boundaries.max_size());
+
+      return;
+   }
+   else if (_world.measurements.size() + group.measurements.size() >
+            _world.measurements.max_size()) {
+      report_limit_reached("Max measurements ({}) Reached",
+                           _world.measurements.max_size());
+
+      return;
+   }
+   else if (_world.blocks.boxes.size() + group.blocks.boxes.size() > world::max_blocks) {
+      report_limit_reached("Max blocks (boxes, {}) Reached", world::max_blocks);
+
+      return;
+   }
+   else if (_world.blocks.ramps.size() + group.blocks.ramps.size() > world::max_blocks) {
+      report_limit_reached("Max blocks (ramps, {}) Reached", world::max_blocks);
+
+      return;
+   }
+   else if (_world.blocks.quads.size() + group.blocks.quads.size() > world::max_blocks) {
+      report_limit_reached("Max blocks (quads, {}) Reached", world::max_blocks);
+
+      return;
+   }
+   else if (_world.blocks.custom.size() + group.blocks.custom.description.size() >
+            world::max_blocks) {
+      report_limit_reached("Max blocks (custom, {}) Reached", world::max_blocks);
+
+      return;
+   }
+   else if (_world.blocks.hemispheres.size() + group.blocks.hemispheres.size() >
+            world::max_blocks) {
+      report_limit_reached("Max blocks (hemispheres, {}) Reached", world::max_blocks);
+
+      return;
+   }
+   else if (_world.blocks.pyramids.size() + group.blocks.pyramids.size() >
+            world::max_blocks) {
+      report_limit_reached("Max blocks (pyramids, {}) Reached", world::max_blocks);
+
+      return;
+   }
+   else if (_world.blocks.terrain_cut_boxes.size() +
+               group.blocks.terrain_cut_boxes.size() >
+            world::max_blocks) {
+      report_limit_reached("Max blocks (terrain cut boxes, {}) Reached",
+                           world::max_blocks);
+
+      return;
+   }
+
+   const uint32 object_base_index = static_cast<uint32>(_world.objects.size());
+   const uint32 path_base_index = static_cast<uint32>(_world.paths.size());
+   const uint32 region_base_index = static_cast<uint32>(_world.regions.size());
+   const uint32 sector_base_index = static_cast<uint32>(_world.sectors.size());
+   const uint32 planning_hub_base_index =
+      static_cast<uint32>(_world.planning_hubs.size());
+   const uint32 planning_connection_base_index =
+      static_cast<uint32>(_world.planning_connections.size());
+
+   bool is_transparent_edit = false;
+
+   for (const world::object& object : group.objects) {
+      world::object new_object = object;
+
+      const world::object_id new_object_id = _world.next_id.objects.aquire();
+
+      new_object.layer = group.layer;
+      new_object.rotation = group.rotation * new_object.rotation;
+      new_object.position = group.rotation * new_object.position + group.position;
+      new_object.name = world::create_unique_name(_world.objects, new_object.name);
+      new_object.id = new_object_id;
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_object),
+                                                        _object_classes),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) _interaction_targets.selection.add(new_object_id);
+   }
+
+   for (const world::light& light : group.lights) {
+      world::light new_light = light;
+
+      const world::light_id new_light_id = _world.next_id.lights.aquire();
+
+      new_light.layer = group.layer;
+      new_light.rotation = group.rotation * new_light.rotation;
+      new_light.position = group.rotation * new_light.position + group.position;
+      new_light.region_rotation = group.rotation * new_light.region_rotation;
+      new_light.name = world::create_unique_name(_world.lights, new_light.name);
+      new_light.id = new_light_id;
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_light)),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) _interaction_targets.selection.add(new_light_id);
+   }
+
+   for (const world::path& path : group.paths) {
+      world::path new_path = path;
+
+      const world::path_id new_path_id = _world.next_id.paths.aquire();
+
+      for (world::path::node& node : new_path.nodes) {
+         node.rotation = group.rotation * node.rotation;
+         node.position = group.rotation * node.position + group.position;
+      }
+
+      new_path.layer = group.layer;
+      new_path.name = world::create_unique_name(_world.paths, new_path.name);
+      new_path.id = new_path_id;
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_path)),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) {
+         world::path_id_node_mask path_nodes_id{.id = new_path_id};
+
+         for (std::size_t i = 0; i < path.nodes.size(); ++i) {
+            path_nodes_id.nodes.set(i);
+         }
+
+         _interaction_targets.selection.add(path_nodes_id);
+      }
+   }
+
+   for (const world::region& region : group.regions) {
+      world::region new_region = region;
+
+      const world::region_id new_region_id = _world.next_id.regions.aquire();
+
+      new_region.layer = group.layer;
+      new_region.rotation = group.rotation * new_region.rotation;
+      new_region.position = group.rotation * new_region.position + group.position;
+      new_region.name =
+         world::create_unique_name(_world.regions, _world.lights, new_region.name);
+      new_region.id = new_region_id;
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_region)),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) _interaction_targets.selection.add(new_region_id);
+   }
+
+   for (const world::sector& sector : group.sectors) {
+      world::sector new_sector = sector;
+
+      const world::sector_id new_sector_id = _world.next_id.sectors.aquire();
+
+      float2 sector_centre = {0.0f, 0.0f};
+
+      for (const float2& point : new_sector.points) {
+         sector_centre += (point);
+      }
+
+      sector_centre /= static_cast<float>(new_sector.points.size());
+
+      const float3 rotated_sector_centre =
+         group.rotation * float3{sector_centre.x, 0.0f, sector_centre.y};
+
+      for (float2& point : new_sector.points) {
+         const float3 rotated_point =
+            group.rotation *
+            float3{point.x - sector_centre.x, 0.0f, point.y - sector_centre.y};
+
+         point = float2{rotated_point.x, rotated_point.z} +
+                 float2{rotated_sector_centre.x, rotated_sector_centre.z} +
+                 float2{group.position.x, group.position.z};
+      }
+
+      for (std::string& object : new_sector.objects) {
+         object = world::get_placed_entity_name(object, _world.objects, group,
+                                                object_base_index);
+      }
+
+      new_sector.base += group.position.y;
+      new_sector.name = world::create_unique_name(_world.sectors, new_sector.name);
+      new_sector.id = new_sector_id;
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_sector)),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) _interaction_targets.selection.add(new_sector_id);
+   }
+
+   for (const world::portal& portal : group.portals) {
+      world::portal new_portal = portal;
+
+      const world::portal_id new_portal_id = _world.next_id.portals.aquire();
+
+      if (not new_portal.sector1.empty()) {
+         new_portal.sector1 =
+            world::get_placed_entity_name(new_portal.sector1, _world.sectors,
+                                          group, sector_base_index);
+      }
+
+      if (not new_portal.sector2.empty()) {
+         new_portal.sector2 =
+            world::get_placed_entity_name(new_portal.sector2, _world.sectors,
+                                          group, sector_base_index);
+      }
+
+      new_portal.rotation = group.rotation * new_portal.rotation;
+      new_portal.position = group.rotation * new_portal.position + group.position;
+      new_portal.name = world::create_unique_name(_world.portals, new_portal.name);
+      new_portal.id = new_portal_id;
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_portal)),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) _interaction_targets.selection.add(new_portal_id);
+   }
+
+   for (const world::hintnode& hintnode : group.hintnodes) {
+      world::hintnode new_hintnode = hintnode;
+
+      const world::hintnode_id new_hintnode_id = _world.next_id.hintnodes.aquire();
+
+      if (not new_hintnode.command_post.empty()) {
+         new_hintnode.command_post =
+            world::get_placed_entity_name(new_hintnode.command_post, _world.objects,
+                                          group, object_base_index);
+      }
+
+      new_hintnode.layer = group.layer;
+      new_hintnode.rotation = group.rotation * new_hintnode.rotation;
+      new_hintnode.position = group.rotation * new_hintnode.position + group.position;
+      new_hintnode.name =
+         world::create_unique_name(_world.hintnodes, new_hintnode.name);
+      new_hintnode.id = new_hintnode_id;
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hintnode)),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) _interaction_targets.selection.add(new_hintnode_id);
+   }
+
+   for (const world::barrier& barrier : group.barriers) {
+      world::barrier new_barrier = barrier;
+
+      const world::barrier_id new_barrier_id = _world.next_id.barriers.aquire();
+
+      new_barrier.rotation_angle = group.rotation_angle + new_barrier.rotation_angle;
+      new_barrier.position = group.rotation * new_barrier.position + group.position;
+      new_barrier.name = world::create_unique_name(_world.barriers, new_barrier.name);
+      new_barrier.id = new_barrier_id;
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_barrier)),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) _interaction_targets.selection.add(new_barrier_id);
+   }
+
+   for (const world::planning_hub& hub : group.planning_hubs) {
+      world::planning_hub new_hub = hub;
+
+      const world::planning_hub_id new_hub_id = _world.next_id.planning_hubs.aquire();
+
+      for (world::planning_branch_weights& weight : new_hub.weights) {
+         weight.hub_index += planning_hub_base_index;
+         weight.connection_index += planning_connection_base_index;
+      }
+
+      new_hub.position = group.rotation * new_hub.position + group.position;
+      new_hub.name = world::create_unique_name(_world.planning_hubs, new_hub.name);
+      new_hub.id = new_hub_id;
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hub)),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) _interaction_targets.selection.add(new_hub_id);
+   }
+
+   for (const world::planning_connection& connection : group.planning_connections) {
+      world::planning_connection new_connection = connection;
+
+      const world::planning_connection_id new_connection_id =
+         _world.next_id.planning_connections.aquire();
+
+      new_connection.start_hub_index += planning_hub_base_index;
+      new_connection.end_hub_index += planning_hub_base_index;
+      new_connection.name =
+         world::create_unique_name(_world.planning_connections, new_connection.name);
+      new_connection.id = new_connection_id;
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_connection)),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) _interaction_targets.selection.add(new_connection_id);
+   }
+
+   for (const world::boundary& boundary : group.boundaries) {
+      world::boundary new_boundary = boundary;
+
+      const world::boundary_id new_boundary_id = _world.next_id.boundaries.aquire();
+
+      new_boundary.position = group.rotation * new_boundary.position + group.position;
+      new_boundary.name =
+         world::create_unique_name(_world.boundaries, new_boundary.name);
+      new_boundary.id = new_boundary_id;
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_boundary)),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) _interaction_targets.selection.add(new_boundary_id);
+   }
+
+   for (const world::measurement& measurement : group.measurements) {
+      world::measurement new_measurement = measurement;
+
+      const world::measurement_id new_measurement_id =
+         _world.next_id.measurements.aquire();
+
+      new_measurement.start = group.rotation * new_measurement.start + group.position;
+      new_measurement.end = group.rotation * new_measurement.end + group.position;
+      new_measurement.id = new_measurement_id;
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_measurement)),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) _interaction_targets.selection.add(new_measurement_id);
+   }
+
+   std::array<std::optional<uint8>, world::max_block_materials> block_material_remap;
+
+   for (uint32 material_index = 0;
+        material_index <
+        std::min(group.blocks.materials.size(), world::max_block_materials);
+        ++material_index) {
+      if (std::optional<uint8> equivalent_material =
+             world::find_block_equivalent_material(_world.blocks,
+                                                   group.blocks.materials[material_index]);
+          equivalent_material) {
+         block_material_remap[material_index] = *equivalent_material;
+
+         continue;
+      }
+
+      if (std::optional<uint8> empty_material =
+             world::find_block_empty_material(_world.blocks);
+          empty_material) {
+         block_material_remap[material_index] = *empty_material;
+
+         _edit_stack_world.apply(
+            edits::make_set_block_material(&_world.blocks.materials[*empty_material],
+                                           group.blocks.materials[material_index],
+                                           *empty_material,
+                                           &_world.blocks.materials_dirty),
+            _edit_context, {.transparent = std::exchange(is_transparent_edit, true)});
+      }
+   }
+
+   for (const world::block_description_box& box : group.blocks.boxes) {
+      world::block_description_box new_box = box;
+
+      const world::block_box_id new_box_id = _world.blocks.next_id.boxes.aquire();
+
+      new_box.rotation = group.rotation * new_box.rotation;
+      new_box.position = group.rotation * new_box.position + group.position;
+
+      for (uint8& material : new_box.surface_materials) {
+         if (block_material_remap[material]) {
+            material = *block_material_remap[material];
+         }
+         else {
+            material = 0;
+         }
+      }
+
+      _edit_stack_world.apply(edits::make_add_block(new_box, group.layer, new_box_id),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) {
+         _interaction_targets.selection.add(world::block_id{new_box_id});
+      }
+   }
+
+   for (const world::block_description_ramp& ramp : group.blocks.ramps) {
+      world::block_description_ramp new_ramp = ramp;
+
+      const world::block_ramp_id new_ramp_id = _world.blocks.next_id.ramps.aquire();
+
+      new_ramp.rotation = group.rotation * new_ramp.rotation;
+      new_ramp.position = group.rotation * new_ramp.position + group.position;
+
+      for (uint8& material : new_ramp.surface_materials) {
+         if (block_material_remap[material]) {
+            material = *block_material_remap[material];
+         }
+         else {
+            material = 0;
+         }
+      }
+
+      _edit_stack_world.apply(edits::make_add_block(new_ramp, group.layer, new_ramp_id),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) {
+         _interaction_targets.selection.add(world::block_id{new_ramp_id});
+      }
+   }
+
+   for (const world::block_description_quad& quad : group.blocks.quads) {
+      world::block_description_quad new_quad = quad;
+
+      const world::block_quad_id new_quad_id = _world.blocks.next_id.quads.aquire();
+
+      new_quad.vertices = {
+         group.rotation * quad.vertices[0] + group.position,
+         group.rotation * quad.vertices[1] + group.position,
+         group.rotation * quad.vertices[2] + group.position,
+         group.rotation * quad.vertices[3] + group.position,
+      };
+
+      for (uint8& material : new_quad.surface_materials) {
+         if (block_material_remap[material]) {
+            material = *block_material_remap[material];
+         }
+         else {
+            material = 0;
+         }
+      }
+
+      _edit_stack_world.apply(edits::make_add_block(new_quad, group.layer, new_quad_id),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) {
+         _interaction_targets.selection.add(world::block_id{new_quad_id});
+      }
+   }
+
+   for (const world::block_description_custom& block : group.blocks.custom.description) {
+      world::block_description_custom new_block = block;
+
+      const world::block_custom_id new_block_id =
+         _world.blocks.next_id.custom.aquire();
+
+      new_block.rotation = group.rotation * new_block.rotation;
+      new_block.position = group.rotation * new_block.position + group.position;
+
+      for (uint8& material : new_block.surface_materials) {
+         if (block_material_remap[material]) {
+            material = *block_material_remap[material];
+         }
+         else {
+            material = 0;
+         }
+      }
+
+      _edit_stack_world.apply(edits::make_add_block(new_block, group.layer, new_block_id),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) {
+         _interaction_targets.selection.add(world::block_id{new_block_id});
+      }
+   }
+
+   for (const world::block_description_hemisphere& hemisphere : group.blocks.hemispheres) {
+      world::block_description_hemisphere new_hemisphere = hemisphere;
+
+      const world::block_hemisphere_id new_hemisphere_id =
+         _world.blocks.next_id.hemispheres.aquire();
+
+      new_hemisphere.rotation = group.rotation * new_hemisphere.rotation;
+      new_hemisphere.position =
+         group.rotation * new_hemisphere.position + group.position;
+
+      for (uint8& material : new_hemisphere.surface_materials) {
+         if (block_material_remap[material]) {
+            material = *block_material_remap[material];
+         }
+         else {
+            material = 0;
+         }
+      }
+
+      _edit_stack_world.apply(edits::make_add_block(new_hemisphere, group.layer,
+                                                    new_hemisphere_id),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) {
+         _interaction_targets.selection.add(world::block_id{new_hemisphere_id});
+      }
+   }
+
+   for (const world::block_description_pyramid& pyramid : group.blocks.pyramids) {
+      world::block_description_pyramid new_pyramid = pyramid;
+
+      const world::block_pyramid_id new_pyramid_id =
+         _world.blocks.next_id.pyramids.aquire();
+
+      new_pyramid.rotation = group.rotation * new_pyramid.rotation;
+      new_pyramid.position = group.rotation * new_pyramid.position + group.position;
+
+      for (uint8& material : new_pyramid.surface_materials) {
+         if (block_material_remap[material]) {
+            material = *block_material_remap[material];
+         }
+         else {
+            material = 0;
+         }
+      }
+
+      _edit_stack_world.apply(edits::make_add_block(new_pyramid, group.layer,
+                                                    new_pyramid_id),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) {
+
+         _interaction_targets.selection.add(world::block_id{new_pyramid_id});
+      }
+   }
+
+   for (const world::block_description_terrain_cut_box& terrain_cut_box :
+        group.blocks.terrain_cut_boxes) {
+      world::block_description_terrain_cut_box new_terrain_cut_box = terrain_cut_box;
+
+      const world::block_terrain_cut_box_id new_terrain_cut_box_id =
+         _world.blocks.next_id.terrain_cut_boxes.aquire();
+
+      new_terrain_cut_box.rotation = group.rotation * new_terrain_cut_box.rotation;
+      new_terrain_cut_box.position =
+         group.rotation * new_terrain_cut_box.position + group.position;
+
+      for (uint8& material : new_terrain_cut_box.surface_materials) {
+         if (block_material_remap[material]) {
+            material = *block_material_remap[material];
+         }
+         else {
+            material = 0;
+         }
+      }
+
+      _edit_stack_world.apply(edits::make_add_block(new_terrain_cut_box, group.layer,
+                                                    new_terrain_cut_box_id),
+                              _edit_context,
+                              {.transparent = std::exchange(is_transparent_edit, true)});
+
+      if (select_placed) {
+         _interaction_targets.selection.add(world::block_id{new_terrain_cut_box_id});
+      }
+   }
+
+   for (uint32 object_index = object_base_index;
+        object_index < _world.objects.size(); ++object_index) {
+      world::object& object = _world.objects[object_index];
+
+      for (uint32 prop_index = 0;
+           prop_index < object.instance_properties.size(); ++prop_index) {
+         const world::instance_property& prop = object.instance_properties[prop_index];
+
+         if (prop.value.empty()) continue;
+
+         std::string_view new_value;
+
+         if (string::iequals("ControlZone", prop.key)) {
+            new_value = world::get_placed_entity_name(prop.value, _world.objects,
+                                                      group, object_base_index);
+         }
+         else if (string::icontains(prop.key, "Path")) {
+            new_value = world::get_placed_entity_name(prop.value, _world.paths,
+                                                      group, path_base_index);
+         }
+         else if (string::icontains(prop.key, "Region")) {
+            for (uint32 i = 0; i < group.regions.size(); ++i) {
+               if (not string::iequals(prop.value, group.regions[i].description)) {
+                  continue;
+               }
+
+               world::region& region = _world.regions[region_base_index + i];
+
+               if (not string::iequals(region.name, region.description)) {
+                  _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                                region.name),
+                                          _edit_context, {.transparent = true});
+               }
+
+               new_value = region.description;
+            }
+         }
+
+         if (not new_value.empty()) {
+            _edit_stack_world
+               .apply(edits::make_set_vector_value(&object.instance_properties, prop_index,
+                                                   &world::instance_property::value,
+                                                   std::string{new_value}),
+                      _edit_context, {.transparent = true});
+         }
+      }
+   }
 }
 
 void world_edit::command_post_auto_place_meta_entities(world::object& object) noexcept
@@ -3742,6 +3832,50 @@ void world_edit::focus_on_selection() noexcept
       std::sin((_camera.fov() / _camera.aspect_ratio()) / 2.0f);
 
    _camera.position(bounding_sphere_centre + camera_offset * _camera.back());
+}
+
+void world_edit::duplicate_and_select_selection() noexcept
+{
+   if (_interaction_targets.selection.size() == 1 and
+       _interaction_targets.selection[0].is<world::path_id_node_mask>() and
+       _interaction_targets.selection[0].get<world::path_id_node_mask>().nodes.has_single_node_set()) {
+      const auto& [id, node_mask] =
+         _interaction_targets.selection[0].get<world::path_id_node_mask>();
+
+      std::size_t index = 0;
+
+      for (std::size_t i = 0; i < node_mask.size(); ++i) {
+         if (node_mask[i]) index = i;
+      }
+
+      world::path* path = world::find_entity(_world.paths, id);
+
+      if (path) {
+         if (path->nodes.size() == world::max_path_nodes) {
+            MessageBoxA(
+               _window,
+               fmt::format("Max Path Nodes ({}) for single path reached.", world::max_path_nodes)
+                  .c_str(),
+               "Limit Reached", MB_OK);
+
+            return;
+         }
+
+         if (index >= path->nodes.size()) return;
+
+         _edit_stack_world.apply(edits::make_insert_node(id, index + 1,
+                                                         path->nodes[index]),
+                                 _edit_context);
+      }
+   }
+   else {
+      const world::entity_group group =
+         world::make_entity_group_from_selection(_world, _interaction_targets.selection);
+
+      _interaction_targets.selection.clear();
+
+      place_entity_group(group, true);
+   }
 }
 
 void world_edit::unhide_all() noexcept

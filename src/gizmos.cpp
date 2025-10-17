@@ -91,6 +91,7 @@ struct gizmo_position_state {
 
    float alignment = 1.0f;
 
+   bool duplication_triggered = false;
    bool submitted_last_frame = true;
 };
 
@@ -114,6 +115,7 @@ struct gizmo_rotation_state {
    float3 cursor_directionGS;
    float3 buffered_rotation;
 
+   bool duplication_triggered = false;
    bool submitted_last_frame = true;
 };
 
@@ -286,7 +288,7 @@ struct gizmos::impl {
       _capture_keyboard = _want_keyboard_input;
       _want_mouse_input = false;
       _want_keyboard_input = false;
-      _last_gizmo_deactivated = false;
+      _last_gizmo_status = {};
       _orthographic_projection =
          camera.projection() == graphics::camera_projection::orthographic;
 
@@ -319,6 +321,8 @@ struct gizmos::impl {
       gizmo.rotation = normalize(desc.gizmo_rotation);
       gizmo.alignment = desc.alignment;
 
+      _last_gizmo_status = {};
+
       const float gizmo_camera_scale =
          not _orthographic_projection ? distance(_camera_positionWS, positionWS) : 1.0f;
       const float gizmo_length =
@@ -346,11 +350,13 @@ struct gizmos::impl {
          fabs(dot(view_directionGS, float3{0.0f, 0.0f, 1.0f})) > cull_angle;
 
       if (not _input.left_mouse_down) {
-         _last_gizmo_deactivated = gizmo.state == state::active;
+         _last_gizmo_status.deactivated = gizmo.state == state::active;
+
          gizmo.state = state::idle;
+         gizmo.duplication_triggered = false;
       }
       else {
-         _last_gizmo_deactivated = false;
+         _last_gizmo_status.deactivated = false;
       }
 
       if (gizmo.state == state::idle or gizmo.state == state::hovered) {
@@ -547,7 +553,17 @@ struct gizmos::impl {
                   gizmo.activation_offsetGS = positionGS - hit_positionGS;
                }
             }
+
+            if (_input.alt_down) {
+               gizmo.duplication_triggered = true;
+
+               _last_gizmo_status.is_activated_with_duplication = true;
+            }
          }
+      }
+
+      if (gizmo.duplication_triggered) {
+         _last_gizmo_status.was_duplication_triggered = true;
       }
 
       if (gizmo.state == state::active) {
@@ -863,6 +879,8 @@ struct gizmos::impl {
          gizmo.rotation = normalize(desc.gizmo_rotation);
       }
 
+      _last_gizmo_status = {};
+
       const float gizmo_camera_scale =
          not _orthographic_projection ? distance(_camera_positionWS, gizmo.positionWS)
                                       : 1.0f;
@@ -889,11 +907,13 @@ struct gizmos::impl {
          fabs(dot(view_directionGS, float3{0.0f, 0.0f, 1.0f})) > cull_angle;
 
       if (not _input.left_mouse_down) {
-         _last_gizmo_deactivated = gizmo.state == state::active;
+         _last_gizmo_status.deactivated = gizmo.state == state::active;
+
          gizmo.state = state::idle;
+         gizmo.duplication_triggered = false;
       }
       else {
-         _last_gizmo_deactivated = false;
+         _last_gizmo_status.deactivated = false;
       }
 
       if (gizmo.state == state::idle or gizmo.state == state::hovered) {
@@ -975,7 +995,17 @@ struct gizmos::impl {
                gizmo.cursor_directionGS =
                   normalize(ray_originGS + ray_directionGS * plane_hit);
             }
+
+            if (_input.alt_down) {
+               gizmo.duplication_triggered = true;
+
+               _last_gizmo_status.is_activated_with_duplication = true;
+            }
          }
+      }
+
+      if (gizmo.duplication_triggered) {
+         _last_gizmo_status.was_duplication_triggered = true;
       }
 
       if (gizmo.state == state::active) {
@@ -1178,11 +1208,11 @@ struct gizmos::impl {
          normalize(conjugate(gizmo.rotation) * (_camera_positionWS - positionWS));
 
       if (not _input.left_mouse_down) {
-         _last_gizmo_deactivated = gizmo.state == state::active;
+         _last_gizmo_status = {.deactivated = gizmo.state == state::active};
          gizmo.state = state::idle;
       }
       else {
-         _last_gizmo_deactivated = false;
+         _last_gizmo_status = {.deactivated = false};
       }
 
       if (gizmo.state == state::idle or gizmo.state == state::hovered) {
@@ -1594,11 +1624,11 @@ struct gizmos::impl {
          conjugate(gizmo.rotation) * (_camera_positionWS - gizmo.positionWS));
 
       if (not _input.left_mouse_down) {
-         _last_gizmo_deactivated = gizmo.state == state::active;
+         _last_gizmo_status = {.deactivated = gizmo.state == state::active};
          gizmo.state = state::idle;
       }
       else {
-         _last_gizmo_deactivated = false;
+         _last_gizmo_status = {.deactivated = false};
       }
 
       if (gizmo.state == state::idle or gizmo.state == state::hovered) {
@@ -1994,11 +2024,11 @@ struct gizmos::impl {
          normalize(conjugate(gizmo.rotation) * (_camera_positionWS - positionWS));
 
       if (not _input.left_mouse_down) {
-         _last_gizmo_deactivated = gizmo.state == state::active;
+         _last_gizmo_status = {.deactivated = gizmo.state == state::active};
          gizmo.state = state::idle;
       }
       else {
-         _last_gizmo_deactivated = false;
+         _last_gizmo_status = {.deactivated = false};
       }
 
       if (gizmo.state == state::idle or gizmo.state == state::hovered) {
@@ -2526,19 +2556,35 @@ struct gizmos::impl {
 
    bool can_close_last_edit() const noexcept
    {
-      return _last_gizmo_deactivated;
+      return _last_gizmo_status.deactivated;
+   }
+
+   bool is_activated_with_duplication() const noexcept
+   {
+      return _last_gizmo_status.is_activated_with_duplication;
+   }
+
+   bool was_duplication_triggered() const noexcept
+   {
+      return _last_gizmo_status.was_duplication_triggered;
    }
 
    gizmo_draw_lists draw_lists;
 
 private:
+   struct last_gizmo_flags {
+      bool deactivated = false;
+      bool is_activated_with_duplication = false;
+      bool was_duplication_triggered = false;
+   };
+
    graphics::camera_ray _cursor_rayWS;
    gizmo_button_input _input;
    bool _want_mouse_input = false;
    bool _want_keyboard_input = false;
    bool _capture_mouse = false;
    bool _capture_keyboard = false;
-   bool _last_gizmo_deactivated = false;
+   last_gizmo_flags _last_gizmo_status;
    bool _orthographic_projection = false;
 
    std::vector<gizmo_position_state> _position_gizmos;
@@ -2795,6 +2841,16 @@ bool gizmos::gizmo_ring_size(const gizmo_ring_size_desc& desc,
 bool gizmos::can_close_last_edit() const noexcept
 {
    return impl->can_close_last_edit();
+}
+
+bool gizmos::is_activated_with_duplication() const noexcept
+{
+   return impl->is_activated_with_duplication();
+}
+
+bool gizmos::was_duplication_triggered() const noexcept
+{
+   return impl->was_duplication_triggered();
 }
 
 }

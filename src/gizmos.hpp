@@ -119,6 +119,7 @@ struct gizmo_draw_lists {
 struct gizmo_button_input {
    bool left_mouse_down = false;
    bool ctrl_down = false;
+   bool alt_down = false;
 };
 
 struct gizmos {
@@ -155,9 +156,17 @@ struct gizmos {
 
    bool can_close_last_edit() const noexcept;
 
+   /// @brief Check if the user started interacting this frame with the last gizmo while Alt was held down. This can be used to implement Alt-Click to duplicate patterns.
+   /// @return True if Alt was held when the gizmo was activated and it was activated this frame, false otherwise.
+   bool is_activated_with_duplication() const noexcept;
+
+   /// @brief Check if last gizmo had Alt held down when activated. This can be used to mark edits after the duplication as transparent (allowing a smoother user experience).
+   /// @return True if Alt was held when the gizmo was activated, false otherwise.
+   bool was_duplication_triggered() const noexcept;
+
 private:
    struct impl;
 
-   implementation_storage<impl, 552> impl;
+   implementation_storage<impl, 560> impl;
 };
 }

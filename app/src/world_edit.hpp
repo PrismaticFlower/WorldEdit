@@ -443,6 +443,9 @@ private:
 
    void place_creation_entity_at_camera() noexcept;
 
+   void place_entity_group(const world::entity_group& group,
+                           const bool select_placed) noexcept;
+
    void command_post_auto_place_meta_entities(world::object& object) noexcept;
 
    void add_object_to_sectors(const world::object& object) noexcept;
@@ -472,6 +475,8 @@ private:
    void new_entity_from_selection() noexcept;
 
    void focus_on_selection() noexcept;
+
+   void duplicate_and_select_selection() noexcept;
 
    void unhide_all() noexcept;
 

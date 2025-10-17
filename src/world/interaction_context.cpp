@@ -4,6 +4,8 @@
 
 #include "utility/world_utilities.hpp"
 
+#include <bit>
+
 namespace we::world {
 
 namespace {
@@ -419,6 +421,17 @@ void path_id_node_mask::node_mask::reset(const std::size_t i) noexcept
    const std::size_t bit = i % 32;
 
    words[word] &= ~(1 << bit);
+}
+
+bool path_id_node_mask::node_mask::has_single_node_set() noexcept
+{
+   for (uint32& word : words) {
+      if (word != 0 and not std::has_single_bit(word)) {
+         return false;
+      }
+   }
+
+   return true;
 }
 
 auto operator|(const path_id_node_mask::node_mask& l,

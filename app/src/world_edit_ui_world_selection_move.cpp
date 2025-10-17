@@ -240,6 +240,11 @@ void world_edit::ui_show_world_selection_move() noexcept
                                  .gizmo_rotation = gizmo_rotation},
                                 new_selection_centre);
       const bool gizmo_close_edit = _gizmos.can_close_last_edit();
+      const bool gizmo_was_duplication_edit = _gizmos.was_duplication_triggered();
+
+      if (_gizmos.is_activated_with_duplication()) {
+         duplicate_and_select_selection();
+      }
 
       if (imgui_edited or gizmo_edited) {
          const float3 move_delta = (new_selection_centre - selection_centre);
@@ -461,11 +466,13 @@ void world_edit::ui_show_world_selection_move() noexcept
          }
 
          if (bundled_edits.size() == 1) {
-            _edit_stack_world.apply(std::move(bundled_edits.back()), _edit_context);
+            _edit_stack_world.apply(std::move(bundled_edits.back()), _edit_context,
+                                    {.transparent = gizmo_was_duplication_edit});
          }
          else if (not bundled_edits.empty()) {
             _edit_stack_world.apply(edits::make_bundle(std::move(bundled_edits)),
-                                    _edit_context);
+                                    _edit_context,
+                                    {.transparent = gizmo_was_duplication_edit});
          }
       }
 

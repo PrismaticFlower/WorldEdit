@@ -52,6 +52,8 @@ struct path_id_node_mask {
 
       void reset(const std::size_t i) noexcept;
 
+      bool has_single_node_set() noexcept;
+
       bool operator==(const node_mask&) const noexcept = default;
 
       friend auto operator|(const node_mask& l, const node_mask& r) noexcept -> node_mask;
