@@ -487,8 +487,15 @@ void world_edit::ui_show_terrain_editor() noexcept
 
             if (config.brush_mode == terrain_brush_mode::pull_towards or
                 config.brush_mode == terrain_brush_mode::overwrite) {
+               const float pick_button_size = ImGui::GetStyle().FramePadding.x * 2.0f +
+                                              ImGui::CalcTextSize("Pick").x;
+               const float drag_size = ImGui::CalcItemWidth() - pick_button_size -
+                                       ImGui::GetStyle().ItemInnerSpacing.x;
+
+               ImGui::SetNextItemWidth(drag_size);
+
                if (float height = config.brush_height * _world.terrain.height_scale;
-                   ImGui::DragFloat("Height", &height, _world.terrain.height_scale,
+                   ImGui::DragFloat("##Height", &height, _world.terrain.height_scale,
                                     -32768.0f * _world.terrain.height_scale,
                                     32767.0f * _world.terrain.height_scale, "%.3f",
                                     ImGuiSliderFlags_AlwaysClamp |
@@ -496,6 +503,16 @@ void world_edit::ui_show_terrain_editor() noexcept
                   config.brush_height =
                      std::trunc(height / _world.terrain.height_scale);
                }
+
+               ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+               if (ImGui::Button("Pick")) {
+                  _terrain_editor_context.pick_height.active = true;
+               }
+
+               ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+               ImGui::TextUnformatted("Height");
             }
 
             if (config.brush_mode == terrain_brush_mode::pull_towards or
@@ -758,6 +775,24 @@ void world_edit::ui_show_terrain_editor() noexcept
          _hotkeys.query_binding("Terrain Editing", "Decrease Brush Size")));
 
       ImGui::End();
+   }
+
+   if (_terrain_editor_context.pick_height.active) {
+      if (_terrain_editor_context.pick_height.clicked) {
+         _terrain_editor_context.pick_height = {};
+
+         _terrain_editor_config.height.brush_height =
+            std::trunc(_cursor_positionWS.y / _world.terrain.height_scale);
+      }
+
+      const uint32 visualizer_color = utility::pack_srgb_bgra(
+         float4{_settings.graphics.terrain_brush_color, 1.0f});
+
+      _tool_visualizers.add_line_overlay(_cursor_positionWS,
+                                         _cursor_positionWS +
+                                            float3{0.0f, _world.terrain.grid_scale, 0.0f},
+                                         visualizer_color);
+      return;
    }
 
    graphics::camera_ray ray =

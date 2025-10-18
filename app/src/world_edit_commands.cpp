@@ -577,6 +577,10 @@ void world_edit::initialize_commands() noexcept
       _terrain_import_heightmap_context = {};
       _edit_stack_world.close_last();
    });
+   _commands.add("terrain.pick_height_click"s,
+                 [this] { _terrain_editor_context.pick_height.clicked = true; });
+   _commands.add("terrain.pick_height_cancel"s,
+                 [this] { _terrain_editor_context.pick_height = {}; });
 
    _commands.add("measurement_tool.close"s,
                  [this] { _measurement_tool_open = false; });
@@ -1297,6 +1301,22 @@ void world_edit::initialize_hotkeys() noexcept
       .default_hotkeys =
          {
             {"Clear", "terrain.clear_edit_tool", {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Terrain Edit Tool Pick Height",
+      .activated =
+         [this] {
+            return _terrain_edit_tool == terrain_edit_tool::editor and
+                   _terrain_editor_context.pick_height.active;
+         },
+      .default_hotkeys =
+         {
+            {"Cancel", "terrain.pick_height_cancel", {.key = key::escape}},
+            {"Click", "terrain.pick_height_click", {.key = key::mouse1}},
          },
 
       .hidden = true,

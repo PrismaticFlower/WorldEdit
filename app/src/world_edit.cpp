@@ -358,7 +358,12 @@ void world_edit::update_hovered_entity() noexcept
 
    if (ImGui::GetIO().WantCaptureMouse or _gizmos.want_capture_mouse()) return;
    if (_rotate_camera or _pan_camera) return;
-   if (_terrain_edit_tool != terrain_edit_tool::none) return;
+   if (_terrain_edit_tool != terrain_edit_tool::none) {
+      if (_terrain_edit_tool != terrain_edit_tool::editor and
+          not _terrain_editor_context.pick_height.active) {
+         return;
+      }
+   }
    if (_block_editor_open) {
       if (_block_editor_context.tool != block_edit_tool::draw) return;
    }
@@ -4441,6 +4446,12 @@ auto world_edit::get_mouse_cursor() const noexcept -> mouse_cursor
 
    if (_animation_hierarchy_editor_open) {
       if (_animation_hierarchy_editor_context.pick_object.active) {
+         return mouse_cursor::cross;
+      }
+   }
+
+   if (_terrain_edit_tool == terrain_edit_tool::editor) {
+      if (_terrain_editor_context.pick_height.active) {
          return mouse_cursor::cross;
       }
    }

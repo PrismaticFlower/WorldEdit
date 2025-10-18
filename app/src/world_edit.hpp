@@ -837,6 +837,11 @@ private:
 
       float brush_plane_height = 0.0f;
       utility::stopwatch last_brush_update_timer;
+
+      struct pick_height {
+         bool active = false;
+         bool clicked = false;
+      } pick_height;
    } _terrain_editor_context;
 
    struct terrain_editor_maps {
