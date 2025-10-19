@@ -1825,24 +1825,26 @@ void renderer_impl::draw_world_meta_objects(
          case world::light_type::spot: {
             const float outer_cone_radius =
                light.range * std::tan(light.outer_cone_angle * 0.5f);
-            const float inner_cone_radius =
-               light.range * std::tan(light.inner_cone_angle * 0.5f);
-            const float half_range = light.range * 0.5f;
+            const float3 light_directionWS =
+               normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
+            const float3 cone_baseWS =
+               light.position + light_directionWS * light.range;
+            const float3 e = outer_cone_radius *
+                             sqrt(1.0f - light_directionWS * light_directionWS);
 
-            const float3 light_direction =
-               normalize(light_rotation * float3{0.0f, 0.0f, -1.0f});
+            const math::bounding_box bbox{.min = min(cone_baseWS - e, light.position),
+                                          .max = max(cone_baseWS + e, light.position)};
 
-            const float light_bounds_radius = std::max(outer_cone_radius, half_range);
-            const float3 light_centre =
-               light_positionWS - (light_direction * (half_range));
-
-            // TODO: Better cone culling
-            if (not intersects(view_frustum, light_centre, light_bounds_radius)) {
+            if (not intersects(view_frustum, bbox)) {
                return;
             }
 
             const float4x4 rotation = to_matrix(
                light_rotation * quaternion{0.707107f, -0.707107f, 0.0f, 0.0f});
+
+            const float half_range = light.range / 2.0f;
+            const float inner_cone_radius =
+               light.range * std::tan(light.inner_cone_angle * 0.5f);
 
             float4x4 outer_transform =
                rotation * float4x4{{outer_cone_radius, 0.0f, 0.0f, 0.0f},

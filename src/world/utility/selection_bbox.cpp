@@ -6,6 +6,7 @@
 #include "../object_class.hpp"
 
 #include "math/matrix_funcs.hpp"
+#include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
 namespace we::world {
@@ -74,15 +75,17 @@ auto selection_bbox_for_camera(const world& world,
                selection_bbox = math::combine(bbox, selection_bbox);
             } break;
             case light_type::spot: {
-               const float half_range = light->range / 2.0f;
                const float outer_cone_radius =
-                  half_range * std::tan(light->outer_cone_angle);
+                  light->range * std::tan(light->outer_cone_angle * 0.5f);
+               const float3 light_directionWS =
+                  normalize(light->rotation * float3{0.0f, 0.0f, 1.0f});
+               const float3 cone_baseWS =
+                  light->position + light_directionWS * light->range;
+               const float3 e = outer_cone_radius *
+                                sqrt(1.0f - light_directionWS * light_directionWS);
 
-               math::bounding_box bbox{.min = {-outer_cone_radius, 0.0f, -outer_cone_radius},
-                                       .max = {outer_cone_radius, light->range,
-                                               outer_cone_radius}};
-
-               bbox = light->rotation * bbox + light->position;
+               const math::bounding_box bbox{.min = min(cone_baseWS - e, light->position),
+                                             .max = max(cone_baseWS + e, light->position)};
 
                selection_bbox = math::combine(bbox, selection_bbox);
             } break;
@@ -352,15 +355,17 @@ auto selection_metrics_for_move(const world& world,
                selection_bbox = math::combine(bbox, selection_bbox);
             } break;
             case light_type::spot: {
-               const float half_range = light->range / 2.0f;
                const float outer_cone_radius =
-                  half_range * std::tan(light->outer_cone_angle);
+                  light->range * std::tan(light->outer_cone_angle * 0.5f);
+               const float3 light_directionWS =
+                  normalize(light->rotation * float3{0.0f, 0.0f, 1.0f});
+               const float3 cone_baseWS =
+                  light->position + light_directionWS * light->range;
+               const float3 e = outer_cone_radius *
+                                sqrt(1.0f - light_directionWS * light_directionWS);
 
-               math::bounding_box bbox{.min = {-outer_cone_radius, 0.0f, -outer_cone_radius},
-                                       .max = {outer_cone_radius, light->range,
-                                               outer_cone_radius}};
-
-               bbox = light->rotation * bbox + light->position;
+               const math::bounding_box bbox{.min = min(cone_baseWS - e, light->position),
+                                             .max = max(cone_baseWS + e, light->position)};
 
                selection_bbox = math::combine(bbox, selection_bbox);
             } break;

@@ -745,4 +745,19 @@ inline auto sin(const float4& v) noexcept -> float4
    return {std::sin(v.x), std::sin(v.y), std::sin(v.z), std::sin(v.w)};
 }
 
+inline auto sqrt(const float2& v) noexcept -> float2
+{
+   return {sqrt(v.x), sqrt(v.y)};
+}
+
+inline auto sqrt(const float3& v) noexcept -> float3
+{
+   return {sqrt(v.x), sqrt(v.y), sqrt(v.z)};
+}
+
+inline auto sqrt(const float4& v) noexcept -> float4
+{
+   return {sqrt(v.x), sqrt(v.y), sqrt(v.z), sqrt(v.w)};
+}
+
 }

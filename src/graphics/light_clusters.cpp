@@ -448,23 +448,22 @@ void light_clusters::prepare_lights(
              .light_index = light_index};
       } break;
       case world::light_type::spot: {
-         const float3 light_direction =
-            normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
-
-         const float cone_radius =
+         const float outer_cone_radius =
             light.range * std::tan(light.outer_cone_angle * 0.5f);
-         const float half_range = light.range * 0.5f;
+         const float3 light_directionWS =
+            normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
+         const float3 cone_baseWS = light.position + light_directionWS * light.range;
+         const float3 e =
+            outer_cone_radius * sqrt(1.0f - light_directionWS * light_directionWS);
 
-         const float light_bounds_radius = std::max(cone_radius, half_range);
-         const float3 light_centre =
-            light.position - (light_direction * (half_range));
+         const math::bounding_box bbox{.min = min(cone_baseWS - e, light.position),
+                                       .max = max(cone_baseWS + e, light.position)};
 
-         // TODO: Cone-frustum intersection (but how much of a problem is it?)
-         if (not intersects(view_frustum, light_centre, light_bounds_radius)) {
+         if (not intersects(view_frustum, bbox)) {
             return;
          }
 
-         lights[light_index] = {.direction = light_direction,
+         lights[light_index] = {.direction = -light_directionWS,
                                 .type = light_type::spot,
                                 .position = light.position,
                                 .range = light.range,

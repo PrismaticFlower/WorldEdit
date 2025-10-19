@@ -213,12 +213,14 @@ auto entity_group_metrics(const entity_group& group,
       case light_type::spot: {
          const float outer_cone_radius =
             light.range * std::tan(light.outer_cone_angle * 0.5f);
-         const float half_radius = outer_cone_radius * 0.5f;
+         const float3 light_directionGS =
+            normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
+         const float3 cone_baseGS = light.position + light_directionGS * light.range;
+         const float3 e =
+            outer_cone_radius * sqrt(1.0f - light_directionGS * light_directionGS);
 
-         math::bounding_box bbox{.min = {-half_radius, 0.0f, -half_radius},
-                                 .max = {half_radius, light.range, half_radius}};
-
-         bbox = light.rotation * bbox + light.position;
+         const math::bounding_box bbox{.min = min(cone_baseGS - e, light.position),
+                                       .max = max(cone_baseGS + e, light.position)};
 
          group_bbox = math::combine(bbox, group_bbox);
       } break;
