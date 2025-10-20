@@ -812,6 +812,7 @@ void libraries_manager::clear() noexcept
    models.clear();
    textures.clear();
    skies.clear();
+   entity_groups.clear();
 }
 
 void libraries_manager::register_asset(const io::path& path, uint64 last_write_time) noexcept
