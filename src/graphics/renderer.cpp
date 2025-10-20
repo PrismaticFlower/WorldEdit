@@ -3390,6 +3390,16 @@ void renderer_impl::draw_interaction_targets(
 
                draw_entity(path->nodes[i], color);
             }
+
+            const uint32 packed_color = utility::pack_srgb_bgra({color, 1.0f});
+
+            for (std::ptrdiff_t i = 0;
+                 i < std::max((std::ssize(path->nodes) - 1), std::ptrdiff_t{0}); ++i) {
+               const float3 a = path->nodes[i].position;
+               const float3 b = path->nodes[i + 1].position;
+
+               _meta_draw_batcher.add_line_solid(a, b, packed_color);
+            }
          }
       }
       else if (target.is<world::region_id>()) {
