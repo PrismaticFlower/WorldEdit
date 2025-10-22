@@ -513,9 +513,7 @@ void light_clusters::prepare_lights(
             sphere_light_proxies[_light_proxy_count++] =
                {.transform =
                    make_sphere_light_proxy_transform(light.position,
-                                                     std::max({light.region_size.x,
-                                                               light.region_size.y,
-                                                               light.region_size.z})),
+                                                     length(light.region_size)),
 
                 .light_index = light_index};
          } break;
@@ -560,8 +558,7 @@ void light_clusters::prepare_lights(
             sphere_light_proxies[_light_proxy_count++] =
                {.transform =
                    make_sphere_light_proxy_transform(light.position,
-                                                     std::max(radius,
-                                                              light.region_size.y)),
+                                                     length(light.region_size)),
 
                 .light_index = light_index};
          } break;
@@ -711,10 +708,9 @@ void light_clusters::prepare_lights(
                                       .flags = flags};
 
                sphere_light_proxies[_light_proxy_count++] =
-                  {.transform = make_sphere_light_proxy_transform(
-                      light_positionWS,
-                      std::max({light.region_size.x, light.region_size.y,
-                                light.region_size.z})),
+                  {.transform =
+                      make_sphere_light_proxy_transform(light_positionWS,
+                                                        length(light.region_size)),
 
                    .light_index = light_index};
             } break;
@@ -757,8 +753,9 @@ void light_clusters::prepare_lights(
                                       .flags = flags};
 
                sphere_light_proxies[_light_proxy_count++] =
-                  {.transform = make_sphere_light_proxy_transform(
-                      light_positionWS, std::max(radius, light.region_size.y)),
+                  {.transform =
+                      make_sphere_light_proxy_transform(light_positionWS,
+                                                        length(light.region_size)),
 
                    .light_index = light_index};
             } break;
