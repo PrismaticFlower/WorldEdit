@@ -445,7 +445,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
             if (is_multi_select) {
                bool keep_selected = true;
 
-               if (not ImGui::CollapsingHeader("Path Node", &keep_selected,
+               if (not ImGui::CollapsingHeader("Path", &keep_selected,
                                                ImGuiTreeNodeFlags_DefaultOpen) and
                    keep_selected) {
                   ImGui::PopID();
@@ -465,7 +465,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                }
             }
             else {
-               ImGui::SeparatorText("Path Node");
+               ImGui::SeparatorText("Path");
             }
 
             ImGui::InputText("Name", &path->name, _edit_stack_world, _edit_context,
@@ -526,7 +526,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::EndCombo();
             }
 
-            ImGui::Separator();
+            ImGui::SeparatorText("Selected Nodes");
 
             const std::size_t node_count =
                std::min(path->nodes.size(), world::max_path_nodes);
@@ -580,6 +580,33 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::PopID();
                ImGui::PopID();
                ImGui::Separator();
+            }
+
+            ImGui::SeparatorText("Node List");
+
+            for (uint32 node_index = 0; node_index < node_count; ++node_index) {
+               ImGui::PushID("NodeList");
+               ImGui::PushID(static_cast<int>(node_index));
+
+               const ImVec2 cursor = ImGui::GetCursorPos();
+
+               if (ImGui::Selectable("##node", node_mask[node_index])) {
+                  if (node_mask[node_index]) {
+                     _interaction_targets.selection.remove(
+                        world::make_path_id_node_mask(path->id, node_index));
+                  }
+                  else {
+                     _interaction_targets.selection.add(
+                        world::make_path_id_node_mask(path->id, node_index));
+                  }
+               }
+
+               ImGui::SetCursorPos(cursor);
+
+               ImGui::Text("Node %u", node_index);
+
+               ImGui::PopID();
+               ImGui::PopID();
             }
 
             if (ImGui::Button("Add Nodes", {ImGui::CalcItemWidth(), 0.0f})) {
