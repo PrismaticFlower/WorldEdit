@@ -104,8 +104,6 @@ struct graphics {
    bool colorize_foliage_brush = true;
 
    bool visualize_terrain_cutters = false;
-
-   bool show_profiler = false;
 };
 
 }

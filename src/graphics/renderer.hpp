@@ -130,6 +130,10 @@ struct renderer {
                                          const fallback_imgui_texture fallback) noexcept
       -> uint32 = 0;
 
+   virtual bool get_profiler_enabled() noexcept = 0;
+
+   virtual void set_profiler_enabled(const bool enabled) noexcept = 0;
+
    const static float thumbnail_base_length;
 };
 

@@ -24,8 +24,7 @@ struct profiler::impl {
    {
       _sections = std::make_unique<section[]>(max_sections);
 
-      _query_heap = {_device.create_timestamp_query_heap(_max_timestamps),
-                     _device};
+      _query_heap = {_device.create_timestamp_query_heap(_max_timestamps), _device};
       _readback_buffer =
          {_device.create_buffer({.size = _max_timestamps * sizeof(uint64) * gpu::frame_pipeline_length,
                                  .debug_name =
@@ -54,6 +53,10 @@ struct profiler::impl {
    auto begin(const char* name, gpu::compute_command_list& command_list,
               const profiler_queue queue) -> uint32
    {
+      [[likely]] if (not _enabled) {
+         return UINT32_MAX;
+      }
+
       const uint32 section_index = _section_count.fetch_add(1);
       const uint32 begin_timestamp_index = _timestamp_count.fetch_add(2);
       const uint32 end_timestamp_index = begin_timestamp_index + 1;
@@ -73,6 +76,10 @@ struct profiler::impl {
 
    void end(const uint32 index)
    {
+      [[likely]] if (not _enabled) {
+         return;
+      }
+
       if (index >= _max_sections) return;
 
       section& section = _sections[index];
@@ -83,6 +90,10 @@ struct profiler::impl {
 
    void end_frame(gpu::compute_command_list& command_list)
    {
+      if (not _enabled) {
+         return;
+      }
+
       const uint32 section_count = std::min(_section_count.exchange(0), _max_sections);
       const uint32 timestamp_count =
          std::min(_timestamp_count.exchange(0), _max_timestamps);
@@ -125,8 +136,20 @@ struct profiler::impl {
                         &std::pair<uint32, std::string_view>::first);
    }
 
+   bool get_enabled() noexcept
+   {
+      return _enabled;
+   }
+
+   void set_enabled(const bool enabled) noexcept
+   {
+      _enabled = enabled;
+   }
+
    void show()
    {
+      if (not _enabled) return;
+
       if (ImGui::Begin("GPU Profiler")) {
          for (auto& [_, name] : _data_order) {
             double max_time = 0.0;
@@ -162,6 +185,9 @@ struct profiler::impl {
    }
 
 private:
+   bool _enabled = false;
+   bool _print_microseconds = false;
+
    gpu::device& _device;
 
    std::atomic_uint32_t _section_count = 0;
@@ -194,8 +220,6 @@ private:
    std::vector<std::pair<uint32, std::string_view>> _data_order;
 
    container::enum_array<double, profiler_queue> _timestamp_frequencies;
-
-   bool _print_microseconds = false;
 };
 
 profiler::profiler(gpu::device& device, const uint32 max_sections)
@@ -219,6 +243,16 @@ void profiler::end(const uint32 index)
 void profiler::end_frame(gpu::compute_command_list& command_list)
 {
    return _impl->end_frame(command_list);
+}
+
+bool profiler::get_enabled() noexcept
+{
+   return _impl->get_enabled();
+}
+
+void profiler::set_enabled(const bool enabled) noexcept
+{
+   return _impl->set_enabled(enabled);
 }
 
 void profiler::show()

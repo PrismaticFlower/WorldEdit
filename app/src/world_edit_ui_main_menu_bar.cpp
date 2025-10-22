@@ -518,7 +518,10 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _renderer->reset_thumbnails();
          }
 
-         ImGui::MenuItem("Show GPU Profiler", nullptr, &_settings.graphics.show_profiler);
+         if (bool profiler_enabled = _renderer->get_profiler_enabled();
+             ImGui::MenuItem("Show GPU Profiler", nullptr, &profiler_enabled)) {
+            _renderer->set_profiler_enabled(profiler_enabled);
+         }
 
          ImGui::SetItemTooltip("Some GPU work is not measured.");
 

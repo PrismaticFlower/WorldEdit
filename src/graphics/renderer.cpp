@@ -123,6 +123,16 @@ struct renderer_impl final : renderer {
       return _ui_texture_manager.request(name, fallback, _texture_manager);
    }
 
+   bool get_profiler_enabled() noexcept override
+   {
+      return _profiler.get_enabled();
+   }
+
+   void set_profiler_enabled(const bool enabled) noexcept override
+   {
+      _profiler.set_enabled(enabled);
+   }
+
 private:
    void update_frame_constant_buffer(const camera& camera, const gpu::viewport viewport,
                                      const bool scroll_textures,
@@ -398,7 +408,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    _sky.update(world.name);
    _thumbnail_manager.update_cpu_cache();
 
-   if (settings.show_profiler) _profiler.show();
+   _profiler.show();
 
    // Pre-Render Work
    {

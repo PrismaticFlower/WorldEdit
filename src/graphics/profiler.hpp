@@ -38,13 +38,21 @@ struct profiler {
    /// @param command_list The command list to use to resolve the queries.
    void end_frame(gpu::compute_command_list& command_list);
 
+   /// @brief Gets if the profiler is enabled or not.
+   /// @return If the profiler is enabled or not.
+   bool get_enabled() noexcept;
+
+   /// @brief Enable or disable the profiler.
+   /// @param enabled If the profiler should be enabled.
+   void set_enabled(const bool enabled) noexcept;
+
    /// @brief Display the profiler in an ImGui window.
    void show();
 
 private:
    struct impl;
 
-   implementation_storage<impl, 184> _impl;
+   implementation_storage<impl, 176> _impl;
 };
 
 /// @brief RAII wrapper around profiler.
