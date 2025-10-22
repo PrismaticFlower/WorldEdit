@@ -14,7 +14,10 @@ enum class ai_path_flags {
    small = 0b100,
    medium = 0b1000,
    huge = 0b10000,
-   flyer = 0b100000
+   flyer = 0b100000,
+
+   none = 0b0,
+   all = 0b111111,
 };
 
 constexpr bool marked_as_enum_bitflag(const ai_path_flags)

@@ -19,10 +19,13 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    using namespace assets;
 
    std::optional<object_id> hit;
+   uint32 hit_index = 0;
    float min_distance = std::numeric_limits<float>::max();
    float3 surface_normalWS;
 
-   for (auto& object : objects) {
+   for (std::size_t object_index = 0; object_index < objects.size(); ++object_index) {
+      const object& object = objects[object_index];
+
       if (not active_layers[object.layer]) continue;
       if (object.hidden) continue;
       if (filter and not filter(object)) continue;
@@ -50,6 +53,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
       if (model_hit->distance < min_distance) {
          hit = object.id;
+         hit_index = static_cast<uint32>(object_index);
          min_distance = model_hit->distance;
          surface_normalWS =
             normalize(object.rotation * model_hit->unnormalized_normal);
@@ -60,7 +64,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    return raycast_result<object>{.distance = min_distance,
                                  .normalWS = surface_normalWS,
-                                 .id = *hit};
+                                 .id = *hit,
+                                 .index = hit_index};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
@@ -69,9 +74,12 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<light>>
 {
    std::optional<light_id> hit;
+   uint32 hit_index = 0;
    float min_distance = std::numeric_limits<float>::max();
 
-   for (auto& light : lights) {
+   for (std::size_t light_index = 0; light_index < lights.size(); ++light_index) {
+      const light& light = lights[light_index];
+
       if (not active_layers[light.layer]) continue;
       if (light.hidden) continue;
       if (filter and not filter(light)) continue;
@@ -84,6 +92,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = light.id;
+            hit_index = static_cast<uint32>(light_index);
             min_distance = intersection;
          }
       }
@@ -95,6 +104,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = light.id;
+            hit_index = static_cast<uint32>(light_index);
             min_distance = intersection;
          }
       }
@@ -116,6 +126,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = light.id;
+            hit_index = static_cast<uint32>(light_index);
             min_distance = intersection;
          }
       }
@@ -133,6 +144,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = light.id;
+            hit_index = static_cast<uint32>(light_index);
             min_distance = intersection;
          }
       }
@@ -145,6 +157,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = light.id;
+            hit_index = static_cast<uint32>(light_index);
             min_distance = intersection;
          }
       }
@@ -165,6 +178,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = light.id;
+            hit_index = static_cast<uint32>(light_index);
             min_distance = intersection;
          }
       }
@@ -172,7 +186,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    if (not hit) return std::nullopt;
 
-   return raycast_result<light>{.distance = min_distance, .id = *hit};
+   return raycast_result<light>{.distance = min_distance, .id = *hit, .index = hit_index};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
@@ -182,10 +196,13 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<path>>
 {
    std::optional<path_id> hit;
+   uint32 hit_index = 0;
    uint32 hit_node = 0;
    float min_distance = std::numeric_limits<float>::max();
 
-   for (auto& path : paths) {
+   for (std::size_t path_index = 0; path_index < paths.size(); ++path_index) {
+      const path& path = paths[path_index];
+
       if (not active_layers[path.layer]) continue;
       if (path.hidden) continue;
 
@@ -202,6 +219,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = path.id;
+            hit_index = static_cast<uint32>(path_index);
             hit_node = i;
             min_distance = intersection;
          }
@@ -210,7 +228,10 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    if (not hit) return std::nullopt;
 
-   return raycast_result<path>{.distance = min_distance, .id = *hit, .node_index = hit_node};
+   return raycast_result<path>{.distance = min_distance,
+                               .id = *hit,
+                               .index = hit_index,
+                               .node_index = hit_node};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
@@ -219,9 +240,12 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<region>>
 {
    std::optional<region_id> hit;
+   uint32 hit_index = 0;
    float min_distance = std::numeric_limits<float>::max();
 
-   for (auto& region : regions) {
+   for (std::size_t region_index = 0; region_index < regions.size(); ++region_index) {
+      const region& region = regions[region_index];
+
       if (not active_layers[region.layer]) continue;
       if (region.hidden) continue;
       if (filter and not filter(region)) continue;
@@ -240,6 +264,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = region.id;
+            hit_index = static_cast<uint32>(region_index);
             min_distance = intersection;
          }
       }
@@ -252,6 +277,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = region.id;
+            hit_index = static_cast<uint32>(region_index);
             min_distance = intersection;
          }
       }
@@ -271,6 +297,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = region.id;
+            hit_index = static_cast<uint32>(region_index);
             min_distance = intersection;
          }
       }
@@ -278,7 +305,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    if (not hit) return std::nullopt;
 
-   return raycast_result<region>{.distance = min_distance, .id = *hit};
+   return raycast_result<region>{.distance = min_distance, .id = *hit, .index = hit_index};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
@@ -287,10 +314,13 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<sector>>
 {
    std::optional<sector_id> hit;
+   uint32 hit_index = 0;
    float min_distance = std::numeric_limits<float>::max();
    float3 normalWS;
 
-   for (auto& sector : sectors) {
+   for (std::size_t sector_index = 0; sector_index < sectors.size(); ++sector_index) {
+      const sector& sector = sectors[sector_index];
+
       if (sector.hidden) continue;
       if (filter and not filter(sector)) continue;
 
@@ -311,6 +341,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = sector.id;
+            hit_index = static_cast<uint32>(sector_index);
             min_distance = intersection;
             normalWS = normalize(cross(quad[1] - quad[0], quad[2] - quad[0]));
          }
@@ -321,7 +352,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    return raycast_result<sector>{.distance = min_distance,
                                  .normalWS = normalWS,
-                                 .id = *hit};
+                                 .id = *hit,
+                                 .index = hit_index};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
@@ -330,9 +362,12 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<portal>>
 {
    std::optional<portal_id> hit;
+   uint32 hit_index = 0;
    float min_distance = std::numeric_limits<float>::max();
 
-   for (auto& portal : portals) {
+   for (std::size_t portal_index = 0; portal_index < portals.size(); ++portal_index) {
+      const portal& portal = portals[portal_index];
+
       if (portal.hidden) continue;
       if (filter and not filter(portal)) continue;
 
@@ -357,13 +392,14 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
       if (intersection < min_distance) {
          hit = portal.id;
+         hit_index = static_cast<uint32>(portal_index);
          min_distance = intersection;
       }
    }
 
    if (not hit) return std::nullopt;
 
-   return raycast_result<portal>{.distance = min_distance, .id = *hit};
+   return raycast_result<portal>{.distance = min_distance, .id = *hit, .index = hit_index};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
@@ -372,9 +408,13 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<hintnode>>
 {
    std::optional<hintnode_id> hit;
+   uint32 hit_index = 0;
    float min_distance = std::numeric_limits<float>::max();
 
-   for (auto& hintnode : hintnodes) {
+   for (std::size_t hintnode_index = 0; hintnode_index < hintnodes.size();
+        ++hintnode_index) {
+      const hintnode& hintnode = hintnodes[hintnode_index];
+
       if (not active_layers[hintnode.layer]) continue;
       if (hintnode.hidden) continue;
       if (filter and not filter(hintnode)) continue;
@@ -413,6 +453,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = hintnode.id;
+            hit_index = static_cast<uint32>(hintnode_index);
             min_distance = intersection;
          }
       }
@@ -420,7 +461,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    if (not hit) return std::nullopt;
 
-   return raycast_result<hintnode>{.distance = min_distance, .id = *hit};
+   return raycast_result<hintnode>{.distance = min_distance, .id = *hit, .index = hit_index};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
@@ -429,9 +470,12 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<barrier>>
 {
    std::optional<barrier_id> hit;
+   uint32 hit_index = 0;
    float min_distance = std::numeric_limits<float>::max();
 
-   for (auto& barrier : barriers) {
+   for (std::size_t barrier_index = 0; barrier_index < barriers.size(); ++barrier_index) {
+      const barrier& barrier = barriers[barrier_index];
+
       if (barrier.hidden) continue;
       if (filter and not filter(barrier)) continue;
 
@@ -450,13 +494,14 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
       if (intersection < min_distance) {
          hit = barrier.id;
+         hit_index = static_cast<uint32>(barrier_index);
          min_distance = intersection;
       }
    }
 
    if (not hit) return std::nullopt;
 
-   return raycast_result<barrier>{.distance = min_distance, .id = *hit};
+   return raycast_result<barrier>{.distance = min_distance, .id = *hit, .index = hit_index};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
@@ -465,9 +510,12 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<planning_hub>>
 {
    std::optional<planning_hub_id> hit;
+   uint32 hit_index = 0;
    float min_distance = std::numeric_limits<float>::max();
 
-   for (auto& hub : hubs) {
+   for (std::size_t hub_index = 0; hub_index < hubs.size(); ++hub_index) {
+      const planning_hub& hub = hubs[hub_index];
+
       if (hub.hidden) continue;
       if (filter and not filter(hub)) continue;
 
@@ -482,13 +530,16 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
       if (intersection < min_distance) {
          hit = hub.id;
+         hit_index = static_cast<uint32>(hub_index);
          min_distance = intersection;
       }
    }
 
    if (not hit) return std::nullopt;
 
-   return raycast_result<planning_hub>{.distance = min_distance, .id = *hit};
+   return raycast_result<planning_hub>{.distance = min_distance,
+                                       .id = *hit,
+                                       .index = hit_index};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
@@ -498,9 +549,13 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<planning_connection>>
 {
    std::optional<planning_connection_id> hit;
+   uint32 hit_index = 0;
    float min_distance = std::numeric_limits<float>::max();
 
-   for (auto& connection : connections) {
+   for (std::size_t connection_index = 0; connection_index < connections.size();
+        ++connection_index) {
+      const planning_connection& connection = connections[connection_index];
+
       if (connection.hidden) continue;
       if (filter and not filter(connection)) continue;
 
@@ -579,6 +634,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = connection.id;
+            hit_index = static_cast<uint32>(connection_index);
             min_distance = intersection;
          }
       }
@@ -586,7 +642,9 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    if (not hit) return std::nullopt;
 
-   return raycast_result<planning_connection>{.distance = min_distance, .id = *hit};
+   return raycast_result<planning_connection>{.distance = min_distance,
+                                              .id = *hit,
+                                              .index = hit_index};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
@@ -595,9 +653,13 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<boundary>>
 {
    std::optional<boundary_id> hit;
+   uint32 hit_index = 0;
    float min_distance = std::numeric_limits<float>::max();
 
-   for (auto& boundary : boundaries) {
+   for (std::size_t boundary_index = 0; boundary_index < boundaries.size();
+        ++boundary_index) {
+      const boundary& boundary = boundaries[boundary_index];
+
       if (boundary.hidden) continue;
       if (filter and not filter(boundary)) continue;
 
@@ -620,6 +682,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
          if (intersection < min_distance) {
             hit = boundary.id;
+            hit_index = static_cast<uint32>(boundary_index);
             min_distance = intersection;
          }
       }
@@ -627,6 +690,6 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    if (not hit) return std::nullopt;
 
-   return raycast_result<boundary>{.distance = min_distance, .id = *hit};
+   return raycast_result<boundary>{.distance = min_distance, .id = *hit, .index = hit_index};
 }
 }

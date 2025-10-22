@@ -354,6 +354,7 @@ void world_edit::update_hovered_entity() noexcept
    _interaction_targets.hovered_entity = {};
    _cursor_surface_normalWS = std::nullopt;
    float hovered_entity_distance = std::numeric_limits<float>::max();
+   uint32 hovered_entity_index = UINT32_MAX;
    float cursor_distance = std::numeric_limits<float>::max();
 
    if (ImGui::GetIO().WantCaptureMouse or _gizmos.want_capture_mouse()) return;
@@ -412,6 +413,7 @@ void world_edit::update_hovered_entity() noexcept
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
             hovered_entity_distance = hit->distance;
+            hovered_entity_index = hit->index;
          }
 
          if (hit->distance < cursor_distance) {
@@ -429,6 +431,7 @@ void world_edit::update_hovered_entity() noexcept
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
             hovered_entity_distance = hit->distance;
+            hovered_entity_index = hit->index;
          }
       }
    }
@@ -442,6 +445,7 @@ void world_edit::update_hovered_entity() noexcept
             _interaction_targets.hovered_entity =
                world::make_path_id_node_mask(hit->id, hit->node_index);
             hovered_entity_distance = hit->distance;
+            hovered_entity_index = hit->index;
          }
       }
    }
@@ -454,6 +458,7 @@ void world_edit::update_hovered_entity() noexcept
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
             hovered_entity_distance = hit->distance;
+            hovered_entity_index = hit->index;
          }
       }
    }
@@ -465,6 +470,7 @@ void world_edit::update_hovered_entity() noexcept
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
             hovered_entity_distance = hit->distance;
+            hovered_entity_index = hit->index;
          }
 
          if (hit->distance < cursor_distance and
@@ -482,6 +488,7 @@ void world_edit::update_hovered_entity() noexcept
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
             hovered_entity_distance = hit->distance;
+            hovered_entity_index = hit->index;
          }
       }
    }
@@ -494,6 +501,7 @@ void world_edit::update_hovered_entity() noexcept
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
             hovered_entity_distance = hit->distance;
+            hovered_entity_index = hit->index;
          }
       }
    }
@@ -506,6 +514,7 @@ void world_edit::update_hovered_entity() noexcept
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
             hovered_entity_distance = hit->distance;
+            hovered_entity_index = hit->index;
          }
       }
    }
@@ -518,6 +527,7 @@ void world_edit::update_hovered_entity() noexcept
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
             hovered_entity_distance = hit->distance;
+            hovered_entity_index = hit->index;
          }
       }
    }
@@ -531,6 +541,7 @@ void world_edit::update_hovered_entity() noexcept
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
             hovered_entity_distance = hit->distance;
+            hovered_entity_index = hit->index;
          }
       }
    }
@@ -543,6 +554,7 @@ void world_edit::update_hovered_entity() noexcept
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
             hovered_entity_distance = hit->distance;
+            hovered_entity_index = hit->index;
          }
       }
    }
@@ -650,6 +662,397 @@ void world_edit::update_hovered_entity() noexcept
    if (_block_editor_open) {
       if (_block_editor_context.tool == block_edit_tool::draw) {
          _interaction_targets.hovered_entity = std::nullopt;
+      }
+   }
+
+   if (_interaction_targets.hovered_entity and
+       not _settings.ui.hide_entity_hover_tooltips) {
+      const float description_scale = 0.85f;
+
+      if (_interaction_targets.hovered_entity->is<world::object_id>()) {
+         if (hovered_entity_index < _world.objects.size() and
+             _world.objects[hovered_entity_index].id ==
+                _interaction_targets.hovered_entity) {
+            if (ImGui::BeginTooltip()) {
+               const world::object& object = _world.objects[hovered_entity_index];
+
+               ImGui::TextUnformatted(object.name.empty() ? "<unnamed object>"
+                                                          : object.name.c_str());
+
+               ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * description_scale);
+
+               ImGui::Text("Class Name: %s", object.class_name.c_str());
+
+               ImGui::Text("Layer: %s",
+                           _world.layer_descriptions[object.layer].name.c_str());
+
+               ImGui::PopFont();
+
+               ImGui::EndTooltip();
+            }
+         }
+      }
+      else if (_interaction_targets.hovered_entity->is<world::light_id>()) {
+         if (hovered_entity_index < _world.lights.size() and
+             _world.lights[hovered_entity_index].id ==
+                _interaction_targets.hovered_entity) {
+            if (ImGui::BeginTooltip()) {
+               const world::light& light = _world.lights[hovered_entity_index];
+
+               ImGui::TextUnformatted(light.name.empty() ? "<unnamed light>"
+                                                         : light.name.c_str());
+
+               ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * description_scale);
+
+               switch (light.light_type) {
+               case world::light_type::directional:
+                  ImGui::Text("Light Type: Directional");
+                  break;
+               case world::light_type::point:
+                  ImGui::Text("Light Type: Point");
+                  break;
+               case world::light_type::spot:
+                  ImGui::Text("Light Type: Spot");
+                  break;
+               case world::light_type::directional_region_box:
+                  ImGui::Text("Light Type: Directional Region Box");
+                  break;
+               case world::light_type::directional_region_sphere:
+                  ImGui::Text("Light Type: Directional Region Sphere");
+                  break;
+               case world::light_type::directional_region_cylinder:
+                  ImGui::Text("Light Type: Directional Region Cylinder");
+                  break;
+               }
+
+               ImGui::Text("Layer: %s",
+                           _world.layer_descriptions[light.layer].name.c_str());
+
+               ImGui::PopFont();
+
+               ImGui::EndTooltip();
+            }
+         }
+      }
+      else if (_interaction_targets.hovered_entity->is<world::path_id_node_mask>()) {
+         if (hovered_entity_index < _world.paths.size() and
+             _world.paths[hovered_entity_index].id ==
+                _interaction_targets.hovered_entity
+                   ->get<world::path_id_node_mask>()
+                   .id) {
+
+            const world::path_id_node_mask::node_mask& nodes =
+               _interaction_targets.hovered_entity
+                  ->get<world::path_id_node_mask>()
+                  .nodes;
+
+            for (int i = 0; i < nodes.size(); ++i) {
+               if (not nodes[i]) continue;
+
+               if (ImGui::BeginTooltip()) {
+                  const world::path& path = _world.paths[hovered_entity_index];
+
+                  ImGui::TextUnformatted(path.name.empty() ? "<unnamed light>"
+                                                           : path.name.c_str());
+
+                  ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase *
+                                              description_scale);
+
+                  ImGui::Text("Node: %i", i);
+
+                  ImGui::Text("Layer: %s",
+                              _world.layer_descriptions[path.layer].name.c_str());
+
+                  ImGui::PopFont();
+
+                  ImGui::EndTooltip();
+               }
+
+               break;
+            }
+         }
+      }
+      else if (_interaction_targets.hovered_entity->is<world::region_id>()) {
+         if (hovered_entity_index < _world.regions.size() and
+             _world.regions[hovered_entity_index].id ==
+                _interaction_targets.hovered_entity) {
+            if (ImGui::BeginTooltip()) {
+               const world::region& region = _world.regions[hovered_entity_index];
+
+               ImGui::TextUnformatted(region.name.empty() ? "<unnamed region>"
+                                                          : region.name.c_str());
+
+               ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * description_scale);
+
+               ImGui::TextUnformatted(region.description.c_str());
+
+               ImGui::Text("Layer: %s",
+                           _world.layer_descriptions[region.layer].name.c_str());
+
+               ImGui::PopFont();
+
+               ImGui::EndTooltip();
+            }
+         }
+      }
+      else if (_interaction_targets.hovered_entity->is<world::sector_id>()) {
+         if (hovered_entity_index < _world.sectors.size() and
+             _world.sectors[hovered_entity_index].id ==
+                _interaction_targets.hovered_entity) {
+            if (ImGui::BeginTooltip()) {
+               const world::sector& sector = _world.sectors[hovered_entity_index];
+
+               ImGui::TextUnformatted(sector.name.empty() ? "<unnamed sector>"
+                                                          : sector.name.c_str());
+
+               ImGui::EndTooltip();
+            }
+         }
+      }
+      else if (_interaction_targets.hovered_entity->is<world::portal_id>()) {
+         if (hovered_entity_index < _world.portals.size() and
+             _world.portals[hovered_entity_index].id ==
+                _interaction_targets.hovered_entity) {
+            if (ImGui::BeginTooltip()) {
+               const world::portal& portal = _world.portals[hovered_entity_index];
+
+               ImGui::TextUnformatted(portal.name.empty() ? "<unnamed portal>"
+                                                          : portal.name.c_str());
+
+               ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * description_scale);
+
+               ImGui::Text("Sector 1: %s", portal.sector1.empty()
+                                              ? "<none>"
+                                              : portal.sector1.c_str());
+               ImGui::Text("Sector 2: %s", portal.sector2.empty()
+                                              ? "<none>"
+                                              : portal.sector2.c_str());
+
+               ImGui::PopFont();
+
+               ImGui::EndTooltip();
+            }
+         }
+      }
+      else if (_interaction_targets.hovered_entity->is<world::barrier_id>()) {
+         if (hovered_entity_index < _world.barriers.size() and
+             _world.barriers[hovered_entity_index].id ==
+                _interaction_targets.hovered_entity) {
+            if (ImGui::BeginTooltip()) {
+               const world::barrier& barrier = _world.barriers[hovered_entity_index];
+
+               ImGui::TextUnformatted(barrier.name.empty() ? "<unnamed barrier>"
+                                                           : barrier.name.c_str());
+
+               ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * description_scale);
+
+               if (barrier.flags == world::ai_path_flags::none) {
+                  ImGui::Text("AI Path Flags: <none>");
+               }
+               else if (barrier.flags == world::ai_path_flags::all) {
+                  ImGui::Text("AI Path Flags: <all>");
+               }
+               else {
+                  ImGui::Text("AI Path Flags:");
+
+                  if (are_flags_set(barrier.flags, world::ai_path_flags::soldier)) {
+                     ImGui::SameLine();
+                     ImGui::Text("Soldier");
+                  }
+
+                  if (are_flags_set(barrier.flags, world::ai_path_flags::hover)) {
+                     ImGui::SameLine();
+                     ImGui::Text("Hover");
+                  }
+
+                  if (are_flags_set(barrier.flags, world::ai_path_flags::small)) {
+                     ImGui::SameLine();
+                     ImGui::Text("Small");
+                  }
+
+                  if (are_flags_set(barrier.flags, world::ai_path_flags::medium)) {
+                     ImGui::SameLine();
+                     ImGui::Text("Medium");
+                  }
+
+                  if (are_flags_set(barrier.flags, world::ai_path_flags::huge)) {
+                     ImGui::SameLine();
+                     ImGui::Text("Huge");
+                  }
+
+                  if (are_flags_set(barrier.flags, world::ai_path_flags::flyer)) {
+                     ImGui::SameLine();
+                     ImGui::Text("Flyer");
+                  }
+               }
+
+               ImGui::PopFont();
+
+               ImGui::EndTooltip();
+            }
+         }
+      }
+      else if (_interaction_targets.hovered_entity->is<world::hintnode_id>()) {
+         if (hovered_entity_index < _world.hintnodes.size() and
+             _world.hintnodes[hovered_entity_index].id ==
+                _interaction_targets.hovered_entity) {
+            if (ImGui::BeginTooltip()) {
+               const world::hintnode& hintnode =
+                  _world.hintnodes[hovered_entity_index];
+
+               ImGui::TextUnformatted(hintnode.name.empty()
+                                         ? "<unnamed hintnode>"
+                                         : hintnode.name.c_str());
+
+               ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * description_scale);
+
+               switch (hintnode.type) {
+               case world::hintnode_type::snipe:
+                  ImGui::Text("Type: Sniper");
+                  break;
+               case world::hintnode_type::patrol:
+                  ImGui::Text("Type: Patrol");
+                  break;
+               case world::hintnode_type::cover:
+                  ImGui::Text("Type: Cover");
+                  break;
+               case world::hintnode_type::access:
+                  ImGui::Text("Type: Access");
+                  break;
+               case world::hintnode_type::jet_jump:
+                  ImGui::Text("Type: Jet Jump");
+                  break;
+               case world::hintnode_type::mine:
+                  ImGui::Text("Type: Mine");
+                  break;
+               case world::hintnode_type::land:
+                  ImGui::Text("Type: Land");
+                  break;
+               case world::hintnode_type::fortification:
+                  ImGui::Text("Type: Fortification");
+                  break;
+               case world::hintnode_type::vehicle_cover:
+                  ImGui::Text("Type: Vehicle Cover");
+                  break;
+               default:
+                  ImGui::Text("Type: Unknown (%i)", static_cast<int>(hintnode.type));
+                  break;
+               }
+
+               ImGui::PopFont();
+
+               ImGui::EndTooltip();
+            }
+         }
+      }
+      else if (_interaction_targets.hovered_entity->is<world::planning_hub_id>()) {
+         if (hovered_entity_index < _world.planning_hubs.size() and
+             _world.planning_hubs[hovered_entity_index].id ==
+                _interaction_targets.hovered_entity) {
+            if (ImGui::BeginTooltip()) {
+               const world::planning_hub& hub =
+                  _world.planning_hubs[hovered_entity_index];
+
+               ImGui::TextUnformatted(hub.name.empty() ? "<unnamed hub>"
+                                                       : hub.name.c_str());
+
+               ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * description_scale);
+
+               for (const world::planning_branch_weights& weights : hub.weights) {
+                  ImGui::Text("Branch Weight: %s - %s",
+                              _world.planning_hubs[weights.hub_index].name.c_str(),
+                              _world
+                                 .planning_connections[weights.connection_index]
+                                 .name.c_str());
+               }
+
+               ImGui::PopFont();
+
+               ImGui::EndTooltip();
+            }
+         }
+      }
+      else if (_interaction_targets.hovered_entity->is<world::planning_connection_id>()) {
+         if (hovered_entity_index < _world.planning_connections.size() and
+             _world.planning_connections[hovered_entity_index].id ==
+                _interaction_targets.hovered_entity) {
+            if (ImGui::BeginTooltip()) {
+               const world::planning_connection& connection =
+                  _world.planning_connections[hovered_entity_index];
+
+               ImGui::TextUnformatted(connection.name.empty()
+                                         ? "<unnamed connection>"
+                                         : connection.name.c_str());
+
+               ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * description_scale);
+
+               if (connection.flags == world::ai_path_flags::none) {
+                  ImGui::Text("AI Path Flags: <none>");
+               }
+               else if (connection.flags == world::ai_path_flags::all) {
+                  ImGui::Text("AI Path Flags: <all>");
+               }
+               else {
+                  ImGui::Text("AI Path Flags:");
+
+                  if (are_flags_set(connection.flags, world::ai_path_flags::soldier)) {
+                     ImGui::SameLine();
+                     ImGui::Text("Soldier");
+                  }
+
+                  if (are_flags_set(connection.flags, world::ai_path_flags::hover)) {
+                     ImGui::SameLine();
+                     ImGui::Text("Hover");
+                  }
+
+                  if (are_flags_set(connection.flags, world::ai_path_flags::small)) {
+                     ImGui::SameLine();
+                     ImGui::Text("Small");
+                  }
+
+                  if (are_flags_set(connection.flags, world::ai_path_flags::medium)) {
+                     ImGui::SameLine();
+                     ImGui::Text("Medium");
+                  }
+
+                  if (are_flags_set(connection.flags, world::ai_path_flags::huge)) {
+                     ImGui::SameLine();
+                     ImGui::Text("Huge");
+                  }
+
+                  if (are_flags_set(connection.flags, world::ai_path_flags::flyer)) {
+                     ImGui::SameLine();
+                     ImGui::Text("Flyer");
+                  }
+               }
+
+               ImGui::PopFont();
+
+               ImGui::EndTooltip();
+            }
+         }
+      }
+      else if (_interaction_targets.hovered_entity->is<world::boundary_id>()) {
+         if (hovered_entity_index < _world.boundaries.size() and
+             _world.boundaries[hovered_entity_index].id ==
+                _interaction_targets.hovered_entity) {
+            if (ImGui::BeginTooltip()) {
+               const world::boundary& boundary =
+                  _world.boundaries[hovered_entity_index];
+
+               ImGui::TextUnformatted(boundary.name.empty()
+                                         ? "<unnamed boundary>"
+                                         : boundary.name.c_str());
+
+               ImGui::EndTooltip();
+            }
+         }
+      }
+      else if (_interaction_targets.hovered_entity->is<world::measurement_id>()) {
+         // No tooltips for measurements.
+      }
+      else if (_interaction_targets.hovered_entity->is<world::block_id>()) {
+         // No tooltips for blocks.
       }
    }
 }
@@ -3857,11 +4260,12 @@ void world_edit::duplicate_and_select_selection() noexcept
 
       if (path) {
          if (path->nodes.size() == world::max_path_nodes) {
-            MessageBoxA(
-               _window,
-               fmt::format("Max Path Nodes ({}) for single path reached.", world::max_path_nodes)
-                  .c_str(),
-               "Limit Reached", MB_OK);
+            MessageBoxA(_window,
+                        fmt::format("Max Path Nodes ({}) for "
+                                    "single path reached.",
+                                    world::max_path_nodes)
+                           .c_str(),
+                        "Limit Reached", MB_OK);
 
             return;
          }
@@ -4582,15 +4986,15 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
       }
    } break;
    case error::no_suitable_device: {
-      switch (MessageBoxA(
-         _window,
-         fmt::format("{}\n\nIt is possible the GPU "
-                     "being used was removed and the remaining ones do not met "
-                     "requirements.\n\nThe editor "
-                     "will now exit.\n\nSave world?",
-                     e.what())
-            .c_str(),
-         "No Suitable GPU", MB_YESNO | MB_ICONERROR)) {
+      switch (MessageBoxA(_window,
+                          fmt::format("{}\n\nIt is possible the GPU "
+                                      "being used was removed and the "
+                                      "remaining ones do not met "
+                                      "requirements.\n\nThe editor "
+                                      "will now exit.\n\nSave world?",
+                                      e.what())
+                             .c_str(),
+                          "No Suitable GPU", MB_YESNO | MB_ICONERROR)) {
       case IDYES:
          save_world_with_picker();
          [[fallthrough]];

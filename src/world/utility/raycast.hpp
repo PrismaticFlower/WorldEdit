@@ -14,6 +14,7 @@ template<typename T>
 struct raycast_result {
    float distance = 0.0f;
    id<T> id;
+   uint32 index = 0;
 };
 
 template<>
@@ -21,12 +22,14 @@ struct raycast_result<object> {
    float distance = 0.0f;
    float3 normalWS;
    object_id id;
+   uint32 index = 0;
 };
 
 template<>
 struct raycast_result<path> {
    float distance = 0.0f;
    path_id id;
+   uint32 index = 0;
    uint32 node_index = 0;
 };
 
@@ -35,6 +38,7 @@ struct raycast_result<sector> {
    float distance = 0.0f;
    float3 normalWS;
    sector_id id;
+   uint32 index = 0;
 };
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
