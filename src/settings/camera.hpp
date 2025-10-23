@@ -12,6 +12,8 @@ struct camera {
    float step_size = 10.0f;
    float fov = 1.5707964f;
    float view_width = 256.0f;
+
+   bool operator==(const camera&) const noexcept = default;
 };
 
 }

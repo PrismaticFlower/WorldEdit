@@ -141,6 +141,7 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
                         static_cast<float>(_window_height));
 
    _settings = settings_load.get();
+   _settings_saver.start_settings = _settings;
 }
 
 world_edit::~world_edit()

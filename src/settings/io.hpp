@@ -16,6 +16,7 @@ struct saver {
 
    const std::string_view path;
    const settings& settings;
+   we::settings::settings start_settings;
 };
 
 }

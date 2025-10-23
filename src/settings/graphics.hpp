@@ -104,6 +104,8 @@ struct graphics {
    bool colorize_foliage_brush = true;
 
    bool visualize_terrain_cutters = false;
+
+   bool operator==(const graphics&) const noexcept = default;
 };
 
 }

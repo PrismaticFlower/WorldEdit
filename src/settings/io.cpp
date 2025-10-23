@@ -306,7 +306,7 @@ void save(const std::string_view path, const settings& settings) noexcept
 
 saver::~saver()
 {
-   save(path, settings);
+   if (settings != start_settings) save(path, settings);
 }
 
 }

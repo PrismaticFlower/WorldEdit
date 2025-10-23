@@ -13,6 +13,8 @@ struct settings {
    camera camera;
    ui ui;
    preferences preferences;
+
+   bool operator==(const settings&) const noexcept = default;
 };
 
 void show_imgui_editor(settings& settings, bool& open,
