@@ -3636,7 +3636,7 @@ void renderer_impl::draw_interaction_targets(
    }
 
    if (not interaction_targets.selection.empty()) {
-      for (auto target : interaction_targets.selection) {
+      for (const world::interaction_target& target : interaction_targets.selection) {
          draw_target(target, settings.selected_color);
       }
    }
