@@ -690,10 +690,13 @@ void world_edit::ui_show_animation_editor() noexcept
 
                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
-               ImGui::SliderFloat("##new_key_time",
-                                  &_animation_editor_context.selected.new_position_key_time,
-                                  0.0f, selected_animation->runtime,
-                                  "Time: %.2f", ImGuiSliderFlags_AlwaysClamp);
+               if (ImGui::SliderFloat("##new_key_time",
+                                      &_animation_editor_context.selected.new_position_key_time,
+                                      0.0f, selected_animation->runtime, "Time: %.2f")) {
+                  _animation_editor_context.selected.new_position_key_time =
+                     std::max(_animation_editor_context.selected.new_position_key_time,
+                              0.0f);
+               }
 
                ImGui::BeginDisabled(
                   not is_unique_key_time(selected_animation->position_keys,
@@ -704,6 +707,18 @@ void world_edit::ui_show_animation_editor() noexcept
                                           0.5f;
 
                if (ImGui::Button("Add", {button_width, 0.0f})) {
+                  bool insert_edit_transparent = false;
+
+                  if (_animation_editor_context.selected.new_position_key_time >
+                      selected_animation->runtime) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(&selected_animation->runtime,
+                                              _animation_editor_context.selected.new_position_key_time),
+                        _edit_context);
+
+                     insert_edit_transparent = true;
+                  }
+
                   std::optional<int32> previous_key_index;
 
                   for (int32 i = 0;
@@ -734,10 +749,10 @@ void world_edit::ui_show_animation_editor() noexcept
                      }
                   }
 
-                  _edit_stack_world.apply(edits::make_insert_animation_key(
-                                             &selected_animation->position_keys,
-                                             insert_before_index, new_key),
-                                          _edit_context);
+                  _edit_stack_world.apply(
+                     edits::make_insert_animation_key(&selected_animation->position_keys,
+                                                      insert_before_index, new_key),
+                     _edit_context, {.transparent = insert_edit_transparent});
 
                   if (_animation_editor_config.auto_tangents) {
                      update_auto_tangents(*selected_animation, insert_before_index,
@@ -821,16 +836,31 @@ void world_edit::ui_show_animation_editor() noexcept
 
                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
-               ImGui::SliderFloat("##new_key_time",
-                                  &_animation_editor_context.selected.new_rotation_key_time,
-                                  0.0f, selected_animation->runtime,
-                                  "Time: %.2f", ImGuiSliderFlags_AlwaysClamp);
+               if (ImGui::SliderFloat("##new_key_time",
+                                      &_animation_editor_context.selected.new_rotation_key_time,
+                                      0.0f, selected_animation->runtime, "Time: %.2f")) {
+                  _animation_editor_context.selected.new_rotation_key_time =
+                     std::max(_animation_editor_context.selected.new_rotation_key_time,
+                              0.0f);
+               }
 
                ImGui::BeginDisabled(
                   not is_unique_key_time(selected_animation->rotation_keys,
                                          _animation_editor_context.selected.new_rotation_key_time));
 
                if (ImGui::Button("Add", {ImGui::GetContentRegionAvail().x, 0.0f})) {
+                  bool insert_edit_transparent = false;
+
+                  if (_animation_editor_context.selected.new_rotation_key_time >
+                      selected_animation->runtime) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(&selected_animation->runtime,
+                                              _animation_editor_context.selected.new_rotation_key_time),
+                        _edit_context);
+
+                     insert_edit_transparent = true;
+                  }
+
                   std::optional<int32> previous_key_index;
 
                   for (int32 i = 0;
@@ -862,10 +892,10 @@ void world_edit::ui_show_animation_editor() noexcept
                      }
                   }
 
-                  _edit_stack_world.apply(edits::make_insert_animation_key(
-                                             &selected_animation->rotation_keys,
-                                             insert_before_index, new_key),
-                                          _edit_context);
+                  _edit_stack_world.apply(
+                     edits::make_insert_animation_key(&selected_animation->rotation_keys,
+                                                      insert_before_index, new_key),
+                     _edit_context, {.transparent = insert_edit_transparent});
 
                   if (_animation_editor_config.auto_tangents) {
                      update_auto_tangents(*selected_animation, insert_before_index,
