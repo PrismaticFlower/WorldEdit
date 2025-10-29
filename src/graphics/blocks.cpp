@@ -1581,7 +1581,7 @@ void blocks::draw(blocks_draw draw, const view& view,
                                        lights_constant_buffer_view);
          command_list.set_graphics_cbv(rs::block_custom_mesh::materials_cbv,
                                        _device.get_gpu_virtual_address(
-                                          _blocks_materials_buffer.get()));
+                                          _dynamic_blocks->materials_buffer.get()));
 
          command_list.set_pipeline_state(select_pipeline_custom_mesh(draw, pipelines));
 
