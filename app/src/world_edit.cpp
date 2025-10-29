@@ -117,6 +117,7 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
 
    ImGui_ImplWin32_Init(window);
    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
+   ImGui::GetIO().Fonts->Flags |= ImFontAtlasFlags_NoMouseCursors;
 
    initialize_imgui_font();
    initialize_imgui_style();
