@@ -368,7 +368,9 @@ void world_edit::initialize_commands() noexcept
                  _entity_creation_context.rotate_forward);
    _commands.add("entity_creation.rotate_back"s, _entity_creation_context.rotate_back);
 
-   _commands.add("entity_creation.place"s, [this] { place_creation_entity(); });
+   _commands.add("entity_creation.place"s, [this] {
+      if (not _rotate_camera) place_creation_entity();
+   });
    _commands.add("entity_creation.place_at_camera"s,
                  [this] { place_creation_entity_at_camera(); });
    _commands.add("entity_creation.cancel"s, [this] {
