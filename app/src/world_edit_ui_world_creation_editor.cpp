@@ -3693,53 +3693,73 @@ void world_edit::ui_show_world_creation_editor() noexcept
                              world::create_unique_name(_world.boundaries, *edited_value);
                        });
 
-      if (const float3 old_position = boundary.position;
-          ImGui::DragFloat3("Position", &boundary.position, _edit_stack_world,
-                            _edit_context, 0.25f)) {
-         _entity_creation_context.lock_x_axis |=
-            old_position.x != boundary.position.x;
-         _entity_creation_context.lock_y_axis |=
-            old_position.y != boundary.position.y;
-         _entity_creation_context.lock_z_axis |=
-            old_position.z != boundary.position.z;
+      math::bounding_box bboxWS = {
+         .min = {FLT_MAX, FLT_MAX, FLT_MAX},
+         .max = {-FLT_MAX, -FLT_MAX, -FLT_MAX},
+      };
+
+      for (const float3& pointWS : boundary.points) {
+         bboxWS = math::integrate(bboxWS, pointWS);
       }
 
-      if (using_cursor_placement and not using_point_at) {
-         float3 new_position = boundary.position;
+      if (boundary.points.empty()) {
+         bboxWS = {
+            .min = {-128.0f, -128.0f, -128.0f},
+            .max = {128.0f, 128.0f, 128.0f},
+         };
+      }
 
+      const float3 start_positionWS = (bboxWS.min + bboxWS.max) * 0.5f;
+      const float2 start_size = {fabsf(bboxWS.max.x - bboxWS.min.x) * 0.5f,
+                                 fabsf(bboxWS.max.z - bboxWS.min.z) * 0.5f};
+
+      float3 new_positionWS = start_positionWS;
+      float2 new_size = start_size;
+
+      bool close_transform_edit = false;
+
+      if (ImGui::DragFloat3("Position", &new_positionWS, 0.25f)) {
+         _entity_creation_context.lock_x_axis |=
+            start_positionWS.x != new_positionWS.x;
+         _entity_creation_context.lock_y_axis |=
+            start_positionWS.y != new_positionWS.y;
+         _entity_creation_context.lock_z_axis |=
+            start_positionWS.z != new_positionWS.z;
+      }
+
+      close_transform_edit |= ImGui::IsItemDeactivatedAfterEdit();
+
+      if (using_cursor_placement and not using_point_at) {
          if (using_cursor_placement) {
-            new_position = _cursor_positionWS;
+            new_positionWS = _cursor_positionWS;
 
             if (_entity_creation_config.placement_cursor_align) {
-               new_position = align_position_to_grid(new_position, _editor_grid_size);
+               new_positionWS =
+                  align_position_to_grid(new_positionWS, _editor_grid_size);
             }
 
             if (_entity_creation_context.lock_x_axis) {
-               new_position.x = boundary.position.x;
+               new_positionWS.x = start_positionWS.x;
             }
             if (_entity_creation_context.lock_y_axis) {
-               new_position.y = boundary.position.y;
+               new_positionWS.y = start_positionWS.y;
             }
             if (_entity_creation_context.lock_z_axis) {
-               new_position.z = boundary.position.z;
+               new_positionWS.z = start_positionWS.z;
             }
-         }
-
-         if (new_position != boundary.position) {
-            _edit_stack_world.apply(edits::make_set_value(&boundary.position, new_position),
-                                    _edit_context, {.transparent = true});
          }
       }
 
       if (show_gizmo_position) {
-         edit_stack_gizmo_position({.name = "New Boundary",
-                                    .alignment = _editor_grid_size,
-                                    .gizmo_rotation = quaternion{}},
-                                   &boundary.position);
+         _gizmos.gizmo_position({.name = "New Boundary", .alignment = _editor_grid_size},
+                                new_positionWS);
+
+         close_transform_edit |= _gizmos.can_close_last_edit();
       }
 
-      ImGui::DragFloat2XZ("Size", &boundary.size, _edit_stack_world,
-                          _edit_context, 1.0f, 0.0f, 1e10f);
+      ImGui::DragFloat2XZ("Size", &new_size, 1.0f, 0.0f, 1e10f);
+
+      close_transform_edit |= ImGui::IsItemDeactivatedAfterEdit();
 
       if (ImGui::Button("Draw Boundary", {ImGui::CalcItemWidth(), 0.0f})) {
          _entity_creation_context.activate_tool = entity_creation_tool::draw;
@@ -3780,23 +3800,16 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                  0xff'ff'ff'ffu);
          } break;
          case draw_boundary_step::radius_z: {
-            const float3 new_position =
-               {(_entity_creation_context.draw_boundary_start.x +
-                 _entity_creation_context.draw_boundary_end_x) *
-                   0.5f,
-                _entity_creation_context.draw_boundary_start.y,
-                _entity_creation_context.draw_boundary_start.z};
-            const float2 new_size =
-               {std::abs(_entity_creation_context.draw_boundary_end_x -
-                         _entity_creation_context.draw_boundary_start.x) *
-                   0.5f,
-                std::abs(_cursor_positionWS.z -
-                         _entity_creation_context.draw_boundary_start.z)};
-
-            _edit_stack_world.apply(edits::make_set_multi_value(&boundary.position,
-                                                                new_position,
-                                                                &boundary.size, new_size),
-                                    _edit_context);
+            new_positionWS = {(_entity_creation_context.draw_boundary_start.x +
+                               _entity_creation_context.draw_boundary_end_x) *
+                                 0.5f,
+                              _entity_creation_context.draw_boundary_start.y,
+                              _entity_creation_context.draw_boundary_start.z};
+            new_size = {std::abs(_entity_creation_context.draw_boundary_end_x -
+                                 _entity_creation_context.draw_boundary_start.x) *
+                           0.5f,
+                        std::abs(_cursor_positionWS.z -
+                                 _entity_creation_context.draw_boundary_start.z)};
 
             if (draw_boundary_click) {
                place_creation_entity();
@@ -3824,6 +3837,29 @@ void world_edit::ui_show_world_creation_editor() noexcept
                0xff'ff'ff'ffu);
          } break;
          }
+      }
+
+      if (new_positionWS != start_positionWS or new_size != start_size) {
+         const float pi2 = std::numbers::pi_v<float> * 2.0f;
+         const int point_count = 12;
+         const float point_count_flt = point_count;
+
+         std::vector<float3> points;
+         points.reserve(point_count);
+
+         for (int i = 0; i < point_count; ++i) {
+            const float3 pointLS = {
+               cosf(i / point_count_flt * pi2) * new_size.x,
+               0.0f,
+               sinf(i / point_count_flt * pi2) * new_size.y,
+            };
+
+            points.push_back(pointLS + new_positionWS);
+         }
+
+         _edit_stack_world.apply(edits::make_set_value(&boundary.points,
+                                                       std::move(points)),
+                                 _edit_context, {.closed = close_transform_edit});
       }
 
       traits = {.has_placement_rotation = false,

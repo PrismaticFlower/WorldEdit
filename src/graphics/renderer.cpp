@@ -42,7 +42,6 @@
 #include "world/blocks/utility/bounding_box.hpp"
 #include "world/blocks/utility/find.hpp"
 #include "world/object_class_library.hpp"
-#include "world/utility/boundary_nodes.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
 
@@ -2393,16 +2392,12 @@ void renderer_impl::draw_world_meta_objects(
       const float boundary_height = settings.boundary_height;
       const uint32 boundary_color = utility::pack_srgb_bgra(settings.boundary_color);
 
-      const auto add_boundary = [&](const world::boundary& boundary,
-                                    const float3& boundary_positionWS) {
+      const auto add_boundary = [&](const world::boundary& boundary) {
          if (boundary.hidden) return;
 
-         const std::array<float3, 12> nodes =
-            world::get_boundary_nodes(boundary_positionWS, boundary.size);
-
-         for (std::size_t i = 0; i < nodes.size(); ++i) {
-            const float3 a = nodes[i];
-            const float3 b = nodes[(i + 1) % nodes.size()];
+         for (std::size_t i = 0; i < boundary.points.size(); ++i) {
+            const float3 a = boundary.points[i];
+            const float3 b = boundary.points[(i + 1) % boundary.points.size()];
 
             const std::array quad = {float3{a.x, a.y - boundary_height, a.z},
                                      float3{b.x, b.y - boundary_height, b.z},
@@ -2420,21 +2415,39 @@ void renderer_impl::draw_world_meta_objects(
       };
 
       for (const world::boundary& boundary : world.boundaries) {
-         add_boundary(boundary, boundary.position);
+         add_boundary(boundary);
       }
 
       if (interaction_targets.creation_entity.is<world::boundary>()) {
          const world::boundary& boundary =
             interaction_targets.creation_entity.get<world::boundary>();
 
-         add_boundary(boundary, boundary.position);
+         add_boundary(boundary);
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
          const world::entity_group& group =
             interaction_targets.creation_entity.get<world::entity_group>();
 
          for (const world::boundary& boundary : group.boundaries) {
-            add_boundary(boundary, group.rotation * boundary.position + group.position);
+            for (std::size_t i = 0; i < boundary.points.size(); ++i) {
+               const float3 a = group.rotation * boundary.points[i] + group.position;
+               const float3 b =
+                  group.rotation * boundary.points[(i + 1) % boundary.points.size()] +
+                  group.position;
+
+               const std::array quad = {float3{a.x, a.y - boundary_height, a.z},
+                                        float3{b.x, b.y - boundary_height, b.z},
+                                        float3{a.x, a.y + boundary_height, a.z},
+                                        float3{b.x, b.y + boundary_height, b.z}};
+
+               _meta_draw_batcher.add_triangle(quad[0], quad[1], quad[2], boundary_color);
+               _meta_draw_batcher.add_triangle(quad[2], quad[1], quad[3], boundary_color);
+               _meta_draw_batcher.add_triangle(quad[0], quad[2], quad[1], boundary_color);
+               _meta_draw_batcher.add_triangle(quad[2], quad[3], quad[1], boundary_color);
+
+               _meta_draw_batcher.add_line_solid(quad[0], quad[2], boundary_color);
+               _meta_draw_batcher.add_line_solid(quad[1], quad[3], boundary_color);
+            }
          }
       }
    }
@@ -3346,7 +3359,7 @@ void renderer_impl::draw_interaction_targets(
 
          const uint32 packed_color = utility::pack_srgb_bgra({color, 1.0f});
 
-         const std::array<float3, 12> nodes = world::get_boundary_nodes(boundary);
+         const std::span<const float3> nodes = boundary.points;
 
          for (std::size_t i = 0; i < nodes.size(); ++i) {
             const float3 a = nodes[i];

@@ -168,7 +168,15 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
                                   hovered.get<world::boundary_id>());
 
             if (boundary) {
-               new_position = boundary->position;
+               float3 boundary_centre;
+
+               for (const float3& point : boundary->points) {
+                  boundary_centre += point;
+               }
+
+               boundary_centre /= static_cast<float>(boundary->points.size());
+
+               new_position = boundary_centre;
                hovered_has_rotation = false;
             }
          }
@@ -392,8 +400,20 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
                                      selected.get<world::boundary_id>());
 
                if (boundary) {
+                  std::vector<float3> new_points = boundary->points;
+
+                  float3 boundary_centre;
+
+                  for (float3& point : new_points) boundary_centre += point;
+
+                  boundary_centre /= static_cast<float>(new_points.size());
+
+                  for (float3& point : new_points) {
+                     point = point - boundary_centre + new_position;
+                  }
+
                   bundled_edits.push_back(
-                     edits::make_set_value(&boundary->position, new_position));
+                     edits::make_set_value(&boundary->points, std::move(new_points)));
                }
             }
             else if (selected.is<world::measurement_id>()) {

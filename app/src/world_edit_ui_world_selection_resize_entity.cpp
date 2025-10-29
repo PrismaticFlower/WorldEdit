@@ -389,8 +389,20 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                                   selected.get<world::boundary_id>());
 
             if (boundary) {
-               float3 new_position = boundary->position;
-               float3 new_size = {boundary->size.x, 0.0f, boundary->size.y};
+               math::bounding_box bboxWS = {
+                  .min = {FLT_MAX, FLT_MAX, FLT_MAX},
+                  .max = {-FLT_MAX, -FLT_MAX, -FLT_MAX},
+               };
+
+               for (const float3& pointWS : boundary->points) {
+                  bboxWS = math::integrate(bboxWS, pointWS);
+               }
+
+               const float3 start_centreWS = (bboxWS.min + bboxWS.max) * 0.5f;
+               const float3 start_sizeWS = abs(bboxWS.max - bboxWS.min) * 0.5f;
+
+               float3 new_centreWS = start_centreWS;
+               float3 new_sizeWS = start_sizeWS;
 
                if (_gizmos.gizmo_size(
                       {
@@ -400,12 +412,28 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                          .gizmo_rotation = quaternion{},
                          .show_y_axis = false,
                       },
-                      new_position, new_size)) {
-                  _edit_stack_world
-                     .apply(edits::make_set_multi_value(&boundary->position,
-                                                        new_position, &boundary->size,
-                                                        {new_size.x, new_size.z}),
-                            _edit_context);
+                      new_centreWS, new_sizeWS)) {
+                  std::vector<float3> new_points = boundary->points;
+
+                  for (float3& pointWS : new_points) {
+                     const float3 new_pointWS =
+                        ((pointWS - start_centreWS) / start_sizeWS) * new_sizeWS +
+                        new_centreWS;
+
+                     if (new_pointWS.x == new_pointWS.x) {
+                        pointWS.x = new_pointWS.x;
+                     }
+                     if (new_pointWS.y == new_pointWS.y) {
+                        pointWS.y = new_pointWS.y;
+                     }
+                     if (new_pointWS.z == new_pointWS.z) {
+                        pointWS.z = new_pointWS.z;
+                     }
+                  }
+
+                  _edit_stack_world.apply(edits::make_set_value(&boundary->points,
+                                                                std::move(new_points)),
+                                          _edit_context);
                }
 
                if (_gizmos.can_close_last_edit()) {

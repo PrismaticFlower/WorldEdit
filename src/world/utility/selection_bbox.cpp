@@ -256,14 +256,9 @@ auto selection_bbox_for_camera(const world& world,
             find_entity(world.boundaries, selected.get<boundary_id>());
 
          if (boundary) {
-            const math::bounding_box bbox{.min = boundary->position -
-                                                 float3{boundary->size.x, 0.0f,
-                                                        boundary->size.y},
-                                          .max = boundary->position +
-                                                 float3{boundary->size.x, 0.0f,
-                                                        boundary->size.y}};
-
-            selection_bbox = math::combine(bbox, selection_bbox);
+            for (const float3& point : boundary->points) {
+               selection_bbox = math::integrate(selection_bbox, point);
+            }
          }
       }
       else if (selected.is<measurement_id>()) {
@@ -522,17 +517,12 @@ auto selection_metrics_for_move(const world& world,
             find_entity(world.boundaries, selected.get<boundary_id>());
 
          if (boundary) {
-            const math::bounding_box bbox{.min = boundary->position -
-                                                 float3{boundary->size.x, 0.0f,
-                                                        boundary->size.y},
-                                          .max = boundary->position +
-                                                 float3{boundary->size.x, 0.0f,
-                                                        boundary->size.y}};
+            for (const float3& point : boundary->points) {
+               selection_bbox = math::integrate(selection_bbox, point);
 
-            selection_bbox = math::combine(bbox, selection_bbox);
-
-            centreWS += boundary->position;
-            point_count += 1.0f;
+               centreWS += point;
+               point_count += 1.0f;
+            }
          }
       }
       else if (selected.is<measurement_id>()) {

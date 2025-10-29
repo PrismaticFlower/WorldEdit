@@ -1,8 +1,10 @@
 #pragma once
 
 #include "id.hpp"
+#include "types.hpp"
 
 #include <string>
+#include <vector>
 
 namespace we::world {
 
@@ -11,8 +13,7 @@ struct boundary {
 
    bool hidden = false;
 
-   float3 position = {0.0f, 0.0f, 0.0f};
-   float2 size = {8.0f, 8.0f};
+   std::vector<float3> points;
 
    id<boundary> id{};
 

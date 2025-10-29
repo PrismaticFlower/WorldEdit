@@ -487,8 +487,21 @@ TEST_CASE("world loading", "[World][IO]")
 
       REQUIRE(world.boundaries.size() == 1);
       CHECK(world.boundaries[0].name == "boundary"sv);
-      CHECK(world.boundaries[0].size == float2{384.000000f, 384.000000f});
-      CHECK(world.boundaries[0].position == float3{-0.442565918f, 1.0f, 4.79779053f});
+
+      REQUIRE(world.boundaries[0].points.size() == 12);
+      CHECK(world.boundaries[0].points[0] == float3{383.557434f, 1.0f, 4.797800f});
+      CHECK(world.boundaries[0].points[1] == float3{332.062256f, 1.0f, -187.287064f});
+      CHECK(world.boundaries[0].points[2] == float3{191.642288f, 1.0f, -327.707031f});
+      CHECK(world.boundaries[0].points[3] == float3{-0.442575f, 1.0f, -379.202209f});
+      CHECK(world.boundaries[0].points[4] == float3{-192.527451f, 1.0f, -327.707031f});
+      CHECK(world.boundaries[0].points[5] == float3{-332.947418f, 1.0f, -187.287064f});
+      CHECK(world.boundaries[0].points[6] == float3{-384.442566f, 1.0f, 4.797800f});
+      CHECK(world.boundaries[0].points[7] == float3{-332.947021f, 1.0f, 196.882675f});
+      CHECK(world.boundaries[0].points[8] == float3{-192.527451f, 1.0f, 337.302643f});
+      CHECK(world.boundaries[0].points[9] == float3{-0.442575f, 1.0f, 388.797791f});
+      CHECK(world.boundaries[0].points[10] == float3{191.642288f, 1.0f, 337.302246f});
+      CHECK(world.boundaries[0].points[11] == float3{332.062256f, 1.0f, 196.882675f});
+
       CHECK(is_unique_id(0, world.boundaries));
    }
 

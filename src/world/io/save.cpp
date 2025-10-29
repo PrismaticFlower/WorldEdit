@@ -13,8 +13,6 @@
 
 #include "utility/string_icompare.hpp"
 
-#include "world/utility/boundary_nodes.hpp"
-
 #include <cctype>
 #include <cstddef>
 #include <numeric>
@@ -300,7 +298,7 @@ void save_paths(const io::path& file_path, const int layer_index,
       file.write_ln("\t{");
       file.write_ln("\t}\n");
 
-      const std::array<float3, 12> nodes = get_boundary_nodes(boundary);
+      const std::span<const float3> nodes = boundary.points;
 
       file.write_ln("\tNodes({})", nodes.size());
       file.write_ln("\t{");

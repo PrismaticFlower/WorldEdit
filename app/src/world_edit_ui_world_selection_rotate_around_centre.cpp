@@ -232,10 +232,17 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                                      selected.get<world::boundary_id>());
 
                if (boundary) {
+                  const quaternion boundary_rotation =
+                     make_quat_from_euler(float3{0.0f, rotate_delta.y, 0.0f});
+
+                  std::vector<float3> new_points = boundary->points;
+
+                  for (float3& point : new_points) {
+                     point = boundary_rotation * (point - centre) + centre;
+                  }
+
                   bundled_edits.push_back(
-                     edits::make_set_value(&boundary->position,
-                                           (rotation * (boundary->position - centre)) +
-                                              centre));
+                     edits::make_set_value(&boundary->points, std::move(new_points)));
                }
             }
             else if (selected.is<world::measurement_id>()) {

@@ -430,7 +430,6 @@
     <ClCompile Include="src\world\utility\load_terrain_map.cpp" />
     <ClCompile Include="src\world\object_class_library.cpp" />
     <ClCompile Include="src\world\tool_visualizers.cpp" />
-    <ClCompile Include="src\world\utility\boundary_nodes.cpp" />
     <ClCompile Include="src\world\utility\grounding.cpp" />
     <ClCompile Include="src\world\utility\make_command_post_linked_entities.cpp" />
     <ClCompile Include="src\world\utility\hintnode_traits.cpp" />
@@ -784,7 +783,6 @@
     <ClInclude Include="src\world\utility\animation.hpp" />
     <ClInclude Include="src\world\utility\entity_group_utilities.hpp" />
     <ClInclude Include="src\world\utility\terrain_light_map_baker.hpp" />
-    <ClInclude Include="src\world\utility\boundary_nodes.hpp" />
     <ClInclude Include="src\world\utility\grounding.hpp" />
     <ClInclude Include="src\world\utility\load_terrain_brush.hpp" />
     <ClInclude Include="src\world\utility\load_terrain_map.hpp" />

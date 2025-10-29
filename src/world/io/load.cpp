@@ -1419,31 +1419,17 @@ void convert_boundaries(world& world, output_stream& output)
 
       if (path == world.paths.end()) {
          output.write("Warning! Boundary '{}' is missing it's path. The "
-                      "default size({:f}, {:f}) and position({:f}, {:f}, {:f}) "
-                      "will be used for the boundary.\n",
-                      boundary.name, boundary.size.x, boundary.size.y,
-                      boundary.position.x, boundary.position.y,
-                      boundary.position.z);
+                      "boundary will not be loaded and will disappear from the "
+                      "world when saved.\n");
 
          continue;
       }
 
-      float3 min_node = {std::numeric_limits<float>::max(),
-                         std::numeric_limits<float>::max(),
-                         std::numeric_limits<float>::max()};
-      float3 max_node = {std::numeric_limits<float>::lowest(),
-                         std::numeric_limits<float>::lowest(),
-                         std::numeric_limits<float>::lowest()};
+      boundary.points.reserve(path->nodes.size());
 
       for (auto& node : path->nodes) {
-         min_node = min(node.position, min_node);
-         max_node = max(node.position, max_node);
+         boundary.points.push_back(node.position);
       }
-
-      const float3 size = abs(max_node - min_node) / 2.0f;
-
-      boundary.position = (min_node + max_node) / 2.0f;
-      boundary.size = {size.x, size.z};
 
       world.paths.erase(path);
    }

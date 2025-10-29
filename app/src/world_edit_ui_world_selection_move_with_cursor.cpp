@@ -396,7 +396,21 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                world::find_entity(_world.boundaries,
                                   selected.get<world::boundary_id>());
 
-            if (boundary) update_position(&boundary->position);
+            if (boundary) {
+               std::vector<float3> new_points = boundary->points;
+
+               for (std::size_t i = 0; i < new_points.size(); ++i) {
+                  new_points[i] -= selection_centreWS;
+                  new_points[i] += cursor_positionWS;
+
+                  if (lock_x) new_points[i].x = boundary->points[i].x;
+                  if (lock_y) new_points[i].y = boundary->points[i].y;
+                  if (lock_z) new_points[i].z = boundary->points[i].z;
+               }
+
+               bundled_edits.push_back(
+                  edits::make_set_value(&boundary->points, std::move(new_points)));
+            }
          }
          else if (selected.is<world::measurement_id>()) {
             world::measurement* measurement =
@@ -789,10 +803,14 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                                   selected.get<world::boundary_id>());
 
             if (boundary) {
+               std::vector<float3> new_points = boundary->points;
+
+               for (auto& point : new_points) {
+                  point = (rotation * (point - centreWS)) + centreWS;
+               }
+
                bundled_edits.push_back(
-                  edits::make_set_value(&boundary->position,
-                                        (rotation * (boundary->position - centreWS)) +
-                                           centreWS));
+                  edits::make_set_value(&boundary->points, std::move(new_points)));
             }
          }
          else if (selected.is<world::measurement_id>()) {

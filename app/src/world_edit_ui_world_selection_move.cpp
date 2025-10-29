@@ -161,8 +161,10 @@ void world_edit::ui_show_world_selection_move() noexcept
                                   selected.get<world::boundary_id>());
 
             if (boundary) {
-               selection_centre += boundary->position;
-               selection_axis_count += {1.0f, 1.0f, 1.0f};
+               for (const float3& point : boundary->points) {
+                  selection_centre += point;
+                  selection_axis_count += 1.0f;
+               }
             }
          }
          else if (selected.is<world::measurement_id>()) {
@@ -371,9 +373,12 @@ void world_edit::ui_show_world_selection_move() noexcept
                                      selected.get<world::boundary_id>());
 
                if (boundary) {
+                  std::vector<float3> new_points = boundary->points;
+
+                  for (float3& point : new_points) point += move_delta;
+
                   bundled_edits.push_back(
-                     edits::make_set_value(&boundary->position,
-                                           boundary->position + move_delta));
+                     edits::make_set_value(&boundary->points, std::move(new_points)));
                }
             }
             else if (selected.is<world::measurement_id>()) {

@@ -1878,12 +1878,6 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                    world::create_unique_name(_world.boundaries,
                                                              *edited_value);
                              });
-
-            ImGui::DragFloat3("Position", &boundary->position,
-                              _edit_stack_world, _edit_context, 0.25f);
-
-            ImGui::DragFloat2XZ("Size", &boundary->size, _edit_stack_world,
-                                _edit_context, 1.0f, 0.0f, 1e10f);
          }
          else if (selected.is<world::measurement_id>()) {
             world::measurement* measurement =

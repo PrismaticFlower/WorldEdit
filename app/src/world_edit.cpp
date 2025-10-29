@@ -1654,21 +1654,32 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
       if (_world_hit_mask.boundaries) {
          for (auto& boundary : _world.boundaries) {
+
             if (boundary.hidden) continue;
 
-            math::bounding_box bbox{{-boundary.size.x + boundary.position.x,
-                                     -_settings.graphics.boundary_height,
-                                     -boundary.size.y + boundary.position.y},
-                                    {boundary.size.x + boundary.position.x,
-                                     _settings.graphics.boundary_height,
-                                     boundary.size.y + boundary.position.y}};
+            const std::span<const float3> nodes = boundary.points;
 
-            if (intersects(frustumWS, bbox)) {
-               if (method == select_method::remove) {
-                  _interaction_targets.selection.remove(boundary.id);
-               }
-               else {
-                  _interaction_targets.selection.add(boundary.id);
+            for (std::size_t i = 0; i < nodes.size(); ++i) {
+               const float3 a = nodes[i];
+               const float3 b = nodes[(i + 1) % nodes.size()];
+
+               const std::array quadWS = {
+                  float3{b.x, b.y + _settings.graphics.boundary_height, b.z},
+                  float3{a.x, a.y + _settings.graphics.boundary_height, a.z},
+                  float3{a.x, a.y - _settings.graphics.boundary_height, a.z},
+                  float3{b.x, b.y - _settings.graphics.boundary_height, b.z},
+               };
+
+               if (intersects(frustumWS, quadWS[0], quadWS[1], quadWS[2]) or
+                   intersects(frustumWS, quadWS[0], quadWS[2], quadWS[3])) {
+                  if (method == select_method::remove) {
+                     _interaction_targets.selection.remove(boundary.id);
+                  }
+                  else {
+                     _interaction_targets.selection.add(boundary.id);
+                  }
+
+                  break;
                }
             }
          }
@@ -2712,7 +2723,10 @@ void world_edit::place_entity_group(const world::entity_group& group,
 
       const world::boundary_id new_boundary_id = _world.next_id.boundaries.aquire();
 
-      new_boundary.position = group.rotation * new_boundary.position + group.position;
+      for (float3& point : new_boundary.points) {
+         point = group.rotation * point + group.position;
+      }
+
       new_boundary.name =
          world::create_unique_name(_world.boundaries, new_boundary.name);
       new_boundary.id = new_boundary_id;
@@ -3469,9 +3483,26 @@ void world_edit::align_selection(const float alignment) noexcept
             world::find_entity(_world.boundaries, selected.get<world::boundary_id>());
 
          if (boundary) {
+            // Align the boundary centre, not the vertices. This should ensure the boundary remains convex.
+
+            float3 boundary_centre;
+
+            for (const float3& point : boundary->points) {
+               boundary_centre += point;
+            }
+
+            boundary_centre /= static_cast<float>(boundary->points.size());
+
+            const float3 aligned_boundary_centre = align_position(boundary_centre);
+
+            std::vector<float3> new_points = boundary->points;
+
+            for (float3& point : new_points) {
+               point = point - boundary_centre + aligned_boundary_centre;
+            }
+
             bundle.push_back(
-               edits::make_set_value(&boundary->position,
-                                     round(boundary->position / alignment) * alignment));
+               edits::make_set_value(&boundary->points, std::move(new_points)));
          }
       }
       else if (selected.is<world::measurement_id>()) {
@@ -3890,6 +3921,32 @@ void world_edit::ground_selection() noexcept
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(&hub->position, *grounded_position));
+            }
+         }
+      }
+      else if (selected.is<world::boundary_id>()) {
+         world::boundary* boundary =
+            world::find_entity(_world.boundaries, selected.get<world::boundary_id>());
+
+         if (boundary) {
+            bool point_grounded = false;
+
+            std::vector<float3> grounded_points = boundary->points;
+
+            for (float3& point : grounded_points) {
+               if (const std::optional<float3> grounded_point =
+                      world::ground_point(point, _world, _object_classes,
+                                          _world_blocks_bvh_library,
+                                          _world_layers_hit_mask);
+                   grounded_point) {
+                  point = *grounded_point;
+                  point_grounded = true;
+               }
+            }
+
+            if (point_grounded) {
+               bundle.push_back(edits::make_set_value(&boundary->points,
+                                                      std::move(grounded_points)));
             }
          }
       }

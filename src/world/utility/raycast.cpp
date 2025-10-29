@@ -1,6 +1,7 @@
 #include "raycast.hpp"
+
 #include "../object_class.hpp"
-#include "boundary_nodes.hpp"
+
 #include "math/iq_intersectors.hpp"
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
@@ -663,19 +664,21 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       if (boundary.hidden) continue;
       if (filter and not filter(boundary)) continue;
 
-      const std::array<float3, 12> nodes = get_boundary_nodes(boundary);
+      const std::span<const float3> nodes = boundary.points;
 
       for (std::size_t i = 0; i < nodes.size(); ++i) {
          const float3 a = nodes[i];
          const float3 b = nodes[(i + 1) % nodes.size()];
 
-         const std::array quad = {float3{a.x, a.y - boundary_height, a.z},
-                                  float3{b.x, b.y - boundary_height, b.z},
-                                  float3{a.x, a.y + boundary_height, a.z},
-                                  float3{b.x, b.y + boundary_height, b.z}};
+         const std::array quad = {
+            float3{a.x, a.y - boundary_height, a.z},
+            float3{a.x, a.y + boundary_height, a.z},
+            float3{b.x, b.y + boundary_height, b.z},
+            float3{b.x, b.y - boundary_height, b.z},
+         };
 
          const float intersection = quadIntersect(ray_origin, ray_direction,
-                                                  quad[0], quad[1], quad[3], quad[2])
+                                                  quad[0], quad[1], quad[2], quad[3])
                                        .x;
 
          if (intersection < 0.0f) continue;

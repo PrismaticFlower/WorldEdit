@@ -324,7 +324,9 @@ auto entity_group_metrics(const entity_group& group,
    }
 
    for (const boundary& boundary : group.boundaries) {
-      group_bbox = math::integrate(group_bbox, boundary.position);
+      for (const float3& point : boundary.points) {
+         group_bbox = math::integrate(group_bbox, point);
+      }
    }
 
    for (const measurement& measurement : group.measurements) {
@@ -434,8 +436,10 @@ void centre_entity_group(entity_group& group) noexcept
    }
 
    for (const boundary& boundary : group.boundaries) {
-      position += boundary.position;
-      count += 1.0f;
+      for (const float3& point : boundary.points) {
+         position += point;
+         count += 1.0f;
+      }
    }
 
    for (const measurement& measurement : group.measurements) {
@@ -526,7 +530,9 @@ void centre_entity_group(entity_group& group) noexcept
    }
 
    for (boundary& boundary : group.boundaries) {
-      boundary.position -= centre;
+      for (float3& point : boundary.points) {
+         point -= centre;
+      }
    }
 
    for (measurement& measurement : group.measurements) {

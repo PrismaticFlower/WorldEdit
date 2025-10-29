@@ -120,7 +120,21 @@ TEST_CASE("world creation_entity", "[World]")
    check_type(hintnode{.name = "Hintnode", .position = {2.0f, 2.0f, 2.0f}});
    check_type(planning_hub{.name = "Hub", .position = {0.0f, 8.0f, 0.0f}});
    check_type(planning_connection{.name = "Connection", .jet_jump = true});
-   check_type(boundary{.name = "Boundary", .position = {0.5f, 0.0f, 0.5f}});
+   check_type(boundary{.name = "Boundary",
+                       .points = {
+                          {383.557434f, 1.0f, -4.797791f},
+                          {332.111023f, 1.0f, 187.202209f},
+                          {191.557434f, 1.0f, 327.755798f},
+                          {-0.442566f, 1.0f, 379.202209f},
+                          {-192.442566f, 1.0f, 327.755798f},
+                          {-332.996155f, 1.0f, 187.202209f},
+                          {-384.442566f, 1.0f, -4.797791f},
+                          {-332.996155f, 1.0f, -196.797791f},
+                          {-192.442566f, 1.0f, -337.351379f},
+                          {-0.442566f, 1.0f, -388.797791f},
+                          {191.557434f, 1.0f, -337.351379f},
+                          {332.111023f, 1.0f, -196.797791f},
+                       }});
    check_type(entity_group{});
    check_type(measurement{.start = {0.0f, 0.5f, 0.0f}, .name = "Measurement"});
 

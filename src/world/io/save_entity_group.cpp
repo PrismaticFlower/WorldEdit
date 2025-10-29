@@ -1,5 +1,4 @@
 #include "save_entity_group.hpp"
-#include "world/utility/boundary_nodes.hpp"
 
 #include "io/output_file.hpp"
 #include "math/vector_funcs.hpp"
@@ -455,7 +454,7 @@ void save_entity_group_impl(File& file, const entity_group& group)
       file.write_ln("Boundary(\"{}\")", boundary.name);
       file.write_ln("{");
 
-      for (const float3& node : get_boundary_nodes(boundary)) {
+      for (const float3& node : boundary.points) {
          file.write_ln("\tNode({:f}, {:f}, {:f});", node.x, node.y, -node.z);
       }
 

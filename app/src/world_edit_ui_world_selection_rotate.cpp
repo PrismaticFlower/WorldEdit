@@ -137,6 +137,18 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                selection_axis_count += {2.0f, 2.0f, 2.0f};
             }
          }
+         else if (selected.is<world::boundary_id>()) {
+            const world::boundary* boundary =
+               world::find_entity(_world.boundaries,
+                                  selected.get<world::boundary_id>());
+
+            if (boundary) {
+               for (const float3& point : boundary->points) {
+                  selection_centre += point;
+                  selection_axis_count += 1.0f;
+               }
+            }
+         }
          else if (selected.is<world::block_id>()) {
             const world::block_id block_id = selected.get<world::block_id>();
             const std::optional<uint32> block_index =
@@ -344,6 +356,35 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                      edits::make_set_value(&barrier->rotation_angle,
                                            barrier->rotation_angle +
                                               rotate_delta.y));
+               }
+            }
+            else if (selected.is<world::boundary_id>()) {
+               world::boundary* boundary =
+                  world::find_entity(_world.boundaries,
+                                     selected.get<world::boundary_id>());
+
+               if (boundary) {
+                  const quaternion boundary_rotation =
+                     make_quat_from_euler(float3{0.0f, rotate_delta.y, 0.0f});
+
+                  float3 centre;
+
+                  for (const float3& point : boundary->points) {
+                     centre += point;
+                  }
+
+                  centre /= static_cast<float>(boundary->points.size());
+
+                  std::vector<float3> new_points = boundary->points;
+
+                  for (auto& point : new_points) {
+                     const float3 rotated_point = boundary_rotation * (point - centre);
+
+                     point = rotated_point + centre;
+                  }
+
+                  bundled_edits.push_back(
+                     edits::make_set_value(&boundary->points, std::move(new_points)));
                }
             }
             else if (selected.is<world::measurement_id>()) {

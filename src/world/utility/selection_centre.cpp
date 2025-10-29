@@ -114,8 +114,10 @@ auto selection_centre_for_rotate_around(const world& world,
             find_entity(world.boundaries, selected.get<boundary_id>());
 
          if (boundary) {
-            selection_centre += {boundary->position.x, 0.0f, boundary->position.y};
-            selection_axis_count += {1.0f, 0.0f, 1.0f};
+            for (const float3& point : boundary->points) {
+               selection_centre += point;
+               selection_axis_count += 1.0f;
+            }
          }
       }
       else if (selected.is<measurement_id>()) {
@@ -275,8 +277,10 @@ auto selection_centre_for_env_map(const world& world,
             find_entity(world.boundaries, selected.get<boundary_id>());
 
          if (boundary) {
-            selection_centre += {boundary->position.x, 0.0f, boundary->position.y};
-            selection_axis_count += {1.0f, 0.0f, 1.0f};
+            for (const float3& point : boundary->points) {
+               selection_centre += point;
+               selection_axis_count += 1.0f;
+            }
          }
       }
       else if (selected.is<measurement_id>()) {
