@@ -725,7 +725,7 @@ private:
       float draw_region_rotation_angle = 0.0f;
 
       float3 draw_boundary_start;
-      float draw_boundary_end_x;
+      float draw_boundary_end_x = 0.0f;
    } _entity_creation_context;
 
    struct entity_creation_config {
