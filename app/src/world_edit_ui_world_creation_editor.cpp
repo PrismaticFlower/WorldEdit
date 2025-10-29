@@ -1428,10 +1428,18 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                                           ? path.nodes[0].rotation
                                                           : quaternion{}},
                                     position)) {
+            if (_gizmos.is_activated_with_duplication()) {
+               place_creation_entity();
+
+               _entity_creation_config.placement_mode = placement_mode::manual;
+            }
+
             _edit_stack_world.apply(edits::make_set_vector_value(&path.nodes, 0,
                                                                  &world::path::node::position,
                                                                  position),
-                                    _edit_context);
+                                    _edit_context,
+                                    {.transparent =
+                                        _gizmos.was_duplication_triggered()});
          }
 
          if (_gizmos.can_close_last_edit()) _edit_stack_world.close_last();
@@ -2560,11 +2568,18 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                      .alignment = _editor_grid_size,
                                      .gizmo_rotation = quaternion{}},
                                     position)) {
+            if (_gizmos.is_activated_with_duplication()) {
+               place_creation_entity();
+
+               _entity_creation_config.placement_mode = placement_mode::manual;
+            }
+
             _edit_stack_world
                .apply(edits::make_set_sector_position(&sector.points, 0,
                                                       {position.x, position.z},
                                                       &sector.base, position.y),
-                      _edit_context);
+                      _edit_context,
+                      {.transparent = _gizmos.was_duplication_triggered()});
          }
 
          if (_gizmos.can_close_last_edit()) _edit_stack_world.close_last();
@@ -3750,10 +3765,19 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
+      bool transparent_transform_edit = false;
+
       if (show_gizmo_position) {
          _gizmos.gizmo_position({.name = "New Boundary", .alignment = _editor_grid_size},
                                 new_positionWS);
 
+         if (_gizmos.is_activated_with_duplication()) {
+            place_creation_entity();
+
+            _entity_creation_config.placement_mode = placement_mode::manual;
+         }
+
+         transparent_transform_edit |= _gizmos.was_duplication_triggered();
          close_transform_edit |= _gizmos.can_close_last_edit();
       }
 
@@ -3859,7 +3883,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          _edit_stack_world.apply(edits::make_set_value(&boundary.points,
                                                        std::move(points)),
-                                 _edit_context, {.closed = close_transform_edit});
+                                 _edit_context,
+                                 {.closed = close_transform_edit,
+                                  .transparent = transparent_transform_edit});
       }
 
       traits = {.has_placement_rotation = false,
@@ -3953,6 +3979,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                           ? group.rotation
                                           : quaternion{}},
                                    new_position);
+
+         if (_gizmos.is_activated_with_duplication()) {
+            place_creation_entity();
+
+            _entity_creation_config.placement_mode = placement_mode::manual;
+         }
       }
 
       transform_modified |= ImGui::DragFloat("Rotation", &new_rotation_angle,

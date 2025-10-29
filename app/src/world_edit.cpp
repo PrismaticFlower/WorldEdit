@@ -1200,8 +1200,15 @@ bool world_edit::edit_stack_gizmo_position(const gizmo_position_desc& desc,
 
    const bool activated = _gizmos.gizmo_position(desc, position);
 
+   if (_gizmos.is_activated_with_duplication()) {
+      place_creation_entity();
+
+      _entity_creation_config.placement_mode = placement_mode::manual;
+   }
+
    if (activated) {
-      _edit_stack_world.apply(edits::make_set_value(value, position), _edit_context);
+      _edit_stack_world.apply(edits::make_set_value(value, position), _edit_context,
+                              {.transparent = _gizmos.was_duplication_triggered()});
    }
 
    if (_gizmos.can_close_last_edit()) _edit_stack_world.close_last();
