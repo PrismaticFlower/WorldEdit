@@ -47,6 +47,8 @@ TEST_CASE("world blocks_custom_mesh_library acquire-free events", "[World]")
 {
    blocks_custom_mesh_library library;
 
+   library.clear_events();
+
    const block_custom_mesh_description stairway0 =
       block_custom_mesh_description_stairway{.size = {2.0f, 2.0f, 2.0f},
                                              .step_height = 0.25f};
