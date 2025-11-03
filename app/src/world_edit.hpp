@@ -303,6 +303,8 @@ public:
 
    void dpi_changed(const int new_dpi) noexcept;
 
+   void setting_change() noexcept;
+
    void key_down(const key key) noexcept;
 
    void key_up(const key key) noexcept;
@@ -534,6 +536,7 @@ private:
    bool _window_resized = false;
    float _applied_user_display_scale = 1.0f;
    int _current_dpi = 96;
+   float _double_click_time = 0.5f;
    uint16 _window_width = 0;
    uint16 _window_height = 0;
    scale_factor _display_scale{.value = 1.0f};
@@ -559,6 +562,7 @@ private:
    world::object_class_library _object_classes{_asset_libraries};
    world::world _world;
    world::interaction_targets _interaction_targets;
+   world::hovered_entity _last_clicked_entity;
    world::active_entity_types _world_draw_mask;
    world::active_entity_types _world_hit_mask{};
    world::active_layers _world_layers_draw_mask{true};
@@ -1297,6 +1301,7 @@ private:
    float2 _select_start_position;
    float2 _select_locked_sign;
    float2 _select_locked_size;
+   utility::stopwatch _select_last_click_time;
    float2 _cursor_placement_lock_position;
 
    std::optional<world::terrain_light_map_baker> _terrain_light_map_baker;

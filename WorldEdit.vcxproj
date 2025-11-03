@@ -424,7 +424,10 @@
     <ClCompile Include="src\world\io\save_effects.cpp" />
     <ClCompile Include="src\world\io\save_entity_group.cpp" />
     <ClCompile Include="src\world\utility\animation.cpp" />
+    <ClCompile Include="src\world\utility\double_click_select.cpp" />
     <ClCompile Include="src\world\utility\entity_group_utilities.cpp" />
+    <ClCompile Include="src\world\utility\intersects_frustum.cpp" />
+    <ClCompile Include="src\world\utility\is_similar.cpp" />
     <ClCompile Include="src\world\utility\terrain_light_map_baker.cpp" />
     <ClCompile Include="src\world\utility\load_terrain_brush.cpp" />
     <ClCompile Include="src\world\utility\load_terrain_map.cpp" />
@@ -781,7 +784,10 @@
     <ClInclude Include="src\world\terrain.hpp" />
     <ClInclude Include="src\world\tool_visualizers.hpp" />
     <ClInclude Include="src\world\utility\animation.hpp" />
+    <ClInclude Include="src\world\utility\double_click_select.hpp" />
     <ClInclude Include="src\world\utility\entity_group_utilities.hpp" />
+    <ClInclude Include="src\world\utility\intersects_frustum.hpp" />
+    <ClInclude Include="src\world\utility\is_similar.hpp" />
     <ClInclude Include="src\world\utility\terrain_light_map_baker.hpp" />
     <ClInclude Include="src\world\utility\grounding.hpp" />
     <ClInclude Include="src\world\utility\load_terrain_brush.hpp" />

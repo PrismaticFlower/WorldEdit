@@ -144,6 +144,9 @@ void show_imgui_editor(settings& settings, bool& open,
             ImGui::Checkbox("Don't Extrapolate New Animation Key Values",
                             &preferences.dont_extrapolate_new_animation_keys);
 
+            ImGui::Checkbox("Disable Double-click Select",
+                            &preferences.disable_double_click_select);
+
             ImGui::SeparatorText("World Save Options");
 
             ImGui::Checkbox("Don't Save World Game Modes",

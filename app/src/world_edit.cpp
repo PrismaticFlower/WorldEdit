@@ -44,6 +44,7 @@
 #include "world/io/load_entity_group.hpp"
 #include "world/io/save.hpp"
 #include "world/io/save_entity_group.hpp"
+#include "world/utility/double_click_select.hpp"
 #include "world/utility/entity_group_utilities.hpp"
 #include "world/utility/grounding.hpp"
 #include "world/utility/make_command_post_linked_entities.hpp"
@@ -88,7 +89,8 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
      _renderer_never_use_relaxed_format_casting{
         command_line.get_flag("-gpu_no_relaxed_format_casting")},
      _renderer_never_use_target_independent_rasterization{
-        command_line.get_flag("-gpu_no_target_independent_rasterization")}
+        command_line.get_flag("-gpu_no_target_independent_rasterization")},
+     _double_click_time{GetDoubleClickTime() / 1000.0f}
 {
    async::task<settings::settings> settings_load = _thread_pool->exec([]() {
       try {
@@ -1267,6 +1269,9 @@ void world_edit::finish_entity_select(const select_method method) noexcept
    _selecting_entity = false;
    _selection_edit_tool = selection_edit_tool::none;
 
+   const world::hovered_entity last_clicked_entity =
+      std::exchange(_last_clicked_entity, world::hovered_entity{});
+
    const float2 current_cursor_position =
       std::bit_cast<float2>(ImGui::GetMousePos());
 
@@ -1726,11 +1731,35 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
       if (not _interaction_targets.hovered_entity) return;
 
-      if (method == select_method::remove) {
-         _interaction_targets.selection.remove(*_interaction_targets.hovered_entity);
+      if (_interaction_targets.hovered_entity == last_clicked_entity and
+          _select_last_click_time.elapsed() <= _double_click_time and
+          not _settings.preferences.disable_double_click_select) {
+         const frustum frustumWS{_camera.world_from_projection()};
+
+         world::double_click_select(
+            *_interaction_targets.hovered_entity, _world, _object_classes,
+            _world_blocks_bvh_library, frustumWS,
+            method == select_method::remove ? world::double_click_select_op::remove
+                                            : world::double_click_select_op::add,
+            _interaction_targets.selection,
+            {
+               .path_node_radius = 0.707f * (_settings.graphics.path_node_size / 0.5f),
+               .barrier_visualizer_height = _settings.graphics.barrier_height,
+               .hub_visualizer_height = _settings.graphics.planning_hub_height,
+               .connection_visualizer_height = _settings.graphics.planning_connection_height,
+               .boundary_visualizer_height = _settings.graphics.boundary_height,
+            });
       }
       else {
-         _interaction_targets.selection.add(*_interaction_targets.hovered_entity);
+         if (method == select_method::remove) {
+            _interaction_targets.selection.remove(*_interaction_targets.hovered_entity);
+         }
+         else {
+            _interaction_targets.selection.add(*_interaction_targets.hovered_entity);
+         }
+
+         _select_last_click_time.restart();
+         _last_clicked_entity = *_interaction_targets.hovered_entity;
       }
    }
 }
@@ -4605,6 +4634,7 @@ void world_edit::close_world() noexcept
    _object_classes.clear();
    _world = {};
    _interaction_targets = {};
+   _last_clicked_entity = {};
    _entity_creation_context = {};
    _world_draw_mask = {};
    _world_hit_mask = {};
@@ -4968,6 +4998,13 @@ void world_edit::dpi_changed(const int new_dpi) noexcept
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
    }
+}
+
+void world_edit::setting_change() noexcept
+{
+   _double_click_time = GetDoubleClickTime() / 1000.0f;
+
+   _stream->write("New Double Click Time {}\n", _double_click_time);
 }
 
 void world_edit::initialize_imgui_font() noexcept

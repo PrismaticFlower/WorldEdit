@@ -238,6 +238,11 @@ void run_application(command_line command_line)
 
          return 0;
       }
+      case WM_SETTINGCHANGE: {
+         app.setting_change();
+
+         return 0;
+      }
       case WM_KEYDOWN: {
          app.key_down(we::translate_virtual_key(wparam));
 

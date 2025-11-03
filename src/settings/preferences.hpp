@@ -20,6 +20,8 @@ struct preferences {
    bool dont_ask_to_add_animation_to_group = false;
    bool dont_extrapolate_new_animation_keys = false;
 
+   bool disable_double_click_select = false;
+
    bool operator==(const preferences&) const noexcept = default;
 };
 

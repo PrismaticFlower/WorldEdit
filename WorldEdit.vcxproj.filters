@@ -276,6 +276,9 @@
     <ClCompile Include="src\os\process.cpp" />
     <ClCompile Include="src\munge\output.cpp" />
     <ClCompile Include="src\munge\project.cpp" />
+    <ClCompile Include="src\world\utility\double_click_select.cpp" />
+    <ClCompile Include="src\world\utility\is_similar.cpp" />
+    <ClCompile Include="src\world\utility\intersects_frustum.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -609,6 +612,9 @@
     <ClInclude Include="src\munge\manager.hpp" />
     <ClInclude Include="src\os\process.hpp" />
     <ClInclude Include="src\munge\output.hpp" />
+    <ClInclude Include="src\world\utility\double_click_select.hpp" />
+    <ClInclude Include="src\world\utility\is_similar.hpp" />
+    <ClInclude Include="src\world\utility\intersects_frustum.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
