@@ -207,7 +207,7 @@ void drag_select(const world& world, const active_entity_types active_entities,
    }
 
    if (active_entities.blocks) {
-      drag_select(world.blocks, bvh_library, frustumWS,
+      drag_select(world.blocks, active_layers, bvh_library, frustumWS,
                   op == select_op::remove ? block_drag_select_op::remove
                                           : block_drag_select_op::add,
                   selection);

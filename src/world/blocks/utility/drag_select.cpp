@@ -8,12 +8,14 @@
 
 namespace we::world {
 
-void drag_select(const blocks& blocks, const blocks_custom_mesh_bvh_library& bvh_library,
+void drag_select(const blocks& blocks, const active_layers active_layers,
+                 const blocks_custom_mesh_bvh_library& bvh_library,
                  const frustum& frustumWS, block_drag_select_op op,
                  selection& selection) noexcept
 {
    for (uint32 block_index = 0; block_index < blocks.boxes.size(); ++block_index) {
       if (blocks.boxes.hidden[block_index]) continue;
+      if (not active_layers[blocks.boxes.layer[block_index]]) continue;
 
       if (intersects(frustumWS, {.min =
                                     {
@@ -37,6 +39,7 @@ void drag_select(const blocks& blocks, const blocks_custom_mesh_bvh_library& bvh
 
    for (uint32 block_index = 0; block_index < blocks.ramps.size(); ++block_index) {
       if (blocks.ramps.hidden[block_index]) continue;
+      if (not active_layers[blocks.ramps.layer[block_index]]) continue;
 
       if (intersects(frustumWS, {.min =
                                     {
@@ -60,6 +63,7 @@ void drag_select(const blocks& blocks, const blocks_custom_mesh_bvh_library& bvh
 
    for (uint32 block_index = 0; block_index < blocks.quads.size(); ++block_index) {
       if (blocks.quads.hidden[block_index]) continue;
+      if (not active_layers[blocks.quads.layer[block_index]]) continue;
 
       if (intersects(frustumWS, {.min =
                                     {
@@ -83,6 +87,7 @@ void drag_select(const blocks& blocks, const blocks_custom_mesh_bvh_library& bvh
 
    for (uint32 block_index = 0; block_index < blocks.custom.size(); ++block_index) {
       if (blocks.custom.hidden[block_index]) continue;
+      if (not active_layers[blocks.custom.layer[block_index]]) continue;
 
       if (intersects(frustumWS, {.min =
                                     {
@@ -115,6 +120,7 @@ void drag_select(const blocks& blocks, const blocks_custom_mesh_bvh_library& bvh
 
    for (uint32 block_index = 0; block_index < blocks.hemispheres.size(); ++block_index) {
       if (blocks.hemispheres.hidden[block_index]) continue;
+      if (not active_layers[blocks.hemispheres.layer[block_index]]) continue;
 
       if (intersects(frustumWS, {.min =
                                     {
@@ -138,6 +144,7 @@ void drag_select(const blocks& blocks, const blocks_custom_mesh_bvh_library& bvh
 
    for (uint32 block_index = 0; block_index < blocks.pyramids.size(); ++block_index) {
       if (blocks.pyramids.hidden[block_index]) continue;
+      if (not active_layers[blocks.pyramids.layer[block_index]]) continue;
 
       if (intersects(frustumWS, {.min =
                                     {
@@ -161,7 +168,10 @@ void drag_select(const blocks& blocks, const blocks_custom_mesh_bvh_library& bvh
 
    for (uint32 block_index = 0; block_index < blocks.terrain_cut_boxes.size();
         ++block_index) {
-      if (blocks.terrain_cut_boxes.hidden[block_index]) continue;
+      if (blocks.terrain_cut_boxes.hidden[block_index] or
+          not active_layers[blocks.terrain_cut_boxes.layer[block_index]]) {
+         continue;
+      }
 
       if (intersects(frustumWS,
                      {.min =

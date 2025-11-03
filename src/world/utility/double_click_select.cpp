@@ -251,7 +251,7 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
       }
    }
    else if (hovered_entity.is<block_id>()) {
-      drag_select(world.blocks, bvh_library, frustumWS,
+      drag_select(world.blocks, active_layers{true}, bvh_library, frustumWS,
                   op == select_op::add ? block_drag_select_op::add
                                        : block_drag_select_op::remove,
                   selection);
