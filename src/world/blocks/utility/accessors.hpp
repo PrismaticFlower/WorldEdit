@@ -13,6 +13,9 @@ auto get_block_hidden(blocks& blocks, const block_type type,
 auto get_block_layer(blocks& blocks, const block_type type,
                      const uint32 block_index) noexcept -> int8&;
 
+auto get_block_layer(const blocks& blocks, const block_type type,
+                     const uint32 block_index) noexcept -> int8;
+
 auto get_block_surface_material(blocks& blocks, const block_type type,
                                 const uint32 block_index,
                                 const uint32 surface_index) noexcept -> uint8&;

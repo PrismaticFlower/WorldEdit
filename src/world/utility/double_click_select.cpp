@@ -4,7 +4,9 @@
 #include "is_similar.hpp"
 #include "world_utilities.hpp"
 
+#include "../blocks/utility/accessors.hpp"
 #include "../blocks/utility/drag_select.hpp"
+#include "../blocks/utility/find.hpp"
 
 namespace we::world {
 
@@ -251,10 +253,21 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
       }
    }
    else if (hovered_entity.is<block_id>()) {
-      drag_select(world.blocks, active_layers{true}, bvh_library, frustumWS,
-                  op == select_op::add ? block_drag_select_op::add
-                                       : block_drag_select_op::remove,
-                  selection);
+      const std::optional<uint32> hovered_block =
+         find_block(world.blocks, hovered_entity.get<block_id>());
+
+      if (hovered_block) {
+         active_layers active_block_layer{false};
+
+         active_block_layer[get_block_layer(world.blocks,
+                                            hovered_entity.get<block_id>().type(), *hovered_block)] =
+            true;
+
+         drag_select(world.blocks, active_block_layer, bvh_library, frustumWS,
+                     op == select_op::add ? block_drag_select_op::add
+                                          : block_drag_select_op::remove,
+                     selection);
+      }
    }
 }
 
