@@ -279,6 +279,7 @@
     <ClCompile Include="src\world\utility\double_click_select.cpp" />
     <ClCompile Include="src\world\utility\is_similar.cpp" />
     <ClCompile Include="src\world\utility\intersects_frustum.cpp" />
+    <ClCompile Include="src\world\utility\drag_select.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -615,6 +616,8 @@
     <ClInclude Include="src\world\utility\double_click_select.hpp" />
     <ClInclude Include="src\world\utility\is_similar.hpp" />
     <ClInclude Include="src\world\utility\intersects_frustum.hpp" />
+    <ClInclude Include="src\world\utility\drag_select.hpp" />
+    <ClInclude Include="src\world\utility\select_common.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

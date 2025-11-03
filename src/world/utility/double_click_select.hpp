@@ -1,5 +1,7 @@
 #pragma once
 
+#include "select_common.hpp"
+
 #include "../interaction_context.hpp"
 #include "../world.hpp"
 
@@ -21,8 +23,7 @@ struct object_class_library;
 void double_click_select(const interaction_target& hovered_entity, const world& world,
                          const object_class_library& object_classes,
                          const blocks_custom_mesh_bvh_library& bvh_library,
-                         const frustum& frustumWS, double_click_select_op op,
-                         selection& selection,
-                         const double_click_settings& settings) noexcept;
+                         const frustum& frustumWS, select_op op, selection& selection,
+                         const select_settings& settings) noexcept;
 
 }

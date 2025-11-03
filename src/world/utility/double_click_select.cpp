@@ -11,9 +11,8 @@ namespace we::world {
 void double_click_select(const interaction_target& hovered_entity, const world& world,
                          const object_class_library& object_classes,
                          const blocks_custom_mesh_bvh_library& bvh_library,
-                         const frustum& frustumWS, double_click_select_op op,
-                         selection& selection,
-                         const double_click_settings& settings) noexcept
+                         const frustum& frustumWS, select_op op,
+                         selection& selection, const select_settings& settings) noexcept
 {
    if (hovered_entity.is<object_id>()) {
       const object* hovered_object =
@@ -26,7 +25,7 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
          if (not is_similar(object, *hovered_object)) continue;
 
          if (intersects(frustumWS, object, object_classes)) {
-            if (op == double_click_select_op::remove) {
+            if (op == select_op::remove) {
                selection.remove(object.id);
             }
             else {
@@ -46,7 +45,7 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
          if (not is_similar(light, *hovered_light)) continue;
 
          if (intersects(frustumWS, light)) {
-            if (op == double_click_select_op::remove) {
+            if (op == select_op::remove) {
                selection.remove(light.id);
             }
             else {
@@ -64,7 +63,7 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
       for (uint32 i = 0; i < hovered_path->nodes.size(); ++i) {
          if (intersects(frustumWS, hovered_path->nodes[i].position,
                         settings.path_node_radius)) {
-            if (op == double_click_select_op::remove) {
+            if (op == select_op::remove) {
                selection.remove(make_path_id_node_mask(hovered_path->id, i));
             }
             else {
@@ -84,7 +83,7 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
          if (not is_similar(region, *hovered_region)) continue;
 
          if (intersects(frustumWS, region)) {
-            if (op == double_click_select_op::remove) {
+            if (op == select_op::remove) {
                selection.remove(region.id);
             }
             else {
@@ -103,7 +102,7 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
          if (sector.hidden) continue;
 
          if (intersects(frustumWS, sector)) {
-            if (op == double_click_select_op::remove) {
+            if (op == select_op::remove) {
                selection.remove(sector.id);
             }
             else {
@@ -123,7 +122,7 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
          if (not is_similar(portal, *hovered_portal)) continue;
 
          if (intersects(frustumWS, portal)) {
-            if (op == double_click_select_op::remove) {
+            if (op == select_op::remove) {
                selection.remove(portal.id);
             }
             else {
@@ -143,7 +142,7 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
          if (not is_similar(barrier, *hovered_barrier)) continue;
 
          if (intersects(frustumWS, barrier, settings.barrier_visualizer_height)) {
-            if (op == double_click_select_op::remove) {
+            if (op == select_op::remove) {
                selection.remove(barrier.id);
             }
             else {
@@ -163,7 +162,7 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
          if (not is_similar(hintnode, *hovered_hintnode)) continue;
 
          if (intersects(frustumWS, hintnode)) {
-            if (op == double_click_select_op::remove) {
+            if (op == select_op::remove) {
                selection.remove(hintnode.id);
             }
             else {
@@ -182,7 +181,7 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
          if (planning_hub.hidden) continue;
 
          if (intersects(frustumWS, planning_hub, settings.hub_visualizer_height)) {
-            if (op == double_click_select_op::remove) {
+            if (op == select_op::remove) {
                selection.remove(planning_hub.id);
             }
             else {
@@ -204,7 +203,7 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
 
          if (intersects(frustumWS, planning_connection, world.planning_hubs,
                         settings.connection_visualizer_height)) {
-            if (op == double_click_select_op::remove) {
+            if (op == select_op::remove) {
                selection.remove(planning_connection.id);
             }
             else {
@@ -223,7 +222,7 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
          if (boundary.hidden) continue;
 
          if (intersects(frustumWS, boundary, settings.boundary_visualizer_height)) {
-            if (op == double_click_select_op::remove) {
+            if (op == select_op::remove) {
                selection.remove(boundary.id);
             }
             else {
@@ -242,7 +241,7 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
          if (measurement.hidden) continue;
 
          if (intersects(frustumWS, measurement)) {
-            if (op == double_click_select_op::remove) {
+            if (op == select_op::remove) {
                selection.remove(measurement.id);
             }
             else {
@@ -253,8 +252,8 @@ void double_click_select(const interaction_target& hovered_entity, const world& 
    }
    else if (hovered_entity.is<block_id>()) {
       drag_select(world.blocks, bvh_library, frustumWS,
-                  op == double_click_select_op::add ? block_drag_select_op::add
-                                                    : block_drag_select_op::remove,
+                  op == select_op::add ? block_drag_select_op::add
+                                       : block_drag_select_op::remove,
                   selection);
    }
 }
