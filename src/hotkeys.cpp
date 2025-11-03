@@ -58,6 +58,7 @@ enum class sizing_desc : uint8 {
 struct keyboard_entry {
    key key = key::void_key;
    sizing_desc sizing = sizing_desc::normal;
+   int key_instance = 0;
 };
 
 constexpr keyboard_entry keyboard_row0[] = {
@@ -160,7 +161,7 @@ constexpr keyboard_entry keyboard_row3[] = {
 };
 
 constexpr keyboard_entry keyboard_row4[] = {
-   {key::shift, sizing_desc::lshift},
+   {key::shift, sizing_desc::lshift, 0},
    {key::z},
    {key::x},
    {key::c},
@@ -171,7 +172,7 @@ constexpr keyboard_entry keyboard_row4[] = {
    {key::comma},
    {key::period},
    {key::slash},
-   {key::shift, sizing_desc::rshift},
+   {key::shift, sizing_desc::rshift, 1},
    {key::void_key, sizing_desc::section_split},
    {key::void_key},
    {key::up_arrow},
@@ -183,12 +184,12 @@ constexpr keyboard_entry keyboard_row4[] = {
 };
 
 constexpr keyboard_entry keyboard_row5[] = {
-   {key::ctrl, sizing_desc::ctrl_alt},
-   {key::alt, sizing_desc::ctrl_alt},
+   {key::ctrl, sizing_desc::ctrl_alt, 0},
+   {key::alt, sizing_desc::ctrl_alt, 0},
    {key::space, sizing_desc::spacebar},
-   {key::alt, sizing_desc::ctrl_alt},
+   {key::alt, sizing_desc::ctrl_alt, 1},
    {key::menu, sizing_desc::menu},
-   {key::ctrl, sizing_desc::ctrl_alt},
+   {key::ctrl, sizing_desc::ctrl_alt, 1},
    {key::void_key, sizing_desc::section_split},
    {key::left_arrow},
    {key::down_arrow},
@@ -625,7 +626,7 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
 
             const float key_height = 32.0f * display_scale;
 
-            for (const auto& [key, sizing] : keyboard_rows[i]) {
+            for (const auto& [key, sizing, key_instance] : keyboard_rows[i]) {
                float width = 32.0f * display_scale;
 
                if (sizing == sizing_desc::fn_spacing) {
@@ -691,12 +692,14 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
                   if (not has_bindings) ImGui::BeginDisabled();
 
                   ImGui::PushID(static_cast<int>(key));
+                  if (key_instance != 0) ImGui::PushID(key_instance);
 
                   if (ImGui::Button(get_key_name(key), {width, key_height})) {
                      _user_swapping_key = key;
                      open_swap_bindings_popup = true;
                   }
 
+                  if (key_instance != 0) ImGui::PopID();
                   ImGui::PopID();
 
                   if (not has_bindings) ImGui::EndDisabled();
