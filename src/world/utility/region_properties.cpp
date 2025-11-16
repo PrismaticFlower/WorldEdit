@@ -115,14 +115,15 @@ auto unpack_region_sound_stream(const std::string_view description) noexcept
       string::split_first_of_exclusive(args, " ");
 
    return {.sound_name = std::string{sound_name},
-           .min_distance_divisor = parse_float(distance_divisor_string)};
+           .min_distance_divisor =
+              std::max(parse_float(distance_divisor_string), 1.0f)};
 }
 
 auto pack_region_sound_stream(const sound_stream_properties& properties) noexcept
    -> std::string
 {
    return fmt::format("soundstream {} {:.3f}", properties.sound_name,
-                      properties.min_distance_divisor);
+                      std::max(properties.min_distance_divisor, 1.0f));
 }
 
 auto unpack_region_sound_static(const std::string_view description) noexcept
@@ -137,14 +138,15 @@ auto unpack_region_sound_static(const std::string_view description) noexcept
       string::split_first_of_exclusive(args, " ");
 
    return {.sound_name = std::string{sound_name},
-           .min_distance_divisor = parse_float(distance_divisor_string)};
+           .min_distance_divisor =
+              std::max(parse_float(distance_divisor_string), 1.0f)};
 }
 
 auto pack_region_sound_static(const sound_static_properties& properties) noexcept
    -> std::string
 {
    return fmt::format("soundstatic {} {:.3f}", properties.sound_name,
-                      properties.min_distance_divisor);
+                      std::max(properties.min_distance_divisor, 1.0f));
 }
 
 auto unpack_region_sound_space(const std::string_view description) noexcept
