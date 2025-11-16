@@ -90,7 +90,7 @@ struct colorgrading_region_properties {
 
 auto get_region_type(const std::string_view description) noexcept -> region_type;
 
-auto to_string(const region_type type) noexcept -> std::string;
+auto get_default_description(const region_type type) noexcept -> std::string;
 
 auto get_region_allowed_shapes(const region_type type) noexcept -> region_allowed_shapes;
 

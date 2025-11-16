@@ -1550,7 +1550,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
              })) {
          if (region_type != start_region_type) {
             _edit_stack_world.apply(edits::make_set_value(&region.description,
-                                                          to_string(region_type)),
+                                                          get_default_description(
+                                                             region_type)),
                                     _edit_context);
 
             const world::region_allowed_shapes allowed_shapes =

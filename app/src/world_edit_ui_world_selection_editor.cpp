@@ -616,7 +616,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                       })) {
                   if (region_type != start_region_type) {
                      _edit_stack_world.apply(edits::make_set_value(&region->description,
-                                                                   to_string(region_type)),
+                                                                   get_default_description(
+                                                                      region_type)),
                                              _edit_context);
 
                      const world::region_allowed_shapes allowed_shapes =
@@ -4994,7 +4995,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
                      edit_bundle.push_back(
                         edits::make_set_value(&region->description,
-                                              to_string(other_type)));
+                                              get_default_description(other_type)));
 
                      const world::region_allowed_shapes allowed_shapes =
                         world::get_region_allowed_shapes(other_type);

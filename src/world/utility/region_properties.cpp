@@ -49,26 +49,26 @@ auto get_region_type(const std::string_view description) noexcept -> region_type
    return region_type::typeless;
 }
 
-auto to_string(const region_type type) noexcept -> std::string
+auto get_default_description(const region_type type) noexcept -> std::string
 {
    // clang-format off
    switch (type) {
    default:
-   case region_type::typeless: return "";
-   case region_type::soundstream: return "soundstream";
-   case region_type::soundstatic: return "soundstatic";
-   case region_type::soundspace: return "soundspace";
-   case region_type::soundtrigger: return "soundtrigger";
-   case region_type::foleyfx: return "foleyfx";
-   case region_type::shadow: return "shadow";
-   case region_type::mapbounds: return "mapbounds";
-   case region_type::rumble: return "rumble";
-   case region_type::reflection: return "reflection";
-   case region_type::rainshadow: return "rainshadow";
-   case region_type::danger: return "danger";
-   case region_type::damage_region: return "DamageRegion";
-   case region_type::ai_vis: return "AIVis";
-   case region_type::colorgrading: return "colorgrading";
+   case region_type::typeless:      return "";
+   case region_type::soundstream:   return pack_region_sound_stream({});
+   case region_type::soundstatic:   return pack_region_sound_static({});
+   case region_type::soundspace:    return pack_region_sound_space({});
+   case region_type::soundtrigger:  return pack_region_sound_trigger({});
+   case region_type::foleyfx:       return pack_region_foley_fx({});
+   case region_type::shadow:        return pack_region_shadow({});
+   case region_type::mapbounds:     return "mapbounds";
+   case region_type::rumble:        return pack_region_rumble({});;
+   case region_type::reflection:    return "reflection";
+   case region_type::rainshadow:    return "rainshadow";
+   case region_type::danger:        return "danger";
+   case region_type::damage_region: return pack_region_damage({});;
+   case region_type::ai_vis:        return pack_region_ai_vis({});;
+   case region_type::colorgrading:  return pack_region_colorgrading({});;
    }
    // clang-format on
 }
