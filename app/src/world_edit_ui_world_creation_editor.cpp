@@ -5,18 +5,22 @@
 #include "edits/delete_path_property.hpp"
 #include "edits/imgui_ext.hpp"
 #include "edits/set_value.hpp"
+
 #include "math/intersectors.hpp"
 #include "math/iq_intersectors.hpp"
 #include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
+
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
+
 #include "world/utility/entity_group_utilities.hpp"
 #include "world/utility/hintnode_traits.hpp"
 #include "world/utility/path_properties.hpp"
 #include "world/utility/region_properties.hpp"
 #include "world/utility/snapping.hpp"
+#include "world/utility/to_ui_string.hpp"
 #include "world/utility/world_utilities.hpp"
 
 #include <numbers>
@@ -634,13 +638,23 @@ void world_edit::ui_show_world_creation_editor() noexcept
             return entries;
          });
 
-      if (world::is_directional_light(light) and not light.texture.empty()) {
-         ImGui::DragFloat2("Directional Texture Tiling",
-                           &light.directional_texture_tiling, _edit_stack_world,
-                           _edit_context, 0.01f);
-         ImGui::DragFloat2("Directional Texture Offset",
-                           &light.directional_texture_offset, _edit_stack_world,
-                           _edit_context, 0.01f);
+      if (not light.texture.empty()) {
+         ImGui::EnumSelect(
+            "Texture Addressing", &light.texture_addressing, _edit_stack_world,
+            _edit_context,
+            {enum_select_option{world::to_ui_string(world::texture_addressing::wrap),
+                                world::texture_addressing::wrap},
+             enum_select_option{world::to_ui_string(world::texture_addressing::clamp),
+                                world::texture_addressing::clamp}});
+
+         if (world::is_directional_light(light)) {
+            ImGui::DragFloat2("Directional Texture Tiling",
+                              &light.directional_texture_tiling,
+                              _edit_stack_world, _edit_context, 0.0625f);
+            ImGui::DragFloat2("Directional Texture Offset",
+                              &light.directional_texture_offset,
+                              _edit_stack_world, _edit_context, 0.0625f);
+         }
       }
 
       if (is_region_light(light)) {
