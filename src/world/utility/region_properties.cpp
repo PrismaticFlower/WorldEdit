@@ -88,6 +88,21 @@ auto get_region_allowed_shapes(const region_type type) noexcept -> region_allowe
    }
 }
 
+bool is_region_allowed_shape(const region_type type, const region_shape shape) noexcept
+{
+   switch (type) {
+   default:
+      return true;
+   case region_type::soundstream:
+   case region_type::soundstatic:
+      return shape == region_shape::sphere;
+   case region_type::reflection:
+      return shape == region_shape::box or shape == region_shape::cylinder;
+   case region_type::danger:
+      return shape == region_shape::box;
+   }
+}
+
 auto unpack_region_sound_stream(const std::string_view description) noexcept
    -> sound_stream_properties
 {

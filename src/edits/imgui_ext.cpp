@@ -136,7 +136,7 @@ bool DragQuat(const char* label, quaternion* value,
 
    quaternion edit_value = *value;
 
-   const bool changed = DragQuat(label, &edit_value, v_speed, 0.0f, 0.0f, flags);
+   const bool changed = DragQuat(label, &edit_value, v_speed, nullptr, flags);
 
    if (changed) {
       edit_stack.apply(edits::make_set_value(value, edit_value), context);
@@ -587,7 +587,7 @@ bool DragPathNodeRotation(const char* label, std::vector<we::world::path::node>*
 
    quaternion edit_value = (*nodes)[node_index].rotation;
 
-   const bool changed = DragQuat(label, &edit_value, v_speed, 0.0f, 0.0f, flags);
+   const bool changed = DragQuat(label, &edit_value, v_speed, nullptr, flags);
 
    if (changed) {
       edit_stack.apply(edits::make_set_vector_value(nodes, node_index,

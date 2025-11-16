@@ -451,6 +451,7 @@
     <ClCompile Include="src\world\utility\selection_centre.cpp" />
     <ClCompile Include="src\world\utility\snapping.cpp" />
     <ClCompile Include="src\world\utility\terrain_cut.cpp" />
+    <ClCompile Include="src\world\utility\to_ui_string.cpp" />
     <ClCompile Include="src\world\utility\world_utilities.cpp" />
     <ClCompile Include="third_party\stb_image_resize2\stb_image_resize2.c" />
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -790,6 +791,7 @@
     <ClInclude Include="src\world\utility\entity_group_utilities.hpp" />
     <ClInclude Include="src\world\utility\intersects_frustum.hpp" />
     <ClInclude Include="src\world\utility\is_similar.hpp" />
+    <ClInclude Include="src\world\utility\multi_select_support.hpp" />
     <ClInclude Include="src\world\utility\select_common.hpp" />
     <ClInclude Include="src\world\utility\terrain_light_map_baker.hpp" />
     <ClInclude Include="src\world\utility\grounding.hpp" />
@@ -809,6 +811,7 @@
     <ClInclude Include="src\world\utility\selection_centre.hpp" />
     <ClInclude Include="src\world\utility\snapping.hpp" />
     <ClInclude Include="src\world\utility\terrain_cut.hpp" />
+    <ClInclude Include="src\world\utility\to_ui_string.hpp" />
     <ClInclude Include="src\world\utility\world_utilities.hpp" />
     <ClInclude Include="src\world\world.hpp" />
     <ClInclude Include="third_party\stb_image_resize2\stb_image_resize2.h" />

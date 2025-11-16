@@ -2,6 +2,8 @@
 
 #include "types.hpp"
 
+#include "../region.hpp"
+
 #include <optional>
 #include <string>
 #include <string_view>
@@ -24,8 +26,6 @@ enum class region_type {
    damage_region,
    ai_vis,
    colorgrading,
-
-   count
 };
 
 enum class region_allowed_shapes { all, box, sphere, box_cylinder };
@@ -93,6 +93,8 @@ auto get_region_type(const std::string_view description) noexcept -> region_type
 auto to_string(const region_type type) noexcept -> std::string;
 
 auto get_region_allowed_shapes(const region_type type) noexcept -> region_allowed_shapes;
+
+bool is_region_allowed_shape(const region_type type, const region_shape shape) noexcept;
 
 auto unpack_region_sound_stream(const std::string_view description) noexcept
    -> sound_stream_properties;

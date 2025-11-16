@@ -10,6 +10,7 @@
 #include "async/thread_pool.hpp"
 
 #include "container/ring_set.hpp"
+
 #include "edits/stack.hpp"
 
 #include "graphics/camera.hpp"
@@ -338,6 +339,8 @@ private:
 
    void ui_show_world_selection_editor() noexcept;
 
+   void ui_show_world_selection_multi_editor() noexcept;
+
    void ui_show_world_creation_editor() noexcept;
 
    void ui_show_world_global_lights_editor() noexcept;
@@ -423,6 +426,10 @@ private:
    void ui_show_munge_manager() noexcept;
 
    void ui_draw_select_box() noexcept;
+
+   auto ui_object_class_pick_widget_untracked(const lowercase_string& class_name,
+                                              const char* preview_override = nullptr) noexcept
+      -> std::optional<lowercase_string>;
 
    bool ui_object_class_pick_widget(world::object* object) noexcept;
 

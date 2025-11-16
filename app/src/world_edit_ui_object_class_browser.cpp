@@ -380,16 +380,17 @@ void world_edit::ui_show_object_class_browser() noexcept
    ImGui::End();
 }
 
-bool world_edit::ui_object_class_pick_widget(world::object* object) noexcept
+auto world_edit::ui_object_class_pick_widget_untracked(const lowercase_string& class_name,
+                                                       const char* preview_override) noexcept
+   -> std::optional<lowercase_string>
 {
-   assert(_edit_context.is_memory_valid(object));
+   std::optional<lowercase_string> picked;
 
-   bool modified = false;
-
-   if (ImGui::BeginCombo("Class Name", object->class_name.c_str(),
+   if (ImGui::BeginCombo("Class Name",
+                         preview_override ? preview_override : class_name.c_str(),
                          ImGuiComboFlags_HeightLargest | ImGuiComboFlags_NoArrowButton)) {
       if (ImGui::IsWindowAppearing()) {
-         _object_class_pick_filter = object->class_name;
+         _object_class_pick_filter = class_name;
          _object_class_pick_keyboard_hover = -1;
 
          ImGui::SetKeyboardFocusHere();
@@ -399,12 +400,7 @@ bool world_edit::ui_object_class_pick_widget(world::object* object) noexcept
 
       if (ImGui::InputText("##name", &_object_class_pick_filter,
                            ImGuiInputTextFlags_EnterReturnsTrue)) {
-         _edit_stack_world.apply(edits::make_set_class_name(object,
-                                                            lowercase_string{_object_class_pick_filter},
-                                                            _object_classes),
-                                 _edit_context);
-
-         modified = true;
+         picked.emplace(_object_class_pick_filter);
 
          ImGui::CloseCurrentPopup();
       }
@@ -475,18 +471,13 @@ bool world_edit::ui_object_class_pick_widget(world::object* object) noexcept
 
                if (ImGui::Selectable("##pick",
                                      is_hovered_from_keyboard or
-                                        string::iequals(asset, object->class_name),
+                                        string::iequals(asset, class_name),
                                      is_hovered_from_keyboard
                                         ? ImGuiSelectableFlags_Highlight
                                         : ImGuiSelectableFlags_None,
                                      {button_width, thumbnail_size}) or
                    pick_with_keyboard) {
-                  _edit_stack_world.apply(edits::make_set_class_name(object,
-                                                                     lowercase_string{asset},
-                                                                     _object_classes),
-                                          _edit_context);
-
-                  modified = true;
+                  picked.emplace(asset);
 
                   ImGui::CloseCurrentPopup();
                }
@@ -530,7 +521,25 @@ bool world_edit::ui_object_class_pick_widget(world::object* object) noexcept
       ImGui::EndCombo();
    };
 
-   return modified;
+   return picked;
+}
+
+bool world_edit::ui_object_class_pick_widget(world::object* object) noexcept
+{
+   assert(_edit_context.is_memory_valid(object));
+
+   std::optional<lowercase_string> new_class_name =
+      ui_object_class_pick_widget_untracked(object->class_name);
+
+   if (new_class_name) {
+      _edit_stack_world.apply(edits::make_set_class_name(object, std::move(*new_class_name),
+                                                         _object_classes),
+                              _edit_context);
+
+      return true;
+   }
+
+   return false;
 }
 
 }

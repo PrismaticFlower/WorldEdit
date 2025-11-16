@@ -6,15 +6,9 @@
 #include <cmath>
 #include <optional>
 
-// From imgui_internal.h, forward declared to avoid accidentally taking a dependency on other internals.
-// This is a special exception, as without the auto complete window is... hard.
-struct ImGuiWindow;
+#include <imgui_internal.h> // ImGuiWindow, GetCurrentWindow, BringWindowToDisplayFront, ImGuiItemFlags_MixedValue
 
 namespace ImGui {
-
-// From imgui_internal.h, see forward declaration of ImGuiWindow.
-ImGuiWindow* GetCurrentWindow();
-IMGUI_API void BringWindowToDisplayFront(ImGuiWindow* window);
 
 namespace {
 
@@ -191,8 +185,8 @@ bool DragFloat4(const char* label, we::float4* v, float v_speed, float v_min,
    return value_changed;
 }
 
-bool DragQuat(const char* label, we::quaternion* v, float v_speed, float v_min,
-              float v_max, ImGuiSliderFlags flags)
+bool DragQuat(const char* label, we::quaternion* v, float v_speed,
+              const char* format_override, ImGuiSliderFlags flags)
 {
    bool value_changed = false;
 
@@ -205,16 +199,20 @@ bool DragQuat(const char* label, we::quaternion* v, float v_speed, float v_min,
    PushItemWidth(item_widths.one);
    PushItemWidth(item_widths.one);
 
-   value_changed |= DragFloat("##W", &v->w, v_speed, v_min, v_max, "W:%.3f", flags);
+   value_changed |= DragFloat("##W", &v->w, v_speed, 0.0f, 0.0f,
+                              format_override ? format_override : "W:%.3f", flags);
    SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
    PopItemWidth();
-   value_changed |= DragFloat("##X", &v->x, v_speed, v_min, v_max, "X:%.3f", flags);
+   value_changed |= DragFloat("##X", &v->x, v_speed, 0.0f, 0.0f,
+                              format_override ? format_override : "X:%.3f", flags);
    SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
    PopItemWidth();
-   value_changed |= DragFloat("##Y", &v->y, v_speed, v_min, v_max, "Y:%.3f", flags);
+   value_changed |= DragFloat("##Y", &v->y, v_speed, 0.0f, 0.0f,
+                              format_override ? format_override : "Y:%.3f", flags);
    SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
    PopItemWidth();
-   value_changed |= DragFloat("##Z", &v->z, v_speed, v_min, v_max, "Z:%.3f", flags);
+   value_changed |= DragFloat("##Z", &v->z, v_speed, 0.0f, 0.0f,
+                              format_override ? format_override : "Z:%.3f", flags);
    PopItemWidth();
 
    PopID();
@@ -270,6 +268,13 @@ bool InputText(const char* label, absl::InlinedVector<char, 256>* buffer,
                ImGuiInputTextFlags flags, ImGuiInputTextCallback callback,
                void* user_data)
 {
+   return InputTextWithHint(label, "", buffer, flags, callback, user_data);
+}
+
+bool InputTextWithHint(const char* label, const char* hint,
+                       absl::InlinedVector<char, 256>* buffer, ImGuiInputTextFlags flags,
+                       ImGuiInputTextCallback callback, void* user_data)
+{
    IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
 
    flags |= ImGuiInputTextFlags_CallbackResize;
@@ -302,8 +307,9 @@ bool InputText(const char* label, absl::InlinedVector<char, 256>* buffer,
 
    buffer->push_back('\0');
 
-   const bool edited = InputText(label, buffer->data(), buffer->capacity() + 1,
-                                 flags, resize_callback, &cb_user_data);
+   const bool edited =
+      InputTextWithHint(label, hint, buffer->data(), buffer->capacity() + 1,
+                        flags, resize_callback, &cb_user_data);
 
    buffer->pop_back();
 
@@ -348,7 +354,13 @@ bool InputTextWithClose(const char* label, absl::InlinedVector<char, 256>* buffe
 bool InputTextAutoComplete(const char* label, absl::InlinedVector<char, 256>* buffer,
                            we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback)
 {
+   return InputTextWithHintAutoComplete(label, "", buffer, fill_entries_callback);
+}
 
+bool InputTextWithHintAutoComplete(
+   const char* label, const char* hint, absl::InlinedVector<char, 256>* buffer,
+   we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback)
+{
    ImGui::PushID(label);
 
    ImGui::BeginGroup();
@@ -362,8 +374,8 @@ bool InputTextAutoComplete(const char* label, absl::InlinedVector<char, 256>* bu
    text_callback_autofill_data callback_user_data{autocomplete_entries, selected_index,
                                                   fill_entries_callback};
 
-   bool value_changed = ImGui::InputText(
-      label, buffer, ImGuiInputTextFlags_CallbackCompletion,
+   bool value_changed = ImGui::InputTextWithHint(
+      label, hint, buffer, ImGuiInputTextFlags_CallbackCompletion,
       [](ImGuiInputTextCallbackData* data) {
          if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
             text_callback_autofill_data& user_data =
@@ -475,6 +487,17 @@ bool InputTextAutoComplete(const char* label, absl::InlinedVector<char, 256>* bu
    ImGui::PopID();
 
    return value_changed;
+}
+
+bool CheckboxTristate(const char* label, bool* value, bool indeterminate)
+{
+   ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, indeterminate);
+
+   const bool edited = ImGui::Checkbox(label, value);
+
+   ImGui::PopItemFlag();
+
+   return edited;
 }
 
 }

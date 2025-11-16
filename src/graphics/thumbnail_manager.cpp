@@ -2054,13 +2054,14 @@ private:
             texture_loaded(name, ref, data);
          });
    event_listener<void(const lowercase_string&, asset_ref<assets::texture::texture>)> _texture_load_failure_listener =
-      _asset_libraries.textures.listen_for_load_failures([this](const lowercase_string& name,
-                                                                const asset_ref<assets::texture::texture>&) {
-         std::scoped_lock lock{_pending_textures_mutex, _failed_textures_mutex};
+      _asset_libraries.textures.listen_for_load_failures(
+         [this](const lowercase_string& name,
+                const asset_ref<assets::texture::texture>&) {
+            std::scoped_lock lock{_pending_textures_mutex, _failed_textures_mutex};
 
-         _pending_textures.erase(name);
-         _failed_textures.emplace(std::string{name});
-      });
+            _pending_textures.erase(name);
+            _failed_textures.emplace(std::string{name});
+         });
    event_listener<void(const lowercase_string&)> _texture_change_listener =
       _asset_libraries.textures.listen_for_changes([this](const lowercase_string& name) {
          std::scoped_lock lock{_failed_textures_mutex};
