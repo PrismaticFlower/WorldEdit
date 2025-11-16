@@ -458,7 +458,7 @@ private:
    }
 
    void texture_load_failure(const lowercase_string& name,
-                             asset_ref<assets::texture::texture> asset) noexcept
+                             [[maybe_unused]] asset_ref<assets::texture::texture> asset) noexcept
    {
       std::scoped_lock lock{_mutex};
 

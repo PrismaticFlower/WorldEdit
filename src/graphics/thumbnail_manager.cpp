@@ -1724,7 +1724,8 @@ private:
       }
    }
 
-   void odf_loaded(const std::string_view name, asset_ref<assets::odf::definition> ref,
+   void odf_loaded(const std::string_view name,
+                   [[maybe_unused]] asset_ref<assets::odf::definition> ref,
                    asset_data<assets::odf::definition> definition) noexcept
    {
       const lowercase_string model_name = [&] {

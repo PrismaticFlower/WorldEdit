@@ -204,7 +204,7 @@ private:
    }
 
    void model_load_failed(const lowercase_string& name,
-                          asset_ref<assets::msh::flat_model> asset) noexcept
+                          [[maybe_unused]] asset_ref<assets::msh::flat_model> asset) noexcept
    {
       std::scoped_lock lock{_mutex};
 
