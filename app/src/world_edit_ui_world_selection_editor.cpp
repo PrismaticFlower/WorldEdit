@@ -5028,6 +5028,16 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          ImGui::EndCombo();
       }
 
+      // Save the region description before we possibly edit it below.
+      absl::InlinedVector<char, 256> region_description_buffer;
+
+      if (not properties.region.description.is_different()) {
+         const std::string_view description =
+            properties.region.description.value_or("");
+
+         region_description_buffer = {description.begin(), description.end()};
+      }
+
       if (are_flags_set(flags, multi_select_flags::has_region_sound_stream)) {
          // Stream Name
          {
@@ -6223,20 +6233,12 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       // Description
       {
          const bool is_different = properties.region.description.is_different();
-         const std::string_view description =
-            properties.region.description.value_or("");
-
-         absl::InlinedVector<char, 256> description_buffer;
-
-         if (not is_different) {
-            description_buffer = {description.begin(), description.end()};
-         }
 
          ImGui::PushStyleColor(ImGuiCol_TextDisabled,
                                ImGui::GetStyleColorVec4(ImGuiCol_Text));
 
          if (ImGui::InputTextWithHint("Description", is_different ? "<different>" : "",
-                                      &description_buffer)) {
+                                      &region_description_buffer)) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.description.count());
 
@@ -6250,8 +6252,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
                   edit_bundle.push_back(
                      edits::make_set_value(&region->description,
-                                           std::string{description_buffer.begin(),
-                                                       description_buffer.end()}));
+                                           std::string{region_description_buffer.begin(),
+                                                       region_description_buffer.end()}));
                }
             }
 
