@@ -779,15 +779,15 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      value_changed = true;
                   }
 
-                  if (float3 color_top =
-                         properties.color_top.value_or(float3{0.0f, 0.0f, 0.0f});
+                  if (float3 color_top = properties.color_top.value_or(
+                         _world.global_lights.ambient_sky_color);
                       ImGui::ColorEdit3("Ambient Light Top", &color_top.x)) {
                      properties.color_top = color_top;
                      value_changed = true;
                   }
 
-                  if (float3 color_bottom =
-                         properties.color_bottom.value_or(float3{0.0f, 0.0f, 0.0f});
+                  if (float3 color_bottom = properties.color_bottom.value_or(
+                         _world.global_lights.ambient_ground_color);
                       ImGui::ColorEdit3("Ambient Light Bottom", &color_bottom.x)) {
                      properties.color_bottom = color_bottom;
                      value_changed = true;
@@ -2385,9 +2385,9 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
             properties.region.shadow.directional1.integrate(
                shadow.directional1.value_or(1.0f));
             properties.region.shadow.color_top.integrate(
-               shadow.color_top.value_or(float3{0.0f, 0.0f, 0.0f}));
+               shadow.color_top.value_or(_world.global_lights.ambient_sky_color));
             properties.region.shadow.color_bottom.integrate(
-               shadow.color_bottom.value_or(float3{0.0f, 0.0f, 0.0f}));
+               shadow.color_bottom.value_or(_world.global_lights.ambient_ground_color));
             properties.region.shadow.env_map.integrate(shadow.env_map);
 
             region_flags |= multi_select_flags::has_region_shadow;
