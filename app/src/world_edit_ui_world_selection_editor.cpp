@@ -1376,6 +1376,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   if (ImGui::BeginCombo("Command Post",
                                         hintnode->command_post.c_str())) {
                      for (const auto& object : _world.objects) {
+                        if (object.name.empty()) continue;
+
                         const assets::odf::definition& definition =
                            *_object_classes[object.class_handle].definition;
 
