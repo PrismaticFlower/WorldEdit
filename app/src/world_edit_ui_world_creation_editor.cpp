@@ -1803,13 +1803,14 @@ void world_edit::ui_show_world_creation_editor() noexcept
             value_changed = true;
          }
 
-         if (float building_dead_scale = properties.building_scale.value_or(1.0f);
+         if (float building_dead_scale = properties.building_dead_scale.value_or(1.0f);
              ImGui::DragFloat("Building Dead Scale", &building_dead_scale, 0.01f)) {
             properties.building_dead_scale = building_dead_scale;
             value_changed = true;
          }
 
-         if (float building_unbuilt_scale = properties.building_scale.value_or(1.0f);
+         if (float building_unbuilt_scale =
+                properties.building_unbuilt_scale.value_or(1.0f);
              ImGui::DragFloat("Building Unbuilt Scale", &building_unbuilt_scale, 0.01f)) {
             properties.building_unbuilt_scale = building_unbuilt_scale;
             value_changed = true;
