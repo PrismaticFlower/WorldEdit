@@ -773,8 +773,14 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      value_changed = true;
                   }
 
-                  value_changed |=
-                     ImGui::InputText("Environment Map", &properties.env_map);
+                  if (std::optional<std::string> new_env_map =
+                         ui_texture_pick_widget_untracked("Environment Map",
+                                                          properties.env_map.c_str());
+                      new_env_map) {
+                     properties.env_map = std::move(*new_env_map);
+
+                     value_changed = true;
+                  }
 
                   if (value_changed) {
                      _edit_stack_world.apply(edits::make_set_value(&region->description,
@@ -5568,18 +5574,10 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
             const std::string& env_map =
                properties.region.shadow.env_map.value_or("");
 
-            absl::InlinedVector<char, 256> env_map_buffer;
-
-            if (not is_different) {
-               env_map_buffer = {env_map.begin(), env_map.end()};
-            }
-
-            ImGui::PushStyleColor(ImGuiCol_TextDisabled,
-                                  ImGui::GetStyleColorVec4(ImGuiCol_Text));
-
-            if (ImGui::InputTextWithHint("Environment Map",
-                                         is_different ? "<different>" : "",
-                                         &env_map_buffer)) {
+            if (std::optional<std::string> new_env_map =
+                   ui_texture_pick_widget_untracked("Environment Map", env_map.c_str(),
+                                                    is_different ? "<different>" : nullptr);
+                new_env_map) {
                edits::bundle_vector edit_bundle;
                edit_bundle.reserve(properties.region.shadow.env_map.count());
 
@@ -5595,8 +5593,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                      world::shadow_region_properties shadow =
                         world::unpack_region_shadow(region->description);
 
-                     shadow.env_map =
-                        std::string{env_map_buffer.begin(), env_map_buffer.end()};
+                     shadow.env_map = *new_env_map;
 
                      edit_bundle.push_back(
                         edits::make_set_value(&region->description,
@@ -5605,13 +5602,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                }
 
                _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
-                                       _edit_context);
-            }
-
-            ImGui::PopStyleColor();
-
-            if (ImGui::IsItemDeactivatedAfterEdit()) {
-               _edit_stack_world.close_last();
+                                       _edit_context, {.closed = true});
             }
          }
       }

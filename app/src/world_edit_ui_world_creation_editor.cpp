@@ -1699,7 +1699,14 @@ void world_edit::ui_show_world_creation_editor() noexcept
             value_changed = true;
          }
 
-         value_changed |= ImGui::InputText("Environment Map", &properties.env_map);
+         if (std::optional<std::string> new_env_map =
+                ui_texture_pick_widget_untracked("Environment Map",
+                                                 properties.env_map.c_str());
+             new_env_map) {
+            properties.env_map = std::move(*new_env_map);
+
+            value_changed = true;
+         }
 
          if (value_changed) {
             _edit_stack_world.apply(edits::make_set_value(&region.description,
