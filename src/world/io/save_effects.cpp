@@ -538,7 +538,6 @@ void save_fog_cloud(io::output_file& out, const fog_cloud& cloud)
 
 void save_wind(io::output_file& out, const wind& wind)
 {
-
    out.write_ln("Effect(\"Wind\")");
    out.write_ln("{");
 
@@ -954,7 +953,7 @@ void save_effects(const io::path& path, const effects& effects)
 
    save_color_control(out, effects.color_control);
    save_fog_cloud(out, effects.fog_cloud);
-   save_wind(out, effects.wind);
+   if (effects.wind != wind{}) save_wind(out, effects.wind);
    save_precipitation(out, effects.precipitation);
    save_lightning(out, effects.lightning, effects.lightning_bolt);
    save_water(out, effects.water);

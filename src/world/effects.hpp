@@ -72,11 +72,13 @@ struct fog_cloud {
 struct wind {
    PLATFORMED_VAR(bool, enable, false);
 
-   PLATFORMED_VAR(float2, velocity, {4.0f, 0.3f});
+   PLATFORMED_VAR(float2, velocity, {0.0f, 0.0f});
 
-   PLATFORMED_VAR(float, velocity_range, 1.0f);
+   PLATFORMED_VAR(float, velocity_range, 0.0f);
 
-   PLATFORMED_VAR(float, velocity_change_rate, 0.2f);
+   PLATFORMED_VAR(float, velocity_change_rate, 0.0f);
+
+   bool operator==(const wind&) const noexcept = default;
 };
 
 struct precipitation {
