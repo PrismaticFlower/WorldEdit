@@ -75,20 +75,8 @@ void world_edit::ui_show_world_global_lights_editor() noexcept
    ambient_editor("Ambient Sky Color", &_world.global_lights.ambient_sky_color);
    ambient_editor("Ambient Ground Color", &_world.global_lights.ambient_ground_color);
 
-   if (absl::InlinedVector<char, 256>
-          env_map_texture{_world.global_lights.env_map_texture.begin(),
-                          _world.global_lights.env_map_texture.end()};
-       ImGui::InputText("Global Environment Map", &env_map_texture)) {
-      _edit_stack_world
-         .apply(edits::make_set_memory_value(&_world.global_lights.env_map_texture,
-                                             std::string{env_map_texture.data(),
-                                                         env_map_texture.size()}),
-                _edit_context);
-   }
-
-   if (ImGui::IsItemDeactivatedAfterEdit()) {
-      _edit_stack_world.close_last();
-   }
+   ui_texture_pick_widget("Global Environment Map",
+                          &_world.global_lights.env_map_texture);
 
    ImGui::End();
 }
