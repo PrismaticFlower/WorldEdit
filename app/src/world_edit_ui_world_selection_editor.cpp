@@ -258,28 +258,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   ImGui::Separator();
                }
 
-               ImGui::InputTextAutoComplete(
-                  "Texture", &light->texture, _edit_stack_world, _edit_context,
-                  [&]() noexcept {
-                     std::array<std::string_view, 6> entries;
-                     std::size_t matching_count = 0;
-
-                     _asset_libraries.textures.view_existing(
-                        [&](const std::span<const assets::stable_string> assets) noexcept {
-                           for (const std::string_view asset : assets) {
-                              if (matching_count == entries.size()) break;
-                              if (not asset.contains(light->texture)) {
-                                 continue;
-                              }
-
-                              entries[matching_count] = asset;
-
-                              ++matching_count;
-                           }
-                        });
-
-                     return entries;
-                  });
+               ui_texture_pick_widget("Texture", &light->texture);
 
                if (not light->texture.empty()) {
                   ImGui::EnumSelect(
@@ -4369,36 +4348,12 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       // Texture
       {
          const bool is_different = properties.light.texture.is_different();
-         const std::string_view texture = properties.light.texture.value_or("");
+         const std::string& texture = properties.light.texture.value_or("");
 
-         absl::InlinedVector<char, 256> texture_buffer;
-
-         if (not is_different) {
-            texture_buffer = {texture.begin(), texture.end()};
-         }
-
-         ImGui::PushStyleColor(ImGuiCol_TextDisabled,
-                               ImGui::GetStyleColorVec4(ImGuiCol_Text));
-
-         if (ImGui::InputTextWithHintAutoComplete(
-                "Texture", is_different ? "<different>" : "", &texture_buffer, [&]() noexcept {
-                   std::array<std::string_view, 6> entries;
-                   std::size_t matching_count = 0;
-
-                   _asset_libraries.textures.view_existing(
-                      [&](const std::span<const assets::stable_string> assets) noexcept {
-                         for (const std::string_view asset : assets) {
-                            if (matching_count == entries.size()) break;
-                            if (not asset.contains(texture)) continue;
-
-                            entries[matching_count] = asset;
-
-                            ++matching_count;
-                         }
-                      });
-
-                   return entries;
-                })) {
+         if (std::optional<std::string> new_texture =
+                ui_texture_pick_widget_untracked("Texture", texture.c_str(),
+                                                 is_different ? "<different>" : nullptr);
+             new_texture) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.light.texture.count());
 
@@ -4411,20 +4366,12 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                   if (not light) continue;
 
                   edit_bundle.push_back(
-                     edits::make_set_value(&light->texture,
-                                           std::string{texture_buffer.begin(),
-                                                       texture_buffer.end()}));
+                     edits::make_set_value(&light->texture, *new_texture));
                }
             }
 
             _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
-                                    _edit_context);
-         }
-
-         ImGui::PopStyleColor();
-
-         if (ImGui::IsItemDeactivatedAfterEdit()) {
-            _edit_stack_world.close_last();
+                                    _edit_context, {.closed = true});
          }
       }
 

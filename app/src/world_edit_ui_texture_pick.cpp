@@ -9,24 +9,26 @@
 
 namespace we {
 
-bool world_edit::ui_texture_pick_widget(const char* label, std::string* texture) noexcept
+auto world_edit::ui_texture_pick_widget_untracked(const char* label,
+                                                  const char* c_str_texture,
+                                                  const char* preview_override) noexcept
+   -> std::optional<std::string>
 {
-   assert(_edit_context.is_memory_valid(texture));
-
-   bool modified = false;
-
    const float tiny_preview_size = ImGui::GetFrameHeight();
    const float combo_width =
       ImGui::CalcItemWidth() - ImGui::GetStyle().ItemInnerSpacing.x - tiny_preview_size;
+   const std::string_view texture = c_str_texture;
+
+   std::optional<std::string> picked_texture;
 
    ImGui::PushID(label);
 
    ImGui::SetNextItemWidth(combo_width);
 
-   if (ImGui::BeginCombo("##combo", texture->c_str(),
+   if (ImGui::BeginCombo("##combo", preview_override ? preview_override : c_str_texture,
                          ImGuiComboFlags_HeightLargest | ImGuiComboFlags_NoArrowButton)) {
       if (ImGui::IsWindowAppearing()) {
-         _texture_pick_filter = *texture;
+         _texture_pick_filter = texture;
          _texture_pick_keyboard_hover = -1;
 
          ImGui::SetKeyboardFocusHere();
@@ -36,10 +38,7 @@ bool world_edit::ui_texture_pick_widget(const char* label, std::string* texture)
 
       if (ImGui::InputText("##name", &_texture_pick_filter,
                            ImGuiInputTextFlags_EnterReturnsTrue)) {
-         _edit_stack_world.apply(edits::make_set_value(texture, _texture_pick_filter),
-                                 _edit_context, {.closed = true});
-
-         modified = true;
+         picked_texture = _texture_pick_filter;
 
          ImGui::CloseCurrentPopup();
       }
@@ -101,17 +100,13 @@ bool world_edit::ui_texture_pick_widget(const char* label, std::string* texture)
 
                if (ImGui::Selectable("##pick",
                                      is_hovered_from_keyboard or
-                                        string::iequals(asset, *texture),
+                                        string::iequals(asset, texture),
                                      is_hovered_from_keyboard
                                         ? ImGuiSelectableFlags_Highlight
                                         : ImGuiSelectableFlags_None,
                                      button_size) or
                    pick_with_keyboard) {
-                  _edit_stack_world.apply(edits::make_set_value(texture,
-                                                                std::string{asset}),
-                                          _edit_context, {.closed = true});
-
-                  modified = true;
+                  picked_texture.emplace(asset);
 
                   ImGui::CloseCurrentPopup();
                }
@@ -173,7 +168,7 @@ bool world_edit::ui_texture_pick_widget(const char* label, std::string* texture)
 
    ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 
-   ImGui::Image(_renderer->request_imgui_texture_id(*texture,
+   ImGui::Image(_renderer->request_imgui_texture_id(texture,
                                                     graphics::fallback_imgui_texture::missing_diffuse),
                 {tiny_preview_size, tiny_preview_size}, {0.0f, 0.0f}, {1.0f, 1.0f});
 
@@ -183,6 +178,23 @@ bool world_edit::ui_texture_pick_widget(const char* label, std::string* texture)
 
    ImGui::PopID();
 
-   return modified;
+   return picked_texture;
+}
+
+bool world_edit::ui_texture_pick_widget(const char* label, std::string* texture) noexcept
+{
+   assert(_edit_context.is_memory_valid(texture));
+
+   std::optional<std::string> picked_texture =
+      ui_texture_pick_widget_untracked(label, texture->c_str());
+
+   if (picked_texture) {
+      _edit_stack_world.apply(edits::make_set_value(texture, std::move(*picked_texture)),
+                              _edit_context, {.closed = true});
+
+      return true;
+   }
+
+   return false;
 }
 }

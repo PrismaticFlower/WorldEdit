@@ -616,27 +616,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          ImGui::Separator();
       }
 
-      ImGui::InputTextAutoComplete(
-         "Texture", &light.texture, _edit_stack_world, _edit_context, [&]() noexcept {
-            std::array<std::string_view, 6> entries;
-            std::size_t matching_count = 0;
-
-            _asset_libraries.textures.view_existing(
-               [&](const std::span<const assets::stable_string> assets) noexcept {
-                  for (const std::string_view asset : assets) {
-                     if (matching_count == entries.size()) break;
-                     if (not asset.contains(light.texture)) {
-                        continue;
-                     }
-
-                     entries[matching_count] = asset;
-
-                     ++matching_count;
-                  }
-               });
-
-            return entries;
-         });
+      ui_texture_pick_widget("Texture", &light.texture);
 
       if (not light.texture.empty()) {
          ImGui::EnumSelect(

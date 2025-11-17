@@ -436,6 +436,10 @@ private:
    bool ui_block_texture_pick_widget(const char* label, std::string* texture,
                                      uint32 material_index) noexcept;
 
+   auto ui_texture_pick_widget_untracked(const char* label, const char* texture,
+                                         const char* preview_override = nullptr) noexcept
+      -> std::optional<std::string>;
+
    bool ui_texture_pick_widget(const char* label, std::string* texture) noexcept;
 
    void setup_orbit_camera() noexcept;

@@ -409,7 +409,7 @@ struct multi_select_properties {
       value<float> inner_cone_angle;
       value<float> outer_cone_angle;
 
-      value<std::string_view> texture;
+      value<std::string> texture;
       value<texture_addressing> texture_addressing;
 
       value_split_float2 directional_texture_tiling;
