@@ -4947,6 +4947,9 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                                            selected.get<world::region_id>());
 
                      if (not region) continue;
+                     if (world::get_region_type(region->description) == other_type) {
+                        continue;
+                     }
 
                      edit_bundle.push_back(
                         edits::make_set_value(&region->description,
