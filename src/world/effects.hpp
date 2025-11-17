@@ -108,7 +108,7 @@ struct precipitation {
 
    PLATFORMED_VAR(float, camera_axial_velocity_scale, 1.0f);
 
-   PLATFORMED_VAR(std::string, ground_effect, "com_sfx_rainsplash");
+   PLATFORMED_VAR(std::string, ground_effect, "");
 
    PLATFORMED_VAR(int32, ground_effects_per_sec, 8);
 
