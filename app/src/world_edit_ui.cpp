@@ -182,6 +182,10 @@ void world_edit::update_ui() noexcept
       ui_show_munge_manager();
    }
 
+   if (_effects_editor_open) {
+      ui_show_effects_editor();
+   }
+
    if (ImGui::BeginPopup("Create Entity", ImGuiWindowFlags_AlwaysAutoResize |
                                              ImGuiWindowFlags_NoDecoration)) {
       ui_show_create_menu_items();

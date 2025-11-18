@@ -148,6 +148,7 @@ void world_edit::initialize_commands() noexcept
    _commands.add("show.world_requirements_editor"s, _world_requirements_editor_open);
    _commands.add("show.world_explorer"s, _world_explorer_open);
    _commands.add("show.world_stats"s, _world_stats_open);
+   _commands.add("show.world_effects_editor"s, _effects_editor_open);
    _commands.add("show.object_class_browser"s, _object_class_browser_open);
    _commands.add("show.env_map_renderer"s, _render_env_map_open);
    _commands.add("show.measurement_tool"s, _measurement_tool_open);
@@ -851,6 +852,7 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show World Explorer", "show.world_explorer", {.key = key::f8}},
           {"Show World Stats", "show.world_stats", {.key = key::f9}},
           {"Show Object Class Browser", "show.object_class_browser", {.key = key::f10}},
+          {"Show World Effects Editor", "show.world_effects_editor", {.key = key::f11}},
 
           {"Show Measurement Tool", "show.measurement_tool", {.key = key::m}},
 

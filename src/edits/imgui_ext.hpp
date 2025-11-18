@@ -74,6 +74,12 @@ bool DragQuat(const char* label, we::quaternion* value,
               we::world::edit_context& context, float v_speed = 0.001f,
               ImGuiSliderFlags flags = 0) noexcept;
 
+bool DragInt(const char* label, we::int32* value,
+             we::edits::stack<we::world::edit_context>& edit_stack,
+             we::world::edit_context& context, float v_speed = 1.0f,
+             we::int32 v_min = 0, we::int32 v_max = 0,
+             const char* format = "%d", ImGuiSliderFlags flags = 0) noexcept;
+
 bool DragInt2(const char* label, std::array<we::int32, 2>* value,
               we::edits::stack<we::world::edit_context>& edit_stack,
               we::world::edit_context& context, float v_speed = 1.0f,

@@ -281,6 +281,7 @@
     <ClCompile Include="src\world\utility\intersects_frustum.cpp" />
     <ClCompile Include="src\world\utility\drag_select.cpp" />
     <ClCompile Include="src\world\utility\to_ui_string.cpp" />
+    <ClCompile Include="src\edits\imgui_ext_platform_var.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -621,6 +622,7 @@
     <ClInclude Include="src\world\utility\select_common.hpp" />
     <ClInclude Include="src\world\utility\to_ui_string.hpp" />
     <ClInclude Include="src\world\utility\multi_select_support.hpp" />
+    <ClInclude Include="src\edits\imgui_ext_platform_var.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

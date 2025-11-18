@@ -138,6 +138,12 @@ void show_imgui_editor(settings& settings, bool& open,
             ImGui::SetItemTooltip("Hides the editors for the PS2 Blend Mode "
                                   "and Bidirectional light properties.");
 
+            ImGui::Checkbox("Hide Extra World Effects Properties",
+                            &ui.hide_extra_effects_properties);
+
+            ImGui::SetItemTooltip("Hides the editors for PS2/Xbox only world "
+                                  "effects properties and unknown properties.");
+
             ImGui::Checkbox("Don't Ask to Add New Animations to Groups",
                             &preferences.dont_ask_to_add_animation_to_group);
 

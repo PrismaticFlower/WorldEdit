@@ -224,14 +224,14 @@ Effect("HeatShimmer")
 
 	XBOX()
 	{
-		Tessellation(4);
+		Tessellation(4, 2);
 		BumpMap("shimmer_waves_xbox", 0.5, 0.5);
 		DistortionScale(4.0);
 	}
 
 	PC()
 	{
-		Tessellation(3);
+		Tessellation(3, 2);
 		BumpMap("shimmer_waves_pc", 1.5, 1.5);
 		DistortionScale(0.004);
 	}
@@ -367,171 +367,185 @@ SunFlare()
    effects effects{
       .color_control =
          {
-            .enable_pc = true,
+            .enable = {.pc = true},
 
-            .gamma_brightness_per_platform = true,
-            .gamma_brightness_pc = 0.6f,
-            .gamma_brightness_xbox = 0.48f,
+            .gamma_brightness = {.pc = 0.6f, .xbox = 0.48f, .per_platform = true},
+            .gamma_color_balance = {.pc = 0.55f, .xbox = 0.5f, .per_platform = true},
+            .gamma_contrast = {.pc = 0.7f, .xbox = 0.54f, .per_platform = true},
+            .gamma_correction = {.pc = 0.5f, .xbox = 0.52f, .per_platform = true},
+            .gamma_hue = {.pc = 0.5f, .xbox = 0.52f, .per_platform = true},
 
-            .gamma_color_balance_per_platform = true,
-            .gamma_color_balance_pc = 0.55f,
-            .gamma_color_balance_xbox = 0.5f,
-
-            .gamma_contrast_per_platform = true,
-            .gamma_contrast_pc = 0.7f,
-            .gamma_contrast_xbox = 0.54f,
-
-            .gamma_correction_per_platform = true,
-            .gamma_correction_pc = 0.5f,
-            .gamma_correction_xbox = 0.52f,
-
-            .gamma_hue_per_platform = true,
-            .gamma_hue_pc = 0.5f,
-            .gamma_hue_xbox = 0.52f,
-
-            .world_brightness_pc = 0.46f,
-            .world_contrast_pc = 0.48f,
-            .world_saturation_pc = 0.65f,
+            .world_brightness = {0.46f},
+            .world_contrast = {0.48f},
+            .world_saturation = {0.65f},
          },
 
       .fog_cloud =
          {
-            .enable_pc = true,
-            .texture_pc = "cloud",
-            .range_pc = {35.0f, 110.0f},
-            .color_pc = float4{168.0f, 172.0f, 180.0f, 128.0f} / 255.0f,
-            .velocity_pc = {5.0f, 0.0f},
-            .rotation_pc = 0.1f,
-            .height_pc = 24.0f,
-            .particle_size_pc = 32.0f,
-            .particle_density_pc = 100.0f,
+            .enable = {true},
+            .texture = {"cloud"},
+            .range = {{35.0f, 110.0f}},
+            .color = {float4{168.0f, 172.0f, 180.0f, 128.0f} / 255.0f},
+            .velocity = {{5.0f, 0.0f}},
+            .rotation = {0.1f},
+            .height = {24.0f},
+            .particle_size = {32.0f},
+            .particle_density = {100.0f},
          },
 
       .wind =
          {
-            .enable_pc = true,
-            .velocity_pc = {3.0f, 0.6f},
-            .velocity_range_pc = 0.75f,
-            .velocity_change_rate_pc = 0.2f,
+            .enable = {true},
+            .velocity = {{3.0f, 0.6f}},
+            .velocity_range = {0.75f},
+            .velocity_change_rate = {0.2f},
          },
 
       .precipitation =
          {
-            .enable_pc = true,
-            .type_pc = precipitation_type::streaks,
-            .range_pc = 16.0f,
-            .color_pc = float3{200.0f, 200.0f, 228.0f} / 255.0f,
-            .velocity_pc = 4.0f,
-            .velocity_range_pc = 0.6f,
-            .particle_density_pc = 80.0f,
-            .particle_density_range_pc = 0.1f,
+            .enable = {true},
+            .type = {precipitation_type::streaks},
+            .range = {16.0f},
+            .color = {float3{200.0f, 200.0f, 228.0f} / 255.0f},
+            .velocity = {4.0f},
+            .velocity_range = {0.6f},
+            .particle_density = {80.0f},
+            .particle_density_range = {0.1f},
 
-            .particle_size_per_platform = true,
-            .particle_size_pc = 0.02f,
-            .particle_size_ps2 = 0.06f,
-            .particle_size_xbox = 0.03f,
+            .particle_size =
+               {
+                  .pc = {0.02f},
+                  .ps2 = 0.06f,
+                  .xbox = 0.03f,
+                  .per_platform = true,
+               },
 
-            .streak_length_pc = 1.7f,
-            .camera_cross_velocity_scale_pc = 0.3f,
-            .camera_axial_velocity_scale_pc = 0.9f,
-            .ground_effect_pc = "huge_splash",
-            .ground_effects_per_sec_pc = 7,
-            .ground_effect_spread_pc = 16,
+            .streak_length = {1.7f},
+            .camera_cross_velocity_scale = {0.3f},
+            .camera_axial_velocity_scale = {0.9f},
+            .ground_effect = {"huge_splash"},
+            .ground_effects_per_sec = {7},
+            .ground_effect_spread = {16},
 
-            .alpha_min_max_per_platform = true,
-            .alpha_min_max_pc = {0.3f, 0.45f},
-            .alpha_min_max_ps2 = {0.8f, 1.0f},
-            .alpha_min_max_xbox = {0.2f, 0.3f},
+            .alpha_min_max =
+               {
+                  .pc = {0.3f, 0.45f},
+                  .ps2 = {0.8f, 1.0f},
+                  .xbox = {0.2f, 0.3f},
+                  .per_platform = true,
+               },
+
          },
 
       .lightning =
          {
-            .enable_pc = true,
-            .color_pc = float3{220.0f, 220.0f, 255.0f} / 255.0f,
-            .sunlight_fade_factor_pc = 0.2f,
-            .sky_dome_darken_factor_pc = 0.3f,
-            .brightness_min_pc = 0.7f,
-            .fade_time_pc = 0.3f,
-            .time_between_flashes_min_max_pc = {2.0f, 4.0f},
-            .time_between_sub_flashes_min_max_pc = {0.02f, 0.7f},
-            .num_sub_flashes_min_max_pc = {1, 8},
-            .horizon_angle_min_max_pc = {20, 80},
-            .sound_crack_pc = "test_amb_thunder",
-            .sound_sub_crack_pc = "test_amb_thundersub",
+            .enable = {true},
+            .color = {float3{220.0f, 220.0f, 255.0f} / 255.0f},
+            .sunlight_fade_factor = {0.2f},
+            .sky_dome_darken_factor = {0.3f},
+            .brightness_min = {0.7f},
+            .fade_time = {0.3f},
+            .time_between_flashes_min_max = {{2.0f, 4.0f}},
+            .time_between_sub_flashes_min_max = {{0.02f, 0.7f}},
+            .num_sub_flashes_min_max = {{1, 8}},
+            .horizon_angle_min_max = {{20, 80}},
+            .sound_crack = {"test_amb_thunder"},
+            .sound_sub_crack = {"test_amb_thundersub"},
          },
 
       .lightning_bolt =
          {
-            .texture_pc = "lightning2",
-            .width_pc = 10.0f,
-            .fade_time_pc = 0.25f,
-            .break_distance_pc = 30.0f,
-            .texture_size_pc = 40.0f,
-            .spread_factor_pc = 30.0f,
-            .max_branches_pc = 3.0f,
-            .branch_factor_pc = 0.75f,
-            .branch_spread_factor_pc = 16,
-            .branch_length_pc = 160.0f,
-            .interpolation_speed_pc = 0.7f,
-            .num_children_pc = 3,
-            .child_break_distance_pc = 5.0f,
-            .child_texture_size_pc = 4.0f,
-            .child_width_pc = 2.0f,
-            .child_spread_factor_pc = 20.0f,
-            .color_pc = float4{200.0f, 200.0f, 255.0f, 255.0f} / 255.0f,
-            .child_color_pc = float4{200.0f, 200.0f, 255.0f, 150.0f} / 255.0f,
+            .texture = {"lightning2"},
+            .width = {10.0f},
+            .fade_time = {0.25f},
+            .break_distance = {30.0f},
+            .texture_size = {40.0f},
+            .spread_factor = {30.0f},
+            .max_branches = {3.0f},
+            .branch_factor = {0.75f},
+            .branch_spread_factor = {16},
+            .branch_length = {160.0f},
+            .interpolation_speed = {0.7f},
+            .num_children = {3},
+            .child_break_distance = {5.0f},
+            .child_texture_size = {4.0f},
+            .child_width = {2.0f},
+            .child_spread_factor = {20.0f},
+            .color = {float4{200.0f, 200.0f, 255.0f, 255.0f} / 255.0f},
+            .child_color = {float4{200.0f, 200.0f, 255.0f, 150.0f} / 255.0f},
          },
 
       .water =
          {
-            .ocean_enable_pc = false,
-            .oscillation_enable_pc = false,
-            .disable_low_res_pc = true,
-            .patch_divisions_pc = {8, 8},
-            .water_ring_color_pc = float4{148.0f, 170.0f, 200.0f, 255.0f} / 255.0f,
-            .water_wake_color_pc = float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f,
-            .water_splash_color_pc = float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f,
+            .ocean_enable = {false},
+            .oscillation_enable = {false},
+            .disable_low_res = {true},
+            .patch_divisions = {{8, 8}},
+            .water_ring_color = {float4{148.0f, 170.0f, 200.0f, 255.0f} / 255.0f},
+            .water_wake_color = {float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f},
+            .water_splash_color = {float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f},
 
-            .lod_decimation_per_platform = true,
-            .lod_decimation_pc = 1,
-            .lod_decimation_ps2 = 8,
-            .lod_decimation_xbox = 2,
+            .lod_decimation = {.pc = 1, .ps2 = 8, .xbox = 2, .per_platform = true},
 
-            .tile_per_platform = true,
-            .tile_pc = {3.0f, 3.0f},
-            .tile_ps2 = {1.0f, 1.0f},
-            .tile_xbox = {4.0f, 4.0f},
+            .tile =
+               {
+                  .pc = {3.0f, 3.0f},
+                  .ps2 = {1.0f, 1.0f},
+                  .xbox = {4.0f, 4.0f},
+                  .per_platform = true,
+               },
 
-            .velocity_per_platform = true,
-            .velocity_pc = {0.02f, 0.02f},
-            .velocity_ps2 = {0.0f, 0.0f},
-            .velocity_xbox = {0.04f, 0.008f},
+            .velocity =
+               {
+                  .pc = {0.02f, 0.02f},
+                  .ps2 = {0.0f, 0.0f},
+                  .xbox = {0.04f, 0.008f},
+                  .per_platform = true,
+               },
 
-            .main_texture_per_platform = true,
-            .main_texture_pc = "water_pc",
-            .main_texture_ps2 = "water_ps2",
+            .main_texture =
+               {
+                  .pc = "water_pc",
+                  .ps2 = "water_ps2",
+                  .per_platform = true,
+               },
 
-            .refraction_color_per_platform = true,
-            .refraction_color_pc = float4{5.0f, 230.0f, 255.0f, 255.0f} / 255.0f,
-            .refraction_color_xbox = float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f,
+            .refraction_color =
+               {
+                  .pc = float4{5.0f, 230.0f, 255.0f, 255.0f} / 255.0f,
+                  .xbox = float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f,
+                  .per_platform = true,
+               },
 
-            .reflection_color_per_platform = true,
-            .reflection_color_pc = float4{57.0f, 100.0f, 138.0f, 255.0f} / 255.0f,
-            .reflection_color_xbox = float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f,
+            .reflection_color =
+               {
+                  .pc = float4{57.0f, 100.0f, 138.0f, 255.0f} / 255.0f,
+                  .xbox = float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f,
+                  .per_platform = true,
+               },
 
-            .underwater_color_per_platform = true,
-            .underwater_color_pc = float4{61.0f, 128.0f, 144.0f, 128.0f} / 255.0f,
-            .underwater_color_xbox = float4{96.0f, 96.0f, 88.0f, 128.0f} / 255.0f,
+            .underwater_color =
+               {
+                  .pc = float4{61.0f, 128.0f, 144.0f, 128.0f} / 255.0f,
+                  .xbox = float4{96.0f, 96.0f, 88.0f, 128.0f} / 255.0f,
+                  .per_platform = true,
+               },
 
-            .fresnel_min_max_per_platform = true,
-            .fresnel_min_max_pc = {0.1f, 0.75f},
-            .fresnel_min_max_xbox = {0.3f, 0.6f},
+            .fresnel_min_max =
+               {
+                  .pc = {0.1f, 0.75f},
+                  .xbox = {0.3f, 0.6f},
+                  .per_platform = true,
+               },
 
-            .normal_map_textures_per_platform = true,
-            .normal_map_textures_pc = {"water_pc_normalmap_", 8, 4.0f},
-            .normal_map_textures_xbox = {"water_xbox_normalmap_", 4, 16.0f},
+            .normal_map_textures =
+               {
+                  .pc = {"water_pc_normalmap_", 8, 4.0f},
+                  .xbox = {"water_xbox_normalmap_", 4, 16.0f},
+                  .per_platform = true,
+               },
 
-            .far_scene_range_pc = 1500.0f,
+            .far_scene_range_pc = {1500.0f},
 
             .bump_map_textures_pc = {"water_pc_bumpmap_", 32, 16.0f},
             .specular_mask_textures_pc = {"water_pc_specularmask_", 16, 8.0f},
@@ -553,146 +567,170 @@ SunFlare()
 
       .godray =
          {
-            .enable_pc = true,
-            .max_godrays_in_world_pc = 100,
-            .max_godrays_on_screen_pc = 4,
-            .max_view_distance_pc = 40.0f,
-            .fade_view_distance_pc = 30.0f,
-            .max_length_pc = 80.0f,
-            .offset_angle_pc = -20.0f,
-            .min_rays_per_godray_pc = 2,
-            .max_rays_per_godray_pc = 8,
-            .radius_for_max_rays_pc = 4.0f,
-            .dust_velocity_pc = {0.0f, -0.1f, 0.0f},
-            .texture_pc = "fx_godray",
-            .texture_scale_pc = {1.5f, 1.5f},
-            .texture_velocity_pc = {0.0f, -0.1f, 0.0f},
-            .texture_jitter_speed_pc = 0.1f,
+            .enable = {true},
+            .max_godrays_in_world = {100},
+            .max_godrays_on_screen = {4},
+            .max_view_distance = {40.0f},
+            .fade_view_distance = {30.0f},
+            .max_length = {80.0f},
+            .offset_angle = {-20.0f},
+            .min_rays_per_godray = {2},
+            .max_rays_per_godray = {8},
+            .radius_for_max_rays = {4.0f},
+            .dust_velocity = {{0.0f, -0.1f, 0.0f}},
+            .texture = {"fx_godray"},
+            .texture_scale = {{1.5f, 1.5f}},
+            .texture_velocity = {{0.0f, -0.1f, 0.0f}},
+            .texture_jitter_speed = {0.1f},
          },
 
       .heat_shimmer =
          {
-            .enable_pc = true,
-            .world_height_pc = 10.0f,
-            .geometry_height_pc = 4.0f,
-            .scroll_speed_pc = 0.08f,
-            .bump_map_per_platform = true,
-            .bump_map_pc = {"shimmer_waves_pc", {1.5f, 1.5f}},
-            .bump_map_xbox = {"shimmer_waves_xbox", {0.5f, 0.5f}},
-            .distortion_scale_per_platform = true,
-            .distortion_scale_pc = 0.004f,
-            .distortion_scale_ps2 = 0.06f,
-            .distortion_scale_xbox = 4.0f,
-            .tessellation_pc = 3,
-            .tessellation_ps2 = {20, 40},
-            .tessellation_xbox = 4,
+            .enable = {true},
+            .world_height = {10.0f},
+            .geometry_height = {4.0f},
+            .scroll_speed = {0.08f},
+            .bump_map =
+               {
+                  .pc = {"shimmer_waves_pc", {1.5f, 1.5f}},
+                  .xbox = {"shimmer_waves_xbox", {0.5f, 0.5f}},
+                  .per_platform = true,
+               },
+            .distortion_scale =
+               {
+                  .pc = 0.004f,
+                  .ps2 = 0.06f,
+                  .xbox = 4.0f,
+                  .per_platform = true,
+               },
+            .tessellation =
+               {
+                  .pc = {3, 2},
+                  .ps2 = {20, 40},
+                  .xbox = {4, 2},
+                  .per_platform = true,
+               },
          },
 
       .space_dust =
          {
-            .enable_pc = true,
-            .texture_pc = "spacedust",
-            .spawn_distance_pc = 200.0f,
-            .max_random_side_offset_pc = 80.0f,
-            .center_dead_zone_radius_pc = 40.0f,
-            .min_particle_scale_pc = 0.2f,
-            .max_particle_scale_pc = 0.8f,
-            .spawn_delay_pc = 0.2f,
-            .reference_speed_pc = 40.0f,
-            .dust_particle_speed_pc = 50.0f,
-            .speed_particle_min_length_pc = 4.0f,
-            .speed_particle_max_length_pc = 14.0f,
-            .particle_length_min_speed_pc = 70.0f,
-            .particle_length_max_speed_pc = 200.0f,
+            .enable = {true},
+            .texture = {"spacedust"},
+            .spawn_distance = {200.0f},
+            .max_random_side_offset = {80.0f},
+            .center_dead_zone_radius = {40.0f},
+            .min_particle_scale = {0.2f},
+            .max_particle_scale = {0.8f},
+            .spawn_delay = {0.2f},
+            .reference_speed = {40.0f},
+            .dust_particle_speed = {50.0f},
+            .speed_particle_min_length = {4.0f},
+            .speed_particle_max_length = {14.0f},
+            .particle_length_min_speed = {70.0f},
+            .particle_length_max_speed = {200.0f},
          },
 
       .world_shadow_map =
          {
-            .enable_pc = true,
-            .texture_pc = "shadowy_sun",
-            .light_name_pc = "sun",
-            .texture_scale_pc = 40.0f,
-            .animation_frequency_pc = 0.2f,
-            .animation_amplitude0_pc = {4.0f, 0.0f},
-            .animation_amplitude1_pc = {0.1f, -0.1f},
+            .enable = {true},
+            .texture = {"shadowy_sun"},
+            .light_name = {"sun"},
+            .texture_scale = {40.0f},
+            .animation_frequency = {0.2f},
+            .animation_amplitude0 = {{4.0f, 0.0f}},
+            .animation_amplitude1 = {{0.1f, -0.1f}},
          },
 
       .blur =
          {
-            .enable_pc = true,
-            .constant_blend_per_platform = true,
-            .constant_blend_pc = 0.3f,
-            .constant_blend_ps2 = 0.25f,
-            .constant_blend_xbox = 0.45f,
-            .down_size_factor_per_platform = true,
-            .down_size_factor_pc = 0.35f,
-            .down_size_factor_ps2 = 0.25f,
-            .down_size_factor_xbox = 0.5f,
+            .enable = {true},
+            .constant_blend =
+               {
+                  .pc = 0.3f,
+                  .ps2 = 0.25f,
+                  .xbox = 0.45f,
+                  .per_platform = true,
+               },
+            .down_size_factor =
+               {
+
+                  .pc = 0.35f,
+                  .ps2 = 0.25f,
+                  .xbox = 0.5f,
+                  .per_platform = true,
+               },
             .min_max_depth_ps2 = {0.95f, 1.0f},
-            .mode_per_platform = true,
-            .mode_pc = 0,
-            .mode_xbox = 1,
+            .mode =
+               {
+                  .pc = 0,
+                  .xbox = 1,
+                  .per_platform = true,
+               },
          },
 
       .motion_blur =
          {
-            .enable_pc = false,
+            .enable = {false},
          },
 
       .scope_blur =
          {
-            .enable_pc = false,
+            .enable = {false},
          },
 
       .hdr =
          {
-            .enable_pc = true,
-            .down_size_factor_pc = 0.125f,
-            .num_bloom_passes_pc = 3,
-            .max_total_weight_pc = 1.1f,
-            .glow_threshold_pc = 0.75f,
-            .glow_factor_pc = 0.25f,
+            .enable = {true},
+            .down_size_factor = {0.125f},
+            .num_bloom_passes = {3},
+            .max_total_weight = {1.1f},
+            .glow_threshold = {0.75f},
+            .glow_factor = {0.25f},
          },
 
       .shadow =
          {
-            .enable_pc = true,
-            .blur_enable_pc = true,
-            .intensity_pc = 0.2f,
+            .enable = {true},
+            .blur_enable = {true},
+            .intensity = {0.2f},
          },
 
       .sun_flares =
-         {
-            sun_flare{
-               .angle_pc = {130.0f, 130.0f},
-               .color_pc = float3{255.0f, 150.0f, 150.0f} / 255.0f,
-               .size_pc = 4.0f,
-               .flare_out_size_pc = 5.0f,
-               .num_flare_outs_per_platform = true,
-               .num_flare_outs_pc = 30,
-               .num_flare_outs_ps2 = 40,
-               .num_flare_outs_xbox = 50,
-               .initial_flare_out_alpha_pc = 50,
-               .halo_inner_ring_pc = {1.0f, float4{192.0f, 255.0f, 255.0f, 255.0f} / 255.0f},
-               .halo_middle_ring_pc = {4.0f, float4{192.0f, 200.0f, 0.0f, 255.0f} / 255.0f},
-               .halo_outter_ring_pc = {5.0f, float4{192.0f, 127.0f, 0.0f, 0.0f} / 255.0f},
-               .spike_color_pc = float4{150.0f, 100.0f, 0.0f, 128.0f} / 255.0f,
-               .spike_size_pc = 10.0f,
-            },
-            sun_flare{
-               .angle_pc = {132.0f, 132.0f},
-               .color_pc = float3{255.0f, 152.0f, 150.0f} / 255.0f,
-               .size_pc = 6.0f,
-               .flare_out_size_pc = 7.0f,
-               .num_flare_outs_pc = 42,
-               .initial_flare_out_alpha_pc = 52,
-               .halo_inner_ring_pc = {3.0f, float4{194.0f, 255.0f, 255.0f, 255.0f} / 255.0f},
-               .halo_middle_ring_pc = {6.0f, float4{194.0f, 200.0f, 0.0f, 255.0f} / 255.0f},
-               .halo_outter_ring_pc = {7.0f, float4{194.0f, 127.0f, 0.0f, 0.0f} / 255.0f},
-               .spike_color_pc = float4{152.0f, 100.0f, 0.0f, 128.0f} / 255.0f,
-               .spike_size_pc = 12.0f,
-            },
-         },
+         {pinned_vector_init{.max_size = 2},
+          std::initializer_list{
+             sun_flare{
+                .angle = {{130.0f, 130.0f}},
+                .color = {float3{255.0f, 150.0f, 150.0f} / 255.0f},
+                .size = {4.0f},
+                .flare_out_size = {5.0f},
+                .num_flare_outs =
+                   {
+                      .pc = 30,
+                      .ps2 = 40,
+                      .xbox = 50,
+                      .per_platform = true,
+                   },
+                .initial_flare_out_alpha = {50},
+                .halo_inner_ring = {{1.0f, float4{192.0f, 255.0f, 255.0f, 255.0f} / 255.0f}},
+                .halo_middle_ring = {{4.0f, float4{192.0f, 200.0f, 0.0f, 255.0f} / 255.0f}},
+                .halo_outter_ring = {{5.0f, float4{192.0f, 127.0f, 0.0f, 0.0f} / 255.0f}},
+                .spike_color = {float4{150.0f, 100.0f, 0.0f, 128.0f} / 255.0f},
+                .spike_size = {10.0f},
+             },
+             sun_flare{
+                .angle = {{132.0f, 132.0f}},
+                .color = {float3{255.0f, 152.0f, 150.0f} / 255.0f},
+                .size = {6.0f},
+                .flare_out_size = {7.0f},
+                .num_flare_outs = {42},
+                .initial_flare_out_alpha = {52},
+                .halo_inner_ring = {{3.0f, float4{194.0f, 255.0f, 255.0f, 255.0f} / 255.0f}},
+                .halo_middle_ring = {{6.0f, float4{194.0f, 200.0f, 0.0f, 255.0f} / 255.0f}},
+                .halo_outter_ring = {{7.0f, float4{194.0f, 127.0f, 0.0f, 0.0f} / 255.0f}},
+                .spike_color = {float4{152.0f, 100.0f, 0.0f, 128.0f} / 255.0f},
+                .spike_size = {12.0f},
+             },
+          }},
    };
 
    (void)io::create_directory("temp/world");
@@ -914,14 +952,14 @@ Effect("HeatShimmer")
 
 	XBOX()
 	{
-		Tessellation(4);
+		Tessellation(4, 2);
 		BumpMap("shimmer_waves_xbox", 0.5, 0.5);
 		DistortionScale(4.0);
 	}
 
 	PC()
 	{
-		Tessellation(3);
+		Tessellation(3, 2);
 		BumpMap("shimmer_waves_pc", 1.5, 1.5);
 		DistortionScale(0.004);
 	}
@@ -1057,163 +1095,177 @@ SunFlare()
    effects effects{
       .color_control =
          {
-            .enable_pc = true,
+            .enable = {.pc = true},
 
-            .gamma_brightness_per_platform = true,
-            .gamma_brightness_pc = 0.6f,
-            .gamma_brightness_xbox = 0.48f,
+            .gamma_brightness = {.pc = 0.6f, .xbox = 0.48f, .per_platform = true},
+            .gamma_color_balance = {.pc = 0.55f, .xbox = 0.5f, .per_platform = true},
+            .gamma_contrast = {.pc = 0.7f, .xbox = 0.54f, .per_platform = true},
+            .gamma_correction = {.pc = 0.5f, .xbox = 0.52f, .per_platform = true},
+            .gamma_hue = {.pc = 0.5f, .xbox = 0.52f, .per_platform = true},
 
-            .gamma_color_balance_per_platform = true,
-            .gamma_color_balance_pc = 0.55f,
-            .gamma_color_balance_xbox = 0.5f,
-
-            .gamma_contrast_per_platform = true,
-            .gamma_contrast_pc = 0.7f,
-            .gamma_contrast_xbox = 0.54f,
-
-            .gamma_correction_per_platform = true,
-            .gamma_correction_pc = 0.5f,
-            .gamma_correction_xbox = 0.52f,
-
-            .gamma_hue_per_platform = true,
-            .gamma_hue_pc = 0.5f,
-            .gamma_hue_xbox = 0.52f,
-
-            .world_brightness_pc = 0.46f,
-            .world_contrast_pc = 0.48f,
-            .world_saturation_pc = 0.65f,
+            .world_brightness = {0.46f},
+            .world_contrast = {0.48f},
+            .world_saturation = {0.65f},
          },
 
       .fog_cloud =
          {
-            .enable_pc = true,
-            .texture_pc = "cloud",
-            .range_pc = {35.0f, 110.0f},
-            .color_pc = float4{168.0f, 172.0f, 180.0f, 128.0f} / 255.0f,
-            .velocity_pc = {5.0f, 0.0f},
-            .rotation_pc = 0.1f,
-            .height_pc = 24.0f,
-            .particle_size_pc = 32.0f,
-            .particle_density_pc = 100.0f,
+            .enable = {true},
+            .texture = {"cloud"},
+            .range = {{35.0f, 110.0f}},
+            .color = {float4{168.0f, 172.0f, 180.0f, 128.0f} / 255.0f},
+            .velocity = {{5.0f, 0.0f}},
+            .rotation = {0.1f},
+            .height = {24.0f},
+            .particle_size = {32.0f},
+            .particle_density = {100.0f},
          },
 
       .precipitation =
          {
-            .enable_pc = true,
-            .type_pc = precipitation_type::streaks,
-            .range_pc = 16.0f,
-            .color_pc = float3{200.0f, 200.0f, 228.0f} / 255.0f,
-            .velocity_pc = 4.0f,
-            .velocity_range_pc = 0.6f,
-            .particle_density_pc = 80.0f,
-            .particle_density_range_pc = 0.1f,
+            .enable = {true},
+            .type = {precipitation_type::streaks},
+            .range = {16.0f},
+            .color = {float3{200.0f, 200.0f, 228.0f} / 255.0f},
+            .velocity = {4.0f},
+            .velocity_range = {0.6f},
+            .particle_density = {80.0f},
+            .particle_density_range = {0.1f},
 
-            .particle_size_per_platform = true,
-            .particle_size_pc = 0.02f,
-            .particle_size_ps2 = 0.06f,
-            .particle_size_xbox = 0.03f,
+            .particle_size =
+               {
+                  .pc = {0.02f},
+                  .ps2 = 0.06f,
+                  .xbox = 0.03f,
+                  .per_platform = true,
+               },
 
-            .streak_length_pc = 1.7f,
-            .camera_cross_velocity_scale_pc = 0.3f,
-            .camera_axial_velocity_scale_pc = 0.9f,
-            .ground_effect_pc = "huge_splash",
-            .ground_effects_per_sec_pc = 7,
-            .ground_effect_spread_pc = 16,
+            .streak_length = {1.7f},
+            .camera_cross_velocity_scale = {0.3f},
+            .camera_axial_velocity_scale = {0.9f},
+            .ground_effect = {"huge_splash"},
+            .ground_effects_per_sec = {7},
+            .ground_effect_spread = {16},
 
-            .alpha_min_max_per_platform = true,
-            .alpha_min_max_pc = {0.3f, 0.45f},
-            .alpha_min_max_ps2 = {0.8f, 1.0f},
-            .alpha_min_max_xbox = {0.2f, 0.3f},
+            .alpha_min_max =
+               {
+                  .pc = {0.3f, 0.45f},
+                  .ps2 = {0.8f, 1.0f},
+                  .xbox = {0.2f, 0.3f},
+                  .per_platform = true,
+               },
+
          },
 
       .lightning =
          {
-            .enable_pc = true,
-            .color_pc = float3{220.0f, 220.0f, 255.0f} / 255.0f,
-            .sunlight_fade_factor_pc = 0.2f,
-            .sky_dome_darken_factor_pc = 0.3f,
-            .brightness_min_pc = 0.7f,
-            .fade_time_pc = 0.3f,
-            .time_between_flashes_min_max_pc = {2.0f, 4.0f},
-            .time_between_sub_flashes_min_max_pc = {0.02f, 0.7f},
-            .num_sub_flashes_min_max_pc = {1, 8},
-            .horizon_angle_min_max_pc = {20, 80},
-            .sound_crack_pc = "test_amb_thunder",
-            .sound_sub_crack_pc = "test_amb_thundersub",
+            .enable = {true},
+            .color = {float3{220.0f, 220.0f, 255.0f} / 255.0f},
+            .sunlight_fade_factor = {0.2f},
+            .sky_dome_darken_factor = {0.3f},
+            .brightness_min = {0.7f},
+            .fade_time = {0.3f},
+            .time_between_flashes_min_max = {{2.0f, 4.0f}},
+            .time_between_sub_flashes_min_max = {{0.02f, 0.7f}},
+            .num_sub_flashes_min_max = {{1, 8}},
+            .horizon_angle_min_max = {{20, 80}},
+            .sound_crack = {"test_amb_thunder"},
+            .sound_sub_crack = {"test_amb_thundersub"},
          },
 
       .lightning_bolt =
          {
-            .texture_pc = "lightning2",
-            .width_pc = 10.0f,
-            .fade_time_pc = 0.25f,
-            .break_distance_pc = 30.0f,
-            .texture_size_pc = 40.0f,
-            .spread_factor_pc = 30.0f,
-            .max_branches_pc = 3.0f,
-            .branch_factor_pc = 0.75f,
-            .branch_spread_factor_pc = 16,
-            .branch_length_pc = 160.0f,
-            .interpolation_speed_pc = 0.7f,
-            .num_children_pc = 3,
-            .child_break_distance_pc = 5.0f,
-            .child_texture_size_pc = 4.0f,
-            .child_width_pc = 2.0f,
-            .child_spread_factor_pc = 20.0f,
-            .color_pc = float4{200.0f, 200.0f, 255.0f, 255.0f} / 255.0f,
-            .child_color_pc = float4{200.0f, 200.0f, 255.0f, 150.0f} / 255.0f,
+            .texture = {"lightning2"},
+            .width = {10.0f},
+            .fade_time = {0.25f},
+            .break_distance = {30.0f},
+            .texture_size = {40.0f},
+            .spread_factor = {30.0f},
+            .max_branches = {3.0f},
+            .branch_factor = {0.75f},
+            .branch_spread_factor = {16},
+            .branch_length = {160.0f},
+            .interpolation_speed = {0.7f},
+            .num_children = {3},
+            .child_break_distance = {5.0f},
+            .child_texture_size = {4.0f},
+            .child_width = {2.0f},
+            .child_spread_factor = {20.0f},
+            .color = {float4{200.0f, 200.0f, 255.0f, 255.0f} / 255.0f},
+            .child_color = {float4{200.0f, 200.0f, 255.0f, 150.0f} / 255.0f},
          },
 
       .water =
          {
-            .ocean_enable_pc = false,
-            .oscillation_enable_pc = false,
-            .disable_low_res_pc = true,
-            .patch_divisions_pc = {8, 8},
-            .water_ring_color_pc = float4{148.0f, 170.0f, 200.0f, 255.0f} / 255.0f,
-            .water_wake_color_pc = float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f,
-            .water_splash_color_pc = float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f,
+            .ocean_enable = {false},
+            .oscillation_enable = {false},
+            .disable_low_res = {true},
+            .patch_divisions = {{8, 8}},
+            .water_ring_color = {float4{148.0f, 170.0f, 200.0f, 255.0f} / 255.0f},
+            .water_wake_color = {float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f},
+            .water_splash_color = {float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f},
 
-            .lod_decimation_per_platform = true,
-            .lod_decimation_pc = 1,
-            .lod_decimation_ps2 = 8,
-            .lod_decimation_xbox = 2,
+            .lod_decimation = {.pc = 1, .ps2 = 8, .xbox = 2, .per_platform = true},
 
-            .tile_per_platform = true,
-            .tile_pc = {3.0f, 3.0f},
-            .tile_ps2 = {1.0f, 1.0f},
-            .tile_xbox = {4.0f, 4.0f},
+            .tile =
+               {
+                  .pc = {3.0f, 3.0f},
+                  .ps2 = {1.0f, 1.0f},
+                  .xbox = {4.0f, 4.0f},
+                  .per_platform = true,
+               },
 
-            .velocity_per_platform = true,
-            .velocity_pc = {0.02f, 0.02f},
-            .velocity_ps2 = {0.0f, 0.0f},
-            .velocity_xbox = {0.04f, 0.008f},
+            .velocity =
+               {
+                  .pc = {0.02f, 0.02f},
+                  .ps2 = {0.0f, 0.0f},
+                  .xbox = {0.04f, 0.008f},
+                  .per_platform = true,
+               },
 
-            .main_texture_per_platform = true,
-            .main_texture_pc = "water_pc",
-            .main_texture_ps2 = "water_ps2",
+            .main_texture =
+               {
+                  .pc = "water_pc",
+                  .ps2 = "water_ps2",
+                  .per_platform = true,
+               },
 
-            .refraction_color_per_platform = true,
-            .refraction_color_pc = float4{5.0f, 230.0f, 255.0f, 255.0f} / 255.0f,
-            .refraction_color_xbox = float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f,
+            .refraction_color =
+               {
+                  .pc = float4{5.0f, 230.0f, 255.0f, 255.0f} / 255.0f,
+                  .xbox = float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f,
+                  .per_platform = true,
+               },
 
-            .reflection_color_per_platform = true,
-            .reflection_color_pc = float4{57.0f, 100.0f, 138.0f, 255.0f} / 255.0f,
-            .reflection_color_xbox = float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f,
+            .reflection_color =
+               {
+                  .pc = float4{57.0f, 100.0f, 138.0f, 255.0f} / 255.0f,
+                  .xbox = float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f,
+                  .per_platform = true,
+               },
 
-            .underwater_color_per_platform = true,
-            .underwater_color_pc = float4{61.0f, 128.0f, 144.0f, 128.0f} / 255.0f,
-            .underwater_color_xbox = float4{96.0f, 96.0f, 88.0f, 128.0f} / 255.0f,
+            .underwater_color =
+               {
+                  .pc = float4{61.0f, 128.0f, 144.0f, 128.0f} / 255.0f,
+                  .xbox = float4{96.0f, 96.0f, 88.0f, 128.0f} / 255.0f,
+                  .per_platform = true,
+               },
 
-            .fresnel_min_max_per_platform = true,
-            .fresnel_min_max_pc = {0.1f, 0.75f},
-            .fresnel_min_max_xbox = {0.3f, 0.6f},
+            .fresnel_min_max =
+               {
+                  .pc = {0.1f, 0.75f},
+                  .xbox = {0.3f, 0.6f},
+                  .per_platform = true,
+               },
 
-            .normal_map_textures_per_platform = true,
-            .normal_map_textures_pc = {"water_pc_normalmap_", 8, 4.0f},
-            .normal_map_textures_xbox = {"water_xbox_normalmap_", 4, 16.0f},
+            .normal_map_textures =
+               {
+                  .pc = {"water_pc_normalmap_", 8, 4.0f},
+                  .xbox = {"water_xbox_normalmap_", 4, 16.0f},
+                  .per_platform = true,
+               },
 
-            .far_scene_range_pc = 1500.0f,
+            .far_scene_range_pc = {1500.0f},
 
             .bump_map_textures_pc = {"water_pc_bumpmap_", 32, 16.0f},
             .specular_mask_textures_pc = {"water_pc_specularmask_", 16, 8.0f},
@@ -1235,146 +1287,170 @@ SunFlare()
 
       .godray =
          {
-            .enable_pc = true,
-            .max_godrays_in_world_pc = 100,
-            .max_godrays_on_screen_pc = 4,
-            .max_view_distance_pc = 40.0f,
-            .fade_view_distance_pc = 30.0f,
-            .max_length_pc = 80.0f,
-            .offset_angle_pc = -20.0f,
-            .min_rays_per_godray_pc = 2,
-            .max_rays_per_godray_pc = 8,
-            .radius_for_max_rays_pc = 4.0f,
-            .dust_velocity_pc = {0.0f, -0.1f, 0.0f},
-            .texture_pc = "fx_godray",
-            .texture_scale_pc = {1.5f, 1.5f},
-            .texture_velocity_pc = {0.0f, -0.1f, 0.0f},
-            .texture_jitter_speed_pc = 0.1f,
+            .enable = {true},
+            .max_godrays_in_world = {100},
+            .max_godrays_on_screen = {4},
+            .max_view_distance = {40.0f},
+            .fade_view_distance = {30.0f},
+            .max_length = {80.0f},
+            .offset_angle = {-20.0f},
+            .min_rays_per_godray = {2},
+            .max_rays_per_godray = {8},
+            .radius_for_max_rays = {4.0f},
+            .dust_velocity = {{0.0f, -0.1f, 0.0f}},
+            .texture = {"fx_godray"},
+            .texture_scale = {{1.5f, 1.5f}},
+            .texture_velocity = {{0.0f, -0.1f, 0.0f}},
+            .texture_jitter_speed = {0.1f},
          },
 
       .heat_shimmer =
          {
-            .enable_pc = true,
-            .world_height_pc = 10.0f,
-            .geometry_height_pc = 4.0f,
-            .scroll_speed_pc = 0.08f,
-            .bump_map_per_platform = true,
-            .bump_map_pc = {"shimmer_waves_pc", {1.5f, 1.5f}},
-            .bump_map_xbox = {"shimmer_waves_xbox", {0.5f, 0.5f}},
-            .distortion_scale_per_platform = true,
-            .distortion_scale_pc = 0.004f,
-            .distortion_scale_ps2 = 0.06f,
-            .distortion_scale_xbox = 4.0f,
-            .tessellation_pc = 3,
-            .tessellation_ps2 = {20, 40},
-            .tessellation_xbox = 4,
+            .enable = {true},
+            .world_height = {10.0f},
+            .geometry_height = {4.0f},
+            .scroll_speed = {0.08f},
+            .bump_map =
+               {
+                  .pc = {"shimmer_waves_pc", {1.5f, 1.5f}},
+                  .xbox = {"shimmer_waves_xbox", {0.5f, 0.5f}},
+                  .per_platform = true,
+               },
+            .distortion_scale =
+               {
+                  .pc = 0.004f,
+                  .ps2 = 0.06f,
+                  .xbox = 4.0f,
+                  .per_platform = true,
+               },
+            .tessellation =
+               {
+                  .pc = {3, 2},
+                  .ps2 = {20, 40},
+                  .xbox = {4, 2},
+                  .per_platform = true,
+               },
          },
 
       .space_dust =
          {
-            .enable_pc = true,
-            .texture_pc = "spacedust",
-            .spawn_distance_pc = 200.0f,
-            .max_random_side_offset_pc = 80.0f,
-            .center_dead_zone_radius_pc = 40.0f,
-            .min_particle_scale_pc = 0.2f,
-            .max_particle_scale_pc = 0.8f,
-            .spawn_delay_pc = 0.2f,
-            .reference_speed_pc = 40.0f,
-            .dust_particle_speed_pc = 50.0f,
-            .speed_particle_min_length_pc = 4.0f,
-            .speed_particle_max_length_pc = 14.0f,
-            .particle_length_min_speed_pc = 70.0f,
-            .particle_length_max_speed_pc = 200.0f,
+            .enable = {true},
+            .texture = {"spacedust"},
+            .spawn_distance = {200.0f},
+            .max_random_side_offset = {80.0f},
+            .center_dead_zone_radius = {40.0f},
+            .min_particle_scale = {0.2f},
+            .max_particle_scale = {0.8f},
+            .spawn_delay = {0.2f},
+            .reference_speed = {40.0f},
+            .dust_particle_speed = {50.0f},
+            .speed_particle_min_length = {4.0f},
+            .speed_particle_max_length = {14.0f},
+            .particle_length_min_speed = {70.0f},
+            .particle_length_max_speed = {200.0f},
          },
 
       .world_shadow_map =
          {
-            .enable_pc = true,
-            .texture_pc = "shadowy_sun",
-            .light_name_pc = "sun",
-            .texture_scale_pc = 40.0f,
-            .animation_frequency_pc = 0.2f,
-            .animation_amplitude0_pc = {4.0f, 0.0f},
-            .animation_amplitude1_pc = {0.1f, -0.1f},
+            .enable = {true},
+            .texture = {"shadowy_sun"},
+            .light_name = {"sun"},
+            .texture_scale = {40.0f},
+            .animation_frequency = {0.2f},
+            .animation_amplitude0 = {{4.0f, 0.0f}},
+            .animation_amplitude1 = {{0.1f, -0.1f}},
          },
 
       .blur =
          {
-            .enable_pc = true,
-            .constant_blend_per_platform = true,
-            .constant_blend_pc = 0.3f,
-            .constant_blend_ps2 = 0.25f,
-            .constant_blend_xbox = 0.45f,
-            .down_size_factor_per_platform = true,
-            .down_size_factor_pc = 0.35f,
-            .down_size_factor_ps2 = 0.25f,
-            .down_size_factor_xbox = 0.5f,
+            .enable = {true},
+            .constant_blend =
+               {
+                  .pc = 0.3f,
+                  .ps2 = 0.25f,
+                  .xbox = 0.45f,
+                  .per_platform = true,
+               },
+            .down_size_factor =
+               {
+
+                  .pc = 0.35f,
+                  .ps2 = 0.25f,
+                  .xbox = 0.5f,
+                  .per_platform = true,
+               },
             .min_max_depth_ps2 = {0.95f, 1.0f},
-            .mode_per_platform = true,
-            .mode_pc = 0,
-            .mode_xbox = 1,
+            .mode =
+               {
+                  .pc = 0,
+                  .xbox = 1,
+                  .per_platform = true,
+               },
          },
 
       .motion_blur =
          {
-            .enable_pc = false,
+            .enable = {false},
          },
 
       .scope_blur =
          {
-            .enable_pc = false,
+            .enable = {false},
          },
 
       .hdr =
          {
-            .enable_pc = true,
-            .down_size_factor_pc = 0.125f,
-            .num_bloom_passes_pc = 3,
-            .max_total_weight_pc = 1.1f,
-            .glow_threshold_pc = 0.75f,
-            .glow_factor_pc = 0.25f,
+            .enable = {true},
+            .down_size_factor = {0.125f},
+            .num_bloom_passes = {3},
+            .max_total_weight = {1.1f},
+            .glow_threshold = {0.75f},
+            .glow_factor = {0.25f},
          },
 
       .shadow =
          {
-            .enable_pc = true,
-            .blur_enable_pc = true,
-            .intensity_pc = 0.2f,
+            .enable = {true},
+            .blur_enable = {true},
+            .intensity = {0.2f},
          },
 
       .sun_flares =
-         {
-            sun_flare{
-               .angle_pc = {130.0f, 130.0f},
-               .color_pc = float3{255.0f, 150.0f, 150.0f} / 255.0f,
-               .size_pc = 4.0f,
-               .flare_out_size_pc = 5.0f,
-               .num_flare_outs_per_platform = true,
-               .num_flare_outs_pc = 30,
-               .num_flare_outs_ps2 = 40,
-               .num_flare_outs_xbox = 50,
-               .initial_flare_out_alpha_pc = 50,
-               .halo_inner_ring_pc = {1.0f, float4{192.0f, 255.0f, 255.0f, 255.0f} / 255.0f},
-               .halo_middle_ring_pc = {4.0f, float4{192.0f, 200.0f, 0.0f, 255.0f} / 255.0f},
-               .halo_outter_ring_pc = {5.0f, float4{192.0f, 127.0f, 0.0f, 0.0f} / 255.0f},
-               .spike_color_pc = float4{150.0f, 100.0f, 0.0f, 128.0f} / 255.0f,
-               .spike_size_pc = 10.0f,
-            },
-            sun_flare{
-               .angle_pc = {132.0f, 132.0f},
-               .color_pc = float3{255.0f, 152.0f, 150.0f} / 255.0f,
-               .size_pc = 6.0f,
-               .flare_out_size_pc = 7.0f,
-               .num_flare_outs_pc = 42,
-               .initial_flare_out_alpha_pc = 52,
-               .halo_inner_ring_pc = {3.0f, float4{194.0f, 255.0f, 255.0f, 255.0f} / 255.0f},
-               .halo_middle_ring_pc = {6.0f, float4{194.0f, 200.0f, 0.0f, 255.0f} / 255.0f},
-               .halo_outter_ring_pc = {7.0f, float4{194.0f, 127.0f, 0.0f, 0.0f} / 255.0f},
-               .spike_color_pc = float4{152.0f, 100.0f, 0.0f, 128.0f} / 255.0f,
-               .spike_size_pc = 12.0f,
-            },
-         },
+         {pinned_vector_init{.max_size = 2},
+          std::initializer_list{
+             sun_flare{
+                .angle = {{130.0f, 130.0f}},
+                .color = {float3{255.0f, 150.0f, 150.0f} / 255.0f},
+                .size = {4.0f},
+                .flare_out_size = {5.0f},
+                .num_flare_outs =
+                   {
+                      .pc = 30,
+                      .ps2 = 40,
+                      .xbox = 50,
+                      .per_platform = true,
+                   },
+                .initial_flare_out_alpha = {50},
+                .halo_inner_ring = {{1.0f, float4{192.0f, 255.0f, 255.0f, 255.0f} / 255.0f}},
+                .halo_middle_ring = {{4.0f, float4{192.0f, 200.0f, 0.0f, 255.0f} / 255.0f}},
+                .halo_outter_ring = {{5.0f, float4{192.0f, 127.0f, 0.0f, 0.0f} / 255.0f}},
+                .spike_color = {float4{150.0f, 100.0f, 0.0f, 128.0f} / 255.0f},
+                .spike_size = {10.0f},
+             },
+             sun_flare{
+                .angle = {{132.0f, 132.0f}},
+                .color = {float3{255.0f, 152.0f, 150.0f} / 255.0f},
+                .size = {6.0f},
+                .flare_out_size = {7.0f},
+                .num_flare_outs = {42},
+                .initial_flare_out_alpha = {52},
+                .halo_inner_ring = {{3.0f, float4{194.0f, 255.0f, 255.0f, 255.0f} / 255.0f}},
+                .halo_middle_ring = {{6.0f, float4{194.0f, 200.0f, 0.0f, 255.0f} / 255.0f}},
+                .halo_outter_ring = {{7.0f, float4{194.0f, 127.0f, 0.0f, 0.0f} / 255.0f}},
+                .spike_color = {float4{152.0f, 100.0f, 0.0f, 128.0f} / 255.0f},
+                .spike_size = {12.0f},
+             },
+          }},
    };
 
    (void)io::create_directory("temp/world");
@@ -1604,14 +1680,14 @@ Effect("HeatShimmer")
 
 	XBOX()
 	{
-		Tessellation(4);
+		Tessellation(4, 2);
 		BumpMap("shimmer_waves_xbox", 0.5, 0.5);
 		DistortionScale(4.0);
 	}
 
 	PC()
 	{
-		Tessellation(3);
+		Tessellation(3, 2);
 		BumpMap("shimmer_waves_pc", 1.5, 1.5);
 		DistortionScale(0.004);
 	}
@@ -1747,171 +1823,184 @@ SunFlare()
    effects effects{
       .color_control =
          {
-            .enable_pc = true,
+            .enable = {.pc = true},
 
-            .gamma_brightness_per_platform = true,
-            .gamma_brightness_pc = 0.6f,
-            .gamma_brightness_xbox = 0.48f,
+            .gamma_brightness = {.pc = 0.6f, .xbox = 0.48f, .per_platform = true},
+            .gamma_color_balance = {.pc = 0.55f, .xbox = 0.5f, .per_platform = true},
+            .gamma_contrast = {.pc = 0.7f, .xbox = 0.54f, .per_platform = true},
+            .gamma_correction = {.pc = 0.5f, .xbox = 0.52f, .per_platform = true},
+            .gamma_hue = {.pc = 0.5f, .xbox = 0.52f, .per_platform = true},
 
-            .gamma_color_balance_per_platform = true,
-            .gamma_color_balance_pc = 0.55f,
-            .gamma_color_balance_xbox = 0.5f,
-
-            .gamma_contrast_per_platform = true,
-            .gamma_contrast_pc = 0.7f,
-            .gamma_contrast_xbox = 0.54f,
-
-            .gamma_correction_per_platform = true,
-            .gamma_correction_pc = 0.5f,
-            .gamma_correction_xbox = 0.52f,
-
-            .gamma_hue_per_platform = true,
-            .gamma_hue_pc = 0.5f,
-            .gamma_hue_xbox = 0.52f,
-
-            .world_brightness_pc = 0.46f,
-            .world_contrast_pc = 0.48f,
-            .world_saturation_pc = 0.65f,
+            .world_brightness = {0.46f},
+            .world_contrast = {0.48f},
+            .world_saturation = {0.65f},
          },
 
       .fog_cloud =
          {
-            .enable_pc = true,
-            .texture_pc = "cloud",
-            .range_pc = {35.0f, 110.0f},
-            .color_pc = float4{168.0f, 172.0f, 180.0f, 128.0f} / 255.0f,
-            .velocity_pc = {5.0f, 0.0f},
-            .rotation_pc = 0.1f,
-            .height_pc = 24.0f,
-            .particle_size_pc = 32.0f,
-            .particle_density_pc = 100.0f,
+            .enable = {true},
+            .texture = {"cloud"},
+            .range = {{35.0f, 110.0f}},
+            .color = {float4{168.0f, 172.0f, 180.0f, 128.0f} / 255.0f},
+            .velocity = {{5.0f, 0.0f}},
+            .rotation = {0.1f},
+            .height = {24.0f},
+            .particle_size = {32.0f},
+            .particle_density = {100.0f},
          },
 
       .wind =
          {
-            .enable_pc = true,
-            .velocity_pc = {3.0f, 0.6f},
-            .velocity_range_pc = 0.75f,
-            .velocity_change_rate_pc = 0.2f,
+            .enable = {true},
+            .velocity = {{3.0f, 0.6f}},
+            .velocity_range = {0.75f},
+            .velocity_change_rate = {0.2f},
          },
 
       .precipitation =
          {
-            .enable_pc = true,
-            .type_pc = precipitation_type::streaks,
-            .range_pc = 16.0f,
-            .color_pc = float3{200.0f, 200.0f, 228.0f} / 255.0f,
-            .velocity_pc = 4.0f,
-            .velocity_range_pc = 0.6f,
-            .particle_density_pc = 80.0f,
-            .particle_density_range_pc = 0.1f,
+            .enable = {true},
+            .type = {precipitation_type::streaks},
+            .range = {16.0f},
+            .color = {float3{200.0f, 200.0f, 228.0f} / 255.0f},
+            .velocity = {4.0f},
+            .velocity_range = {0.6f},
+            .particle_density = {80.0f},
+            .particle_density_range = {0.1f},
 
-            .particle_size_per_platform = true,
-            .particle_size_pc = 0.02f,
-            .particle_size_ps2 = 0.06f,
-            .particle_size_xbox = 0.03f,
+            .particle_size =
+               {
+                  .pc = {0.02f},
+                  .ps2 = 0.06f,
+                  .xbox = 0.03f,
+                  .per_platform = true,
+               },
 
-            .streak_length_pc = 1.7f,
-            .camera_cross_velocity_scale_pc = 0.3f,
-            .camera_axial_velocity_scale_pc = 0.9f,
-            .ground_effect_pc = "",
-            .ground_effects_per_sec_pc = 7,
-            .ground_effect_spread_pc = 16,
+            .streak_length = {1.7f},
+            .camera_cross_velocity_scale = {0.3f},
+            .camera_axial_velocity_scale = {0.9f},
+            .ground_effects_per_sec = {7},
+            .ground_effect_spread = {16},
 
-            .alpha_min_max_per_platform = true,
-            .alpha_min_max_pc = {0.3f, 0.45f},
-            .alpha_min_max_ps2 = {0.8f, 1.0f},
-            .alpha_min_max_xbox = {0.2f, 0.3f},
+            .alpha_min_max =
+               {
+                  .pc = {0.3f, 0.45f},
+                  .ps2 = {0.8f, 1.0f},
+                  .xbox = {0.2f, 0.3f},
+                  .per_platform = true,
+               },
+
          },
 
       .lightning =
          {
-            .enable_pc = true,
-            .color_pc = float3{220.0f, 220.0f, 255.0f} / 255.0f,
-            .sunlight_fade_factor_pc = 0.2f,
-            .sky_dome_darken_factor_pc = 0.3f,
-            .brightness_min_pc = 0.7f,
-            .fade_time_pc = 0.3f,
-            .time_between_flashes_min_max_pc = {2.0f, 4.0f},
-            .time_between_sub_flashes_min_max_pc = {0.02f, 0.7f},
-            .num_sub_flashes_min_max_pc = {1, 8},
-            .horizon_angle_min_max_pc = {20, 80},
-            .sound_crack_pc = "test_amb_thunder",
-            .sound_sub_crack_pc = "test_amb_thundersub",
+            .enable = {true},
+            .color = {float3{220.0f, 220.0f, 255.0f} / 255.0f},
+            .sunlight_fade_factor = {0.2f},
+            .sky_dome_darken_factor = {0.3f},
+            .brightness_min = {0.7f},
+            .fade_time = {0.3f},
+            .time_between_flashes_min_max = {{2.0f, 4.0f}},
+            .time_between_sub_flashes_min_max = {{0.02f, 0.7f}},
+            .num_sub_flashes_min_max = {{1, 8}},
+            .horizon_angle_min_max = {{20, 80}},
+            .sound_crack = {"test_amb_thunder"},
+            .sound_sub_crack = {"test_amb_thundersub"},
          },
 
       .lightning_bolt =
          {
-            .texture_pc = "lightning2",
-            .width_pc = 10.0f,
-            .fade_time_pc = 0.25f,
-            .break_distance_pc = 30.0f,
-            .texture_size_pc = 40.0f,
-            .spread_factor_pc = 30.0f,
-            .max_branches_pc = 3.0f,
-            .branch_factor_pc = 0.75f,
-            .branch_spread_factor_pc = 16,
-            .branch_length_pc = 160.0f,
-            .interpolation_speed_pc = 0.7f,
-            .num_children_pc = 3,
-            .child_break_distance_pc = 5.0f,
-            .child_texture_size_pc = 4.0f,
-            .child_width_pc = 2.0f,
-            .child_spread_factor_pc = 20.0f,
-            .color_pc = float4{200.0f, 200.0f, 255.0f, 255.0f} / 255.0f,
-            .child_color_pc = float4{200.0f, 200.0f, 255.0f, 150.0f} / 255.0f,
+            .texture = {"lightning2"},
+            .width = {10.0f},
+            .fade_time = {0.25f},
+            .break_distance = {30.0f},
+            .texture_size = {40.0f},
+            .spread_factor = {30.0f},
+            .max_branches = {3.0f},
+            .branch_factor = {0.75f},
+            .branch_spread_factor = {16},
+            .branch_length = {160.0f},
+            .interpolation_speed = {0.7f},
+            .num_children = {3},
+            .child_break_distance = {5.0f},
+            .child_texture_size = {4.0f},
+            .child_width = {2.0f},
+            .child_spread_factor = {20.0f},
+            .color = {float4{200.0f, 200.0f, 255.0f, 255.0f} / 255.0f},
+            .child_color = {float4{200.0f, 200.0f, 255.0f, 150.0f} / 255.0f},
          },
 
       .water =
          {
-            .ocean_enable_pc = false,
-            .oscillation_enable_pc = false,
-            .disable_low_res_pc = true,
-            .patch_divisions_pc = {8, 8},
-            .water_ring_color_pc = float4{148.0f, 170.0f, 200.0f, 255.0f} / 255.0f,
-            .water_wake_color_pc = float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f,
-            .water_splash_color_pc = float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f,
+            .ocean_enable = {false},
+            .oscillation_enable = {false},
+            .disable_low_res = {true},
+            .patch_divisions = {{8, 8}},
+            .water_ring_color = {float4{148.0f, 170.0f, 200.0f, 255.0f} / 255.0f},
+            .water_wake_color = {float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f},
+            .water_splash_color = {float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f},
 
-            .lod_decimation_per_platform = true,
-            .lod_decimation_pc = 1,
-            .lod_decimation_ps2 = 8,
-            .lod_decimation_xbox = 2,
+            .lod_decimation = {.pc = 1, .ps2 = 8, .xbox = 2, .per_platform = true},
 
-            .tile_per_platform = true,
-            .tile_pc = {3.0f, 3.0f},
-            .tile_ps2 = {1.0f, 1.0f},
-            .tile_xbox = {4.0f, 4.0f},
+            .tile =
+               {
+                  .pc = {3.0f, 3.0f},
+                  .ps2 = {1.0f, 1.0f},
+                  .xbox = {4.0f, 4.0f},
+                  .per_platform = true,
+               },
 
-            .velocity_per_platform = true,
-            .velocity_pc = {0.02f, 0.02f},
-            .velocity_ps2 = {0.0f, 0.0f},
-            .velocity_xbox = {0.04f, 0.008f},
+            .velocity =
+               {
+                  .pc = {0.02f, 0.02f},
+                  .ps2 = {0.0f, 0.0f},
+                  .xbox = {0.04f, 0.008f},
+                  .per_platform = true,
+               },
 
-            .main_texture_per_platform = true,
-            .main_texture_pc = "water_pc",
-            .main_texture_ps2 = "water_ps2",
+            .main_texture =
+               {
+                  .pc = "water_pc",
+                  .ps2 = "water_ps2",
+                  .per_platform = true,
+               },
 
-            .refraction_color_per_platform = true,
-            .refraction_color_pc = float4{5.0f, 230.0f, 255.0f, 255.0f} / 255.0f,
-            .refraction_color_xbox = float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f,
+            .refraction_color =
+               {
+                  .pc = float4{5.0f, 230.0f, 255.0f, 255.0f} / 255.0f,
+                  .xbox = float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f,
+                  .per_platform = true,
+               },
 
-            .reflection_color_per_platform = true,
-            .reflection_color_pc = float4{57.0f, 100.0f, 138.0f, 255.0f} / 255.0f,
-            .reflection_color_xbox = float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f,
+            .reflection_color =
+               {
+                  .pc = float4{57.0f, 100.0f, 138.0f, 255.0f} / 255.0f,
+                  .xbox = float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f,
+                  .per_platform = true,
+               },
 
-            .underwater_color_per_platform = true,
-            .underwater_color_pc = float4{61.0f, 128.0f, 144.0f, 128.0f} / 255.0f,
-            .underwater_color_xbox = float4{96.0f, 96.0f, 88.0f, 128.0f} / 255.0f,
+            .underwater_color =
+               {
+                  .pc = float4{61.0f, 128.0f, 144.0f, 128.0f} / 255.0f,
+                  .xbox = float4{96.0f, 96.0f, 88.0f, 128.0f} / 255.0f,
+                  .per_platform = true,
+               },
 
-            .fresnel_min_max_per_platform = true,
-            .fresnel_min_max_pc = {0.1f, 0.75f},
-            .fresnel_min_max_xbox = {0.3f, 0.6f},
+            .fresnel_min_max =
+               {
+                  .pc = {0.1f, 0.75f},
+                  .xbox = {0.3f, 0.6f},
+                  .per_platform = true,
+               },
 
-            .normal_map_textures_per_platform = true,
-            .normal_map_textures_pc = {"water_pc_normalmap_", 8, 4.0f},
-            .normal_map_textures_xbox = {"water_xbox_normalmap_", 4, 16.0f},
+            .normal_map_textures =
+               {
+                  .pc = {"water_pc_normalmap_", 8, 4.0f},
+                  .xbox = {"water_xbox_normalmap_", 4, 16.0f},
+                  .per_platform = true,
+               },
 
-            .far_scene_range_pc = 1500.0f,
+            .far_scene_range_pc = {1500.0f},
 
             .bump_map_textures_pc = {"water_pc_bumpmap_", 32, 16.0f},
             .specular_mask_textures_pc = {"water_pc_specularmask_", 16, 8.0f},
@@ -1933,146 +2022,170 @@ SunFlare()
 
       .godray =
          {
-            .enable_pc = true,
-            .max_godrays_in_world_pc = 100,
-            .max_godrays_on_screen_pc = 4,
-            .max_view_distance_pc = 40.0f,
-            .fade_view_distance_pc = 30.0f,
-            .max_length_pc = 80.0f,
-            .offset_angle_pc = -20.0f,
-            .min_rays_per_godray_pc = 2,
-            .max_rays_per_godray_pc = 8,
-            .radius_for_max_rays_pc = 4.0f,
-            .dust_velocity_pc = {0.0f, -0.1f, 0.0f},
-            .texture_pc = "fx_godray",
-            .texture_scale_pc = {1.5f, 1.5f},
-            .texture_velocity_pc = {0.0f, -0.1f, 0.0f},
-            .texture_jitter_speed_pc = 0.1f,
+            .enable = {true},
+            .max_godrays_in_world = {100},
+            .max_godrays_on_screen = {4},
+            .max_view_distance = {40.0f},
+            .fade_view_distance = {30.0f},
+            .max_length = {80.0f},
+            .offset_angle = {-20.0f},
+            .min_rays_per_godray = {2},
+            .max_rays_per_godray = {8},
+            .radius_for_max_rays = {4.0f},
+            .dust_velocity = {{0.0f, -0.1f, 0.0f}},
+            .texture = {"fx_godray"},
+            .texture_scale = {{1.5f, 1.5f}},
+            .texture_velocity = {{0.0f, -0.1f, 0.0f}},
+            .texture_jitter_speed = {0.1f},
          },
 
       .heat_shimmer =
          {
-            .enable_pc = true,
-            .world_height_pc = 10.0f,
-            .geometry_height_pc = 4.0f,
-            .scroll_speed_pc = 0.08f,
-            .bump_map_per_platform = true,
-            .bump_map_pc = {"shimmer_waves_pc", {1.5f, 1.5f}},
-            .bump_map_xbox = {"shimmer_waves_xbox", {0.5f, 0.5f}},
-            .distortion_scale_per_platform = true,
-            .distortion_scale_pc = 0.004f,
-            .distortion_scale_ps2 = 0.06f,
-            .distortion_scale_xbox = 4.0f,
-            .tessellation_pc = 3,
-            .tessellation_ps2 = {20, 40},
-            .tessellation_xbox = 4,
+            .enable = {true},
+            .world_height = {10.0f},
+            .geometry_height = {4.0f},
+            .scroll_speed = {0.08f},
+            .bump_map =
+               {
+                  .pc = {"shimmer_waves_pc", {1.5f, 1.5f}},
+                  .xbox = {"shimmer_waves_xbox", {0.5f, 0.5f}},
+                  .per_platform = true,
+               },
+            .distortion_scale =
+               {
+                  .pc = 0.004f,
+                  .ps2 = 0.06f,
+                  .xbox = 4.0f,
+                  .per_platform = true,
+               },
+            .tessellation =
+               {
+                  .pc = {3, 2},
+                  .ps2 = {20, 40},
+                  .xbox = {4, 2},
+                  .per_platform = true,
+               },
          },
 
       .space_dust =
          {
-            .enable_pc = true,
-            .texture_pc = "spacedust",
-            .spawn_distance_pc = 200.0f,
-            .max_random_side_offset_pc = 80.0f,
-            .center_dead_zone_radius_pc = 40.0f,
-            .min_particle_scale_pc = 0.2f,
-            .max_particle_scale_pc = 0.8f,
-            .spawn_delay_pc = 0.2f,
-            .reference_speed_pc = 40.0f,
-            .dust_particle_speed_pc = 50.0f,
-            .speed_particle_min_length_pc = 4.0f,
-            .speed_particle_max_length_pc = 14.0f,
-            .particle_length_min_speed_pc = 70.0f,
-            .particle_length_max_speed_pc = 200.0f,
+            .enable = {true},
+            .texture = {"spacedust"},
+            .spawn_distance = {200.0f},
+            .max_random_side_offset = {80.0f},
+            .center_dead_zone_radius = {40.0f},
+            .min_particle_scale = {0.2f},
+            .max_particle_scale = {0.8f},
+            .spawn_delay = {0.2f},
+            .reference_speed = {40.0f},
+            .dust_particle_speed = {50.0f},
+            .speed_particle_min_length = {4.0f},
+            .speed_particle_max_length = {14.0f},
+            .particle_length_min_speed = {70.0f},
+            .particle_length_max_speed = {200.0f},
          },
 
       .world_shadow_map =
          {
-            .enable_pc = true,
-            .texture_pc = "shadowy_sun",
-            .light_name_pc = "sun",
-            .texture_scale_pc = 40.0f,
-            .animation_frequency_pc = 0.2f,
-            .animation_amplitude0_pc = {4.0f, 0.0f},
-            .animation_amplitude1_pc = {0.1f, -0.1f},
+            .enable = {true},
+            .texture = {"shadowy_sun"},
+            .light_name = {"sun"},
+            .texture_scale = {40.0f},
+            .animation_frequency = {0.2f},
+            .animation_amplitude0 = {{4.0f, 0.0f}},
+            .animation_amplitude1 = {{0.1f, -0.1f}},
          },
 
       .blur =
          {
-            .enable_pc = true,
-            .constant_blend_per_platform = true,
-            .constant_blend_pc = 0.3f,
-            .constant_blend_ps2 = 0.25f,
-            .constant_blend_xbox = 0.45f,
-            .down_size_factor_per_platform = true,
-            .down_size_factor_pc = 0.35f,
-            .down_size_factor_ps2 = 0.25f,
-            .down_size_factor_xbox = 0.5f,
+            .enable = {true},
+            .constant_blend =
+               {
+                  .pc = 0.3f,
+                  .ps2 = 0.25f,
+                  .xbox = 0.45f,
+                  .per_platform = true,
+               },
+            .down_size_factor =
+               {
+
+                  .pc = 0.35f,
+                  .ps2 = 0.25f,
+                  .xbox = 0.5f,
+                  .per_platform = true,
+               },
             .min_max_depth_ps2 = {0.95f, 1.0f},
-            .mode_per_platform = true,
-            .mode_pc = 0,
-            .mode_xbox = 1,
+            .mode =
+               {
+                  .pc = 0,
+                  .xbox = 1,
+                  .per_platform = true,
+               },
          },
 
       .motion_blur =
          {
-            .enable_pc = false,
+            .enable = {false},
          },
 
       .scope_blur =
          {
-            .enable_pc = false,
+            .enable = {false},
          },
 
       .hdr =
          {
-            .enable_pc = true,
-            .down_size_factor_pc = 0.125f,
-            .num_bloom_passes_pc = 3,
-            .max_total_weight_pc = 1.1f,
-            .glow_threshold_pc = 0.75f,
-            .glow_factor_pc = 0.25f,
+            .enable = {true},
+            .down_size_factor = {0.125f},
+            .num_bloom_passes = {3},
+            .max_total_weight = {1.1f},
+            .glow_threshold = {0.75f},
+            .glow_factor = {0.25f},
          },
 
       .shadow =
          {
-            .enable_pc = true,
-            .blur_enable_pc = true,
-            .intensity_pc = 0.2f,
+            .enable = {true},
+            .blur_enable = {true},
+            .intensity = {0.2f},
          },
 
       .sun_flares =
-         {
-            sun_flare{
-               .angle_pc = {130.0f, 130.0f},
-               .color_pc = float3{255.0f, 150.0f, 150.0f} / 255.0f,
-               .size_pc = 4.0f,
-               .flare_out_size_pc = 5.0f,
-               .num_flare_outs_per_platform = true,
-               .num_flare_outs_pc = 30,
-               .num_flare_outs_ps2 = 40,
-               .num_flare_outs_xbox = 50,
-               .initial_flare_out_alpha_pc = 50,
-               .halo_inner_ring_pc = {1.0f, float4{192.0f, 255.0f, 255.0f, 255.0f} / 255.0f},
-               .halo_middle_ring_pc = {4.0f, float4{192.0f, 200.0f, 0.0f, 255.0f} / 255.0f},
-               .halo_outter_ring_pc = {5.0f, float4{192.0f, 127.0f, 0.0f, 0.0f} / 255.0f},
-               .spike_color_pc = float4{150.0f, 100.0f, 0.0f, 128.0f} / 255.0f,
-               .spike_size_pc = 10.0f,
-            },
-            sun_flare{
-               .angle_pc = {132.0f, 132.0f},
-               .color_pc = float3{255.0f, 152.0f, 150.0f} / 255.0f,
-               .size_pc = 6.0f,
-               .flare_out_size_pc = 7.0f,
-               .num_flare_outs_pc = 42,
-               .initial_flare_out_alpha_pc = 52,
-               .halo_inner_ring_pc = {3.0f, float4{194.0f, 255.0f, 255.0f, 255.0f} / 255.0f},
-               .halo_middle_ring_pc = {6.0f, float4{194.0f, 200.0f, 0.0f, 255.0f} / 255.0f},
-               .halo_outter_ring_pc = {7.0f, float4{194.0f, 127.0f, 0.0f, 0.0f} / 255.0f},
-               .spike_color_pc = float4{152.0f, 100.0f, 0.0f, 128.0f} / 255.0f,
-               .spike_size_pc = 12.0f,
-            },
-         },
+         {pinned_vector_init{.max_size = 2},
+          std::initializer_list{
+             sun_flare{
+                .angle = {{130.0f, 130.0f}},
+                .color = {float3{255.0f, 150.0f, 150.0f} / 255.0f},
+                .size = {4.0f},
+                .flare_out_size = {5.0f},
+                .num_flare_outs =
+                   {
+                      .pc = 30,
+                      .ps2 = 40,
+                      .xbox = 50,
+                      .per_platform = true,
+                   },
+                .initial_flare_out_alpha = {50},
+                .halo_inner_ring = {{1.0f, float4{192.0f, 255.0f, 255.0f, 255.0f} / 255.0f}},
+                .halo_middle_ring = {{4.0f, float4{192.0f, 200.0f, 0.0f, 255.0f} / 255.0f}},
+                .halo_outter_ring = {{5.0f, float4{192.0f, 127.0f, 0.0f, 0.0f} / 255.0f}},
+                .spike_color = {float4{150.0f, 100.0f, 0.0f, 128.0f} / 255.0f},
+                .spike_size = {10.0f},
+             },
+             sun_flare{
+                .angle = {{132.0f, 132.0f}},
+                .color = {float3{255.0f, 152.0f, 150.0f} / 255.0f},
+                .size = {6.0f},
+                .flare_out_size = {7.0f},
+                .num_flare_outs = {42},
+                .initial_flare_out_alpha = {52},
+                .halo_inner_ring = {{3.0f, float4{194.0f, 255.0f, 255.0f, 255.0f} / 255.0f}},
+                .halo_middle_ring = {{6.0f, float4{194.0f, 200.0f, 0.0f, 255.0f} / 255.0f}},
+                .halo_outter_ring = {{7.0f, float4{194.0f, 127.0f, 0.0f, 0.0f} / 255.0f}},
+                .spike_color = {float4{152.0f, 100.0f, 0.0f, 128.0f} / 255.0f},
+                .spike_size = {12.0f},
+             },
+          }},
    };
 
    (void)io::create_directory("temp/world");

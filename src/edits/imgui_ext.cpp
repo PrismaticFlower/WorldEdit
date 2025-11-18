@@ -149,6 +149,30 @@ bool DragQuat(const char* label, quaternion* value,
    return changed;
 }
 
+bool DragInt(const char* label, we::int32* value,
+             we::edits::stack<we::world::edit_context>& edit_stack,
+             we::world::edit_context& context, float v_speed, we::int32 v_min,
+             we::int32 v_max, const char* format, ImGuiSliderFlags flags) noexcept
+{
+   IM_ASSERT(value);
+   IM_ASSERT(context.is_memory_valid(value));
+
+   int32 edit_value = *value;
+
+   const bool changed =
+      DragInt(label, &edit_value, v_speed, v_min, v_max, format, flags);
+
+   if (changed) {
+      edit_stack.apply(edits::make_set_value(value, edit_value), context);
+   }
+
+   if (IsItemDeactivated()) {
+      edit_stack.close_last();
+   }
+
+   return changed;
+}
+
 bool DragInt2(const char* label, std::array<we::int32, 2>* value,
               we::edits::stack<we::world::edit_context>& edit_stack,
               we::world::edit_context& context, float v_speed, int v_min,

@@ -21,6 +21,7 @@ auto world_edit::ui_texture_pick_widget_untracked(const char* label,
 
    std::optional<std::string> picked_texture;
 
+   ImGui::BeginGroup();
    ImGui::PushID(label);
 
    ImGui::SetNextItemWidth(combo_width);
@@ -177,6 +178,7 @@ auto world_edit::ui_texture_pick_widget_untracked(const char* label,
    ImGui::TextUnformatted(label);
 
    ImGui::PopID();
+   ImGui::EndGroup();
 
    return picked_texture;
 }

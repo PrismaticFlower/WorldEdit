@@ -65,8 +65,8 @@ void water::update(const world::world& world, gpu::copy_command_list& command_li
       }
    }
 
-   if (not string::iequals(_color_map_name, world.effects.water.main_texture_pc)) {
-      _color_map_name = lowercase_string{world.effects.water.main_texture_pc};
+   if (not string::iequals(_color_map_name, world.effects.water.main_texture.pc)) {
+      _color_map_name = lowercase_string{world.effects.water.main_texture.pc};
       _color_map = texture_manager.at_or(_color_map_name, world_texture_dimension::_2d,
                                          texture_manager.null_color_map());
    }
@@ -76,11 +76,12 @@ void water::update(const world::world& world, gpu::copy_command_list& command_li
    _half_water_map_length = (_water_map_length / 2.0f) * _water_grid_scale;
    _water_height = world.terrain.water_settings.height;
 
-   water_constants constants{.tiling = _water_grid_scale / world.effects.water.tile_pc,
-                             .velocity = world.effects.water.velocity_pc,
+   water_constants constants{.tiling =
+                                _water_grid_scale / world.effects.water.tile.pc,
+                             .velocity = world.effects.water.velocity.pc,
                              .height = world.terrain.water_settings.height,
                              .color_map_index = _color_map->srv_srgb.index,
-                             .color = world.effects.water.refraction_color_pc};
+                             .color = world.effects.water.refraction_color.pc};
 
    auto constants_allocation = dynamic_buffer_allocator.allocate_and_copy(constants);
 

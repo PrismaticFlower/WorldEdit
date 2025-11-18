@@ -53,6 +53,17 @@ void read_int32_2(const assets::config::values& values, void* pc_value,
    if (xbox_value) *static_cast<std::array<int32, 2>*>(xbox_value) = value;
 }
 
+void read_int32_1_or_2(const assets::config::values& values, void* pc_value,
+                       void* ps2_value, void* xbox_value)
+{
+   const std::array<int32, 2> value = {values.get<int32>(0),
+                                       values.size() > 1 ? values.get<int32>(1) : 2};
+
+   if (pc_value) *static_cast<std::array<int32, 2>*>(pc_value) = value;
+   if (ps2_value) *static_cast<std::array<int32, 2>*>(ps2_value) = value;
+   if (xbox_value) *static_cast<std::array<int32, 2>*>(xbox_value) = value;
+}
+
 void read_float(const assets::config::values& values, void* pc_value,
                 void* ps2_value, void* xbox_value)
 {
@@ -166,10 +177,10 @@ void read_animated_textures(const assets::config::values& values,
 void read_bump_map(const assets::config::values& values, void* pc_value,
                    void* ps2_value, void* xbox_value)
 {
-   using bump_map = heat_shimmer::bump_map;
+   using bump_map = heat_shimmer::bump_map_t;
 
    bump_map texture{.name = values.get<std::string>(0),
-                    .unknown = {values.get<float>(1), values.get<float>(2)}};
+                    .tiling = {values.get<float>(1), values.get<float>(2)}};
 
    if (pc_value) *static_cast<bump_map*>(pc_value) = texture;
    if (ps2_value) *static_cast<bump_map*>(ps2_value) = texture;
@@ -194,6 +205,8 @@ void read_halo_ring(const assets::config::values& values, void* pc_value,
 struct color_property_t {};
 
 struct tag_property_t {};
+
+struct int1_to_int2_t {};
 
 struct property {
    property(std::string_view name, bool* per_platform_value, bool* pc_value,
@@ -235,6 +248,18 @@ struct property {
       : name{name},
         per_platform_value{per_platform_value},
         read_value{read_int32_2},
+        pc_value{pc_value},
+        ps2_value{ps2_value},
+        xbox_value{xbox_value}
+   {
+   }
+
+   property(std::string_view name, int1_to_int2_t, bool* per_platform_value,
+            std::array<int32, 2>* pc_value, std::array<int32, 2>* ps2_value,
+            std::array<int32, 2>* xbox_value)
+      : name{name},
+        per_platform_value{per_platform_value},
+        read_value{read_int32_1_or_2},
         pc_value{pc_value},
         ps2_value{ps2_value},
         xbox_value{xbox_value}
@@ -331,8 +356,8 @@ struct property {
    }
 
    property(std::string_view name, bool* per_platform_value,
-            heat_shimmer::bump_map* pc_value, heat_shimmer::bump_map* ps2_value,
-            heat_shimmer::bump_map* xbox_value)
+            heat_shimmer::bump_map_t* pc_value, heat_shimmer::bump_map_t* ps2_value,
+            heat_shimmer::bump_map_t* xbox_value)
       : name{name},
         read_value{read_bump_map},
         per_platform_value{per_platform_value},
@@ -392,10 +417,11 @@ private:
 };
 
 #define UNPACK_VAR(var, member)                                                \
-   &var.member##_per_platform, &var.member##_pc, &var.member##_ps2, &var.member##_xbox
+   &var.member##.per_platform, &var.member##.pc, &var.member##.ps2,            \
+      &var.member##.xbox
 
 #define UNPACK_PC_XB_VAR(var, member)                                          \
-   &var.member##_per_platform, &var.member##_pc, nullptr, &var.member##_xbox
+   &var.member##.per_platform, &var.member##.pc, nullptr, &var.member##.xbox
 
 void read_node(assets::config::node& node, std::span<const property> properties)
 {
@@ -733,12 +759,12 @@ auto read_water(assets::config::node& node) -> water
    read_node(node, properties);
 
    for (std::string* texture : {
-           &water.main_texture_pc,
-           &water.main_texture_ps2,
-           &water.main_texture_xbox,
-           &water.foam_texture_pc,
-           &water.foam_texture_ps2,
-           &water.foam_texture_xbox,
+           &water.main_texture.pc,
+           &water.main_texture.ps2,
+           &water.main_texture.xbox,
+           &water.foam_texture.pc,
+           &water.foam_texture.ps2,
+           &water.foam_texture.xbox,
         }) {
       if (string::iends_with(*texture, ".tga"sv)) {
          texture->resize(texture->size() - ".tga"sv.size());
@@ -789,22 +815,11 @@ auto read_heat_shimmer(assets::config::node& node) -> heat_shimmer
       {"ScrollSpeed"sv, UNPACK_VAR(shimmer, scroll_speed)},
       {"BumpMap"sv, UNPACK_PC_XB_VAR(shimmer, bump_map)},
       {"DistortionScale"sv, UNPACK_VAR(shimmer, distortion_scale)},
-      {"Tessellation"sv, nullptr, &shimmer.tessellation_pc, nullptr, &shimmer.tessellation_xbox},
+      {"Tessellation"sv, int1_to_int2_t{}, UNPACK_VAR(shimmer, tessellation)},
       // clang-format on
    };
 
    read_node(node, properties);
-
-   for (auto& platform_node : node) {
-      if (string::iequals(platform_node.key, "PS2"sv)) {
-         for (auto& key_node : platform_node) {
-            if (not string::iequals(key_node.key, "Tessellation"sv)) continue;
-
-            shimmer.tessellation_ps2 = {key_node.values.get<int>(0),
-                                        key_node.values.get<int>(1)};
-         }
-      }
-   }
 
    return shimmer;
 }
@@ -1039,6 +1054,12 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             }
          }
          else if (string::iequals(key_node.key, "SunFlare"sv)) {
+            if (effects.sun_flares.size() == effects.sun_flares.max_size()) {
+               throw load_failure{fmt::format(
+                  "Too many Sun Flares in world effects file. Max is: {}",
+                  effects.sun_flares.size())};
+            }
+
             effects.sun_flares.push_back(read_sun_flare(key_node));
          }
          else {

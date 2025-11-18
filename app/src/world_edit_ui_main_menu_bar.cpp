@@ -195,6 +195,13 @@ void world_edit::ui_show_main_menu_bar() noexcept
                             "Global", "Show World Requirements Editor")),
                          &_world_requirements_editor_open);
 
+         ImGui::MenuItem("World Effects Editor",
+                         get_display_string(_hotkeys.query_binding(
+                            "Global", "Show World Effects Editor")),
+                         &_effects_editor_open);
+
+         ImGui::Separator();
+
          ImGui::MenuItem("World Explorer",
                          get_display_string(
                             _hotkeys.query_binding("Global",

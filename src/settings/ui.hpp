@@ -8,6 +8,7 @@ struct ui {
 
    bool hide_entity_hover_tooltips = false;
    bool hide_extra_light_properties = true;
+   bool hide_extra_effects_properties = true;
 
    bool operator==(const ui&) const noexcept = default;
 };

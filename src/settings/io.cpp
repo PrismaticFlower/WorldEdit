@@ -159,6 +159,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(gizmo_scale);
             setting_entry(hide_entity_hover_tooltips);
             setting_entry(hide_extra_light_properties);
+            setting_entry(hide_extra_effects_properties);
          }
 #undef setting_entry
       }
@@ -276,6 +277,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(gizmo_scale));
       write(file, name_value(hide_entity_hover_tooltips));
       write(file, name_value(hide_extra_light_properties));
+      write(file, name_value(hide_extra_effects_properties));
 
 #undef name_value
 

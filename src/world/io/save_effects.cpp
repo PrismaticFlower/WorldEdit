@@ -159,11 +159,11 @@ void write(io::output_file& out, indention indention_level,
                    value.count, rounded_float{value.framerate});
    } break;
    case property_type::heat_shimmer_bump_map: {
-      const heat_shimmer::bump_map& value =
-         *static_cast<const heat_shimmer::bump_map*>(value_ptr);
+      const heat_shimmer::bump_map_t& value =
+         *static_cast<const heat_shimmer::bump_map_t*>(value_ptr);
 
       out.write_ln("{}{}(\"{}\", {}, {});", indention, name, value.name,
-                   rounded_float{value.unknown.x}, rounded_float{value.unknown.y});
+                   rounded_float{value.tiling.x}, rounded_float{value.tiling.y});
    } break;
    case property_type::sun_flare_halo_ring: {
       const sun_flare::halo_ring& value =
@@ -181,11 +181,11 @@ void write(io::output_file& out, indention indention_level,
 }
 
 #define UNPACK_VAR(var, member)                                                \
-   var.member##_per_platform, &var.member##_pc, &var.member##_ps2, &var.member##_xbox
+   var.member##.per_platform, &var.member##.pc, &var.member##.ps2, &var.member##.xbox
 
 #define UNPACK_PC_XB_VAR(var, member)                                          \
-   var.member##_per_platform, &var.member##_pc,                                \
-      decltype(&var.member##_pc){nullptr}, &var.member##_xbox
+   var.member##.per_platform, &var.member##.pc,                                \
+      decltype(&var.member##.pc){nullptr}, &var.member##.xbox
 
 struct color_property_t {};
 
@@ -341,9 +341,9 @@ struct property {
    }
 
    property(std::string_view name, std::optional<bool> per_platform,
-            const heat_shimmer::bump_map* value_pc,
-            const heat_shimmer::bump_map* value_ps2,
-            const heat_shimmer::bump_map* value_xbox)
+            const heat_shimmer::bump_map_t* value_pc,
+            const heat_shimmer::bump_map_t* value_ps2,
+            const heat_shimmer::bump_map_t* value_xbox)
       : type{property_type::heat_shimmer_bump_map},
         name{name},
         per_platform{per_platform.value_or(true)},
@@ -615,13 +615,13 @@ void save_lightning(io::output_file& out, const lightning& lightning,
 
    bool lightning_enabled = false;
 
-   if (not lightning.enable_per_platform) {
-      lightning_enabled |= lightning.enable_pc;
-      lightning_enabled |= lightning.enable_ps2;
-      lightning_enabled |= lightning.enable_xbox;
+   if (not lightning.enable.per_platform) {
+      lightning_enabled |= lightning.enable.pc;
+      lightning_enabled |= lightning.enable.ps2;
+      lightning_enabled |= lightning.enable.xbox;
    }
    else {
-      lightning_enabled = lightning.enable_pc;
+      lightning_enabled = lightning.enable.pc;
    }
 
    if (not lightning_enabled and bolt == lightning_bolt{}) return;
@@ -663,10 +663,10 @@ void save_water(io::output_file& out, const water& water)
 {
    bool ocean_enabled = false;
 
-   if (not water.ocean_enable_per_platform) {
-      ocean_enabled |= water.ocean_enable_pc;
-      ocean_enabled |= water.ocean_enable_ps2;
-      ocean_enabled |= water.ocean_enable_xbox;
+   if (not water.ocean_enable.per_platform) {
+      ocean_enabled |= water.ocean_enable.pc;
+      ocean_enabled |= water.ocean_enable.ps2;
+      ocean_enabled |= water.ocean_enable.xbox;
    }
    else {
       ocean_enabled = true;
@@ -690,7 +690,7 @@ void save_water(io::output_file& out, const water& water)
       {"Velocity"sv, UNPACK_VAR(water, velocity)},
       {"LODDecimation"sv, UNPACK_VAR(water, lod_decimation)},
       {"PhillipsConstant"sv, UNPACK_VAR(water, phillips_constant)},
-      {"MainTexture"sv, water.main_texture_per_platform, &water.main_texture_pc, &water.main_texture_ps2, ocean_enabled ? &water.main_texture_xbox : nullptr},
+      {"MainTexture"sv, water.main_texture.per_platform, &water.main_texture.pc, &water.main_texture.ps2, ocean_enabled ? &water.main_texture.xbox : nullptr},
       {"FoamTexture"sv, UNPACK_VAR(water, foam_texture)},
       {"FoamTile"sv, UNPACK_VAR(water, foam_tile)},
       {"RefractionColor"sv, color_property_t{}, UNPACK_PC_XB_VAR(water, refraction_color)},   
@@ -763,8 +763,7 @@ void save_heat_shimmer(io::output_file& out, const heat_shimmer& shimmer)
       {"WorldHeight"sv, UNPACK_VAR(shimmer, world_height)},
       {"GeometryHeight"sv, UNPACK_VAR(shimmer, geometry_height)},
       {"ScrollSpeed"sv, UNPACK_VAR(shimmer, scroll_speed)},
-      {"Tessellation"sv, std::nullopt, &shimmer.tessellation_pc, nullptr, &shimmer.tessellation_xbox},
-      {"Tessellation"sv, std::nullopt, nullptr, &shimmer.tessellation_ps2, nullptr},
+      {"Tessellation"sv,UNPACK_VAR(shimmer, tessellation)},
       {"BumpMap"sv, UNPACK_PC_XB_VAR(shimmer, bump_map)},
       {"DistortionScale"sv, UNPACK_VAR(shimmer, distortion_scale)},
       // clang-format on

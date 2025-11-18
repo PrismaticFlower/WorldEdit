@@ -425,6 +425,8 @@ private:
 
    void ui_show_munge_manager() noexcept;
 
+   void ui_show_effects_editor() noexcept;
+
    void ui_draw_select_box() noexcept;
 
    auto ui_object_class_pick_widget_untracked(const lowercase_string& class_name,
@@ -594,7 +596,6 @@ private:
    bool _renderer_never_use_write_buffer_immediate = false;
    bool _renderer_never_use_relaxed_format_casting = false;
    bool _renderer_never_use_target_independent_rasterization = false;
-
    std::unique_ptr<graphics::renderer> _renderer;
    graphics::camera _camera;
 
@@ -636,6 +637,7 @@ private:
    bool _block_material_editor_open = false;
    bool _export_selection_open = false;
    bool _munge_manager_open = false;
+   bool _effects_editor_open = false;
    terrain_edit_tool _terrain_edit_tool = terrain_edit_tool::none;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
