@@ -282,6 +282,8 @@
     <ClCompile Include="src\world\utility\drag_select.cpp" />
     <ClCompile Include="src\world\utility\to_ui_string.cpp" />
     <ClCompile Include="src\edits\imgui_ext_platform_var.cpp" />
+    <ClCompile Include="src\edits\add_sun_flare.cpp" />
+    <ClCompile Include="src\edits\delete_sun_flare.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -623,6 +625,8 @@
     <ClInclude Include="src\world\utility\to_ui_string.hpp" />
     <ClInclude Include="src\world\utility\multi_select_support.hpp" />
     <ClInclude Include="src\edits\imgui_ext_platform_var.hpp" />
+    <ClInclude Include="src\edits\add_sun_flare.hpp" />
+    <ClInclude Include="src\edits\delete_sun_flare.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

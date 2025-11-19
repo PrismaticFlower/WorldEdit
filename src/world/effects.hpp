@@ -500,12 +500,14 @@ struct sun_flare {
    };
 
    platform_var<float4> spike_color = {
-      {230.0f / 255.0f, 230.0f / 255.0f, 0.0f / 255.0f, 255.0f / 128.0f},
-      {230.0f / 255.0f, 230.0f / 255.0f, 0.0f / 255.0f, 255.0f / 128.0f},
-      {230.0f / 255.0f, 230.0f / 255.0f, 0.0f / 255.0f, 255.0f / 128.0f},
+      {230.0f / 255.0f, 230.0f / 255.0f, 0.0f / 255.0f, 128.0f / 255.0f},
+      {230.0f / 255.0f, 230.0f / 255.0f, 0.0f / 255.0f, 128.0f / 255.0f},
+      {230.0f / 255.0f, 230.0f / 255.0f, 0.0f / 255.0f, 128.0f / 255.0f},
    };
 
    platform_var<float> spike_size = {20.0f, 20.0f, 20.0f};
+
+   bool operator==(const sun_flare&) const noexcept = default;
 };
 
 struct effects {

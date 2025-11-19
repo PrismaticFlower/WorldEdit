@@ -1,5 +1,7 @@
 #include "world_edit.hpp"
 
+#include "edits/add_sun_flare.hpp"
+#include "edits/delete_sun_flare.hpp"
 #include "edits/imgui_ext.hpp"
 #include "edits/imgui_ext_platform_var.hpp"
 
@@ -750,7 +752,11 @@ void world_edit::ui_show_effects_editor() noexcept
    }
 
    if (ImGui::TreeNodeEx("Sun Flares", ImGuiTreeNodeFlags_Framed)) {
-      for (world::sun_flare& sun_flare : _world.effects.sun_flares) {
+      std::optional<uint32> delete_flare_index;
+
+      for (uint32 i = 0; i < _world.effects.sun_flares.size(); ++i) {
+         world::sun_flare& sun_flare = _world.effects.sun_flares[i];
+
          if (ImGui::TreeNode(&sun_flare, "Sun Flare - (%.3f %.3f)",
                              sun_flare.angle.pc.x, sun_flare.angle.pc.y)) {
 
@@ -793,8 +799,24 @@ void world_edit::ui_show_effects_editor() noexcept
             ImGui::DragFloat("Spike Size", &sun_flare.spike_size,
                              _edit_stack_world, _edit_context, 1.0f, 0.0f, 1e10f);
 
+            ImGui::Separator();
+
+            if (ImGui::Button("Delete", {ImGui::CalcItemWidth(), 0.0f})) {
+               delete_flare_index = i;
+            }
+
             ImGui::TreePop();
          }
+      }
+
+      if (ImGui::Button("Add Sun Flare", {ImGui::CalcItemWidth(), 0.0f})) {
+         _edit_stack_world.apply(edits::make_add_sun_flare(world::sun_flare{}),
+                                 _edit_context);
+      }
+
+      if (delete_flare_index) {
+         _edit_stack_world.apply(edits::make_delete_sun_flare(*delete_flare_index),
+                                 _edit_context);
       }
 
       ImGui::TreePop();

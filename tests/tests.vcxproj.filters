@@ -130,6 +130,8 @@
     <ClCompile Include="src\edits\delete_block_tests.cpp" />
     <ClCompile Include="src\world\blocks\mesh_generate_tests.cpp" />
     <ClCompile Include="src\world\blocks\blocks_custom_mesh_library_tests.cpp" />
+    <ClCompile Include="src\edits\add_sun_flare_tests.cpp" />
+    <ClCompile Include="src\edits\delete_sun_flare.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
