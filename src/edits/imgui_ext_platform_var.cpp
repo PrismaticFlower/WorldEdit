@@ -268,29 +268,33 @@ bool Checkbox(const char* label, world::platform_var<bool>* value,
 bool DragFloat(const char* label, world::platform_var<float>* value,
                edits::stack<world::edit_context>& edit_stack,
                world::edit_context& context, float v_speed, float v_min,
-               float v_max) noexcept
+               float v_max, const char* format, ImGuiSliderFlags flags) noexcept
 {
    return Widget(
       label, value, edit_stack, context,
       [](const char* label, float* value, edits::stack<world::edit_context>& edit_stack,
-         world::edit_context& context, float v_speed, float v_min, float v_max) {
-         return DragFloat(label, value, edit_stack, context, v_speed, v_min, v_max);
+         world::edit_context& context, float v_speed, float v_min, float v_max,
+         const char* format, ImGuiSliderFlags flags) {
+         return DragFloat(label, value, edit_stack, context, v_speed, v_min,
+                          v_max, format, flags);
       },
-      v_speed, v_min, v_max);
+      v_speed, v_min, v_max, format, flags);
 }
 
 bool DragFloat(const char* label, world::platform_pc_xb_var<float>* value,
                edits::stack<world::edit_context>& edit_stack,
                world::edit_context& context, float v_speed, float v_min,
-               float v_max) noexcept
+               float v_max, const char* format, ImGuiSliderFlags flags) noexcept
 {
    return Widget(
       label, value, edit_stack, context,
       [](const char* label, float* value, edits::stack<world::edit_context>& edit_stack,
-         world::edit_context& context, float v_speed, float v_min, float v_max) {
-         return DragFloat(label, value, edit_stack, context, v_speed, v_min, v_max);
+         world::edit_context& context, float v_speed, float v_min, float v_max,
+         const char* format, ImGuiSliderFlags flags) {
+         return DragFloat(label, value, edit_stack, context, v_speed, v_min,
+                          v_max, format, flags);
       },
-      v_speed, v_min, v_max);
+      v_speed, v_min, v_max, format, flags);
 }
 
 bool DragFloat2(const char* label, world::platform_var<float2>* value,
@@ -321,6 +325,40 @@ bool DragFloat3(const char* label, world::platform_var<float3>* value,
       v_speed, v_min, v_max);
 }
 
+bool DragFloatRange2(const char* label, we::world::platform_var<we::float2>* value,
+                     we::edits::stack<we::world::edit_context>& edit_stack,
+                     we::world::edit_context& context, float v_speed,
+                     float v_min, float v_max, const char* format_min,
+                     const char* format_max, ImGuiSliderFlags flags) noexcept
+{
+   return Widget(
+      label, value, edit_stack, context,
+      [](const char* label, float2* value, edits::stack<world::edit_context>& edit_stack,
+         world::edit_context& context, float v_speed, float v_min, float v_max,
+         const char* format_min, const char* format_max, ImGuiSliderFlags flags) {
+         return DragFloatRange2(label, &value->x, &value->y, edit_stack, context,
+                                v_speed, v_min, v_max, format_min, format_max, flags);
+      },
+      v_speed, v_min, v_max, format_min, format_max, flags);
+}
+
+bool DragFloatRange2(const char* label, we::world::platform_pc_xb_var<we::float2>* value,
+                     we::edits::stack<we::world::edit_context>& edit_stack,
+                     we::world::edit_context& context, float v_speed,
+                     float v_min, float v_max, const char* format_min,
+                     const char* format_max, ImGuiSliderFlags flags) noexcept
+{
+   return Widget(
+      label, value, edit_stack, context,
+      [](const char* label, float2* value, edits::stack<world::edit_context>& edit_stack,
+         world::edit_context& context, float v_speed, float v_min, float v_max,
+         const char* format_min, const char* format_max, ImGuiSliderFlags flags) {
+         return DragFloatRange2(label, &value->x, &value->y, edit_stack, context,
+                                v_speed, v_min, v_max, format_min, format_max, flags);
+      },
+      v_speed, v_min, v_max, format_min, format_max, flags);
+}
+
 bool DragInt(const char* label, world::platform_var<int32>* value,
              edits::stack<world::edit_context>& edit_stack,
              world::edit_context& context, float v_speed, int32 v_min, int32 v_max) noexcept
@@ -336,16 +374,19 @@ bool DragInt(const char* label, world::platform_var<int32>* value,
 
 bool DragInt2(const char* label, world::platform_var<std::array<int32, 2>>* value,
               edits::stack<world::edit_context>& edit_stack,
-              world::edit_context& context, float v_speed, int32 v_min, int32 v_max) noexcept
+              world::edit_context& context, float v_speed, int32 v_min,
+              int32 v_max, const char* format, ImGuiSliderFlags flags) noexcept
 {
    return Widget(
       label, value, edit_stack, context,
       [](const char* label, std::array<int32, 2>* value,
          edits::stack<world::edit_context>& edit_stack,
-         world::edit_context& context, float v_speed, int32 v_min, int32 v_max) {
-         return DragInt2(label, value, edit_stack, context, v_speed, v_min, v_max);
+         world::edit_context& context, float v_speed, int32 v_min, int32 v_max,
+         const char* format, ImGuiSliderFlags flags) {
+         return DragInt2(label, value, edit_stack, context, v_speed, v_min,
+                         v_max, format, flags);
       },
-      v_speed, v_min, v_max);
+      v_speed, v_min, v_max, format, flags);
 }
 
 bool SliderInt(const char* label, world::platform_pc_xb_var<int32>* value,
@@ -361,6 +402,22 @@ bool SliderInt(const char* label, world::platform_pc_xb_var<int32>* value,
       v_min, v_max);
 }
 
+bool SliderInt(const char* label, world::platform_var<int32>* value,
+               edits::stack<world::edit_context>& edit_stack,
+               world::edit_context& context, int32 v_min, int32 v_max,
+               const char* format, ImGuiSliderFlags flags) noexcept
+{
+   return Widget(
+      label, value, edit_stack, context,
+      [](const char* label, int32* value,
+         edits::stack<world::edit_context>& edit_stack, world::edit_context& context,
+         int32 v_min, int32 v_max, const char* format, ImGuiSliderFlags flags) {
+         return SliderInt(label, value, edit_stack, context, v_min, v_max,
+                          format, flags);
+      },
+      v_min, v_max, format, flags);
+}
+
 bool ColorEdit3(const char* label, world::platform_var<float3>* value,
                 edits::stack<world::edit_context>& edit_stack,
                 world::edit_context& context) noexcept
@@ -374,6 +431,18 @@ bool ColorEdit3(const char* label, world::platform_var<float3>* value,
 }
 
 bool ColorEdit4(const char* label, world::platform_var<float4>* value,
+                edits::stack<world::edit_context>& edit_stack,
+                world::edit_context& context) noexcept
+{
+   return Widget(label, value, edit_stack, context,
+                 [](const char* label, float4* value,
+                    edits::stack<world::edit_context>& edit_stack,
+                    world::edit_context& context) {
+                    return ColorEdit4(label, value, edit_stack, context);
+                 });
+}
+
+bool ColorEdit4(const char* label, world::platform_pc_xb_var<float4>* value,
                 edits::stack<world::edit_context>& edit_stack,
                 world::edit_context& context) noexcept
 {
@@ -574,6 +643,127 @@ bool EditHaloRing(const char* label,
       Text("%s Halo Ring Color", label);
 
       EndGroup();
+
+      ShowSplitPopup(label, value, edit_stack, context);
+   }
+
+   EndGroup();
+   PopID();
+
+   return edited;
+}
+
+bool EditAnimatedTextures(const char* label, we::world::water::animated_textures* value,
+                          we::edits::stack<we::world::edit_context>& edit_stack,
+                          we::world::edit_context& context) noexcept
+{
+   bool edited = false;
+
+   BeginGroup();
+   PushID(label);
+
+   edited |= InputText("##prefix", &value->prefix, edit_stack, context);
+
+   SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
+
+   Text("%s Textures Prefix", label);
+
+   edited |= SliderInt("##count", &value->count, edit_stack, context, 1, 50,
+                       "%d", ImGuiSliderFlags_AlwaysClamp);
+
+   SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
+
+   Text("%s Textures Count", label);
+
+   edited |= DragFloat("##framerate", &value->framerate, edit_stack, context,
+                       0.25f, 1.0f, 250.0f);
+
+   SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
+
+   Text("%s Textures Framerate", label);
+
+   PopID();
+   EndGroup();
+
+   return edited;
+}
+
+bool EditAnimatedTextures(const char* label,
+                          we::world::platform_pc_xb_var<we::world::water::animated_textures>* value,
+                          we::edits::stack<we::world::edit_context>& edit_stack,
+                          we::world::edit_context& context) noexcept
+{
+   IM_ASSERT(value);
+   IM_ASSERT(context.is_memory_valid(value));
+
+   bool edited = false;
+
+   PushID(label);
+   BeginGroup();
+
+   if (value->per_platform) [[unlikely]] {
+      BeginGroup();
+
+      PushID("PC");
+      BeginGroup();
+
+      edited |= InputText("##prefix", &value->pc.prefix, edit_stack, context);
+
+      SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
+
+      Text("%s Textures Prefix (PC)", label);
+
+      edited |= SliderInt("##count", &value->pc.count, edit_stack, context, 1,
+                          50, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+      SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
+
+      Text("%s Textures Count (PC)", label);
+
+      edited |= DragFloat("##framerate", &value->pc.framerate, edit_stack,
+                          context, 0.25f, 1.0f, 250.0f);
+
+      SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
+
+      Text("%s Textures Framerate (PC)", label);
+
+      EndGroup();
+      PopID();
+
+      ShowCombinePopup("##PC", value, value->xbox, edit_stack, context);
+
+      PushID("Xbox");
+      BeginGroup();
+
+      edited |= InputText("##prefix", &value->pc.prefix, edit_stack, context);
+
+      SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
+
+      Text("%s Textures Prefix (Xbox)", label);
+
+      edited |= SliderInt("##count", &value->pc.count, edit_stack, context, 1,
+                          50, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+      SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
+
+      Text("%s Textures Count (Xbox)", label);
+
+      edited |= DragFloat("##framerate", &value->pc.framerate, edit_stack,
+                          context, 0.25f, 1.0f, 250.0f);
+
+      SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
+
+      Text("%s Textures Framerate (Xbox)", label);
+
+      EndGroup();
+      PopID();
+
+      ShowCombinePopup("##Xbox", value, value->xbox, edit_stack, context);
+
+      EndGroup();
+   }
+   else [[likely]] {
+      edited |= EditAnimatedTextures(label, &value->pc, edit_stack, context);
 
       ShowSplitPopup(label, value, edit_stack, context);
    }

@@ -19,10 +19,18 @@ auto world_edit::ui_texture_pick_widget_untracked(const char* label,
       ImGui::CalcItemWidth() - ImGui::GetStyle().ItemInnerSpacing.x - tiny_preview_size;
    const std::string_view texture = c_str_texture;
 
+   std::string_view id_label = label;
+   const std::size_t visible_label_end = id_label.find("##");
+   const std::string_view visible_label = id_label.substr(0, visible_label_end);
+
+   if (visible_label_end != id_label.npos) {
+      id_label.remove_prefix(visible_label_end);
+   }
+
    std::optional<std::string> picked_texture;
 
    ImGui::BeginGroup();
-   ImGui::PushID(label);
+   ImGui::PushID(id_label.data(), id_label.data() + id_label.size());
 
    ImGui::SetNextItemWidth(combo_width);
 
@@ -173,9 +181,12 @@ auto world_edit::ui_texture_pick_widget_untracked(const char* label,
                                                     graphics::fallback_imgui_texture::missing_diffuse),
                 {tiny_preview_size, tiny_preview_size}, {0.0f, 0.0f}, {1.0f, 1.0f});
 
-   ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+   if (not visible_label.empty()) {
+      ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 
-   ImGui::TextUnformatted(label);
+      ImGui::TextUnformatted(visible_label.data(),
+                             visible_label.data() + visible_label.size());
+   }
 
    ImGui::PopID();
    ImGui::EndGroup();

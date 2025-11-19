@@ -1,6 +1,7 @@
 #include "world_edit.hpp"
 
 #include "edits/imgui_ext.hpp"
+#include "edits/imgui_ext_platform_var.hpp"
 #include "edits/set_terrain_area.hpp"
 
 #include "math/vector_funcs.hpp"
@@ -87,26 +88,30 @@ void world_edit::ui_show_water_editor() noexcept
 
          world::water& water = _world.effects.water;
 
+         const bool ocean_enabled =
+            water.ocean_enable.pc or
+            (water.ocean_enable.per_platform and
+             (water.ocean_enable.ps2 or water.ocean_enable.xbox));
+
          ImGui::SeparatorText("Mesh");
 
          ImGui::SetItemTooltip("Settings affecting the water mesh.");
 
-         ImGui::DragInt2("Patch Divisions", &water.patch_divisions.pc,
+         ImGui::DragInt2("Patch Divisions", &water.patch_divisions,
                          _edit_stack_world, _edit_context, 1.0f, 1, 256, "%d",
                          ImGuiSliderFlags_AlwaysClamp);
 
-         ImGui::SliderInt("LOD Decimation", &water.lod_decimation.pc,
-                          _edit_stack_world, _edit_context, 1, 16, "%d",
-                          ImGuiSliderFlags_AlwaysClamp);
+         ImGui::SliderInt("LOD Decimation", &water.lod_decimation, _edit_stack_world,
+                          _edit_context, 1, 16, "%d", ImGuiSliderFlags_AlwaysClamp);
 
-         ImGui::BeginDisabled(water.ocean_enable.pc);
+         ImGui::BeginDisabled(ocean_enabled);
 
-         ImGui::Checkbox("Oscillation Enable", &water.oscillation_enable.pc,
+         ImGui::Checkbox("Oscillation Enable", &water.oscillation_enable,
                          _edit_stack_world, _edit_context);
 
          ImGui::EndDisabled();
 
-         ImGui::Checkbox("Disable LowRes", &water.disable_low_res.pc,
+         ImGui::Checkbox("Disable LowRes", &water.disable_low_res,
                          _edit_stack_world, _edit_context);
 
          ImGui::DragFloat("Far Scene Range", &water.far_scene_range_pc,
@@ -115,71 +120,50 @@ void world_edit::ui_show_water_editor() noexcept
 
          ImGui::SeparatorText("Colors");
 
-         ImGui::ColorEdit4("Refraction Color", &water.refraction_color.pc,
+         ImGui::ColorEdit4("Refraction Color", &water.refraction_color,
                            _edit_stack_world, _edit_context);
 
-         ImGui::ColorEdit4("Reflection Color", &water.reflection_color.pc,
+         ImGui::ColorEdit4("Reflection Color", &water.reflection_color,
                            _edit_stack_world, _edit_context);
 
-         ImGui::ColorEdit4("Underwater Color", &water.underwater_color.pc,
+         ImGui::ColorEdit4("Underwater Color", &water.underwater_color,
                            _edit_stack_world, _edit_context);
 
-         ImGui::ColorEdit4("Water Ring Color", &water.water_ring_color.pc,
+         ImGui::ColorEdit4("Water Ring Color", &water.water_ring_color,
                            _edit_stack_world, _edit_context);
 
-         ImGui::ColorEdit4("Water Wake Color", &water.water_wake_color.pc,
+         ImGui::ColorEdit4("Water Wake Color", &water.water_wake_color,
                            _edit_stack_world, _edit_context);
 
-         ImGui::ColorEdit4("Water Splash Color", &water.water_splash_color.pc,
+         ImGui::ColorEdit4("Water Splash Color", &water.water_splash_color,
                            _edit_stack_world, _edit_context);
 
          ImGui::SeparatorText("Textures");
 
-         ImGui::DragFloat2("Tile", &water.tile.pc, _edit_stack_world,
-                           _edit_context, 0.25f);
+         ImGui::DragFloat2("Tile", &water.tile, _edit_stack_world, _edit_context, 0.25f);
 
-         ImGui::DragFloat2("Velocity", &water.velocity.pc, _edit_stack_world,
+         ImGui::DragFloat2("Velocity", &water.velocity, _edit_stack_world,
                            _edit_context, 0.0125f);
 
-         ui_texture_pick_widget("Main Texture", &water.main_texture.pc);
+         ImGui::CustomWidget("Main Texture", &water.main_texture,
+                             _edit_stack_world, _edit_context,
+                             [&](const char* label, std::string* texture) noexcept {
+                                IM_ASSERT(texture);
+                                IM_ASSERT(_edit_context.is_memory_valid(texture));
 
-         ImGui::BeginDisabled(water.ocean_enable.pc);
+                                return ui_texture_pick_widget(label, texture);
+                             });
 
-         ImGui::InputText("Normal Map Textures Prefix",
-                          &water.normal_map_textures.pc.prefix,
-                          _edit_stack_world, _edit_context);
+         ImGui::BeginDisabled(ocean_enabled);
 
-         ImGui::SliderInt("Normal Map Textures Count",
-                          &water.normal_map_textures.pc.count, _edit_stack_world,
-                          _edit_context, 1, 50, "%d", ImGuiSliderFlags_AlwaysClamp);
+         ImGui::EditAnimatedTextures("Normal Map", &water.normal_map_textures,
+                                     _edit_stack_world, _edit_context);
 
-         ImGui::DragFloat("Normal Map Textures Framerate",
-                          &water.normal_map_textures.pc.framerate,
-                          _edit_stack_world, _edit_context, 0.25f, 1.0f, 250.0f);
+         ImGui::EditAnimatedTextures("Bump Map", &water.bump_map_textures_pc,
+                                     _edit_stack_world, _edit_context);
 
-         ImGui::InputText("Bump Map Textures Prefix",
-                          &water.bump_map_textures_pc.prefix, _edit_stack_world,
-                          _edit_context);
-
-         ImGui::SliderInt("Bump Map Textures Count",
-                          &water.bump_map_textures_pc.count, _edit_stack_world,
-                          _edit_context, 1, 50, "%d", ImGuiSliderFlags_AlwaysClamp);
-
-         ImGui::DragFloat("Bump Map Textures Framerate",
-                          &water.bump_map_textures_pc.framerate,
-                          _edit_stack_world, _edit_context, 0.25f, 1.0f, 250.0f);
-
-         ImGui::InputText("Specular Mask Textures Prefix",
-                          &water.specular_mask_textures_pc.prefix,
-                          _edit_stack_world, _edit_context);
-
-         ImGui::SliderInt("Specular Mask Textures Count",
-                          &water.specular_mask_textures_pc.count, _edit_stack_world,
-                          _edit_context, 1, 50, "%d", ImGuiSliderFlags_AlwaysClamp);
-
-         ImGui::DragFloat("Specular Mask Textures Framerate",
-                          &water.specular_mask_textures_pc.framerate,
-                          _edit_stack_world, _edit_context, 0.25f, 1.0f, 250.0f);
+         ImGui::EditAnimatedTextures("Specular Mask", &water.specular_mask_textures_pc,
+                                     _edit_stack_world, _edit_context);
 
          ImGui::DragFloat2("Specular Mask Tile", &water.specular_mask_tile_pc,
                            _edit_stack_world, _edit_context, 0.25f);
@@ -192,56 +176,42 @@ void world_edit::ui_show_water_editor() noexcept
 
          ImGui::SeparatorText("Reflections");
 
-         ImGui::BeginDisabled(water.ocean_enable.pc);
+         ImGui::BeginDisabled(ocean_enabled);
 
-         ImGui::DragFloatRange2("Fresnel Min-Max", &water.fresnel_min_max.pc.x,
-                                &water.fresnel_min_max.pc.y, _edit_stack_world,
-                                _edit_context, 0.025f, 0.0f, 1.0f, "Min: %.3f",
-                                "Max: %.3f", ImGuiSliderFlags_AlwaysClamp);
+         ImGui::DragFloatRange2("Fresnel Min-Max", &water.fresnel_min_max,
+                                _edit_stack_world, _edit_context, 0.025f, 0.0f,
+                                1.0f, "Min: %.3f", "Max: %.3f",
+                                ImGuiSliderFlags_AlwaysClamp);
 
          ImGui::EndDisabled();
 
          ImGui::SeparatorText("Ocean");
 
-         ImGui::Checkbox("Ocean Enable", &water.ocean_enable.pc,
-                         _edit_stack_world, _edit_context);
+         ImGui::Checkbox("Ocean Enable", &water.ocean_enable, _edit_stack_world,
+                         _edit_context);
 
-         ImGui::BeginDisabled(not water.ocean_enable.pc);
+         ImGui::BeginDisabled(not ocean_enabled);
 
-         ImGui::DragFloat2("Wind Direction", &water.wind_direction.pc,
+         ImGui::DragFloat2("Wind Direction", &water.wind_direction,
                            _edit_stack_world, _edit_context, 0.0125f);
 
-         ImGui::DragFloat("Wind Speed", &water.wind_speed.pc, _edit_stack_world,
+         ImGui::DragFloat("Wind Speed", &water.wind_speed, _edit_stack_world,
                           _edit_context, 0.5f);
 
-         ImGui::DragFloat("Phillips Constant", &water.phillips_constant.pc,
+         ImGui::DragFloat("Phillips Constant", &water.phillips_constant,
                           _edit_stack_world, _edit_context, 0.000001f, 0.0f,
                           0.0f, "%.6f");
 
-         ImGui::InputTextAutoComplete(
-            "Foam Texture", &water.foam_texture.pc, _edit_stack_world,
-            _edit_context, [&]() noexcept {
-               std::array<std::string_view, 6> entries;
-               std::size_t matching_count = 0;
+         ImGui::CustomWidget("Foam Texture", &water.foam_texture,
+                             _edit_stack_world, _edit_context,
+                             [&](const char* label, std::string* texture) noexcept {
+                                IM_ASSERT(texture);
+                                IM_ASSERT(_edit_context.is_memory_valid(texture));
 
-               _asset_libraries.textures.view_existing(
-                  [&](const std::span<const assets::stable_string> assets) noexcept {
-                     for (const std::string_view asset : assets) {
-                        if (matching_count == entries.size()) break;
-                        if (not string::icontains(asset, water.foam_texture.pc)) {
-                           continue;
-                        }
+                                return ui_texture_pick_widget(label, texture);
+                             });
 
-                        entries[matching_count] = asset;
-
-                        ++matching_count;
-                     }
-                  });
-
-               return entries;
-            });
-
-         ImGui::DragFloat2("Foam Tile", &water.foam_tile.pc, _edit_stack_world,
+         ImGui::DragFloat2("Foam Tile", &water.foam_tile, _edit_stack_world,
                            _edit_context, 0.25f);
 
          ImGui::EndDisabled();
