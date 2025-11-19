@@ -12,39 +12,51 @@ struct ui_texture_manager::impl {
    void new_frame() noexcept
    {
       std::swap(_front_textures, _back_textures);
+      std::swap(_front_load_tokens, _beck_load_tokens);
       std::swap(_front_garbage, _back_garbage);
 
       _front_textures.clear();
+      _front_load_tokens.clear();
       _front_garbage.clear();
    }
 
    auto request(const std::string_view name, const fallback_imgui_texture fallback,
                 texture_manager& texture_manager) noexcept -> uint32
    {
+      if (auto it = _front_textures.find(name); it != _front_textures.end()) {
+         return it->second->srv_srgb.index;
+      }
+
       if (auto it = _back_textures.find(name); it != _back_textures.end()) {
          _front_textures.insert(*it);
 
          return it->second->srv_srgb.index;
       }
+      const lowercase_string lowercase_name{name};
 
-      if (auto it = _front_textures.find(name); it != _front_textures.end()) {
-         return it->second->srv_srgb.index;
-      }
-
-      if (auto texture = texture_manager.at_or(lowercase_string{name},
+      if (auto texture = texture_manager.at_or(lowercase_name,
                                                world_texture_dimension::_2d, nullptr);
           texture) {
          _front_textures.emplace(name, texture);
 
          return texture->srv_srgb.index;
       }
+      else {
+         if (auto it = _front_load_tokens.find(name); it != _front_load_tokens.end()) {
+            return fallback_texture(fallback, texture_manager);
+         }
 
-      switch (fallback) {
-      case fallback_imgui_texture::missing_diffuse:
-         return texture_manager.null_diffuse_map()->srv_srgb.index;
+         if (auto it = _beck_load_tokens.find(name); it != _beck_load_tokens.end()) {
+            _front_load_tokens.insert(*it);
+
+            return fallback_texture(fallback, texture_manager);
+         }
+
+         _front_load_tokens.emplace(name, texture_manager.acquire_load_token(
+                                             lowercase_name));
       }
 
-      return texture_manager.null_color_map()->srv_srgb.index;
+      return fallback_texture(fallback, texture_manager);
    }
 
    void process_updated_textures(const updated_textures& updated) noexcept
@@ -71,8 +83,21 @@ struct ui_texture_manager::impl {
    }
 
 private:
+   auto fallback_texture(const fallback_imgui_texture fallback,
+                         texture_manager& texture_manager) const noexcept -> uint32
+   {
+      switch (fallback) {
+      case fallback_imgui_texture::missing_diffuse:
+         return texture_manager.null_diffuse_map()->srv_srgb.index;
+      default:
+         return texture_manager.null_color_map()->srv_srgb.index;
+      }
+   }
+
    absl::flat_hash_map<std::string, std::shared_ptr<const world_texture>> _front_textures;
    absl::flat_hash_map<std::string, std::shared_ptr<const world_texture>> _back_textures;
+   absl::flat_hash_map<std::string, std::shared_ptr<const world_texture_load_token>> _front_load_tokens;
+   absl::flat_hash_map<std::string, std::shared_ptr<const world_texture_load_token>> _beck_load_tokens;
    std::vector<std::shared_ptr<const world_texture>> _front_garbage;
    std::vector<std::shared_ptr<const world_texture>> _back_garbage;
 };

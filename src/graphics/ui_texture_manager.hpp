@@ -31,7 +31,7 @@ struct ui_texture_manager {
 private:
    struct impl;
 
-   implementation_storage<impl, 144> _impl;
+   implementation_storage<impl, 192> _impl;
 };
 
 }
