@@ -752,6 +752,8 @@ void world_edit::initialize_commands() noexcept
       _munge_manager_open = true;
    });
    _commands.add("munge_manager.close"s, [this] { _munge_manager_open = false; });
+   _commands.add("effects_editor.close"s,
+                 [this] { _effects_editor_open = false; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -1543,6 +1545,17 @@ void world_edit::initialize_hotkeys() noexcept
                         },
 
                      .hidden = true});
+
+   _hotkeys.add_set({
+      .name = "Effects Editor",
+      .activated = [this] { return _effects_editor_open; },
+      .default_hotkeys =
+         {
+            {"Cancel", "effects_editor.close", {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
 }
 
 }

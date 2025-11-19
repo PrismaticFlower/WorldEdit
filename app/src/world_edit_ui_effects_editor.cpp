@@ -70,7 +70,7 @@ void world_edit::ui_show_effects_editor() noexcept
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
 
-   ImGui::Begin("World Effects Editor");
+   ImGui::Begin("World Effects Editor", &_effects_editor_open);
 
    if (not _settings.ui.hide_extra_effects_properties and
        ImGui::TreeNodeEx("Color Control", ImGuiTreeNodeFlags_Framed)) {
