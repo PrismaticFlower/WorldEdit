@@ -502,13 +502,13 @@ bool EditBumpMap(world::platform_pc_xb_var<world::heat_shimmer::bump_map_t>* val
 
       edited |= texture_picker("", &value->pc.name);
 
-      SameLine(0.0f, 0.0f);
+      SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
 
       Text("Bump Map (PC)");
 
       edited |= DragFloat2("##tile", &value->pc.tiling);
 
-      SameLine(0.0f, 0.0f);
+      SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
 
       Text("Bump Map Tiling (PC)");
 
@@ -522,13 +522,13 @@ bool EditBumpMap(world::platform_pc_xb_var<world::heat_shimmer::bump_map_t>* val
 
       edited |= texture_picker("", &value->xbox.name);
 
-      SameLine(0.0f, 0.0f);
+      SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
 
       Text("Bump Map (Xbox)");
 
       edited |= DragFloat2("##tile", &value->xbox.tiling);
 
-      SameLine(0.0f, 0.0f);
+      SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
 
       Text("Bump Map Tiling (Xbox)");
 
