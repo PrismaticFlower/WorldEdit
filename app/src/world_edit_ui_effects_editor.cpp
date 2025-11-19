@@ -69,6 +69,8 @@ void world_edit::ui_show_effects_editor() noexcept
 {
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
+   ImGui::SetNextWindowSize({620.0f * _display_scale, 620.0f * _display_scale},
+                            ImGuiCond_FirstUseEver);
 
    ImGui::Begin("World Effects Editor", &_effects_editor_open);
 
