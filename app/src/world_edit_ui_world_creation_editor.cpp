@@ -10,6 +10,7 @@
 #include "math/iq_intersectors.hpp"
 #include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
+#include "math/scalar_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
 #include "utility/srgb_conversion.hpp"
@@ -103,7 +104,7 @@ auto surface_rotation(const float3 surface_normal,
 
    const float3 axis = cross(basis, direction);
    const float cos_angle = dot(basis, direction);
-   const float sin_angle = std::sqrt(1.0f - cos_angle * cos_angle);
+   const float sin_angle = sqrt(1.0f - cos_angle * cos_angle);
 
    if (axis == float3{0.0f, 0.0f, 0.0f}) {
       if (rotation_axis == surface_rotation_axis::y) {
@@ -669,7 +670,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             if (ImGui::DragFloat("Region Radius", &radius, 0.1f)) {
 
                const float radius_sq = radius * radius;
-               const float size = std::sqrt(radius_sq / 3.0f);
+               const float size = sqrt(radius_sq / 3.0f);
 
                _edit_stack_world.apply(edits::make_set_value(&light.region_size,
                                                              {size, size, size}),
@@ -700,7 +701,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                    length(float2{light.region_size.x, light.region_size.z});
                 ImGui::DragFloat("Region Radius", &radius, 0.1f, 0.0f, 1e10f)) {
                const float radius_sq = radius * radius;
-               const float size = std::sqrt(radius_sq / 2.0f);
+               const float size = sqrt(radius_sq / 2.0f);
 
                _edit_stack_world
                   .apply(edits::make_set_value(&light.region_size,
@@ -1080,7 +1081,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
             const float radius = distance(position, _cursor_positionWS);
             const float radius_sq = radius * radius;
-            const float size = std::sqrt(radius_sq / 3.0f);
+            const float size = sqrt(radius_sq / 3.0f);
 
             _edit_stack_world.apply(edits::make_set_multi_value(&light.rotation,
                                                                 light.rotation,
@@ -1130,7 +1131,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float radius = distance(_entity_creation_context.draw_light_start,
                                           _cursor_positionWS);
             const float radius_sq = radius * radius;
-            const float size = std::sqrt(radius_sq * 0.5f);
+            const float size = sqrt(radius_sq * 0.5f);
 
             _edit_stack_world.apply(edits::make_set_multi_value(
                                        &light.rotation, light.rotation, &light.position,
@@ -1173,7 +1174,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                                0xffffffffu);
 
             const float radius_sq = radius * radius;
-            const float xz_size = std::sqrt(radius_sq * 0.5f);
+            const float xz_size = sqrt(radius_sq * 0.5f);
 
             const float3 position =
                draw_light_start + float3{0.0f, height * 0.5f, 0.0f};
@@ -2066,7 +2067,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (ImGui::DragFloat("Radius", &radius, 0.1f)) {
             const float radius_sq = radius * radius;
-            const float size = std::sqrt(radius_sq / 3.0f);
+            const float size = sqrt(radius_sq / 3.0f);
 
             region_size = {size, size, size};
          }
@@ -2082,7 +2083,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (ImGui::DragFloat("Radius", &radius, 0.1f, 0.0f, 1e10f)) {
             const float radius_sq = radius * radius;
-            const float size = std::sqrt(radius_sq / 2.0f);
+            const float size = sqrt(radius_sq / 2.0f);
 
             region_size.x = size;
             region_size.z = size;
@@ -2133,7 +2134,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                   ? std::max(start_radius, new_radius)
                   : std::min(start_radius, new_radius);
             const float radius_sq = radius * radius;
-            const float size = std::sqrt(radius_sq / 3.0f);
+            const float size = sqrt(radius_sq / 3.0f);
 
             region_size = {size, size, size};
          } break;
@@ -2152,7 +2153,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
             const float radius = std::max(start_radius, new_radius);
             const float radius_sq = radius * radius;
-            const float size = std::sqrt(radius_sq / 2.0f);
+            const float size = sqrt(radius_sq / 2.0f);
 
             region_size = {size, std::max(start_height, new_height), size};
          }
@@ -2404,7 +2405,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float radius = distance(_entity_creation_context.draw_region_start,
                                           _cursor_positionWS);
             const float radius_sq = radius * radius;
-            const float size = std::sqrt(radius_sq / 3.0f);
+            const float size = sqrt(radius_sq / 3.0f);
 
             _edit_stack_world.apply(edits::make_set_multi_value(
                                        &region.position,
@@ -2429,7 +2430,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float radius = distance(_entity_creation_context.draw_region_start,
                                           _cursor_positionWS);
             const float radius_sq = radius * radius;
-            const float size = std::sqrt(radius_sq * 0.5f);
+            const float size = sqrt(radius_sq * 0.5f);
 
             _edit_stack_world.apply(edits::make_set_multi_value(
                                        &region.position,
@@ -2472,7 +2473,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                                0xffffffffu);
 
             const float radius_sq = radius * radius;
-            const float xz_size = std::sqrt(radius_sq * 0.5f);
+            const float xz_size = sqrt(radius_sq * 0.5f);
 
             const float3 position =
                draw_region_start + float3{0.0f, height * 0.5f, 0.0f};

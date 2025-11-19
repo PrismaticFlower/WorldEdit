@@ -13,6 +13,7 @@
 #include "edits/set_class_name.hpp"
 #include "edits/set_value.hpp"
 
+#include "math/scalar_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
 #include "utility/string_icompare.hpp"
@@ -311,7 +312,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
                      if (ImGui::DragFloat("Region Radius", &radius, 0.1f)) {
                         const float radius_sq = radius * radius;
-                        const float size = std::sqrt(radius_sq / 3.0f);
+                        const float size = sqrt(radius_sq / 3.0f);
 
                         _edit_stack_world.apply(edits::make_set_value(&light->region_size,
                                                                       {size, size, size}),
@@ -342,7 +343,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                             float2{light->region_size.x, light->region_size.z});
                          ImGui::DragFloat("Region Radius", &radius, 0.1f, 0.0f, 1e10f)) {
                         const float radius_sq = radius * radius;
-                        const float size = std::sqrt(radius_sq / 2.0f);
+                        const float size = sqrt(radius_sq / 2.0f);
 
                         _edit_stack_world.apply(
                            edits::make_set_value(&light->region_size,
@@ -981,7 +982,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   if (ImGui::DragFloat("Radius", &radius, 0.1f)) {
 
                      const float radius_sq = radius * radius;
-                     const float size = std::sqrt(radius_sq / 3.0f);
+                     const float size = sqrt(radius_sq / 3.0f);
 
                      _edit_stack_world.apply(edits::make_set_value(&region->size,
                                                                    {size, size, size}),
@@ -1011,7 +1012,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   if (float radius = length(float2{region->size.x, region->size.z});
                       ImGui::DragFloat("Radius", &radius, 0.1f, 0.0f, 1e10f)) {
                      const float radius_sq = radius * radius;
-                     const float size = std::sqrt(radius_sq / 2.0f);
+                     const float size = sqrt(radius_sq / 2.0f);
 
                      _edit_stack_world
                         .apply(edits::make_set_value(&region->size,
@@ -3826,7 +3827,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
                if (light->light_type == world::light_type::directional_region_sphere) {
                   const float radius_sq = radius * radius;
-                  const float size = std::sqrt(radius_sq / 3.0f);
+                  const float size = sqrt(radius_sq / 3.0f);
 
                   edit_bundle.push_back(edits::make_set_value(&light->region_size,
                                                               {size, size, size}));
@@ -3834,7 +3835,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                else if (light->light_type ==
                         world::light_type::directional_region_cylinder) {
                   const float radius_sq = radius * radius;
-                  const float size = std::sqrt(radius_sq / 2.0f);
+                  const float size = sqrt(radius_sq / 2.0f);
 
                   edit_bundle.push_back(
                      edits::make_set_value(&light->region_size,
@@ -3849,14 +3850,14 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
                if (region->shape == world::region_shape::sphere) {
                   const float radius_sq = radius * radius;
-                  const float size = std::sqrt(radius_sq / 3.0f);
+                  const float size = sqrt(radius_sq / 3.0f);
 
                   edit_bundle.push_back(
                      edits::make_set_value(&region->size, {size, size, size}));
                }
                else if (region->shape == world::region_shape::cylinder) {
                   const float radius_sq = radius * radius;
-                  const float size = std::sqrt(radius_sq / 2.0f);
+                  const float size = sqrt(radius_sq / 2.0f);
 
                   edit_bundle.push_back(
                      edits::make_set_value(&region->size,
