@@ -181,11 +181,11 @@ void write(io::output_file& out, indention indention_level,
 }
 
 #define UNPACK_VAR(var, member)                                                \
-   var.member##.per_platform, &var.member##.pc, &var.member##.ps2, &var.member##.xbox
+   var.member.per_platform, &var.member.pc, &var.member.ps2, &var.member.xbox
 
 #define UNPACK_PC_XB_VAR(var, member)                                          \
-   var.member##.per_platform, &var.member##.pc,                                \
-      decltype(&var.member##.pc){nullptr}, &var.member##.xbox
+   var.member.per_platform, &var.member.pc, decltype(&var.member.pc){nullptr}, \
+      &var.member.xbox
 
 struct color_property_t {};
 

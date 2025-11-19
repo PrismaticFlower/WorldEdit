@@ -417,11 +417,10 @@ private:
 };
 
 #define UNPACK_VAR(var, member)                                                \
-   &var.member##.per_platform, &var.member##.pc, &var.member##.ps2,            \
-      &var.member##.xbox
+   &var.member.per_platform, &var.member.pc, &var.member.ps2, &var.member.xbox
 
 #define UNPACK_PC_XB_VAR(var, member)                                          \
-   &var.member##.per_platform, &var.member##.pc, nullptr, &var.member##.xbox
+   &var.member.per_platform, &var.member.pc, nullptr, &var.member.xbox
 
 void read_node(assets::config::node& node, std::span<const property> properties)
 {
