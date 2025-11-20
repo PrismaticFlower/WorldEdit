@@ -8,9 +8,64 @@
 
 #include <fmt/core.h>
 
+using we::string::iequals;
+
 namespace we::edits {
 
 namespace {
+
+struct unlinked_object_property {
+   uint32 object_index = 0;
+   uint32 property_index = 0;
+   std::string value;
+};
+
+struct unlinked_path_property {
+   uint32 path_index = 0;
+   uint32 property_index = 0;
+   world::path::property value;
+};
+
+struct unlinked_sector_entry {
+   uint32 sector_index = 0;
+   uint32 entry_index = 0;
+   std::string entry;
+};
+
+struct unlinked_animation_group {
+   uint32 group_index = 0;
+   uint32 entry_index = 0;
+   world::animation_group::entry entry;
+};
+
+struct unlinked_animation_hierarchy {
+   uint32 hierarchy_index = 0;
+   uint32 object_index = 0;
+   std::string object;
+};
+
+struct unlinked_animation_hierarchy_root {
+   uint32 hierarchy_index = 0;
+   world::animation_hierarchy hierarchy;
+};
+
+struct unlinked_hintnode {
+   uint32 hintnode_index = 0;
+   std::string value;
+};
+
+struct unlinked_properties {
+   std::vector<unlinked_object_property> object_properties;
+   std::vector<unlinked_path_property> path_properties;
+   std::vector<unlinked_sector_entry> sector_entries;
+   std::vector<unlinked_animation_group> animation_groups;
+   std::vector<unlinked_animation_hierarchy> animation_hierarchies;
+   std::vector<unlinked_animation_hierarchy_root> animation_hierarchy_roots;
+   std::vector<unlinked_hintnode> hintnodes;
+
+   std::optional<std::string> global_light_1;
+   std::optional<std::string> global_light_2;
+};
 
 template<typename T>
 struct remap_entry {
@@ -68,6 +123,8 @@ struct delete_layer_data {
    int index;
    world::layer_description layer;
 
+   unlinked_properties unlinked_properties;
+
    std::vector<remap_entry<world::object>> remap_objects;
    std::vector<remap_entry<world::light>> remap_lights;
    std::vector<remap_entry<world::path>> remap_paths;
@@ -102,6 +159,185 @@ struct delete_layer_data {
    std::vector<delete_entry_block<world::block_description_pyramid>> delete_blocks_pyramids;
    std::vector<delete_entry_block<world::block_description_terrain_cut_box>> delete_blocks_terrain_cut_boxes;
 };
+
+auto make_unlink_properties(int layer_index, const world::world& world) -> unlinked_properties
+{
+   unlinked_properties unlinked_properties;
+
+   for (const world::object& object : world.objects) {
+      if (object.layer != layer_index) continue;
+      if (object.name.empty()) continue;
+
+      for (uint32 other_object_index = 0;
+           other_object_index < world.objects.size(); ++other_object_index) {
+         const world::object& other_object = world.objects[other_object_index];
+
+         if (other_object.layer == layer_index) continue;
+
+         for (uint32 property_index = 0;
+              property_index < other_object.instance_properties.size();
+              ++property_index) {
+            const world::instance_property& prop =
+               other_object.instance_properties[property_index];
+
+            if (iequals(prop.key, "ControlZone") and iequals(prop.value, object.name)) {
+               unlinked_properties.object_properties.emplace_back(other_object_index,
+                                                                  property_index);
+            }
+         }
+      }
+
+      for (uint32 path_index = 0; path_index < world.paths.size(); ++path_index) {
+         const world::path& path = world.paths[path_index];
+
+         if (path.layer == layer_index) continue;
+
+         uint32 delete_offset = 0;
+
+         for (uint32 property_index = 0;
+              property_index < path.properties.size(); ++property_index) {
+            const auto& [key, value] = path.properties[property_index];
+
+            if (iequals(key, "EnableObject") and iequals(value, object.name)) {
+               unlinked_properties.path_properties.emplace_back(path_index,
+                                                                property_index -
+                                                                   delete_offset);
+
+               delete_offset += 1;
+            }
+         }
+      }
+
+      for (uint32 sector_index = 0; sector_index < world.sectors.size(); ++sector_index) {
+         const world::sector& sector = world.sectors[sector_index];
+
+         uint32 delete_offset = 0;
+
+         for (uint32 entry_index = 0; entry_index < sector.objects.size();
+              ++entry_index) {
+            if (iequals(sector.objects[entry_index], object.name)) {
+               unlinked_properties.sector_entries.emplace_back(sector_index,
+                                                               entry_index - delete_offset);
+
+               delete_offset += 1;
+            }
+         }
+      }
+
+      for (uint32 hintnode_index = 0; hintnode_index < world.hintnodes.size();
+           ++hintnode_index) {
+         const world::hintnode& hintnode = world.hintnodes[hintnode_index];
+
+         if (hintnode.layer == layer_index) continue;
+
+         if (iequals(hintnode.command_post, object.name)) {
+            unlinked_properties.hintnodes.emplace_back(hintnode_index);
+         }
+      }
+
+      for (uint32 group_index = 0; group_index < world.animation_groups.size();
+           ++group_index) {
+         const world::animation_group& group = world.animation_groups[group_index];
+
+         uint32 delete_offset = 0;
+
+         for (uint32 entry_index = 0; entry_index < group.entries.size(); ++entry_index) {
+            if (iequals(group.entries[entry_index].object, object.name)) {
+               unlinked_properties.animation_groups.emplace_back(group_index,
+                                                                 entry_index - delete_offset);
+
+               delete_offset += 1;
+            }
+         }
+      }
+
+      uint32 hierarchy_delete_offset = 0;
+
+      for (uint32 hierarchy_index = 0;
+           hierarchy_index < world.animation_hierarchies.size(); ++hierarchy_index) {
+         const world::animation_hierarchy& hierarchy =
+            world.animation_hierarchies[hierarchy_index];
+
+         uint32 delete_offset = 0;
+
+         for (uint32 entry_index = 0; entry_index < hierarchy.objects.size();
+              ++entry_index) {
+            if (iequals(hierarchy.objects[entry_index], object.name)) {
+               unlinked_properties.animation_hierarchies
+                  .emplace_back(hierarchy_index, entry_index - delete_offset);
+
+               delete_offset += 1;
+            }
+         }
+
+         if (iequals(hierarchy.root_object, object.name)) {
+            unlinked_properties.animation_hierarchy_roots.emplace_back(
+               hierarchy_index - hierarchy_delete_offset);
+
+            hierarchy_delete_offset += 1;
+         }
+      }
+   }
+
+   for (const world::path& path : world.paths) {
+      if (path.layer != layer_index) continue;
+      if (path.name.empty()) continue;
+
+      for (uint32 object_index = 0; object_index < world.objects.size(); ++object_index) {
+         const world::object& object = world.objects[object_index];
+
+         for (uint32 property_index = 0;
+              property_index < object.instance_properties.size(); ++property_index) {
+            const auto& [key, value] = object.instance_properties[property_index];
+
+            if (iequals(key, "SpawnPath") or iequals(key, "AllyPath") or
+                iequals(key, "TurretPath")) {
+               if (iequals(value, path.name)) {
+                  unlinked_properties.object_properties.emplace_back(object_index,
+                                                                     property_index);
+               }
+            }
+         }
+      }
+   }
+
+   for (const world::region& region : world.regions) {
+      if (region.layer != layer_index) continue;
+      if (region.description.empty()) continue;
+
+      for (uint32 object_index = 0; object_index < world.objects.size(); ++object_index) {
+         const world::object& object = world.objects[object_index];
+
+         for (uint32 property_index = 0;
+              property_index < object.instance_properties.size(); ++property_index) {
+            const auto& [key, value] = object.instance_properties[property_index];
+
+            if (iequals(key, "CaptureRegion") or
+                iequals(key, "ControlRegion") or iequals(key, "EffectRegion") or
+                iequals(key, "KillRegion") or iequals(key, "SpawnRegion")) {
+               if (iequals(value, region.description)) {
+                  unlinked_properties.object_properties.emplace_back(object_index,
+                                                                     property_index);
+               }
+            }
+         }
+      }
+   }
+
+   for (const world::light& light : world.lights) {
+      if (light.layer != layer_index) continue;
+
+      if (iequals(light.name, world.global_lights.global_light_1)) {
+         unlinked_properties.global_light_1 = "";
+      }
+
+      if (iequals(light.name, world.global_lights.global_light_2)) {
+         unlinked_properties.global_light_2 = "";
+      }
+   }
+
+   return unlinked_properties;
+}
 
 template<typename T>
 auto make_remap_entries(int layer_index, const pinned_vector<T>& entities)
@@ -195,6 +431,151 @@ auto make_block_remap_entries(int layer_index, const std::span<const int8> block
    }
 
    return entries;
+}
+
+void apply_unlinked_entities(world::world& world, unlinked_properties& unlinked_properties)
+{
+   for (unlinked_object_property& unlinked : unlinked_properties.object_properties) {
+      std::swap(world.objects[unlinked.object_index]
+                   .instance_properties[unlinked.property_index]
+                   .value,
+                unlinked.value);
+   }
+
+   for (unlinked_path_property& unlinked : unlinked_properties.path_properties) {
+      std::vector<world::path::property>& properties =
+         world.paths[unlinked.path_index].properties;
+
+      std::swap(properties[unlinked.property_index], unlinked.value);
+
+      properties.erase(properties.begin() + unlinked.property_index);
+   }
+
+   for (unlinked_sector_entry& unlinked : unlinked_properties.sector_entries) {
+      std::vector<std::string>& objects = world.sectors[unlinked.sector_index].objects;
+
+      std::swap(objects[unlinked.entry_index], unlinked.entry);
+
+      objects.erase(objects.begin() + unlinked.entry_index);
+   }
+
+   for (unlinked_hintnode& unlinked : unlinked_properties.hintnodes) {
+      std::swap(world.hintnodes[unlinked.hintnode_index].command_post, unlinked.value);
+   }
+
+   for (unlinked_animation_group& unlinked : unlinked_properties.animation_groups) {
+      std::vector<world::animation_group::entry>& entries =
+         world.animation_groups[unlinked.group_index].entries;
+
+      std::swap(entries[unlinked.entry_index], unlinked.entry);
+
+      entries.erase(entries.begin() + unlinked.entry_index);
+   }
+
+   for (unlinked_animation_hierarchy& unlinked :
+        unlinked_properties.animation_hierarchies) {
+      std::vector<std::string>& objects =
+         world.animation_hierarchies[unlinked.hierarchy_index].objects;
+
+      std::swap(objects[unlinked.object_index], unlinked.object);
+
+      objects.erase(objects.begin() + unlinked.object_index);
+   }
+
+   for (unlinked_animation_hierarchy_root& unlinked :
+        unlinked_properties.animation_hierarchy_roots) {
+      std::swap(world.animation_hierarchies[unlinked.hierarchy_index],
+                unlinked.hierarchy);
+
+      world.animation_hierarchies.erase(world.animation_hierarchies.begin() +
+                                        unlinked.hierarchy_index);
+   }
+
+   if (unlinked_properties.global_light_1) {
+      std::swap(*unlinked_properties.global_light_1, world.global_lights.global_light_1);
+   }
+
+   if (unlinked_properties.global_light_2) {
+      std::swap(*unlinked_properties.global_light_2, world.global_lights.global_light_2);
+   }
+}
+
+void revert_unlinked_entities(world::world& world, unlinked_properties& unlinked_properties)
+{
+   for (unlinked_object_property& unlinked : unlinked_properties.object_properties) {
+      std::swap(world.objects[unlinked.object_index]
+                   .instance_properties[unlinked.property_index]
+                   .value,
+                unlinked.value);
+   }
+
+   for (std::ptrdiff_t i = (std::ssize(unlinked_properties.path_properties) - 1);
+        i >= 0; --i) {
+      unlinked_path_property& unlinked = unlinked_properties.path_properties[i];
+
+      std::vector<world::path::property>& properties =
+         world.paths[unlinked.path_index].properties;
+
+      properties.emplace(properties.begin() + unlinked.property_index,
+                         std::move(unlinked.value));
+   }
+
+   for (std::ptrdiff_t i = (std::ssize(unlinked_properties.sector_entries) - 1);
+        i >= 0; --i) {
+      unlinked_sector_entry& unlinked = unlinked_properties.sector_entries[i];
+
+      std::vector<std::string>& objects = world.sectors[unlinked.sector_index].objects;
+
+      objects.insert(objects.begin() + unlinked.entry_index, std::move(unlinked.entry));
+   }
+
+   for (std::ptrdiff_t i = (std::ssize(unlinked_properties.hintnodes) - 1);
+        i >= 0; --i) {
+      unlinked_hintnode& unlinked = unlinked_properties.hintnodes[i];
+
+      std::swap(world.hintnodes[unlinked.hintnode_index].command_post, unlinked.value);
+   }
+
+   for (std::ptrdiff_t i = (std::ssize(unlinked_properties.animation_groups) - 1);
+        i >= 0; --i) {
+      unlinked_animation_group& unlinked = unlinked_properties.animation_groups[i];
+
+      std::vector<world::animation_group::entry>& entries =
+         world.animation_groups[unlinked.group_index].entries;
+
+      entries.insert(entries.begin() + unlinked.entry_index, std::move(unlinked.entry));
+   }
+
+   for (std::ptrdiff_t i = (std::ssize(unlinked_properties.animation_hierarchies) - 1);
+        i >= 0; --i) {
+      unlinked_animation_hierarchy& unlinked =
+         unlinked_properties.animation_hierarchies[i];
+
+      std::vector<std::string>& objects =
+         world.animation_hierarchies[unlinked.hierarchy_index].objects;
+
+      objects.insert(objects.begin() + unlinked.object_index,
+                     std::move(unlinked.object));
+   }
+
+   for (std::ptrdiff_t i =
+           (std::ssize(unlinked_properties.animation_hierarchy_roots) - 1);
+        i >= 0; --i) {
+      unlinked_animation_hierarchy_root& unlinked =
+         unlinked_properties.animation_hierarchy_roots[i];
+
+      world.animation_hierarchies.insert(world.animation_hierarchies.begin() +
+                                            unlinked.hierarchy_index,
+                                         std::move(unlinked.hierarchy));
+   }
+
+   if (unlinked_properties.global_light_1) {
+      std::swap(*unlinked_properties.global_light_1, world.global_lights.global_light_1);
+   }
+
+   if (unlinked_properties.global_light_2) {
+      std::swap(*unlinked_properties.global_light_2, world.global_lights.global_light_2);
+   }
 }
 
 template<typename T>
@@ -701,6 +1082,8 @@ struct delete_layer final : edit<world::edit_context> {
       world.layer_descriptions.erase(world.layer_descriptions.begin() + _data.index);
       world.deleted_layers.push_back(_data.layer.name);
 
+      apply_unlinked_entities(world, _data.unlinked_properties);
+
       apply_remap_entries(world.objects, _data.remap_objects);
       apply_remap_entries(world.lights, _data.remap_lights);
       apply_remap_entries(world.paths, _data.remap_paths);
@@ -781,6 +1164,8 @@ struct delete_layer final : edit<world::edit_context> {
       revert_remap_entries(world.blocks.pyramids.layer, _data.remap_blocks_pyramids);
       revert_remap_entries(world.blocks.pyramids.layer,
                            _data.remap_blocks_terrain_cut_boxes);
+
+      revert_unlinked_entities(world, _data.unlinked_properties);
    }
 
    bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
@@ -791,7 +1176,7 @@ struct delete_layer final : edit<world::edit_context> {
    void coalesce([[maybe_unused]] edit& other) noexcept override {}
 
 private:
-   const delete_layer_data _data;
+   delete_layer_data _data;
    world::object_class_library& _object_class_library;
 };
 
@@ -808,6 +1193,8 @@ auto make_delete_layer(int layer_index, const world::world& world,
       delete_layer_data{
          .index = layer_index,
          .layer = world.layer_descriptions[layer_index],
+
+         .unlinked_properties = make_unlink_properties(layer_index, world),
 
          .remap_objects = make_remap_entries(layer_index, world.objects),
          .remap_lights = make_remap_entries(layer_index, world.lights),

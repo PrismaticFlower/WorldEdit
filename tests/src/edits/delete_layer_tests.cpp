@@ -13,6 +13,8 @@ namespace we::edits::tests {
 
 namespace {
 
+using world::animation_group;
+using world::animation_hierarchy;
 using world::hintnode;
 using world::light;
 using world::object;
@@ -549,4 +551,316 @@ TEST_CASE("edits delete_layer blocks custom", "[Edits]")
    CHECK(blocks.custom_meshes.debug_ref_count(mesh_desc0) == 2);
    CHECK(blocks.custom_meshes.debug_ref_count(mesh_desc1) == 3);
 }
+
+TEST_CASE("edits delete_layer unlink objects", "[Edits]")
+{
+   world::world world = {
+      .name = "Test"s,
+
+      .requirements = {{.file_type = "world",
+                        .entries = {"Test", "Test_Middle", "Test_Top", "Test_Unlinked"}}},
+
+      .layer_descriptions = {{.name = "[Base]"},
+                             {.name = "Middle"},
+                             {.name = "Top"},
+                             {.name = "Unlinked"}},
+      .game_modes =
+         {
+            {
+               .name = "conquest",
+               .layers = {1},
+               .requirements = {{
+                  .file_type = "world",
+                  .entries = {"Test_Middle"},
+               }},
+            },
+         },
+      .common_layers = {0, 2, 3},
+
+      .objects = {world::entities_init,
+                  std::initializer_list{
+                     object{.name = "Object0", .layer = 0},
+                     object{.name = "Object1", .layer = 1},
+                     object{.name = "Object2", .layer = 2},
+                     object{.name = "Object3",
+                            .layer = 1,
+                            .instance_properties = {{"ControlZone",
+                                                     "Object4"}}},
+                     object{.name = "Object4", .layer = 3},
+                  }},
+
+      .paths = {world::entities_init,
+                std::initializer_list{
+                   path{.name = "Path0", .layer = 0, .properties = {{"EnableObject", "Object4"}}},
+                   path{.name = "Path1", .layer = 1},
+                   path{.name = "Path2", .layer = 2},
+                }},
+
+      .hintnodes = {world::entities_init,
+                    std::initializer_list{
+                       hintnode{.name = "Hintnode0", .layer = 0},
+                       hintnode{.name = "Hintnode1", .layer = 1},
+                       hintnode{.name = "Hintnode2", .layer = 2, .command_post = "Object4"},
+                    }},
+
+      .animation_groups =
+         {
+            {.max_size = 1},
+            std::initializer_list{
+               animation_group{
+                  .name = "Group",
+                  .entries =
+                     {
+                        animation_group::entry{.animation = "Animation", .object = "Object4"},
+                        animation_group::entry{.animation = "Animation", .object = "Object1"},
+                     },
+               },
+            },
+         },
+
+      .animation_hierarchies =
+         {
+            {.max_size = 1},
+            std::initializer_list{
+               animation_hierarchy{
+                  .root_object = "Object3",
+
+                  .objects =
+                     {
+                        "Object4",
+                        "Object1",
+                     },
+               },
+               animation_hierarchy{
+                  .root_object = "Object4",
+               },
+            },
+         },
+   };
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   auto edit = make_delete_layer(3, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   CHECK(world.objects[3].instance_properties[0].value == "");
+
+   CHECK(world.paths[0].properties.size() == 0);
+
+   CHECK(world.hintnodes[2].command_post == "");
+
+   REQUIRE(world.animation_groups[0].entries.size() == 1);
+   CHECK(world.animation_groups[0].entries[0].object == "Object1");
+
+   REQUIRE(world.animation_hierarchies.size() == 1);
+
+   REQUIRE(world.animation_hierarchies[0].objects.size() == 1);
+   CHECK(world.animation_hierarchies[0].objects[0] == "Object1");
+
+   edit->revert(edit_context);
+
+   CHECK(world.objects[3].instance_properties[0].value == "Object4");
+
+   CHECK(world.paths[0].properties.size() == 1);
+   CHECK(world.paths[0].properties[0].key == "EnableObject");
+   CHECK(world.paths[0].properties[0].value == "Object4");
+
+   CHECK(world.hintnodes[2].command_post == "Object4");
+
+   REQUIRE(world.animation_groups[0].entries.size() == 2);
+   CHECK(world.animation_groups[0].entries[0].object == "Object4");
+   CHECK(world.animation_groups[0].entries[1].object == "Object1");
+
+   REQUIRE(world.animation_hierarchies.size() == 2);
+
+   REQUIRE(world.animation_hierarchies[0].objects.size() == 2);
+   CHECK(world.animation_hierarchies[0].objects[0] == "Object4");
+   CHECK(world.animation_hierarchies[0].objects[1] == "Object1");
+
+   CHECK(world.animation_hierarchies[1].root_object == "Object4");
+}
+
+TEST_CASE("edits delete_layer unlink paths", "[Edits]")
+{
+   world::world world = {
+      .name = "Test"s,
+
+      .requirements = {{.file_type = "world",
+                        .entries = {"Test", "Test_Middle", "Test_Top", "Test_Unlinked"}}},
+
+      .layer_descriptions = {{.name = "[Base]"},
+                             {.name = "Middle"},
+                             {.name = "Top"},
+                             {.name = "Unlinked"}},
+      .game_modes =
+         {
+            {
+               .name = "conquest",
+               .layers = {1},
+               .requirements = {{
+                  .file_type = "world",
+                  .entries = {"Test_Middle"},
+               }},
+            },
+         },
+      .common_layers = {0, 2, 3},
+
+      .objects = {world::entities_init,
+                  std::initializer_list{
+                     object{.name = "Object0",
+                            .layer = 1,
+                            .instance_properties =
+                               {
+                                  {"SpawnPath", "Path0"},
+                                  {"AllyPath", "Path0"},
+                                  {"TurretPath", "Path0"},
+                               }},
+                  }},
+
+      .paths = {world::entities_init,
+                std::initializer_list{
+                   path{.name = "Path0", .layer = 3},
+                }},
+
+   };
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   auto edit = make_delete_layer(3, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   CHECK(world.objects[0].instance_properties[0].value == "");
+   CHECK(world.objects[0].instance_properties[1].value == "");
+   CHECK(world.objects[0].instance_properties[2].value == "");
+
+   edit->revert(edit_context);
+
+   CHECK(world.objects[0].instance_properties[0].value == "Path0");
+   CHECK(world.objects[0].instance_properties[1].value == "Path0");
+   CHECK(world.objects[0].instance_properties[2].value == "Path0");
+}
+
+TEST_CASE("edits delete_layer unlink regions", "[Edits]")
+{
+   world::world world = {
+      .name = "Test"s,
+
+      .requirements = {{.file_type = "world",
+                        .entries = {"Test", "Test_Middle", "Test_Top", "Test_Unlinked"}}},
+
+      .layer_descriptions = {{.name = "[Base]"},
+                             {.name = "Middle"},
+                             {.name = "Top"},
+                             {.name = "Unlinked"}},
+      .game_modes =
+         {
+            {
+               .name = "conquest",
+               .layers = {1},
+               .requirements = {{
+                  .file_type = "world",
+                  .entries = {"Test_Middle"},
+               }},
+            },
+         },
+      .common_layers = {0, 2, 3},
+
+      .objects = {world::entities_init,
+                  std::initializer_list{
+                     object{.name = "Object0",
+                            .layer = 1,
+                            .instance_properties =
+                               {
+                                  {"CaptureRegion", "Region0"},
+                                  {"ControlRegion", "Region0"},
+                                  {"EffectRegion", "Region0"},
+                                  {"KillRegion", "Region0"},
+                                  {"SpawnRegion", "Region0"},
+                               }},
+                  }},
+
+      .regions = {world::entities_init,
+                  std::initializer_list{
+                     region{.name = "Region", .layer = 3, .description = "Region0"},
+                  }},
+
+   };
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   auto edit = make_delete_layer(3, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   CHECK(world.objects[0].instance_properties[0].value == "");
+   CHECK(world.objects[0].instance_properties[1].value == "");
+   CHECK(world.objects[0].instance_properties[2].value == "");
+   CHECK(world.objects[0].instance_properties[3].value == "");
+   CHECK(world.objects[0].instance_properties[4].value == "");
+
+   edit->revert(edit_context);
+
+   CHECK(world.objects[0].instance_properties[0].value == "Region0");
+   CHECK(world.objects[0].instance_properties[1].value == "Region0");
+   CHECK(world.objects[0].instance_properties[2].value == "Region0");
+   CHECK(world.objects[0].instance_properties[3].value == "Region0");
+   CHECK(world.objects[0].instance_properties[4].value == "Region0");
+}
+
+TEST_CASE("edits delete_layer unlink lights", "[Edits]")
+{
+   world::world world = {
+      .name = "Test"s,
+
+      .requirements = {{.file_type = "world",
+                        .entries = {"Test", "Test_Middle", "Test_Top", "Test_Unlinked"}}},
+
+      .layer_descriptions = {{.name = "[Base]"},
+                             {.name = "Middle"},
+                             {.name = "Top"},
+                             {.name = "Unlinked"}},
+      .game_modes =
+         {
+            {
+               .name = "conquest",
+               .layers = {1},
+               .requirements = {{
+                  .file_type = "world",
+                  .entries = {"Test_Middle"},
+               }},
+            },
+         },
+      .common_layers = {0, 2, 3},
+
+      .global_lights = {.global_light_1 = "Light1", .global_light_2 = "Light0"},
+
+      .lights = {world::entities_init,
+                 std::initializer_list{
+                    light{.name = "Light0", .layer = 3},
+                    light{.name = "Light1", .layer = 3},
+                 }},
+   };
+
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   auto edit = make_delete_layer(3, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   CHECK(world.global_lights.global_light_1 == "");
+   CHECK(world.global_lights.global_light_2 == "");
+
+   edit->revert(edit_context);
+
+   CHECK(world.global_lights.global_light_1 == "Light1");
+   CHECK(world.global_lights.global_light_2 == "Light0");
+}
+
 }
