@@ -1,6 +1,8 @@
 #include "world_edit.hpp"
 
+#include "munge/message.hpp"
 #include "munge/project.hpp"
+
 #include "utility/file_pickers.hpp"
 #include "utility/show_in_explorer.hpp"
 

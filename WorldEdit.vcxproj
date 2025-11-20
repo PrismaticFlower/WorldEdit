@@ -380,6 +380,7 @@
     <ClCompile Include="src\math\frustum.cpp" />
     <ClCompile Include="src\math\matrix_funcs.cpp" />
     <ClCompile Include="src\math\scalar_funcs.cpp" />
+    <ClCompile Include="src\munge\feedback.cpp" />
     <ClCompile Include="src\munge\manager.cpp" />
     <ClCompile Include="src\munge\output.cpp" />
     <ClCompile Include="src\munge\project.cpp" />
@@ -672,10 +673,13 @@
     <ClInclude Include="src\math\sampling.hpp" />
     <ClInclude Include="src\math\scalar_funcs.hpp" />
     <ClInclude Include="src\math\vector_funcs.hpp" />
+    <ClInclude Include="src\munge\feedback.hpp" />
     <ClInclude Include="src\munge\manager.hpp" />
+    <ClInclude Include="src\munge\message.hpp" />
     <ClInclude Include="src\munge\output.hpp" />
     <ClInclude Include="src\munge\project.hpp" />
     <ClInclude Include="src\munge\tool.hpp" />
+    <ClInclude Include="src\munge\tool_context.hpp" />
     <ClInclude Include="src\os\process.hpp" />
     <ClInclude Include="src\output_stream.hpp" />
     <ClInclude Include="src\scale_factor.hpp" />

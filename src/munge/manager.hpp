@@ -17,12 +17,7 @@ namespace we::munge {
 
 struct project_config;
 struct project;
-
-struct message {
-   io::path file;
-   std::string tool;
-   std::string message;
-};
+struct message;
 
 struct report {
    std::vector<message> warnings;
