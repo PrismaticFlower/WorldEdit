@@ -997,7 +997,7 @@ auto make_delete_entity(world::region_id region_id, const world::world& world)
          if (iequals(key, "CaptureRegion") or iequals(key, "ControlRegion") or
              iequals(key, "EffectRegion") or iequals(key, "KillRegion") or
              iequals(key, "SpawnRegion")) {
-            if (iequals(value, region.name)) {
+            if (iequals(value, region.description)) {
                unlinked_object_properties.emplace_back(object_index, property_index);
             }
          }
