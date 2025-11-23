@@ -89,6 +89,30 @@ const std::string_view invalid_req_unknown_platform_test = R"(ucft
 }
 )";
 
+const std::string_view empty_string_skip_test = R"(ucft
+{
+	REQN
+	{
+		"light"
+		""
+	}
+	REQN
+	{
+		"terrain"
+		""
+	}
+	REQN
+	{
+		"config"
+		""
+	}
+	REQN
+	{
+		"path"
+		""
+	}
+})";
+
 }
 
 TEST_CASE(".req reading", "[Assets][REQ]")
@@ -144,6 +168,33 @@ TEST_CASE(".req failed reading missing closing bracket", "[Assets][REQ]")
 TEST_CASE(".req failed reading unknown platform", "[Assets][REQ]")
 {
    REQUIRE_THROWS(read(invalid_req_unknown_platform_test));
+}
+
+TEST_CASE(".req empty string skip", "[Assets][REQ]")
+{
+   auto requirements = read(empty_string_skip_test);
+
+   REQUIRE(requirements.size() == 4);
+
+   CHECK(requirements[0].file_type == "light");
+   CHECK(requirements[0].platform == platform::all);
+   CHECK(requirements[0].alignment == 0);
+   REQUIRE(requirements[0].entries.empty());
+
+   CHECK(requirements[1].file_type == "terrain");
+   CHECK(requirements[1].platform == platform::all);
+   CHECK(requirements[1].alignment == 0);
+   REQUIRE(requirements[1].entries.empty());
+
+   CHECK(requirements[2].file_type == "config");
+   CHECK(requirements[2].platform == platform::all);
+   CHECK(requirements[2].alignment == 0);
+   REQUIRE(requirements[2].entries.empty());
+
+   CHECK(requirements[3].file_type == "path");
+   CHECK(requirements[3].platform == platform::all);
+   CHECK(requirements[3].alignment == 0);
+   REQUIRE(requirements[3].entries.empty());
 }
 
 }

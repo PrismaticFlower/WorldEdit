@@ -79,9 +79,11 @@ auto read(std::string_view req_string) -> std::vector<requirement_list>
                return quoted ? std::optional{(*quoted)[0]} : std::nullopt;
             });
 
-         if (not quoted_str or quoted_str->empty()) {
+         if (not quoted_str) {
             throw_parse_error(line.number, "Expected entry!");
          }
+
+         if (quoted_str->empty()) continue;
 
          str = *quoted_str;
 
