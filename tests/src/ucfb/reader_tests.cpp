@@ -12,7 +12,7 @@ TEST_CASE("ucfb reading", "[ucfb][reader]")
 {
    const auto bytes = io::read_file_to_bytes("data/ucfb_read_test.lvl");
 
-   ucfb::reader reader{bytes};
+   ucfb::reader reader{bytes, ucfb::reader_options{.aligned_children = false}};
 
    SECTION("reader id and size matches expected")
    {
@@ -54,6 +54,33 @@ TEST_CASE("ucfb reading", "[ucfb][reader]")
       REQUIRE(info.read<uint32>() == 1);
       REQUIRE(info.read<uint32>() == 26);
       REQUIRE_THROWS(info.read<uint32>() == 0);
+
+      info.reset_head();
+
+      REQUIRE(info.read_multi<uint32, uint32>() == std::tuple<uint32, uint32>{1, 26});
+   }
+
+   SECTION("data read bytes tests")
+   {
+      auto shdr = reader.read_child_strict<"SHDR"_id>();
+
+      auto rtyp = shdr.read_child_strict<"RTYP"_id>();
+      REQUIRE(rtyp.read_string() == "zprepass"sv);
+
+      shdr.read_child_strict<"NAME"_id>();
+
+      auto info = shdr.read_child_strict<"INFO"_id>();
+
+      const std::span<const std::byte> info_bytes = info.read_bytes(8);
+
+      REQUIRE(info_bytes[0] == std::byte{0x01});
+      REQUIRE(info_bytes[1] == std::byte{0x00});
+      REQUIRE(info_bytes[2] == std::byte{0x00});
+      REQUIRE(info_bytes[3] == std::byte{0x00});
+      REQUIRE(info_bytes[4] == std::byte{0x1A});
+      REQUIRE(info_bytes[5] == std::byte{0x00});
+      REQUIRE(info_bytes[6] == std::byte{0x00});
+      REQUIRE(info_bytes[7] == std::byte{0x00});
 
       info.reset_head();
 
@@ -121,6 +148,37 @@ INFO at offset 84
 
       REQUIRE(pipe_info.trace() == expected_trace);
    }
+}
+
+TEST_CASE("ucfb aligned children", "[ucfb][reader]")
+{
+   const auto bytes =
+      io::read_file_to_bytes("data/ucfb_child_alignment_test.lvl");
+
+   ucfb::reader reader{bytes, ucfb::reader_options{.aligned_children = true}};
+
+   REQUIRE(reader.id() == "ucfb"_id);
+   REQUIRE(reader.size() == 44);
+
+   ucfb::reader_strict<"modl"_id> modl = reader.read_child_strict<"modl"_id>();
+   ucfb::reader_strict<"NAME"_id> name = modl.read_child_strict<"NAME"_id>();
+   ucfb::reader_strict<"VRTX"_id> vrtx = modl.read_child_strict<"VRTX"_id>();
+
+   CHECK(modl.size() == 36);
+   CHECK(name.size() == 15);
+   CHECK(vrtx.size() == 4);
+}
+
+TEST_CASE("ucfb unaligned children fail", "[ucfb][reader]")
+{
+   const auto bytes =
+      io::read_file_to_bytes("data/ucfb_child_alignment_test.lvl");
+
+   ucfb::reader reader{bytes, ucfb::reader_options{.aligned_children = false}};
+
+   ucfb::reader_strict<"modl"_id> modl = reader.read_child_strict<"modl"_id>();
+   ucfb::reader_strict<"NAME"_id> name = modl.read_child_strict<"NAME"_id>();
+   REQUIRE_THROWS(modl.read_child_strict<"VRTX"_id>());
 }
 
 }

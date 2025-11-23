@@ -351,7 +351,7 @@ auto read_msh2(ucfb::reader_strict<"MSH2"_id> msh2) -> scene
 
 auto read_scene(const std::span<const std::byte> bytes) -> scene
 {
-   ucfb::reader_strict<"HEDR"_id> hedr{bytes};
+   ucfb::reader_strict<"HEDR"_id> hedr{bytes, {.aligned_children = false}};
 
    while (hedr) {
       auto msh_ = hedr.read_child();

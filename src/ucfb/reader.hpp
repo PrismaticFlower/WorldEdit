@@ -24,16 +24,23 @@ namespace we::ucfb {
 template<chunk_id type_id>
 class reader_strict;
 
+struct reader_options {
+   /// @brief Align to 4 byte boundaries after reading children.
+   /// .msh files should have this set to false, ucfb files should have it set to true.
+   bool aligned_children = true;
+};
+
 class reader {
 public:
    reader() = delete;
 
-   explicit reader(const std::span<const std::byte> bytes)
+   explicit reader(const std::span<const std::byte> bytes, const reader_options options)
       : _id{utility::make_from_bytes<chunk_id>(bytes.subspan(0, sizeof(chunk_id)))},
         _size{utility::make_from_bytes<uint32>(
            bytes.subspan(sizeof(chunk_id), sizeof(uint32)))},
         _data{&bytes[8]},
-        _abs_offset{0}
+        _abs_offset{0},
+        _aligned_children{options.aligned_children}
    {
       if (bytes.size() < 8) {
          throw std::runtime_error{
@@ -57,14 +64,9 @@ public:
                     "Type must be trivially copyable.");
       static_assert(!std::is_pointer_v<Type>, "Type can not be a pointer.");
 
-      const auto cur_pos = _head;
-      _head += sizeof(Type);
+      const std::span<const std::byte> bytes = read_bytes(sizeof(Type), aligned);
 
-      check_head();
-
-      if (aligned) align_head();
-
-      return utility::make_from_bytes<Type>(std::span{&_data[cur_pos], sizeof(Type)});
+      return utility::make_from_bytes<Type>(bytes);
    }
 
    template<typename Type>
@@ -88,12 +90,16 @@ public:
 
    auto read_string(const bool aligned = false) -> std::string_view
    {
+      check_head();
+
       const char* const string = reinterpret_cast<const char*>(_data + _head);
       const auto string_length = cstring_length(string, _size - _head);
 
-      _head += (string_length + 1);
+      std::size_t new_head = _head + string_length + 1;
 
-      check_head();
+      check_new_head(new_head);
+
+      _head = new_head;
 
       if (aligned) align_head();
 
@@ -105,22 +111,51 @@ public:
       return read_string(true);
    }
 
+   auto read_bytes(const std::size_t count, const bool aligned = false)
+      -> std::span<const std::byte>
+   {
+      std::size_t new_head = _head + count;
+
+      check_new_head(new_head);
+
+      const std::span<const std::byte> bytes = {_data + _head, count};
+
+      _head = new_head;
+
+      if (aligned) align_head();
+
+      return bytes;
+   }
+
+   auto read_bytes_aligned() -> std::span<const std::byte>
+   {
+      return read_bytes(true);
+   }
+
    auto read_child() -> reader
    {
+      check_new_head(_head + 8);
+
       const auto child_header_abs_offset = _abs_offset + 8 + _head;
       const auto child_id = read<chunk_id>();
       const auto child_size = read<std::uint32_t>();
       const auto child_data_offset = _head;
 
+      check_new_head(_head + child_size);
+
       _head += child_size;
 
-      check_head();
+      if (_aligned_children) align_head();
 
       auto child_trace_stack = _trace_stack;
       child_trace_stack.push_back({.id = child_id, .offset = child_header_abs_offset});
 
-      return reader{child_id, child_size, _data + child_data_offset,
-                    child_header_abs_offset, std::move(child_trace_stack)};
+      return reader{child_id,
+                    child_size,
+                    _data + child_data_offset,
+                    child_header_abs_offset,
+                    _aligned_children,
+                    std::move(child_trace_stack)};
    }
 
    template<chunk_id type_id>
@@ -132,9 +167,9 @@ public:
 
    void consume(const std::size_t amount, const bool aligned = false)
    {
-      _head += amount;
+      check_new_head(_head + amount);
 
-      check_head();
+      _head += amount;
 
       if (aligned) align_head();
    }
@@ -208,8 +243,13 @@ private:
    using trace_stack = absl::InlinedVector<trace_entry, 8>;
 
    reader(const chunk_id id, const std::uint32_t size, const std::byte* const data,
-          const std::size_t abs_offset, trace_stack trace_stack)
-      : _id{id}, _size{size}, _data{data}, _abs_offset{abs_offset}, _trace_stack{trace_stack}
+          const std::size_t abs_offset, bool aligned_children, trace_stack trace_stack)
+      : _id{id},
+        _size{size},
+        _data{data},
+        _abs_offset{abs_offset},
+        _aligned_children{aligned_children},
+        _trace_stack{trace_stack}
    {
    }
 
@@ -259,6 +299,19 @@ private:
       if (remainder != 0) _head += (4 - remainder);
    }
 
+   void check_new_head(const std::size_t new_head)
+   {
+      using namespace std::literals;
+
+      if (new_head > _size) {
+         throw std::runtime_error{
+            fmt::format("Attempt to read {} bytes past end of chunk {}. Chunk "
+                        "Trace Stack: \n{}",
+                        new_head - _size, to_string(id()),
+                        string::indent(1, trace()))};
+      }
+   }
+
    static auto cstring_length(const char* const string, const std::size_t max_length)
       -> std::size_t
    {
@@ -273,6 +326,8 @@ private:
 
    std::size_t _head = 0;
    const std::size_t _abs_offset;
+
+   bool _aligned_children = false;
 
    trace_stack _trace_stack;
 };
@@ -291,8 +346,9 @@ public:
       }
    }
 
-   explicit reader_strict(const std::span<const std::byte> bytes)
-      : reader_strict{reader{bytes}}
+   explicit reader_strict(const std::span<const std::byte> bytes,
+                          const reader_options options)
+      : reader_strict{reader{bytes, options}}
    {
    }
 
@@ -306,5 +362,4 @@ private:
    {
    }
 };
-
 }
