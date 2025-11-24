@@ -1407,7 +1407,7 @@ void world_edit::ui_show_world_explorer() noexcept
                                   &_world_explorer_filter);
          ImGui::PopItemWidth();
 
-         if (ImGui::BeginTable("AI Planning Connections", 10,
+         if (ImGui::BeginTable("AI Planning Connections", 11,
                                ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
                                   ImGuiTableFlags_SortTristate)) {
@@ -1420,6 +1420,7 @@ void world_edit::ui_show_world_explorer() noexcept
             ImGui::TableSetupColumn("Medium");
             ImGui::TableSetupColumn("Huge");
             ImGui::TableSetupColumn("Flyer");
+            ImGui::TableSetupColumn("Dynamic");
             ImGui::TableSetupColumn("Hidden");
             ImGui::TableHeadersRow();
 
@@ -1448,7 +1449,8 @@ void world_edit::ui_show_world_explorer() noexcept
                const int medium_column = 6;
                const int huge_column = 7;
                const int flyer_column = 8;
-               const int hidden_column = 9;
+               const int dynamic_column = 9;
+               const int hidden_column = 10;
 
                if (sort_specs.ColumnIndex == name_column) {
                   fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
@@ -1512,6 +1514,19 @@ void world_edit::ui_show_world_explorer() noexcept
                                            flag);
                                 });
                }
+               else if (sort_specs.ColumnIndex == dynamic_column) {
+                  fill_sort_map(
+                     _world_explorer_sort_map, sort_specs.SortDirection,
+                     [&](const uint32 left, const uint32 right) {
+                        return string::iless_than(
+                           _world
+                              .planning_hubs[_world.planning_connections[left].dynamic_group]
+                              .name,
+                           _world
+                              .planning_hubs[_world.planning_connections[right].dynamic_group]
+                              .name);
+                     });
+               }
                else if (sort_specs.ColumnIndex == hidden_column) {
                   fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
                                 [&](const uint32 left, const uint32 right) {
@@ -1550,6 +1565,7 @@ void world_edit::ui_show_world_explorer() noexcept
                bool medium = are_flags_set(flags, ai_path_flags::medium);
                bool huge = are_flags_set(flags, ai_path_flags::huge);
                bool flyer = are_flags_set(flags, ai_path_flags::flyer);
+               const int dynamic_group = connection.dynamic_group;
 
                ImGui::TableNextRow();
 
@@ -1575,6 +1591,13 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text(huge ? "X" : "-");
                ImGui::TableNextColumn();
                ImGui::Text(flyer ? "X" : "-");
+               ImGui::TableNextColumn();
+               if (dynamic_group != 0) {
+                  ImGui::Text("Group %i", dynamic_group);
+               }
+               else {
+                  ImGui::Text("Static");
+               }
                ImGui::TableNextColumn();
                ImGui::Text(connection.hidden ? "X" : "-");
 
