@@ -385,12 +385,12 @@
     <ClCompile Include="src\munge\manager.cpp" />
     <ClCompile Include="src\munge\output.cpp" />
     <ClCompile Include="src\munge\project.cpp" />
+    <ClCompile Include="src\os\execute.cpp" />
     <ClCompile Include="src\os\process.cpp" />
     <ClCompile Include="src\settings\io.cpp" />
     <ClCompile Include="src\settings\preferences.cpp" />
     <ClCompile Include="src\settings\settings.cpp" />
     <ClCompile Include="src\ucfb\writer.cpp" />
-    <ClCompile Include="src\utility\os_execute.cpp" />
     <ClCompile Include="src\utility\show_in_explorer.cpp" />
     <ClCompile Include="src\utility\srgb_conversion.cpp" />
     <ClCompile Include="src\utility\stopwatch.cpp" />
@@ -683,6 +683,7 @@
     <ClInclude Include="src\munge\shared.hpp" />
     <ClInclude Include="src\munge\tool.hpp" />
     <ClInclude Include="src\munge\tool_context.hpp" />
+    <ClInclude Include="src\os\execute.hpp" />
     <ClInclude Include="src\os\process.hpp" />
     <ClInclude Include="src\output_stream.hpp" />
     <ClInclude Include="src\scale_factor.hpp" />
@@ -728,7 +729,6 @@
     <ClInclude Include="src\utility\implementation_storage.hpp" />
     <ClInclude Include="src\utility\look_for.hpp" />
     <ClInclude Include="src\utility\make_from_bytes.hpp" />
-    <ClInclude Include="src\utility\os_execute.hpp" />
     <ClInclude Include="src\utility\overload.hpp" />
     <ClInclude Include="src\utility\show_in_explorer.hpp" />
     <ClInclude Include="src\utility\srgb_conversion.hpp" />

@@ -1,8 +1,8 @@
-#include "os_execute.hpp"
+#include "execute.hpp"
 
 #include <Windows.h>
 
-namespace we::utility {
+namespace we::os {
 
 auto expand_environment_strings(const std::string& string) noexcept -> std::string
 {
@@ -21,7 +21,7 @@ auto expand_environment_strings(const std::string& string) noexcept -> std::stri
    return expanded_string;
 }
 
-bool os_execute_async(const std::string& command_line) noexcept
+bool execute_async(const std::string& command_line) noexcept
 {
    std::string expanded_command_line = expand_environment_strings(command_line);
 

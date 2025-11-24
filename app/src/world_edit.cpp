@@ -25,8 +25,9 @@
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
+#include "os/execute.hpp"
+
 #include "utility/file_pickers.hpp"
-#include "utility/os_execute.hpp"
 #include "utility/overload.hpp"
 #include "utility/show_in_explorer.hpp"
 #include "utility/srgb_conversion.hpp"
@@ -4368,7 +4369,7 @@ void world_edit::open_odf_in_text_editor(const lowercase_string& asset_name) noe
       fmt::format("{} {}", _settings.preferences.text_editor,
                   asset_path.string_view());
 
-   if (not utility::os_execute_async(command_line)) {
+   if (not os::execute_async(command_line)) {
       MessageBoxA(_window,
                   fmt::format("Unable to execute command line '{}'.", command_line)
                      .c_str(),

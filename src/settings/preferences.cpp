@@ -1,6 +1,8 @@
 #include "preferences.hpp"
+
 #include "io/path.hpp"
-#include "utility/os_execute.hpp"
+
+#include "os/execute.hpp"
 
 #include <array>
 
@@ -17,7 +19,7 @@ auto detect_default_text_editor() -> std::string
                                             R"(%ProgramFiles%\Notepad++\Notepad++.exe)"s};
 
    for (const auto& known : known_common_editors) {
-      if (io::exists(io::path{utility::expand_environment_strings(known)})) {
+      if (io::exists(io::path{os::expand_environment_strings(known)})) {
          return known;
       }
    }

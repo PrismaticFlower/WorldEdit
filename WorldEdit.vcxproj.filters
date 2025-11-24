@@ -122,7 +122,6 @@
     <ClCompile Include="src\settings\io.cpp" />
     <ClCompile Include="src\settings\preferences.cpp" />
     <ClCompile Include="src\settings\settings.cpp" />
-    <ClCompile Include="src\utility\os_execute.cpp" />
     <ClCompile Include="src\utility\show_in_explorer.cpp" />
     <ClCompile Include="src\utility\srgb_conversion.cpp" />
     <ClCompile Include="src\utility\string_icompare.cpp" />
@@ -286,6 +285,7 @@
     <ClCompile Include="src\edits\delete_sun_flare.cpp" />
     <ClCompile Include="src\munge\feedback.cpp" />
     <ClCompile Include="src\munge\builtin\blocks_munge.cpp" />
+    <ClCompile Include="src\os\execute.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -481,7 +481,6 @@
     <ClInclude Include="src\utility\implementation_storage.hpp" />
     <ClInclude Include="src\utility\look_for.hpp" />
     <ClInclude Include="src\utility\make_from_bytes.hpp" />
-    <ClInclude Include="src\utility\os_execute.hpp" />
     <ClInclude Include="src\utility\overload.hpp" />
     <ClInclude Include="src\utility\show_in_explorer.hpp" />
     <ClInclude Include="src\utility\srgb_conversion.hpp" />
@@ -634,6 +633,7 @@
     <ClInclude Include="src\munge\feedback.hpp" />
     <ClInclude Include="src\munge\builtin\blocks_munge.hpp" />
     <ClInclude Include="src\munge\shared.hpp" />
+    <ClInclude Include="src\os\execute.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
