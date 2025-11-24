@@ -1308,74 +1308,83 @@ void load_materials(assets::config::node& node, blocks& blocks_out,
 }
 }
 
+auto load_blocks_from_string(const std::string_view blocks_file,
+                             const layer_remap& layer_remap,
+                             output_stream& output) -> blocks
+{
+   blocks blocks;
+
+   for (auto& key_node : assets::config::read_config(blocks_file)) {
+      if (iequals(key_node.key, "Boxes")) {
+         const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
+
+         blocks.boxes.reserve(box_reservation);
+
+         load_boxes(key_node, layer_remap, blocks);
+      }
+      else if (iequals(key_node.key, "Ramps")) {
+         const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
+
+         blocks.ramps.reserve(box_reservation);
+
+         load_ramps(key_node, layer_remap, blocks);
+      }
+      else if (iequals(key_node.key, "Quads")) {
+         const std::size_t quad_reservation = key_node.values.get<std::size_t>(0);
+
+         blocks.quads.reserve(quad_reservation);
+
+         load_quads(key_node, layer_remap, blocks);
+      }
+      else if (iequals(key_node.key, "Custom")) {
+         const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
+
+         blocks.custom.reserve(box_reservation);
+
+         load_custom(key_node, layer_remap, blocks);
+      }
+      else if (iequals(key_node.key, "Hemispheres")) {
+         const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
+
+         blocks.hemispheres.reserve(box_reservation);
+
+         load_hemispheres(key_node, layer_remap, blocks);
+      }
+      else if (iequals(key_node.key, "Pyramids")) {
+         const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
+
+         blocks.pyramids.reserve(box_reservation);
+
+         load_pyramids(key_node, layer_remap, blocks);
+      }
+      else if (iequals(key_node.key, "TerrainCutBoxes")) {
+         const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
+
+         blocks.terrain_cut_boxes.reserve(box_reservation);
+
+         load_terrain_cut_boxes(key_node, layer_remap, blocks);
+      }
+      else if (iequals(key_node.key, "Materials")) {
+         load_materials(key_node, blocks, output);
+      }
+   }
+
+   blocks.untracked_fill_dirty_ranges();
+
+   return blocks;
+}
+
 auto load_blocks(const io::path& path, const layer_remap& layer_remap,
                  output_stream& output) -> blocks
 {
    try {
       utility::stopwatch load_timer;
 
-      blocks blocks;
-
-      for (auto& key_node :
-           assets::config::read_config(io::read_file_to_string(path))) {
-         if (iequals(key_node.key, "Boxes")) {
-            const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
-
-            blocks.boxes.reserve(box_reservation);
-
-            load_boxes(key_node, layer_remap, blocks);
-         }
-         else if (iequals(key_node.key, "Ramps")) {
-            const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
-
-            blocks.ramps.reserve(box_reservation);
-
-            load_ramps(key_node, layer_remap, blocks);
-         }
-         else if (iequals(key_node.key, "Quads")) {
-            const std::size_t quad_reservation = key_node.values.get<std::size_t>(0);
-
-            blocks.quads.reserve(quad_reservation);
-
-            load_quads(key_node, layer_remap, blocks);
-         }
-         else if (iequals(key_node.key, "Custom")) {
-            const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
-
-            blocks.custom.reserve(box_reservation);
-
-            load_custom(key_node, layer_remap, blocks);
-         }
-         else if (iequals(key_node.key, "Hemispheres")) {
-            const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
-
-            blocks.hemispheres.reserve(box_reservation);
-
-            load_hemispheres(key_node, layer_remap, blocks);
-         }
-         else if (iequals(key_node.key, "Pyramids")) {
-            const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
-
-            blocks.pyramids.reserve(box_reservation);
-
-            load_pyramids(key_node, layer_remap, blocks);
-         }
-         else if (iequals(key_node.key, "TerrainCutBoxes")) {
-            const std::size_t box_reservation = key_node.values.get<std::size_t>(0);
-
-            blocks.terrain_cut_boxes.reserve(box_reservation);
-
-            load_terrain_cut_boxes(key_node, layer_remap, blocks);
-         }
-         else if (iequals(key_node.key, "Materials")) {
-            load_materials(key_node, blocks, output);
-         }
-      }
+      blocks blocks = load_blocks_from_string(io::read_file_to_string(path),
+                                              layer_remap, output);
 
       output.write("Loaded {} (time taken {:f}ms)\n", path.string_view(),
                    load_timer.elapsed_ms());
-
-      blocks.untracked_fill_dirty_ranges();
 
       return blocks;
    }

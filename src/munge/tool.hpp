@@ -146,6 +146,8 @@ enum class tool_type {
    texture_munge,
    world_munge,
 
+   we_blocks_munge,
+
    copy_premunged,
 };
 

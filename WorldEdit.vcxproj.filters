@@ -285,6 +285,7 @@
     <ClCompile Include="src\edits\add_sun_flare.cpp" />
     <ClCompile Include="src\edits\delete_sun_flare.cpp" />
     <ClCompile Include="src\munge\feedback.cpp" />
+    <ClCompile Include="src\munge\builtin\blocks_munge.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -631,6 +632,8 @@
     <ClInclude Include="src\munge\message.hpp" />
     <ClInclude Include="src\munge\tool_context.hpp" />
     <ClInclude Include="src\munge\feedback.hpp" />
+    <ClInclude Include="src\munge\builtin\blocks_munge.hpp" />
+    <ClInclude Include="src\munge\shared.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

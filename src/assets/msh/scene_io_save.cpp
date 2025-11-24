@@ -246,7 +246,7 @@ void save_scene(const io::path& path, const scene& scene)
 
    // HEDR
    {
-      ucfb::writer hedr{"HEDR"_id, file};
+      ucfb::writer hedr{"HEDR"_id, file, {.child_trail_alignment_padding_included = true}};
 
       // MSH2
       {

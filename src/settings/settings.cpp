@@ -173,6 +173,41 @@ void show_imgui_editor(settings& settings, bool& open,
                "Don't save the world .fx file. Note that this won't disable "
                "edit controls for values from the .fx file.");
 
+            if (ImGui::BeginTable("Blocks Mode", 2,
+                                  ImGuiTableFlags_SizingStretchSame |
+                                     ImGuiTableFlags_NoSavedSettings,
+                                  {ImGui::CalcItemWidth(), 0.0f})) {
+               ImGui::TableNextColumn();
+
+               if (ImGui::RadioButton("WorldEdit Munged",
+                                      not preferences.save_blocks_into_layer)) {
+                  preferences.save_blocks_into_layer = false;
+               }
+
+               ImGui::SetItemTooltip(
+                  "Blocks will only appear ingame when munged through "
+                  "WorldEdit. Blocks will have uncompresseds UVs on PC.");
+
+               ImGui::TableNextColumn();
+
+               if (ImGui::RadioButton("Saved to Layer",
+                                      preferences.save_blocks_into_layer)) {
+                  preferences.save_blocks_into_layer = true;
+               }
+
+               ImGui::SetItemTooltip(
+                  "Blocks will be saved into a special hidden layer named "
+                  "'{WORLD}_WE_blocks`. A set of ODFs and MSHs for the layer "
+                  "will be saved into a 'blocks\\` folder relative to the "
+                  "world.");
+
+               ImGui::EndTable();
+            }
+
+            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+            ImGui::Text("Blocks Mode");
+
             ImGui::SeparatorText("Reset");
 
             if (ImGui::Button("Reset to Defaults", {ImGui::CalcItemWidth(), 0.0f})) {

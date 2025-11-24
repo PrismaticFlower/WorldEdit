@@ -64,6 +64,20 @@ bool is_regional_light(const light& light) noexcept
    }
 }
 
+bool has_blocks_req_entry(std::span<const requirement_list> requirements,
+                          const std::string_view world_name) noexcept
+{
+   for (const requirement_list& list : requirements) {
+      if (not string::iequals(list.file_type, "blocks")) continue;
+
+      for (const std::string& name : list.entries) {
+         if (string::iequals(name, world_name)) return true;
+      }
+   }
+
+   return false;
+}
+
 auto flatten_light_type(const light& light) noexcept -> light_type
 {
    switch (light.light_type) {
@@ -832,11 +846,30 @@ void save_requirements(const io::path& world_dir, const std::string_view world_n
                        const world& world, const save_flags flags)
 {
    if (not world.requirements.empty()) {
-      if (world.blocks.empty()) {
-         assets::req::save(io::compose_path(world_dir, world_name, ".req"),
-                           world.requirements);
+      if (not world.blocks.empty() and not flags.save_blocks_into_layer and
+          not has_blocks_req_entry(world.requirements, world_name)) {
+         std::vector<requirement_list> requirements = world.requirements;
+
+         std::vector<requirement_list>::iterator world_list_it = requirements.begin();
+
+         for (; world_list_it != requirements.end(); ++world_list_it) {
+            if (string::iequals(world_list_it->file_type, "world") and
+                world_list_it->platform == assets::req::platform::all) {
+               break;
+            }
+         }
+
+         std::vector<requirement_list>::iterator blocks_insert_it =
+            world_list_it != requirements.end() ? world_list_it + 1 : world_list_it;
+
+         requirements.insert(blocks_insert_it, requirement_list{
+                                                  .file_type = "blocks",
+                                                  .entries = {std::string{world_name}},
+                                               });
+
+         assets::req::save(io::compose_path(world_dir, world_name, ".req"), requirements);
       }
-      else {
+      else if (not world.blocks.empty() and flags.save_blocks_into_layer) {
          std::vector<requirement_list> requirements = world.requirements;
 
          for (requirement_list& list : requirements) {
@@ -847,6 +880,10 @@ void save_requirements(const io::path& world_dir, const std::string_view world_n
          }
 
          assets::req::save(io::compose_path(world_dir, world_name, ".req"), requirements);
+      }
+      else {
+         assets::req::save(io::compose_path(world_dir, world_name, ".req"),
+                           world.requirements);
       }
    }
 
@@ -863,24 +900,20 @@ void save_requirements(const io::path& world_dir, const std::string_view world_n
    }
 }
 
-void save_blocks_layer(const std::string_view world_dir,
+void save_blocks_layer(const io::path& path, const io::path& world_dir,
                        const std::string_view world_name, const world& world,
                        sequence_numbers& sequence_numbers)
 {
-   save_blocks(io::compose_path(world_dir, world_name, ".blk"sv), world.blocks);
+   io::output_file file{path};
+
+   file.write_ln("Version(3);");
+   file.write_ln("SaveType(0);\n");
 
    if (world.blocks.empty()) return;
 
    const std::size_t object_count =
       save_blocks_meshes(io::compose_path(world_dir, "blocks"), world_name,
                          world.blocks);
-
-   io::output_file file{
-      io::compose_path(world_dir, fmt::format("{}_{}", world_name, "WE_blocks"),
-                       ".lyr"sv)};
-
-   file.write_ln("Version(3);");
-   file.write_ln("SaveType(0);\n");
 
    for (std::size_t object_index = 0; object_index < object_count; ++object_index) {
       const int sequence_number = sequence_numbers.objects++;
@@ -955,6 +988,17 @@ void save_world(const io::path& path, const world& world,
       save_effects(make_path_with_new_extension(path, ".fx"sv), world.effects);
    }
 
-   save_blocks_layer(world_dir, world_name, world, sequence_numbers);
+   save_blocks(io::compose_path(world_dir, world_name, ".blk"sv), world.blocks);
+
+   if (const io::path blocks_layer_path =
+          io::compose_path(world_dir,
+                           fmt::format("{}_{}", world_name, "WE_blocks"), ".lyr"sv);
+       flags.save_blocks_into_layer) {
+      save_blocks_layer(blocks_layer_path, world_dir, world_name, world,
+                        sequence_numbers);
+   }
+   else {
+      (void)io::remove(blocks_layer_path);
+   }
 }
 }

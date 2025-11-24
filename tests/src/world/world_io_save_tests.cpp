@@ -1809,7 +1809,8 @@ TEST_CASE("world saving blocks req and layer", "[World][IO]")
                          world.blocks.next_id.boxes.aquire())
       ->apply(edit_context);
 
-   save_world("temp/world_blocks/test_blocks.wld", world, {}, {});
+   save_world("temp/world_blocks/test_blocks.wld", world, {},
+              {.save_blocks_into_layer = true});
 
    constexpr auto expected_blocks_req = R"(ucft
 {
@@ -1874,4 +1875,200 @@ Object("", "WE_test_blocks_blocks0", 0)
 
    CHECK(written_lyr == expected_blocks_lyr);
 }
+
+TEST_CASE("world saving blocks layer garbage collect", "[World][IO]")
+{
+   (void)io::create_directory("temp/world_blocks_gc");
+
+   world world{
+      .name = "test_blocks",
+      .requirements =
+         {
+            {.file_type = "path", .entries = {"test_blocks"}},
+            {.file_type = "congraph", .entries = {"test_blocks"}},
+            {.file_type = "envfx", .entries = {"test_blocks"}},
+            {.file_type = "world", .entries = {"test_blocks"}},
+            {.file_type = "prop", .entries = {"test_blocks"}},
+            {.file_type = "povs", .entries = {"test_blocks"}},
+            {.file_type = "lvl", .entries = {}},
+         },
+
+      .layer_descriptions = {{.name = "[Base]"}},
+   };
+   creation_entity creation_entity;
+   edit_context edit_context{.world = world, .creation_entity = creation_entity};
+
+   edits::make_add_block({.size = {4.0f, 4.0f, 4.0f}}, 0,
+                         world.blocks.next_id.boxes.aquire())
+      ->apply(edit_context);
+
+   const io::path layer_path = "temp/world_blocks_gc/test_blocks_WE_blocks.lyr";
+
+   io::output_file{layer_path};
+
+   save_world("temp/world_blocks_gc/test_blocks.wld", world, {},
+              {.save_blocks_into_layer = false});
+
+   CHECK(not io::exists(layer_path));
+}
+
+TEST_CASE("world saving blocks req insertion", "[World][IO]")
+{
+   (void)io::create_directory("temp/world_test_blocks_req");
+
+   world world{
+      .name = "test_blocks",
+      .requirements =
+         {
+            {.file_type = "path", .entries = {"test_blocks"}},
+            {.file_type = "congraph", .entries = {"test_blocks"}},
+            {.file_type = "envfx", .entries = {"test_blocks"}},
+            {.file_type = "world", .entries = {"test_blocks"}},
+            {.file_type = "prop", .entries = {"test_blocks"}},
+            {.file_type = "povs", .entries = {"test_blocks"}},
+            {.file_type = "lvl", .entries = {}},
+         },
+
+      .layer_descriptions = {{.name = "[Base]"}},
+   };
+   creation_entity creation_entity;
+   edit_context edit_context{.world = world, .creation_entity = creation_entity};
+
+   edits::make_add_block({.size = {4.0f, 4.0f, 4.0f}}, 0,
+                         world.blocks.next_id.boxes.aquire())
+      ->apply(edit_context);
+
+   save_world("temp/world_test_blocks_req/test_blocks.wld", world, {},
+              {.save_blocks_into_layer = false});
+
+   constexpr auto expected_blocks_req = R"(ucft
+{
+	REQN
+	{
+		"path"
+		"test_blocks"
+	}
+	REQN
+	{
+		"congraph"
+		"test_blocks"
+	}
+	REQN
+	{
+		"envfx"
+		"test_blocks"
+	}
+	REQN
+	{
+		"world"
+		"test_blocks"
+	}
+	REQN
+	{
+		"blocks"
+		"test_blocks"
+	}
+	REQN
+	{
+		"prop"
+		"test_blocks"
+	}
+	REQN
+	{
+		"povs"
+		"test_blocks"
+	}
+	REQN
+	{
+		"lvl"
+	}
+}
+)"sv;
+
+   const auto written_req =
+      io::read_file_to_string("temp/world_test_blocks_req/test_blocks.req");
+
+   CHECK(written_req == expected_blocks_req);
+}
+
+TEST_CASE("world saving blocks req existing", "[World][IO]")
+{
+   (void)io::create_directory("temp/world_blocks_existing_req");
+
+   world world{
+      .name = "test_blocks",
+      .requirements =
+         {
+            {.file_type = "path", .entries = {"test_blocks"}},
+            {.file_type = "congraph", .entries = {"test_blocks"}},
+            {.file_type = "envfx", .entries = {"test_blocks"}},
+            {.file_type = "world", .entries = {"test_blocks"}},
+            {.file_type = "blocks", .entries = {"test_blocks"}},
+            {.file_type = "prop", .entries = {"test_blocks"}},
+            {.file_type = "povs", .entries = {"test_blocks"}},
+            {.file_type = "lvl", .entries = {}},
+         },
+
+      .layer_descriptions = {{.name = "[Base]"}},
+   };
+   creation_entity creation_entity;
+   edit_context edit_context{.world = world, .creation_entity = creation_entity};
+
+   edits::make_add_block({.size = {4.0f, 4.0f, 4.0f}}, 0,
+                         world.blocks.next_id.boxes.aquire())
+      ->apply(edit_context);
+
+   save_world("temp/world_blocks_existing_req/test_blocks.wld", world, {},
+              {.save_blocks_into_layer = false});
+
+   constexpr auto expected_blocks_req = R"(ucft
+{
+	REQN
+	{
+		"path"
+		"test_blocks"
+	}
+	REQN
+	{
+		"congraph"
+		"test_blocks"
+	}
+	REQN
+	{
+		"envfx"
+		"test_blocks"
+	}
+	REQN
+	{
+		"world"
+		"test_blocks"
+	}
+	REQN
+	{
+		"blocks"
+		"test_blocks"
+	}
+	REQN
+	{
+		"prop"
+		"test_blocks"
+	}
+	REQN
+	{
+		"povs"
+		"test_blocks"
+	}
+	REQN
+	{
+		"lvl"
+	}
+}
+)"sv;
+
+   const auto written_req =
+      io::read_file_to_string("temp/world_blocks_existing_req/test_blocks.req");
+
+   CHECK(written_req == expected_blocks_req);
+}
+
 }

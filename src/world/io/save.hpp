@@ -17,6 +17,9 @@ struct save_flags {
 
    /// @brief Controls saving the .fx file.
    bool save_effects : 1 = true;
+
+   /// @brief Save blocks layer.
+   bool save_blocks_into_layer : 1 = false;
 };
 
 void save_world(const io::path& path, const world& world,

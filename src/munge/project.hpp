@@ -154,6 +154,7 @@ struct project_config {
       {.type = tool_type::terrain_munge},
       {.type = tool_type::world_munge},
       {.type = tool_type::world_munge, .world_munge = {.layers = true}},
+      {.type = tool_type::we_blocks_munge},
       {.type = tool_type::path_munge},
       {.type = tool_type::path_planning_munge},
       {.type = tool_type::config_effects_munge,

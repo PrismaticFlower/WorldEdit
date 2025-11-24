@@ -2,7 +2,10 @@
 #include "feedback.hpp"
 #include "output.hpp"
 #include "project.hpp"
+#include "shared.hpp"
 #include "tool_context.hpp"
+
+#include "builtin/blocks_munge.hpp"
 
 #include "async/thread_pool.hpp"
 
@@ -20,9 +23,6 @@
 namespace we::munge {
 
 namespace {
-
-constexpr os::process_priority munge_process_priority =
-   os::process_priority::below_normal;
 
 struct munge_config {
    /// @brief Name of the executable.
@@ -1268,6 +1268,9 @@ void execute_tool(const tool& tool, const tool_context& context)
    } break;
    case tool_type::world_munge: {
       execute_munge({"WorldMunge", tool.world_munge.layers ? "lyr" : "wld"}, context);
+   } break;
+   case tool_type::we_blocks_munge: {
+      execute_blocks_munge(context);
    } break;
    case tool_type::copy_premunged: {
       for (const io::directory_entry& entry :

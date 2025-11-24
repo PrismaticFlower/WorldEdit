@@ -55,7 +55,9 @@ auto save_blocks_meshes(const io::path& output_directory,
          io::output_file option{
             io::compose_path(output_directory, mesh_name, ".msh.option")};
 
-         if (not scene.has_collision) option.write("-nocollision");
+         option.write("-donotmergecollision");
+
+         if (not scene.has_collision) option.write(" -nocollision");
       }
 
       // write .odf
