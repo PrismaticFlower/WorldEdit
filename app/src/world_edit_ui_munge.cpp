@@ -407,7 +407,7 @@ void world_edit::ui_show_munge_manager() noexcept
 
       if (ImGui::TreeNode("Warnings", "Warnings %zu", report.warnings.size())) {
          if (ImGui::BeginTable("Messages", 3,
-                               ImGuiTableFlags_Reorderable |
+                               ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_SizingStretchProp)) {
 
             ImGui::TableSetupColumn("Tool");
@@ -458,7 +458,7 @@ void world_edit::ui_show_munge_manager() noexcept
 
       if (ImGui::TreeNode("Errors", "Errors %zu", report.errors.size())) {
          if (ImGui::BeginTable("Messages", 3,
-                               ImGuiTableFlags_Reorderable |
+                               ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_SizingStretchProp)) {
 
             ImGui::TableSetupColumn("Tool");
