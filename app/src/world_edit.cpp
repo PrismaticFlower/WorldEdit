@@ -26,10 +26,10 @@
 #include "math/vector_funcs.hpp"
 
 #include "os/execute.hpp"
+#include "os/show_in_explorer.hpp"
 
 #include "utility/file_pickers.hpp"
 #include "utility/overload.hpp"
-#include "utility/show_in_explorer.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
@@ -4383,7 +4383,7 @@ void world_edit::show_odf_in_explorer(const lowercase_string& asset_name) noexce
 
    if (asset_path.empty()) return;
 
-   utility::try_show_in_explorer(asset_path);
+   os::try_show_in_explorer(asset_path);
 }
 
 void world_edit::resized(uint16 width, uint16 height)

@@ -3,8 +3,9 @@
 #include "munge/message.hpp"
 #include "munge/project.hpp"
 
+#include "os/show_in_explorer.hpp"
+
 #include "utility/file_pickers.hpp"
-#include "utility/show_in_explorer.hpp"
 
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
@@ -428,7 +429,7 @@ void world_edit::ui_show_munge_manager() noexcept
 
                ImGui::TableNextColumn();
                if (ImGui::TextLink(warning.file.c_str())) {
-                  utility::try_show_in_explorer(warning.file);
+                  os::try_show_in_explorer(warning.file);
                }
 
                if (ImGui::IsItemHovered()) {
@@ -479,7 +480,7 @@ void world_edit::ui_show_munge_manager() noexcept
 
                ImGui::TableNextColumn();
                if (ImGui::TextLink(error.file.c_str())) {
-                  utility::try_show_in_explorer(error.file);
+                  os::try_show_in_explorer(error.file);
                }
 
                if (ImGui::IsItemHovered()) {
