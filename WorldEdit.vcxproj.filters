@@ -286,6 +286,7 @@
     <ClCompile Include="src\munge\builtin\blocks_munge.cpp" />
     <ClCompile Include="src\os\execute.cpp" />
     <ClCompile Include="src\os\show_in_explorer.cpp" />
+    <ClCompile Include="src\utility\string_template.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -634,6 +635,7 @@
     <ClInclude Include="src\munge\shared.hpp" />
     <ClInclude Include="src\os\execute.hpp" />
     <ClInclude Include="src\os\show_in_explorer.hpp" />
+    <ClInclude Include="src\utility\string_template.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

@@ -392,6 +392,7 @@
     <ClCompile Include="src\settings\preferences.cpp" />
     <ClCompile Include="src\settings\settings.cpp" />
     <ClCompile Include="src\ucfb\writer.cpp" />
+    <ClCompile Include="src\utility\string_template.cpp" />
     <ClCompile Include="src\utility\srgb_conversion.cpp" />
     <ClCompile Include="src\utility\stopwatch.cpp" />
     <ClCompile Include="src\utility\string_icompare.cpp" />
@@ -722,6 +723,7 @@
     <ClCompile Include="src\utility\file_watcher.cpp" />
     <ClInclude Include="src\utility\event.hpp" />
     <ClInclude Include="src\utility\event_listener.hpp" />
+    <ClInclude Include="src\utility\string_template.hpp" />
     <ClInclude Include="src\utility\file_pickers.hpp" />
     <ClInclude Include="src\utility\file_watcher.hpp">
       <FileType>CppHeader</FileType>
