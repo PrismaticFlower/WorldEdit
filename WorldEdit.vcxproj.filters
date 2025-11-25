@@ -636,6 +636,7 @@
     <ClInclude Include="src\os\execute.hpp" />
     <ClInclude Include="src\os\show_in_explorer.hpp" />
     <ClInclude Include="src\utility\string_template.hpp" />
+    <ClInclude Include="src\munge\tool_set.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

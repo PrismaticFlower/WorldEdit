@@ -4,6 +4,7 @@
 #include "project.hpp"
 #include "shared.hpp"
 #include "tool_context.hpp"
+#include "tool_set.hpp"
 
 #include "builtin/blocks_munge.hpp"
 
@@ -57,6 +58,7 @@ struct munge_context {
    std::string_view platform;
 
    project project;
+   tool_set tool_set;
 
    io::path game_directory;
 
@@ -1450,12 +1452,12 @@ auto run_munge(munge_context context) -> report
       io::compose_path(root_context.project_path,
                        fmt::format(R"(_BUILD\Common\MUNGED\{})", root_context.platform));
 
-   for (const io::path& file : context.project.config.common_files) {
+   for (const io::path& file : context.tool_set.common_files) {
       root_context.common_files.push_back(
          io::compose_path(common_output_path, file.string_view()));
    }
 
-   root_context.common_files.reserve(context.project.config.common_files.size());
+   root_context.common_files.reserve(context.tool_set.common_files.size());
 
    if (context.project.addme_active) {
       tool_context addme_context = root_context;
@@ -1473,7 +1475,7 @@ auto run_munge(munge_context context) -> report
          });
       }
       else {
-         for (const tool& tool : context.project.config.addme) {
+         for (const tool& tool : context.tool_set.addme) {
             execute_tool(tool, addme_context);
          }
       }
@@ -1508,22 +1510,22 @@ auto run_munge(munge_context context) -> report
          });
       }
       else {
-         for (const tool& tool : context.project.config.common) {
+         for (const tool& tool : context.tool_set.common) {
             execute_tool(tool, common_context);
          }
 
-         for (const tool& tool : context.project.config.common_pack) {
+         for (const tool& tool : context.tool_set.common_pack) {
             execute_tool(tool, common_context);
          }
 
          tool_context post_pack_context = common_context;
          post_pack_context.common_files = root_context.common_files;
 
-         for (const tool& tool : context.project.config.common_mission_child_pack) {
+         for (const tool& tool : context.tool_set.common_mission_child_pack) {
             execute_tool(tool, post_pack_context);
          }
 
-         for (const tool& tool : context.project.config.common_mission_pack) {
+         for (const tool& tool : context.tool_set.common_mission_pack) {
             execute_tool(tool, common_context);
          }
 
@@ -1547,7 +1549,7 @@ auto run_munge(munge_context context) -> report
             });
          }
          else {
-            for (const tool& tool : context.project.config.common_fpm_pack) {
+            for (const tool& tool : context.tool_set.common_fpm_pack) {
                execute_tool(tool, fpm_context);
             }
          }
@@ -1585,11 +1587,11 @@ auto run_munge(munge_context context) -> report
          });
       }
       else {
-         for (const tool& tool : context.project.config.load) {
+         for (const tool& tool : context.tool_set.load) {
             execute_tool(tool, load_context);
          }
 
-         for (const tool& tool : context.project.config.load_pack) {
+         for (const tool& tool : context.tool_set.load_pack) {
             execute_tool(tool, load_context);
          }
       }
@@ -1627,16 +1629,16 @@ auto run_munge(munge_context context) -> report
          });
       }
       else {
-         for (const tool& tool : context.project.config.shell) {
+         for (const tool& tool : context.tool_set.shell) {
             execute_tool(tool, shell_context);
          }
 
-         for (const tool& tool : context.project.config.shell_pack) {
+         for (const tool& tool : context.tool_set.shell_pack) {
             execute_tool(tool, shell_context);
          }
 
          if (string::iequals(shell_context.platform, "PS2")) {
-            for (const tool& tool : context.project.config.shell_ps2_pack) {
+            for (const tool& tool : context.tool_set.shell_ps2_pack) {
                execute_tool(tool, shell_context);
             }
          }
@@ -1679,17 +1681,17 @@ auto run_munge(munge_context context) -> report
          continue;
       }
 
-      for (const tool& tool : context.project.config.side) {
+      for (const tool& tool : context.tool_set.side) {
          execute_tool(tool, side_context);
       }
 
-      for (const tool& tool : context.project.config.side_child_pack) {
+      for (const tool& tool : context.tool_set.side_child_pack) {
          execute_tool(tool, side_context);
       }
 
       if (string::iequals(side.name, "Common")) continue;
 
-      for (const tool& tool : context.project.config.side_pack) {
+      for (const tool& tool : context.tool_set.side_pack) {
          execute_tool(tool, side_context);
       }
 
@@ -1710,7 +1712,7 @@ auto run_munge(munge_context context) -> report
          continue;
       }
 
-      for (const tool& tool : context.project.config.side_fpm_pack) {
+      for (const tool& tool : context.tool_set.side_fpm_pack) {
          execute_tool(tool, fpm_context);
       }
    }
@@ -1752,7 +1754,7 @@ auto run_munge(munge_context context) -> report
          continue;
       }
 
-      for (const tool& tool : context.project.config.world) {
+      for (const tool& tool : context.tool_set.world) {
          execute_tool(tool, world_context);
       }
 
@@ -1767,7 +1769,7 @@ auto run_munge(munge_context context) -> report
 
          child_context.source_path = entry.path;
 
-         for (const tool& tool : context.project.config.world_pack) {
+         for (const tool& tool : context.tool_set.world_pack) {
             execute_tool(tool, child_context);
          }
       }
@@ -1994,7 +1996,7 @@ auto run_clean(munge_context context) noexcept -> report
       const io::path lvl_output_directory =
          io::compose_path(project_directory, fmt::format("_LVL_{}", platform));
 
-      for (const tool& tool : context.project.config.common_pack) {
+      for (const tool& tool : context.tool_set.common_pack) {
          if (tool.type != tool_type::level_pack) continue;
          if (tool.level_pack.input_file.empty() or
              not string::iequals(tool.level_pack.input_file.extension(),
@@ -2036,7 +2038,7 @@ auto run_clean(munge_context context) noexcept -> report
       const io::path lvl_output_directory =
          io::compose_path(project_directory, fmt::format("_LVL_{}", platform));
 
-      for (const tool& tool : context.project.config.shell_pack) {
+      for (const tool& tool : context.tool_set.shell_pack) {
          if (tool.type != tool_type::level_pack) continue;
          if (tool.level_pack.input_file.empty() or
              not string::iequals(tool.level_pack.input_file.extension(),

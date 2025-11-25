@@ -684,6 +684,7 @@
     <ClInclude Include="src\munge\shared.hpp" />
     <ClInclude Include="src\munge\tool.hpp" />
     <ClInclude Include="src\munge\tool_context.hpp" />
+    <ClInclude Include="src\munge\tool_set.hpp" />
     <ClInclude Include="src\os\execute.hpp" />
     <ClInclude Include="src\os\process.hpp" />
     <ClInclude Include="src\os\show_in_explorer.hpp" />
