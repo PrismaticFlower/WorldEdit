@@ -115,12 +115,26 @@ TEST_CASE("string substr distance", "[Utility][StringOp]")
    //
    // REQUIRE(substr_distance(input,  " Baz"sv) == 3);
 }
+
 TEST_CASE("string indention", "[Utility][StringOp]")
 {
    const auto input = "Foo\nBar\n"sv;
    const auto expected_input = "   Foo\n   Bar\n"sv;
 
    REQUIRE(indent(1, input, "   "sv) == expected_input);
+}
+
+TEST_CASE("string quoted_read", "[Utility][StringOp]")
+{
+   REQUIRE(quoted_read(R"("Foo "Bar Baz)"sv) == std::array{"Foo "sv, "Bar Baz"sv});
+   REQUIRE(quoted_read(R"("Foo Bar Baz)"sv) == std::nullopt);
+}
+
+TEST_CASE("string quoted_read_with_escapes", "[Utility][StringOp]")
+{
+   REQUIRE(quoted_read_with_escapes(R"("Foo\" "Bar Baz)"sv) ==
+           std::array{R"(Foo\" )"sv, "Bar Baz"sv});
+   REQUIRE(quoted_read_with_escapes(R"("Foo Bar\" Baz)"sv) == std::nullopt);
 }
 
 TEST_CASE("string token iterator", "[Utility][StringOp]")

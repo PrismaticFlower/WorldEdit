@@ -62,6 +62,9 @@ Value(1 2, 3)
 {
    ChildValue(1, 2 3 4);
 })"sv;
+
+const auto escaped_strings_test =
+   R"(Value("\', \", \?, \\, \a, \b, \f, \n, \r, \t, \v");)"sv;
 }
 
 namespace we::assets::config::tests {
@@ -266,6 +269,23 @@ TEST_CASE("config io elided values comma", "[Assets][Config]")
          CHECK(values_it->values.get<int>(2) == 3);
          CHECK(values_it->values.get<int>(3) == 4);
       }
+   }
+}
+
+TEST_CASE("config io escaped strings", "[Assets][Config]")
+{
+   node config =
+      read_config(escaped_strings_test, {.support_escape_sequences = true});
+
+   auto config_it = config.begin();
+
+   REQUIRE(config_it != config.end());
+   {
+      const std::string_view expected =
+         "\', \", \?, \\, \a, \b, \f, \n, \r, \t, \v";
+
+      REQUIRE(config_it->key == "Value"sv);
+      CHECK(config_it->values.get<std::string_view>(0) == expected);
    }
 }
 

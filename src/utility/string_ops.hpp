@@ -60,6 +60,9 @@ auto trim_whitespace(std::string&& str) noexcept -> std::string_view = delete;
 auto quoted_read(std::string_view str) noexcept
    -> std::optional<std::array<std::string_view, 2>>;
 
+auto quoted_read_with_escapes(std::string_view str) noexcept
+   -> std::optional<std::array<std::string_view, 2>>;
+
 auto quoted_read(std::string&& str) noexcept
    -> std::optional<std::array<std::string_view, 2>> = delete;
 

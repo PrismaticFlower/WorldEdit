@@ -126,6 +126,28 @@ auto quoted_read(std::string_view str) noexcept
    return std::array{str.substr(0, offset), str.substr(offset + 1)};
 }
 
+auto quoted_read_with_escapes(std::string_view str) noexcept
+   -> std::optional<std::array<std::string_view, 2>>
+{
+   if (str.empty() or str.front() != '"') return std::nullopt;
+
+   for (std::size_t i = 1; i < str.size(); ++i) {
+      if (str[i] == '"') {
+         return std::array{str.substr(1, i - 1), str.substr(i + 1)};
+      }
+      else if (str[i] == '\\') {
+         if (i + 1 >= str.size()) {
+            break;
+         }
+         else if (str[i + 1] == '"') {
+            i += 1;
+         }
+      }
+   }
+
+   return std::nullopt;
+}
+
 bool is_whitespace(const std::string_view str) noexcept
 {
    return std::all_of(str.cbegin(), str.cend(), std::isspace);

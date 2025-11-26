@@ -6,6 +6,11 @@
 
 namespace we::assets::config {
 
-auto read_config(std::string_view str) -> node;
+struct read_options {
+   /// @brief Support basic escape sequences in strings (\', \", \?, \\, \a, \b, \f, \n, \r, \t, \v)
+   bool support_escape_sequences = false;
+};
+
+auto read_config(std::string_view str, const read_options options = {}) -> node;
 
 }
