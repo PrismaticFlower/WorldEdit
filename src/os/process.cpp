@@ -86,7 +86,9 @@ process::process() noexcept = default;
 process::process(const process_create_desc& desc)
 {
    std::string command_line =
-      fmt::format("{} {}", desc.executable_path.string_view(), desc.command_line);
+      desc.executable_path.empty()
+         ? desc.command_line
+         : fmt::format("{} {}", desc.executable_path.string_view(), desc.command_line);
 
    STARTUPINFOEXA startup_info = {
       .StartupInfo =
@@ -193,14 +195,12 @@ process::process(const process_create_desc& desc)
 
    PROCESS_INFORMATION process_info = {};
 
-   if (not CreateProcessA(desc.executable_path.c_str(), command_line.data(),
-                          nullptr, nullptr, not inherited_handle_list.empty(),
-                          EXTENDED_STARTUPINFO_PRESENT | get_priority_class(desc.priority),
-                          nullptr,
-                          not desc.working_directory.empty()
-                             ? desc.working_directory.c_str()
-                             : nullptr,
-                          &startup_info.StartupInfo, &process_info)) {
+   if (not CreateProcessA(
+          not desc.executable_path.empty() ? desc.executable_path.c_str() : nullptr,
+          command_line.data(), nullptr, nullptr, not inherited_handle_list.empty(),
+          EXTENDED_STARTUPINFO_PRESENT | get_priority_class(desc.priority), nullptr,
+          not desc.working_directory.empty() ? desc.working_directory.c_str() : nullptr,
+          &startup_info.StartupInfo, &process_info)) {
       const DWORD last_error = GetLastError();
 
       throw process_launch_error{

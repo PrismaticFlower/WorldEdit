@@ -5,8 +5,60 @@
 
 namespace we::munge {
 
+enum class project_platform { pc, ps2, xbox };
+
+enum class project_platform_filter { all, pc, ps2, xbox };
+
+struct project_custom_command {
+   std::string command_line;
+   project_platform_filter platform_filter = project_platform_filter::all;
+
+   bool detach = false;
+
+   bool operator==(const project_custom_command&) const noexcept = default;
+};
+
+struct project_custom_commands {
+   std::vector<project_custom_command> common;
+   std::vector<project_custom_command> common_pack;
+   std::vector<project_custom_command> common_mission_child_pack;
+   std::vector<project_custom_command> common_mission_pack;
+   std::vector<project_custom_command> common_fpm_pack;
+
+   std::vector<project_custom_command> load;
+   std::vector<project_custom_command> load_pack;
+
+   std::vector<project_custom_command> shell;
+   std::vector<project_custom_command> shell_pack;
+   std::vector<project_custom_command> shell_ps2_pack;
+
+   std::vector<project_custom_command> side;
+   std::vector<project_custom_command> side_child_pack;
+   std::vector<project_custom_command> side_pack;
+   std::vector<project_custom_command> side_fpm_pack;
+
+   std::vector<project_custom_command> world;
+   std::vector<project_custom_command> world_pack;
+
+   bool operator==(const project_custom_commands&) const noexcept = default;
+};
+
+struct project_custom_clean_directories {
+   std::vector<std::string> common;
+   std::vector<std::string> load;
+   std::vector<std::string> shell;
+   std::vector<std::string> side;
+   std::vector<std::string> world;
+
+   bool operator==(const project_custom_clean_directories&) const noexcept = default;
+};
+
 struct project_config {
    io::path toolsfl_bin_path;
+   project_platform platform = project_platform::pc;
+
+   project_custom_commands custom_commands;
+   project_custom_clean_directories custom_clean_directories;
 
    bool operator==(const project_config&) const noexcept = default;
 };

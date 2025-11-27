@@ -14,10 +14,12 @@
 #include "io/output_file.hpp"
 #include "io/read_file.hpp"
 
+#include "os/execute.hpp"
 #include "os/process.hpp"
 
 #include "utility/stopwatch.hpp"
 #include "utility/string_icompare.hpp"
+#include "utility/string_template.hpp"
 
 #include <fmt/format.h>
 
@@ -1300,6 +1302,139 @@ void execute_tool(const tool& tool, const tool_context& context)
    }
 }
 
+void execute_custom_commands(const std::span<const project_custom_command> commands,
+                             const tool_context& context)
+{
+   if (commands.empty()) return;
+
+   using string::template_string_var;
+
+   std::string common_files;
+
+   if (not context.common_files.empty()) {
+      std::size_t common_files_size = 0;
+
+      for (const io::path& path : context.common_files) {
+         common_files_size += path.string_view().size();
+      }
+
+      common_files.reserve(common_files_size + context.common_files.size());
+
+      for (const io::path& path : context.common_files) {
+         common_files += path.string_view();
+         common_files += ' ';
+      }
+
+      if (not common_files.empty()) common_files.pop_back();
+   }
+
+   const std::array template_variables = {
+      template_string_var{"TOOLSFL_BIN_PATH", context.toolsfl_bin_path.string_view()},
+      template_string_var{"PROJECT_PATH", context.project_path.string_view()},
+      template_string_var{"SOURCE_PATH", context.source_path.string_view()},
+      template_string_var{"OUTPUT_PATH", context.output_path.string_view()},
+      template_string_var{"LVL_OUTPUT_PATH", context.lvl_output_path.string_view()},
+      template_string_var{"PLATFORM", context.platform},
+      template_string_var{"COMMON_FILES", common_files},
+   };
+
+   for (const project_custom_command& command : commands) {
+      if (command.platform_filter != project_platform_filter::all) {
+         if (command.platform_filter == project_platform_filter::pc and
+             not string::iequals("PC", context.platform)) {
+            continue;
+         }
+         else if (command.platform_filter == project_platform_filter::ps2 and
+                  not string::iequals("PS2", context.platform)) {
+            continue;
+         }
+         else if (command.platform_filter == project_platform_filter::xbox and
+                  not string::iequals("Xbox", context.platform)) {
+            continue;
+         }
+      }
+
+      const std::string command_line = os::expand_environment_strings(
+         string::resolve_template(command.command_line, template_variables));
+
+      context.feedback.print_output(command_line);
+
+      try {
+         os::process process = os::process_create_desc{
+            .executable_path = io::path{},
+            .command_line = command_line,
+            .working_directory = io::path{},
+            .capture_stdout = not command.detach,
+            .capture_stderr = not command.detach,
+            .priority = command.detach ? munge_process_priority
+                                       : os::process_priority::normal,
+         };
+
+         if (command.detach) continue;
+
+         std::string standard_error = process.get_standard_error();
+
+         context.feedback.print_output(process.get_standard_output());
+         context.feedback.parse_error_string(standard_error, context.source_path);
+         context.feedback.print_errors(std::move(standard_error));
+
+         const int exit_code = process.wait_for_exit();
+
+         if (exit_code != 0) {
+            context.feedback.add_warning(
+               {.tool = command.command_line,
+                .message = fmt::format(
+                   "Custom command exited with non-zero code. Code: {}", exit_code)});
+         }
+      }
+      catch (os::process_launch_error& e) {
+         context.feedback.add_error(
+            {.tool = command.command_line,
+             .message = fmt::format(
+                "Failed to launch process for custom command. Reason: {}", e.what())});
+      }
+   }
+}
+
+void clean_custom_directories(const std::span<const std::string> directories,
+                              const std::string_view platform,
+                              const std::string_view relative_directory,
+                              const io::path& project_directory,
+                              munge_feedback& feedback) noexcept
+{
+   if (directories.empty()) return;
+
+   using string::template_string_var;
+
+   const io::path base_path = io::compose_path(project_directory, relative_directory);
+
+   const std::array template_variables = {
+      template_string_var{"BASE_PATH", base_path.string_view()},
+      template_string_var{"PROJECT_PATH", project_directory.string_view()},
+      template_string_var{"PLATFORM", platform},
+   };
+
+   for (const std::string& directory_template : directories) {
+      const std::string directory =
+         string::resolve_template(directory_template, template_variables);
+
+      feedback.print_output(fmt::format("Cleaning {}", directory));
+
+      for (const io::directory_entry& entry :
+           io::directory_iterator{io::path{directory}}) {
+         if (not entry.is_file) continue;
+
+         if (not io::remove(entry.path) and io::exists(entry.path)) {
+            feedback.warnings.push_back({
+               .file = entry.path,
+               .tool = "Clean",
+               .message = "Failed to delete file.",
+            });
+         }
+      }
+   }
+}
+
 void clean_directory(const std::string_view relative_directory,
                      const io::path& project_directory, munge_feedback& feedback) noexcept
 {
@@ -1448,6 +1583,8 @@ auto run_munge(munge_context context) -> report
       .feedback = context.feedback,
    };
 
+   const project_custom_commands& custom_commands =
+      context.project.config.custom_commands;
    const io::path common_output_path =
       io::compose_path(root_context.project_path,
                        fmt::format(R"(_BUILD\Common\MUNGED\{})", root_context.platform));
@@ -1514,9 +1651,13 @@ auto run_munge(munge_context context) -> report
             execute_tool(tool, common_context);
          }
 
+         execute_custom_commands(custom_commands.common, common_context);
+
          for (const tool& tool : context.tool_set.common_pack) {
             execute_tool(tool, common_context);
          }
+
+         execute_custom_commands(custom_commands.common_pack, common_context);
 
          tool_context post_pack_context = common_context;
          post_pack_context.common_files = root_context.common_files;
@@ -1525,9 +1666,14 @@ auto run_munge(munge_context context) -> report
             execute_tool(tool, post_pack_context);
          }
 
+         execute_custom_commands(custom_commands.common_mission_child_pack,
+                                 post_pack_context);
+
          for (const tool& tool : context.tool_set.common_mission_pack) {
             execute_tool(tool, common_context);
          }
+
+         execute_custom_commands(custom_commands.common_mission_pack, common_context);
 
          tool_context fpm_context = post_pack_context;
 
@@ -1552,6 +1698,8 @@ auto run_munge(munge_context context) -> report
             for (const tool& tool : context.tool_set.common_fpm_pack) {
                execute_tool(tool, fpm_context);
             }
+
+            execute_custom_commands(custom_commands.common_fpm_pack, fpm_context);
          }
       }
    }
@@ -1591,9 +1739,13 @@ auto run_munge(munge_context context) -> report
             execute_tool(tool, load_context);
          }
 
+         execute_custom_commands(custom_commands.load, load_context);
+
          for (const tool& tool : context.tool_set.load_pack) {
             execute_tool(tool, load_context);
          }
+
+         execute_custom_commands(custom_commands.load_pack, load_context);
       }
    }
 
@@ -1633,14 +1785,20 @@ auto run_munge(munge_context context) -> report
             execute_tool(tool, shell_context);
          }
 
+         execute_custom_commands(custom_commands.shell, shell_context);
+
          for (const tool& tool : context.tool_set.shell_pack) {
             execute_tool(tool, shell_context);
          }
+
+         execute_custom_commands(custom_commands.shell_pack, shell_context);
 
          if (string::iequals(shell_context.platform, "PS2")) {
             for (const tool& tool : context.tool_set.shell_ps2_pack) {
                execute_tool(tool, shell_context);
             }
+
+            execute_custom_commands(custom_commands.shell_ps2_pack, shell_context);
          }
       }
    }
@@ -1685,15 +1843,21 @@ auto run_munge(munge_context context) -> report
          execute_tool(tool, side_context);
       }
 
+      execute_custom_commands(custom_commands.side, side_context);
+
       for (const tool& tool : context.tool_set.side_child_pack) {
          execute_tool(tool, side_context);
       }
+
+      execute_custom_commands(custom_commands.side_child_pack, side_context);
 
       if (string::iequals(side.name, "Common")) continue;
 
       for (const tool& tool : context.tool_set.side_pack) {
          execute_tool(tool, side_context);
       }
+
+      execute_custom_commands(custom_commands.side_pack, side_context);
 
       tool_context fpm_context = side_context;
 
@@ -1715,6 +1879,8 @@ auto run_munge(munge_context context) -> report
       for (const tool& tool : context.tool_set.side_fpm_pack) {
          execute_tool(tool, fpm_context);
       }
+
+      execute_custom_commands(custom_commands.side_fpm_pack, fpm_context);
    }
 
    for (const project_child& world : context.project.worlds) {
@@ -1758,6 +1924,8 @@ auto run_munge(munge_context context) -> report
          execute_tool(tool, world_context);
       }
 
+      execute_custom_commands(custom_commands.world, world_context);
+
       if (string::iequals(world.name, "Common")) continue;
 
       for (const io::directory_entry& entry :
@@ -1772,6 +1940,8 @@ auto run_munge(munge_context context) -> report
          for (const tool& tool : context.tool_set.world_pack) {
             execute_tool(tool, child_context);
          }
+
+         execute_custom_commands(custom_commands.world_pack, child_context);
       }
    }
 
@@ -1983,15 +2153,24 @@ auto run_clean(munge_context context) noexcept -> report
    const std::string_view platform = context.platform;
    const io::path& project_directory = context.project.directory;
 
+   const project_custom_clean_directories& custom_clean_directories =
+      context.project.config.custom_clean_directories;
+
    if (context.project.addme_active) {
       clean_directory(R"(addme\munged)", project_directory, context.feedback);
    }
 
    if (context.project.common_active) {
-      clean_directory(fmt::format(R"(_BUILD\Common\MUNGED\{})", platform),
-                      project_directory, context.feedback);
+      const std::string build_relative_directory =
+         fmt::format(R"(_BUILD\Common\MUNGED\{})", platform);
+
+      clean_directory(build_relative_directory, project_directory, context.feedback);
       clean_directory(fmt::format(R"(_LVL_{}\FPM\COM)", platform),
                       project_directory, context.feedback);
+
+      clean_custom_directories(custom_clean_directories.common, platform,
+                               build_relative_directory, project_directory,
+                               context.feedback);
 
       const io::path lvl_output_directory =
          io::compose_path(project_directory, fmt::format("_LVL_{}", platform));
@@ -2023,17 +2202,29 @@ auto run_clean(munge_context context) noexcept -> report
    }
 
    if (context.project.load_active) {
-      clean_directory(fmt::format(R"(_BUILD\Load\MUNGED\{})", platform),
-                      project_directory, context.feedback);
+      const std::string build_relative_directory =
+         fmt::format(R"(_BUILD\Load\MUNGED\{})", platform);
+
+      clean_directory(build_relative_directory, project_directory, context.feedback);
       clean_directory(fmt::format(R"(_LVL_{}\load)", platform),
                       project_directory, context.feedback);
+
+      clean_custom_directories(custom_clean_directories.load, platform,
+                               build_relative_directory, project_directory,
+                               context.feedback);
    }
 
    if (context.project.shell_active) {
-      clean_directory(fmt::format(R"(_BUILD\Shell\MUNGED\{})", platform),
-                      project_directory, context.feedback);
+      const std::string build_relative_directory =
+         fmt::format(R"(_BUILD\Shell\MUNGED\{})", platform);
+
+      clean_directory(build_relative_directory, project_directory, context.feedback);
       clean_directory(fmt::format(R"(_LVL_{}\Movies)", platform),
                       project_directory, context.feedback);
+
+      clean_custom_directories(custom_clean_directories.shell, platform,
+                               build_relative_directory, project_directory,
+                               context.feedback);
 
       const io::path lvl_output_directory =
          io::compose_path(project_directory, fmt::format("_LVL_{}", platform));
@@ -2067,19 +2258,32 @@ auto run_clean(munge_context context) noexcept -> report
    for (const project_child& world : context.project.worlds) {
       if (not world.active) continue;
 
-      clean_directory(fmt::format(R"(_BUILD\Worlds\{}\MUNGED\{})", world.name, platform),
-                      project_directory, context.feedback);
+      const std::string build_relative_directory =
+         fmt::format(R"(_BUILD\Worlds\{}\MUNGED\{})", world.name, platform);
+
+      clean_directory(build_relative_directory, project_directory, context.feedback);
 
       clean_directory(fmt::format(R"(_LVL_{}\{})", platform, world.name),
                       project_directory, context.feedback);
+
+      clean_custom_directories(custom_clean_directories.world, platform,
+                               build_relative_directory, project_directory,
+                               context.feedback);
    }
 
    for (const project_child& side : context.project.sides) {
       if (not side.active) continue;
-      clean_directory(fmt::format(R"(_BUILD\Sides\{}\MUNGED\{})", side.name, platform),
-                      project_directory, context.feedback);
+
+      const std::string build_relative_directory =
+         fmt::format(R"(_BUILD\Sides\{}\MUNGED\{})", side.name, platform);
+
+      clean_directory(build_relative_directory, project_directory, context.feedback);
       clean_directory(fmt::format(R"(_LVL_{}\FPM\{})", platform, side.name),
                       project_directory, context.feedback);
+
+      clean_custom_directories(custom_clean_directories.side, platform,
+                               build_relative_directory, project_directory,
+                               context.feedback);
 
       for (const io::directory_entry& entry :
            io::directory_iterator{io::compose_path(context.project.directory,

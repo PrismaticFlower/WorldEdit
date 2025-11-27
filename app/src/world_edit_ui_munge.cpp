@@ -14,6 +14,126 @@ using namespace std::literals;
 
 namespace we {
 
+namespace {
+
+namespace custom {
+
+struct command_set {
+   const char* name = "";
+   const char* description = "";
+   std::vector<munge::project_custom_command> munge::project_custom_commands::* commands =
+      nullptr;
+};
+
+struct command_group {
+   const char* name = "";
+   std::span<const command_set> sets;
+};
+
+constexpr char common_step_description[] =
+   "Executed after munging files for common .lvls but before packing them.";
+constexpr char common_pack_step_description[] =
+   "Executed after packing common .lvls (except 'mission.lvl').";
+constexpr char common_mission_child_pack_step_description[] =
+   "Executed after packing 'mission.lvl' children but before packing "
+   "'mission.lvl'.";
+constexpr char common_mission_pack_step_description[] =
+   "Executed after packing 'mission.lvl'.";
+constexpr char common_fpm_pack_step_description[] =
+   "Executed after packing common first person models.";
+
+constexpr std::array<command_set, 5> common_command_sets = {{
+   {"Common", common_step_description, &munge::project_custom_commands::common},
+   {"Common Pack", common_pack_step_description, &munge::project_custom_commands::common_pack},
+   {"Common Mission Child Pack", common_mission_child_pack_step_description,
+    &munge::project_custom_commands::common_mission_child_pack},
+   {"Common Mission Pack", common_mission_pack_step_description,
+    &munge::project_custom_commands::common_mission_pack},
+   {"Common FPM Pack", common_fpm_pack_step_description,
+    &munge::project_custom_commands::common_fpm_pack},
+}};
+
+constexpr char load_step_description[] =
+   "Executed after munging files for load .lvls but before packing them.";
+constexpr char load_pack_step_description[] =
+   "Executed after packing load .lvls.";
+
+constexpr std::array<command_set, 2> load_command_sets = {{
+   {"Load", load_step_description, &munge::project_custom_commands::load},
+   {"Load Pack", load_pack_step_description, &munge::project_custom_commands::load_pack},
+}};
+
+constexpr char shell_step_description[] =
+   "Executed after munging files for 'shell.lvl' but before packing them.";
+constexpr char shell_pack_step_description[] =
+   "Executed after packing 'shell.lvl'.";
+constexpr char shell_ps2_pack_step_description[] =
+   "Executed after packing 'shellps2.lvl'. This will only happen when munging "
+   "for PS2.";
+
+constexpr std::array<command_set, 3> shell_command_sets = {{
+   {"Shell", shell_step_description, &munge::project_custom_commands::shell},
+   {"Shell Pack", shell_pack_step_description, &munge::project_custom_commands::shell_pack},
+   {"Shell PS2 Pack", shell_ps2_pack_step_description,
+    &munge::project_custom_commands::shell_ps2_pack},
+}};
+
+constexpr char side_step_description[] =
+   "Executed for each side after munging files for it but before packing them.";
+constexpr char side_child_pack_step_description[] =
+   "Executed for each side after packing child .lvls for it.";
+constexpr char side_pack_step_description[] =
+   "Executed for each side after packing the .lvls.";
+constexpr char side_fpm_pack_step_description[] =
+   "Executed for each side after packing it's First Person Model .lvls.";
+
+constexpr std::array<command_set, 4> side_command_sets = {{
+   {"Side", side_step_description, &munge::project_custom_commands::side},
+   {"Side Child Pack", side_child_pack_step_description,
+    &munge::project_custom_commands::side_child_pack},
+   {"Side Pack", side_pack_step_description, &munge::project_custom_commands::side_pack},
+   {"Side FPM Pack", side_fpm_pack_step_description,
+    &munge::project_custom_commands::side_fpm_pack},
+}};
+
+constexpr char world_step_description[] =
+   "Executed for each world after munging files for it but before packing "
+   "them.";
+constexpr char world_pack_step_description[] =
+   "Executed for each 'world.req' after packing it's children and the main "
+   "'world.lvl'.";
+
+constexpr std::array<command_set, 2> world_command_sets = {{
+   {"World", world_step_description, &munge::project_custom_commands::world},
+   {"World Pack", world_pack_step_description, &munge::project_custom_commands::world_pack},
+}};
+
+constexpr std::array<command_group, 5> command_groups = {{
+   {"Common", common_command_sets},
+   {"Load", load_command_sets},
+   {"Shell", shell_command_sets},
+   {"Side", side_command_sets},
+   {"World", world_command_sets},
+}};
+
+struct clean_set {
+   const char* name = "";
+   std::vector<std::string> munge::project_custom_clean_directories::* directories =
+      nullptr;
+};
+
+constexpr std::array<clean_set, 5> clean_sets = {{
+   {"Common", &munge::project_custom_clean_directories::common},
+   {"Load", &munge::project_custom_clean_directories::load},
+   {"Shell", &munge::project_custom_clean_directories::shell},
+   {"Side", &munge::project_custom_clean_directories::side},
+   {"World", &munge::project_custom_clean_directories::world},
+}};
+
+}
+
+}
+
 void world_edit::ui_show_munge_manager() noexcept
 {
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
@@ -700,6 +820,249 @@ void world_edit::ui_show_munge_manager() noexcept
          ImGui::EndPopup();
       }
    }
+}
+
+void world_edit::ui_show_munge_config_editor() noexcept
+{
+   ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
+                           ImGuiCond_Once, {0.0f, 0.0f});
+   ImGui::SetNextWindowSize({960.0f * _display_scale, 698.0f * _display_scale},
+                            ImGuiCond_FirstUseEver);
+   ImGui::SetNextWindowSizeConstraints({640.0f * _display_scale, 0.0f},
+                                       {FLT_MAX, FLT_MAX});
+   if (ImGui::Begin("Munge Config", &_munge_config_editor_open,
+                    ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
+      munge::project_config& config = _munge_manager.get_project().config;
+
+      if (ImGui::BeginTable("Common", 2, ImGuiTableFlags_SizingStretchSame)) {
+         ImGui::TableNextColumn();
+
+         if (ImGui::BeginCombo("Tool Set", "SWBF2")) {
+
+            ImGui::EndCombo();
+         }
+
+         ImGui::TableNextColumn();
+
+         if (ImGui::BeginCombo("Platform", "PC")) {
+
+            ImGui::EndCombo();
+         }
+
+         ImGui::EndTable();
+      }
+
+      ImGui::Separator();
+
+      ImGui::LabelText("ToolsFL\\bin Path", "%s", config.toolsfl_bin_path.c_str());
+
+      ImGui::SetItemTooltip(
+         "Path ToolsFL\\bin containing the modtools mungers. WorldEdit will "
+         "normally find this on it's own and will prompt you if it can't.");
+
+      if (ImGui::Button("Clear##ToolsFL\\bin Path", {ImGui::CalcItemWidth(), 0.0f})) {
+         config.toolsfl_bin_path = {};
+      }
+
+      ImGui::SetItemTooltip("Clear ToolsFL\\bin Path. WorldEdit will prompt "
+                            "for it again if needed.");
+
+      ImGui::SeparatorText("Custom Munge Commands");
+
+      for (const custom::command_group& group : custom::command_groups) {
+         if (not ImGui::TreeNode(group.name)) continue;
+
+         for (const custom::command_set& set : group.sets) {
+            if (ImGui::TreeNode(&set, "%s Custom Commands", set.name)) {
+               ImGui::PushTextWrapPos();
+               ImGui::TextUnformatted(set.description);
+               ImGui::PopTextWrapPos();
+
+               ImGui::Separator();
+
+               std::vector<munge::project_custom_command>& commands =
+                  config.custom_commands.*set.commands;
+
+               std::optional<std::size_t> swap_up_index;
+               std::optional<std::size_t> swap_down_index;
+               std::optional<std::size_t> delete_index;
+
+               ImGui::Unindent();
+
+               if (ImGui::BeginTable("Commands", 2, ImGuiTableFlags_SizingStretchProp)) {
+                  for (std::size_t i = 0; i < commands.size(); ++i) {
+                     ImGui::PushID(static_cast<int>(i));
+
+                     ImGui::TableNextRow();
+                     ImGui::TableNextColumn();
+
+                     ImGui::BeginDisabled(i <= 0);
+
+                     if (ImGui::ArrowButton("##up", ImGuiDir_Up) and i > 0) {
+                        swap_up_index = i;
+                     }
+
+                     ImGui::EndDisabled();
+
+                     ImGui::BeginDisabled(i + 1 >= commands.size());
+
+                     if (ImGui::ArrowButton("##down", ImGuiDir_Down) and
+                         i + 1 < commands.size()) {
+                        swap_down_index = i;
+                     }
+
+                     ImGui::EndDisabled();
+
+                     ImGui::TableNextColumn();
+
+                     munge::project_custom_command& command = commands[i];
+
+                     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                     ImGui::InputText("##command", &command.command_line);
+
+                     if (ImGui::BeginTable("Control", 3,
+                                           ImGuiTableFlags_BordersInnerV |
+                                              ImGuiTableFlags_SizingStretchSame)) {
+                        ImGui::TableNextColumn();
+
+                        if (ImGui::BeginCombo("Platform", [&] {
+                               switch (command.platform_filter) {
+                               case munge::project_platform_filter::all:
+                                  return "All";
+                               case munge::project_platform_filter::pc:
+                                  return "PC";
+                               case munge::project_platform_filter::ps2:
+                                  return "PS2";
+                               case munge::project_platform_filter::xbox:
+                                  return "Xbox";
+                               default:
+                                  return "<unknown>";
+                               }
+                            }())) {
+                           if (ImGui::Selectable("All",
+                                                 command.platform_filter ==
+                                                    munge::project_platform_filter::all)) {
+                              command.platform_filter =
+                                 munge::project_platform_filter::all;
+                           }
+
+                           if (ImGui::Selectable("PC", command.platform_filter ==
+                                                          munge::project_platform_filter::pc)) {
+                              command.platform_filter =
+                                 munge::project_platform_filter::pc;
+                           }
+
+                           if (ImGui::Selectable("PS2",
+                                                 command.platform_filter ==
+                                                    munge::project_platform_filter::ps2)) {
+                              command.platform_filter =
+                                 munge::project_platform_filter::ps2;
+                           }
+
+                           if (ImGui::Selectable("Xbox",
+                                                 command.platform_filter ==
+                                                    munge::project_platform_filter::xbox)) {
+                              command.platform_filter =
+                                 munge::project_platform_filter::xbox;
+                           }
+
+                           ImGui::EndCombo();
+                        }
+
+                        ImGui::TableNextColumn();
+
+                        ImGui::Checkbox("Detach", &command.detach);
+
+                        ImGui::SetItemTooltip(
+                           "Normally the munge process will wait for a process "
+                           "launched from a command to exit before continuing. "
+                           "Enabling Detach will cause it to continue "
+                           "immediately and no output from the command will "
+                           "show "
+                           "up in WorldEdit.");
+
+                        ImGui::TableNextColumn();
+
+                        if (ImGui::Button("Remove",
+                                          {ImGui::GetContentRegionAvail().x, 0.0f})) {
+                           delete_index = i;
+                        }
+
+                        ImGui::EndTable();
+                     }
+
+                     ImGui::PopID();
+                  }
+
+                  ImGui::EndTable();
+               }
+
+               ImGui::Indent();
+
+               if (swap_up_index and *swap_up_index > 0) {
+                  std::swap(commands[*swap_up_index - 1], commands[*swap_up_index]);
+               }
+
+               if (swap_down_index and *swap_down_index + 1 < commands.size()) {
+                  std::swap(commands[*swap_down_index + 1], commands[*swap_down_index]);
+               }
+
+               if (delete_index) {
+                  commands.erase(commands.begin() + *delete_index);
+               }
+
+               ImGui::Separator();
+
+               if (ImGui::Button("Add", {ImGui::GetContentRegionAvail().x, 0.0f})) {
+                  commands.emplace_back();
+               }
+
+               ImGui::TreePop();
+            }
+         }
+
+         ImGui::TreePop();
+      }
+
+      ImGui::SeparatorText("Custom Clean Directories");
+
+      for (const custom::clean_set& set : custom::clean_sets) {
+         if (not ImGui::TreeNode(&set, "%s Clean Directories", set.name)) {
+            continue;
+         }
+
+         std::optional<std::size_t> delete_index;
+
+         std::vector<std::string>& directories =
+            config.custom_clean_directories.*set.directories;
+
+         for (std::size_t i = 0; i < directories.size(); ++i) {
+            ImGui::PushID(static_cast<int>(i));
+
+            ImGui::InputText("Directory", &directories[i]);
+
+            if (ImGui::Button("Remove", {ImGui::CalcItemWidth(), 0.0f})) {
+               delete_index = i;
+            }
+
+            ImGui::PopID();
+
+            ImGui::Separator();
+         }
+
+         if (delete_index) {
+            directories.erase(directories.begin() + *delete_index);
+         }
+
+         if (ImGui::Button("Add", {ImGui::CalcItemWidth(), 0.0f})) {
+            directories.emplace_back();
+         }
+
+         ImGui::TreePop();
+      }
+   }
+
+   ImGui::End();
 }
 
 }

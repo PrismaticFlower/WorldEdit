@@ -19,7 +19,7 @@ enum class process_priority { idle, below_normal, normal, above_normal, high };
 
 /// @brief Process creation info.
 struct process_create_desc {
-   /// @brief Path to the executable for the process.
+   /// @brief If not empty, path to the executable for the process.
    const io::path& executable_path;
 
    /// @brief Command line for the process.

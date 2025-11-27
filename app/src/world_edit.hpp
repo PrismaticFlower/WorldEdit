@@ -425,6 +425,8 @@ private:
 
    void ui_show_munge_manager() noexcept;
 
+   void ui_show_munge_config_editor() noexcept;
+
    void ui_show_effects_editor() noexcept;
 
    void ui_draw_select_box() noexcept;
@@ -637,6 +639,7 @@ private:
    bool _block_material_editor_open = false;
    bool _export_selection_open = false;
    bool _munge_manager_open = false;
+   bool _munge_config_editor_open = false;
    bool _effects_editor_open = false;
    terrain_edit_tool _terrain_edit_tool = terrain_edit_tool::none;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;

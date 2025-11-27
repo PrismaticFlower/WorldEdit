@@ -11,14 +11,126 @@
 
 #include <absl/container/btree_map.h>
 
+template<>
+struct fmt::formatter<we::munge::project_platform_filter>
+   : fmt::formatter<std::string_view> {
+   auto format(we::munge::project_platform_filter v, format_context& ctx) const
+      -> fmt::appender
+   {
+      switch (v) {
+      case we::munge::project_platform_filter::all: {
+         return fmt::formatter<std::string_view>::format("all", ctx);
+      };
+      case we::munge::project_platform_filter::pc: {
+         return fmt::formatter<std::string_view>::format("pc", ctx);
+      };
+      case we::munge::project_platform_filter::ps2: {
+         return fmt::formatter<std::string_view>::format("ps2", ctx);
+      };
+      case we::munge::project_platform_filter::xbox: {
+         return fmt::formatter<std::string_view>::format("xbox", ctx);
+      };
+      }
+
+      return fmt::formatter<std::string_view>::format("<unknown>", ctx);
+   }
+};
+
 namespace we::munge {
+
+namespace {
+
+void write_commands(io::output_file& out, std::string_view name,
+                    std::span<const project_custom_command> commands)
+{
+   out.write_ln("      {}()", name);
+   out.write_ln("      {");
+
+   for (const project_custom_command& command : commands) {
+      out.write_ln("         Command()");
+      out.write_ln("         {");
+      out.write_ln("            CommandLine({:?});", command.command_line);
+      out.write_ln("            PlatformFilter(\"{}\");", command.platform_filter);
+      out.write_ln("            Detach({:d});", command.detach);
+      out.write_ln("         }");
+   }
+
+   out.write_ln("      }");
+}
+
+void read_commands(const assets::config::key_node& key_node,
+                   std::vector<project_custom_command>& commands)
+{
+   using namespace assets;
+   using string::iequals;
+
+   for (const config::key_node& command_key_node : key_node) {
+      if (not iequals(command_key_node.key, "Command")) continue;
+
+      project_custom_command command;
+
+      for (const config::key_node& property_key_node : command_key_node) {
+         if (iequals(property_key_node.key, "CommandLine")) {
+            command.command_line = property_key_node.values.get<std::string>(0);
+         }
+         else if (iequals(property_key_node.key, "PlatformFilter")) {
+            if (iequals("all", property_key_node.values.get<std::string_view>(0))) {
+               command.platform_filter = project_platform_filter::all;
+            }
+            else if (iequals("pc", property_key_node.values.get<std::string_view>(0))) {
+               command.platform_filter = project_platform_filter::pc;
+            }
+            else if (iequals("ps2", property_key_node.values.get<std::string_view>(0))) {
+               command.platform_filter = project_platform_filter::ps2;
+            }
+            else if (iequals("xbox",
+                             property_key_node.values.get<std::string_view>(0))) {
+               command.platform_filter = project_platform_filter::xbox;
+            }
+         }
+         else if (iequals(property_key_node.key, "Detach")) {
+            command.detach = property_key_node.values.get<int>(0) != 0;
+         }
+      }
+
+      commands.push_back(std::move(command));
+   }
+}
+
+void write_clean_directories(io::output_file& out, std::string_view name,
+                             std::span<const std::string> directories)
+{
+   out.write_ln("      {}()", name);
+   out.write_ln("      {");
+
+   for (const std::string& directory : directories) {
+      out.write_ln("         Directory({:?});", directory);
+   }
+
+   out.write_ln("      }");
+}
+
+void read_clean_directories(const assets::config::key_node& key_node,
+                            std::vector<std::string>& directories)
+{
+   using namespace assets;
+   using string::iequals;
+
+   for (const config::key_node& directory_key_node : key_node) {
+      if (not iequals(directory_key_node.key, "Directory")) continue;
+
+      directories.push_back(directory_key_node.values.get<std::string>(0));
+   }
+}
+
+}
 
 void save_project(const project& project, const io::path& path) noexcept
 {
    try {
       io::output_file out{path};
 
-      out.write_ln("Version(0);"); // Just incase
+      out.write_ln("Version(1);");
 
       out.write_ln("Deploy({:d});", project.deploy);
       out.write_ln("AddmeActive({:d});", project.addme_active);
@@ -77,7 +189,7 @@ void save_project(const project& project, const io::path& path) noexcept
       for (const project_sound_localization& localization : project.sound_localizations) {
          out.write_ln("   {}()", localization.language);
          out.write_ln("   {");
-         out.write_ln("      OutputDirectory(\"{}\");", localization.output_directory);
+         out.write_ln("      OutputDirectory({:?});", localization.output_directory);
          out.write_ln("   }");
       }
 
@@ -85,8 +197,52 @@ void save_project(const project& project, const io::path& path) noexcept
 
       out.write_ln("Config()");
       out.write_ln("{");
-      out.write_ln("   ToolsFLBin(\"{}\");",
+      out.write_ln("   ToolsFLBin({:?});",
                    project.config.toolsfl_bin_path.string_view());
+
+      out.write_ln("   CustomMungeCommands()");
+      out.write_ln("   {");
+
+      const project_custom_commands& custom_commands = project.config.custom_commands;
+
+      write_commands(out, "Common", custom_commands.common);
+      write_commands(out, "CommonPack", custom_commands.common_pack);
+      write_commands(out, "CommonMissionChildPack",
+                     custom_commands.common_mission_child_pack);
+      write_commands(out, "CommonMissionPack", custom_commands.common_mission_pack);
+      write_commands(out, "CommonFPMPack", custom_commands.common_fpm_pack);
+
+      write_commands(out, "Load", custom_commands.load);
+      write_commands(out, "LoadPack", custom_commands.load_pack);
+
+      write_commands(out, "Shell", custom_commands.shell);
+      write_commands(out, "ShellPack", custom_commands.shell_pack);
+      write_commands(out, "ShellPS2Pack", custom_commands.shell_ps2_pack);
+
+      write_commands(out, "Side", custom_commands.side);
+      write_commands(out, "SideChildPack", custom_commands.side_child_pack);
+      write_commands(out, "SidePack", custom_commands.side_pack);
+      write_commands(out, "SideFPMPack", custom_commands.side_fpm_pack);
+
+      write_commands(out, "World", custom_commands.world);
+      write_commands(out, "WorldPack", custom_commands.world_pack);
+
+      out.write_ln("   }");
+
+      const project_custom_clean_directories& clean_directories =
+         project.config.custom_clean_directories;
+
+      out.write_ln("   CustomCleanDirectories()");
+      out.write_ln("   {");
+
+      write_clean_directories(out, "Common", clean_directories.common);
+      write_clean_directories(out, "Load", clean_directories.load);
+      write_clean_directories(out, "Shell", clean_directories.shell);
+      write_clean_directories(out, "Side", clean_directories.side);
+      write_clean_directories(out, "World", clean_directories.world);
+
+      out.write_ln("   }");
+
       out.write_ln("}");
    }
    catch (io::open_error&) {
@@ -100,10 +256,15 @@ auto load_project(const io::path& path) noexcept -> project
       using namespace assets;
       using string::iequals;
 
+      const std::string project_file_contents = io::read_file_to_string(path);
+      const bool no_escape_seqeunces =
+         string::istarts_with(project_file_contents, "Version(0);");
+
       project project;
 
       for (const config::key_node& key_node :
-           config::read_config(io::read_file_to_string(path))) {
+           config::read_config(project_file_contents,
+                               {.support_escape_sequences = not no_escape_seqeunces})) {
          if (iequals("Deploy", key_node.key)) {
             project.deploy = key_node.values.get<int>(0) != 0;
          }
@@ -186,6 +347,85 @@ auto load_project(const io::path& path) noexcept -> project
                if (iequals("ToolsFLBin", config_key_node.key)) {
                   project.config.toolsfl_bin_path =
                      io::path{config_key_node.values.get<std::string>(0)};
+               }
+               else if (iequals("CustomMungeCommands", config_key_node.key)) {
+                  project_custom_commands& custom_commands =
+                     project.config.custom_commands;
+
+                  for (const config::key_node& command_key_node : config_key_node) {
+                     if (iequals("Common", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.common);
+                     }
+                     else if (iequals("CommonPack", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.common_pack);
+                     }
+                     else if (iequals("CommonMissionChildPack", command_key_node.key)) {
+                        read_commands(command_key_node,
+                                      custom_commands.common_mission_child_pack);
+                     }
+                     else if (iequals("CommonMissionPack", command_key_node.key)) {
+                        read_commands(command_key_node,
+                                      custom_commands.common_mission_pack);
+                     }
+                     else if (iequals("CommonFPMPack", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.common_fpm_pack);
+                     }
+                     else if (iequals("Load", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.load);
+                     }
+                     else if (iequals("LoadPack", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.load_pack);
+                     }
+                     else if (iequals("Shell", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.shell);
+                     }
+                     else if (iequals("ShellPack", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.shell_pack);
+                     }
+                     else if (iequals("ShellPS2Pack", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.shell_ps2_pack);
+                     }
+                     else if (iequals("Side", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.side);
+                     }
+                     else if (iequals("SideChildPack", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.side_child_pack);
+                     }
+                     else if (iequals("SidePack", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.side_pack);
+                     }
+                     else if (iequals("SideFPMPack", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.side_fpm_pack);
+                     }
+                     else if (iequals("World", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.world);
+                     }
+                     else if (iequals("WorldPack", command_key_node.key)) {
+                        read_commands(command_key_node, custom_commands.world_pack);
+                     }
+                  }
+               }
+               else if (iequals("CustomCleanDirectories", config_key_node.key)) {
+                  project_custom_clean_directories& clean_directories =
+                     project.config.custom_clean_directories;
+
+                  for (const config::key_node& set_key_node : config_key_node) {
+                     if (iequals("Common", set_key_node.key)) {
+                        read_clean_directories(set_key_node, clean_directories.common);
+                     }
+                     else if (iequals("Load", set_key_node.key)) {
+                        read_clean_directories(set_key_node, clean_directories.load);
+                     }
+                     else if (iequals("Shell", set_key_node.key)) {
+                        read_clean_directories(set_key_node, clean_directories.shell);
+                     }
+                     else if (iequals("Side", set_key_node.key)) {
+                        read_clean_directories(set_key_node, clean_directories.side);
+                     }
+                     else if (iequals("World", set_key_node.key)) {
+                        read_clean_directories(set_key_node, clean_directories.world);
+                     }
+                  }
                }
             }
          }
@@ -285,5 +525,9 @@ void merge_loaded_project(project& current_project, const project& loaded_projec
    if (current_project.config.toolsfl_bin_path.empty()) {
       current_project.config.toolsfl_bin_path = loaded_project.config.toolsfl_bin_path;
    }
+
+   current_project.config.custom_commands = loaded_project.config.custom_commands;
+   current_project.config.custom_clean_directories =
+      loaded_project.config.custom_clean_directories;
 }
 }

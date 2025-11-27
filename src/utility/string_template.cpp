@@ -6,7 +6,7 @@
 namespace we::string {
 
 auto resolve_template(const std::string_view str,
-                      const std::initializer_list<template_string_var> variables) noexcept
+                      const std::span<const template_string_var> variables) noexcept
    -> std::string
 {
    std::size_t result_size = 0;
@@ -127,6 +127,13 @@ auto resolve_template(const std::string_view str,
    assert(result_size == result.size());
 
    return result;
+}
+
+auto resolve_template(const std::string_view str,
+                      const std::initializer_list<template_string_var> variables) noexcept
+   -> std::string
+{
+   return resolve_template(str, std::span{variables.begin(), variables.size()});
 }
 
 }

@@ -500,6 +500,8 @@ void world_edit::ui_show_main_menu_bar() noexcept
                                                    "Show Munge Manager")),
                          &_munge_manager_open);
 
+         ImGui::MenuItem("Show Munge Config Editor", nullptr, &_munge_config_editor_open);
+
          ImGui::EndMenu();
       }
 
