@@ -115,10 +115,6 @@ void combine_and_edit_modl(ucfb::reader modl, ucfb::writer& out)
    while (modl) {
       ucfb::reader child = modl.read_child();
 
-      auto id = child.id();
-
-      fmt::println("{}", std::string_view{(const char*)&id, 4});
-
       if (child.id() == "segm"_id) {
          ucfb::writer segm_out = out.write_child("segm"_id);
 
