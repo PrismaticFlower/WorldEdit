@@ -547,6 +547,13 @@ void world_edit::ui_show_munge_manager() noexcept
                ImGui::TextUnformatted(warning.tool.c_str(),
                                       warning.tool.c_str() + warning.tool.size());
 
+               if (ImGui::BeginItemTooltip()) {
+                  ImGui::TextUnformatted(warning.tool.c_str(),
+                                         warning.tool.c_str() + warning.tool.size());
+
+                  ImGui::EndTooltip();
+               }
+
                ImGui::TableNextColumn();
                if (ImGui::TextLink(warning.file.c_str())) {
                   os::try_show_in_explorer(warning.file);
@@ -554,6 +561,14 @@ void world_edit::ui_show_munge_manager() noexcept
 
                if (ImGui::IsItemHovered()) {
                   ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+               }
+
+               if (ImGui::BeginItemTooltip()) {
+                  ImGui::TextUnformatted(warning.file.c_str(),
+                                         warning.file.c_str() +
+                                            warning.file.string_view().size());
+
+                  ImGui::EndTooltip();
                }
 
                ImGui::TableNextColumn();
@@ -598,6 +613,13 @@ void world_edit::ui_show_munge_manager() noexcept
                ImGui::TextUnformatted(error.tool.c_str(),
                                       error.tool.c_str() + error.tool.size());
 
+               if (ImGui::BeginItemTooltip()) {
+                  ImGui::TextUnformatted(error.tool.c_str(),
+                                         error.tool.c_str() + error.tool.size());
+
+                  ImGui::EndTooltip();
+               }
+
                ImGui::TableNextColumn();
                if (ImGui::TextLink(error.file.c_str())) {
                   os::try_show_in_explorer(error.file);
@@ -605,6 +627,14 @@ void world_edit::ui_show_munge_manager() noexcept
 
                if (ImGui::IsItemHovered()) {
                   ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+               }
+
+               if (ImGui::BeginItemTooltip()) {
+                  ImGui::TextUnformatted(error.file.c_str(),
+                                         error.file.c_str() +
+                                            error.file.string_view().size());
+
+                  ImGui::EndTooltip();
                }
 
                ImGui::TableNextColumn();
