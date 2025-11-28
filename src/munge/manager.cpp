@@ -8,6 +8,7 @@
 
 #include "builtin/blocks_munge.hpp"
 
+#include "async/for_each.hpp"
 #include "async/thread_pool.hpp"
 
 #include "io/error.hpp"
@@ -65,6 +66,7 @@ struct munge_context {
    io::path game_directory;
 
    munge_feedback feedback;
+   async::thread_pool& thread_pool;
 };
 
 void execute_munge(const munge_config& config, const tool_context& context)
@@ -1396,6 +1398,79 @@ void execute_custom_commands(const std::span<const project_custom_command> comma
    }
 }
 
+auto execute_async_task(munge_context& context, std::invocable auto func) noexcept
+   -> async::task<void>
+{
+   return context.thread_pool
+      .exec(async::task_priority::low, [&feedback = context.feedback,
+                                        func = std::move(func)]() noexcept {
+         try {
+            func();
+         }
+         catch (os::process_launch_error& e) {
+            std::string message =
+               fmt::format("Failed to launch process!\n{}\nEnsure your "
+                           "ToolsFL\\bin directory is configured correctly.",
+                           e.what());
+
+            feedback.print_output(message);
+            feedback.print_errors(message);
+
+            feedback.add_error(
+               {.file = "", .tool = "Munge", .message = std::move(message)});
+         }
+         catch (std::exception& e) {
+            std::string message =
+               fmt::format("Unexpected error occured while munging!\n{}", e.what());
+
+            feedback.print_output(message);
+            feedback.print_errors(message);
+
+            feedback.add_error(
+               {.file = "", .tool = "Munge", .message = std::move(message)});
+         }
+      });
+}
+
+template<std::ranges::random_access_range random_access_range,
+         std::invocable<std::ranges::range_const_reference_t<random_access_range>> callback_t>
+void execute_par_for_each(munge_context& context, const random_access_range& range,
+                          const callback_t& func) noexcept
+   requires(std::is_nothrow_invocable_v<callback_t, std::ranges::range_const_reference_t<random_access_range>>)
+{
+   using T = std::ranges::range_value_t<random_access_range>;
+
+   async::for_each(
+      context.thread_pool, async::task_priority::low, range,
+      [&feedback = context.feedback, &func = func](const T& v) noexcept {
+         try {
+            func(v);
+         }
+         catch (os::process_launch_error& e) {
+            std::string message =
+               fmt::format("Failed to launch process!\n{}\nEnsure your "
+                           "ToolsFL\\bin directory is configured correctly.",
+                           e.what());
+
+            feedback.print_output(message);
+            feedback.print_errors(message);
+
+            feedback.add_error(
+               {.file = "", .tool = "Munge", .message = std::move(message)});
+         }
+         catch (std::exception& e) {
+            std::string message =
+               fmt::format("Unexpected error occured while munging!\n{}", e.what());
+
+            feedback.print_output(message);
+            feedback.print_errors(message);
+
+            feedback.add_error(
+               {.file = "", .tool = "Munge", .message = std::move(message)});
+         }
+      });
+}
+
 void clean_custom_directories(const std::span<const std::string> directories,
                               const std::string_view platform,
                               const std::string_view relative_directory,
@@ -1425,7 +1500,7 @@ void clean_custom_directories(const std::span<const std::string> directories,
          if (not entry.is_file) continue;
 
          if (not io::remove(entry.path) and io::exists(entry.path)) {
-            feedback.warnings.push_back({
+            feedback.add_warning({
                .file = entry.path,
                .tool = "Clean",
                .message = "Failed to delete file.",
@@ -1446,7 +1521,7 @@ void clean_directory(const std::string_view relative_directory,
       if (not entry.is_file) continue;
 
       if (not io::remove(entry.path) and io::exists(entry.path)) {
-         feedback.warnings.push_back({
+         feedback.add_warning({
             .file = entry.path,
             .tool = "Clean",
             .message = "Failed to delete file.",
@@ -1572,7 +1647,158 @@ void deploy_addon(munge_context& context)
    context.feedback.print_output(fmt::format("Time Taken: {:.3f}s", timer.elapsed()));
 }
 
-auto run_munge(munge_context context) -> report
+void run_side_munge(const project_child& side, munge_context& context,
+                    const tool_context& root_context)
+{
+   if (not side.active) return;
+
+   const project_custom_commands& custom_commands =
+      context.project.config.custom_commands;
+
+   tool_context side_context = root_context;
+
+   side_context.source_path = io::compose_path(side_context.project_path,
+                                               fmt::format(R"(Sides\{})", side.name));
+   side_context.output_path =
+      io::compose_path(side_context.project_path,
+                       fmt::format(R"(_BUILD\Sides\{}\MUNGED\{})", side.name,
+                                   side_context.platform));
+   side_context.lvl_output_path =
+      io::compose_path(side_context.project_path,
+                       fmt::format(R"(_LVL_{}\side)", side_context.platform));
+
+   if (not io::create_directories(side_context.output_path)) {
+      side_context.feedback.add_error({
+         .file = side_context.output_path,
+         .tool = "Create Directory",
+         .message = "Failed to create directory for use as output path.",
+      });
+
+      return;
+   }
+
+   if (not io::create_directories(side_context.lvl_output_path)) {
+      side_context.feedback.add_error({
+         .file = side_context.lvl_output_path,
+         .tool = "Create Directory",
+         .message = "Failed to create directory for use as output path.",
+      });
+
+      return;
+   }
+
+   execute_par_for_each(context, context.tool_set.side, [&](const tool& tool) noexcept {
+      execute_tool(tool, side_context);
+   });
+
+   execute_custom_commands(custom_commands.side, side_context);
+
+   for (const tool& tool : context.tool_set.side_child_pack) {
+      execute_tool(tool, side_context);
+   }
+
+   execute_custom_commands(custom_commands.side_child_pack, side_context);
+
+   if (string::iequals(side.name, "Common")) return;
+
+   for (const tool& tool : context.tool_set.side_pack) {
+      execute_tool(tool, side_context);
+   }
+
+   execute_custom_commands(custom_commands.side_pack, side_context);
+
+   tool_context fpm_context = side_context;
+
+   fpm_context.lvl_output_path =
+      io::compose_path(fpm_context.project_path,
+                       fmt::format(R"(_LVL_{}\FPM\{})", fpm_context.platform,
+                                   side.name));
+
+   if (not io::create_directories(fpm_context.lvl_output_path)) {
+      context.feedback.add_error({
+         .file = fpm_context.lvl_output_path,
+         .tool = "Create Directory",
+         .message = "Failed to create directory for use as output path.",
+      });
+
+      return;
+   }
+
+   for (const tool& tool : context.tool_set.side_fpm_pack) {
+      execute_tool(tool, fpm_context);
+   }
+
+   execute_custom_commands(custom_commands.side_fpm_pack, fpm_context);
+}
+
+void run_world_munge(const project_child& world, munge_context& context,
+                     const tool_context& root_context)
+{
+   if (not world.active) return;
+
+   const project_custom_commands& custom_commands =
+      context.project.config.custom_commands;
+
+   tool_context world_context = root_context;
+
+   world_context.source_path =
+      io::compose_path(world_context.project_path,
+                       fmt::format(R"(Worlds\{})", world.name));
+   world_context.output_path =
+      io::compose_path(world_context.project_path,
+                       fmt::format(R"(_BUILD\Worlds\{}\MUNGED\{})", world.name,
+                                   world_context.platform));
+   world_context.lvl_output_path =
+      io::compose_path(world_context.project_path,
+                       fmt::format(R"(_LVL_{}\{})", world_context.platform,
+                                   world.name));
+
+   if (not io::create_directories(world_context.output_path)) {
+      context.feedback.add_error({
+         .file = world_context.output_path,
+         .tool = "Create Directory",
+         .message = "Failed to create directory for use as output path.",
+      });
+
+      return;
+   }
+
+   if (not io::create_directories(world_context.lvl_output_path)) {
+      context.feedback.add_error({
+         .file = world_context.lvl_output_path,
+         .tool = "Create Directory",
+         .message = "Failed to create directory for use as output path.",
+      });
+
+      return;
+   }
+
+   execute_par_for_each(context, context.tool_set.world, [&](const tool& tool) noexcept {
+      execute_tool(tool, world_context);
+   });
+
+   execute_custom_commands(custom_commands.world, world_context);
+
+   if (string::iequals(world.name, "Common")) return;
+
+   for (const io::directory_entry& entry :
+        io::directory_iterator{world_context.source_path, false}) {
+      if (not entry.is_directory) return;
+      if (not string::istarts_with(entry.path.stem(), "World")) return;
+
+      tool_context child_context = world_context;
+
+      child_context.source_path = entry.path;
+
+      for (const tool& tool : context.tool_set.world_pack) {
+         execute_tool(tool, child_context);
+      }
+
+      execute_custom_commands(custom_commands.world_pack, child_context);
+   }
+}
+
+auto run_munge(munge_context& context) -> report
 {
    utility::stopwatch timer;
 
@@ -1596,26 +1822,31 @@ auto run_munge(munge_context context) -> report
 
    root_context.common_files.reserve(context.tool_set.common_files.size());
 
+   std::vector<async::task<void>> tasks;
+   tasks.reserve(6);
+
    if (context.project.addme_active) {
-      tool_context addme_context = root_context;
+      tasks.push_back(execute_async_task(context, [&]() noexcept {
+         tool_context addme_context = root_context;
 
-      addme_context.source_path =
-         io::compose_path(addme_context.project_path, "addme");
-      addme_context.output_path =
-         io::compose_path(addme_context.project_path, R"(addme\munged)");
+         addme_context.source_path =
+            io::compose_path(addme_context.project_path, "addme");
+         addme_context.output_path =
+            io::compose_path(addme_context.project_path, R"(addme\munged)");
 
-      if (not io::create_directories(addme_context.output_path)) {
-         context.feedback.add_error({
-            .file = addme_context.output_path,
-            .tool = "Create Directory",
-            .message = "Failed to create directory for use as output path.",
-         });
-      }
-      else {
-         for (const tool& tool : context.tool_set.addme) {
-            execute_tool(tool, addme_context);
+         if (not io::create_directories(addme_context.output_path)) {
+            addme_context.feedback.add_error({
+               .file = addme_context.output_path,
+               .tool = "Create Directory",
+               .message = "Failed to create directory for use as output path.",
+            });
          }
-      }
+         else {
+            for (const tool& tool : context.tool_set.addme) {
+               execute_tool(tool, addme_context);
+            }
+         }
+      }));
    }
 
    if (context.project.common_active) {
@@ -1647,9 +1878,10 @@ auto run_munge(munge_context context) -> report
          });
       }
       else {
-         for (const tool& tool : context.tool_set.common) {
-            execute_tool(tool, common_context);
-         }
+         execute_par_for_each(context, context.tool_set.common,
+                              [&](const tool& tool) noexcept {
+                                 execute_tool(tool, common_context);
+                              });
 
          execute_custom_commands(custom_commands.common, common_context);
 
@@ -1705,428 +1937,360 @@ auto run_munge(munge_context context) -> report
    }
 
    if (context.project.load_active) {
-      tool_context load_context = root_context;
+      tasks.push_back(execute_async_task(context, [&]() noexcept {
+         tool_context load_context = root_context;
 
-      load_context.source_path =
-         io::compose_path(load_context.project_path, "Load");
-      load_context.output_path =
-         io::compose_path(load_context.project_path,
-                          fmt::format(R"(_BUILD\Load\MUNGED\{})", load_context.platform));
-      load_context.lvl_output_path =
-         io::compose_path(load_context.project_path,
-                          fmt::format(R"(_LVL_{}\load)", load_context.platform));
+         load_context.source_path =
+            io::compose_path(load_context.project_path, "Load");
+         load_context.output_path =
+            io::compose_path(load_context.project_path,
+                             fmt::format(R"(_BUILD\Load\MUNGED\{})",
+                                         load_context.platform));
+         load_context.lvl_output_path =
+            io::compose_path(load_context.project_path,
+                             fmt::format(R"(_LVL_{}\load)", load_context.platform));
 
-      std::erase_if(load_context.common_files, [](const io::path& path) {
-         return not string::iequals("core.files", path.filename());
-      });
-
-      if (not io::create_directories(load_context.output_path)) {
-         context.feedback.add_error({
-            .file = load_context.output_path,
-            .tool = "Create Directory",
-            .message = "Failed to create directory for use as output path.",
+         std::erase_if(load_context.common_files, [](const io::path& path) {
+            return not string::iequals("core.files", path.filename());
          });
-      }
-      else if (not io::create_directories(load_context.lvl_output_path)) {
-         context.feedback.add_error({
-            .file = load_context.lvl_output_path,
-            .tool = "Create Directory",
-            .message = "Failed to create directory for use as output path.",
-         });
-      }
-      else {
-         for (const tool& tool : context.tool_set.load) {
-            execute_tool(tool, load_context);
+
+         if (not io::create_directories(load_context.output_path)) {
+            context.feedback.add_error({
+               .file = load_context.output_path,
+               .tool = "Create Directory",
+               .message = "Failed to create directory for use as output path.",
+            });
          }
-
-         execute_custom_commands(custom_commands.load, load_context);
-
-         for (const tool& tool : context.tool_set.load_pack) {
-            execute_tool(tool, load_context);
+         else if (not io::create_directories(load_context.lvl_output_path)) {
+            context.feedback.add_error({
+               .file = load_context.lvl_output_path,
+               .tool = "Create Directory",
+               .message = "Failed to create directory for use as output path.",
+            });
          }
+         else {
+            execute_par_for_each(context, context.tool_set.load,
+                                 [&](const tool& tool) noexcept {
+                                    execute_tool(tool, load_context);
+                                 });
 
-         execute_custom_commands(custom_commands.load_pack, load_context);
-      }
+            execute_custom_commands(custom_commands.load, load_context);
+
+            for (const tool& tool : context.tool_set.load_pack) {
+               execute_tool(tool, load_context);
+            }
+
+            execute_custom_commands(custom_commands.load_pack, load_context);
+         }
+      }));
    }
 
    if (context.project.shell_active) {
-      tool_context shell_context = root_context;
+      tasks.push_back(execute_async_task(context, [&]() noexcept {
+         tool_context shell_context = root_context;
 
-      shell_context.source_path =
-         io::compose_path(shell_context.project_path, "Shell");
-      shell_context.output_path =
-         io::compose_path(shell_context.project_path,
-                          fmt::format(R"(_BUILD\Shell\MUNGED\{})",
-                                      shell_context.platform));
-      shell_context.lvl_output_path =
-         io::compose_path(shell_context.project_path,
-                          fmt::format("_LVL_{}", shell_context.platform));
+         shell_context.source_path =
+            io::compose_path(shell_context.project_path, "Shell");
+         shell_context.output_path =
+            io::compose_path(shell_context.project_path,
+                             fmt::format(R"(_BUILD\Shell\MUNGED\{})",
+                                         shell_context.platform));
+         shell_context.lvl_output_path =
+            io::compose_path(shell_context.project_path,
+                             fmt::format("_LVL_{}", shell_context.platform));
 
-      std::erase_if(shell_context.common_files, [](const io::path& path) {
-         return string::iequals("ingame.files", path.filename());
-      });
-
-      if (not io::create_directories(shell_context.output_path)) {
-         context.feedback.add_error({
-            .file = shell_context.output_path,
-            .tool = "Create Directory",
-            .message = "Failed to create directory for use as output path.",
+         std::erase_if(shell_context.common_files, [](const io::path& path) {
+            return string::iequals("ingame.files", path.filename());
          });
-      }
-      else if (not io::create_directories(shell_context.lvl_output_path)) {
-         context.feedback.add_error({
-            .file = shell_context.lvl_output_path,
-            .tool = "Create Directory",
-            .message = "Failed to create directory for use as output path.",
-         });
-      }
-      else {
-         for (const tool& tool : context.tool_set.shell) {
-            execute_tool(tool, shell_context);
+
+         if (not io::create_directories(shell_context.output_path)) {
+            context.feedback.add_error({
+               .file = shell_context.output_path,
+               .tool = "Create Directory",
+               .message = "Failed to create directory for use as output path.",
+            });
          }
-
-         execute_custom_commands(custom_commands.shell, shell_context);
-
-         for (const tool& tool : context.tool_set.shell_pack) {
-            execute_tool(tool, shell_context);
+         else if (not io::create_directories(shell_context.lvl_output_path)) {
+            context.feedback.add_error({
+               .file = shell_context.lvl_output_path,
+               .tool = "Create Directory",
+               .message = "Failed to create directory for use as output path.",
+            });
          }
+         else {
+            execute_par_for_each(context, context.tool_set.shell,
+                                 [&](const tool& tool) noexcept {
+                                    execute_tool(tool, shell_context);
+                                 });
 
-         execute_custom_commands(custom_commands.shell_pack, shell_context);
+            execute_custom_commands(custom_commands.shell, shell_context);
 
-         if (string::iequals(shell_context.platform, "PS2")) {
-            for (const tool& tool : context.tool_set.shell_ps2_pack) {
+            for (const tool& tool : context.tool_set.shell_pack) {
                execute_tool(tool, shell_context);
             }
 
-            execute_custom_commands(custom_commands.shell_ps2_pack, shell_context);
+            execute_custom_commands(custom_commands.shell_pack, shell_context);
+
+            if (string::iequals(shell_context.platform, "PS2")) {
+               for (const tool& tool : context.tool_set.shell_ps2_pack) {
+                  execute_tool(tool, shell_context);
+               }
+
+               execute_custom_commands(custom_commands.shell_ps2_pack, shell_context);
+            }
          }
-      }
+      }));
    }
 
-   for (const project_child& side : context.project.sides) {
-      if (not side.active) continue;
+   if (not context.project.sides.empty()) {
+      tasks.push_back(execute_async_task(context, [&]() noexcept {
+         std::span<const project_child> sides = context.project.sides;
 
-      tool_context side_context = root_context;
+         if (string::iequals(sides[0].name, "Common")) {
+            run_side_munge(sides[0], context, root_context);
 
-      side_context.source_path =
-         io::compose_path(side_context.project_path,
-                          fmt::format(R"(Sides\{})", side.name));
-      side_context.output_path =
-         io::compose_path(side_context.project_path,
-                          fmt::format(R"(_BUILD\Sides\{}\MUNGED\{})", side.name,
-                                      side_context.platform));
-      side_context.lvl_output_path =
-         io::compose_path(side_context.project_path,
-                          fmt::format(R"(_LVL_{}\side)", side_context.platform));
-
-      if (not io::create_directories(side_context.output_path)) {
-         context.feedback.add_error({
-            .file = side_context.output_path,
-            .tool = "Create Directory",
-            .message = "Failed to create directory for use as output path.",
-         });
-
-         continue;
-      }
-
-      if (not io::create_directories(side_context.lvl_output_path)) {
-         context.feedback.add_error({
-            .file = side_context.lvl_output_path,
-            .tool = "Create Directory",
-            .message = "Failed to create directory for use as output path.",
-         });
-
-         continue;
-      }
-
-      for (const tool& tool : context.tool_set.side) {
-         execute_tool(tool, side_context);
-      }
-
-      execute_custom_commands(custom_commands.side, side_context);
-
-      for (const tool& tool : context.tool_set.side_child_pack) {
-         execute_tool(tool, side_context);
-      }
-
-      execute_custom_commands(custom_commands.side_child_pack, side_context);
-
-      if (string::iequals(side.name, "Common")) continue;
-
-      for (const tool& tool : context.tool_set.side_pack) {
-         execute_tool(tool, side_context);
-      }
-
-      execute_custom_commands(custom_commands.side_pack, side_context);
-
-      tool_context fpm_context = side_context;
-
-      fpm_context.lvl_output_path =
-         io::compose_path(fpm_context.project_path,
-                          fmt::format(R"(_LVL_{}\FPM\{})", fpm_context.platform,
-                                      side.name));
-
-      if (not io::create_directories(fpm_context.lvl_output_path)) {
-         context.feedback.add_error({
-            .file = fpm_context.lvl_output_path,
-            .tool = "Create Directory",
-            .message = "Failed to create directory for use as output path.",
-         });
-
-         continue;
-      }
-
-      for (const tool& tool : context.tool_set.side_fpm_pack) {
-         execute_tool(tool, fpm_context);
-      }
-
-      execute_custom_commands(custom_commands.side_fpm_pack, fpm_context);
-   }
-
-   for (const project_child& world : context.project.worlds) {
-      if (not world.active) continue;
-
-      tool_context world_context = root_context;
-
-      world_context.source_path =
-         io::compose_path(world_context.project_path,
-                          fmt::format(R"(Worlds\{})", world.name));
-      world_context.output_path =
-         io::compose_path(world_context.project_path,
-                          fmt::format(R"(_BUILD\Worlds\{}\MUNGED\{})",
-                                      world.name, world_context.platform));
-      world_context.lvl_output_path =
-         io::compose_path(world_context.project_path,
-                          fmt::format(R"(_LVL_{}\{})", world_context.platform,
-                                      world.name));
-
-      if (not io::create_directories(world_context.output_path)) {
-         context.feedback.add_error({
-            .file = world_context.output_path,
-            .tool = "Create Directory",
-            .message = "Failed to create directory for use as output path.",
-         });
-
-         continue;
-      }
-
-      if (not io::create_directories(world_context.lvl_output_path)) {
-         context.feedback.add_error({
-            .file = world_context.lvl_output_path,
-            .tool = "Create Directory",
-            .message = "Failed to create directory for use as output path.",
-         });
-
-         continue;
-      }
-
-      for (const tool& tool : context.tool_set.world) {
-         execute_tool(tool, world_context);
-      }
-
-      execute_custom_commands(custom_commands.world, world_context);
-
-      if (string::iequals(world.name, "Common")) continue;
-
-      for (const io::directory_entry& entry :
-           io::directory_iterator{world_context.source_path, false}) {
-         if (not entry.is_directory) continue;
-         if (not string::istarts_with(entry.path.stem(), "World")) continue;
-
-         tool_context child_context = world_context;
-
-         child_context.source_path = entry.path;
-
-         for (const tool& tool : context.tool_set.world_pack) {
-            execute_tool(tool, child_context);
+            sides = sides.subspan(1);
          }
 
-         execute_custom_commands(custom_commands.world_pack, child_context);
-      }
+         execute_par_for_each(context, sides, [&](const project_child& side) noexcept {
+            run_side_munge(side, context, root_context);
+         });
+      }));
+   }
+
+   if (not context.project.worlds.empty()) {
+      tasks.push_back(execute_async_task(context, [&]() {
+         std::span<const project_child> worlds = context.project.worlds;
+
+         if (string::iequals(worlds[0].name, "Common")) {
+            run_world_munge(worlds[0], context, root_context);
+
+            worlds = worlds.subspan(1);
+         }
+
+         execute_par_for_each(context, worlds, [&](const project_child& world) noexcept {
+            run_world_munge(world, context, root_context);
+         });
+      }));
    }
 
    if (context.project.sound_active) {
-      std::vector<io::path> shared_pack_input_directories;
-      shared_pack_input_directories.reserve(context.project.sound_shared.size());
+      tasks.push_back(execute_async_task(context, [&]() noexcept {
+         std::vector<io::path> shared_pack_input_directories;
+         shared_pack_input_directories.reserve(context.project.sound_shared.size());
 
-      const bool create_common_bank =
-         string::iequals(context.platform, "PC") and context.project.sound_common_bank;
+         const bool create_common_bank =
+            string::iequals(context.platform, "PC") and context.project.sound_common_bank;
 
-      for (const project_child_sound_shared& shared_sound : context.project.sound_shared) {
-         tool_context sound_context = root_context;
-
-         sound_context.source_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(Sound\{})", shared_sound.name));
-         sound_context.output_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(_BUILD\Sound\{}\MUNGED\{})",
-                                         shared_sound.name, sound_context.platform));
-         sound_context.lvl_output_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(_LVL_{}\sound)", sound_context.platform));
-
-         if (not io::create_directories(sound_context.output_path)) {
-            context.feedback.add_error({
-               .file = sound_context.output_path,
-               .tool = "Create Directory",
-               .message = "Failed to create directory for use as output path.",
-            });
-
-            continue;
+         for (const project_child_sound_shared& shared_sound :
+              context.project.sound_shared) {
+            shared_pack_input_directories.push_back(
+               io::compose_path(root_context.project_path,
+                                fmt::format(R"(_BUILD\Sound\{}\MUNGED\{})",
+                                            shared_sound.name, root_context.platform)));
          }
 
-         if (not io::create_directories(sound_context.lvl_output_path)) {
-            context.feedback.add_error({
-               .file = sound_context.lvl_output_path,
-               .tool = "Create Directory",
-               .message = "Failed to create directory for use as output path.",
-            });
+         async::task<void> shared_sound_task = execute_async_task(context, [&]() noexcept {
+            execute_par_for_each(
+               context, context.project.sound_shared,
+               [&](const project_child_sound_shared& shared_sound) noexcept {
+                  tool_context sound_context = root_context;
 
-            continue;
+                  sound_context.source_path =
+                     io::compose_path(sound_context.project_path,
+                                      fmt::format(R"(Sound\{})", shared_sound.name));
+                  sound_context.output_path =
+                     io::compose_path(sound_context.project_path,
+                                      fmt::format(R"(_BUILD\Sound\{}\MUNGED\{})",
+                                                  shared_sound.name,
+                                                  sound_context.platform));
+                  sound_context.lvl_output_path =
+                     io::compose_path(sound_context.project_path,
+                                      fmt::format(R"(_LVL_{}\sound)",
+                                                  sound_context.platform));
+
+                  if (not io::create_directories(sound_context.output_path)) {
+                     context.feedback.add_error({
+                        .file = sound_context.output_path,
+                        .tool = "Create Directory",
+                        .message =
+                           "Failed to create directory for use as output path.",
+                     });
+
+                     return;
+                  }
+
+                  if (not io::create_directories(sound_context.lvl_output_path)) {
+                     context.feedback.add_error({
+                        .file = sound_context.lvl_output_path,
+                        .tool = "Create Directory",
+                        .message =
+                           "Failed to create directory for use as output path.",
+                     });
+
+                     return;
+                  }
+
+                  execute_sound_directory_munge(
+                     {.create_common_bank = create_common_bank,
+                      .localizations = shared_sound.localized
+                                          ? context.project.sound_localizations
+                                          : std::span<project_sound_localization>{}},
+                     sound_context);
+               });
+         });
+
+         async::task<void> shared_worlds_task = execute_async_task(context, [&]() noexcept {
+            execute_par_for_each(
+               context, context.project.sound_worlds,
+               [&](const project_child_sound_world& world) noexcept {
+                  if (not world.active) return;
+
+                  tool_context sound_context = root_context;
+
+                  sound_context.source_path =
+                     io::compose_path(sound_context.project_path,
+                                      fmt::format(R"(Sound\Worlds\{})", world.name));
+                  sound_context.output_path =
+                     io::compose_path(sound_context.project_path,
+                                      fmt::format(R"(_BUILD\Sound\worlds\{}\MUNGED\{})",
+                                                  world.name, sound_context.platform));
+                  sound_context.lvl_output_path =
+                     io::compose_path(sound_context.project_path,
+                                      fmt::format(R"(_LVL_{}\sound)",
+                                                  sound_context.platform));
+
+                  if (not io::create_directories(sound_context.output_path)) {
+                     context.feedback.add_error({
+                        .file = sound_context.output_path,
+                        .tool = "Create Directory",
+                        .message =
+                           "Failed to create directory for use as output path.",
+                     });
+
+                     return;
+                  }
+
+                  if (not io::create_directories(sound_context.lvl_output_path)) {
+                     context.feedback.add_error({
+                        .file = sound_context.lvl_output_path,
+                        .tool = "Create Directory",
+                        .message =
+                           "Failed to create directory for use as output path.",
+                     });
+
+                     return;
+                  }
+
+                  execute_sound_directory_munge(
+                     {.create_common_bank = create_common_bank,
+                      .localizations = world.localized
+                                          ? context.project.sound_localizations
+                                          : std::span<project_sound_localization>{}},
+                     sound_context);
+               });
+         });
+
+         shared_sound_task.wait();
+         shared_worlds_task.wait();
+
+         for (const project_child_sound_shared& shared_sound :
+              context.project.sound_shared) {
+            tool_context sound_context = root_context;
+
+            sound_context.source_path =
+               io::compose_path(sound_context.project_path,
+                                fmt::format(R"(Sound\{})", shared_sound.name));
+            sound_context.output_path =
+               io::compose_path(sound_context.project_path,
+                                fmt::format(R"(_BUILD\Sound\{}\MUNGED\{})",
+                                            shared_sound.name, sound_context.platform));
+            sound_context.lvl_output_path =
+               io::compose_path(sound_context.project_path,
+                                fmt::format(R"(_LVL_{}\sound)", sound_context.platform));
+
+            execute_sound_directory_children_pack(
+               {.directory_name = shared_sound.name,
+                .localizations = shared_sound.localized
+                                    ? context.project.sound_localizations
+                                    : std::span<project_sound_localization>{},
+                .input_directories = shared_pack_input_directories},
+               sound_context);
          }
 
-         execute_sound_directory_munge({.create_common_bank = create_common_bank,
-                                        .localizations =
-                                           shared_sound.localized
-                                              ? context.project.sound_localizations
-                                              : std::span<project_sound_localization>{}},
-                                       sound_context);
+         for (const project_child_sound_shared& shared_sound :
+              context.project.sound_shared) {
+            tool_context sound_context = root_context;
 
-         shared_pack_input_directories.push_back(sound_context.output_path);
-      }
+            sound_context.source_path =
+               io::compose_path(sound_context.project_path,
+                                fmt::format(R"(Sound\{})", shared_sound.name));
+            sound_context.output_path =
+               io::compose_path(sound_context.project_path,
+                                fmt::format(R"(_BUILD\Sound\{}\MUNGED\{})",
+                                            shared_sound.name, sound_context.platform));
+            sound_context.lvl_output_path =
+               io::compose_path(sound_context.project_path,
+                                fmt::format(R"(_LVL_{}\sound)", sound_context.platform));
 
-      for (const project_child_sound_world& world : context.project.sound_worlds) {
-         if (not world.active) continue;
-
-         tool_context sound_context = root_context;
-
-         sound_context.source_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(Sound\Worlds\{})", world.name));
-         sound_context.output_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(_BUILD\Sound\worlds\{}\MUNGED\{})",
-                                         world.name, sound_context.platform));
-         sound_context.lvl_output_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(_LVL_{}\sound)", sound_context.platform));
-
-         if (not io::create_directories(sound_context.output_path)) {
-            context.feedback.add_error({
-               .file = sound_context.output_path,
-               .tool = "Create Directory",
-               .message = "Failed to create directory for use as output path.",
-            });
-
-            continue;
+            execute_sound_directory_pack({.directory_name = shared_sound.name,
+                                          .localizations =
+                                             shared_sound.localized
+                                                ? context.project.sound_localizations
+                                                : std::span<project_sound_localization>{},
+                                          .input_directories =
+                                             shared_pack_input_directories},
+                                         sound_context);
          }
 
-         if (not io::create_directories(sound_context.lvl_output_path)) {
-            context.feedback.add_error({
-               .file = sound_context.lvl_output_path,
-               .tool = "Create Directory",
-               .message = "Failed to create directory for use as output path.",
-            });
+         for (const project_child_sound_world& world : context.project.sound_worlds) {
+            if (not world.active) continue;
 
-            continue;
+            tool_context sound_context = root_context;
+
+            sound_context.source_path =
+               io::compose_path(sound_context.project_path,
+                                fmt::format(R"(Sound\Worlds\{})", world.name));
+            sound_context.output_path =
+               io::compose_path(sound_context.project_path,
+                                fmt::format(R"(_BUILD\Sound\worlds\{}\MUNGED\{})",
+                                            world.name, sound_context.platform));
+            sound_context.lvl_output_path =
+               io::compose_path(sound_context.project_path,
+                                fmt::format(R"(_LVL_{}\sound)", sound_context.platform));
+
+            execute_sound_directory_children_pack({.directory_name = world.name,
+                                                   .localizations =
+                                                      context.project.sound_localizations,
+                                                   .input_directories =
+                                                      shared_pack_input_directories},
+                                                  sound_context);
+            execute_sound_directory_pack({.directory_name = world.name,
+                                          .localizations =
+                                             world.localized
+                                                ? context.project.sound_localizations
+                                                : std::span<project_sound_localization>{},
+                                          .input_directories =
+                                             shared_pack_input_directories},
+                                         sound_context);
          }
 
-         execute_sound_directory_munge({.create_common_bank = create_common_bank,
-                                        .localizations =
-                                           world.localized
-                                              ? context.project.sound_localizations
-                                              : std::span<project_sound_localization>{}},
-                                       sound_context);
-      }
+         if (create_common_bank) {
+            tool_context sound_context = root_context;
 
-      for (const project_child_sound_shared& shared_sound : context.project.sound_shared) {
-         tool_context sound_context = root_context;
+            sound_context.source_path =
+               io::compose_path(sound_context.project_path, "Sound");
+            sound_context.lvl_output_path =
+               io::compose_path(sound_context.project_path,
+                                fmt::format(R"(_LVL_{}\sound)", sound_context.platform));
 
-         sound_context.source_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(Sound\{})", shared_sound.name));
-         sound_context.output_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(_BUILD\Sound\{}\MUNGED\{})",
-                                         shared_sound.name, sound_context.platform));
-         sound_context.lvl_output_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(_LVL_{}\sound)", sound_context.platform));
+            execute_sound_common_bank_munge(sound_context);
+         }
+      }));
+   }
 
-         execute_sound_directory_children_pack(
-            {.directory_name = shared_sound.name,
-             .localizations = shared_sound.localized
-                                 ? context.project.sound_localizations
-                                 : std::span<project_sound_localization>{},
-             .input_directories = shared_pack_input_directories},
-            sound_context);
-      }
-
-      for (const project_child_sound_shared& shared_sound : context.project.sound_shared) {
-         tool_context sound_context = root_context;
-
-         sound_context.source_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(Sound\{})", shared_sound.name));
-         sound_context.output_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(_BUILD\Sound\{}\MUNGED\{})",
-                                         shared_sound.name, sound_context.platform));
-         sound_context.lvl_output_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(_LVL_{}\sound)", sound_context.platform));
-
-         execute_sound_directory_pack({.directory_name = shared_sound.name,
-                                       .localizations =
-                                          shared_sound.localized
-                                             ? context.project.sound_localizations
-                                             : std::span<project_sound_localization>{},
-                                       .input_directories = shared_pack_input_directories},
-                                      sound_context);
-      }
-
-      for (const project_child_sound_world& world : context.project.sound_worlds) {
-         if (not world.active) continue;
-
-         tool_context sound_context = root_context;
-
-         sound_context.source_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(Sound\Worlds\{})", world.name));
-         sound_context.output_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(_BUILD\Sound\worlds\{}\MUNGED\{})",
-                                         world.name, sound_context.platform));
-         sound_context.lvl_output_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(_LVL_{}\sound)", sound_context.platform));
-
-         execute_sound_directory_children_pack({.directory_name = world.name,
-                                                .localizations = context.project.sound_localizations,
-                                                .input_directories =
-                                                   shared_pack_input_directories},
-                                               sound_context);
-         execute_sound_directory_pack({.directory_name = world.name,
-                                       .localizations =
-                                          world.localized
-                                             ? context.project.sound_localizations
-                                             : std::span<project_sound_localization>{},
-                                       .input_directories = shared_pack_input_directories},
-                                      sound_context);
-      }
-
-      if (create_common_bank) {
-         tool_context sound_context = root_context;
-
-         sound_context.source_path =
-            io::compose_path(sound_context.project_path, "Sound");
-         sound_context.lvl_output_path =
-            io::compose_path(sound_context.project_path,
-                             fmt::format(R"(_LVL_{}\sound)", sound_context.platform));
-
-         execute_sound_common_bank_munge(sound_context);
-      }
+   for (std::ptrdiff_t i = std::ssize(tasks) - 1; i >= 0; --i) {
+      tasks[i].wait();
    }
 
    context.feedback.print_output("Munge Finished");
@@ -2141,12 +2305,12 @@ auto run_munge(munge_context context) -> report
    }
 
    return {
-      .warnings = std::move(context.feedback.warnings),
-      .errors = std::move(context.feedback.errors),
+      .warnings = context.feedback.take_warnings(),
+      .errors = context.feedback.take_errors(),
    };
 }
 
-auto run_clean(munge_context context) noexcept -> report
+auto run_clean(munge_context& context) noexcept -> report
 {
    utility::stopwatch timer;
 
@@ -2192,7 +2356,7 @@ auto run_clean(munge_context context) noexcept -> report
                              tool.level_pack.input_file.stem(), ".lvl");
 
          if (not io::remove(lvl_path) and io::exists(lvl_path)) {
-            context.feedback.warnings.push_back({
+            context.feedback.add_warning({
                .file = lvl_path,
                .tool = "Clean",
                .message = "Failed to delete file.",
@@ -2246,7 +2410,7 @@ auto run_clean(munge_context context) noexcept -> report
                              tool.level_pack.input_file.stem(), ".lvl");
 
          if (not io::remove(lvl_path) and io::exists(lvl_path)) {
-            context.feedback.warnings.push_back({
+            context.feedback.add_warning({
                .file = lvl_path,
                .tool = "Clean",
                .message = "Failed to delete file.",
@@ -2302,7 +2466,7 @@ auto run_clean(munge_context context) noexcept -> report
                                          entry.path.stem()));
 
          if (not io::remove(lvl_path) and io::exists(lvl_path)) {
-            context.feedback.warnings.push_back({
+            context.feedback.add_warning({
                .file = lvl_path,
                .tool = "Clean",
                .message = "Failed to delete file.",
@@ -2324,7 +2488,7 @@ auto run_clean(munge_context context) noexcept -> report
                                             shared_sound.name));
 
             if (not io::remove(lvl_path) and io::exists(lvl_path)) {
-               context.feedback.warnings.push_back({
+               context.feedback.add_warning({
                   .file = lvl_path,
                   .tool = "Clean",
                   .message = "Failed to delete file.",
@@ -2342,7 +2506,7 @@ auto run_clean(munge_context context) noexcept -> report
                                                shared_sound.name));
 
                if (not io::remove(lvl_path) and io::exists(lvl_path)) {
-                  context.feedback.warnings.push_back({
+                  context.feedback.add_warning({
                      .file = lvl_path,
                      .tool = "Clean",
                      .message = "Failed to delete file.",
@@ -2366,7 +2530,7 @@ auto run_clean(munge_context context) noexcept -> report
                                             world.name));
 
             if (not io::remove(lvl_path) and io::exists(lvl_path)) {
-               context.feedback.warnings.push_back({
+               context.feedback.add_warning({
                   .file = lvl_path,
                   .tool = "Clean",
                   .message = "Failed to delete file.",
@@ -2384,7 +2548,7 @@ auto run_clean(munge_context context) noexcept -> report
                                                world.name));
 
                if (not io::remove(lvl_path) and io::exists(lvl_path)) {
-                  context.feedback.warnings.push_back({
+                  context.feedback.add_warning({
                      .file = lvl_path,
                      .tool = "Clean",
                      .message = "Failed to delete file.",
@@ -2401,7 +2565,7 @@ auto run_clean(munge_context context) noexcept -> report
                              fmt::format(R"(_LVL_{}\sound\common.bnk)", platform));
 
          if (not io::remove(lvl_path) and io::exists(lvl_path)) {
-            context.feedback.warnings.push_back({
+            context.feedback.add_warning({
                .file = lvl_path,
                .tool = "Clean",
                .message = "Failed to delete file.",
@@ -2414,11 +2578,10 @@ auto run_clean(munge_context context) noexcept -> report
    context.feedback.print_output(fmt::format("Time Taken: {:.3f}s", timer.elapsed()));
 
    return {
-      .warnings = std::move(context.feedback.warnings),
-      .errors = std::move(context.feedback.errors),
+      .warnings = context.feedback.take_warnings(),
+      .errors = context.feedback.take_errors(),
    };
 }
-
 }
 
 struct manager::impl {
@@ -2505,13 +2668,18 @@ struct manager::impl {
       _report = {};
       _munge_task = _thread_pool.exec(
          async::task_priority::low,
-         [this, context = munge_context{
-                   .platform = "PC",
-                   .project = _project,
-                   .game_directory = game_directory,
-                   .feedback = munge_feedback{_standard_output, _standard_error},
-                }] {
+         [platform = "PC", project = _project, game_directory = game_directory,
+          &standard_output = _standard_output,
+          &standard_error = _standard_error, &thread_pool = _thread_pool] {
             try {
+               munge_context context = {
+                  .platform = platform,
+                  .project = project,
+                  .game_directory = game_directory,
+                  .feedback = munge_feedback{standard_output, standard_error},
+                  .thread_pool = thread_pool,
+               };
+
                return run_munge(context);
             }
             catch (os::process_launch_error& e) {
@@ -2520,7 +2688,8 @@ struct manager::impl {
                               "ToolsFL\\bin directory is configured correctly.",
                               e.what());
 
-               _standard_output.write(message);
+               standard_output.write(message);
+               standard_error.write(message);
 
                return report{
                   .errors =
@@ -2533,7 +2702,8 @@ struct manager::impl {
                std::string message =
                   fmt::format("Unexpected error occured while munging!\n{}", e.what());
 
-               _standard_output.write(message);
+               standard_output.write(message);
+               standard_error.write(message);
 
                return report{
                   .errors =
@@ -2556,11 +2726,19 @@ struct manager::impl {
       _report = {};
       _munge_task =
          _thread_pool.exec(async::task_priority::low,
-                           [this, context = munge_context{
-                                     .platform = "PC",
-                                     .project = _project,
-                                     .feedback = munge_feedback{_standard_output, _standard_error},
-                                  }] { return run_clean(context); });
+                           [platform = "PC", project = _project,
+                            &standard_output = _standard_output,
+                            &standard_error = _standard_error,
+                            &thread_pool = _thread_pool] {
+                              munge_context context = {
+                                 .platform = platform,
+                                 .project = project,
+                                 .feedback = munge_feedback{standard_output, standard_error},
+                                 .thread_pool = thread_pool,
+                              };
+
+                              return run_clean(context);
+                           });
    }
 
    auto get_munge_report() noexcept -> const report&
@@ -2654,5 +2832,4 @@ auto manager::get_project() noexcept -> project&
 {
    return impl->get_project();
 }
-
 }

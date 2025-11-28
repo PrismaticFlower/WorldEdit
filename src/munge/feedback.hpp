@@ -3,6 +3,8 @@
 #include "message.hpp"
 #include "output.hpp"
 
+#include "utility/implementation_storage.hpp"
+
 #include "io/path.hpp"
 
 #include <string>
@@ -13,16 +15,15 @@ namespace we::munge {
 struct munge_feedback {
    munge_feedback(output& standard_output, output& standard_error);
 
+   munge_feedback(const munge_feedback&) = delete;
+
+   auto operator=(const munge_feedback&) -> munge_feedback& = delete;
+
+   ~munge_feedback();
+
    void print_output(std::string output);
 
    void print_errors(std::string output);
-
-   void parse_error_line(const std::string_view error_output,
-                         const io::path& source_directory,
-                         std::vector<message>& messages_out) noexcept;
-
-   auto parse_sound_munge_error_line(const std::string_view error_output) noexcept
-      -> message&;
 
    /// @brief Parse a munge tool error string.
    /// @param error_output The standard error output from the munge tool
@@ -57,12 +58,14 @@ struct munge_feedback {
 
    void add_error(message message) noexcept;
 
-   std::vector<message> warnings;
-   std::vector<message> errors;
+   auto take_warnings() noexcept -> std::vector<message>;
+
+   auto take_errors() noexcept -> std::vector<message>;
 
 private:
-   output& _standard_output;
-   output& _standard_error;
+   struct impl;
+
+   implementation_storage<impl, 88> impl;
 };
 
 }
