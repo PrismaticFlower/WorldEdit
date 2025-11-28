@@ -1365,7 +1365,7 @@ void execute_custom_commands(const std::span<const project_custom_command> comma
          os::process process = os::process_create_desc{
             .executable_path = io::path{},
             .command_line = command_line,
-            .working_directory = io::path{},
+            .working_directory = context.project_path,
             .capture_stdout = not command.detach,
             .capture_stderr = not command.detach,
             .priority = command.detach ? munge_process_priority
