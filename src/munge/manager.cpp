@@ -1783,8 +1783,8 @@ void run_world_munge(const project_child& world, munge_context& context,
 
    for (const io::directory_entry& entry :
         io::directory_iterator{world_context.source_path, false}) {
-      if (not entry.is_directory) return;
-      if (not string::istarts_with(entry.path.stem(), "World")) return;
+      if (not entry.is_directory) continue;
+      if (not string::istarts_with(entry.path.stem(), "World")) continue;
 
       tool_context child_context = world_context;
 
