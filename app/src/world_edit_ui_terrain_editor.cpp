@@ -2,6 +2,7 @@
 
 #include "edits/set_terrain_area.hpp"
 #include "edits/set_value.hpp"
+#include "edits/swap_terrain_textures.hpp"
 
 #include "math/vector_funcs.hpp"
 
@@ -583,6 +584,47 @@ void world_edit::ui_show_terrain_editor() noexcept
                config.edit_texture = i;
             }
 
+            const char* drag_drop_payload_name = "WE_TERRAIN_TEXTURE_SWAP";
+
+            if (ImGui::BeginDragDropSource()) {
+               ImGui::SetDragDropPayload(drag_drop_payload_name, &i, sizeof(i));
+
+               const float thumbnail_size =
+                  graphics::renderer::thumbnail_base_length * _display_scale;
+
+               ImGui::Image(_renderer->request_imgui_texture_id(
+                               _world.terrain.texture_names[i],
+                               graphics::fallback_imgui_texture::missing_diffuse),
+                            {thumbnail_size, thumbnail_size});
+
+               ImGui::EndDragDropSource();
+            }
+
+            if (ImGui::BeginDragDropTarget()) {
+
+               if (const ImGuiPayload* payload =
+                      ImGui::AcceptDragDropPayload(drag_drop_payload_name);
+                   payload and payload->DataSize == sizeof(i)) {
+                  decltype(i) swap_index = 0;
+
+                  std::memcpy(&swap_index, payload->Data, payload->DataSize);
+
+                  if (swap_index != i and swap_index < _world.terrain.texture_count) {
+                     _edit_stack_world.apply(edits::make_swap_terrain_textures(swap_index, i),
+                                             _edit_context);
+                  }
+
+                  if (_terrain_editor_config.texture.edit_texture == i) {
+                     _terrain_editor_config.texture.edit_texture = swap_index;
+                  }
+                  else if (_terrain_editor_config.texture.edit_texture == swap_index) {
+                     _terrain_editor_config.texture.edit_texture = i;
+                  }
+               }
+
+               ImGui::EndDragDropTarget();
+            }
+
             const uint32 texture_id =
                _renderer->request_imgui_texture_id(_world.terrain.texture_names[i],
                                                    graphics::fallback_imgui_texture::missing_diffuse);
@@ -603,6 +645,41 @@ void world_edit::ui_show_terrain_editor() noexcept
          }
 
          ImGui::Separator();
+
+         const float raise_lower_width =
+            (ImGui::CalcItemWidth() - ImGui::GetStyle().ItemSpacing.x) * 0.5f;
+
+         ImGui::BeginDisabled(_terrain_editor_config.texture.edit_texture <= 0);
+
+         if (ImGui::Button("Lower", {raise_lower_width, 0.0f}) and
+             _terrain_editor_config.texture.edit_texture > 0) {
+            _edit_stack_world.apply(edits::make_swap_terrain_textures(
+                                       _terrain_editor_config.texture.edit_texture,
+                                       _terrain_editor_config.texture.edit_texture - 1),
+                                    _edit_context);
+
+            _terrain_editor_config.texture.edit_texture -= 1;
+         }
+
+         ImGui::EndDisabled();
+
+         ImGui::SameLine();
+
+         ImGui::BeginDisabled(_terrain_editor_config.texture.edit_texture + 1 >=
+                              world::terrain::texture_count);
+
+         if (ImGui::Button("Raise", {raise_lower_width, 0.0f}) and
+             _terrain_editor_config.texture.edit_texture + 1 <
+                world::terrain::texture_count) {
+            _edit_stack_world.apply(edits::make_swap_terrain_textures(
+                                       _terrain_editor_config.texture.edit_texture,
+                                       _terrain_editor_config.texture.edit_texture + 1),
+                                    _edit_context);
+
+            _terrain_editor_config.texture.edit_texture += 1;
+         }
+
+         ImGui::EndDisabled();
 
          const uint32 texture = _terrain_editor_config.texture.edit_texture;
 

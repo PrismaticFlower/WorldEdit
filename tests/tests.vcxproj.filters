@@ -133,6 +133,7 @@
     <ClCompile Include="src\edits\add_sun_flare_tests.cpp" />
     <ClCompile Include="src\edits\delete_sun_flare.cpp" />
     <ClCompile Include="src\utility\string_template_tests.cpp" />
+    <ClCompile Include="src\edits\swap_terrain_textures_test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

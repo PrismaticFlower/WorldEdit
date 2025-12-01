@@ -287,6 +287,7 @@
     <ClCompile Include="src\os\execute.cpp" />
     <ClCompile Include="src\os\show_in_explorer.cpp" />
     <ClCompile Include="src\utility\string_template.cpp" />
+    <ClCompile Include="src\edits\swap_terrain_textures.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -637,6 +638,7 @@
     <ClInclude Include="src\os\show_in_explorer.hpp" />
     <ClInclude Include="src\utility\string_template.hpp" />
     <ClInclude Include="src\munge\tool_set.hpp" />
+    <ClInclude Include="src\edits\swap_terrain_textures.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

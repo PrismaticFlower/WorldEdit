@@ -280,6 +280,7 @@
     <ClCompile Include="src\edits\set_terrain_tests.cpp" />
     <ClCompile Include="src\edits\set_value_tests.cpp" />
     <ClCompile Include="src\edits\stack_tests.cpp" />
+    <ClCompile Include="src\edits\swap_terrain_textures_test.cpp" />
     <ClCompile Include="src\edits\world_test_data.cpp" />
     <ClCompile Include="src\graphics\gpu\detail\descriptor_allocator_tests.cpp" />
     <ClCompile Include="src\graphics\gpu\resource_tests.cpp" />
