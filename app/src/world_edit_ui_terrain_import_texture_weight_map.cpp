@@ -20,6 +20,13 @@ void world_edit::ui_show_terrain_import_texture_weight_map() noexcept
 
    if (ImGui::Begin("Import Texture Weight Map", &open,
                     ImGuiWindowFlags_AlwaysAutoResize)) {
+      bool terrain_needs_update = false;
+
+      ImGui::BeginGroup();
+
+      ImGui::BeginDisabled(
+         not _terrain_import_texture_weight_map_context.loaded_weight_map_u8.empty());
+
       ImGui::SeparatorText("Texture");
 
       for (int i = 0; i < world::terrain::texture_count; ++i) {
@@ -91,16 +98,10 @@ void world_edit::ui_show_terrain_import_texture_weight_map() noexcept
                      imported_length, _world.terrain.length)};
                }
 
-               if (weight_map_index < 0 or
-                   weight_map_index >= world::terrain::texture_count) {
-                  std::terminate();
-               }
+               _terrain_import_texture_weight_map_context.loaded_weight_map_u8 =
+                  std::move(loaded_weight_map);
 
-               _edit_stack_world.apply(edits::make_set_terrain_area(0, 0, weight_map_index,
-                                                                    std::move(loaded_weight_map)),
-                                       _edit_context, {.closed = true});
-
-               open = false;
+               terrain_needs_update = true;
             }
             catch (world::terrain_map_load_error& e) {
                _terrain_import_texture_weight_map_context.error_message = e.what();
@@ -109,6 +110,15 @@ void world_edit::ui_show_terrain_import_texture_weight_map() noexcept
       }
 
       ImGui::EndDisabled();
+      ImGui::EndDisabled();
+      ImGui::EndGroup();
+
+      if (not _terrain_import_texture_weight_map_context.loaded_weight_map_u8.empty() and
+          ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip |
+                               ImGuiHoveredFlags_AllowWhenDisabled)) {
+         ImGui::SetTooltip(
+            "Can not change texture after importing weight map.");
+      }
 
       if (not _terrain_import_texture_weight_map_context.error_message.empty()) {
          ImGui::SeparatorText("Import Error");
@@ -116,11 +126,63 @@ void world_edit::ui_show_terrain_import_texture_weight_map() noexcept
          ImGui::TextWrapped(
             _terrain_import_texture_weight_map_context.error_message.c_str());
       }
+
+      ImGui::BeginDisabled(
+         _terrain_import_texture_weight_map_context.loaded_weight_map_u8.empty());
+
+      ImGui::SeparatorText("Weight Map Import Options");
+
+      terrain_needs_update |=
+         ImGui::DragFloat("Weight Map Power",
+                          &_terrain_import_texture_weight_map_context.weight_map_power,
+                          1.0f / 255.0f, 0.0f, 10.0f);
+
+      ImGui::SetItemTooltip(
+         "Apply a power curve to the imported weight map. Higher values will "
+         "fade the map more, lower values will increase it's strength "
+         "and make transitions sharper.");
+
+      ImGui::Separator();
+
+      if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {
+         open = false;
+         _terrain_import_texture_weight_map_context = {};
+         _edit_stack_world.close_last();
+      }
+
+      ImGui::EndDisabled();
+
+      if (terrain_needs_update and
+          not _terrain_import_texture_weight_map_context.loaded_weight_map_u8.empty() and
+          _terrain_import_texture_weight_map_context.loaded_weight_map_u8.s_width() ==
+             _world.terrain.length and
+          weight_map_index >= 0 and weight_map_index < world::terrain::texture_count) {
+         const int32 new_length = static_cast<int32>(
+            _terrain_import_texture_weight_map_context.loaded_weight_map_u8.width());
+
+         container::dynamic_array_2d<uint8> weight_map{new_length, new_length};
+
+         const float weight_map_power =
+            _terrain_import_texture_weight_map_context.weight_map_power;
+
+         for (std::ptrdiff_t y = 0; y < weight_map.s_height(); ++y) {
+            for (std::ptrdiff_t x = 0; x < weight_map.s_width(); ++x) {
+               const uint8 weight =
+                  _terrain_import_texture_weight_map_context.loaded_weight_map_u8[{x, y}];
+
+               weight_map[{x, y}] = static_cast<uint8>(
+                  std::pow(weight / 255.0f, weight_map_power) * 255.0f + 0.5f);
+            }
+         }
+
+         _edit_stack_world.apply(edits::make_set_terrain_area(0, 0, weight_map_index,
+                                                              std::move(weight_map)),
+                                 _edit_context);
+      }
    }
 
    if (not open) _terrain_edit_tool = terrain_edit_tool::none;
 
    ImGui::End();
 }
-
 }

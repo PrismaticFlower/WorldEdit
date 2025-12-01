@@ -892,7 +892,10 @@ private:
    } _terrain_import_heightmap_context;
 
    struct terrain_import_texture_weight_map_context {
+      container::dynamic_array_2d<uint8> loaded_weight_map_u8;
       std::string error_message;
+
+      float weight_map_power = 1.0f;
 
       int weight_map_index = -1;
    } _terrain_import_texture_weight_map_context;
