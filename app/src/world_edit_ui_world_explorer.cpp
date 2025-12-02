@@ -1305,11 +1305,12 @@ void world_edit::ui_show_world_explorer() noexcept
          ImGui::InputTextWithHint("Name Filter", "e.g. Hub", &_world_explorer_filter);
          ImGui::PopItemWidth();
 
-         if (ImGui::BeginTable("AI Planning Hubs", 2,
+         if (ImGui::BeginTable("AI Planning Hubs", 3,
                                ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
                                   ImGuiTableFlags_SortTristate)) {
             ImGui::TableSetupColumn("Name");
+            ImGui::TableSetupColumn("Branch Weights");
             ImGui::TableSetupColumn("Hidden");
             ImGui::TableHeadersRow();
 
@@ -1329,7 +1330,8 @@ void world_edit::ui_show_world_explorer() noexcept
                   table_sort_specs->Specs[0];
 
                const int name_column = 0;
-               const int hidden_column = 1;
+               const int branch_weights_column = 1;
+               const int hidden_column = 2;
 
                if (sort_specs.ColumnIndex == name_column) {
                   fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
@@ -1337,6 +1339,13 @@ void world_edit::ui_show_world_explorer() noexcept
                                    return string::iless_than(
                                       _world.planning_hubs[left].name,
                                       _world.planning_hubs[right].name);
+                                });
+               }
+               else if (sort_specs.ColumnIndex == branch_weights_column) {
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return _world.planning_hubs[left].weights.size() <
+                                          _world.planning_hubs[right].weights.size();
                                 });
                }
                else if (sort_specs.ColumnIndex == hidden_column) {
@@ -1372,6 +1381,23 @@ void world_edit::ui_show_world_explorer() noexcept
                   ImGui::Selectable(hub.name.c_str(), is_selected,
                                     ImGuiSelectableFlags_SpanAllColumns);
                const bool hover = ImGui::IsItemHovered();
+               ImGui::TableNextColumn();
+               ImGui::Text("%u", static_cast<uint32>(hub.weights.size()));
+
+               if (hover and
+                   (ImGui::TableGetColumnFlags() & ImGuiTableColumnFlags_IsHovered) and
+                   ImGui::BeginTooltip()) {
+                  for (const world::planning_branch_weights& weights : hub.weights) {
+                     ImGui::Text("Branch Weight: %s - %s",
+                                 _world.planning_hubs[weights.hub_index].name.c_str(),
+                                 _world
+                                    .planning_connections[weights.connection_index]
+                                    .name.c_str());
+                  }
+
+                  ImGui::EndTooltip();
+               }
+
                ImGui::TableNextColumn();
                ImGui::Text(hub.hidden ? "X" : "-");
 
