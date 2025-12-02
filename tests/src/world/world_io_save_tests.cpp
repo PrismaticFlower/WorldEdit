@@ -1666,7 +1666,7 @@ TEST_CASE("world saving garbage collect", "[World][IO]")
    }
 }
 
-TEST_CASE("world saving no gamemodes", "[World][IO]")
+TEST_CASE("world saving no gamemodes bf1 format", "[World][IO]")
 {
    (void)io::create_directory("temp/world");
 
@@ -1695,7 +1695,7 @@ TEST_CASE("world saving no gamemodes", "[World][IO]")
       .common_layers = {0},
    };
 
-   save_world("temp/world/test_no_gamemodes.wld", world, {}, {.save_gamemodes = false});
+   save_world("temp/world/test_no_gamemodes.wld", world, {}, {.save_bf1_format = true});
 
    const auto written_ldx =
       io::read_file_to_string("temp/world/test_no_gamemodes.ldx");
@@ -1760,7 +1760,7 @@ TEST_CASE("world saving boundary bf1 format", "[World][IO]")
    };
 
    save_world("temp/world/test_no_boundary_spline_type.wld", world, {},
-              {.save_boundary_bf1_format = true});
+              {.save_bf1_format = true});
 
    const auto written_pth =
       io::read_file_to_string("temp/world/test_no_boundary_spline_type.pth");

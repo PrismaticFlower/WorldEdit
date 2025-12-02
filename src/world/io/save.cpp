@@ -297,12 +297,12 @@ void save_paths(const io::path& file_path, const int layer_index,
       file.write_ln("{");
 
       file.write_ln("\tData(0);");
-      file.write_ln("\tPathType({});", flags.save_boundary_bf1_format ? 2 : 0);
+      file.write_ln("\tPathType({});", flags.save_bf1_format ? 2 : 0);
       file.write_ln("\tPathSpeedType(0);");
       file.write_ln("\tPathTime(0.000000);");
       file.write_ln("\tOffsetPath(0);");
 
-      if (not flags.save_boundary_bf1_format) {
+      if (not flags.save_bf1_format) {
          file.write_ln("\tSplineType(\"Hermite\");");
       }
 
@@ -825,7 +825,7 @@ void save_layer_index(const io::path& path, const world& world, const save_flags
       file.write_ln("}\n");
    }
 
-   if (not flags.save_gamemodes) return;
+   if (flags.save_bf1_format) return;
 
    file.write_ln("GameMode(\"Common\")");
    file.write_ln("{");
@@ -887,7 +887,7 @@ void save_requirements(const io::path& world_dir, const std::string_view world_n
       }
    }
 
-   if (not flags.save_gamemodes) return;
+   if (flags.save_bf1_format) return;
 
    for (const game_mode_description& game_mode : world.game_modes) {
       if (game_mode.requirements.empty()) continue;

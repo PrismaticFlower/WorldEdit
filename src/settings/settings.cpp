@@ -155,16 +155,17 @@ void show_imgui_editor(settings& settings, bool& open,
 
             ImGui::SeparatorText("World Save Options");
 
-            ImGui::Checkbox("Don't Save World Game Modes",
-                            &preferences.dont_save_world_gamemodes);
-
             ImGui::SetItemTooltip(
                "Don't save world game modes when saving the world. This works "
                "around a crash when trying to load worlds using BF1's Zero "
                "Editor.");
 
-            ImGui::Checkbox("Save World Boundary in BF1 Format",
-                            &preferences.save_world_boundary_bf1_format);
+            ImGui::Checkbox("Save World in BF1 Format",
+                            &preferences.save_world_bf1_format);
+
+            ImGui::SetItemTooltip(
+               "Save worlds in formats friendly to BF1's toolchain. Terrain "
+               "version is controlled seperately.");
 
             ImGui::Checkbox("Don't Save World Effects",
                             &preferences.dont_save_world_effects);

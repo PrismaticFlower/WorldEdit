@@ -4187,8 +4187,7 @@ void world_edit::save_world(const io::path& path) noexcept
 {
    try {
       const world::save_flags flags =
-         {.save_gamemodes = not _settings.preferences.dont_save_world_gamemodes,
-          .save_boundary_bf1_format = _settings.preferences.save_world_boundary_bf1_format,
+         {.save_bf1_format = _settings.preferences.save_world_bf1_format,
           .save_effects = not _settings.preferences.dont_save_world_effects,
           .save_blocks_into_layer = _settings.preferences.save_blocks_into_layer};
 

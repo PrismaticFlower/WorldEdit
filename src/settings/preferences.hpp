@@ -14,9 +14,8 @@ struct preferences {
    std::string text_editor = default_text_editor;
    std::string game_install_path;
 
-   bool dont_save_world_gamemodes = false;
    bool dont_save_world_effects = false;
-   bool save_world_boundary_bf1_format = false;
+   bool save_world_bf1_format = false;
    bool save_blocks_into_layer = true;
    bool dont_ask_to_add_animation_to_group = false;
    bool dont_extrapolate_new_animation_keys = false;
