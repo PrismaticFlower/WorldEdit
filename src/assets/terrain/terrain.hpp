@@ -68,8 +68,8 @@ struct terrain {
    version version = version::swbf2;
    int32 length = 64;
 
-   float height_scale = 1.0f;
-   float grid_scale = 1.0f;
+   float height_scale = 0.01f;
+   float grid_scale = 8.0f;
 
    active_flags active_flags;
 
