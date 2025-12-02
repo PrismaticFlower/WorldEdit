@@ -668,4 +668,29 @@ TEST_CASE("world loading blocks req strip", "[World][IO]")
    CHECK(world.requirements[6].file_type == "lvl"sv);
    REQUIRE(world.requirements[6].entries.size() == 0);
 }
+
+TEST_CASE("world loading no terrain", "[World][IO]")
+{
+   null_output_stream out;
+   const auto world = load_world("data/world_no_terrain/test.wld"sv, out);
+
+   REQUIRE(world.objects.size() == 1);
+
+   // com_item_healthrecharge
+   {
+      CHECK(world.objects[0].name == "com_item_healthrecharge"sv);
+      CHECK(world.objects[0].class_name == "com_item_healthrecharge"sv);
+      CHECK(approx_equals(world.objects[0].position, {-32.000f, 0.008f, 32.000f}));
+      CHECK(approx_equals(world.objects[0].rotation, {0.000f, 0.000f, 1.000f, 0.000f}));
+      CHECK(world.objects[0].team == 0);
+      CHECK(world.objects[0].layer == 0);
+      CHECK(is_unique_id(0, world.objects));
+
+      REQUIRE(world.objects[0].instance_properties.size() == 2);
+      CHECK(world.objects[0].instance_properties[0].key == "EffectRegion"sv);
+      CHECK(world.objects[0].instance_properties[0].value == ""sv);
+      CHECK(world.objects[0].instance_properties[1].key == "Radius"sv);
+      CHECK(world.objects[0].instance_properties[1].value == "5.0"sv);
+   }
+}
 }

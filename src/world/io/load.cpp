@@ -1492,11 +1492,12 @@ auto load_world(const io::path& path, output_stream& output) -> world
       convert_boundaries(world, output);
       ensure_common_game_mode(world);
 
+      if (const auto ter_path = io::compose_path(world_dir, world.name, ".ter"sv);
+          io::exists(ter_path)) {
       try {
          utility::stopwatch load_timer;
 
-         world.terrain = read_terrain(io::read_file_to_bytes(
-            io::compose_path(world_dir, world.name, ".ter"sv)));
+            world.terrain = read_terrain(io::read_file_to_bytes(ter_path));
 
          output.write("Loaded world terrain (time taken {:f}ms)\n",
                       load_timer.elapsed_ms());
@@ -1509,6 +1510,11 @@ auto load_world(const io::path& path, output_stream& output) -> world
          output.write(message);
 
          throw load_failure{message};
+      }
+      }
+      else {
+         output.write(
+            "World terrain file is missing. World will have default terrain.");
       }
 
       load_requirements_files(world_dir, world, output);
