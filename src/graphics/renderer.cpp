@@ -2688,9 +2688,9 @@ void renderer_impl::draw_grid_overlay(const float height, const float length,
       .grid_offsetWS_z = grid_offsetWS.z,
       .height = height,
       .inv_grid_scale = 1.0f / grid_scale,
-      .line_width = line_width * (4.0f / grid_scale),
+      .line_width = line_width,
       .inv_grid_major_scale = 1.0f / major_grid_scale,
-      .major_line_width = line_width * (16.0f / major_grid_scale),
+      .major_line_width = line_width / settings.overlay_grid_major_grid_spacing * 4.0f,
    };
 
    command_list.set_graphics_root_signature(_root_signatures.grid_overlay.get());
