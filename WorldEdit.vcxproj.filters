@@ -639,6 +639,7 @@
     <ClInclude Include="src\utility\string_template.hpp" />
     <ClInclude Include="src\munge\tool_set.hpp" />
     <ClInclude Include="src\edits\swap_terrain_textures.hpp" />
+    <ClInclude Include="src\world\configuration.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

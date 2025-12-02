@@ -1367,6 +1367,40 @@ void load_requirements_files(const io::path& world_dir, world& world_out,
    }
 }
 
+auto load_configuration(const io::path& filepath, output_stream& output) -> configuration
+{
+   using namespace assets;
+
+   utility::stopwatch load_timer;
+
+   configuration configuration;
+
+   try {
+      for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
+         if (key_node.key == "SaveBF1Format"sv) {
+            configuration.save_bf1_format = key_node.values.get<int>(0) != 0;
+         }
+         else if (key_node.key == "SaveEffects"sv) {
+            configuration.save_effects = key_node.values.get<int>(0) != 0;
+         }
+         else if (key_node.key == "SaveBlocksIntoLayer"sv) {
+            configuration.save_blocks_into_layer = key_node.values.get<int>(0) != 0;
+         }
+      }
+   }
+   catch (std::exception& e) {
+      throw load_failure{fmt::format("Failed to load world configuration.\n   "
+                                     "File: {}\n   Message: \n{}\n",
+                                     filepath.string_view(),
+                                     string::indent(2, e.what()))};
+   }
+
+   output.write("Loaded world configuration (time taken {:f}ms)\n",
+                load_timer.elapsed_ms());
+
+   return configuration;
+}
+
 void convert_light_regions(world& world)
 {
    absl::flat_hash_map<std::string_view, region*> regions;
@@ -1466,11 +1500,11 @@ void strip_blocks_layer_reference(world& world) noexcept
 
 }
 
-auto load_world(const io::path& path, output_stream& output) -> world
+auto load_world(const io::path& path, const configuration& default_configuration,
+                output_stream& output) -> world
 {
-   world world;
-
-   world.name = path.stem();
+   world world = {.name = std::string{path.stem()},
+                  .configuration = default_configuration};
 
    const io::path world_dir = path.parent_path();
 
@@ -1494,23 +1528,23 @@ auto load_world(const io::path& path, output_stream& output) -> world
 
       if (const auto ter_path = io::compose_path(world_dir, world.name, ".ter"sv);
           io::exists(ter_path)) {
-      try {
-         utility::stopwatch load_timer;
+         try {
+            utility::stopwatch load_timer;
 
             world.terrain = read_terrain(io::read_file_to_bytes(ter_path));
 
-         output.write("Loaded world terrain (time taken {:f}ms)\n",
-                      load_timer.elapsed_ms());
-      }
-      catch (std::exception& e) {
-         auto message =
-            fmt::format("Error while loading terrain:\n   Message: \n{}\n",
-                        string::indent(2, e.what()));
+            output.write("Loaded world terrain (time taken {:f}ms)\n",
+                         load_timer.elapsed_ms());
+         }
+         catch (std::exception& e) {
+            auto message =
+               fmt::format("Error while loading terrain:\n   Message: \n{}\n",
+                           string::indent(2, e.what()));
 
-         output.write(message);
+            output.write(message);
 
-         throw load_failure{message};
-      }
+            throw load_failure{message};
+         }
       }
       else {
          output.write(
@@ -1543,6 +1577,12 @@ auto load_world(const io::path& path, output_stream& output) -> world
       if (const auto blk_path = io::compose_path(world_dir, world.name, ".blk"sv);
           io::exists(blk_path)) {
          world.blocks = load_blocks(blk_path, layer_remap, output);
+      }
+
+      if (const auto configuration_path =
+             io::compose_path(world_dir, world.name, ".WorldEdit"sv);
+          io::exists(configuration_path)) {
+         world.configuration = load_configuration(configuration_path, output);
       }
 
       strip_blocks_layer_reference(world);

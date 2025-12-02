@@ -36,9 +36,13 @@ bool is_unique_id(std::size_t index, const auto& entities)
 TEST_CASE("world loading", "[World][IO]")
 {
    null_output_stream out;
-   const auto world = load_world("data/world/test.wld"sv, out);
+   const auto world = load_world("data/world/test.wld"sv, {}, out);
 
    CHECK(world.name == "test"sv);
+
+   CHECK(not world.configuration.save_bf1_format);
+   CHECK(not world.configuration.save_effects);
+   CHECK(world.configuration.save_blocks_into_layer);
 
    REQUIRE(world.requirements.size() == 7);
 
@@ -634,7 +638,7 @@ TEST_CASE("world loading", "[World][IO]")
 TEST_CASE("world loading blocks req strip", "[World][IO]")
 {
    null_output_stream out;
-   const auto world = load_world("data/world_blocks/test.wld"sv, out);
+   const auto world = load_world("data/world_blocks/test.wld"sv, {}, out);
 
    CHECK(world.name == "test"sv);
 
@@ -669,10 +673,26 @@ TEST_CASE("world loading blocks req strip", "[World][IO]")
    REQUIRE(world.requirements[6].entries.size() == 0);
 }
 
+TEST_CASE("world loading default configuration", "[World][IO]")
+{
+   null_output_stream out;
+   const auto world = load_world("data/world_default_configuration/test.wld"sv,
+                                 {
+                                    .save_bf1_format = true,
+                                    .save_effects = false,
+                                    .save_blocks_into_layer = true,
+                                 },
+                                 out);
+
+   CHECK(world.configuration.save_bf1_format);
+   CHECK(not world.configuration.save_effects);
+   CHECK(world.configuration.save_blocks_into_layer);
+}
+
 TEST_CASE("world loading no terrain", "[World][IO]")
 {
    null_output_stream out;
-   const auto world = load_world("data/world_no_terrain/test.wld"sv, out);
+   const auto world = load_world("data/world_no_terrain/test.wld"sv, {}, out);
 
    REQUIRE(world.objects.size() == 1);
 

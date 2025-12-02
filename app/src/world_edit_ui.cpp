@@ -41,6 +41,10 @@ void world_edit::update_ui() noexcept
       ui_show_world_requirements_editor();
    }
 
+   if (_world_config_editor_open) {
+      ui_show_world_config_editor();
+   }
+
    if (_world_explorer_open) {
       ui_show_world_explorer();
    }

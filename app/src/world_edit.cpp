@@ -4140,7 +4140,15 @@ void world_edit::load_world(const io::path& path) noexcept
    close_world();
 
    try {
-      _world = world::load_world(path, *_stream);
+      _world =
+         world::load_world(path,
+                           {
+                              .save_bf1_format = _settings.preferences.save_world_bf1_format,
+                              .save_effects = not _settings.preferences.dont_save_world_effects,
+                              .save_blocks_into_layer =
+                                 _settings.preferences.save_blocks_into_layer,
+                           },
+                           *_stream);
       _world_path = path;
 
       for (world::object& object : _world.objects) {
@@ -4186,13 +4194,8 @@ void world_edit::load_world_with_picker() noexcept
 void world_edit::save_world(const io::path& path) noexcept
 {
    try {
-      const world::save_flags flags =
-         {.save_bf1_format = _settings.preferences.save_world_bf1_format,
-          .save_effects = not _settings.preferences.dont_save_world_effects,
-          .save_blocks_into_layer = _settings.preferences.save_blocks_into_layer};
-
       world::save_world(path, _world,
-                        world::gather_terrain_cuts(_world, _object_classes), flags);
+                        world::gather_terrain_cuts(_world, _object_classes));
 
       _edit_stack_world.clear_modified_flag();
    }

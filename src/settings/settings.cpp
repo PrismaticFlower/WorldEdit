@@ -153,12 +153,13 @@ void show_imgui_editor(settings& settings, bool& open,
             ImGui::Checkbox("Disable Double-click Select",
                             &preferences.disable_double_click_select);
 
-            ImGui::SeparatorText("World Save Options");
+            ImGui::SeparatorText("World Configuration Defaults");
 
             ImGui::SetItemTooltip(
-               "Don't save world game modes when saving the world. This works "
-               "around a crash when trying to load worlds using BF1's Zero "
-               "Editor.");
+               "Defaults for WorldEdit world configurations when none "
+               "exists.\n\n"
+               "Note that changes these here will not affect an already loaded "
+               "world, use the World Configuration Editor for that.");
 
             ImGui::Checkbox("Save World in BF1 Format",
                             &preferences.save_world_bf1_format);
@@ -173,6 +174,8 @@ void show_imgui_editor(settings& settings, bool& open,
             ImGui::SetItemTooltip(
                "Don't save the world .fx file. Note that this won't disable "
                "edit controls for values from the .fx file.");
+
+            ImGui::SeparatorText("Blocks Mode");
 
             if (ImGui::BeginTable("Blocks Mode", 2,
                                   ImGuiTableFlags_SizingStretchSame |
@@ -198,16 +201,12 @@ void show_imgui_editor(settings& settings, bool& open,
 
                ImGui::SetItemTooltip(
                   "Blocks will be saved into a special hidden layer named "
-                  "'{WORLD}_WE_blocks`. A set of ODFs and MSHs for the layer "
-                  "will be saved into a 'blocks\\` folder relative to the "
+                  "'{WORLD}_WE_blocks'. A set of ODFs and MSHs for the layer "
+                  "will be saved into a 'blocks\\' folder relative to the "
                   "world.");
 
                ImGui::EndTable();
             }
-
-            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-
-            ImGui::Text("Blocks Mode");
 
             ImGui::SeparatorText("Reset");
 

@@ -351,6 +351,8 @@ private:
 
    void ui_show_world_requirements_editor() noexcept;
 
+   void ui_show_world_config_editor() noexcept;
+
    void ui_show_world_explorer() noexcept;
 
    void ui_show_world_stats() noexcept;
@@ -624,6 +626,7 @@ private:
    bool _world_layers_editor_open = false;
    bool _world_game_mode_editor_open = false;
    bool _world_requirements_editor_open = false;
+   bool _world_config_editor_open = false;
    bool _world_explorer_open = false;
    bool _world_stats_open = false;
    bool _object_class_browser_open = false;

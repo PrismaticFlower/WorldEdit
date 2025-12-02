@@ -200,6 +200,9 @@ void world_edit::ui_show_main_menu_bar() noexcept
                             "Global", "Show World Effects Editor")),
                          &_effects_editor_open);
 
+         ImGui::MenuItem("World Configuration Editor", nullptr,
+                         &_world_config_editor_open);
+
          ImGui::Separator();
 
          ImGui::MenuItem("World Explorer",

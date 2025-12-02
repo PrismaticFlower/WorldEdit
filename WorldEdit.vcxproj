@@ -767,6 +767,7 @@
     <ClInclude Include="src\world\blocks\utility\raycast.hpp" />
     <ClInclude Include="src\world\blocks\utility\snapping.hpp" />
     <ClInclude Include="src\world\boundary.hpp" />
+    <ClInclude Include="src\world\configuration.hpp" />
     <ClInclude Include="src\world\effects.hpp" />
     <ClInclude Include="src\world\entity_group.hpp" />
     <ClInclude Include="src\world\id.hpp" />

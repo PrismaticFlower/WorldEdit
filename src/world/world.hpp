@@ -4,6 +4,7 @@
 #include "barrier.hpp"
 #include "blocks.hpp"
 #include "boundary.hpp"
+#include "configuration.hpp"
 #include "effects.hpp"
 #include "game_mode_description.hpp"
 #include "global_lights.hpp"
@@ -38,6 +39,8 @@ constexpr std::size_t max_animation_hierarchies = 16'384;
 
 struct world {
    std::string name;
+
+   configuration configuration;
 
    std::vector<requirement_list> requirements;
 

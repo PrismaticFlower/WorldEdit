@@ -1,0 +1,7 @@
+// World configuration for WorldEdit
+
+SaveBF1Format(0);
+
+SaveEffects(0);
+
+SaveBlocksIntoLayer(1);

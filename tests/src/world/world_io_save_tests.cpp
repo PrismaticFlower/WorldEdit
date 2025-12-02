@@ -1564,7 +1564,7 @@ TEST_CASE("world saving", "[World][IO]")
                                 }},
    };
 
-   save_world("temp/world/test.wld", world, {}, save_flags{});
+   save_world("temp/world/test.wld", world, {});
 
    const auto written_wld = io::read_file_to_string("temp/world/test.wld");
 
@@ -1651,7 +1651,7 @@ TEST_CASE("world saving garbage collect", "[World][IO]")
       // NB: Test that test_ctf.mrq already being gone causes no issues.
    }
 
-   save_world("temp/world_gc/test.wld", world, {}, save_flags{});
+   save_world("temp/world_gc/test.wld", world, {});
 
    for (const auto& layer : world.deleted_layers) {
       for (const auto& file : layer_files) {
@@ -1672,6 +1672,8 @@ TEST_CASE("world saving no gamemodes bf1 format", "[World][IO]")
 
    const world world{
       .name = "test_no_gamemodes",
+
+      .configuration = {.save_bf1_format = true},
 
       .requirements =
          {
@@ -1695,7 +1697,7 @@ TEST_CASE("world saving no gamemodes bf1 format", "[World][IO]")
       .common_layers = {0},
    };
 
-   save_world("temp/world/test_no_gamemodes.wld", world, {}, {.save_bf1_format = true});
+   save_world("temp/world/test_no_gamemodes.wld", world, {});
 
    const auto written_ldx =
       io::read_file_to_string("temp/world/test_no_gamemodes.ldx");
@@ -1716,6 +1718,8 @@ TEST_CASE("world saving boundary bf1 format", "[World][IO]")
 
    const world world{
       .name = "test_no_boundary_spline_type",
+
+      .configuration = {.save_bf1_format = true},
 
       .layer_descriptions = {{.name = "[Base]"}},
 
@@ -1759,8 +1763,7 @@ TEST_CASE("world saving boundary bf1 format", "[World][IO]")
          },
    };
 
-   save_world("temp/world/test_no_boundary_spline_type.wld", world, {},
-              {.save_bf1_format = true});
+   save_world("temp/world/test_no_boundary_spline_type.wld", world, {});
 
    const auto written_pth =
       io::read_file_to_string("temp/world/test_no_boundary_spline_type.pth");
@@ -1775,10 +1778,12 @@ TEST_CASE("world saving no effects", "[World][IO]")
    const world world{
       .name = "test_no_effects",
 
+      .configuration = {.save_effects = false},
+
       .layer_descriptions = {{.name = "[Base]"}},
    };
 
-   save_world("temp/world/test_no_effects.wld", world, {}, {.save_effects = false});
+   save_world("temp/world/test_no_effects.wld", world, {});
 
    CHECK(not io::exists("temp/world/test_no_effects.fx"));
 }
@@ -1789,6 +1794,7 @@ TEST_CASE("world saving blocks req and layer", "[World][IO]")
 
    world world{
       .name = "test_blocks",
+      .configuration = {.save_blocks_into_layer = true},
       .requirements =
          {
             {.file_type = "path", .entries = {"test_blocks"}},
@@ -1809,8 +1815,7 @@ TEST_CASE("world saving blocks req and layer", "[World][IO]")
                          world.blocks.next_id.boxes.aquire())
       ->apply(edit_context);
 
-   save_world("temp/world_blocks/test_blocks.wld", world, {},
-              {.save_blocks_into_layer = true});
+   save_world("temp/world_blocks/test_blocks.wld", world, {});
 
    constexpr auto expected_blocks_req = R"(ucft
 {
@@ -1882,6 +1887,7 @@ TEST_CASE("world saving blocks layer garbage collect", "[World][IO]")
 
    world world{
       .name = "test_blocks",
+      .configuration = {.save_blocks_into_layer = false},
       .requirements =
          {
             {.file_type = "path", .entries = {"test_blocks"}},
@@ -1906,8 +1912,7 @@ TEST_CASE("world saving blocks layer garbage collect", "[World][IO]")
 
    io::output_file{layer_path};
 
-   save_world("temp/world_blocks_gc/test_blocks.wld", world, {},
-              {.save_blocks_into_layer = false});
+   save_world("temp/world_blocks_gc/test_blocks.wld", world, {});
 
    CHECK(not io::exists(layer_path));
 }
@@ -1918,6 +1923,7 @@ TEST_CASE("world saving blocks req insertion", "[World][IO]")
 
    world world{
       .name = "test_blocks",
+      .configuration = {.save_blocks_into_layer = false},
       .requirements =
          {
             {.file_type = "path", .entries = {"test_blocks"}},
@@ -1938,8 +1944,7 @@ TEST_CASE("world saving blocks req insertion", "[World][IO]")
                          world.blocks.next_id.boxes.aquire())
       ->apply(edit_context);
 
-   save_world("temp/world_test_blocks_req/test_blocks.wld", world, {},
-              {.save_blocks_into_layer = false});
+   save_world("temp/world_test_blocks_req/test_blocks.wld", world, {});
 
    constexpr auto expected_blocks_req = R"(ucft
 {
@@ -1997,6 +2002,7 @@ TEST_CASE("world saving blocks req existing", "[World][IO]")
 
    world world{
       .name = "test_blocks",
+      .configuration = {.save_blocks_into_layer = false},
       .requirements =
          {
             {.file_type = "path", .entries = {"test_blocks"}},
@@ -2018,8 +2024,7 @@ TEST_CASE("world saving blocks req existing", "[World][IO]")
                          world.blocks.next_id.boxes.aquire())
       ->apply(edit_context);
 
-   save_world("temp/world_blocks_existing_req/test_blocks.wld", world, {},
-              {.save_blocks_into_layer = false});
+   save_world("temp/world_blocks_existing_req/test_blocks.wld", world, {});
 
    constexpr auto expected_blocks_req = R"(ucft
 {
@@ -2069,6 +2074,38 @@ TEST_CASE("world saving blocks req existing", "[World][IO]")
       io::read_file_to_string("temp/world_blocks_existing_req/test_blocks.req");
 
    CHECK(written_req == expected_blocks_req);
+}
+
+TEST_CASE("world saving configuration", "[World][IO]")
+{
+   (void)io::create_directory("temp/world_test_configuration");
+
+   world world{
+      .name = "test",
+      .configuration =
+         {
+            .save_bf1_format = false,
+            .save_effects = true,
+            .save_blocks_into_layer = true,
+         },
+
+      .layer_descriptions = {{.name = "[Base]"}},
+   };
+   save_world("temp/world_test_configuration/test.wld", world, {});
+
+   constexpr auto expected_configuration = R"(// World configuration for WorldEdit
+
+SaveBF1Format(0);
+
+SaveEffects(1);
+
+SaveBlocksIntoLayer(1);
+)"sv;
+
+   const auto written_configuration =
+      io::read_file_to_string("temp/world_test_configuration/test.WorldEdit");
+
+   CHECK(written_configuration == expected_configuration);
 }
 
 }
