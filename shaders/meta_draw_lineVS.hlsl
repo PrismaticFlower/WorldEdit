@@ -44,38 +44,38 @@ output_vertex main(uint vertex_id : SV_VertexID)
    switch (line_vertex_id) {
    case 0:
       positionPS = from_rendertarget_position((position0RT - line_normalRT * line_offset), position0PS);
-      color = unpack_bgra_srgb( ln.color0);
+      color = unpack_bgra_srgb(ln.color0);
       distance_sign = -1.0;
       break;
    case 1:
       positionPS = from_rendertarget_position((position0RT + line_normalRT * line_offset), position0PS);
-      color = unpack_bgra_srgb( ln.color0);
+      color = unpack_bgra_srgb(ln.color0);
       distance_sign = 1.0;
       break;
    case 2:
       positionPS = from_rendertarget_position((position1RT + line_normalRT * line_offset), position1PS);
-      color = unpack_bgra_srgb( ln.color1);
+      color = unpack_bgra_srgb(ln.color1);
       distance_sign = 1.0;
       break;
    case 3:
       positionPS = from_rendertarget_position((position1RT + line_normalRT * line_offset), position1PS);
-      color = unpack_bgra_srgb( ln.color1);
+      color = unpack_bgra_srgb(ln.color1);
       distance_sign = 1.0;
       break;
    case 4:
       positionPS = from_rendertarget_position((position0RT - line_normalRT * line_offset), position0PS);
-      color = unpack_bgra_srgb( ln.color0);
+      color = unpack_bgra_srgb(ln.color0);
       distance_sign = -1.0;
       break;
    case 5:
       positionPS = from_rendertarget_position((position1RT - line_normalRT * line_offset), position1PS);
-      color = unpack_bgra_srgb( ln.color1);
+      color = unpack_bgra_srgb(ln.color1);
       distance_sign = -1.0;
       break;
    }
 
    output.line_distance = line_offset * distance_sign;
-   output.color =color; unpack_bgra_srgb(line_vertex_id < 3 ? ln.color0 : ln.color1);
+   output.color = color;
    output.positionPS = positionPS;
 
    return output;
