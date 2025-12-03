@@ -585,17 +585,11 @@ void world_edit::ui_show_world_creation_editor() noexcept
       ImGui::Checkbox("Specular Caster", &light.specular_caster,
                       _edit_stack_world, _edit_context);
 
-      ImGui::EnumSelect(
-         "Light Type", &light.light_type, _edit_stack_world, _edit_context,
-         {enum_select_option{"Directional", world::light_type::directional},
-          enum_select_option{"Point", world::light_type::point},
-          enum_select_option{"Spot", world::light_type::spot},
-          enum_select_option{"Directional Region Box",
-                             world::light_type::directional_region_box},
-          enum_select_option{"Directional Region Sphere",
-                             world::light_type::directional_region_sphere},
-          enum_select_option{"Directional Region Cylinder",
-                             world::light_type::directional_region_cylinder}});
+      ImGui::EnumSelect("Light Type", &light.light_type, _edit_stack_world, _edit_context,
+                        {world::light_type::directional, world::light_type::point,
+                         world::light_type::spot, world::light_type::directional_region_box,
+                         world::light_type::directional_region_sphere,
+                         world::light_type::directional_region_cylinder});
 
       ImGui::Separator();
 
@@ -620,13 +614,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
       ui_texture_pick_widget("Texture", &light.texture);
 
       if (not light.texture.empty()) {
-         ImGui::EnumSelect(
-            "Texture Addressing", &light.texture_addressing, _edit_stack_world,
-            _edit_context,
-            {enum_select_option{world::to_ui_string(world::texture_addressing::wrap),
-                                world::texture_addressing::wrap},
-             enum_select_option{world::to_ui_string(world::texture_addressing::clamp),
-                                world::texture_addressing::clamp}});
+         ImGui::EnumSelect("Texture Addressing", &light.texture_addressing,
+                           _edit_stack_world, _edit_context,
+                           {world::texture_addressing::wrap,
+                            world::texture_addressing::clamp});
 
          if (world::is_directional_light(light)) {
             ImGui::DragFloat2("Directional Texture Tiling",
@@ -721,9 +712,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
              world::is_directional_light(light)) {
             ImGui::EnumSelect("PS2 Blend Mode", &light.ps2_blend_mode,
                               _edit_stack_world, _edit_context,
-                              {enum_select_option{"Add", world::ps2_blend_mode::add},
-                               enum_select_option{"Multiply", world::ps2_blend_mode::multiply},
-                               enum_select_option{"Blend", world::ps2_blend_mode::blend}});
+                              {world::ps2_blend_mode::add, world::ps2_blend_mode::multiply,
+                               world::ps2_blend_mode::blend});
          }
 
          if (light.light_type == world::light_type::spot) {
@@ -1235,20 +1225,16 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          ImGui::EnumSelect("Path Type", &existing_path->type, _edit_stack_world,
                            _edit_context,
-                           {enum_select_option{"None", world::path_type::none},
-                            enum_select_option{"Entity Follow",
-                                               world::path_type::entity_follow},
-                            enum_select_option{"Formation", world::path_type::formation},
-                            enum_select_option{"Patrol", world::path_type::patrol}});
+                           {world::path_type::none, world::path_type::entity_follow,
+                            world::path_type::formation, world::path_type::patrol});
 
          if (existing_path->type == world::path_type::patrol) {
-            ImGui::EnumSelect(
-               "Spline Type", &existing_path->spline_type, _edit_stack_world,
-               _edit_context,
-               {enum_select_option{"None", world::path_spline_type::none},
-                enum_select_option{"Linear", world::path_spline_type::linear},
-                enum_select_option{"Hermite", world::path_spline_type::hermite},
-                enum_select_option{"Catmull-Rom", world::path_spline_type::catmull_rom}});
+            ImGui::EnumSelect("Spline Type", &existing_path->spline_type,
+                              _edit_stack_world, _edit_context,
+                              {world::path_spline_type::none,
+                               world::path_spline_type::linear,
+                               world::path_spline_type::hermite,
+                               world::path_spline_type::catmull_rom});
          }
 
          ImGui::Separator();
@@ -1296,19 +1282,16 @@ void world_edit::ui_show_world_creation_editor() noexcept
          ImGui::LayerPick("Layer", &path.layer, _edit_stack_world, _edit_context);
 
          ImGui::EnumSelect("Path Type", &path.type, _edit_stack_world, _edit_context,
-                           {enum_select_option{"None", world::path_type::none},
-                            enum_select_option{"Entity Follow",
-                                               world::path_type::entity_follow},
-                            enum_select_option{"Formation", world::path_type::formation},
-                            enum_select_option{"Patrol", world::path_type::patrol}});
+                           {world::path_type::none, world::path_type::entity_follow,
+                            world::path_type::formation, world::path_type::patrol});
 
          if (path.type == world::path_type::patrol) {
-            ImGui::EnumSelect(
-               "Spline Type", &path.spline_type, _edit_stack_world, _edit_context,
-               {enum_select_option{"None", world::path_spline_type::none},
-                enum_select_option{"Linear", world::path_spline_type::linear},
-                enum_select_option{"Hermite", world::path_spline_type::hermite},
-                enum_select_option{"Catmull-Rom", world::path_spline_type::catmull_rom}});
+            ImGui::EnumSelect("Spline Type", &path.spline_type,
+                              _edit_stack_world, _edit_context,
+                              {world::path_spline_type::none,
+                               world::path_spline_type::linear,
+                               world::path_spline_type::hermite,
+                               world::path_spline_type::catmull_rom});
          }
       }
 
@@ -1509,26 +1492,24 @@ void world_edit::ui_show_world_creation_editor() noexcept
          world::get_region_type(region.description);
       world::region_type region_type = start_region_type;
 
-      if (ImGui::EnumSelect(
-             "Type", &region_type,
-             {
-                enum_select_option{"Typeless", world::region_type::typeless},
-                enum_select_option{"Sound Stream", world::region_type::soundstream},
-                enum_select_option{"Sound Static", world::region_type::soundstatic},
-                enum_select_option{"Sound Space", world::region_type::soundspace},
-                enum_select_option{"Sound Trigger", world::region_type::soundtrigger},
-                enum_select_option{"Foley FX", world::region_type::foleyfx},
-                enum_select_option{"Shadow", world::region_type::shadow},
-                enum_select_option{"Map Bounds", world::region_type::mapbounds},
-                enum_select_option{"Rumble", world::region_type::rumble},
-                enum_select_option{"Reflection", world::region_type::reflection},
-                enum_select_option{"Rain Shadow", world::region_type::rainshadow},
-                enum_select_option{"Danger", world::region_type::danger},
-                enum_select_option{"Damage Region", world::region_type::damage_region},
-                enum_select_option{"AI Vis", world::region_type::ai_vis},
-                enum_select_option{"Color Grading (Shader Patch)",
-                                   world::region_type::colorgrading},
-             })) {
+      if (ImGui::EnumSelect("Type", &region_type,
+                            {
+                               world::region_type::typeless,
+                               world::region_type::soundstream,
+                               world::region_type::soundstatic,
+                               world::region_type::soundspace,
+                               world::region_type::soundtrigger,
+                               world::region_type::foleyfx,
+                               world::region_type::shadow,
+                               world::region_type::mapbounds,
+                               world::region_type::rumble,
+                               world::region_type::reflection,
+                               world::region_type::rainshadow,
+                               world::region_type::danger,
+                               world::region_type::damage_region,
+                               world::region_type::ai_vis,
+                               world::region_type::colorgrading,
+                            })) {
          if (region_type != start_region_type) {
             _edit_stack_world.apply(edits::make_set_value(&region.description,
                                                           get_default_description(
@@ -2035,24 +2016,20 @@ void world_edit::ui_show_world_creation_editor() noexcept
       switch (world::get_region_allowed_shapes(region_type)) {
       case world::region_allowed_shapes::all: {
          ImGui::EnumSelect("Shape", &region.shape, _edit_stack_world, _edit_context,
-                           {enum_select_option{"Box", world::region_shape::box},
-                            enum_select_option{"Sphere", world::region_shape::sphere},
-                            enum_select_option{"Cylinder",
-                                               world::region_shape::cylinder}});
+                           {world::region_shape::box, world::region_shape::sphere,
+                            world::region_shape::cylinder});
       } break;
       case world::region_allowed_shapes::box: {
-         ImGui::EnumSelect("Shape", &region.shape, _edit_stack_world, _edit_context,
-                           {enum_select_option{"Box", world::region_shape::box}});
+         ImGui::EnumSelect("Shape", &region.shape, _edit_stack_world,
+                           _edit_context, {world::region_shape::box});
       } break;
       case world::region_allowed_shapes::sphere: {
-         ImGui::EnumSelect("Shape", &region.shape, _edit_stack_world, _edit_context,
-                           {enum_select_option{"Sphere", world::region_shape::sphere}});
+         ImGui::EnumSelect("Shape", &region.shape, _edit_stack_world,
+                           _edit_context, {world::region_shape::sphere});
       } break;
       case world::region_allowed_shapes::box_cylinder: {
          ImGui::EnumSelect("Shape", &region.shape, _edit_stack_world, _edit_context,
-                           {enum_select_option{"Box", world::region_shape::box},
-                            enum_select_option{"Cylinder",
-                                               world::region_shape::cylinder}});
+                           {world::region_shape::box, world::region_shape::cylinder});
       } break;
       }
 
@@ -3080,17 +3057,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::Separator();
 
-      ImGui::EnumSelect(
-         "Type", &hintnode.type, _edit_stack_world, _edit_context,
-         {enum_select_option{"Snipe", world::hintnode_type::snipe},
-          enum_select_option{"Patrol", world::hintnode_type::patrol},
-          enum_select_option{"Cover", world::hintnode_type::cover},
-          enum_select_option{"Access", world::hintnode_type::access},
-          enum_select_option{"Jet Jump", world::hintnode_type::jet_jump},
-          enum_select_option{"Mine", world::hintnode_type::mine},
-          enum_select_option{"Land", world::hintnode_type::land},
-          enum_select_option{"Fortification", world::hintnode_type::fortification},
-          enum_select_option{"Vehicle Cover", world::hintnode_type::vehicle_cover}});
+      ImGui::EnumSelect("Type", &hintnode.type, _edit_stack_world, _edit_context,
+                        {world::hintnode_type::snipe, world::hintnode_type::patrol,
+                         world::hintnode_type::cover, world::hintnode_type::access,
+                         world::hintnode_type::jet_jump, world::hintnode_type::mine,
+                         world::hintnode_type::land, world::hintnode_type::fortification,
+                         world::hintnode_type::vehicle_cover});
 
       const world::hintnode_traits hintnode_traits =
          world::get_hintnode_traits(hintnode.type);
@@ -3136,10 +3108,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       if (hintnode_traits.has_mode) {
          ImGui::EnumSelect("Mode", &hintnode.mode, _edit_stack_world, _edit_context,
-                           {enum_select_option{"None", world::hintnode_mode::none},
-                            enum_select_option{"Attack", world::hintnode_mode::attack},
-                            enum_select_option{"Defend", world::hintnode_mode::defend},
-                            enum_select_option{"Both", world::hintnode_mode::both}});
+                           {world::hintnode_mode::none, world::hintnode_mode::attack,
+                            world::hintnode_mode::defend, world::hintnode_mode::both});
       }
 
       if (hintnode_traits.has_radius) {

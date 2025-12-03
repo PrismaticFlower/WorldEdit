@@ -1,13 +1,18 @@
 #pragma once
 
 #include "../imgui_ext.hpp"
+
 #include "set_value.hpp"
 #include "stack.hpp"
 #include "types.hpp"
+
 #include "utility/function_ptr.hpp"
+
 #include "world/interaction_context.hpp"
 
 #include <imgui.h>
+
+#include <concepts>
 
 // Wrappers for ImGui controls that integrate with the Undo-Redo stack.
 
@@ -187,32 +192,46 @@ bool DragSectorPoint(const char* label, std::vector<we::float2>* points,
 
 template<typename Enum>
 inline bool EnumSelect(const char* label, Enum* value,
-                       we::edits::stack<we::world::edit_context>& edit_stack,
-                       we::world::edit_context& context,
-                       std::initializer_list<we::enum_select_option<Enum>> values) noexcept
+                       std::initializer_list<Enum> values) noexcept
+   requires requires(Enum v) {
+      { to_ui_string(v) } -> std::same_as<const char*>;
+   }
 {
-   IM_ASSERT(value);
-   IM_ASSERT(context.is_memory_valid(value));
-
    bool changed = false;
 
-   if (BeginCombo(label, [&] {
-          for (auto& option : values) {
-             if (option.value == *value) return option.label;
-          }
-
-          return "";
-       }())) {
-
-      for (auto option : values) {
-         if (Selectable(option.label)) {
-            edit_stack.apply(we::edits::make_set_value(value, option.value),
-                             context, {.closed = true});
+   if (ImGui::BeginCombo(label, to_ui_string(*value))) {
+      for (Enum option : values) {
+         if (ImGui::Selectable(to_ui_string(option), *value == option)) {
+            *value = option;
             changed = true;
          }
       }
 
-      EndCombo();
+      ImGui::EndCombo();
+   }
+
+   return changed;
+}
+
+template<typename Enum>
+inline bool EnumSelect(const char* label, Enum* value,
+                       we::edits::stack<we::world::edit_context>& edit_stack,
+                       we::world::edit_context& context,
+                       std::initializer_list<Enum> values) noexcept
+   requires requires(Enum v) {
+      { to_ui_string(v) } -> std::same_as<const char*>;
+   }
+{
+   IM_ASSERT(value);
+   IM_ASSERT(context.is_memory_valid(value));
+
+   Enum edit_value = *value;
+
+   const bool changed = EnumSelect(label, &edit_value, values);
+
+   if (changed) {
+      edit_stack.apply(we::edits::make_set_value(value, edit_value), context,
+                       {.closed = true});
    }
 
    return changed;
@@ -243,33 +262,6 @@ inline bool EditFlags(const char* label, Flags* value,
    if (changed) {
       edit_stack.apply(we::edits::make_set_value(value, static_cast<Flags>(uint_value)),
                        context, {.closed = true});
-   }
-
-   return changed;
-}
-
-template<typename Enum>
-inline bool EnumSelect(const char* label, Enum* value,
-                       std::initializer_list<we::enum_select_option<Enum>> values) noexcept
-{
-   bool changed = false;
-
-   if (ImGui::BeginCombo(label, [&] {
-          for (auto& option : values) {
-             if (option.value == *value) return option.label;
-          }
-
-          return "";
-       }())) {
-
-      for (auto option : values) {
-         if (ImGui::Selectable(option.label)) {
-            *value = option.value;
-            changed = true;
-         }
-      }
-
-      ImGui::EndCombo();
    }
 
    return changed;
