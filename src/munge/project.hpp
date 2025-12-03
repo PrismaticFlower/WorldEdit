@@ -142,4 +142,6 @@ auto load_project(const io::path& path) noexcept -> project;
 
 void merge_loaded_project(project& current_project, const project& loaded_project) noexcept;
 
+auto to_ui_string(const project_platform platform) noexcept -> const char*;
+
 }

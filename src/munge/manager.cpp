@@ -2666,10 +2666,11 @@ struct manager::impl {
       _standard_output.clear();
       _standard_error.clear();
       _report = {};
+
       _munge_task = _thread_pool.exec(
          async::task_priority::low,
-         [platform = "PC", project = _project, game_directory = game_directory,
-          &standard_output = _standard_output,
+         [platform = get_platform(), project = _project,
+          game_directory = game_directory, &standard_output = _standard_output,
           &standard_error = _standard_error, &thread_pool = _thread_pool] {
             try {
                munge_context context = {
@@ -2726,7 +2727,7 @@ struct manager::impl {
       _report = {};
       _munge_task =
          _thread_pool.exec(async::task_priority::low,
-                           [platform = "PC", project = _project,
+                           [platform = get_platform(), project = _project,
                             &standard_output = _standard_output,
                             &standard_error = _standard_error,
                             &thread_pool = _thread_pool] {
@@ -2782,6 +2783,19 @@ private:
    async::task<report> _munge_task;
 
    async::thread_pool& _thread_pool;
+
+   auto get_platform() const noexcept -> std::string_view
+   {
+      switch (_project.config.platform) {
+      default:
+      case project_platform::pc:
+         return "PC";
+      case project_platform::ps2:
+         return "PS2";
+      case project_platform::xbox:
+         return "XBOX";
+      }
+   }
 };
 
 manager::manager(async::thread_pool& thread_pool) : impl{thread_pool} {}

@@ -874,7 +874,14 @@ void world_edit::ui_show_munge_config_editor() noexcept
 
          ImGui::TableNextColumn();
 
-         if (ImGui::BeginCombo("Platform", "PC")) {
+         if (ImGui::BeginCombo("Platform", to_ui_string(config.platform))) {
+            for (const munge::project_platform other :
+                 {munge::project_platform::pc, munge::project_platform::ps2,
+                  munge::project_platform::xbox}) {
+               if (ImGui::Selectable(to_ui_string(other), config.platform == other)) {
+                  config.platform = other;
+               }
+            }
 
             ImGui::EndCombo();
          }

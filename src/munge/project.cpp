@@ -530,4 +530,19 @@ void merge_loaded_project(project& current_project, const project& loaded_projec
    current_project.config.custom_clean_directories =
       loaded_project.config.custom_clean_directories;
 }
+
+auto to_ui_string(const project_platform platform) noexcept -> const char*
+{
+   switch (platform) {
+   case project_platform::pc:
+      return "PC";
+   case project_platform::ps2:
+      return "PS2";
+   case project_platform::xbox:
+      return "Xbox";
+   default:
+      return "<unknown>";
+   }
+}
+
 }
