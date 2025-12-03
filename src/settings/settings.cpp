@@ -175,7 +175,7 @@ void show_imgui_editor(settings& settings, bool& open,
                "Don't save the world .fx file. Note that this won't disable "
                "edit controls for values from the .fx file.");
 
-            ImGui::SeparatorText("Blocks Mode");
+            ImGui::SeparatorText("Default Blocks Mode");
 
             if (ImGui::BeginTable("Blocks Mode", 2,
                                   ImGuiTableFlags_SizingStretchSame |
