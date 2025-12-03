@@ -142,7 +142,9 @@ void save_objects(const io::path& path, const std::string_view layer_name,
    file.write_ln("Version(3);");
    file.write_ln("SaveType(0);\n");
 
-   file.write_ln("LightName(\"{}.LGT\");", layer_name);
+   if (world.configuration.save_lights_references) {
+      file.write_ln("LightName(\"{}.LGT\");", layer_name);
+   }
 
    if (layer_index == 0) {
       file.write_ln("TerrainName(\"{}.ter\");", layer_name);
@@ -932,6 +934,9 @@ void save_configuration(const io::path& path, const world& world)
    file.write_ln("");
    file.write_ln("SaveBlocksIntoLayer({:d});",
                  world.configuration.save_blocks_into_layer);
+   file.write_ln("");
+   file.write_ln("SaveLightsReferences({:d});",
+                 world.configuration.save_lights_references);
 }
 
 void garbage_collect_files(const io::path& world_dir,

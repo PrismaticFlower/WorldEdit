@@ -2076,6 +2076,39 @@ TEST_CASE("world saving blocks req existing", "[World][IO]")
    CHECK(written_req == expected_blocks_req);
 }
 
+TEST_CASE("world saving no lights reference", "[World][IO]")
+{
+   (void)io::create_directory("temp/world_no_lights_reference");
+
+   const world world{
+      .name = "test",
+
+      .configuration =
+         {
+            .save_lights_references = false,
+         },
+
+      .layer_descriptions = {{.name = "[Base]"}},
+
+      .common_layers = {0},
+   };
+
+   save_world("temp/world_no_lights_reference/test.wld", world, {});
+
+   const auto written_wld =
+      io::read_file_to_string("temp/world_no_lights_reference/test.wld");
+
+   CHECK(written_wld == R"(Version(3);
+SaveType(0);
+
+TerrainName("test.ter");
+SkyName("test.sky");
+
+NextSequence(0);
+
+)");
+}
+
 TEST_CASE("world saving configuration", "[World][IO]")
 {
    (void)io::create_directory("temp/world_test_configuration");
@@ -2087,6 +2120,7 @@ TEST_CASE("world saving configuration", "[World][IO]")
             .save_bf1_format = false,
             .save_effects = true,
             .save_blocks_into_layer = true,
+            .save_lights_references = false,
          },
 
       .layer_descriptions = {{.name = "[Base]"}},
@@ -2100,6 +2134,8 @@ SaveBF1Format(0);
 SaveEffects(1);
 
 SaveBlocksIntoLayer(1);
+
+SaveLightsReferences(0);
 )"sv;
 
    const auto written_configuration =

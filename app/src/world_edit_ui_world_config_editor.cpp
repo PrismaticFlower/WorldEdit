@@ -65,6 +65,12 @@ void world_edit::ui_show_world_config_editor() noexcept
 
          ImGui::EndTable();
       }
+
+      ImGui::Checkbox("Save Lights References",
+                      &_world.configuration.save_lights_references,
+                      _edit_stack_world, _edit_context);
+
+      ImGui::SetItemTooltip("Save LightName in .wld/.lyr files.");
    }
 
    ImGui::End();

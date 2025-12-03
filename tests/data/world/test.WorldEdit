@@ -5,3 +5,5 @@ SaveBF1Format(0);
 SaveEffects(0);
 
 SaveBlocksIntoLayer(1);
+
+SaveLightsReferences(0);

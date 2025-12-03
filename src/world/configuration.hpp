@@ -19,6 +19,9 @@ struct configuration {
 
    /// @brief Save blocks layer.
    bool save_blocks_into_layer = true;
+
+   /// @brief Save LightName in .wld/.lyr files.
+   bool save_lights_references = true;
 };
 
 }
