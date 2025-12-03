@@ -962,47 +962,18 @@ void world_edit::ui_show_munge_config_editor() noexcept
                                               ImGuiTableFlags_SizingStretchSame)) {
                         ImGui::TableNextColumn();
 
-                        if (ImGui::BeginCombo("Platform", [&] {
-                               switch (command.platform_filter) {
-                               case munge::project_platform_filter::all:
-                                  return "All";
-                               case munge::project_platform_filter::pc:
-                                  return "PC";
-                               case munge::project_platform_filter::ps2:
-                                  return "PS2";
-                               case munge::project_platform_filter::xbox:
-                                  return "Xbox";
-                               default:
-                                  return "<unknown>";
-                               }
-                            }())) {
-                           if (ImGui::Selectable("All",
-                                                 command.platform_filter ==
-                                                    munge::project_platform_filter::all)) {
-                              command.platform_filter =
-                                 munge::project_platform_filter::all;
+                        if (ImGui::BeginCombo("Platform",
+                                              to_ui_string(command.platform_filter))) {
+                           for (const munge::project_platform_filter other :
+                                {munge::project_platform_filter::all,
+                                 munge::project_platform_filter::pc,
+                                 munge::project_platform_filter::ps2,
+                                 munge::project_platform_filter::xbox}) {
+                              if (ImGui::Selectable(to_ui_string(other),
+                                                    command.platform_filter == other)) {
+                                 command.platform_filter = other;
+                              }
                            }
-
-                           if (ImGui::Selectable("PC", command.platform_filter ==
-                                                          munge::project_platform_filter::pc)) {
-                              command.platform_filter =
-                                 munge::project_platform_filter::pc;
-                           }
-
-                           if (ImGui::Selectable("PS2",
-                                                 command.platform_filter ==
-                                                    munge::project_platform_filter::ps2)) {
-                              command.platform_filter =
-                                 munge::project_platform_filter::ps2;
-                           }
-
-                           if (ImGui::Selectable("Xbox",
-                                                 command.platform_filter ==
-                                                    munge::project_platform_filter::xbox)) {
-                              command.platform_filter =
-                                 munge::project_platform_filter::xbox;
-                           }
-
                            ImGui::EndCombo();
                         }
 

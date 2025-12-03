@@ -545,4 +545,20 @@ auto to_ui_string(const project_platform platform) noexcept -> const char*
    }
 }
 
+auto to_ui_string(const project_platform_filter filter) noexcept -> const char*
+{
+   switch (filter) {
+   case munge::project_platform_filter::all:
+      return "All";
+   case munge::project_platform_filter::pc:
+      return "PC";
+   case munge::project_platform_filter::ps2:
+      return "PS2";
+   case munge::project_platform_filter::xbox:
+      return "Xbox";
+   default:
+      return "<unknown>";
+   }
+}
+
 }

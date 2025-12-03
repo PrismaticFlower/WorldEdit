@@ -144,4 +144,6 @@ void merge_loaded_project(project& current_project, const project& loaded_projec
 
 auto to_ui_string(const project_platform platform) noexcept -> const char*;
 
+auto to_ui_string(const project_platform_filter filter) noexcept -> const char*;
+
 }
