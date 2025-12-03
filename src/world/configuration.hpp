@@ -18,7 +18,7 @@ struct configuration {
    bool save_effects = true;
 
    /// @brief Save blocks layer.
-   bool save_blocks_into_layer = false;
+   bool save_blocks_into_layer = true;
 };
 
 }
