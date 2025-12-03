@@ -795,15 +795,6 @@ void save_layer(const io::path& world_dir, const std::string_view layer_name,
    save_lights(io::compose_path(world_dir, layer_name, ".lgt"sv), layer_index,
                world, sequence_numbers);
    save_hintnodes(io::compose_path(world_dir, layer_name, ".hnt"sv), layer_index, world);
-
-   if (layer_index == 0) {
-      save_boundaries(io::compose_path(world_dir, layer_name, ".bnd"sv), world);
-      save_barriers(io::compose_path(world_dir, layer_name, ".bar"sv), world);
-      save_planning(io::compose_path(world_dir, layer_name, ".pln"sv), world);
-      save_portals_sectors(io::compose_path(world_dir, layer_name, ".pvs"sv), world);
-      save_measurements(io::compose_path(world_dir, layer_name, ".msr"sv), world);
-      save_animations(io::compose_path(world_dir, layer_name, ".anm"sv), world);
-   }
 }
 
 void save_layer_index(const io::path& path, const world& world)
@@ -983,6 +974,18 @@ void save_world(const io::path& path, const world& world,
    save_layer_index(make_path_with_new_extension(path, ".ldx"sv), world);
 
    save_layer(world_dir, world_name, 0, world, sequence_numbers);
+
+   save_boundaries(io::compose_path(world_dir, world_name, ".bnd"sv), world);
+
+   save_barriers(io::compose_path(world_dir, world_name, ".bar"sv), world);
+
+   save_planning(io::compose_path(world_dir, world_name, ".pln"sv), world);
+
+   save_portals_sectors(io::compose_path(world_dir, world_name, ".pvs"sv), world);
+
+   save_measurements(io::compose_path(world_dir, world_name, ".msr"sv), world);
+
+   save_animations(io::compose_path(world_dir, world_name, ".anm"sv), world);
 
    for (std::size_t i = 1; i < world.layer_descriptions.size(); ++i) {
       auto& layer = world.layer_descriptions[i];
