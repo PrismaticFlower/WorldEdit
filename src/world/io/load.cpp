@@ -1389,6 +1389,9 @@ auto load_configuration(const io::path& filepath, output_stream& output) -> conf
          else if (key_node.key == "SaveLightsReferences"sv) {
             configuration.save_lights_references = key_node.values.get<int>(0) != 0;
          }
+         else if (key_node.key == "SaveSkyReference"sv) {
+            configuration.save_sky_reference = key_node.values.get<int>(0) != 0;
+         }
       }
    }
    catch (std::exception& e) {

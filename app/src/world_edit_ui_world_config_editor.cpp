@@ -71,6 +71,11 @@ void world_edit::ui_show_world_config_editor() noexcept
                       _edit_stack_world, _edit_context);
 
       ImGui::SetItemTooltip("Save LightName in .wld/.lyr files.");
+
+      ImGui::Checkbox("Save Sky Reference", &_world.configuration.save_sky_reference,
+                      _edit_stack_world, _edit_context);
+
+      ImGui::SetItemTooltip("Save SkyName in the .wld file.");
    }
 
    ImGui::End();

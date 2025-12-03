@@ -22,6 +22,9 @@ struct configuration {
 
    /// @brief Save LightName in .wld/.lyr files.
    bool save_lights_references = true;
+
+   /// @brief Save SkyName in the .wld file.
+   bool save_sky_reference = true;
 };
 
 }

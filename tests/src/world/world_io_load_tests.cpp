@@ -44,6 +44,7 @@ TEST_CASE("world loading", "[World][IO]")
    CHECK(not world.configuration.save_effects);
    CHECK(world.configuration.save_blocks_into_layer);
    CHECK(not world.configuration.save_lights_references);
+   CHECK(not world.configuration.save_sky_reference);
 
    REQUIRE(world.requirements.size() == 7);
 

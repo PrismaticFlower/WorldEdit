@@ -7,3 +7,5 @@ SaveEffects(0);
 SaveBlocksIntoLayer(1);
 
 SaveLightsReferences(0);
+
+SaveSkyReference(0);

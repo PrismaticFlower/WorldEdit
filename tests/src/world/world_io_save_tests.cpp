@@ -2109,6 +2109,39 @@ NextSequence(0);
 )");
 }
 
+TEST_CASE("world saving no sky reference", "[World][IO]")
+{
+   (void)io::create_directory("temp/world_no_sky_reference");
+
+   const world world{
+      .name = "test",
+
+      .configuration =
+         {
+            .save_sky_reference = false,
+         },
+
+      .layer_descriptions = {{.name = "[Base]"}},
+
+      .common_layers = {0},
+   };
+
+   save_world("temp/world_no_sky_reference/test.wld", world, {});
+
+   const auto written_wld =
+      io::read_file_to_string("temp/world_no_sky_reference/test.wld");
+
+   CHECK(written_wld == R"(Version(3);
+SaveType(0);
+
+LightName("test.LGT");
+TerrainName("test.ter");
+
+NextSequence(0);
+
+)");
+}
+
 TEST_CASE("world saving configuration", "[World][IO]")
 {
    (void)io::create_directory("temp/world_test_configuration");
@@ -2121,6 +2154,7 @@ TEST_CASE("world saving configuration", "[World][IO]")
             .save_effects = true,
             .save_blocks_into_layer = true,
             .save_lights_references = false,
+            .save_sky_reference = false,
          },
 
       .layer_descriptions = {{.name = "[Base]"}},
@@ -2136,6 +2170,8 @@ SaveEffects(1);
 SaveBlocksIntoLayer(1);
 
 SaveLightsReferences(0);
+
+SaveSkyReference(0);
 )"sv;
 
    const auto written_configuration =
