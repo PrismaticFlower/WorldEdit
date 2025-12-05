@@ -89,6 +89,13 @@ struct meta_draw_batcher {
    void add_arrow_outline_solid(const float4x4& transform,
                                 const float arrow_offset, const uint32 color);
 
+   void add_box_outline_solid(const float4x4& transform, const uint32 color);
+
+   void add_sphere_outline_solid(const float3& position, const float radius,
+                                 const uint32 color);
+
+   void add_cylinder_outline_solid(const float4x4& transform, const uint32 color);
+
    void add_octahedron_wireframe(const float4x4& transform, const float3& color);
 
    void add_hint_hexahedron_wireframe(const float4x4& transform, const float3& color);

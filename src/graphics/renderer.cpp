@@ -1634,7 +1634,7 @@ void renderer_impl::draw_world_meta_objects(
    // Adds a region to _meta_draw_batcher. Shared between light volume drawing and region drawing.
    const auto add_region = [&](const quaternion rotation, const float3 position,
                                const float3 size, const world::region_shape shape,
-                               const float4 color) {
+                               const float3 color) {
       const auto make_region_transform = [&](const float3 scale) {
          float4x4 transform =
             to_matrix(rotation) * float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
@@ -1658,9 +1658,20 @@ void renderer_impl::draw_world_meta_objects(
             return;
          }
 
-         const float4x4 transform = make_region_transform(size);
+         std::array<float3, 8> verticesRS = {{
+            {-1.0f, 1.0f, -1.0f},
+            {1.0f, 1.0f, -1.0f},
+            {1.0f, 1.0f, 1.0f},
+            {-1.0f, 1.0f, 1.0f},
 
-         _meta_draw_batcher.add_box(transform, color);
+            {-1.0f, -1.0f, -1.0f},
+            {1.0f, -1.0f, -1.0f},
+            {1.0f, -1.0f, 1.0f},
+            {-1.0f, -1.0f, 1.0f},
+         }};
+
+         _meta_draw_batcher.add_box_outline_solid(make_region_transform(size),
+                                                  utility::pack_srgb_bgra({color, 1.0f}));
       } break;
       case world::region_shape::sphere: {
          const float sphere_radius = length(size);
@@ -1669,13 +1680,15 @@ void renderer_impl::draw_world_meta_objects(
             return;
          }
 
-         _meta_draw_batcher.add_sphere(position, sphere_radius, color);
+         _meta_draw_batcher.add_sphere_outline_solid(position, sphere_radius,
+                                                     utility::pack_srgb_bgra(
+                                                        {color, 1.0f}));
       } break;
       case world::region_shape::cylinder: {
-         const float cylinder_length = length(float2{size.x, size.z});
+         const float cylinder_radius = length(float2{size.x, size.z});
 
-         math::bounding_box bbox{.min = {-cylinder_length, -size.y, -cylinder_length},
-                                 .max = {cylinder_length, size.y, cylinder_length}};
+         math::bounding_box bbox{.min = {-cylinder_radius, -size.y, -cylinder_radius},
+                                 .max = {cylinder_radius, size.y, cylinder_radius}};
 
          bbox = rotation * bbox + position;
 
@@ -1683,29 +1696,28 @@ void renderer_impl::draw_world_meta_objects(
             return;
          }
 
-         const float4x4 transform =
-            make_region_transform(float3{cylinder_length, size.y, cylinder_length});
-
-         _meta_draw_batcher.add_cylinder(transform, color);
+         _meta_draw_batcher.add_cylinder_outline_solid(
+            make_region_transform(float3{cylinder_radius, size.y, cylinder_radius}),
+            utility::pack_srgb_bgra({color, 1.0f}));
       } break;
       }
    };
 
    if (active_entity_types.regions) {
-      const float4 region_color = settings.region_color;
+      const float3 region_outline_color = settings.region_outline_color;
 
       for (auto& region : world.regions) {
          if (not active_layers[region.layer] or region.hidden) continue;
 
          add_region(region.rotation, region.position, region.size, region.shape,
-                    region_color);
+                    region_outline_color);
       }
 
       if (interaction_targets.creation_entity.is<world::region>()) {
          auto& region = interaction_targets.creation_entity.get<world::region>();
 
          add_region(region.rotation, region.position, region.size, region.shape,
-                    region_color);
+                    region_outline_color);
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
          const world::entity_group& group =
@@ -1714,7 +1726,7 @@ void renderer_impl::draw_world_meta_objects(
          for (const world::region& region : group.regions) {
             add_region(group.rotation * region.rotation,
                        group.rotation * region.position + group.position,
-                       region.size, region.shape, region_color);
+                       region.size, region.shape, region_outline_color);
          }
       }
    }
@@ -1880,15 +1892,15 @@ void renderer_impl::draw_world_meta_objects(
             switch (light.light_type) {
             case world::light_type::directional_region_box: {
                add_region(light_region_rotation, light_positionWS,
-                          light.region_size, world::region_shape::box, color);
+                          light.region_size, world::region_shape::box, light.color);
             } break;
             case world::light_type::directional_region_sphere: {
-               add_region(light_region_rotation, light_positionWS,
-                          light.region_size, world::region_shape::sphere, color);
+               add_region(light_region_rotation, light_positionWS, light.region_size,
+                          world::region_shape::sphere, light.color);
             } break;
             case world::light_type::directional_region_cylinder: {
-               add_region(light_region_rotation, light_positionWS,
-                          light.region_size, world::region_shape::cylinder, color);
+               add_region(light_region_rotation, light_positionWS, light.region_size,
+                          world::region_shape::cylinder, light.color);
             } break;
             }
 
@@ -3035,10 +3047,10 @@ void renderer_impl::draw_interaction_targets(
             float4x4 arrow_transform = to_matrix(light.rotation);
             arrow_transform[3] = {light.position, 1.0f};
 
-            _meta_draw_batcher.add_box_wireframe(transform, color);
-            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f,
-                                                       utility::pack_srgb_bgra(
-                                                          float4{color, 1.0f}));
+            const uint32 color_u32 = utility::pack_srgb_bgra({color, 1.0f});
+
+            _meta_draw_batcher.add_box_outline_solid(transform, color_u32);
+            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f, color_u32);
          }
          else if (light.light_type == world::light_type::directional_region_sphere) {
             const float scale = length(light.region_size);
@@ -3046,10 +3058,10 @@ void renderer_impl::draw_interaction_targets(
             float4x4 arrow_transform = to_matrix(light.rotation);
             arrow_transform[3] = {light.position, 1.0f};
 
-            _meta_draw_batcher.add_sphere_wireframe(light.position, scale, color);
-            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f,
-                                                       utility::pack_srgb_bgra(
-                                                          float4{color, 1.0f}));
+            const uint32 color_u32 = utility::pack_srgb_bgra({color, 1.0f});
+
+            _meta_draw_batcher.add_sphere_outline_solid(light.position, scale, color_u32);
+            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f, color_u32);
          }
          else if (light.light_type == world::light_type::directional_region_cylinder) {
             const float cylinder_length =
@@ -3067,10 +3079,10 @@ void renderer_impl::draw_interaction_targets(
             float4x4 arrow_transform = to_matrix(light.rotation);
             arrow_transform[3] = {light.position, 1.0f};
 
-            _meta_draw_batcher.add_cylinder_wireframe(transform, color);
-            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f,
-                                                       utility::pack_srgb_bgra(
-                                                          float4{color, 1.0f}));
+            const uint32 color_u32 = utility::pack_srgb_bgra({color, 1.0f});
+
+            _meta_draw_batcher.add_cylinder_outline_solid(transform, color_u32);
+            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f, color_u32);
          }
       },
       [&](const world::path& path, const float3 color) {
@@ -3101,13 +3113,15 @@ void renderer_impl::draw_interaction_targets(
                                           {0.0f, 0.0f, 0.0f, 1.0f}};
             transform[3] = {region.position, 1.0f};
 
-            _meta_draw_batcher.add_box_wireframe(transform, color);
+            _meta_draw_batcher.add_box_outline_solid(transform, utility::pack_srgb_bgra(
+                                                                   {color, 1.0f}));
          } break;
          case world::region_shape::sphere: {
             const float sphere_radius = length(region.size);
 
-            _meta_draw_batcher.add_sphere_wireframe(region.position,
-                                                    sphere_radius, color);
+            _meta_draw_batcher.add_sphere_outline_solid(region.position, sphere_radius,
+                                                        utility::pack_srgb_bgra(
+                                                           {color, 1.0f}));
          } break;
          case world::region_shape::cylinder: {
             const float cylinder_length =
@@ -3120,7 +3134,9 @@ void renderer_impl::draw_interaction_targets(
                                           {0.0f, 0.0f, 0.0f, 1.0f}};
             transform[3] = {region.position, 1.0f};
 
-            _meta_draw_batcher.add_cylinder_wireframe(transform, color);
+            _meta_draw_batcher.add_cylinder_outline_solid(transform,
+                                                          utility::pack_srgb_bgra(
+                                                             {color, 1.0f}));
          } break;
          }
       },

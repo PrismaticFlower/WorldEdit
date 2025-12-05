@@ -1,6 +1,8 @@
 
 #include "meta_draw_batcher.hpp"
+
 #include "math/matrix_funcs.hpp"
+#include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
 namespace we::graphics {
@@ -53,6 +55,84 @@ constexpr std::array<std::array<float3, 2>, 18> arrow_outline = [] {
 
    return arrow;
 }();
+
+constexpr std::array<float2, 8> circle_outline_8 = {{
+   {1.0f, 0.0f},
+   {0.70710677f, 0.70710677f},
+   {0.0f, 1.0f},
+   {-0.70710677f, 0.70710677f},
+   {-1.0f, 0.0f},
+   {-0.70710665f, -0.7071069f},
+   {0.0f, -1.0f},
+   {0.707107f, -0.70710653f},
+}};
+
+constexpr std::array<float2, 64> circle_outline_64 = {{
+   {1.0f, 0.0f},
+   {0.9951847f, 0.09801714f},
+   {0.98078525f, 0.19509032f},
+   {0.95694035f, 0.29028466f},
+   {0.9238795f, 0.38268346f},
+   {0.88192123f, 0.47139674f},
+   {0.8314696f, 0.55557024f},
+   {0.77301043f, 0.63439333f},
+   {0.70710677f, 0.70710677f},
+   {0.6343933f, 0.77301043f},
+   {0.5555702f, 0.83146966f},
+   {0.47139665f, 0.8819213f},
+   {0.38268343f, 0.9238795f},
+   {0.29028463f, 0.95694035f},
+   {0.19509023f, 0.9807853f},
+   {0.098017134f, 0.9951847f},
+   {0.0f, 1.0f},
+   {-0.09801722f, 0.9951847f},
+   {-0.19509032f, 0.98078525f},
+   {-0.29028472f, 0.9569403f},
+   {-0.38268352f, 0.9238795f},
+   {-0.47139683f, 0.88192123f},
+   {-0.55557036f, 0.83146954f},
+   {-0.6343933f, 0.7730105f},
+   {-0.70710677f, 0.70710677f},
+   {-0.7730105f, 0.6343933f},
+   {-0.83146966f, 0.5555702f},
+   {-0.88192135f, 0.47139663f},
+   {-0.9238796f, 0.38268328f},
+   {-0.95694035f, 0.29028472f},
+   {-0.9807853f, 0.19509031f},
+   {-0.9951847f, 0.0980171f},
+   {-1.0f, 0.0f},
+   {-0.9951847f, -0.09801727f},
+   {-0.98078525f, -0.19509049f},
+   {-0.9569403f, -0.29028487f},
+   {-0.9238795f, -0.38268343f},
+   {-0.88192123f, -0.47139677f},
+   {-0.83146954f, -0.5555703f},
+   {-0.7730104f, -0.6343934f},
+   {-0.70710665f, -0.7071069f},
+   {-0.63439333f, -0.77301043f},
+   {-0.55557f, -0.8314698f},
+   {-0.47139668f, -0.8819213f},
+   {-0.38268313f, -0.9238797f},
+   {-0.29028454f, -0.95694035f},
+   {-0.19509038f, -0.98078525f},
+   {-0.09801693f, -0.9951847f},
+   {0.0f, -1.0f},
+   {0.09801743f, -0.9951847f},
+   {0.19509041f, -0.98078525f},
+   {0.29028502f, -0.95694023f},
+   {0.3826836f, -0.92387944f},
+   {0.4713967f, -0.8819213f},
+   {0.5555704f, -0.8314695f},
+   {0.63439333f, -0.77301043f},
+   {0.707107f, -0.70710653f},
+   {0.77301055f, -0.63439316f},
+   {0.8314696f, -0.5555703f},
+   {0.88192135f, -0.47139654f},
+   {0.92387956f, -0.38268343f},
+   {0.9569404f, -0.2902844f},
+   {0.9807853f, -0.19509023f},
+   {0.9951848f, -0.09801677f},
+}};
 
 constexpr std::size_t line_max_batch_size = 16384;
 
@@ -195,6 +275,97 @@ void meta_draw_batcher::add_arrow_outline_solid(const float4x4& transform,
    for (const auto& line : arrow_outline) {
       add_line_solid(transform * (line[0] + float3{0.0f, 0.0f, arrow_offset}),
                      transform * (line[1] + float3{0.0f, 0.0f, arrow_offset}), color);
+   }
+}
+
+void meta_draw_batcher::add_box_outline_solid(const float4x4& transform, const uint32 color)
+{
+   std::array<float3, 8> verticesRS = {{
+      {-1.0f, 1.0f, -1.0f},
+      {1.0f, 1.0f, -1.0f},
+      {1.0f, 1.0f, 1.0f},
+      {-1.0f, 1.0f, 1.0f},
+
+      {-1.0f, -1.0f, -1.0f},
+      {1.0f, -1.0f, -1.0f},
+      {1.0f, -1.0f, 1.0f},
+      {-1.0f, -1.0f, 1.0f},
+   }};
+
+   std::array<float3, 8> verticesWS = {
+      transform * verticesRS[0], transform * verticesRS[1],
+      transform * verticesRS[2], transform * verticesRS[3],
+      transform * verticesRS[4], transform * verticesRS[5],
+      transform * verticesRS[6], transform * verticesRS[7],
+   };
+
+   add_line_solid(verticesWS[0], verticesWS[1], color);
+   add_line_solid(verticesWS[1], verticesWS[2], color);
+   add_line_solid(verticesWS[2], verticesWS[3], color);
+   add_line_solid(verticesWS[3], verticesWS[0], color);
+
+   add_line_solid(verticesWS[4], verticesWS[5], color);
+   add_line_solid(verticesWS[5], verticesWS[6], color);
+   add_line_solid(verticesWS[6], verticesWS[7], color);
+   add_line_solid(verticesWS[7], verticesWS[4], color);
+
+   add_line_solid(verticesWS[0], verticesWS[4], color);
+   add_line_solid(verticesWS[1], verticesWS[5], color);
+   add_line_solid(verticesWS[2], verticesWS[6], color);
+   add_line_solid(verticesWS[3], verticesWS[7], color);
+}
+
+void meta_draw_batcher::add_sphere_outline_solid(const float3& position,
+                                                 const float radius, const uint32 color)
+{
+   for (int j = 0; j < 4; ++j) {
+      const quaternion rot = make_quat_from_euler({
+         0.0f,
+         j / 4.0f * 3.1415927f,
+         0.0f,
+      });
+
+      float last_y = circle_outline_64[0].x * radius;
+      float last_z = circle_outline_64[0].y * radius;
+
+      for (std::size_t i = 1; i <= 64; ++i) {
+         const float y = circle_outline_64[i % circle_outline_64.size()].x * radius;
+         const float z = circle_outline_64[i % circle_outline_64.size()].y * radius;
+
+         add_line_solid(rot * float3{0.0f, y, z} + position,
+                        rot * float3{0.0f, last_y, last_z} + position, color);
+
+         last_y = y;
+         last_z = z;
+      }
+   }
+}
+
+void meta_draw_batcher::add_cylinder_outline_solid(const float4x4& transform,
+                                                   const uint32 color)
+{
+   float last_x = circle_outline_64[0].x;
+   float last_z = circle_outline_64[0].y;
+
+   for (int i = 1; i <= 64; ++i) {
+      const float x = circle_outline_64[i % circle_outline_64.size()].x;
+      const float z = circle_outline_64[i % circle_outline_64.size()].y;
+
+      add_line_solid(transform * float3{x, -1.0f, z},
+                     transform * float3{last_x, -1.0f, last_z}, color);
+      add_line_solid(transform * float3{x, 1.0f, z},
+                     transform * float3{last_x, 1.0f, last_z}, color);
+
+      last_x = x;
+      last_z = z;
+   }
+
+   for (const float2& point : circle_outline_8) {
+      const float x = point.x;
+      const float z = point.y;
+
+      add_line_solid(transform * float3{x, -1.0f, z},
+                     transform * float3{x, 1.0f, z}, color);
    }
 }
 

@@ -17,7 +17,7 @@ struct graphics {
 
    float3 path_node_orientation_color = {1.0f, 1.0f, 0.1f};
 
-   float4 region_color = {0.25f, 0.4f, 1.0f, 0.3f};
+   float3 region_outline_color = {0.25f, 0.4f, 1.0f};
 
    float3 barrier_outline_color = {1.0f, 0.05f, 0.05f};
 

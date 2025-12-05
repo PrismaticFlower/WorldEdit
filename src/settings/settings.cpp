@@ -238,7 +238,7 @@ void show_imgui_editor(settings& settings, bool& open,
             ImGui::ColorEdit3("Path Orientation",
                               &graphics.path_node_connection_color.x);
 
-            ImGui::ColorEdit4("Region", &graphics.region_color.x);
+            ImGui::ColorEdit3("Region Outline", &graphics.region_outline_color.x);
 
             ImGui::ColorEdit3("Barrier Outline", &graphics.barrier_outline_color.x);
 
