@@ -1847,14 +1847,14 @@ void renderer_impl::draw_world_meta_objects(
             const float outer_cone_radius =
                light.range * std::tan(light.outer_cone_angle * 0.5f);
             const float3 light_directionWS =
-               normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
+               normalize(light_rotation * float3{0.0f, 0.0f, 1.0f});
             const float3 cone_baseWS =
-               light.position + light_directionWS * light.range;
+               light_positionWS + light_directionWS * light.range;
             const float3 e = outer_cone_radius *
                              sqrt(1.0f - light_directionWS * light_directionWS);
 
-            const math::bounding_box bbox{.min = min(cone_baseWS - e, light.position),
-                                          .max = max(cone_baseWS + e, light.position)};
+            const math::bounding_box bbox{.min = min(cone_baseWS - e, light_positionWS),
+                                          .max = max(cone_baseWS + e, light_positionWS)};
 
             if (not intersects(view_frustum, bbox)) {
                return;
