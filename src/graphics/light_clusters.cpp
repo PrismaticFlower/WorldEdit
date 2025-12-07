@@ -581,7 +581,7 @@ void light_clusters::prepare_lights(
       const float3& group_position = optional_entity_group->position;
 
       for (const world::light& light : optional_entity_group->lights) {
-         if (_light_count >= max_lights) return;
+         if (_light_count >= max_lights) continue;
 
          const uint32 light_index = _light_count++;
 
