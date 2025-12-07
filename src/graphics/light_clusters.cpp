@@ -401,6 +401,8 @@ void light_clusters::prepare_lights(
 
    const auto process_light = [&](const world::light& light) {
       if (_light_count >= max_lights) return;
+      if (not active_layers[light.layer]) return;
+      if (light.hidden) return;
 
       const uint32 light_index = _light_count++;
 
