@@ -4270,7 +4270,7 @@ void world_edit::save_entity_group_with_picker(const world::entity_group& group)
        .must_exist = true});
 
    if (not path) return;
-   if (not path->extension().empty()) *path += ".eng";
+   if (path->extension().empty()) *path += ".eng";
 
    try {
       world::save_entity_group(*path, group);
