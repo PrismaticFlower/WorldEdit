@@ -1,6 +1,7 @@
 #include "entity_group_utilities.hpp"
 #include "world_utilities.hpp"
 
+#include "../blocks/utility/accessors.hpp"
 #include "../blocks/utility/bounding_box.hpp"
 #include "../blocks/utility/find.hpp"
 #include "../object_class.hpp"
@@ -16,6 +17,26 @@
 namespace we::world {
 
 namespace {
+
+/// @brief Used to keep track of a selection's layer while building an entity group.
+struct layer_tracker {
+   void integrate(int8 new_layer) noexcept
+   {
+      if (has_layer) {
+         if (not layer_initialized) {
+            layer = new_layer;
+            layer_initialized = true;
+         }
+         else if (layer != new_layer) {
+            has_layer = false;
+         }
+      }
+   }
+
+   int8 layer = 0;
+   bool has_layer = true;
+   bool layer_initialized = false;
+};
 
 struct unlinked_branch_weights {
    std::string_view hub;
@@ -598,6 +619,7 @@ auto make_entity_group_from_selection(const world& world,
 {
    entity_group group;
 
+   layer_tracker layer_tracker;
    std::vector<unlinked_planning_hub> unlinked_hubs;
    std::vector<unlinked_planning_connection> unlinked_connections;
 
@@ -606,12 +628,20 @@ auto make_entity_group_from_selection(const world& world,
          const object* object =
             find_entity(world.objects, selected.get<object_id>());
 
-         if (object) group.objects.push_back(*object);
+         if (object) {
+            group.objects.push_back(*object);
+
+            layer_tracker.integrate(object->layer);
+         }
       }
       else if (selected.is<light_id>()) {
          const light* light = find_entity(world.lights, selected.get<light_id>());
 
-         if (light) group.lights.push_back(*light);
+         if (light) {
+            group.lights.push_back(*light);
+
+            layer_tracker.integrate(light->layer);
+         }
       }
       else if (selected.is<path_id_node_mask>()) {
          const auto& [id, node_mask] = selected.get<path_id_node_mask>();
@@ -630,37 +660,59 @@ auto make_entity_group_from_selection(const world& world,
 
                path.nodes.push_back(world_path->nodes[i]);
             }
+
+            layer_tracker.integrate(world_path->layer);
          }
       }
       else if (selected.is<region_id>()) {
          const region* region =
             find_entity(world.regions, selected.get<region_id>());
 
-         if (region) group.regions.push_back(*region);
+         if (region) {
+            group.regions.push_back(*region);
+
+            layer_tracker.integrate(region->layer);
+         }
       }
       else if (selected.is<sector_id>()) {
          const sector* sector =
             find_entity(world.sectors, selected.get<sector_id>());
 
-         if (sector) group.sectors.push_back(*sector);
+         if (sector) {
+            group.sectors.push_back(*sector);
+
+            layer_tracker.has_layer = false;
+         }
       }
       else if (selected.is<portal_id>()) {
          const portal* portal =
             find_entity(world.portals, selected.get<portal_id>());
 
-         if (portal) group.portals.push_back(*portal);
+         if (portal) {
+            group.portals.push_back(*portal);
+
+            layer_tracker.has_layer = false;
+         }
       }
       else if (selected.is<hintnode_id>()) {
          const hintnode* hintnode =
             find_entity(world.hintnodes, selected.get<hintnode_id>());
 
-         if (hintnode) group.hintnodes.push_back(*hintnode);
+         if (hintnode) {
+            group.hintnodes.push_back(*hintnode);
+
+            layer_tracker.integrate(hintnode->layer);
+         }
       }
       else if (selected.is<barrier_id>()) {
          const barrier* barrier =
             find_entity(world.barriers, selected.get<barrier_id>());
 
-         if (barrier) group.barriers.push_back(*barrier);
+         if (barrier) {
+            group.barriers.push_back(*barrier);
+
+            layer_tracker.has_layer = false;
+         }
       }
       else if (selected.is<planning_hub_id>()) {
          const planning_hub* hub =
@@ -687,6 +739,8 @@ auto make_entity_group_from_selection(const world& world,
                   .flyer = weights.flyer,
                });
             }
+
+            layer_tracker.has_layer = false;
          }
       }
       else if (selected.is<planning_connection_id>()) {
@@ -705,19 +759,29 @@ auto make_entity_group_from_selection(const world& world,
                .one_way = connection->one_way,
                .dynamic_group = connection->dynamic_group,
             });
+
+            layer_tracker.has_layer = false;
          }
       }
       else if (selected.is<boundary_id>()) {
          const boundary* boundary =
             find_entity(world.boundaries, selected.get<boundary_id>());
 
-         if (boundary) group.boundaries.push_back(*boundary);
+         if (boundary) {
+            group.boundaries.push_back(*boundary);
+
+            layer_tracker.has_layer = false;
+         }
       }
       else if (selected.is<measurement_id>()) {
          const measurement* measurement =
             find_entity(world.measurements, selected.get<measurement_id>());
 
-         if (measurement) group.measurements.push_back(*measurement);
+         if (measurement) {
+            group.measurements.push_back(*measurement);
+
+            layer_tracker.has_layer = false;
+         }
       }
       else if (selected.is<block_id>()) {
          const block_id id = selected.get<block_id>();
@@ -753,6 +817,9 @@ auto make_entity_group_from_selection(const world& world,
                   world.blocks.terrain_cut_boxes.description[*block_index]);
             } break;
             }
+
+            layer_tracker.integrate(
+               get_block_layer(world.blocks, id.type(), *block_index));
          }
       }
    }
@@ -851,6 +918,8 @@ auto make_entity_group_from_selection(const world& world,
    }
 
    fill_entity_group_block_materials(group, world.blocks);
+
+   if (layer_tracker.has_layer) group.layer = layer_tracker.layer;
 
    return group;
 }
