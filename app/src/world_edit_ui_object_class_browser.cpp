@@ -32,7 +32,8 @@ void show_tree_branch(const assets::library_tree_branch& branch,
    const bool is_selected = traversal_stack == selected_stack and
                             string::iequals(selected_name, branch.name);
 
-   ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth;
+   ImGuiTreeNodeFlags flags =
+      ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DrawLinesFull;
 
    if (branch.directories.empty()) flags |= ImGuiTreeNodeFlags_Leaf;
    if (is_selected) flags |= ImGuiTreeNodeFlags_Selected;
