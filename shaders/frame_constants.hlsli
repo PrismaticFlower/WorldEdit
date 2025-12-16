@@ -3,6 +3,7 @@
 #include "bindings.hlsli"
 
 struct frame_constant_buffer {
+   float4x4 world_from_view;
    float4x4 projection_from_world;
    float4x4 projection_from_view;
 

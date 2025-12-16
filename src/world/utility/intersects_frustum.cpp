@@ -23,7 +23,7 @@ bool intersects(const frustum& frustumWS, const light& light) noexcept
 {
    switch (light.light_type) {
    case light_type::directional:
-      return intersects(frustumWS, light.position, 2.8284f);
+      return intersects(frustumWS, light.position, 0.0f);
    case light_type::point:
       return intersects(frustumWS, light.position, light.range);
    case light_type::spot: {

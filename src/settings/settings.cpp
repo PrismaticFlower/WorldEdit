@@ -271,9 +271,6 @@ void show_imgui_editor(settings& settings, bool& open,
 
             ImGui::ColorEdit3("Overlay Grid Color", &graphics.overlay_grid_color.x);
 
-            ImGui::SliderFloat("Light Volume Transparency", &graphics.light_volume_alpha,
-                               0.0f, 1.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-
             ImGui::ColorEdit3("Terrain Cutter", &graphics.terrain_cutter_color.x);
 
             ImGui::ColorEdit3("Foliage Overlay Layer 1 Color",
@@ -324,6 +321,20 @@ void show_imgui_editor(settings& settings, bool& open,
 
             ImGui::SliderFloat("Path Node Size", &graphics.path_node_size, 0.5f,
                                32.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+
+            ImGui::SliderFloat("Directional Light Icon Size",
+                               &graphics.directional_light_icon_size, 0.5f,
+                               64.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+
+            ImGui::SliderFloat("Point Light Icon Size", &graphics.point_light_icon_size,
+                               0.5f, 32.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+
+            ImGui::SliderFloat("Spot Light Icon Size", &graphics.spot_light_icon_size,
+                               0.5f, 32.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+
+            ImGui::SliderFloat("Directional Region Light Icon Size",
+                               &graphics.directional_region_light_icon_size,
+                               0.5f, 32.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
 
             ImGui::DragFloat("Overlay Grid Major Spacing",
                              &graphics.overlay_grid_major_grid_spacing, 1.0f,
@@ -380,6 +391,11 @@ void show_imgui_editor(settings& settings, bool& open,
                "potentially more jagged visualizer.");
 
             ImGui::SeparatorText("Optional Visualizers");
+
+            ImGui::Checkbox("Show Light Bounds", &graphics.show_light_bounds);
+
+            ImGui::SetItemTooltip(
+               "Show the bounds for point and spot lights in the world.");
 
             ImGui::Checkbox("Visualize Terrain Cutters",
                             &graphics.visualize_terrain_cutters);

@@ -134,7 +134,7 @@ constexpr std::array<float2, 64> circle_outline_64 = {{
    {0.9951848f, -0.09801677f},
 }};
 
-constexpr std::size_t line_max_batch_size = 16384;
+constexpr std::size_t quad_max_batch_size = 16384;
 
 }
 
@@ -164,6 +164,9 @@ meta_draw_batcher::meta_draw_batcher()
    _triangles_wireframe.reserve(2048);
 
    _lines_overlay.reserve(2048);
+
+   _circle_icons.reserve(256);
+   _light_icons.reserve(256);
 }
 
 void meta_draw_batcher::clear()
@@ -194,6 +197,9 @@ void meta_draw_batcher::clear()
    _triangles_wireframe.clear();
 
    _lines_overlay.clear();
+
+   _circle_icons.clear();
+   _light_icons.clear();
 }
 
 void meta_draw_batcher::add_octahedron_outlined(const float4x4& transform,
@@ -369,6 +375,33 @@ void meta_draw_batcher::add_cylinder_outline_solid(const float4x4& transform,
    }
 }
 
+void meta_draw_batcher::add_cone_outline_solid(const float4x4& transform,
+                                               const uint32 color)
+{
+   float last_x = circle_outline_64[0].x;
+   float last_z = circle_outline_64[0].y;
+
+   for (int i = 1; i <= 64; ++i) {
+      const float x = circle_outline_64[i % circle_outline_64.size()].x;
+      const float z = circle_outline_64[i % circle_outline_64.size()].y;
+
+      add_line_solid(transform * float3{x, -1.0f, z},
+                     transform * float3{last_x, -1.0f, last_z}, color);
+
+      last_x = x;
+      last_z = z;
+   }
+
+   const float3 top = transform * float3{0.0f, 1.0f, 0.0f};
+
+   for (const float2& point : circle_outline_8) {
+      const float x = point.x;
+      const float z = point.y;
+
+      add_line_solid(transform * float3{x, -1.0f, z}, top, color);
+   }
+}
+
 void meta_draw_batcher::add_octahedron_wireframe(const float4x4& transform,
                                                  const float3& color)
 {
@@ -440,6 +473,20 @@ void meta_draw_batcher::add_line_overlay(const float3& a, const uint32 color_a,
    _lines_overlay.emplace_back(a, color_a, b, color_b);
 }
 
+void meta_draw_batcher::add_cricle_icon(const float3& positionVS,
+                                        const float radius, const float3& color)
+{
+   _circle_icons.emplace_back(positionVS, radius, color);
+}
+
+void meta_draw_batcher::add_light_icon(const float3& positionVS,
+                                       const float size, const float3& color)
+{
+   add_cricle_icon(positionVS, size * 0.25f, color);
+
+   _light_icons.emplace_back(positionVS, size * 0.5f, color);
+}
+
 void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
                              gpu_virtual_address frame_constant_buffer,
                              root_signature_library& root_signature_library,
@@ -476,40 +523,40 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
                                           0, 0, 0);
    };
 
-   const auto draw_lines = [&](const std::vector<meta_draw_line>& lines,
-                               gpu::pipeline_handle pipeline) {
-      const std::size_t batches = lines.size() / line_max_batch_size;
+   const auto draw_quads = [&]<typename T>(const std::vector<T>& quads,
+                                           gpu::pipeline_handle pipeline) {
+      static_assert(std::is_trivially_copyable_v<T>);
+
+      command_list.set_pipeline_state(pipeline);
+
+      const std::size_t batches = quads.size() / quad_max_batch_size;
 
       for (std::size_t i = 0; i < batches; ++i) {
-         auto points_allocation = dynamic_buffer_allocator.allocate(
-            sizeof(meta_draw_line) * line_max_batch_size);
+         auto points_allocation =
+            dynamic_buffer_allocator.allocate(sizeof(T) * quad_max_batch_size);
 
          std::memcpy(points_allocation.cpu_address,
-                     lines.data() + i * line_max_batch_size,
-                     sizeof(meta_draw_line) * line_max_batch_size);
-
-         command_list.set_pipeline_state(pipeline);
+                     quads.data() + i * quad_max_batch_size,
+                     sizeof(T) * quad_max_batch_size);
 
          command_list.set_graphics_srv(rs::meta_draw::instance_data_srv,
                                        points_allocation.gpu_address);
 
-         command_list.draw_instanced(static_cast<uint32>(line_max_batch_size) * 6,
+         command_list.draw_instanced(static_cast<uint32>(quad_max_batch_size) * 6,
                                      1, 0, 0);
       }
 
       const std::size_t remainder_batch_size =
-         lines.size() - batches * line_max_batch_size;
+         quads.size() - batches * quad_max_batch_size;
 
       if (remainder_batch_size == 0) return;
 
-      auto points_allocation = dynamic_buffer_allocator.allocate(
-         sizeof(meta_draw_line) * remainder_batch_size);
+      auto points_allocation =
+         dynamic_buffer_allocator.allocate(sizeof(T) * remainder_batch_size);
 
       std::memcpy(points_allocation.cpu_address,
-                  lines.data() + batches * line_max_batch_size,
-                  sizeof(meta_draw_line) * remainder_batch_size);
-
-      command_list.set_pipeline_state(pipeline);
+                  quads.data() + batches * quad_max_batch_size,
+                  sizeof(T) * remainder_batch_size);
 
       command_list.set_graphics_srv(rs::meta_draw::instance_data_srv,
                                     points_allocation.gpu_address);
@@ -544,7 +591,16 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
    }
 
    if (not _lines_solid.empty()) {
-      draw_lines(_lines_solid, pipeline_library.meta_draw_line_solid.get());
+      draw_quads(_lines_solid, pipeline_library.meta_draw_line_solid.get());
+   }
+
+   if (not _light_icons.empty()) {
+      draw_shapes(_light_icons, pipeline_library.meta_draw_icon.get(),
+                  shapes.light_icon());
+   }
+
+   if (not _circle_icons.empty()) {
+      draw_quads(_circle_icons, pipeline_library.meta_draw_icon_circle.get());
    }
 
    if (not _octahedrons_wireframe.empty()) {
@@ -648,7 +704,7 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
    }
 
    if (not _lines_overlay.empty()) {
-      draw_lines(_lines_overlay, pipeline_library.meta_draw_line_overlay.get());
+      draw_quads(_lines_overlay, pipeline_library.meta_draw_line_overlay.get());
    }
 }
 
@@ -676,7 +732,9 @@ bool meta_draw_batcher::all_empty() const noexcept
           _hemispheres_wireframe.empty() and      //
           _pyramids_wireframe.empty() and         //
           _triangles_wireframe.empty() and        //
-          _lines_overlay.empty();
+          _lines_overlay.empty() and              //
+          _circle_icons.empty() and               //
+          _light_icons.empty();
 }
 
 }

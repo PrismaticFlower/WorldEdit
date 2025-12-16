@@ -52,6 +52,15 @@ struct alignas(16) meta_draw_line {
 
 static_assert(sizeof(meta_draw_line) == 32);
 
+struct alignas(16) meta_draw_icon {
+   float3 positionVS;
+   float radius;
+   float3 color;
+   uint32 pad;
+};
+
+static_assert(sizeof(meta_draw_icon) == 32);
+
 struct meta_draw_batcher {
    meta_draw_batcher();
 
@@ -96,6 +105,8 @@ struct meta_draw_batcher {
 
    void add_cylinder_outline_solid(const float4x4& transform, const uint32 color);
 
+   void add_cone_outline_solid(const float4x4& transform, const uint32 color);
+
    void add_octahedron_wireframe(const float4x4& transform, const float3& color);
 
    void add_hint_hexahedron_wireframe(const float4x4& transform, const float3& color);
@@ -122,6 +133,11 @@ struct meta_draw_batcher {
 
    void add_line_overlay(const float3& a, const uint32 color_a, const float3& b,
                          const uint32 color_b);
+
+   void add_cricle_icon(const float3& positionVS, const float radius,
+                        const float3& color);
+
+   void add_light_icon(const float3& positionVS, const float size, const float3& color);
 
    void draw(gpu::graphics_command_list& command_list,
              gpu_virtual_address frame_constant_buffer,
@@ -158,6 +174,9 @@ private:
    std::vector<meta_draw_vertex> _triangles_wireframe;
 
    std::vector<meta_draw_line> _lines_overlay;
+
+   std::vector<meta_draw_icon> _circle_icons;
+   std::vector<meta_draw_icon> _light_icons;
 };
 
 }

@@ -327,6 +327,10 @@
     <ClCompile Include="src\graphics\shaders\mesh_wireframe_GS_fallbackGS.cpp" />
     <ClCompile Include="src\graphics\shaders\mesh_wireframe_GS_fallbackPS.cpp" />
     <ClCompile Include="src\graphics\shaders\meta_drawPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_iconVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_icon_circlePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_icon_circleVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_icon_edgePS.cpp" />
     <ClCompile Include="src\graphics\shaders\meta_draw_linePS.cpp" />
     <ClCompile Include="src\graphics\shaders\meta_draw_lineVS.cpp" />
     <ClCompile Include="src\graphics\shaders\meta_draw_outlinedPS.cpp" />

@@ -55,6 +55,9 @@ auto meta_draw_shapeVS() noexcept -> shader_def;
 auto meta_draw_sphereVS() noexcept -> shader_def;
 auto meta_draw_linePS() noexcept -> shader_def;
 auto meta_draw_lineVS() noexcept -> shader_def;
+auto meta_draw_iconVS() noexcept -> shader_def;
+auto meta_draw_icon_circleVS() noexcept -> shader_def;
+auto meta_draw_icon_circlePS() noexcept -> shader_def;
 auto ai_overlay_shapeVS() noexcept -> shader_def;
 auto ai_overlay_applyVS() noexcept -> shader_def;
 auto ai_overlay_applyPS() noexcept -> shader_def;
@@ -134,6 +137,9 @@ shaders::meta_draw_shapeVS(),
 shaders::meta_draw_sphereVS(),
 shaders::meta_draw_linePS(),
 shaders::meta_draw_lineVS(),
+shaders::meta_draw_iconVS(),
+shaders::meta_draw_icon_circleVS(),
+shaders::meta_draw_icon_circlePS(),
 shaders::ai_overlay_shapeVS(),
 shaders::ai_overlay_applyVS(),
 shaders::ai_overlay_applyPS(),

@@ -71,6 +71,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              const active_layers active_layers, std::span<const light> lights,
+             const raycast_light_sizes& sizes,
              function_ptr<bool(const light&) noexcept> filter) noexcept
    -> std::optional<raycast_result<light>>
 {
@@ -85,43 +86,23 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       if (light.hidden) continue;
       if (filter and not filter(light)) continue;
 
-      if (light.light_type == light_type::directional) {
-         const float intersection =
-            sphIntersect(ray_origin, ray_direction, light.position, 2.8284f);
+      if (light.light_type == light_type::directional or
+          light.light_type == light_type::point or
+          light.light_type == light_type::spot) {
+         float proxy_radius = 0.0f;
 
-         if (intersection < 0.0f) continue;
-
-         if (intersection < min_distance) {
-            hit = light.id;
-            hit_index = static_cast<uint32>(light_index);
-            min_distance = intersection;
+         if (light.light_type == light_type::directional) {
+            proxy_radius = sizes.directional;
          }
-      }
-      else if (light.light_type == light_type::point) {
-         const float intersection =
-            sphIntersect(ray_origin, ray_direction, light.position, light.range);
-
-         if (intersection < 0.0f) continue;
-
-         if (intersection < min_distance) {
-            hit = light.id;
-            hit_index = static_cast<uint32>(light_index);
-            min_distance = intersection;
+         else if (light.light_type == light_type::point) {
+            proxy_radius = sizes.point;
          }
-      }
-      else if (light.light_type == light_type::spot) {
-         const float3 light_direction =
-            normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
-         const float cone_radius =
-            light.range * std::tan(light.outer_cone_angle * 0.5f);
-
-         const float3 cone_end_position =
-            light.position + light_direction * light.range;
+         else if (light.light_type == light_type::spot) {
+            proxy_radius = sizes.spot;
+         }
 
          const float intersection =
-            iCappedCone(ray_origin, ray_direction, light.position,
-                        cone_end_position, 0.0f, cone_radius)
-               .x;
+            sphIntersect(ray_origin, ray_direction, light.position, proxy_radius);
 
          if (intersection < 0.0f) continue;
 

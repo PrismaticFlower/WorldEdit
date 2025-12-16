@@ -68,9 +68,14 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
       }
 
       if (raycast_mask.lights) {
-         if (std::optional<world::raycast_result<world::light>> hit =
-                world::raycast(ray.origin, ray.direction, _world_layers_hit_mask,
-                               _world.lights, filter_entity);
+         if (std::optional<world::raycast_result<world::light>> hit = world::raycast(
+                ray.origin, ray.direction, _world_layers_hit_mask, _world.lights,
+                {
+                   .directional = _settings.graphics.directional_light_icon_size * 0.5f,
+                   .point = _settings.graphics.point_light_icon_size * 0.5f,
+                   .spot = _settings.graphics.spot_light_icon_size * 0.5f,
+                },
+                filter_entity);
              hit) {
             cursor_distance = std::min(cursor_distance, hit->distance);
          }

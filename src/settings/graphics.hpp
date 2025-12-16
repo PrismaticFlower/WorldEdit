@@ -39,8 +39,6 @@ struct graphics {
 
    float4 boundary_color = {1.0f, 0.0f, 0.0f, 0.2f};
 
-   float light_volume_alpha = 0.05f;
-
    float3 terrain_cutter_color = {1.0f, 0.01f, 0.01f};
 
    float3 hover_color = {1.0f, 1.0f, 0.07f};
@@ -95,11 +93,21 @@ struct graphics {
 
    float path_node_size = 0.5f;
 
+   float directional_light_icon_size = 2.0f;
+
+   float point_light_icon_size = 2.0f;
+
+   float spot_light_icon_size = 2.0f;
+
+   float directional_region_light_icon_size = 1.0f;
+
    float3 overlay_grid_color = {1.0f, 1.0f, 1.0f};
 
    float overlay_grid_line_width = 0.01f;
 
    float overlay_grid_major_grid_spacing = 8.0f;
+
+   bool show_light_bounds = false;
 
    bool colorize_foliage_brush = true;
 

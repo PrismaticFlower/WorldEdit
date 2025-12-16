@@ -884,6 +884,61 @@ struct geometric_shapes_buffer {
          {2, 3, 4},
          {0, 4, 3},
       }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment) const std::array<float2, 32> light_icon_vertices = {{
+      {1.0, -0.125},
+      {0.625, 0.09375},
+      {0.625, -0.09375},
+      {-0.5082321166992188, -0.37565165758132935},
+      {-0.6187165975570679, -0.7954965233802795},
+      {-0.3756493330001831, -0.5082338452339172},
+      {-0.6187201738357544, 0.7954937815666199},
+      {-0.5082337856292725, 0.3756493330001831},
+      {-0.3756515681743622, 0.5082321763038635},
+      {0.7954939007759094, 0.6187199354171753},
+      {0.37564948201179504, 0.5082337260246277},
+      {0.5082322359085083, 0.37565144896507263},
+      {0.37565135955810547, -0.5082323551177979},
+      {0.7954962253570557, -0.6187170147895813},
+      {0.5082336664199829, -0.3756495714187622},
+      {-0.124998539686203, -1.000000238418579},
+      {0.09375090897083282, -0.6249998807907104},
+      {-0.09374909102916718, -0.6250001192092896},
+      {-1.0000001192092896, 0.12499868869781494},
+      {-0.6249998807907104, -0.09375081956386566},
+      {-0.6250001192092896, 0.09374918043613434},
+      {0.12499933689832687, 1.0},
+      {-0.09375040233135223, 0.6249998807907104},
+      {0.09374958276748657, 0.625},
+      {1.0, 0.125},
+      {-0.7954937219619751, -0.6187202334403992},
+      {-0.7954964637756348, 0.6187166571617126},
+      {0.6187168955802917, 0.7954963445663452},
+      {0.6187198162078857, -0.795494019985199},
+      {0.125001460313797, -0.9999998211860657},
+      {-0.9999998211860657, -0.12500131130218506},
+      {-0.12500065565109253, 0.9999998807907104},
+   }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment)
+      const std::array<std::array<uint16, 3>, 16> light_icon_indices = {{
+         {0, 1, 2},
+         {3, 4, 5},
+         {6, 7, 8},
+         {9, 10, 11},
+         {12, 13, 14},
+         {15, 16, 17},
+         {18, 19, 20},
+         {21, 22, 23},
+         {0, 24, 1},
+         {3, 25, 4},
+         {6, 26, 7},
+         {9, 27, 10},
+         {12, 28, 13},
+         {15, 29, 16},
+         {18, 30, 19},
+         {21, 31, 22},
+      }};
 };
 
 constexpr geometric_shapes_buffer shapes_buffer;
@@ -1080,6 +1135,23 @@ void geometric_shapes::init_shapes(gpu::device& device)
                gpu_address + offsetof(geometric_shapes_buffer, pyramid_vertices),
             .size_in_bytes = sizeof(geometric_shapes_buffer::pyramid_vertices),
             .stride_in_bytes = sizeof(float3),
+         },
+   };
+
+   _light_icon = {
+      .index_count = static_cast<uint32>(shapes_buffer.light_icon_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, light_icon_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::light_icon_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, light_icon_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::light_icon_vertices),
+            .stride_in_bytes = sizeof(float2),
          },
    };
 }

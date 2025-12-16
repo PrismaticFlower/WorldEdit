@@ -125,6 +125,10 @@ constexpr std::array meta_draw_primitive_input_layout = {
    gpu::input_element_desc{.semantic_name = "COLOR", .format = DXGI_FORMAT_B8G8R8A8_UNORM},
 };
 
+constexpr std::array meta_draw_icon_input_layout = {
+   gpu::input_element_desc{.semantic_name = "POSITION", .format = DXGI_FORMAT_R32G32_FLOAT},
+};
+
 constexpr std::array imgui_input_layout = {
    gpu::input_element_desc{.semantic_name = "POSITION", .format = DXGI_FORMAT_R32G32_FLOAT},
    gpu::input_element_desc{.semantic_name = "TEXCOORDS", .format = DXGI_FORMAT_R32G32_FLOAT},
@@ -1093,6 +1097,40 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "meta_draw_triangle_wireframe"sv}),
+       device};
+
+   meta_draw_icon = {device.create_graphics_pipeline(
+                        {.root_signature = root_signature_library.meta_draw.get(),
+
+                         .vs_bytecode = shader_library["meta_draw_iconVS"sv],
+                         .ps_bytecode = shader_library["meta_drawPS"sv],
+
+                         .rasterizer_state = rasterizer_cull_backfacing,
+                         .depth_stencil_state = depth_stencil_enabled,
+                         .input_layout = meta_draw_icon_input_layout,
+
+                         .render_target_count = 1,
+                         .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                         .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+
+                         .debug_name = "meta_draw_icon"sv}),
+                     device};
+
+   meta_draw_icon_circle =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.meta_draw.get(),
+
+           .vs_bytecode = shader_library["meta_draw_icon_circleVS"sv],
+           .ps_bytecode = shader_library["meta_draw_icon_circlePS"sv],
+
+           .rasterizer_state = rasterizer_cull_backfacing,
+           .depth_stencil_state = depth_stencil_enabled,
+
+           .render_target_count = 1,
+           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+
+           .debug_name = "meta_draw_icon_circle"sv}),
        device};
 
    ai_overlay_shape =

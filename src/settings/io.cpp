@@ -99,7 +99,6 @@ auto load(const std::string_view path) -> settings
             setting_entry(portal_color);
             setting_entry(hintnode_color);
             setting_entry(boundary_color);
-            setting_entry(light_volume_alpha);
             setting_entry(terrain_cutter_color);
             setting_entry(hover_color);
             setting_entry(selected_color);
@@ -123,6 +122,10 @@ auto load(const std::string_view path) -> settings
             setting_entry(planning_hub_height);
             setting_entry(planning_connection_height);
             setting_entry(path_node_size);
+            setting_entry(directional_light_icon_size);
+            setting_entry(point_light_icon_size);
+            setting_entry(spot_light_icon_size);
+            setting_entry(directional_region_light_icon_size);
             setting_entry(line_width);
             setting_entry(overlay_grid_color);
             setting_entry(overlay_grid_line_width);
@@ -217,7 +220,6 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(portal_color));
       write(file, name_value(hintnode_color));
       write(file, name_value(boundary_color));
-      write(file, name_value(light_volume_alpha));
       write(file, name_value(terrain_cutter_color));
       write(file, name_value(hover_color));
       write(file, name_value(selected_color));
@@ -241,6 +243,10 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(planning_hub_height));
       write(file, name_value(planning_connection_height));
       write(file, name_value(path_node_size));
+      write(file, name_value(directional_light_icon_size));
+      write(file, name_value(point_light_icon_size));
+      write(file, name_value(spot_light_icon_size));
+      write(file, name_value(directional_region_light_icon_size));
       write(file, name_value(line_width));
       write(file, name_value(overlay_grid_color));
       write(file, name_value(overlay_grid_line_width));

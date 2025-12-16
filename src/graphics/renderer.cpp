@@ -1226,6 +1226,7 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
    _texture_scroll_time = std::fmod(_texture_scroll_time + delta_time, 255.0f);
 
    frame_constant_buffer constants{
+      .world_from_view = camera.world_from_view(),
       .projection_from_world = camera.projection_from_world(),
       .projection_from_view = camera.projection_from_view(),
 
@@ -1809,82 +1810,116 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.lights) {
-      const float volume_alpha = settings.light_volume_alpha;
-
       const auto add_light = [&](const world::light& light,
                                  const quaternion& light_rotation,
                                  const float3& light_positionWS,
                                  const quaternion& light_region_rotation) {
          if (not active_layers[light.layer] or light.hidden) return;
 
-         const float4 color{light.color, light.light_type == world::light_type::spot
-                                            ? volume_alpha * 0.5f
-                                            : volume_alpha};
-
          switch (light.light_type) {
          case world::light_type::directional: {
-            const float4x4 rotation = to_matrix(light_rotation);
-            float4x4 transform = rotation * float4x4{{2.0f, 0.0f, 0.0f, 0.0f},
-                                                     {0.0f, 2.0f, 0.0f, 0.0f},
-                                                     {0.0f, 0.0f, 2.0f, 0.0f},
-                                                     {0.0f, 0.0f, 0.0f, 1.0f}};
+            if (intersects(view_frustum, light_positionWS,
+                           settings.point_light_icon_size)) {
+               _meta_draw_batcher.add_light_icon(light_positionWS,
+                                                 settings.directional_light_icon_size,
+                                                 light.color);
+            }
 
-            transform[3] = {light_positionWS, 1.0f};
+            const float3 light_directionWS =
+               normalize(light_rotation * float3{0.0f, 0.0f, 1.0f});
+            const float3 arrow_positionWS = light_positionWS + light_directionWS;
+            const float arrow_radius = 2.2f * settings.directional_light_icon_size;
 
-            _meta_draw_batcher.add_octahedron(transform, color);
-            _meta_draw_batcher.add_arrow_outline_solid(transform, 2.2f,
+            if (not intersects(view_frustum, arrow_positionWS, arrow_radius)) {
+               return;
+            }
+
+            float4x4 transform =
+               to_matrix(light_rotation) *
+               float4x4{{settings.directional_light_icon_size, 0.0f, 0.0f, 0.0f},
+                        {0.0f, settings.directional_light_icon_size, 0.0f, 0.0f},
+                        {0.0f, 0.0f, settings.directional_light_icon_size, 0.0f},
+                        {0.0f, 0.0f, 0.0f, 1.0f}};
+            transform[3] = {light_positionWS + light_directionWS * 2.2f *
+                                                  settings.directional_light_icon_size,
+                            1.0f};
+
+            _meta_draw_batcher.add_arrow_outline_solid(transform, 0.0f,
                                                        utility::pack_srgb_bgra(
                                                           float4{light.color, 1.0f}));
          } break;
          case world::light_type::point: {
-            if (not intersects(view_frustum, light_positionWS, light.range)) {
-               return;
+            if (intersects(view_frustum, light_positionWS,
+                           settings.point_light_icon_size)) {
+               _meta_draw_batcher.add_light_icon(light_positionWS,
+                                                 settings.point_light_icon_size,
+                                                 light.color);
             }
 
-            _meta_draw_batcher.add_sphere(light_positionWS, light.range, color);
+            if (settings.show_light_bounds and
+                intersects(view_frustum, light_positionWS, light.range)) {
+               _meta_draw_batcher.add_sphere_outline_solid(light_positionWS,
+                                                           light.range,
+                                                           utility::pack_srgb_bgra(
+                                                              float4{light.color,
+                                                                     0.125f}));
+            }
          } break;
          case world::light_type::spot: {
-            const float outer_cone_radius =
-               light.range * std::tan(light.outer_cone_angle * 0.5f);
-            const float3 light_directionWS =
-               normalize(light_rotation * float3{0.0f, 0.0f, 1.0f});
-            const float3 cone_baseWS =
-               light_positionWS + light_directionWS * light.range;
-            const float3 e = outer_cone_radius *
-                             sqrt(1.0f - light_directionWS * light_directionWS);
-
-            const math::bounding_box bbox{.min = min(cone_baseWS - e, light_positionWS),
-                                          .max = max(cone_baseWS + e, light_positionWS)};
-
-            if (not intersects(view_frustum, bbox)) {
-               return;
+            if (intersects(view_frustum, light_positionWS,
+                           settings.spot_light_icon_size)) {
+               _meta_draw_batcher.add_light_icon(light_positionWS,
+                                                 settings.spot_light_icon_size,
+                                                 light.color);
             }
 
-            const float4x4 rotation = to_matrix(
-               light_rotation * quaternion{0.707107f, -0.707107f, 0.0f, 0.0f});
+            if (settings.show_light_bounds) {
+               const float outer_cone_radius =
+                  light.range * std::tan(light.outer_cone_angle * 0.5f);
+               const float3 light_directionWS =
+                  normalize(light_rotation * float3{0.0f, 0.0f, 1.0f});
+               const float3 cone_baseWS =
+                  light_positionWS + light_directionWS * light.range;
+               const float3 e = outer_cone_radius *
+                                sqrt(1.0f - light_directionWS * light_directionWS);
 
-            const float half_range = light.range / 2.0f;
-            const float inner_cone_radius =
-               light.range * std::tan(light.inner_cone_angle * 0.5f);
+               const math::bounding_box bbox{.min = min(cone_baseWS - e, light_positionWS),
+                                             .max = max(cone_baseWS + e,
+                                                        light_positionWS)};
 
-            float4x4 outer_transform =
-               rotation * float4x4{{outer_cone_radius, 0.0f, 0.0f, 0.0f},
-                                   {0.0f, half_range, 0.0f, 0.0f},
-                                   {0.0f, 0.0f, outer_cone_radius, 0.0f},
-                                   {0.0f, -half_range, 0.0f, 1.0f}};
+               if (not intersects(view_frustum, bbox)) {
+                  return;
+               }
 
-            outer_transform[3] += float4{light_positionWS, 0.0f};
+               const float4x4 rotation = to_matrix(
+                  light_rotation * quaternion{0.707107f, -0.707107f, 0.0f, 0.0f});
 
-            float4x4 inner_transform =
-               rotation * float4x4{{inner_cone_radius, 0.0f, 0.0f, 0.0f},
-                                   {0.0f, half_range, 0.0f, 0.0f},
-                                   {0.0f, 0.0f, inner_cone_radius, 0.0f},
-                                   {0.0f, -half_range, 0.0f, 1.0f}};
+               const float half_range = light.range / 2.0f;
+               const float inner_cone_radius =
+                  light.range * std::tan(light.inner_cone_angle * 0.5f);
 
-            inner_transform[3] += float4{light_positionWS, 0.0f};
+               float4x4 outer_transform =
+                  rotation * float4x4{{outer_cone_radius, 0.0f, 0.0f, 0.0f},
+                                      {0.0f, half_range, 0.0f, 0.0f},
+                                      {0.0f, 0.0f, outer_cone_radius, 0.0f},
+                                      {0.0f, -half_range, 0.0f, 1.0f}};
 
-            _meta_draw_batcher.add_cone(outer_transform, color);
-            _meta_draw_batcher.add_cone(inner_transform, color);
+               outer_transform[3] += float4{light_positionWS, 0.0f};
+
+               float4x4 inner_transform =
+                  rotation * float4x4{{inner_cone_radius, 0.0f, 0.0f, 0.0f},
+                                      {0.0f, half_range, 0.0f, 0.0f},
+                                      {0.0f, 0.0f, inner_cone_radius, 0.0f},
+                                      {0.0f, -half_range, 0.0f, 1.0f}};
+
+               inner_transform[3] += float4{light_positionWS, 0.0f};
+
+               const uint32 outline_color =
+                  utility::pack_srgb_bgra(float4{light.color, 0.125f});
+
+               _meta_draw_batcher.add_cone_outline_solid(outer_transform, outline_color);
+               _meta_draw_batcher.add_cone_outline_solid(inner_transform, outline_color);
+            }
          } break;
          case world::light_type::directional_region_box:
          case world::light_type::directional_region_sphere:
@@ -1904,9 +1939,22 @@ void renderer_impl::draw_world_meta_objects(
             } break;
             }
 
-            float4x4 transform = to_matrix(light_rotation);
+            float4x4 transform =
+               to_matrix(light_rotation) *
+               float4x4{{settings.directional_region_light_icon_size, 0.0f, 0.0f, 0.0f},
+                        {0.0f, settings.directional_region_light_icon_size, 0.0f, 0.0f},
+                        {0.0f, 0.0f, settings.directional_region_light_icon_size, 0.0f},
+                        {0.0f, 0.0f, 0.0f, 1.0f}};
             transform[3] = {light_positionWS, 1.0f};
 
+            const float3 light_directionWS =
+               normalize(light_rotation * float3{0.0f, 0.0f, 1.0f});
+
+            _meta_draw_batcher.add_light_icon(light_positionWS -
+                                                 light_directionWS * 2.2f *
+                                                    settings.directional_region_light_icon_size,
+                                              settings.directional_region_light_icon_size,
+                                              light.color);
             _meta_draw_batcher.add_arrow_outline_solid(transform, 0.0f,
                                                        utility::pack_srgb_bgra(
                                                           float4{light.color, 1.0f}));
@@ -2988,21 +3036,32 @@ void renderer_impl::draw_interaction_targets(
       },
       [&](const world::light& light, const float3 color) {
          if (light.light_type == world::light_type::directional) {
-            const float4x4 rotation = to_matrix(light.rotation);
-            float4x4 transform = rotation * float4x4{{2.0f, 0.0f, 0.0f, 0.0f},
-                                                     {0.0f, 2.0f, 0.0f, 0.0f},
-                                                     {0.0f, 0.0f, 2.0f, 0.0f},
-                                                     {0.0f, 0.0f, 0.0f, 1.0f}};
+            const float3 light_directionWS =
+               normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
 
-            transform[3] = {light.position, 1.0f};
+            float4x4 transform =
+               to_matrix(light.rotation) *
+               float4x4{{settings.directional_light_icon_size, 0.0f, 0.0f, 0.0f},
+                        {0.0f, settings.directional_light_icon_size, 0.0f, 0.0f},
+                        {0.0f, 0.0f, settings.directional_light_icon_size, 0.0f},
+                        {0.0f, 0.0f, 0.0f, 1.0f}};
+            transform[3] = {light.position + light_directionWS * 2.2f *
+                                                settings.directional_light_icon_size,
+                            1.0f};
 
-            _meta_draw_batcher.add_octahedron_wireframe(transform, color);
-            _meta_draw_batcher.add_arrow_outline_solid(transform, 2.2f,
+            _meta_draw_batcher.add_light_icon(light.position,
+                                              settings.directional_light_icon_size,
+                                              color);
+            _meta_draw_batcher.add_arrow_outline_solid(transform, 0.0f,
                                                        utility::pack_srgb_bgra(
                                                           float4{color, 1.0f}));
          }
          else if (light.light_type == world::light_type::point) {
-            _meta_draw_batcher.add_sphere_wireframe(light.position, light.range, color);
+            _meta_draw_batcher.add_light_icon(light.position,
+                                              settings.point_light_icon_size, color);
+            _meta_draw_batcher.add_sphere_outline_solid(light.position, light.range,
+                                                        utility::pack_srgb_bgra(
+                                                           float4{color, 1.0f}));
          }
          else if (light.light_type == world::light_type::spot) {
             const float outer_cone_radius =
@@ -3031,8 +3090,12 @@ void renderer_impl::draw_interaction_targets(
 
             inner_transform[3] += float4{light.position, 0.0f};
 
-            _meta_draw_batcher.add_cone_wireframe(outer_transform, color);
-            _meta_draw_batcher.add_cone_wireframe(inner_transform, color);
+            const uint32 color_u32 = utility::pack_srgb_bgra({color, 1.0f});
+
+            _meta_draw_batcher.add_light_icon(light.position,
+                                              settings.spot_light_icon_size, color);
+            _meta_draw_batcher.add_cone_outline_solid(outer_transform, color_u32);
+            _meta_draw_batcher.add_cone_outline_solid(inner_transform, color_u32);
          }
          else if (light.light_type == world::light_type::directional_region_box) {
             const float3 scale = light.region_size;
@@ -3044,22 +3107,48 @@ void renderer_impl::draw_interaction_targets(
                                           {0.0f, 0.0f, 0.0f, 1.0f}};
             transform[3] = float4{light.position, 0.0f};
 
-            float4x4 arrow_transform = to_matrix(light.rotation);
+            float4x4 arrow_transform =
+               to_matrix(light.rotation) *
+               float4x4{{settings.directional_region_light_icon_size, 0.0f, 0.0f, 0.0f},
+                        {0.0f, settings.directional_region_light_icon_size, 0.0f, 0.0f},
+                        {0.0f, 0.0f, settings.directional_region_light_icon_size, 0.0f},
+                        {0.0f, 0.0f, 0.0f, 1.0f}};
             arrow_transform[3] = {light.position, 1.0f};
+
+            const float3 light_directionWS =
+               normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
 
             const uint32 color_u32 = utility::pack_srgb_bgra({color, 1.0f});
 
+            _meta_draw_batcher.add_light_icon(light.position -
+                                                 light_directionWS * 2.2f *
+                                                    settings.directional_region_light_icon_size,
+                                              settings.directional_region_light_icon_size,
+                                              color);
             _meta_draw_batcher.add_box_outline_solid(transform, color_u32);
             _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f, color_u32);
          }
          else if (light.light_type == world::light_type::directional_region_sphere) {
             const float scale = length(light.region_size);
 
-            float4x4 arrow_transform = to_matrix(light.rotation);
+            float4x4 arrow_transform =
+               to_matrix(light.rotation) *
+               float4x4{{settings.directional_region_light_icon_size, 0.0f, 0.0f, 0.0f},
+                        {0.0f, settings.directional_region_light_icon_size, 0.0f, 0.0f},
+                        {0.0f, 0.0f, settings.directional_region_light_icon_size, 0.0f},
+                        {0.0f, 0.0f, 0.0f, 1.0f}};
             arrow_transform[3] = {light.position, 1.0f};
+
+            const float3 light_directionWS =
+               normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
 
             const uint32 color_u32 = utility::pack_srgb_bgra({color, 1.0f});
 
+            _meta_draw_batcher.add_light_icon(light.position -
+                                                 light_directionWS * 2.2f *
+                                                    settings.directional_region_light_icon_size,
+                                              settings.directional_region_light_icon_size,
+                                              color);
             _meta_draw_batcher.add_sphere_outline_solid(light.position, scale, color_u32);
             _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f, color_u32);
          }
@@ -3076,11 +3165,24 @@ void renderer_impl::draw_interaction_targets(
                                           {0.0f, 0.0f, 0.0f, 1.0f}};
             transform[3] = float4{light.position, 0.0f};
 
-            float4x4 arrow_transform = to_matrix(light.rotation);
+            float4x4 arrow_transform =
+               to_matrix(light.rotation) *
+               float4x4{{settings.directional_region_light_icon_size, 0.0f, 0.0f, 0.0f},
+                        {0.0f, settings.directional_region_light_icon_size, 0.0f, 0.0f},
+                        {0.0f, 0.0f, settings.directional_region_light_icon_size, 0.0f},
+                        {0.0f, 0.0f, 0.0f, 1.0f}};
             arrow_transform[3] = {light.position, 1.0f};
+
+            const float3 light_directionWS =
+               normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
 
             const uint32 color_u32 = utility::pack_srgb_bgra({color, 1.0f});
 
+            _meta_draw_batcher.add_light_icon(light.position -
+                                                 light_directionWS * 2.2f *
+                                                    settings.directional_region_light_icon_size,
+                                              settings.directional_region_light_icon_size,
+                                              color);
             _meta_draw_batcher.add_cylinder_outline_solid(transform, color_u32);
             _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f, color_u32);
          }

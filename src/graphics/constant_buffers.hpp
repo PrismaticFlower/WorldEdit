@@ -5,6 +5,7 @@
 namespace we::graphics {
 
 struct alignas(256) frame_constant_buffer {
+   float4x4 world_from_view;
    float4x4 projection_from_world;
    float4x4 projection_from_view;
 

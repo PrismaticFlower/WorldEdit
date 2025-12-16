@@ -429,9 +429,13 @@ void world_edit::update_hovered_entity() noexcept
    }
 
    if (raycast_mask.lights) {
-      if (std::optional<world::raycast_result<world::light>> hit =
-             world::raycast(ray.origin, ray.direction, _world_layers_hit_mask,
-                            _world.lights);
+      if (std::optional<world::raycast_result<world::light>> hit = world::raycast(
+             ray.origin, ray.direction, _world_layers_hit_mask, _world.lights,
+             {
+                .directional = _settings.graphics.directional_light_icon_size * 0.5f,
+                .point = _settings.graphics.point_light_icon_size * 0.5f,
+                .spot = _settings.graphics.spot_light_icon_size * 0.5f,
+             });
           hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;

@@ -64,6 +64,11 @@ public:
       return _pyramid;
    }
 
+   auto light_icon() const noexcept -> const geometric_shape&
+   {
+      return _light_icon;
+   }
+
 private:
    void init_gpu_buffer(gpu::device& device,
                         copy_command_list_pool& copy_command_list_pool);
@@ -81,6 +86,7 @@ private:
    geometric_shape _ramp;
    geometric_shape _hemisphere;
    geometric_shape _pyramid;
+   geometric_shape _light_icon;
 };
 
 }

@@ -41,6 +41,12 @@ struct raycast_result<sector> {
    uint32 index = 0;
 };
 
+struct raycast_light_sizes {
+   float directional = 1.0f;
+   float point = 1.0f;
+   float spot = 1.0f;
+};
+
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              const active_layers active_layers, std::span<const object> objects,
              const object_class_library& object_classes,
@@ -49,6 +55,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              const active_layers active_layers, std::span<const light> lights,
+             const raycast_light_sizes& sizes,
              function_ptr<bool(const light&) noexcept> filter = nullptr) noexcept
    -> std::optional<raycast_result<light>>;
 

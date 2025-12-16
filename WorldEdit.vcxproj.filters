@@ -288,6 +288,10 @@
     <ClCompile Include="src\os\show_in_explorer.cpp" />
     <ClCompile Include="src\utility\string_template.cpp" />
     <ClCompile Include="src\edits\swap_terrain_textures.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_iconVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_icon_edgePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_icon_circlePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_icon_circleVS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
