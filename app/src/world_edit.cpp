@@ -4599,7 +4599,6 @@ void world_edit::dpi_changed(const int new_dpi) noexcept
    _display_scale.value = (_current_dpi / 96.0f) * _settings.ui.extra_scaling;
    _applied_user_display_scale = _settings.ui.extra_scaling;
 
-   initialize_imgui_font();
    initialize_imgui_style();
 
    try {
@@ -4642,6 +4641,7 @@ void world_edit::initialize_imgui_style() noexcept
 {
    ImGui::GetStyle() = ImGuiStyle{};
    ImGui::GetStyle().ScaleAllSizes(_display_scale.value);
+   ImGui::GetStyle().FontScaleDpi = _display_scale.value;
 }
 
 void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
