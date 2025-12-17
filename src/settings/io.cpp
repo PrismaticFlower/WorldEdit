@@ -99,6 +99,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(portal_color);
             setting_entry(hintnode_color);
             setting_entry(boundary_color);
+            setting_entry(light_bounds_alpha);
             setting_entry(terrain_cutter_color);
             setting_entry(hover_color);
             setting_entry(selected_color);
@@ -220,6 +221,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(portal_color));
       write(file, name_value(hintnode_color));
       write(file, name_value(boundary_color));
+      write(file, name_value(light_bounds_alpha));
       write(file, name_value(terrain_cutter_color));
       write(file, name_value(hover_color));
       write(file, name_value(selected_color));

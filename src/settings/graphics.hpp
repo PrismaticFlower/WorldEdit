@@ -39,6 +39,8 @@ struct graphics {
 
    float4 boundary_color = {1.0f, 0.0f, 0.0f, 0.2f};
 
+   float light_bounds_alpha = 0.125f;
+
    float3 terrain_cutter_color = {1.0f, 0.01f, 0.01f};
 
    float3 hover_color = {1.0f, 1.0f, 0.07f};

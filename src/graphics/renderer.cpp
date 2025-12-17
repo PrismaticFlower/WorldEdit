@@ -1816,6 +1816,8 @@ void renderer_impl::draw_world_meta_objects(
                                  const quaternion& light_region_rotation) {
          if (not active_layers[light.layer] or light.hidden) return;
 
+         const float light_bounds_alpha = settings.light_bounds_alpha;
+
          switch (light.light_type) {
          case world::light_type::directional: {
             if (intersects(view_frustum, light_positionWS,
@@ -1858,11 +1860,9 @@ void renderer_impl::draw_world_meta_objects(
 
             if (settings.show_light_bounds and
                 intersects(view_frustum, light_positionWS, light.range)) {
-               _meta_draw_batcher.add_sphere_outline_solid(light_positionWS,
-                                                           light.range,
-                                                           utility::pack_srgb_bgra(
-                                                              float4{light.color,
-                                                                     0.125f}));
+               _meta_draw_batcher.add_sphere_outline_solid(
+                  light_positionWS, light.range,
+                  utility::pack_srgb_bgra(float4{light.color, light_bounds_alpha}));
             }
          } break;
          case world::light_type::spot: {
@@ -1915,7 +1915,7 @@ void renderer_impl::draw_world_meta_objects(
                inner_transform[3] += float4{light_positionWS, 0.0f};
 
                const uint32 outline_color =
-                  utility::pack_srgb_bgra(float4{light.color, 0.125f});
+                  utility::pack_srgb_bgra(float4{light.color, light_bounds_alpha});
 
                _meta_draw_batcher.add_cone_outline_solid(outer_transform, outline_color);
                _meta_draw_batcher.add_cone_outline_solid(inner_transform, outline_color);

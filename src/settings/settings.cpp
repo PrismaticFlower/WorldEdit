@@ -271,6 +271,14 @@ void show_imgui_editor(settings& settings, bool& open,
 
             ImGui::ColorEdit3("Overlay Grid Color", &graphics.overlay_grid_color.x);
 
+            ImGui::SliderFloat("Light Bounds Transparency",
+                               &graphics.light_bounds_alpha, 1.0f / 255.0f,
+                               1.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+
+            ImGui::SetItemTooltip(
+               "Transparency for point and spot light bounds when Show "
+               "Light Bounds is active.");
+
             ImGui::ColorEdit3("Terrain Cutter", &graphics.terrain_cutter_color.x);
 
             ImGui::ColorEdit3("Foliage Overlay Layer 1 Color",
