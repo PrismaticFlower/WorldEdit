@@ -1,10 +1,15 @@
 
 #include "world_edit.hpp"
 
-#include "container/enum_array.hpp"
 #include "imgui_ext.hpp"
+
+#include "container/enum_array.hpp"
+
 #include "math/vector_funcs.hpp"
+
 #include "utility/file_pickers.hpp"
+#include "utility/string_icompare.hpp"
+
 #include "world/utility/selection_centre.hpp"
 
 #include <imgui.h>
@@ -110,6 +115,8 @@ void world_edit::ui_show_render_env_map() noexcept
                                                      .filter = L"*.tga"s}},
              .picker_guid = save_env_map_picker_guid,
              .window = _window});
+
+         if (not string::iequals(path->extension(), ".tga")) *path += ".tga";
 
          if (path) {
             _env_map_save_path = std::move(*path);
