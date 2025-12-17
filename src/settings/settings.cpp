@@ -63,10 +63,13 @@ void show_imgui_editor(settings& settings, bool& open,
                                      ImGui::GetStyle().FramePadding.x * 2.0f) -
                                     ImGui::GetStyle().ItemInnerSpacing.x);
 
-            ImGui::InputText("##Game Install Path", &preferences.game_install_path);
+            if (ImGui::InputText("##Game Install Path", &preferences.game_install_path)) {
+               std::erase(preferences.game_install_path, '"');
+            }
 
             ImGui::SetItemTooltip(
-               "The path to the game install. Used for deploying munged maps.");
+               "The path to the game install. Used for deploying munged maps. "
+               "May not contain quotes (\").");
 
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 
