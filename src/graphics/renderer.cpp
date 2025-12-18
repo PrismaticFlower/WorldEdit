@@ -3762,8 +3762,8 @@ void renderer_impl::draw_interaction_targets(
       }
    };
 
-   if (interaction_targets.hovered_entity) {
-      draw_target(*interaction_targets.hovered_entity, settings.hover_color);
+   if (interaction_targets.hovered_entity.holds_entity_id()) {
+      draw_target(interaction_targets.hovered_entity, settings.hover_color);
    }
 
    if (not interaction_targets.selection.empty()) {

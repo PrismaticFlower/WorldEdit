@@ -1191,12 +1191,11 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
                if (_selection_edit_context.sector_to_add_object_to == sector->id and
                    std::exchange(_selection_edit_context.add_hovered_object, false) and
-                   _interaction_targets.hovered_entity and
-                   _interaction_targets.hovered_entity->is<world::object_id>()) {
+                   _interaction_targets.hovered_entity.is<world::object_id>()) {
                   if (world::object* object =
                          world::find_entity(_world.objects,
                                             _interaction_targets.hovered_entity
-                                               ->get<world::object_id>());
+                                               .get<world::object_id>());
                       object) {
                      bool already_has_object = false;
 

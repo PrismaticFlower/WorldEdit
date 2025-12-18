@@ -416,7 +416,7 @@ private:
    detail::active_entity _active = detail::active_entity::none;
 
    union storage {
-      ~storage(){};
+      ~storage() {};
 
       void destroy(detail::active_entity active);
 
@@ -465,7 +465,7 @@ private:
 
 /// @brief Stores references to the entities currently being interacted with.
 struct interaction_targets {
-   std::optional<hovered_entity> hovered_entity;
+   hovered_entity hovered_entity;
    selection selection;
 
    creation_entity creation_entity;

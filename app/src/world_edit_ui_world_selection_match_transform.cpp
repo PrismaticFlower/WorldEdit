@@ -46,8 +46,7 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
          "will have their transforms set to match the picked entity.");
 
       if (std::exchange(_selection_match_transform_context.clicked, false) and
-          _interaction_targets.hovered_entity and
-          not _interaction_targets.hovered_entity->is<world::planning_connection_id>()) {
+          not _interaction_targets.hovered_entity.is<world::planning_connection_id>()) {
          float3 new_position = {0.0f, 0.0f, 0.0f};
          quaternion new_rotation = {1.0f, 0.0f, 0.0f, 0.0f};
 
@@ -55,7 +54,7 @@ void world_edit::ui_show_world_selection_match_transform() noexcept
 
          bool hovered_has_rotation = false;
 
-         if (const world::hovered_entity& hovered = *_interaction_targets.hovered_entity;
+         if (const world::hovered_entity& hovered = _interaction_targets.hovered_entity;
              hovered.is<world::object_id>()) {
             world::object* object =
                world::find_entity(_world.objects, hovered.get<world::object_id>());

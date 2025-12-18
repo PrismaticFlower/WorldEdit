@@ -40,12 +40,11 @@ void world_edit::ui_show_world_selection_add_branch_weight() noexcept
       case add_branch_weight_step::connection: {
          ImGui::TextWrapped("Pick a connection for the branch weight.");
 
-         if (_interaction_targets.hovered_entity and
-             _interaction_targets.hovered_entity->is<world::planning_connection_id>()) {
+         if (_interaction_targets.hovered_entity.is<world::planning_connection_id>()) {
             candidate_connection =
                world::find_entity(_world.planning_connections,
                                   _interaction_targets.hovered_entity
-                                     ->get<world::planning_connection_id>());
+                                     .get<world::planning_connection_id>());
 
             if (candidate_connection and
                 _world.planning_hubs[candidate_connection->start_hub_index].id !=
@@ -75,11 +74,10 @@ void world_edit::ui_show_world_selection_add_branch_weight() noexcept
          ImGui::TextWrapped(
             "Pick a destination hub for the branch weight. Can not be %s.", hub_name);
 
-         if (_interaction_targets.hovered_entity and
-             _interaction_targets.hovered_entity->is<world::planning_hub_id>()) {
+         if (_interaction_targets.hovered_entity.is<world::planning_hub_id>()) {
             target_hub = world::find_entity(_world.planning_hubs,
                                             _interaction_targets.hovered_entity
-                                               ->get<world::planning_hub_id>());
+                                               .get<world::planning_hub_id>());
 
             if (connection and target_hub and
                 (_world.planning_hubs[connection->start_hub_index].id ==

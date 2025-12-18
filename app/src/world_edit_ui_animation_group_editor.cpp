@@ -639,11 +639,10 @@ void world_edit::ui_show_animation_group_editor() noexcept
    }
 
    if (_animation_group_editor_context.pick_object.finish) {
-      if (_interaction_targets.hovered_entity and
-          _interaction_targets.hovered_entity->is<world::object_id>()) {
+      if (_interaction_targets.hovered_entity.is<world::object_id>()) {
          const world::object* object =
             world::find_entity(_world.objects,
-                               _interaction_targets.hovered_entity->get<world::object_id>());
+                               _interaction_targets.hovered_entity.get<world::object_id>());
 
          if (object) {
             _animation_group_editor_config.new_entry_object_name = object->name;

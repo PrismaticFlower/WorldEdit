@@ -31,9 +31,9 @@ void world_edit::ui_show_world_selection_pick_sector() noexcept
 
       if (std::exchange(_selection_pick_sector_context.clicked, false)) {
          const world::sector* sector =
-            _interaction_targets.hovered_entity->is<world::sector_id>()
+            _interaction_targets.hovered_entity.is<world::sector_id>()
                ? world::find_entity(_world.sectors,
-                                    _interaction_targets.hovered_entity->get<world::sector_id>())
+                                    _interaction_targets.hovered_entity.get<world::sector_id>())
                : nullptr;
 
          _edit_stack_world

@@ -2151,15 +2151,14 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (_entity_creation_context.tool == entity_creation_tool::from_object_bbox and
-          _interaction_targets.hovered_entity and
-          _interaction_targets.hovered_entity->is<world::object_id>()) {
+          _interaction_targets.hovered_entity.is<world::object_id>()) {
          _entity_creation_config.placement_rotation =
             placement_rotation::manual_quaternion;
          _entity_creation_config.placement_mode = placement_mode::manual;
 
          const world::object* object =
             world::find_entity(_world.objects,
-                               _interaction_targets.hovered_entity->get<world::object_id>());
+                               _interaction_targets.hovered_entity.get<world::object_id>());
 
          if (object) {
             math::bounding_box bbox =
@@ -2638,11 +2637,11 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                             0xffffffffu);
          _tool_visualizers.add_line_overlay(line_top_mid, line_top_end, 0xffffffffu);
       }
-      if (using_from_object_bbox and _interaction_targets.hovered_entity and
-          _interaction_targets.hovered_entity->is<world::object_id>()) {
+      if (using_from_object_bbox and
+          _interaction_targets.hovered_entity.is<world::object_id>()) {
          const world::object* object =
             world::find_entity(_world.objects,
-                               _interaction_targets.hovered_entity->get<world::object_id>());
+                               _interaction_targets.hovered_entity.get<world::object_id>());
 
          if (object) {
             std::array<float3, 8> corners = math::to_corners(
@@ -2731,11 +2730,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (_entity_creation_context.tool == entity_creation_tool::pick_sector and
-          _interaction_targets.hovered_entity and
-          _interaction_targets.hovered_entity->is<world::sector_id>()) {
+          _interaction_targets.hovered_entity.is<world::sector_id>()) {
          const world::sector* sector =
             find_entity(_world.sectors,
-                        _interaction_targets.hovered_entity->get<world::sector_id>());
+                        _interaction_targets.hovered_entity.get<world::sector_id>());
 
          if (sector) {
             if (_entity_creation_context.pick_sector_index == 1) {
@@ -3331,13 +3329,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
          "Padding to apply to a barrier's size using From Object Bounds.");
 
       if (_entity_creation_context.tool == entity_creation_tool::from_object_bbox and
-          _interaction_targets.hovered_entity and
-          _interaction_targets.hovered_entity->is<world::object_id>()) {
+          _interaction_targets.hovered_entity.is<world::object_id>()) {
          _entity_creation_config.placement_mode = placement_mode::manual;
 
          const world::object* object =
             world::find_entity(_world.objects,
-                               _interaction_targets.hovered_entity->get<world::object_id>());
+                               _interaction_targets.hovered_entity.get<world::object_id>());
 
          if (object) {
             math::bounding_box bbox =
@@ -3626,10 +3623,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
                   _world.planning_hubs[connection.end_hub_index].name.c_str());
 
       if (_entity_creation_context.connection_link_started and
-          _interaction_targets.hovered_entity and
-          _interaction_targets.hovered_entity->is<world::planning_hub_id>()) {
+          _interaction_targets.hovered_entity.is<world::planning_hub_id>()) {
          const world::planning_hub_id end_id =
-            _interaction_targets.hovered_entity->get<world::planning_hub_id>();
+            _interaction_targets.hovered_entity.get<world::planning_hub_id>();
 
          _edit_stack_world.apply(edits::make_set_value(&connection.end_hub_index,
                                                        get_hub_index(_world.planning_hubs,

@@ -586,7 +586,7 @@ void world_edit::update_hovered_entity() noexcept
                                                     ray.direction, _world_layers_hit_mask,
                                                     _world, _object_classes)) {
                if (*hit < hovered_entity_distance) {
-                  _interaction_targets.hovered_entity = std::nullopt;
+                  _interaction_targets.hovered_entity = {};
                   hovered_entity_distance = *hit;
                }
 
@@ -627,15 +627,14 @@ void world_edit::update_hovered_entity() noexcept
       _cursor_positionWS = ray.origin + ray.direction * cursor_distance;
    }
 
-   if (_interaction_targets.creation_entity.holds_entity() and
-       _interaction_targets.hovered_entity) {
+   if (_interaction_targets.creation_entity.holds_entity()) {
       const bool from_bbox_wants_hover =
          (_entity_creation_context.tool == entity_creation_tool::from_object_bbox and
-          _interaction_targets.hovered_entity->is<world::object_id>());
+          _interaction_targets.hovered_entity.is<world::object_id>());
 
       const bool connection_placement_wants_hover =
          _interaction_targets.creation_entity.is<world::planning_connection>() and
-         _interaction_targets.hovered_entity->is<world::planning_hub_id>();
+         _interaction_targets.hovered_entity.is<world::planning_hub_id>();
 
       const bool pick_sector_wants_hover =
          _entity_creation_context.tool == entity_creation_tool::pick_sector;
@@ -643,14 +642,14 @@ void world_edit::update_hovered_entity() noexcept
       const bool pick_sector_object_wants_hover =
          (_selection_edit_context.using_add_object_to_sector or
           _selection_edit_context.add_hovered_object) and
-         _interaction_targets.hovered_entity->is<world::object_id>();
+         _interaction_targets.hovered_entity.is<world::object_id>();
 
       const bool tool_wants_hover =
          from_bbox_wants_hover or connection_placement_wants_hover or
          pick_sector_wants_hover or pick_sector_object_wants_hover;
 
       if (not tool_wants_hover) {
-         _interaction_targets.hovered_entity = std::nullopt;
+         _interaction_targets.hovered_entity = {};
       }
    }
 
@@ -664,21 +663,21 @@ void world_edit::update_hovered_entity() noexcept
           _animation_hierarchy_editor_context.pick_object.active);
 
       if (not pick_object_wants_hover) {
-         _interaction_targets.hovered_entity = std::nullopt;
+         _interaction_targets.hovered_entity = {};
       }
    }
 
    if (_block_editor_open) {
       if (_block_editor_context.tool == block_edit_tool::draw) {
-         _interaction_targets.hovered_entity = std::nullopt;
+         _interaction_targets.hovered_entity = {};
       }
    }
 
-   if (_interaction_targets.hovered_entity and
+   if (_interaction_targets.hovered_entity.holds_entity_id() and
        not _settings.ui.hide_entity_hover_tooltips) {
       const float description_scale = 0.85f;
 
-      if (_interaction_targets.hovered_entity->is<world::object_id>()) {
+      if (_interaction_targets.hovered_entity.is<world::object_id>()) {
          if (hovered_entity_index < _world.objects.size() and
              _world.objects[hovered_entity_index].id ==
                 _interaction_targets.hovered_entity) {
@@ -701,7 +700,7 @@ void world_edit::update_hovered_entity() noexcept
             }
          }
       }
-      else if (_interaction_targets.hovered_entity->is<world::light_id>()) {
+      else if (_interaction_targets.hovered_entity.is<world::light_id>()) {
          if (hovered_entity_index < _world.lights.size() and
              _world.lights[hovered_entity_index].id ==
                 _interaction_targets.hovered_entity) {
@@ -743,16 +742,16 @@ void world_edit::update_hovered_entity() noexcept
             }
          }
       }
-      else if (_interaction_targets.hovered_entity->is<world::path_id_node_mask>()) {
+      else if (_interaction_targets.hovered_entity.is<world::path_id_node_mask>()) {
          if (hovered_entity_index < _world.paths.size() and
              _world.paths[hovered_entity_index].id ==
                 _interaction_targets.hovered_entity
-                   ->get<world::path_id_node_mask>()
+                   .get<world::path_id_node_mask>()
                    .id) {
 
             const world::path_id_node_mask::node_mask& nodes =
                _interaction_targets.hovered_entity
-                  ->get<world::path_id_node_mask>()
+                  .get<world::path_id_node_mask>()
                   .nodes;
 
             for (int i = 0; i < nodes.size(); ++i) {
@@ -781,7 +780,7 @@ void world_edit::update_hovered_entity() noexcept
             }
          }
       }
-      else if (_interaction_targets.hovered_entity->is<world::region_id>()) {
+      else if (_interaction_targets.hovered_entity.is<world::region_id>()) {
          if (hovered_entity_index < _world.regions.size() and
              _world.regions[hovered_entity_index].id ==
                 _interaction_targets.hovered_entity) {
@@ -804,7 +803,7 @@ void world_edit::update_hovered_entity() noexcept
             }
          }
       }
-      else if (_interaction_targets.hovered_entity->is<world::sector_id>()) {
+      else if (_interaction_targets.hovered_entity.is<world::sector_id>()) {
          if (hovered_entity_index < _world.sectors.size() and
              _world.sectors[hovered_entity_index].id ==
                 _interaction_targets.hovered_entity) {
@@ -818,7 +817,7 @@ void world_edit::update_hovered_entity() noexcept
             }
          }
       }
-      else if (_interaction_targets.hovered_entity->is<world::portal_id>()) {
+      else if (_interaction_targets.hovered_entity.is<world::portal_id>()) {
          if (hovered_entity_index < _world.portals.size() and
              _world.portals[hovered_entity_index].id ==
                 _interaction_targets.hovered_entity) {
@@ -843,7 +842,7 @@ void world_edit::update_hovered_entity() noexcept
             }
          }
       }
-      else if (_interaction_targets.hovered_entity->is<world::barrier_id>()) {
+      else if (_interaction_targets.hovered_entity.is<world::barrier_id>()) {
          if (hovered_entity_index < _world.barriers.size() and
              _world.barriers[hovered_entity_index].id ==
                 _interaction_targets.hovered_entity) {
@@ -901,7 +900,7 @@ void world_edit::update_hovered_entity() noexcept
             }
          }
       }
-      else if (_interaction_targets.hovered_entity->is<world::hintnode_id>()) {
+      else if (_interaction_targets.hovered_entity.is<world::hintnode_id>()) {
          if (hovered_entity_index < _world.hintnodes.size() and
              _world.hintnodes[hovered_entity_index].id ==
                 _interaction_targets.hovered_entity) {
@@ -954,7 +953,7 @@ void world_edit::update_hovered_entity() noexcept
             }
          }
       }
-      else if (_interaction_targets.hovered_entity->is<world::planning_hub_id>()) {
+      else if (_interaction_targets.hovered_entity.is<world::planning_hub_id>()) {
          if (hovered_entity_index < _world.planning_hubs.size() and
              _world.planning_hubs[hovered_entity_index].id ==
                 _interaction_targets.hovered_entity) {
@@ -981,7 +980,7 @@ void world_edit::update_hovered_entity() noexcept
             }
          }
       }
-      else if (_interaction_targets.hovered_entity->is<world::planning_connection_id>()) {
+      else if (_interaction_targets.hovered_entity.is<world::planning_connection_id>()) {
          if (hovered_entity_index < _world.planning_connections.size() and
              _world.planning_connections[hovered_entity_index].id ==
                 _interaction_targets.hovered_entity) {
@@ -1041,7 +1040,7 @@ void world_edit::update_hovered_entity() noexcept
             }
          }
       }
-      else if (_interaction_targets.hovered_entity->is<world::boundary_id>()) {
+      else if (_interaction_targets.hovered_entity.is<world::boundary_id>()) {
          if (hovered_entity_index < _world.boundaries.size() and
              _world.boundaries[hovered_entity_index].id ==
                 _interaction_targets.hovered_entity) {
@@ -1057,10 +1056,10 @@ void world_edit::update_hovered_entity() noexcept
             }
          }
       }
-      else if (_interaction_targets.hovered_entity->is<world::measurement_id>()) {
+      else if (_interaction_targets.hovered_entity.is<world::measurement_id>()) {
          // No tooltips for measurements.
       }
-      else if (_interaction_targets.hovered_entity->is<world::block_id>()) {
+      else if (_interaction_targets.hovered_entity.is<world::block_id>()) {
          // No tooltips for blocks.
       }
    }
@@ -1336,7 +1335,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
          _interaction_targets.selection.clear();
       }
 
-      if (not _interaction_targets.hovered_entity) return;
+      if (not _interaction_targets.hovered_entity.holds_entity_id()) return;
 
       if (_interaction_targets.hovered_entity == last_clicked_entity and
           _select_last_click_time.elapsed() <= _double_click_time and
@@ -1344,7 +1343,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
          const frustum frustumWS{_camera.world_from_projection()};
 
          world::double_click_select(
-            *_interaction_targets.hovered_entity, _world, _object_classes,
+            _interaction_targets.hovered_entity, _world, _object_classes,
             _world_blocks_bvh_library, frustumWS,
             method == select_method::remove ? world::select_op::remove
                                             : world::select_op::add,
@@ -1359,14 +1358,14 @@ void world_edit::finish_entity_select(const select_method method) noexcept
       }
       else {
          if (method == select_method::remove) {
-            _interaction_targets.selection.remove(*_interaction_targets.hovered_entity);
+            _interaction_targets.selection.remove(_interaction_targets.hovered_entity);
          }
          else {
-            _interaction_targets.selection.add(*_interaction_targets.hovered_entity);
+            _interaction_targets.selection.add(_interaction_targets.hovered_entity);
          }
 
          _select_last_click_time.restart();
-         _last_clicked_entity = *_interaction_targets.hovered_entity;
+         _last_clicked_entity = _interaction_targets.hovered_entity;
       }
    }
 }
@@ -1759,8 +1758,7 @@ void world_edit::place_creation_entity() noexcept
       world::planning_connection& connection =
          _interaction_targets.creation_entity.get<world::planning_connection>();
 
-      if (not(_interaction_targets.hovered_entity and
-              _interaction_targets.hovered_entity->is<world::planning_hub_id>())) {
+      if (not _interaction_targets.hovered_entity.is<world::planning_hub_id>()) {
          return;
       }
 
@@ -1828,7 +1826,7 @@ void world_edit::place_creation_entity() noexcept
                       &connection.start_hub_index,
                       get_hub_index(_world.planning_hubs,
                                     _interaction_targets.hovered_entity
-                                       ->get<world::planning_hub_id>())),
+                                       .get<world::planning_hub_id>())),
                    _edit_context);
 
          _entity_creation_context.connection_link_started = true;
