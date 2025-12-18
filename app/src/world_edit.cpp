@@ -4623,7 +4623,7 @@ void world_edit::initialize_imgui_font() noexcept
    ImGui::GetIO().Fonts->Clear();
    ImGui::GetIO().Fonts->AddFontFromMemoryTTF(roboto_regular.data(),
                                               static_cast<int>(roboto_regular.size()),
-                                              16.0f * _display_scale, &font_config);
+                                              16.0f, &font_config);
 }
 
 void world_edit::initialize_imgui_style() noexcept
