@@ -438,12 +438,16 @@ void run_application(command_line command_line)
                "Fatal Error", MB_OK);
          }
          else {
-            switch (MessageBoxA(
-               window_handle.get(),
-               "Failed to recover from GPU device "
-               "removal.\n\nThe editor will now exit and must be reopened."
-               "\n\nSave world?",
-               "Fatal Error", MB_YESNO | MB_ICONERROR)) {
+            switch (
+               MessageBoxA(window_handle.get(),
+                           fmt::format("An unexpected fatal error (last-error "
+                                       "code: {}) occured in the "
+                                       "message loop. The editor will now "
+                                       "close and must be reopened."
+                                       "\n\nSave world?",
+                                       error_code)
+                              .c_str(),
+                           "Fatal Error", MB_YESNO | MB_ICONERROR)) {
             case IDYES:
                app.save_world_with_picker();
                [[fallthrough]];
