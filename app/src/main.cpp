@@ -492,6 +492,8 @@ void run_application(command_line command_line)
 
 int main(int arg_count, const char** args)
 {
+   DXGIDeclareAdapterRemovalSupport();
+
    ImGui::SetAllocatorFunctions(
       [](std::size_t size, [[maybe_unused]] void* user_data) noexcept {
          return ::operator new(size);
@@ -499,8 +501,6 @@ int main(int arg_count, const char** args)
       [](void* allocation, [[maybe_unused]] void* user_data) noexcept {
          return ::operator delete(allocation);
       });
-
-   DXGIDeclareAdapterRemovalSupport();
 
    run_application(command_line{arg_count, args});
 }
