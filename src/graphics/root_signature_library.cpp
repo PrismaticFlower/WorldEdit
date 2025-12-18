@@ -25,6 +25,7 @@ constexpr uint32 meta_draw_instance_data_register = 1;
 constexpr uint32 water_patch_data_register = 2;
 constexpr uint32 block_instance_index_register = 3;
 constexpr uint32 block_instance_data_register = 4;
+constexpr uint32 meta_draw_line_shape_data_register = 5;
 
 constexpr gpu::root_parameter frame_constant_buffer = {
    .type = gpu::root_parameter_type::constant_buffer_view,
@@ -364,6 +365,9 @@ const gpu::root_signature_desc meta_draw_desc{
          // instance data srv
          gpu::root_parameter{.type = gpu::root_parameter_type::shader_resource_view,
                              .shader_register = meta_draw_instance_data_register},
+         // line shape data srv
+         gpu::root_parameter{.type = gpu::root_parameter_type::shader_resource_view,
+                             .shader_register = meta_draw_line_shape_data_register},
 
          frame_constant_buffer,
       },

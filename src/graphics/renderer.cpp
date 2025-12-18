@@ -1481,9 +1481,8 @@ void renderer_impl::draw_world_meta_objects(
             orientation_transform[3] = {node_positionWS, 1.0f};
 
             _meta_draw_batcher.add_arrow_outline_solid(orientation_transform, 3.2f,
-                                                       utility::pack_srgb_bgra(
-                                                          float4{settings.path_node_orientation_color,
-                                                                 1.0f}));
+                                                       float4{settings.path_node_orientation_color,
+                                                              1.0f});
          }
       };
 
@@ -1672,7 +1671,7 @@ void renderer_impl::draw_world_meta_objects(
          }};
 
          _meta_draw_batcher.add_box_outline_solid(make_region_transform(size),
-                                                  utility::pack_srgb_bgra({color, 1.0f}));
+                                                  {color, 1.0f});
       } break;
       case world::region_shape::sphere: {
          const float sphere_radius = length(size);
@@ -1682,8 +1681,7 @@ void renderer_impl::draw_world_meta_objects(
          }
 
          _meta_draw_batcher.add_sphere_outline_solid(position, sphere_radius,
-                                                     utility::pack_srgb_bgra(
-                                                        {color, 1.0f}));
+                                                     {color, 1.0f});
       } break;
       case world::region_shape::cylinder: {
          const float cylinder_radius = length(float2{size.x, size.z});
@@ -1697,9 +1695,10 @@ void renderer_impl::draw_world_meta_objects(
             return;
          }
 
-         _meta_draw_batcher.add_cylinder_outline_solid(
-            make_region_transform(float3{cylinder_radius, size.y, cylinder_radius}),
-            utility::pack_srgb_bgra({color, 1.0f}));
+         _meta_draw_batcher.add_cylinder_outline_solid(make_region_transform(
+                                                          float3{cylinder_radius,
+                                                                 size.y, cylinder_radius}),
+                                                       {color, 1.0f});
       } break;
       }
    };
@@ -1846,9 +1845,8 @@ void renderer_impl::draw_world_meta_objects(
                                                   settings.directional_light_icon_size,
                             1.0f};
 
-            _meta_draw_batcher.add_arrow_outline_solid(transform, 0.0f,
-                                                       utility::pack_srgb_bgra(
-                                                          float4{light.color, 1.0f}));
+            _meta_draw_batcher.add_arrow_outline_solid(transform,
+                                                       float4{light.color, 1.0f});
          } break;
          case world::light_type::point: {
             if (intersects(view_frustum, light_positionWS,
@@ -1860,9 +1858,10 @@ void renderer_impl::draw_world_meta_objects(
 
             if (settings.show_light_bounds and
                 intersects(view_frustum, light_positionWS, light.range)) {
-               _meta_draw_batcher.add_sphere_outline_solid(
-                  light_positionWS, light.range,
-                  utility::pack_srgb_bgra(float4{light.color, light_bounds_alpha}));
+               _meta_draw_batcher.add_sphere_outline_solid(light_positionWS,
+                                                           light.range,
+                                                           float4{light.color,
+                                                                  light_bounds_alpha});
             }
          } break;
          case world::light_type::spot: {
@@ -1914,8 +1913,7 @@ void renderer_impl::draw_world_meta_objects(
 
                inner_transform[3] += float4{light_positionWS, 0.0f};
 
-               const uint32 outline_color =
-                  utility::pack_srgb_bgra(float4{light.color, light_bounds_alpha});
+               const float4 outline_color = {light.color, light_bounds_alpha};
 
                _meta_draw_batcher.add_cone_outline_solid(outer_transform, outline_color);
                _meta_draw_batcher.add_cone_outline_solid(inner_transform, outline_color);
@@ -1955,9 +1953,8 @@ void renderer_impl::draw_world_meta_objects(
                                                     settings.directional_region_light_icon_size,
                                               settings.directional_region_light_icon_size,
                                               light.color);
-            _meta_draw_batcher.add_arrow_outline_solid(transform, 0.0f,
-                                                       utility::pack_srgb_bgra(
-                                                          float4{light.color, 1.0f}));
+            _meta_draw_batcher.add_arrow_outline_solid(transform,
+                                                       float4{light.color, 1.0f});
          } break;
          }
       };
@@ -2135,7 +2132,6 @@ void renderer_impl::draw_world_meta_objects(
 
    if (active_entity_types.hintnodes) {
       const float4 hintnode_color = settings.hintnode_color;
-      const uint32 packed_hintnode_color = utility::pack_srgb_bgra(hintnode_color);
 
       const auto add_hintnode = [&](const world::hintnode& hintnode,
                                     const quaternion& hintnode_rotation,
@@ -2158,7 +2154,7 @@ void renderer_impl::draw_world_meta_objects(
          arrow_transform[3] += {hintnode.position, 0.0f};
 
          _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 2.4f,
-                                                    packed_hintnode_color);
+                                                    hintnode_color);
       };
 
       for (const world::hintnode& hintnode : world.hintnodes) {
@@ -2184,10 +2180,6 @@ void renderer_impl::draw_world_meta_objects(
 
    if (active_entity_types.planning_hubs) {
       const float planning_hub_height = settings.planning_hub_height;
-      const uint32 packed_color =
-         utility::pack_srgb_bgra({settings.planning_hub_outline_color.x,
-                                  settings.planning_hub_outline_color.y,
-                                  settings.planning_hub_outline_color.z, 1.0f});
 
       const auto add_hub = [&](const world::planning_hub& hub,
                                const float3& hub_positionWS) {
@@ -2202,49 +2194,16 @@ void renderer_impl::draw_world_meta_objects(
 
          if (not intersects(view_frustum, bbox)) return;
 
-         const float3 scale = float3{hub.radius, 0.0f, hub.radius};
-         const float3 offset = hub_positionWS;
-
-         const std::array circle = {
-            float3{0.0f, 0.0f, 1.0f} * scale + offset,
-            float3{-0.195090f, 0.0f, 0.980785f} * scale + offset,
-            float3{-0.382683f, 0.0f, 0.923880f} * scale + offset,
-            float3{-0.555570f, 0.0f, 0.831470f} * scale + offset,
-            float3{-0.707107f, 0.0f, 0.707107f} * scale + offset,
-            float3{-0.831470f, 0.0f, 0.555570f} * scale + offset,
-            float3{-0.923880f, 0.0f, 0.382683f} * scale + offset,
-            float3{-0.980785f, 0.0f, 0.195090f} * scale + offset,
-            float3{-1.0f, 0.0f, 0.0f} * scale + offset,
-            float3{-0.980785f, 0.0f, -0.195090f} * scale + offset,
-            float3{-0.923880f, 0.0f, -0.382683f} * scale + offset,
-            float3{-0.831470f, 0.0f, -0.555570f} * scale + offset,
-            float3{-0.707107f, 0.0f, -0.707107f} * scale + offset,
-            float3{-0.555570f, 0.0f, -0.831470f} * scale + offset,
-            float3{-0.382683f, 0.0f, -0.923880f} * scale + offset,
-            float3{-0.195090f, 0.0f, -0.980785f} * scale + offset,
-            float3{0.0f, 0.0f, -1.0f} * scale + offset,
-            float3{0.195091f, 0.0f, -0.980785f} * scale + offset,
-            float3{0.382684f, 0.0f, -0.923879f} * scale + offset,
-            float3{0.555571f, 0.0f, -0.831469f} * scale + offset,
-            float3{0.707107f, 0.0f, -0.707106f} * scale + offset,
-            float3{0.831470f, 0.0f, -0.555570f} * scale + offset,
-            float3{0.923880f, 0.0f, -0.382683f} * scale + offset,
-            float3{0.980785f, 0.0f, -0.195089f} * scale + offset,
-            float3{1.0f, 0.0f, 0.000001f} * scale + offset,
-            float3{0.980785f, 0.0f, 0.195091f} * scale + offset,
-            float3{0.923879f, 0.0f, 0.382684f} * scale + offset,
-            float3{0.831469f, 0.0f, 0.555571f} * scale + offset,
-            float3{0.707106f, 0.0f, 0.707108f} * scale + offset,
-            float3{0.555569f, 0.0f, 0.831470f} * scale + offset,
-            float3{0.382682f, 0.0f, 0.923880f} * scale + offset,
-            float3{0.195089f, 0.0f, 0.980786f} * scale + offset,
-         };
-
-         for (std::size_t i = 0; i < circle.size(); ++i) {
-            _meta_draw_batcher.add_line_overlay(circle[i],
-                                                circle[(i + 1) % circle.size()],
-                                                packed_color);
-         }
+         _meta_draw_batcher.add_circle_outline_solid(
+            {
+               {hub.radius, 0.0f, 0.0f, 0.0f},
+               {0.0f, 0.0f, 0.0f, 0.0f},
+               {0.0f, 0.0f, hub.radius, 0.0f},
+               {hub_positionWS.x, hub_positionWS.y, hub_positionWS.z, 0.0f},
+            },
+            {settings.planning_hub_outline_color.x,
+             settings.planning_hub_outline_color.y,
+             settings.planning_hub_outline_color.z, 1.0f});
 
          _ai_overlay_batches.hubs.push_back({{hub.radius, 0.0f, 0.0f, 0.0f},
                                              {0.0f, planning_hub_height, 0.0f, 0.0f},
@@ -2659,8 +2618,7 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    for (const auto& arrow : tool_visualizers.arrows_wireframe()) {
-      _meta_draw_batcher.add_arrow_outline_solid(arrow.transform, 0.0f,
-                                                 utility::pack_srgb_bgra(arrow.color));
+      _meta_draw_batcher.add_arrow_outline_solid(arrow.transform, arrow.color);
    }
 
    for (const auto& tri : tool_visualizers.triangles_additive()) {
@@ -3052,16 +3010,13 @@ void renderer_impl::draw_interaction_targets(
             _meta_draw_batcher.add_light_icon(light.position,
                                               settings.directional_light_icon_size,
                                               color);
-            _meta_draw_batcher.add_arrow_outline_solid(transform, 0.0f,
-                                                       utility::pack_srgb_bgra(
-                                                          float4{color, 1.0f}));
+            _meta_draw_batcher.add_arrow_outline_solid(transform, float4{color, 1.0f});
          }
          else if (light.light_type == world::light_type::point) {
             _meta_draw_batcher.add_light_icon(light.position,
                                               settings.point_light_icon_size, color);
             _meta_draw_batcher.add_sphere_outline_solid(light.position, light.range,
-                                                        utility::pack_srgb_bgra(
-                                                           float4{color, 1.0f}));
+                                                        float4{color, 1.0f});
          }
          else if (light.light_type == world::light_type::spot) {
             const float outer_cone_radius =
@@ -3090,12 +3045,12 @@ void renderer_impl::draw_interaction_targets(
 
             inner_transform[3] += float4{light.position, 0.0f};
 
-            const uint32 color_u32 = utility::pack_srgb_bgra({color, 1.0f});
-
             _meta_draw_batcher.add_light_icon(light.position,
                                               settings.spot_light_icon_size, color);
-            _meta_draw_batcher.add_cone_outline_solid(outer_transform, color_u32);
-            _meta_draw_batcher.add_cone_outline_solid(inner_transform, color_u32);
+            _meta_draw_batcher.add_cone_outline_solid(outer_transform,
+                                                      float4{color, 1.0f});
+            _meta_draw_batcher.add_cone_outline_solid(inner_transform,
+                                                      float4{color, 1.0f});
          }
          else if (light.light_type == world::light_type::directional_region_box) {
             const float3 scale = light.region_size;
@@ -3118,15 +3073,13 @@ void renderer_impl::draw_interaction_targets(
             const float3 light_directionWS =
                normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
 
-            const uint32 color_u32 = utility::pack_srgb_bgra({color, 1.0f});
-
             _meta_draw_batcher.add_light_icon(light.position -
                                                  light_directionWS * 2.2f *
                                                     settings.directional_region_light_icon_size,
                                               settings.directional_region_light_icon_size,
                                               color);
-            _meta_draw_batcher.add_box_outline_solid(transform, color_u32);
-            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f, color_u32);
+            _meta_draw_batcher.add_box_outline_solid(transform, {color, 1.0f});
+            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, {color, 1.0f});
          }
          else if (light.light_type == world::light_type::directional_region_sphere) {
             const float scale = length(light.region_size);
@@ -3142,15 +3095,14 @@ void renderer_impl::draw_interaction_targets(
             const float3 light_directionWS =
                normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
 
-            const uint32 color_u32 = utility::pack_srgb_bgra({color, 1.0f});
-
             _meta_draw_batcher.add_light_icon(light.position -
                                                  light_directionWS * 2.2f *
                                                     settings.directional_region_light_icon_size,
                                               settings.directional_region_light_icon_size,
                                               color);
-            _meta_draw_batcher.add_sphere_outline_solid(light.position, scale, color_u32);
-            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f, color_u32);
+            _meta_draw_batcher.add_sphere_outline_solid(light.position, scale,
+                                                        {color, 1.0f});
+            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, {color, 1.0f});
          }
          else if (light.light_type == world::light_type::directional_region_cylinder) {
             const float cylinder_length =
@@ -3176,15 +3128,13 @@ void renderer_impl::draw_interaction_targets(
             const float3 light_directionWS =
                normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
 
-            const uint32 color_u32 = utility::pack_srgb_bgra({color, 1.0f});
-
             _meta_draw_batcher.add_light_icon(light.position -
                                                  light_directionWS * 2.2f *
                                                     settings.directional_region_light_icon_size,
                                               settings.directional_region_light_icon_size,
                                               color);
-            _meta_draw_batcher.add_cylinder_outline_solid(transform, color_u32);
-            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f, color_u32);
+            _meta_draw_batcher.add_cylinder_outline_solid(transform, {color, 1.0f});
+            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, {color, 1.0f});
          }
       },
       [&](const world::path& path, const float3 color) {
@@ -3215,15 +3165,13 @@ void renderer_impl::draw_interaction_targets(
                                           {0.0f, 0.0f, 0.0f, 1.0f}};
             transform[3] = {region.position, 1.0f};
 
-            _meta_draw_batcher.add_box_outline_solid(transform, utility::pack_srgb_bgra(
-                                                                   {color, 1.0f}));
+            _meta_draw_batcher.add_box_outline_solid(transform, {color, 1.0f});
          } break;
          case world::region_shape::sphere: {
             const float sphere_radius = length(region.size);
 
             _meta_draw_batcher.add_sphere_outline_solid(region.position, sphere_radius,
-                                                        utility::pack_srgb_bgra(
-                                                           {color, 1.0f}));
+                                                        {color, 1.0f});
          } break;
          case world::region_shape::cylinder: {
             const float cylinder_length =
@@ -3236,9 +3184,7 @@ void renderer_impl::draw_interaction_targets(
                                           {0.0f, 0.0f, 0.0f, 1.0f}};
             transform[3] = {region.position, 1.0f};
 
-            _meta_draw_batcher.add_cylinder_outline_solid(transform,
-                                                          utility::pack_srgb_bgra(
-                                                             {color, 1.0f}));
+            _meta_draw_batcher.add_cylinder_outline_solid(transform, {color, 1.0f});
          } break;
          }
       },
@@ -3296,8 +3242,7 @@ void renderer_impl::draw_interaction_targets(
          arrow_transform[3] += {hintnode.position, 0.0f};
 
          _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 2.4f,
-                                                    utility::pack_srgb_bgra(
-                                                       float4{color, 1.0f}));
+                                                    float4{color, 1.0f});
       },
       [&](const world::barrier& barrier, const float3 color) {
          const geometric_shape shape = _geometric_shapes.cube();
@@ -3365,62 +3310,25 @@ void renderer_impl::draw_interaction_targets(
                                            corners[0] - height_offset, packed_color);
       },
       [&](const world::planning_hub& hub, const float3 color) {
-         const float3 height = {0.0f, settings.planning_hub_height, 0.0f};
-         const float3 scale = float3{hub.radius, 0.0f, hub.radius};
-         const float3 offset = hub.position;
+         _meta_draw_batcher.add_circle_outline_solid(
+            {
+               {hub.radius, 0.0f, 0.0f, 0.0f},
+               {0.0f, 0.0f, 0.0f, 0.0f},
+               {0.0f, 0.0f, hub.radius, 0.0f},
+               {hub.position.x, hub.position.y, hub.position.z, 0.0f},
+            },
+            {settings.planning_hub_outline_color.x,
+             settings.planning_hub_outline_color.y,
+             settings.planning_hub_outline_color.z, 1.0f});
 
-         const std::array circle = {
-            float3{0.0f, 0.0f, 1.0f} * scale + offset,
-            float3{-0.195090f, 0.0f, 0.980785f} * scale + offset,
-            float3{-0.382683f, 0.0f, 0.923880f} * scale + offset,
-            float3{-0.555570f, 0.0f, 0.831470f} * scale + offset,
-            float3{-0.707107f, 0.0f, 0.707107f} * scale + offset,
-            float3{-0.831470f, 0.0f, 0.555570f} * scale + offset,
-            float3{-0.923880f, 0.0f, 0.382683f} * scale + offset,
-            float3{-0.980785f, 0.0f, 0.195090f} * scale + offset,
-            float3{-1.0f, 0.0f, 0.0f} * scale + offset,
-            float3{-0.980785f, 0.0f, -0.195090f} * scale + offset,
-            float3{-0.923880f, 0.0f, -0.382683f} * scale + offset,
-            float3{-0.831470f, 0.0f, -0.555570f} * scale + offset,
-            float3{-0.707107f, 0.0f, -0.707107f} * scale + offset,
-            float3{-0.555570f, 0.0f, -0.831470f} * scale + offset,
-            float3{-0.382683f, 0.0f, -0.923880f} * scale + offset,
-            float3{-0.195090f, 0.0f, -0.980785f} * scale + offset,
-            float3{0.0f, 0.0f, -1.0f} * scale + offset,
-            float3{0.195091f, 0.0f, -0.980785f} * scale + offset,
-            float3{0.382684f, 0.0f, -0.923879f} * scale + offset,
-            float3{0.555571f, 0.0f, -0.831469f} * scale + offset,
-            float3{0.707107f, 0.0f, -0.707106f} * scale + offset,
-            float3{0.831470f, 0.0f, -0.555570f} * scale + offset,
-            float3{0.923880f, 0.0f, -0.382683f} * scale + offset,
-            float3{0.980785f, 0.0f, -0.195089f} * scale + offset,
-            float3{1.0f, 0.0f, 0.000001f} * scale + offset,
-            float3{0.980785f, 0.0f, 0.195091f} * scale + offset,
-            float3{0.923879f, 0.0f, 0.382684f} * scale + offset,
-            float3{0.831469f, 0.0f, 0.555571f} * scale + offset,
-            float3{0.707106f, 0.0f, 0.707108f} * scale + offset,
-            float3{0.555569f, 0.0f, 0.831470f} * scale + offset,
-            float3{0.382682f, 0.0f, 0.923880f} * scale + offset,
-            float3{0.195089f, 0.0f, 0.980786f} * scale + offset,
-         };
-
-         const uint32 packed_color = utility::pack_srgb_bgra({color, 1.0f});
-
-         for (std::size_t i = 0; i < circle.size(); ++i) {
-            _meta_draw_batcher.add_line_overlay(circle[i],
-                                                circle[(i + 1) % circle.size()],
-                                                packed_color);
-
-            _meta_draw_batcher.add_line_solid(circle[i] - height,
-                                              circle[i] + height, packed_color);
-
-            _meta_draw_batcher.add_line_solid(circle[i] - height,
-                                              circle[(i + 1) % circle.size()] - height,
-                                              packed_color);
-            _meta_draw_batcher.add_line_solid(circle[i] + height,
-                                              circle[(i + 1) % circle.size()] + height,
-                                              packed_color);
-         }
+         _meta_draw_batcher.add_cylinder_outline_solid(
+            {
+               {hub.radius, 0.0f, 0.0f, 0.0f},
+               {0.0f, settings.planning_hub_height, 0.0f, 0.0f},
+               {0.0f, 0.0f, hub.radius, 0.0f},
+               {hub.position.x, hub.position.y, hub.position.z, 0.0f},
+            },
+            {color, 1.0f});
       },
       [&](const world::planning_connection& connection, const float3 color) {
          const float height = settings.planning_connection_height;

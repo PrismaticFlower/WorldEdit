@@ -69,6 +69,36 @@ public:
       return _light_icon;
    }
 
+   auto line_circle_32() const noexcept -> const geometric_shape&
+   {
+      return _line_circle_32;
+   }
+
+   auto line_cone() const noexcept -> const geometric_shape&
+   {
+      return _line_cone;
+   }
+
+   auto line_cylinder() const noexcept -> const geometric_shape&
+   {
+      return _line_cylinder;
+   }
+
+   auto line_sphere() const noexcept -> const geometric_shape&
+   {
+      return _line_sphere;
+   }
+
+   auto line_box() const noexcept -> const geometric_shape&
+   {
+      return _line_box;
+   }
+
+   auto line_arrow() const noexcept -> const geometric_shape&
+   {
+      return _line_arrow;
+   }
+
 private:
    void init_gpu_buffer(gpu::device& device,
                         copy_command_list_pool& copy_command_list_pool);
@@ -87,6 +117,12 @@ private:
    geometric_shape _hemisphere;
    geometric_shape _pyramid;
    geometric_shape _light_icon;
+   geometric_shape _line_circle_32;
+   geometric_shape _line_cone;
+   geometric_shape _line_cylinder;
+   geometric_shape _line_sphere;
+   geometric_shape _line_box;
+   geometric_shape _line_arrow;
 };
 
 }

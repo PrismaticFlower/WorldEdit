@@ -333,6 +333,7 @@
     <ClCompile Include="src\graphics\shaders\meta_draw_icon_edgePS.cpp" />
     <ClCompile Include="src\graphics\shaders\meta_draw_linePS.cpp" />
     <ClCompile Include="src\graphics\shaders\meta_draw_lineVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_line_shapeVS.cpp" />
     <ClCompile Include="src\graphics\shaders\meta_draw_outlinedPS.cpp" />
     <ClCompile Include="src\graphics\shaders\meta_draw_outlined_GS_fallbackGS.cpp" />
     <ClCompile Include="src\graphics\shaders\meta_draw_outlined_GS_fallbackPS.cpp" />

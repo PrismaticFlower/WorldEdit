@@ -9,131 +9,6 @@ namespace we::graphics {
 
 namespace {
 
-constexpr std::array<std::array<float3, 2>, 18> arrow_outline = [] {
-   constexpr std::array<std::array<uint16, 2>, 18> arrow_indices{{{2, 1},
-                                                                  {4, 3},
-                                                                  {4, 5},
-                                                                  {3, 5},
-                                                                  {1, 5},
-                                                                  {2, 5},
-                                                                  {8, 6},
-                                                                  {6, 7},
-                                                                  {7, 9},
-                                                                  {10, 12},
-                                                                  {13, 11},
-                                                                  {11, 10},
-                                                                  {6, 10},
-                                                                  {11, 7},
-                                                                  {2, 9},
-                                                                  {1, 8},
-                                                                  {4, 13},
-                                                                  {3, 12}}};
-
-   constexpr std::array<float3, 15> arrow_vertices{
-      {{0.0f, 0.0f, 0.0f},
-       {0.611469f, -0.366881f, 0.085396f},
-       {0.611469f, 0.366881f, 0.085396f},
-       {-0.611469f, -0.366881f, 0.085396f},
-       {-0.611469f, 0.366881f, 0.085396f},
-       {0.000000f, 0.000000f, 1.002599f},
-       {0.305735f, -0.366881f, -0.984675f},
-       {0.305735f, 0.366881f, -0.984675f},
-       {0.305735f, -0.366881f, 0.085396f},
-       {0.305735f, 0.366881f, 0.085396f},
-       {-0.305735f, -0.366881f, -0.984675f},
-       {-0.305735f, 0.366881f, -0.984675f},
-       {-0.305735f, -0.366881f, 0.085396f},
-       {-0.305735f, 0.366881f, 0.085396f},
-       {-0.305735f, 0.366881f, 0.085396f}}};
-
-   std::array<std::array<float3, 2>, 18> arrow;
-
-   for (std::size_t i = 0; i < arrow.size(); ++i) {
-      arrow[i] = {arrow_vertices[arrow_indices[i][0]],
-                  arrow_vertices[arrow_indices[i][1]]};
-   }
-
-   return arrow;
-}();
-
-constexpr std::array<float2, 8> circle_outline_8 = {{
-   {1.0f, 0.0f},
-   {0.70710677f, 0.70710677f},
-   {0.0f, 1.0f},
-   {-0.70710677f, 0.70710677f},
-   {-1.0f, 0.0f},
-   {-0.70710665f, -0.7071069f},
-   {0.0f, -1.0f},
-   {0.707107f, -0.70710653f},
-}};
-
-constexpr std::array<float2, 64> circle_outline_64 = {{
-   {1.0f, 0.0f},
-   {0.9951847f, 0.09801714f},
-   {0.98078525f, 0.19509032f},
-   {0.95694035f, 0.29028466f},
-   {0.9238795f, 0.38268346f},
-   {0.88192123f, 0.47139674f},
-   {0.8314696f, 0.55557024f},
-   {0.77301043f, 0.63439333f},
-   {0.70710677f, 0.70710677f},
-   {0.6343933f, 0.77301043f},
-   {0.5555702f, 0.83146966f},
-   {0.47139665f, 0.8819213f},
-   {0.38268343f, 0.9238795f},
-   {0.29028463f, 0.95694035f},
-   {0.19509023f, 0.9807853f},
-   {0.098017134f, 0.9951847f},
-   {0.0f, 1.0f},
-   {-0.09801722f, 0.9951847f},
-   {-0.19509032f, 0.98078525f},
-   {-0.29028472f, 0.9569403f},
-   {-0.38268352f, 0.9238795f},
-   {-0.47139683f, 0.88192123f},
-   {-0.55557036f, 0.83146954f},
-   {-0.6343933f, 0.7730105f},
-   {-0.70710677f, 0.70710677f},
-   {-0.7730105f, 0.6343933f},
-   {-0.83146966f, 0.5555702f},
-   {-0.88192135f, 0.47139663f},
-   {-0.9238796f, 0.38268328f},
-   {-0.95694035f, 0.29028472f},
-   {-0.9807853f, 0.19509031f},
-   {-0.9951847f, 0.0980171f},
-   {-1.0f, 0.0f},
-   {-0.9951847f, -0.09801727f},
-   {-0.98078525f, -0.19509049f},
-   {-0.9569403f, -0.29028487f},
-   {-0.9238795f, -0.38268343f},
-   {-0.88192123f, -0.47139677f},
-   {-0.83146954f, -0.5555703f},
-   {-0.7730104f, -0.6343934f},
-   {-0.70710665f, -0.7071069f},
-   {-0.63439333f, -0.77301043f},
-   {-0.55557f, -0.8314698f},
-   {-0.47139668f, -0.8819213f},
-   {-0.38268313f, -0.9238797f},
-   {-0.29028454f, -0.95694035f},
-   {-0.19509038f, -0.98078525f},
-   {-0.09801693f, -0.9951847f},
-   {0.0f, -1.0f},
-   {0.09801743f, -0.9951847f},
-   {0.19509041f, -0.98078525f},
-   {0.29028502f, -0.95694023f},
-   {0.3826836f, -0.92387944f},
-   {0.4713967f, -0.8819213f},
-   {0.5555704f, -0.8314695f},
-   {0.63439333f, -0.77301043f},
-   {0.707107f, -0.70710653f},
-   {0.77301055f, -0.63439316f},
-   {0.8314696f, -0.5555703f},
-   {0.88192135f, -0.47139654f},
-   {0.92387956f, -0.38268343f},
-   {0.9569404f, -0.2902844f},
-   {0.9807853f, -0.19509023f},
-   {0.9951848f, -0.09801677f},
-}};
-
 constexpr std::size_t quad_max_batch_size = 16384;
 
 }
@@ -152,6 +27,13 @@ meta_draw_batcher::meta_draw_batcher()
    _pyramids.reserve(8);
    _triangles.reserve(2048);
    _lines_solid.reserve(2048);
+
+   _circle_outlines.reserve(64);
+   _cone_outlines.reserve(64);
+   _cylinder_outlines.reserve(64);
+   _sphere_outlines.reserve(64);
+   _box_outlines.reserve(64);
+   _arrow_outlines.reserve(64);
 
    _octahedrons_wireframe.reserve(32);
    _boxes_wireframe.reserve(16);
@@ -184,6 +66,13 @@ void meta_draw_batcher::clear()
    _pyramids.clear();
    _triangles.clear();
    _lines_solid.clear();
+
+   _circle_outlines.clear();
+   _cone_outlines.clear();
+   _cylinder_outlines.clear();
+   _sphere_outlines.clear();
+   _box_outlines.clear();
+   _arrow_outlines.clear();
 
    _octahedrons_wireframe.clear();
    _hint_hexahedrons_wireframe.clear();
@@ -276,130 +165,90 @@ void meta_draw_batcher::add_line_solid(const float3& a, const uint32 color_a,
 
 void meta_draw_batcher::add_arrow_outline_solid(const float4x4& transform,
                                                 const float arrow_offset,
-                                                const uint32 color)
+                                                const float4& color)
 {
-   for (const auto& line : arrow_outline) {
-      add_line_solid(transform * (line[0] + float3{0.0f, 0.0f, arrow_offset}),
-                     transform * (line[1] + float3{0.0f, 0.0f, arrow_offset}), color);
-   }
+   add_arrow_outline_solid(transform *
+                              float4x4{
+                                 {1.0f, 0.0f, 0.0f, 0.0f},
+                                 {0.0f, 1.0f, 0.0f, 0.0f},
+                                 {0.0f, 0.0f, 1.0f, 0.0f},
+                                 {0.0f, 0.0f, arrow_offset, 1.0f},
+                              },
+                           color);
 }
 
-void meta_draw_batcher::add_box_outline_solid(const float4x4& transform, const uint32 color)
+void meta_draw_batcher::add_arrow_outline_solid(const float4x4& transform,
+                                                const float4& color)
 {
-   std::array<float3, 8> verticesRS = {{
-      {-1.0f, 1.0f, -1.0f},
-      {1.0f, 1.0f, -1.0f},
-      {1.0f, 1.0f, 1.0f},
-      {-1.0f, 1.0f, 1.0f},
+   _arrow_outlines.emplace_back(std::array<float3, 4>{{
+                                   {transform[0].x, transform[0].y, transform[0].z},
+                                   {transform[1].x, transform[1].y, transform[1].z},
+                                   {transform[2].x, transform[2].y, transform[2].z},
+                                   {transform[3].x, transform[3].y, transform[3].z},
+                                }},
+                                color);
+}
 
-      {-1.0f, -1.0f, -1.0f},
-      {1.0f, -1.0f, -1.0f},
-      {1.0f, -1.0f, 1.0f},
-      {-1.0f, -1.0f, 1.0f},
-   }};
-
-   std::array<float3, 8> verticesWS = {
-      transform * verticesRS[0], transform * verticesRS[1],
-      transform * verticesRS[2], transform * verticesRS[3],
-      transform * verticesRS[4], transform * verticesRS[5],
-      transform * verticesRS[6], transform * verticesRS[7],
-   };
-
-   add_line_solid(verticesWS[0], verticesWS[1], color);
-   add_line_solid(verticesWS[1], verticesWS[2], color);
-   add_line_solid(verticesWS[2], verticesWS[3], color);
-   add_line_solid(verticesWS[3], verticesWS[0], color);
-
-   add_line_solid(verticesWS[4], verticesWS[5], color);
-   add_line_solid(verticesWS[5], verticesWS[6], color);
-   add_line_solid(verticesWS[6], verticesWS[7], color);
-   add_line_solid(verticesWS[7], verticesWS[4], color);
-
-   add_line_solid(verticesWS[0], verticesWS[4], color);
-   add_line_solid(verticesWS[1], verticesWS[5], color);
-   add_line_solid(verticesWS[2], verticesWS[6], color);
-   add_line_solid(verticesWS[3], verticesWS[7], color);
+void meta_draw_batcher::add_box_outline_solid(const float4x4& transform,
+                                              const float4& color)
+{
+   _box_outlines.emplace_back(std::array<float3, 4>{{
+                                 {transform[0].x, transform[0].y, transform[0].z},
+                                 {transform[1].x, transform[1].y, transform[1].z},
+                                 {transform[2].x, transform[2].y, transform[2].z},
+                                 {transform[3].x, transform[3].y, transform[3].z},
+                              }},
+                              color);
 }
 
 void meta_draw_batcher::add_sphere_outline_solid(const float3& position,
-                                                 const float radius, const uint32 color)
+                                                 const float radius, const float4& color)
 {
-   for (int j = 0; j < 4; ++j) {
-      const quaternion rot = make_quat_from_euler({
-         0.0f,
-         j / 4.0f * 3.1415927f,
-         0.0f,
-      });
-
-      float last_y = circle_outline_64[0].x * radius;
-      float last_z = circle_outline_64[0].y * radius;
-
-      for (std::size_t i = 1; i <= 64; ++i) {
-         const float y = circle_outline_64[i % circle_outline_64.size()].x * radius;
-         const float z = circle_outline_64[i % circle_outline_64.size()].y * radius;
-
-         add_line_solid(rot * float3{0.0f, y, z} + position,
-                        rot * float3{0.0f, last_y, last_z} + position, color);
-
-         last_y = y;
-         last_z = z;
-      }
-   }
+   _sphere_outlines.emplace_back(std::array<float3, 4>{{
+                                    {radius, 0.0f, 0.0f},
+                                    {0.0f, radius, 0.0f},
+                                    {0.0f, 0.0f, radius},
+                                    {position.x, position.y, position.z},
+                                 }},
+                                 color);
 }
 
 void meta_draw_batcher::add_cylinder_outline_solid(const float4x4& transform,
-                                                   const uint32 color)
+                                                   const float4& color)
 {
-   float last_x = circle_outline_64[0].x;
-   float last_z = circle_outline_64[0].y;
-
-   for (int i = 1; i <= 64; ++i) {
-      const float x = circle_outline_64[i % circle_outline_64.size()].x;
-      const float z = circle_outline_64[i % circle_outline_64.size()].y;
-
-      add_line_solid(transform * float3{x, -1.0f, z},
-                     transform * float3{last_x, -1.0f, last_z}, color);
-      add_line_solid(transform * float3{x, 1.0f, z},
-                     transform * float3{last_x, 1.0f, last_z}, color);
-
-      last_x = x;
-      last_z = z;
-   }
-
-   for (const float2& point : circle_outline_8) {
-      const float x = point.x;
-      const float z = point.y;
-
-      add_line_solid(transform * float3{x, -1.0f, z},
-                     transform * float3{x, 1.0f, z}, color);
-   }
+   _cylinder_outlines
+      .emplace_back(std::array<float3, 4>{{
+                       {transform[0].x, transform[0].y, transform[0].z},
+                       {transform[1].x, transform[1].y, transform[1].z},
+                       {transform[2].x, transform[2].y, transform[2].z},
+                       {transform[3].x, transform[3].y, transform[3].z},
+                    }},
+                    color);
 }
 
 void meta_draw_batcher::add_cone_outline_solid(const float4x4& transform,
-                                               const uint32 color)
+                                               const float4& color)
 {
-   float last_x = circle_outline_64[0].x;
-   float last_z = circle_outline_64[0].y;
+   _cone_outlines.emplace_back(std::array<float3, 4>{{
+                                  {transform[0].x, transform[0].y, transform[0].z},
+                                  {transform[1].x, transform[1].y, transform[1].z},
+                                  {transform[2].x, transform[2].y, transform[2].z},
+                                  {transform[3].x, transform[3].y, transform[3].z},
+                               }},
+                               color);
+}
 
-   for (int i = 1; i <= 64; ++i) {
-      const float x = circle_outline_64[i % circle_outline_64.size()].x;
-      const float z = circle_outline_64[i % circle_outline_64.size()].y;
-
-      add_line_solid(transform * float3{x, -1.0f, z},
-                     transform * float3{last_x, -1.0f, last_z}, color);
-
-      last_x = x;
-      last_z = z;
-   }
-
-   const float3 top = transform * float3{0.0f, 1.0f, 0.0f};
-
-   for (const float2& point : circle_outline_8) {
-      const float x = point.x;
-      const float z = point.y;
-
-      add_line_solid(transform * float3{x, -1.0f, z}, top, color);
-   }
+void meta_draw_batcher::add_circle_outline_solid(const float4x4& transform,
+                                                 const float4& color)
+{
+   _circle_outlines
+      .emplace_back(std::array<float3, 4>{{
+                       {transform[0].x, transform[0].y, transform[0].z},
+                       {transform[1].x, transform[1].y, transform[1].z},
+                       {transform[2].x, transform[2].y, transform[2].z},
+                       {transform[3].x, transform[3].y, transform[3].z},
+                    }},
+                    color);
 }
 
 void meta_draw_batcher::add_octahedron_wireframe(const float4x4& transform,
@@ -523,6 +372,29 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
                                           0, 0, 0);
    };
 
+   const auto draw_line_shapes = [&]<typename T>(const std::vector<T>& instances,
+                                                 gpu::pipeline_handle pipeline,
+                                                 const geometric_shape& shape) {
+      auto instances_allocation =
+         dynamic_buffer_allocator.allocate(sizeof(T) * instances.size());
+
+      std::memcpy(instances_allocation.cpu_address, instances.data(),
+                  sizeof(T) * instances.size());
+
+      command_list.set_graphics_srv(rs::meta_draw::instance_data_srv,
+                                    instances_allocation.gpu_address);
+      command_list.set_graphics_srv(rs::meta_draw::line_shape_data_srv,
+                                    shape.position_vertex_buffer_view.buffer_location);
+
+      command_list.set_pipeline_state(pipeline);
+
+      command_list.ia_set_index_buffer(shape.index_buffer_view);
+
+      command_list.draw_indexed_instanced(shape.index_count,
+                                          static_cast<uint32>(instances.size()),
+                                          0, 0, 0);
+   };
+
    const auto draw_quads = [&]<typename T>(const std::vector<T>& quads,
                                            gpu::pipeline_handle pipeline) {
       static_assert(std::is_trivially_copyable_v<T>);
@@ -592,6 +464,37 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
 
    if (not _lines_solid.empty()) {
       draw_quads(_lines_solid, pipeline_library.meta_draw_line_solid.get());
+   }
+
+   if (not _circle_outlines.empty()) {
+      draw_line_shapes(_circle_outlines, pipeline_library.meta_draw_line_shape.get(),
+                       shapes.line_circle_32());
+   }
+
+   if (not _cone_outlines.empty()) {
+      draw_line_shapes(_cone_outlines, pipeline_library.meta_draw_line_shape.get(),
+                       shapes.line_cone());
+   }
+
+   if (not _cylinder_outlines.empty()) {
+      draw_line_shapes(_cylinder_outlines,
+                       pipeline_library.meta_draw_line_shape.get(),
+                       shapes.line_cylinder());
+   }
+
+   if (not _sphere_outlines.empty()) {
+      draw_line_shapes(_sphere_outlines, pipeline_library.meta_draw_line_shape.get(),
+                       shapes.line_sphere());
+   }
+
+   if (not _box_outlines.empty()) {
+      draw_line_shapes(_box_outlines, pipeline_library.meta_draw_line_shape.get(),
+                       shapes.line_box());
+   }
+
+   if (not _arrow_outlines.empty()) {
+      draw_line_shapes(_arrow_outlines, pipeline_library.meta_draw_line_shape.get(),
+                       shapes.line_arrow());
    }
 
    if (not _light_icons.empty()) {
@@ -710,18 +613,26 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
 
 bool meta_draw_batcher::all_empty() const noexcept
 {
-   return _octahedrons_outlined.empty() and       //
-          _octahedrons.empty() and                //
-          _hint_hexahedrons.empty() and           //
-          _boxes.empty() and                      //
-          _spheres.empty() and                    //
-          _cylinders.empty() and                  //
-          _cones.empty() and                      //
-          _hemispheres.empty() and                //
-          _pyramids.empty() and                   //
-          _ramps.empty() and                      //
-          _triangles.empty() and                  //
-          _lines_solid.empty() and                //
+   return _octahedrons_outlined.empty() and //
+          _octahedrons.empty() and          //
+          _hint_hexahedrons.empty() and     //
+          _boxes.empty() and                //
+          _spheres.empty() and              //
+          _cylinders.empty() and            //
+          _cones.empty() and                //
+          _hemispheres.empty() and          //
+          _pyramids.empty() and             //
+          _ramps.empty() and                //
+          _triangles.empty() and            //
+          _lines_solid.empty() and          //
+
+          _circle_outlines.empty() and   //
+          _cone_outlines.empty() and     //
+          _cylinder_outlines.empty() and //
+          _sphere_outlines.empty() and   //
+          _box_outlines.empty() and      //
+          _arrow_outlines.empty() and    //
+
           _octahedrons_wireframe.empty() and      //
           _hint_hexahedrons_wireframe.empty() and //
           _boxes_wireframe.empty() and            //
@@ -732,8 +643,9 @@ bool meta_draw_batcher::all_empty() const noexcept
           _hemispheres_wireframe.empty() and      //
           _pyramids_wireframe.empty() and         //
           _triangles_wireframe.empty() and        //
-          _lines_overlay.empty() and              //
-          _circle_icons.empty() and               //
+
+          _lines_overlay.empty() and //
+          _circle_icons.empty() and  //
           _light_icons.empty();
 }
 

@@ -136,7 +136,8 @@ constexpr uint32 env_map = 0;
 
 namespace meta_draw {
 constexpr uint32 instance_data_srv = 0;
-constexpr uint32 frame_cbv = 1;
+constexpr uint32 line_shape_data_srv = 1;
+constexpr uint32 frame_cbv = 2;
 }
 
 namespace ai_overlay_shape {

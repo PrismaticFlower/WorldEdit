@@ -292,6 +292,7 @@
     <ClCompile Include="src\graphics\shaders\meta_draw_icon_edgePS.cpp" />
     <ClCompile Include="src\graphics\shaders\meta_draw_icon_circlePS.cpp" />
     <ClCompile Include="src\graphics\shaders\meta_draw_icon_circleVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_line_shapeVS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />

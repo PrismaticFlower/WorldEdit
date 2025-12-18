@@ -939,6 +939,2506 @@ struct geometric_shapes_buffer {
          {18, 30, 19},
          {21, 31, 22},
       }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment)
+      std::array<std::array<float3, 2>, 32> line_circle_32_vertices = {{
+         {
+            float3{0x1p+0f, 0x0p-1022f, 0x0p-1022f},
+            float3{0x1.f6297cp-1f, 0x0p-1022f, 0x1.8f8b84p-3f},
+         },
+         {
+            float3{0x1.f6297cp-1f, 0x0p-1022f, 0x1.8f8b84p-3f},
+            float3{0x1.d906bcp-1f, 0x0p-1022f, 0x1.87de2cp-2f},
+         },
+         {
+            float3{0x1.d906bcp-1f, 0x0p-1022f, 0x1.87de2cp-2f},
+            float3{0x1.a9b662p-1f, 0x0p-1022f, 0x1.1c73b4p-1f},
+         },
+         {
+            float3{0x1.a9b662p-1f, 0x0p-1022f, 0x1.1c73b4p-1f},
+            float3{0x1.6a09e6p-1f, 0x0p-1022f, 0x1.6a09e6p-1f},
+         },
+         {
+            float3{0x1.6a09e6p-1f, 0x0p-1022f, 0x1.6a09e6p-1f},
+            float3{0x1.1c73b2p-1f, 0x0p-1022f, 0x1.a9b664p-1f},
+         },
+         {
+            float3{0x1.1c73b2p-1f, 0x0p-1022f, 0x1.a9b664p-1f},
+            float3{0x1.87de2ap-2f, 0x0p-1022f, 0x1.d906bcp-1f},
+         },
+         {
+            float3{0x1.87de2ap-2f, 0x0p-1022f, 0x1.d906bcp-1f},
+            float3{0x1.8f8b78p-3f, 0x0p-1022f, 0x1.f6297ep-1f},
+         },
+         {
+            float3{0x1.8f8b78p-3f, 0x0p-1022f, 0x1.f6297ep-1f},
+            float3{-0x1.777a5cp-25f, 0x0p-1022f, 0x1p+0f},
+         },
+         {
+            float3{-0x1.777a5cp-25f, 0x0p-1022f, 0x1p+0f},
+            float3{-0x1.8f8b84p-3f, 0x0p-1022f, 0x1.f6297cp-1f},
+         },
+         {
+            float3{-0x1.8f8b84p-3f, 0x0p-1022f, 0x1.f6297cp-1f},
+            float3{-0x1.87de3p-2f, 0x0p-1022f, 0x1.d906bcp-1f},
+         },
+         {
+            float3{-0x1.87de3p-2f, 0x0p-1022f, 0x1.d906bcp-1f},
+            float3{-0x1.1c73b8p-1f, 0x0p-1022f, 0x1.a9b66p-1f},
+         },
+         {
+            float3{-0x1.1c73b8p-1f, 0x0p-1022f, 0x1.a9b66p-1f},
+            float3{-0x1.6a09e6p-1f, 0x0p-1022f, 0x1.6a09e6p-1f},
+         },
+         {
+            float3{-0x1.6a09e6p-1f, 0x0p-1022f, 0x1.6a09e6p-1f},
+            float3{-0x1.a9b664p-1f, 0x0p-1022f, 0x1.1c73b2p-1f},
+         },
+         {
+            float3{-0x1.a9b664p-1f, 0x0p-1022f, 0x1.1c73b2p-1f},
+            float3{-0x1.d906cp-1f, 0x0p-1022f, 0x1.87de2p-2f},
+         },
+         {
+            float3{-0x1.d906cp-1f, 0x0p-1022f, 0x1.87de2p-2f},
+            float3{-0x1.f6297ep-1f, 0x0p-1022f, 0x1.8f8b82p-3f},
+         },
+         {
+            float3{-0x1.f6297ep-1f, 0x0p-1022f, 0x1.8f8b82p-3f},
+            float3{-0x1p+0f, 0x0p-1022f, -0x1.777a5cp-24f},
+         },
+         {
+            float3{-0x1p+0f, 0x0p-1022f, -0x1.777a5cp-24f},
+            float3{-0x1.f6297cp-1f, 0x0p-1022f, -0x1.8f8b9ap-3f},
+         },
+         {
+            float3{-0x1.f6297cp-1f, 0x0p-1022f, -0x1.8f8b9ap-3f},
+            float3{-0x1.d906bcp-1f, 0x0p-1022f, -0x1.87de2ap-2f},
+         },
+         {
+            float3{-0x1.d906bcp-1f, 0x0p-1022f, -0x1.87de2ap-2f},
+            float3{-0x1.a9b66p-1f, 0x0p-1022f, -0x1.1c73b6p-1f},
+         },
+         {
+            float3{-0x1.a9b66p-1f, 0x0p-1022f, -0x1.1c73b6p-1f},
+            float3{-0x1.6a09e2p-1f, 0x0p-1022f, -0x1.6a09eap-1f},
+         },
+         {
+            float3{-0x1.6a09e2p-1f, 0x0p-1022f, -0x1.6a09eap-1f},
+            float3{-0x1.1c73acp-1f, 0x0p-1022f, -0x1.a9b668p-1f},
+         },
+         {
+            float3{-0x1.1c73acp-1f, 0x0p-1022f, -0x1.a9b668p-1f},
+            float3{-0x1.87de16p-2f, 0x0p-1022f, -0x1.d906c2p-1f},
+         },
+         {
+            float3{-0x1.87de16p-2f, 0x0p-1022f, -0x1.d906c2p-1f},
+            float3{-0x1.8f8b8cp-3f, 0x0p-1022f, -0x1.f6297cp-1f},
+         },
+         {
+            float3{-0x1.8f8b8cp-3f, 0x0p-1022f, -0x1.f6297cp-1f},
+            float3{0x1.99bc5cp-27f, 0x0p-1022f, -0x1p+0f},
+         },
+         {
+            float3{0x1.99bc5cp-27f, 0x0p-1022f, -0x1p+0f},
+            float3{0x1.8f8b9p-3f, 0x0p-1022f, -0x1.f6297cp-1f},
+         },
+         {
+            float3{0x1.8f8b9p-3f, 0x0p-1022f, -0x1.f6297cp-1f},
+            float3{0x1.87de36p-2f, 0x0p-1022f, -0x1.d906bap-1f},
+         },
+         {
+            float3{0x1.87de36p-2f, 0x0p-1022f, -0x1.d906bap-1f},
+            float3{0x1.1c73bap-1f, 0x0p-1022f, -0x1.a9b65ep-1f},
+         },
+         {
+            float3{0x1.1c73bap-1f, 0x0p-1022f, -0x1.a9b65ep-1f},
+            float3{0x1.6a09eep-1f, 0x0p-1022f, -0x1.6a09dep-1f},
+         },
+         {
+            float3{0x1.6a09eep-1f, 0x0p-1022f, -0x1.6a09dep-1f},
+            float3{0x1.a9b662p-1f, 0x0p-1022f, -0x1.1c73b6p-1f},
+         },
+         {
+            float3{0x1.a9b662p-1f, 0x0p-1022f, -0x1.1c73b6p-1f},
+            float3{0x1.d906bep-1f, 0x0p-1022f, -0x1.87de2ap-2f},
+         },
+         {
+            float3{0x1.d906bep-1f, 0x0p-1022f, -0x1.87de2ap-2f},
+            float3{0x1.f6297ep-1f, 0x0p-1022f, -0x1.8f8b78p-3f},
+         },
+         {
+            float3{0x1.f6297ep-1f, 0x0p-1022f, -0x1.8f8b78p-3f},
+            float3{0x1p+0f, 0x0p-1022f, 0x1.777a5cp-23f},
+         },
+      }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment)
+      std::array<std::array<uint16, 3>, 64> line_circle_32_indices = {{
+         {0, 16384, 32768},  {0, 32768, 49152},  {1, 16385, 32769},
+         {1, 32769, 49153},  {2, 16386, 32770},  {2, 32770, 49154},
+         {3, 16387, 32771},  {3, 32771, 49155},  {4, 16388, 32772},
+         {4, 32772, 49156},  {5, 16389, 32773},  {5, 32773, 49157},
+         {6, 16390, 32774},  {6, 32774, 49158},  {7, 16391, 32775},
+         {7, 32775, 49159},  {8, 16392, 32776},  {8, 32776, 49160},
+         {9, 16393, 32777},  {9, 32777, 49161},  {10, 16394, 32778},
+         {10, 32778, 49162}, {11, 16395, 32779}, {11, 32779, 49163},
+         {12, 16396, 32780}, {12, 32780, 49164}, {13, 16397, 32781},
+         {13, 32781, 49165}, {14, 16398, 32782}, {14, 32782, 49166},
+         {15, 16399, 32783}, {15, 32783, 49167}, {16, 16400, 32784},
+         {16, 32784, 49168}, {17, 16401, 32785}, {17, 32785, 49169},
+         {18, 16402, 32786}, {18, 32786, 49170}, {19, 16403, 32787},
+         {19, 32787, 49171}, {20, 16404, 32788}, {20, 32788, 49172},
+         {21, 16405, 32789}, {21, 32789, 49173}, {22, 16406, 32790},
+         {22, 32790, 49174}, {23, 16407, 32791}, {23, 32791, 49175},
+         {24, 16408, 32792}, {24, 32792, 49176}, {25, 16409, 32793},
+         {25, 32793, 49177}, {26, 16410, 32794}, {26, 32794, 49178},
+         {27, 16411, 32795}, {27, 32795, 49179}, {28, 16412, 32796},
+         {28, 32796, 49180}, {29, 16413, 32797}, {29, 32797, 49181},
+         {30, 16414, 32798}, {30, 32798, 49182}, {31, 16415, 32799},
+         {31, 32799, 49183},
+      }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment) std::array<std::array<float3, 2>, 72> line_cone_vertices = {{
+      {
+         float3{0x1p+0f, -0x1p+0f, 0x0p-1022f},
+         float3{0x1.fd88dap-1f, -0x1p+0f, 0x1.917a6cp-4f},
+      },
+      {
+         float3{0x1.fd88dap-1f, -0x1p+0f, 0x1.917a6cp-4f},
+         float3{0x1.f6297cp-1f, -0x1p+0f, 0x1.8f8b84p-3f},
+      },
+      {
+         float3{0x1.f6297cp-1f, -0x1p+0f, 0x1.8f8b84p-3f},
+         float3{0x1.e9f416p-1f, -0x1p+0f, 0x1.294062p-2f},
+      },
+      {
+         float3{0x1.e9f416p-1f, -0x1p+0f, 0x1.294062p-2f},
+         float3{0x1.d906bcp-1f, -0x1p+0f, 0x1.87de2cp-2f},
+      },
+      {
+         float3{0x1.d906bcp-1f, -0x1p+0f, 0x1.87de2cp-2f},
+         float3{0x1.c38b2ep-1f, -0x1p+0f, 0x1.e2b5d4p-2f},
+      },
+      {
+         float3{0x1.c38b2ep-1f, -0x1p+0f, 0x1.e2b5d4p-2f},
+         float3{0x1.a9b662p-1f, -0x1p+0f, 0x1.1c73b4p-1f},
+      },
+      {
+         float3{0x1.a9b662p-1f, -0x1p+0f, 0x1.1c73b4p-1f},
+         float3{0x1.8bc806p-1f, -0x1p+0f, 0x1.44cf34p-1f},
+      },
+      {
+         float3{0x1.8bc806p-1f, -0x1p+0f, 0x1.44cf34p-1f},
+         float3{0x1.6a09e6p-1f, -0x1p+0f, 0x1.6a09e6p-1f},
+      },
+      {
+         float3{0x1.6a09e6p-1f, -0x1p+0f, 0x1.6a09e6p-1f},
+         float3{0x1.44cf32p-1f, -0x1p+0f, 0x1.8bc806p-1f},
+      },
+      {
+         float3{0x1.44cf32p-1f, -0x1p+0f, 0x1.8bc806p-1f},
+         float3{0x1.1c73b2p-1f, -0x1p+0f, 0x1.a9b664p-1f},
+      },
+      {
+         float3{0x1.1c73b2p-1f, -0x1p+0f, 0x1.a9b664p-1f},
+         float3{0x1.e2b5cep-2f, -0x1p+0f, 0x1.c38b3p-1f},
+      },
+      {
+         float3{0x1.e2b5cep-2f, -0x1p+0f, 0x1.c38b3p-1f},
+         float3{0x1.87de2ap-2f, -0x1p+0f, 0x1.d906bcp-1f},
+      },
+      {
+         float3{0x1.87de2ap-2f, -0x1p+0f, 0x1.d906bcp-1f},
+         float3{0x1.29406p-2f, -0x1p+0f, 0x1.e9f416p-1f},
+      },
+      {
+         float3{0x1.29406p-2f, -0x1p+0f, 0x1.e9f416p-1f},
+         float3{0x1.8f8b78p-3f, -0x1p+0f, 0x1.f6297ep-1f},
+      },
+      {
+         float3{0x1.8f8b78p-3f, -0x1p+0f, 0x1.f6297ep-1f},
+         float3{0x1.917a6ap-4f, -0x1p+0f, 0x1.fd88dap-1f},
+      },
+      {
+         float3{0x1.917a6ap-4f, -0x1p+0f, 0x1.fd88dap-1f},
+         float3{-0x1.777a5cp-25f, -0x1p+0f, 0x1p+0f},
+      },
+      {
+         float3{-0x1.777a5cp-25f, -0x1p+0f, 0x1p+0f},
+         float3{-0x1.917a82p-4f, -0x1p+0f, 0x1.fd88dap-1f},
+      },
+      {
+         float3{-0x1.917a82p-4f, -0x1p+0f, 0x1.fd88dap-1f},
+         float3{-0x1.8f8b84p-3f, -0x1p+0f, 0x1.f6297cp-1f},
+      },
+      {
+         float3{-0x1.8f8b84p-3f, -0x1p+0f, 0x1.f6297cp-1f},
+         float3{-0x1.294066p-2f, -0x1p+0f, 0x1.e9f414p-1f},
+      },
+      {
+         float3{-0x1.294066p-2f, -0x1p+0f, 0x1.e9f414p-1f},
+         float3{-0x1.87de3p-2f, -0x1p+0f, 0x1.d906bcp-1f},
+      },
+      {
+         float3{-0x1.87de3p-2f, -0x1p+0f, 0x1.d906bcp-1f},
+         float3{-0x1.e2b5dap-2f, -0x1p+0f, 0x1.c38b2ep-1f},
+      },
+      {
+         float3{-0x1.e2b5dap-2f, -0x1p+0f, 0x1.c38b2ep-1f},
+         float3{-0x1.1c73b8p-1f, -0x1p+0f, 0x1.a9b66p-1f},
+      },
+      {
+         float3{-0x1.1c73b8p-1f, -0x1p+0f, 0x1.a9b66p-1f},
+         float3{-0x1.44cf32p-1f, -0x1p+0f, 0x1.8bc808p-1f},
+      },
+      {
+         float3{-0x1.44cf32p-1f, -0x1p+0f, 0x1.8bc808p-1f},
+         float3{-0x1.6a09e6p-1f, -0x1p+0f, 0x1.6a09e6p-1f},
+      },
+      {
+         float3{-0x1.6a09e6p-1f, -0x1p+0f, 0x1.6a09e6p-1f},
+         float3{-0x1.8bc808p-1f, -0x1p+0f, 0x1.44cf32p-1f},
+      },
+      {
+         float3{-0x1.8bc808p-1f, -0x1p+0f, 0x1.44cf32p-1f},
+         float3{-0x1.a9b664p-1f, -0x1p+0f, 0x1.1c73b2p-1f},
+      },
+      {
+         float3{-0x1.a9b664p-1f, -0x1p+0f, 0x1.1c73b2p-1f},
+         float3{-0x1.c38b32p-1f, -0x1p+0f, 0x1.e2b5ccp-2f},
+      },
+      {
+         float3{-0x1.c38b32p-1f, -0x1p+0f, 0x1.e2b5ccp-2f},
+         float3{-0x1.d906cp-1f, -0x1p+0f, 0x1.87de2p-2f},
+      },
+      {
+         float3{-0x1.d906cp-1f, -0x1p+0f, 0x1.87de2p-2f},
+         float3{-0x1.e9f416p-1f, -0x1p+0f, 0x1.294066p-2f},
+      },
+      {
+         float3{-0x1.e9f416p-1f, -0x1p+0f, 0x1.294066p-2f},
+         float3{-0x1.f6297ep-1f, -0x1p+0f, 0x1.8f8b82p-3f},
+      },
+      {
+         float3{-0x1.f6297ep-1f, -0x1p+0f, 0x1.8f8b82p-3f},
+         float3{-0x1.fd88dap-1f, -0x1p+0f, 0x1.917a6p-4f},
+      },
+      {
+         float3{-0x1.fd88dap-1f, -0x1p+0f, 0x1.917a6p-4f},
+         float3{-0x1p+0f, -0x1p+0f, -0x1.777a5cp-24f},
+      },
+      {
+         float3{-0x1p+0f, -0x1p+0f, -0x1.777a5cp-24f},
+         float3{-0x1.fd88dap-1f, -0x1p+0f, -0x1.917a8ep-4f},
+      },
+      {
+         float3{-0x1.fd88dap-1f, -0x1p+0f, -0x1.917a8ep-4f},
+         float3{-0x1.f6297cp-1f, -0x1p+0f, -0x1.8f8b9ap-3f},
+      },
+      {
+         float3{-0x1.f6297cp-1f, -0x1p+0f, -0x1.8f8b9ap-3f},
+         float3{-0x1.e9f414p-1f, -0x1p+0f, -0x1.29407p-2f},
+      },
+      {
+         float3{-0x1.e9f414p-1f, -0x1p+0f, -0x1.29407p-2f},
+         float3{-0x1.d906bcp-1f, -0x1p+0f, -0x1.87de2ap-2f},
+      },
+      {
+         float3{-0x1.d906bcp-1f, -0x1p+0f, -0x1.87de2ap-2f},
+         float3{-0x1.c38b2ep-1f, -0x1p+0f, -0x1.e2b5d6p-2f},
+      },
+      {
+         float3{-0x1.c38b2ep-1f, -0x1p+0f, -0x1.e2b5d6p-2f},
+         float3{-0x1.a9b66p-1f, -0x1p+0f, -0x1.1c73b6p-1f},
+      },
+      {
+         float3{-0x1.a9b66p-1f, -0x1p+0f, -0x1.1c73b6p-1f},
+         float3{-0x1.8bc804p-1f, -0x1p+0f, -0x1.44cf36p-1f},
+      },
+      {
+         float3{-0x1.8bc804p-1f, -0x1p+0f, -0x1.44cf36p-1f},
+         float3{-0x1.6a09e2p-1f, -0x1p+0f, -0x1.6a09eap-1f},
+      },
+      {
+         float3{-0x1.6a09e2p-1f, -0x1p+0f, -0x1.6a09eap-1f},
+         float3{-0x1.44cf34p-1f, -0x1p+0f, -0x1.8bc806p-1f},
+      },
+      {
+         float3{-0x1.44cf34p-1f, -0x1p+0f, -0x1.8bc806p-1f},
+         float3{-0x1.1c73acp-1f, -0x1p+0f, -0x1.a9b668p-1f},
+      },
+      {
+         float3{-0x1.1c73acp-1f, -0x1p+0f, -0x1.a9b668p-1f},
+         float3{-0x1.e2b5dp-2f, -0x1p+0f, -0x1.c38b3p-1f},
+      },
+      {
+         float3{-0x1.e2b5dp-2f, -0x1p+0f, -0x1.c38b3p-1f},
+         float3{-0x1.87de16p-2f, -0x1p+0f, -0x1.d906c2p-1f},
+      },
+      {
+         float3{-0x1.87de16p-2f, -0x1p+0f, -0x1.d906c2p-1f},
+         float3{-0x1.29405ap-2f, -0x1p+0f, -0x1.e9f416p-1f},
+      },
+      {
+         float3{-0x1.29405ap-2f, -0x1p+0f, -0x1.e9f416p-1f},
+         float3{-0x1.8f8b8cp-3f, -0x1p+0f, -0x1.f6297cp-1f},
+      },
+      {
+         float3{-0x1.8f8b8cp-3f, -0x1p+0f, -0x1.f6297cp-1f},
+         float3{-0x1.917a34p-4f, -0x1p+0f, -0x1.fd88dap-1f},
+      },
+      {
+         float3{-0x1.917a34p-4f, -0x1p+0f, -0x1.fd88dap-1f},
+         float3{0x1.99bc5cp-27f, -0x1p+0f, -0x1p+0f},
+      },
+      {
+         float3{0x1.99bc5cp-27f, -0x1p+0f, -0x1p+0f},
+         float3{0x1.917abap-4f, -0x1p+0f, -0x1.fd88dap-1f},
+      },
+      {
+         float3{0x1.917abap-4f, -0x1p+0f, -0x1.fd88dap-1f},
+         float3{0x1.8f8b9p-3f, -0x1p+0f, -0x1.f6297cp-1f},
+      },
+      {
+         float3{0x1.8f8b9p-3f, -0x1p+0f, -0x1.f6297cp-1f},
+         float3{0x1.29407ap-2f, -0x1p+0f, -0x1.e9f412p-1f},
+      },
+      {
+         float3{0x1.29407ap-2f, -0x1p+0f, -0x1.e9f412p-1f},
+         float3{0x1.87de36p-2f, -0x1p+0f, -0x1.d906bap-1f},
+      },
+      {
+         float3{0x1.87de36p-2f, -0x1p+0f, -0x1.d906bap-1f},
+         float3{0x1.e2b5d2p-2f, -0x1p+0f, -0x1.c38b3p-1f},
+      },
+      {
+         float3{0x1.e2b5d2p-2f, -0x1p+0f, -0x1.c38b3p-1f},
+         float3{0x1.1c73bap-1f, -0x1p+0f, -0x1.a9b65ep-1f},
+      },
+      {
+         float3{0x1.1c73bap-1f, -0x1p+0f, -0x1.a9b65ep-1f},
+         float3{0x1.44cf34p-1f, -0x1p+0f, -0x1.8bc806p-1f},
+      },
+      {
+         float3{0x1.44cf34p-1f, -0x1p+0f, -0x1.8bc806p-1f},
+         float3{0x1.6a09eep-1f, -0x1p+0f, -0x1.6a09dep-1f},
+      },
+      {
+         float3{0x1.6a09eep-1f, -0x1p+0f, -0x1.6a09dep-1f},
+         float3{0x1.8bc80ap-1f, -0x1p+0f, -0x1.44cf2ep-1f},
+      },
+      {
+         float3{0x1.8bc80ap-1f, -0x1p+0f, -0x1.44cf2ep-1f},
+         float3{0x1.a9b662p-1f, -0x1p+0f, -0x1.1c73b6p-1f},
+      },
+      {
+         float3{0x1.a9b662p-1f, -0x1p+0f, -0x1.1c73b6p-1f},
+         float3{0x1.c38b32p-1f, -0x1p+0f, -0x1.e2b5c6p-2f},
+      },
+      {
+         float3{0x1.c38b32p-1f, -0x1p+0f, -0x1.e2b5c6p-2f},
+         float3{0x1.d906bep-1f, -0x1p+0f, -0x1.87de2ap-2f},
+      },
+      {
+         float3{0x1.d906bep-1f, -0x1p+0f, -0x1.87de2ap-2f},
+         float3{0x1.e9f418p-1f, -0x1p+0f, -0x1.29405p-2f},
+      },
+      {
+         float3{0x1.e9f418p-1f, -0x1p+0f, -0x1.29405p-2f},
+         float3{0x1.f6297ep-1f, -0x1p+0f, -0x1.8f8b78p-3f},
+      },
+      {
+         float3{0x1.f6297ep-1f, -0x1p+0f, -0x1.8f8b78p-3f},
+         float3{0x1.fd88dcp-1f, -0x1p+0f, -0x1.917a08p-4f},
+      },
+      {
+         float3{0x1.fd88dcp-1f, -0x1p+0f, -0x1.917a08p-4f},
+         float3{0x1p+0f, -0x1p+0f, 0x1.777a5cp-23f},
+      },
+      {
+         float3{0x0p-1022f, 0x1p+0f, 0x0p-1022f},
+         float3{0x1p+0f, -0x1p+0f, 0x0p-1022f},
+      },
+      {
+         float3{0x0p-1022f, 0x1p+0f, 0x0p-1022f},
+         float3{0x1.6a09e6p-1f, -0x1p+0f, 0x1.6a09e6p-1f},
+      },
+      {
+         float3{0x0p-1022f, 0x1p+0f, 0x0p-1022f},
+         float3{-0x1.777a5cp-25f, -0x1p+0f, 0x1p+0f},
+      },
+      {
+         float3{0x0p-1022f, 0x1p+0f, 0x0p-1022f},
+         float3{-0x1.6a09e6p-1f, -0x1p+0f, 0x1.6a09e6p-1f},
+      },
+      {
+         float3{0x0p-1022f, 0x1p+0f, 0x0p-1022f},
+         float3{-0x1p+0f, -0x1p+0f, -0x1.777a5cp-24f},
+      },
+      {
+         float3{0x0p-1022f, 0x1p+0f, 0x0p-1022f},
+         float3{-0x1.6a09e2p-1f, -0x1p+0f, -0x1.6a09eap-1f},
+      },
+      {
+         float3{0x0p-1022f, 0x1p+0f, 0x0p-1022f},
+         float3{0x1.99bc5cp-27f, -0x1p+0f, -0x1p+0f},
+      },
+      {
+         float3{0x0p-1022f, 0x1p+0f, 0x0p-1022f},
+         float3{0x1.6a09eep-1f, -0x1p+0f, -0x1.6a09dep-1f},
+      },
+   }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment)
+      std::array<std::array<uint16, 3>, 144> line_cone_indices = {{
+         {0, 16384, 32768},  {0, 32768, 49152},  {1, 16385, 32769},
+         {1, 32769, 49153},  {2, 16386, 32770},  {2, 32770, 49154},
+         {3, 16387, 32771},  {3, 32771, 49155},  {4, 16388, 32772},
+         {4, 32772, 49156},  {5, 16389, 32773},  {5, 32773, 49157},
+         {6, 16390, 32774},  {6, 32774, 49158},  {7, 16391, 32775},
+         {7, 32775, 49159},  {8, 16392, 32776},  {8, 32776, 49160},
+         {9, 16393, 32777},  {9, 32777, 49161},  {10, 16394, 32778},
+         {10, 32778, 49162}, {11, 16395, 32779}, {11, 32779, 49163},
+         {12, 16396, 32780}, {12, 32780, 49164}, {13, 16397, 32781},
+         {13, 32781, 49165}, {14, 16398, 32782}, {14, 32782, 49166},
+         {15, 16399, 32783}, {15, 32783, 49167}, {16, 16400, 32784},
+         {16, 32784, 49168}, {17, 16401, 32785}, {17, 32785, 49169},
+         {18, 16402, 32786}, {18, 32786, 49170}, {19, 16403, 32787},
+         {19, 32787, 49171}, {20, 16404, 32788}, {20, 32788, 49172},
+         {21, 16405, 32789}, {21, 32789, 49173}, {22, 16406, 32790},
+         {22, 32790, 49174}, {23, 16407, 32791}, {23, 32791, 49175},
+         {24, 16408, 32792}, {24, 32792, 49176}, {25, 16409, 32793},
+         {25, 32793, 49177}, {26, 16410, 32794}, {26, 32794, 49178},
+         {27, 16411, 32795}, {27, 32795, 49179}, {28, 16412, 32796},
+         {28, 32796, 49180}, {29, 16413, 32797}, {29, 32797, 49181},
+         {30, 16414, 32798}, {30, 32798, 49182}, {31, 16415, 32799},
+         {31, 32799, 49183}, {32, 16416, 32800}, {32, 32800, 49184},
+         {33, 16417, 32801}, {33, 32801, 49185}, {34, 16418, 32802},
+         {34, 32802, 49186}, {35, 16419, 32803}, {35, 32803, 49187},
+         {36, 16420, 32804}, {36, 32804, 49188}, {37, 16421, 32805},
+         {37, 32805, 49189}, {38, 16422, 32806}, {38, 32806, 49190},
+         {39, 16423, 32807}, {39, 32807, 49191}, {40, 16424, 32808},
+         {40, 32808, 49192}, {41, 16425, 32809}, {41, 32809, 49193},
+         {42, 16426, 32810}, {42, 32810, 49194}, {43, 16427, 32811},
+         {43, 32811, 49195}, {44, 16428, 32812}, {44, 32812, 49196},
+         {45, 16429, 32813}, {45, 32813, 49197}, {46, 16430, 32814},
+         {46, 32814, 49198}, {47, 16431, 32815}, {47, 32815, 49199},
+         {48, 16432, 32816}, {48, 32816, 49200}, {49, 16433, 32817},
+         {49, 32817, 49201}, {50, 16434, 32818}, {50, 32818, 49202},
+         {51, 16435, 32819}, {51, 32819, 49203}, {52, 16436, 32820},
+         {52, 32820, 49204}, {53, 16437, 32821}, {53, 32821, 49205},
+         {54, 16438, 32822}, {54, 32822, 49206}, {55, 16439, 32823},
+         {55, 32823, 49207}, {56, 16440, 32824}, {56, 32824, 49208},
+         {57, 16441, 32825}, {57, 32825, 49209}, {58, 16442, 32826},
+         {58, 32826, 49210}, {59, 16443, 32827}, {59, 32827, 49211},
+         {60, 16444, 32828}, {60, 32828, 49212}, {61, 16445, 32829},
+         {61, 32829, 49213}, {62, 16446, 32830}, {62, 32830, 49214},
+         {63, 16447, 32831}, {63, 32831, 49215}, {64, 16448, 32832},
+         {64, 32832, 49216}, {65, 16449, 32833}, {65, 32833, 49217},
+         {66, 16450, 32834}, {66, 32834, 49218}, {67, 16451, 32835},
+         {67, 32835, 49219}, {68, 16452, 32836}, {68, 32836, 49220},
+         {69, 16453, 32837}, {69, 32837, 49221}, {70, 16454, 32838},
+         {70, 32838, 49222}, {71, 16455, 32839}, {71, 32839, 49223},
+      }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment)
+      std::array<std::array<float3, 2>, 136> line_cylinder_vertices = {{
+         {
+            float3{0x1p+0f, -0x1p+0f, 0x0p-1022f},
+            float3{0x1.fd88dap-1f, -0x1p+0f, 0x1.917a6cp-4f},
+         },
+         {
+            float3{0x1.fd88dap-1f, -0x1p+0f, 0x1.917a6cp-4f},
+            float3{0x1.f6297cp-1f, -0x1p+0f, 0x1.8f8b84p-3f},
+         },
+         {
+            float3{0x1.f6297cp-1f, -0x1p+0f, 0x1.8f8b84p-3f},
+            float3{0x1.e9f416p-1f, -0x1p+0f, 0x1.294062p-2f},
+         },
+         {
+            float3{0x1.e9f416p-1f, -0x1p+0f, 0x1.294062p-2f},
+            float3{0x1.d906bcp-1f, -0x1p+0f, 0x1.87de2cp-2f},
+         },
+         {
+            float3{0x1.d906bcp-1f, -0x1p+0f, 0x1.87de2cp-2f},
+            float3{0x1.c38b2ep-1f, -0x1p+0f, 0x1.e2b5d4p-2f},
+         },
+         {
+            float3{0x1.c38b2ep-1f, -0x1p+0f, 0x1.e2b5d4p-2f},
+            float3{0x1.a9b662p-1f, -0x1p+0f, 0x1.1c73b4p-1f},
+         },
+         {
+            float3{0x1.a9b662p-1f, -0x1p+0f, 0x1.1c73b4p-1f},
+            float3{0x1.8bc806p-1f, -0x1p+0f, 0x1.44cf34p-1f},
+         },
+         {
+            float3{0x1.8bc806p-1f, -0x1p+0f, 0x1.44cf34p-1f},
+            float3{0x1.6a09e6p-1f, -0x1p+0f, 0x1.6a09e6p-1f},
+         },
+         {
+            float3{0x1.6a09e6p-1f, -0x1p+0f, 0x1.6a09e6p-1f},
+            float3{0x1.44cf32p-1f, -0x1p+0f, 0x1.8bc806p-1f},
+         },
+         {
+            float3{0x1.44cf32p-1f, -0x1p+0f, 0x1.8bc806p-1f},
+            float3{0x1.1c73b2p-1f, -0x1p+0f, 0x1.a9b664p-1f},
+         },
+         {
+            float3{0x1.1c73b2p-1f, -0x1p+0f, 0x1.a9b664p-1f},
+            float3{0x1.e2b5cep-2f, -0x1p+0f, 0x1.c38b3p-1f},
+         },
+         {
+            float3{0x1.e2b5cep-2f, -0x1p+0f, 0x1.c38b3p-1f},
+            float3{0x1.87de2ap-2f, -0x1p+0f, 0x1.d906bcp-1f},
+         },
+         {
+            float3{0x1.87de2ap-2f, -0x1p+0f, 0x1.d906bcp-1f},
+            float3{0x1.29406p-2f, -0x1p+0f, 0x1.e9f416p-1f},
+         },
+         {
+            float3{0x1.29406p-2f, -0x1p+0f, 0x1.e9f416p-1f},
+            float3{0x1.8f8b78p-3f, -0x1p+0f, 0x1.f6297ep-1f},
+         },
+         {
+            float3{0x1.8f8b78p-3f, -0x1p+0f, 0x1.f6297ep-1f},
+            float3{0x1.917a6ap-4f, -0x1p+0f, 0x1.fd88dap-1f},
+         },
+         {
+            float3{0x1.917a6ap-4f, -0x1p+0f, 0x1.fd88dap-1f},
+            float3{-0x1.777a5cp-25f, -0x1p+0f, 0x1p+0f},
+         },
+         {
+            float3{-0x1.777a5cp-25f, -0x1p+0f, 0x1p+0f},
+            float3{-0x1.917a82p-4f, -0x1p+0f, 0x1.fd88dap-1f},
+         },
+         {
+            float3{-0x1.917a82p-4f, -0x1p+0f, 0x1.fd88dap-1f},
+            float3{-0x1.8f8b84p-3f, -0x1p+0f, 0x1.f6297cp-1f},
+         },
+         {
+            float3{-0x1.8f8b84p-3f, -0x1p+0f, 0x1.f6297cp-1f},
+            float3{-0x1.294066p-2f, -0x1p+0f, 0x1.e9f414p-1f},
+         },
+         {
+            float3{-0x1.294066p-2f, -0x1p+0f, 0x1.e9f414p-1f},
+            float3{-0x1.87de3p-2f, -0x1p+0f, 0x1.d906bcp-1f},
+         },
+         {
+            float3{-0x1.87de3p-2f, -0x1p+0f, 0x1.d906bcp-1f},
+            float3{-0x1.e2b5dap-2f, -0x1p+0f, 0x1.c38b2ep-1f},
+         },
+         {
+            float3{-0x1.e2b5dap-2f, -0x1p+0f, 0x1.c38b2ep-1f},
+            float3{-0x1.1c73b8p-1f, -0x1p+0f, 0x1.a9b66p-1f},
+         },
+         {
+            float3{-0x1.1c73b8p-1f, -0x1p+0f, 0x1.a9b66p-1f},
+            float3{-0x1.44cf32p-1f, -0x1p+0f, 0x1.8bc808p-1f},
+         },
+         {
+            float3{-0x1.44cf32p-1f, -0x1p+0f, 0x1.8bc808p-1f},
+            float3{-0x1.6a09e6p-1f, -0x1p+0f, 0x1.6a09e6p-1f},
+         },
+         {
+            float3{-0x1.6a09e6p-1f, -0x1p+0f, 0x1.6a09e6p-1f},
+            float3{-0x1.8bc808p-1f, -0x1p+0f, 0x1.44cf32p-1f},
+         },
+         {
+            float3{-0x1.8bc808p-1f, -0x1p+0f, 0x1.44cf32p-1f},
+            float3{-0x1.a9b664p-1f, -0x1p+0f, 0x1.1c73b2p-1f},
+         },
+         {
+            float3{-0x1.a9b664p-1f, -0x1p+0f, 0x1.1c73b2p-1f},
+            float3{-0x1.c38b32p-1f, -0x1p+0f, 0x1.e2b5ccp-2f},
+         },
+         {
+            float3{-0x1.c38b32p-1f, -0x1p+0f, 0x1.e2b5ccp-2f},
+            float3{-0x1.d906cp-1f, -0x1p+0f, 0x1.87de2p-2f},
+         },
+         {
+            float3{-0x1.d906cp-1f, -0x1p+0f, 0x1.87de2p-2f},
+            float3{-0x1.e9f416p-1f, -0x1p+0f, 0x1.294066p-2f},
+         },
+         {
+            float3{-0x1.e9f416p-1f, -0x1p+0f, 0x1.294066p-2f},
+            float3{-0x1.f6297ep-1f, -0x1p+0f, 0x1.8f8b82p-3f},
+         },
+         {
+            float3{-0x1.f6297ep-1f, -0x1p+0f, 0x1.8f8b82p-3f},
+            float3{-0x1.fd88dap-1f, -0x1p+0f, 0x1.917a6p-4f},
+         },
+         {
+            float3{-0x1.fd88dap-1f, -0x1p+0f, 0x1.917a6p-4f},
+            float3{-0x1p+0f, -0x1p+0f, -0x1.777a5cp-24f},
+         },
+         {
+            float3{-0x1p+0f, -0x1p+0f, -0x1.777a5cp-24f},
+            float3{-0x1.fd88dap-1f, -0x1p+0f, -0x1.917a8ep-4f},
+         },
+         {
+            float3{-0x1.fd88dap-1f, -0x1p+0f, -0x1.917a8ep-4f},
+            float3{-0x1.f6297cp-1f, -0x1p+0f, -0x1.8f8b9ap-3f},
+         },
+         {
+            float3{-0x1.f6297cp-1f, -0x1p+0f, -0x1.8f8b9ap-3f},
+            float3{-0x1.e9f414p-1f, -0x1p+0f, -0x1.29407p-2f},
+         },
+         {
+            float3{-0x1.e9f414p-1f, -0x1p+0f, -0x1.29407p-2f},
+            float3{-0x1.d906bcp-1f, -0x1p+0f, -0x1.87de2ap-2f},
+         },
+         {
+            float3{-0x1.d906bcp-1f, -0x1p+0f, -0x1.87de2ap-2f},
+            float3{-0x1.c38b2ep-1f, -0x1p+0f, -0x1.e2b5d6p-2f},
+         },
+         {
+            float3{-0x1.c38b2ep-1f, -0x1p+0f, -0x1.e2b5d6p-2f},
+            float3{-0x1.a9b66p-1f, -0x1p+0f, -0x1.1c73b6p-1f},
+         },
+         {
+            float3{-0x1.a9b66p-1f, -0x1p+0f, -0x1.1c73b6p-1f},
+            float3{-0x1.8bc804p-1f, -0x1p+0f, -0x1.44cf36p-1f},
+         },
+         {
+            float3{-0x1.8bc804p-1f, -0x1p+0f, -0x1.44cf36p-1f},
+            float3{-0x1.6a09e2p-1f, -0x1p+0f, -0x1.6a09eap-1f},
+         },
+         {
+            float3{-0x1.6a09e2p-1f, -0x1p+0f, -0x1.6a09eap-1f},
+            float3{-0x1.44cf34p-1f, -0x1p+0f, -0x1.8bc806p-1f},
+         },
+         {
+            float3{-0x1.44cf34p-1f, -0x1p+0f, -0x1.8bc806p-1f},
+            float3{-0x1.1c73acp-1f, -0x1p+0f, -0x1.a9b668p-1f},
+         },
+         {
+            float3{-0x1.1c73acp-1f, -0x1p+0f, -0x1.a9b668p-1f},
+            float3{-0x1.e2b5dp-2f, -0x1p+0f, -0x1.c38b3p-1f},
+         },
+         {
+            float3{-0x1.e2b5dp-2f, -0x1p+0f, -0x1.c38b3p-1f},
+            float3{-0x1.87de16p-2f, -0x1p+0f, -0x1.d906c2p-1f},
+         },
+         {
+            float3{-0x1.87de16p-2f, -0x1p+0f, -0x1.d906c2p-1f},
+            float3{-0x1.29405ap-2f, -0x1p+0f, -0x1.e9f416p-1f},
+         },
+         {
+            float3{-0x1.29405ap-2f, -0x1p+0f, -0x1.e9f416p-1f},
+            float3{-0x1.8f8b8cp-3f, -0x1p+0f, -0x1.f6297cp-1f},
+         },
+         {
+            float3{-0x1.8f8b8cp-3f, -0x1p+0f, -0x1.f6297cp-1f},
+            float3{-0x1.917a34p-4f, -0x1p+0f, -0x1.fd88dap-1f},
+         },
+         {
+            float3{-0x1.917a34p-4f, -0x1p+0f, -0x1.fd88dap-1f},
+            float3{0x1.99bc5cp-27f, -0x1p+0f, -0x1p+0f},
+         },
+         {
+            float3{0x1.99bc5cp-27f, -0x1p+0f, -0x1p+0f},
+            float3{0x1.917abap-4f, -0x1p+0f, -0x1.fd88dap-1f},
+         },
+         {
+            float3{0x1.917abap-4f, -0x1p+0f, -0x1.fd88dap-1f},
+            float3{0x1.8f8b9p-3f, -0x1p+0f, -0x1.f6297cp-1f},
+         },
+         {
+            float3{0x1.8f8b9p-3f, -0x1p+0f, -0x1.f6297cp-1f},
+            float3{0x1.29407ap-2f, -0x1p+0f, -0x1.e9f412p-1f},
+         },
+         {
+            float3{0x1.29407ap-2f, -0x1p+0f, -0x1.e9f412p-1f},
+            float3{0x1.87de36p-2f, -0x1p+0f, -0x1.d906bap-1f},
+         },
+         {
+            float3{0x1.87de36p-2f, -0x1p+0f, -0x1.d906bap-1f},
+            float3{0x1.e2b5d2p-2f, -0x1p+0f, -0x1.c38b3p-1f},
+         },
+         {
+            float3{0x1.e2b5d2p-2f, -0x1p+0f, -0x1.c38b3p-1f},
+            float3{0x1.1c73bap-1f, -0x1p+0f, -0x1.a9b65ep-1f},
+         },
+         {
+            float3{0x1.1c73bap-1f, -0x1p+0f, -0x1.a9b65ep-1f},
+            float3{0x1.44cf34p-1f, -0x1p+0f, -0x1.8bc806p-1f},
+         },
+         {
+            float3{0x1.44cf34p-1f, -0x1p+0f, -0x1.8bc806p-1f},
+            float3{0x1.6a09eep-1f, -0x1p+0f, -0x1.6a09dep-1f},
+         },
+         {
+            float3{0x1.6a09eep-1f, -0x1p+0f, -0x1.6a09dep-1f},
+            float3{0x1.8bc80ap-1f, -0x1p+0f, -0x1.44cf2ep-1f},
+         },
+         {
+            float3{0x1.8bc80ap-1f, -0x1p+0f, -0x1.44cf2ep-1f},
+            float3{0x1.a9b662p-1f, -0x1p+0f, -0x1.1c73b6p-1f},
+         },
+         {
+            float3{0x1.a9b662p-1f, -0x1p+0f, -0x1.1c73b6p-1f},
+            float3{0x1.c38b32p-1f, -0x1p+0f, -0x1.e2b5c6p-2f},
+         },
+         {
+            float3{0x1.c38b32p-1f, -0x1p+0f, -0x1.e2b5c6p-2f},
+            float3{0x1.d906bep-1f, -0x1p+0f, -0x1.87de2ap-2f},
+         },
+         {
+            float3{0x1.d906bep-1f, -0x1p+0f, -0x1.87de2ap-2f},
+            float3{0x1.e9f418p-1f, -0x1p+0f, -0x1.29405p-2f},
+         },
+         {
+            float3{0x1.e9f418p-1f, -0x1p+0f, -0x1.29405p-2f},
+            float3{0x1.f6297ep-1f, -0x1p+0f, -0x1.8f8b78p-3f},
+         },
+         {
+            float3{0x1.f6297ep-1f, -0x1p+0f, -0x1.8f8b78p-3f},
+            float3{0x1.fd88dcp-1f, -0x1p+0f, -0x1.917a08p-4f},
+         },
+         {
+            float3{0x1.fd88dcp-1f, -0x1p+0f, -0x1.917a08p-4f},
+            float3{0x1p+0f, -0x1p+0f, 0x1.777a5cp-23f},
+         },
+         {
+            float3{0x1p+0f, 0x1p+0f, 0x0p-1022f},
+            float3{0x1.fd88dap-1f, 0x1p+0f, 0x1.917a6cp-4f},
+         },
+         {
+            float3{0x1.fd88dap-1f, 0x1p+0f, 0x1.917a6cp-4f},
+            float3{0x1.f6297cp-1f, 0x1p+0f, 0x1.8f8b84p-3f},
+         },
+         {
+            float3{0x1.f6297cp-1f, 0x1p+0f, 0x1.8f8b84p-3f},
+            float3{0x1.e9f416p-1f, 0x1p+0f, 0x1.294062p-2f},
+         },
+         {
+            float3{0x1.e9f416p-1f, 0x1p+0f, 0x1.294062p-2f},
+            float3{0x1.d906bcp-1f, 0x1p+0f, 0x1.87de2cp-2f},
+         },
+         {
+            float3{0x1.d906bcp-1f, 0x1p+0f, 0x1.87de2cp-2f},
+            float3{0x1.c38b2ep-1f, 0x1p+0f, 0x1.e2b5d4p-2f},
+         },
+         {
+            float3{0x1.c38b2ep-1f, 0x1p+0f, 0x1.e2b5d4p-2f},
+            float3{0x1.a9b662p-1f, 0x1p+0f, 0x1.1c73b4p-1f},
+         },
+         {
+            float3{0x1.a9b662p-1f, 0x1p+0f, 0x1.1c73b4p-1f},
+            float3{0x1.8bc806p-1f, 0x1p+0f, 0x1.44cf34p-1f},
+         },
+         {
+            float3{0x1.8bc806p-1f, 0x1p+0f, 0x1.44cf34p-1f},
+            float3{0x1.6a09e6p-1f, 0x1p+0f, 0x1.6a09e6p-1f},
+         },
+         {
+            float3{0x1.6a09e6p-1f, 0x1p+0f, 0x1.6a09e6p-1f},
+            float3{0x1.44cf32p-1f, 0x1p+0f, 0x1.8bc806p-1f},
+         },
+         {
+            float3{0x1.44cf32p-1f, 0x1p+0f, 0x1.8bc806p-1f},
+            float3{0x1.1c73b2p-1f, 0x1p+0f, 0x1.a9b664p-1f},
+         },
+         {
+            float3{0x1.1c73b2p-1f, 0x1p+0f, 0x1.a9b664p-1f},
+            float3{0x1.e2b5cep-2f, 0x1p+0f, 0x1.c38b3p-1f},
+         },
+         {
+            float3{0x1.e2b5cep-2f, 0x1p+0f, 0x1.c38b3p-1f},
+            float3{0x1.87de2ap-2f, 0x1p+0f, 0x1.d906bcp-1f},
+         },
+         {
+            float3{0x1.87de2ap-2f, 0x1p+0f, 0x1.d906bcp-1f},
+            float3{0x1.29406p-2f, 0x1p+0f, 0x1.e9f416p-1f},
+         },
+         {
+            float3{0x1.29406p-2f, 0x1p+0f, 0x1.e9f416p-1f},
+            float3{0x1.8f8b78p-3f, 0x1p+0f, 0x1.f6297ep-1f},
+         },
+         {
+            float3{0x1.8f8b78p-3f, 0x1p+0f, 0x1.f6297ep-1f},
+            float3{0x1.917a6ap-4f, 0x1p+0f, 0x1.fd88dap-1f},
+         },
+         {
+            float3{0x1.917a6ap-4f, 0x1p+0f, 0x1.fd88dap-1f},
+            float3{-0x1.777a5cp-25f, 0x1p+0f, 0x1p+0f},
+         },
+         {
+            float3{-0x1.777a5cp-25f, 0x1p+0f, 0x1p+0f},
+            float3{-0x1.917a82p-4f, 0x1p+0f, 0x1.fd88dap-1f},
+         },
+         {
+            float3{-0x1.917a82p-4f, 0x1p+0f, 0x1.fd88dap-1f},
+            float3{-0x1.8f8b84p-3f, 0x1p+0f, 0x1.f6297cp-1f},
+         },
+         {
+            float3{-0x1.8f8b84p-3f, 0x1p+0f, 0x1.f6297cp-1f},
+            float3{-0x1.294066p-2f, 0x1p+0f, 0x1.e9f414p-1f},
+         },
+         {
+            float3{-0x1.294066p-2f, 0x1p+0f, 0x1.e9f414p-1f},
+            float3{-0x1.87de3p-2f, 0x1p+0f, 0x1.d906bcp-1f},
+         },
+         {
+            float3{-0x1.87de3p-2f, 0x1p+0f, 0x1.d906bcp-1f},
+            float3{-0x1.e2b5dap-2f, 0x1p+0f, 0x1.c38b2ep-1f},
+         },
+         {
+            float3{-0x1.e2b5dap-2f, 0x1p+0f, 0x1.c38b2ep-1f},
+            float3{-0x1.1c73b8p-1f, 0x1p+0f, 0x1.a9b66p-1f},
+         },
+         {
+            float3{-0x1.1c73b8p-1f, 0x1p+0f, 0x1.a9b66p-1f},
+            float3{-0x1.44cf32p-1f, 0x1p+0f, 0x1.8bc808p-1f},
+         },
+         {
+            float3{-0x1.44cf32p-1f, 0x1p+0f, 0x1.8bc808p-1f},
+            float3{-0x1.6a09e6p-1f, 0x1p+0f, 0x1.6a09e6p-1f},
+         },
+         {
+            float3{-0x1.6a09e6p-1f, 0x1p+0f, 0x1.6a09e6p-1f},
+            float3{-0x1.8bc808p-1f, 0x1p+0f, 0x1.44cf32p-1f},
+         },
+         {
+            float3{-0x1.8bc808p-1f, 0x1p+0f, 0x1.44cf32p-1f},
+            float3{-0x1.a9b664p-1f, 0x1p+0f, 0x1.1c73b2p-1f},
+         },
+         {
+            float3{-0x1.a9b664p-1f, 0x1p+0f, 0x1.1c73b2p-1f},
+            float3{-0x1.c38b32p-1f, 0x1p+0f, 0x1.e2b5ccp-2f},
+         },
+         {
+            float3{-0x1.c38b32p-1f, 0x1p+0f, 0x1.e2b5ccp-2f},
+            float3{-0x1.d906cp-1f, 0x1p+0f, 0x1.87de2p-2f},
+         },
+         {
+            float3{-0x1.d906cp-1f, 0x1p+0f, 0x1.87de2p-2f},
+            float3{-0x1.e9f416p-1f, 0x1p+0f, 0x1.294066p-2f},
+         },
+         {
+            float3{-0x1.e9f416p-1f, 0x1p+0f, 0x1.294066p-2f},
+            float3{-0x1.f6297ep-1f, 0x1p+0f, 0x1.8f8b82p-3f},
+         },
+         {
+            float3{-0x1.f6297ep-1f, 0x1p+0f, 0x1.8f8b82p-3f},
+            float3{-0x1.fd88dap-1f, 0x1p+0f, 0x1.917a6p-4f},
+         },
+         {
+            float3{-0x1.fd88dap-1f, 0x1p+0f, 0x1.917a6p-4f},
+            float3{-0x1p+0f, 0x1p+0f, -0x1.777a5cp-24f},
+         },
+         {
+            float3{-0x1p+0f, 0x1p+0f, -0x1.777a5cp-24f},
+            float3{-0x1.fd88dap-1f, 0x1p+0f, -0x1.917a8ep-4f},
+         },
+         {
+            float3{-0x1.fd88dap-1f, 0x1p+0f, -0x1.917a8ep-4f},
+            float3{-0x1.f6297cp-1f, 0x1p+0f, -0x1.8f8b9ap-3f},
+         },
+         {
+            float3{-0x1.f6297cp-1f, 0x1p+0f, -0x1.8f8b9ap-3f},
+            float3{-0x1.e9f414p-1f, 0x1p+0f, -0x1.29407p-2f},
+         },
+         {
+            float3{-0x1.e9f414p-1f, 0x1p+0f, -0x1.29407p-2f},
+            float3{-0x1.d906bcp-1f, 0x1p+0f, -0x1.87de2ap-2f},
+         },
+         {
+            float3{-0x1.d906bcp-1f, 0x1p+0f, -0x1.87de2ap-2f},
+            float3{-0x1.c38b2ep-1f, 0x1p+0f, -0x1.e2b5d6p-2f},
+         },
+         {
+            float3{-0x1.c38b2ep-1f, 0x1p+0f, -0x1.e2b5d6p-2f},
+            float3{-0x1.a9b66p-1f, 0x1p+0f, -0x1.1c73b6p-1f},
+         },
+         {
+            float3{-0x1.a9b66p-1f, 0x1p+0f, -0x1.1c73b6p-1f},
+            float3{-0x1.8bc804p-1f, 0x1p+0f, -0x1.44cf36p-1f},
+         },
+         {
+            float3{-0x1.8bc804p-1f, 0x1p+0f, -0x1.44cf36p-1f},
+            float3{-0x1.6a09e2p-1f, 0x1p+0f, -0x1.6a09eap-1f},
+         },
+         {
+            float3{-0x1.6a09e2p-1f, 0x1p+0f, -0x1.6a09eap-1f},
+            float3{-0x1.44cf34p-1f, 0x1p+0f, -0x1.8bc806p-1f},
+         },
+         {
+            float3{-0x1.44cf34p-1f, 0x1p+0f, -0x1.8bc806p-1f},
+            float3{-0x1.1c73acp-1f, 0x1p+0f, -0x1.a9b668p-1f},
+         },
+         {
+            float3{-0x1.1c73acp-1f, 0x1p+0f, -0x1.a9b668p-1f},
+            float3{-0x1.e2b5dp-2f, 0x1p+0f, -0x1.c38b3p-1f},
+         },
+         {
+            float3{-0x1.e2b5dp-2f, 0x1p+0f, -0x1.c38b3p-1f},
+            float3{-0x1.87de16p-2f, 0x1p+0f, -0x1.d906c2p-1f},
+         },
+         {
+            float3{-0x1.87de16p-2f, 0x1p+0f, -0x1.d906c2p-1f},
+            float3{-0x1.29405ap-2f, 0x1p+0f, -0x1.e9f416p-1f},
+         },
+         {
+            float3{-0x1.29405ap-2f, 0x1p+0f, -0x1.e9f416p-1f},
+            float3{-0x1.8f8b8cp-3f, 0x1p+0f, -0x1.f6297cp-1f},
+         },
+         {
+            float3{-0x1.8f8b8cp-3f, 0x1p+0f, -0x1.f6297cp-1f},
+            float3{-0x1.917a34p-4f, 0x1p+0f, -0x1.fd88dap-1f},
+         },
+         {
+            float3{-0x1.917a34p-4f, 0x1p+0f, -0x1.fd88dap-1f},
+            float3{0x1.99bc5cp-27f, 0x1p+0f, -0x1p+0f},
+         },
+         {
+            float3{0x1.99bc5cp-27f, 0x1p+0f, -0x1p+0f},
+            float3{0x1.917abap-4f, 0x1p+0f, -0x1.fd88dap-1f},
+         },
+         {
+            float3{0x1.917abap-4f, 0x1p+0f, -0x1.fd88dap-1f},
+            float3{0x1.8f8b9p-3f, 0x1p+0f, -0x1.f6297cp-1f},
+         },
+         {
+            float3{0x1.8f8b9p-3f, 0x1p+0f, -0x1.f6297cp-1f},
+            float3{0x1.29407ap-2f, 0x1p+0f, -0x1.e9f412p-1f},
+         },
+         {
+            float3{0x1.29407ap-2f, 0x1p+0f, -0x1.e9f412p-1f},
+            float3{0x1.87de36p-2f, 0x1p+0f, -0x1.d906bap-1f},
+         },
+         {
+            float3{0x1.87de36p-2f, 0x1p+0f, -0x1.d906bap-1f},
+            float3{0x1.e2b5d2p-2f, 0x1p+0f, -0x1.c38b3p-1f},
+         },
+         {
+            float3{0x1.e2b5d2p-2f, 0x1p+0f, -0x1.c38b3p-1f},
+            float3{0x1.1c73bap-1f, 0x1p+0f, -0x1.a9b65ep-1f},
+         },
+         {
+            float3{0x1.1c73bap-1f, 0x1p+0f, -0x1.a9b65ep-1f},
+            float3{0x1.44cf34p-1f, 0x1p+0f, -0x1.8bc806p-1f},
+         },
+         {
+            float3{0x1.44cf34p-1f, 0x1p+0f, -0x1.8bc806p-1f},
+            float3{0x1.6a09eep-1f, 0x1p+0f, -0x1.6a09dep-1f},
+         },
+         {
+            float3{0x1.6a09eep-1f, 0x1p+0f, -0x1.6a09dep-1f},
+            float3{0x1.8bc80ap-1f, 0x1p+0f, -0x1.44cf2ep-1f},
+         },
+         {
+            float3{0x1.8bc80ap-1f, 0x1p+0f, -0x1.44cf2ep-1f},
+            float3{0x1.a9b662p-1f, 0x1p+0f, -0x1.1c73b6p-1f},
+         },
+         {
+            float3{0x1.a9b662p-1f, 0x1p+0f, -0x1.1c73b6p-1f},
+            float3{0x1.c38b32p-1f, 0x1p+0f, -0x1.e2b5c6p-2f},
+         },
+         {
+            float3{0x1.c38b32p-1f, 0x1p+0f, -0x1.e2b5c6p-2f},
+            float3{0x1.d906bep-1f, 0x1p+0f, -0x1.87de2ap-2f},
+         },
+         {
+            float3{0x1.d906bep-1f, 0x1p+0f, -0x1.87de2ap-2f},
+            float3{0x1.e9f418p-1f, 0x1p+0f, -0x1.29405p-2f},
+         },
+         {
+            float3{0x1.e9f418p-1f, 0x1p+0f, -0x1.29405p-2f},
+            float3{0x1.f6297ep-1f, 0x1p+0f, -0x1.8f8b78p-3f},
+         },
+         {
+            float3{0x1.f6297ep-1f, 0x1p+0f, -0x1.8f8b78p-3f},
+            float3{0x1.fd88dcp-1f, 0x1p+0f, -0x1.917a08p-4f},
+         },
+         {
+            float3{0x1.fd88dcp-1f, 0x1p+0f, -0x1.917a08p-4f},
+            float3{0x1p+0f, 0x1p+0f, 0x1.777a5cp-23f},
+         },
+         {
+            float3{0x1p+0f, 0x1p+0f, 0x0p-1022f},
+            float3{0x1p+0f, -0x1p+0f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.6a09e6p-1f, 0x1p+0f, 0x1.6a09e6p-1f},
+            float3{0x1.6a09e6p-1f, -0x1p+0f, 0x1.6a09e6p-1f},
+         },
+         {
+            float3{-0x1.777a5cp-25f, 0x1p+0f, 0x1p+0f},
+            float3{-0x1.777a5cp-25f, -0x1p+0f, 0x1p+0f},
+         },
+         {
+            float3{-0x1.6a09e6p-1f, 0x1p+0f, 0x1.6a09e6p-1f},
+            float3{-0x1.6a09e6p-1f, -0x1p+0f, 0x1.6a09e6p-1f},
+         },
+         {
+            float3{-0x1p+0f, 0x1p+0f, -0x1.777a5cp-24f},
+            float3{-0x1p+0f, -0x1p+0f, -0x1.777a5cp-24f},
+         },
+         {
+            float3{-0x1.6a09e2p-1f, 0x1p+0f, -0x1.6a09eap-1f},
+            float3{-0x1.6a09e2p-1f, -0x1p+0f, -0x1.6a09eap-1f},
+         },
+         {
+            float3{0x1.99bc5cp-27f, 0x1p+0f, -0x1p+0f},
+            float3{0x1.99bc5cp-27f, -0x1p+0f, -0x1p+0f},
+         },
+         {
+            float3{0x1.6a09eep-1f, 0x1p+0f, -0x1.6a09dep-1f},
+            float3{0x1.6a09eep-1f, -0x1p+0f, -0x1.6a09dep-1f},
+         },
+      }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment)
+      std::array<std::array<uint16, 3>, 272> line_cylinder_indices = {{
+         {0, 16384, 32768},   {0, 32768, 49152},   {1, 16385, 32769},
+         {1, 32769, 49153},   {2, 16386, 32770},   {2, 32770, 49154},
+         {3, 16387, 32771},   {3, 32771, 49155},   {4, 16388, 32772},
+         {4, 32772, 49156},   {5, 16389, 32773},   {5, 32773, 49157},
+         {6, 16390, 32774},   {6, 32774, 49158},   {7, 16391, 32775},
+         {7, 32775, 49159},   {8, 16392, 32776},   {8, 32776, 49160},
+         {9, 16393, 32777},   {9, 32777, 49161},   {10, 16394, 32778},
+         {10, 32778, 49162},  {11, 16395, 32779},  {11, 32779, 49163},
+         {12, 16396, 32780},  {12, 32780, 49164},  {13, 16397, 32781},
+         {13, 32781, 49165},  {14, 16398, 32782},  {14, 32782, 49166},
+         {15, 16399, 32783},  {15, 32783, 49167},  {16, 16400, 32784},
+         {16, 32784, 49168},  {17, 16401, 32785},  {17, 32785, 49169},
+         {18, 16402, 32786},  {18, 32786, 49170},  {19, 16403, 32787},
+         {19, 32787, 49171},  {20, 16404, 32788},  {20, 32788, 49172},
+         {21, 16405, 32789},  {21, 32789, 49173},  {22, 16406, 32790},
+         {22, 32790, 49174},  {23, 16407, 32791},  {23, 32791, 49175},
+         {24, 16408, 32792},  {24, 32792, 49176},  {25, 16409, 32793},
+         {25, 32793, 49177},  {26, 16410, 32794},  {26, 32794, 49178},
+         {27, 16411, 32795},  {27, 32795, 49179},  {28, 16412, 32796},
+         {28, 32796, 49180},  {29, 16413, 32797},  {29, 32797, 49181},
+         {30, 16414, 32798},  {30, 32798, 49182},  {31, 16415, 32799},
+         {31, 32799, 49183},  {32, 16416, 32800},  {32, 32800, 49184},
+         {33, 16417, 32801},  {33, 32801, 49185},  {34, 16418, 32802},
+         {34, 32802, 49186},  {35, 16419, 32803},  {35, 32803, 49187},
+         {36, 16420, 32804},  {36, 32804, 49188},  {37, 16421, 32805},
+         {37, 32805, 49189},  {38, 16422, 32806},  {38, 32806, 49190},
+         {39, 16423, 32807},  {39, 32807, 49191},  {40, 16424, 32808},
+         {40, 32808, 49192},  {41, 16425, 32809},  {41, 32809, 49193},
+         {42, 16426, 32810},  {42, 32810, 49194},  {43, 16427, 32811},
+         {43, 32811, 49195},  {44, 16428, 32812},  {44, 32812, 49196},
+         {45, 16429, 32813},  {45, 32813, 49197},  {46, 16430, 32814},
+         {46, 32814, 49198},  {47, 16431, 32815},  {47, 32815, 49199},
+         {48, 16432, 32816},  {48, 32816, 49200},  {49, 16433, 32817},
+         {49, 32817, 49201},  {50, 16434, 32818},  {50, 32818, 49202},
+         {51, 16435, 32819},  {51, 32819, 49203},  {52, 16436, 32820},
+         {52, 32820, 49204},  {53, 16437, 32821},  {53, 32821, 49205},
+         {54, 16438, 32822},  {54, 32822, 49206},  {55, 16439, 32823},
+         {55, 32823, 49207},  {56, 16440, 32824},  {56, 32824, 49208},
+         {57, 16441, 32825},  {57, 32825, 49209},  {58, 16442, 32826},
+         {58, 32826, 49210},  {59, 16443, 32827},  {59, 32827, 49211},
+         {60, 16444, 32828},  {60, 32828, 49212},  {61, 16445, 32829},
+         {61, 32829, 49213},  {62, 16446, 32830},  {62, 32830, 49214},
+         {63, 16447, 32831},  {63, 32831, 49215},  {64, 16448, 32832},
+         {64, 32832, 49216},  {65, 16449, 32833},  {65, 32833, 49217},
+         {66, 16450, 32834},  {66, 32834, 49218},  {67, 16451, 32835},
+         {67, 32835, 49219},  {68, 16452, 32836},  {68, 32836, 49220},
+         {69, 16453, 32837},  {69, 32837, 49221},  {70, 16454, 32838},
+         {70, 32838, 49222},  {71, 16455, 32839},  {71, 32839, 49223},
+         {72, 16456, 32840},  {72, 32840, 49224},  {73, 16457, 32841},
+         {73, 32841, 49225},  {74, 16458, 32842},  {74, 32842, 49226},
+         {75, 16459, 32843},  {75, 32843, 49227},  {76, 16460, 32844},
+         {76, 32844, 49228},  {77, 16461, 32845},  {77, 32845, 49229},
+         {78, 16462, 32846},  {78, 32846, 49230},  {79, 16463, 32847},
+         {79, 32847, 49231},  {80, 16464, 32848},  {80, 32848, 49232},
+         {81, 16465, 32849},  {81, 32849, 49233},  {82, 16466, 32850},
+         {82, 32850, 49234},  {83, 16467, 32851},  {83, 32851, 49235},
+         {84, 16468, 32852},  {84, 32852, 49236},  {85, 16469, 32853},
+         {85, 32853, 49237},  {86, 16470, 32854},  {86, 32854, 49238},
+         {87, 16471, 32855},  {87, 32855, 49239},  {88, 16472, 32856},
+         {88, 32856, 49240},  {89, 16473, 32857},  {89, 32857, 49241},
+         {90, 16474, 32858},  {90, 32858, 49242},  {91, 16475, 32859},
+         {91, 32859, 49243},  {92, 16476, 32860},  {92, 32860, 49244},
+         {93, 16477, 32861},  {93, 32861, 49245},  {94, 16478, 32862},
+         {94, 32862, 49246},  {95, 16479, 32863},  {95, 32863, 49247},
+         {96, 16480, 32864},  {96, 32864, 49248},  {97, 16481, 32865},
+         {97, 32865, 49249},  {98, 16482, 32866},  {98, 32866, 49250},
+         {99, 16483, 32867},  {99, 32867, 49251},  {100, 16484, 32868},
+         {100, 32868, 49252}, {101, 16485, 32869}, {101, 32869, 49253},
+         {102, 16486, 32870}, {102, 32870, 49254}, {103, 16487, 32871},
+         {103, 32871, 49255}, {104, 16488, 32872}, {104, 32872, 49256},
+         {105, 16489, 32873}, {105, 32873, 49257}, {106, 16490, 32874},
+         {106, 32874, 49258}, {107, 16491, 32875}, {107, 32875, 49259},
+         {108, 16492, 32876}, {108, 32876, 49260}, {109, 16493, 32877},
+         {109, 32877, 49261}, {110, 16494, 32878}, {110, 32878, 49262},
+         {111, 16495, 32879}, {111, 32879, 49263}, {112, 16496, 32880},
+         {112, 32880, 49264}, {113, 16497, 32881}, {113, 32881, 49265},
+         {114, 16498, 32882}, {114, 32882, 49266}, {115, 16499, 32883},
+         {115, 32883, 49267}, {116, 16500, 32884}, {116, 32884, 49268},
+         {117, 16501, 32885}, {117, 32885, 49269}, {118, 16502, 32886},
+         {118, 32886, 49270}, {119, 16503, 32887}, {119, 32887, 49271},
+         {120, 16504, 32888}, {120, 32888, 49272}, {121, 16505, 32889},
+         {121, 32889, 49273}, {122, 16506, 32890}, {122, 32890, 49274},
+         {123, 16507, 32891}, {123, 32891, 49275}, {124, 16508, 32892},
+         {124, 32892, 49276}, {125, 16509, 32893}, {125, 32893, 49277},
+         {126, 16510, 32894}, {126, 32894, 49278}, {127, 16511, 32895},
+         {127, 32895, 49279}, {128, 16512, 32896}, {128, 32896, 49280},
+         {129, 16513, 32897}, {129, 32897, 49281}, {130, 16514, 32898},
+         {130, 32898, 49282}, {131, 16515, 32899}, {131, 32899, 49283},
+         {132, 16516, 32900}, {132, 32900, 49284}, {133, 16517, 32901},
+         {133, 32901, 49285}, {134, 16518, 32902}, {134, 32902, 49286},
+         {135, 16519, 32903}, {135, 32903, 49287},
+      }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment)
+      std::array<std::array<float3, 2>, 256> line_sphere_vertices = {{
+         {
+            float3{0x0p-1022f, 0x1p+0f, 0x0p-1022f},
+            float3{0x0p-1022f, 0x1.fd88dap-1f, 0x1.917a6cp-4f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.fd88dap-1f, 0x1.917a6cp-4f},
+            float3{0x0p-1022f, 0x1.f6297cp-1f, 0x1.8f8b84p-3f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.f6297cp-1f, 0x1.8f8b84p-3f},
+            float3{0x0p-1022f, 0x1.e9f416p-1f, 0x1.294062p-2f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.e9f416p-1f, 0x1.294062p-2f},
+            float3{0x0p-1022f, 0x1.d906bcp-1f, 0x1.87de2cp-2f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.d906bcp-1f, 0x1.87de2cp-2f},
+            float3{0x0p-1022f, 0x1.c38b2ep-1f, 0x1.e2b5d4p-2f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.c38b2ep-1f, 0x1.e2b5d4p-2f},
+            float3{0x0p-1022f, 0x1.a9b662p-1f, 0x1.1c73b4p-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.a9b662p-1f, 0x1.1c73b4p-1f},
+            float3{0x0p-1022f, 0x1.8bc806p-1f, 0x1.44cf34p-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.8bc806p-1f, 0x1.44cf34p-1f},
+            float3{0x0p-1022f, 0x1.6a09e6p-1f, 0x1.6a09e6p-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.6a09e6p-1f, 0x1.6a09e6p-1f},
+            float3{0x0p-1022f, 0x1.44cf32p-1f, 0x1.8bc806p-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.44cf32p-1f, 0x1.8bc806p-1f},
+            float3{0x0p-1022f, 0x1.1c73b2p-1f, 0x1.a9b664p-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.1c73b2p-1f, 0x1.a9b664p-1f},
+            float3{0x0p-1022f, 0x1.e2b5cep-2f, 0x1.c38b3p-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.e2b5cep-2f, 0x1.c38b3p-1f},
+            float3{0x0p-1022f, 0x1.87de2ap-2f, 0x1.d906bcp-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.87de2ap-2f, 0x1.d906bcp-1f},
+            float3{0x0p-1022f, 0x1.29406p-2f, 0x1.e9f416p-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.29406p-2f, 0x1.e9f416p-1f},
+            float3{0x0p-1022f, 0x1.8f8b78p-3f, 0x1.f6297ep-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.8f8b78p-3f, 0x1.f6297ep-1f},
+            float3{0x0p-1022f, 0x1.917a6ap-4f, 0x1.fd88dap-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.917a6ap-4f, 0x1.fd88dap-1f},
+            float3{0x0p-1022f, -0x1.777a5cp-25f, 0x1p+0f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.777a5cp-25f, 0x1p+0f},
+            float3{0x0p-1022f, -0x1.917a82p-4f, 0x1.fd88dap-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.917a82p-4f, 0x1.fd88dap-1f},
+            float3{0x0p-1022f, -0x1.8f8b84p-3f, 0x1.f6297cp-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.8f8b84p-3f, 0x1.f6297cp-1f},
+            float3{0x0p-1022f, -0x1.294066p-2f, 0x1.e9f414p-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.294066p-2f, 0x1.e9f414p-1f},
+            float3{0x0p-1022f, -0x1.87de3p-2f, 0x1.d906bcp-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.87de3p-2f, 0x1.d906bcp-1f},
+            float3{0x0p-1022f, -0x1.e2b5dap-2f, 0x1.c38b2ep-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.e2b5dap-2f, 0x1.c38b2ep-1f},
+            float3{0x0p-1022f, -0x1.1c73b8p-1f, 0x1.a9b66p-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.1c73b8p-1f, 0x1.a9b66p-1f},
+            float3{0x0p-1022f, -0x1.44cf32p-1f, 0x1.8bc808p-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.44cf32p-1f, 0x1.8bc808p-1f},
+            float3{0x0p-1022f, -0x1.6a09e6p-1f, 0x1.6a09e6p-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.6a09e6p-1f, 0x1.6a09e6p-1f},
+            float3{0x0p-1022f, -0x1.8bc808p-1f, 0x1.44cf32p-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.8bc808p-1f, 0x1.44cf32p-1f},
+            float3{0x0p-1022f, -0x1.a9b664p-1f, 0x1.1c73b2p-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.a9b664p-1f, 0x1.1c73b2p-1f},
+            float3{0x0p-1022f, -0x1.c38b32p-1f, 0x1.e2b5ccp-2f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.c38b32p-1f, 0x1.e2b5ccp-2f},
+            float3{0x0p-1022f, -0x1.d906cp-1f, 0x1.87de2p-2f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.d906cp-1f, 0x1.87de2p-2f},
+            float3{0x0p-1022f, -0x1.e9f416p-1f, 0x1.294066p-2f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.e9f416p-1f, 0x1.294066p-2f},
+            float3{0x0p-1022f, -0x1.f6297ep-1f, 0x1.8f8b82p-3f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.f6297ep-1f, 0x1.8f8b82p-3f},
+            float3{0x0p-1022f, -0x1.fd88dap-1f, 0x1.917a6p-4f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.fd88dap-1f, 0x1.917a6p-4f},
+            float3{0x0p-1022f, -0x1p+0f, -0x1.777a5cp-24f},
+         },
+         {
+            float3{0x0p-1022f, -0x1p+0f, -0x1.777a5cp-24f},
+            float3{0x0p-1022f, -0x1.fd88dap-1f, -0x1.917a8ep-4f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.fd88dap-1f, -0x1.917a8ep-4f},
+            float3{0x0p-1022f, -0x1.f6297cp-1f, -0x1.8f8b9ap-3f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.f6297cp-1f, -0x1.8f8b9ap-3f},
+            float3{0x0p-1022f, -0x1.e9f414p-1f, -0x1.29407p-2f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.e9f414p-1f, -0x1.29407p-2f},
+            float3{0x0p-1022f, -0x1.d906bcp-1f, -0x1.87de2ap-2f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.d906bcp-1f, -0x1.87de2ap-2f},
+            float3{0x0p-1022f, -0x1.c38b2ep-1f, -0x1.e2b5d6p-2f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.c38b2ep-1f, -0x1.e2b5d6p-2f},
+            float3{0x0p-1022f, -0x1.a9b66p-1f, -0x1.1c73b6p-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.a9b66p-1f, -0x1.1c73b6p-1f},
+            float3{0x0p-1022f, -0x1.8bc804p-1f, -0x1.44cf36p-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.8bc804p-1f, -0x1.44cf36p-1f},
+            float3{0x0p-1022f, -0x1.6a09e2p-1f, -0x1.6a09eap-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.6a09e2p-1f, -0x1.6a09eap-1f},
+            float3{0x0p-1022f, -0x1.44cf34p-1f, -0x1.8bc806p-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.44cf34p-1f, -0x1.8bc806p-1f},
+            float3{0x0p-1022f, -0x1.1c73acp-1f, -0x1.a9b668p-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.1c73acp-1f, -0x1.a9b668p-1f},
+            float3{0x0p-1022f, -0x1.e2b5dp-2f, -0x1.c38b3p-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.e2b5dp-2f, -0x1.c38b3p-1f},
+            float3{0x0p-1022f, -0x1.87de16p-2f, -0x1.d906c2p-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.87de16p-2f, -0x1.d906c2p-1f},
+            float3{0x0p-1022f, -0x1.29405ap-2f, -0x1.e9f416p-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.29405ap-2f, -0x1.e9f416p-1f},
+            float3{0x0p-1022f, -0x1.8f8b8cp-3f, -0x1.f6297cp-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.8f8b8cp-3f, -0x1.f6297cp-1f},
+            float3{0x0p-1022f, -0x1.917a34p-4f, -0x1.fd88dap-1f},
+         },
+         {
+            float3{0x0p-1022f, -0x1.917a34p-4f, -0x1.fd88dap-1f},
+            float3{0x0p-1022f, 0x1.99bc5cp-27f, -0x1p+0f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.99bc5cp-27f, -0x1p+0f},
+            float3{0x0p-1022f, 0x1.917abap-4f, -0x1.fd88dap-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.917abap-4f, -0x1.fd88dap-1f},
+            float3{0x0p-1022f, 0x1.8f8b9p-3f, -0x1.f6297cp-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.8f8b9p-3f, -0x1.f6297cp-1f},
+            float3{0x0p-1022f, 0x1.29407ap-2f, -0x1.e9f412p-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.29407ap-2f, -0x1.e9f412p-1f},
+            float3{0x0p-1022f, 0x1.87de36p-2f, -0x1.d906bap-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.87de36p-2f, -0x1.d906bap-1f},
+            float3{0x0p-1022f, 0x1.e2b5d2p-2f, -0x1.c38b3p-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.e2b5d2p-2f, -0x1.c38b3p-1f},
+            float3{0x0p-1022f, 0x1.1c73bap-1f, -0x1.a9b65ep-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.1c73bap-1f, -0x1.a9b65ep-1f},
+            float3{0x0p-1022f, 0x1.44cf34p-1f, -0x1.8bc806p-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.44cf34p-1f, -0x1.8bc806p-1f},
+            float3{0x0p-1022f, 0x1.6a09eep-1f, -0x1.6a09dep-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.6a09eep-1f, -0x1.6a09dep-1f},
+            float3{0x0p-1022f, 0x1.8bc80ap-1f, -0x1.44cf2ep-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.8bc80ap-1f, -0x1.44cf2ep-1f},
+            float3{0x0p-1022f, 0x1.a9b662p-1f, -0x1.1c73b6p-1f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.a9b662p-1f, -0x1.1c73b6p-1f},
+            float3{0x0p-1022f, 0x1.c38b32p-1f, -0x1.e2b5c6p-2f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.c38b32p-1f, -0x1.e2b5c6p-2f},
+            float3{0x0p-1022f, 0x1.d906bep-1f, -0x1.87de2ap-2f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.d906bep-1f, -0x1.87de2ap-2f},
+            float3{0x0p-1022f, 0x1.e9f418p-1f, -0x1.29405p-2f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.e9f418p-1f, -0x1.29405p-2f},
+            float3{0x0p-1022f, 0x1.f6297ep-1f, -0x1.8f8b78p-3f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.f6297ep-1f, -0x1.8f8b78p-3f},
+            float3{0x0p-1022f, 0x1.fd88dcp-1f, -0x1.917a08p-4f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.fd88dcp-1f, -0x1.917a08p-4f},
+            float3{0x0p-1022f, 0x1p+0f, 0x1.777a5cp-23f},
+         },
+         {
+            float3{0x0p-1022f, 0x1p+0f, 0x0p-1022f},
+            float3{0x1.1be352p-4f, 0x1.fd88d8p-1f, 0x1.1be35p-4f},
+         },
+         {
+            float3{0x1.1be352p-4f, 0x1.fd88d8p-1f, 0x1.1be35p-4f},
+            float3{0x1.1a856p-3f, 0x1.f6297cp-1f, 0x1.1a855cp-3f},
+         },
+         {
+            float3{0x1.1a856p-3f, 0x1.f6297cp-1f, 0x1.1a855cp-3f},
+            float3{0x1.a4608ap-3f, 0x1.e9f414p-1f, 0x1.a46086p-3f},
+         },
+         {
+            float3{0x1.a4608ap-3f, 0x1.e9f414p-1f, 0x1.a46086p-3f},
+            float3{0x1.1517aap-2f, 0x1.d906bcp-1f, 0x1.1517a8p-2f},
+         },
+         {
+            float3{0x1.1517aap-2f, 0x1.d906bcp-1f, 0x1.1517a8p-2f},
+            float3{0x1.5553e6p-2f, 0x1.c38b2cp-1f, 0x1.5553e2p-2f},
+         },
+         {
+            float3{0x1.5553e6p-2f, 0x1.c38b2cp-1f, 0x1.5553e2p-2f},
+            float3{0x1.92469ep-2f, 0x1.a9b66p-1f, 0x1.92469ap-2f},
+         },
+         {
+            float3{0x1.92469ep-2f, 0x1.a9b66p-1f, 0x1.92469ap-2f},
+            float3{0x1.cb599p-2f, 0x1.8bc806p-1f, 0x1.cb598cp-2f},
+         },
+         {
+            float3{0x1.cb599p-2f, 0x1.8bc806p-1f, 0x1.cb598cp-2f},
+            float3{0x1p-1f, 0x1.6a09e4p-1f, 0x1.fffffcp-2f},
+         },
+         {
+            float3{0x1p-1f, 0x1.6a09e4p-1f, 0x1.fffffcp-2f},
+            float3{0x1.17dc14p-1f, 0x1.44cf32p-1f, 0x1.17dc12p-1f},
+         },
+         {
+            float3{0x1.17dc14p-1f, 0x1.44cf32p-1f, 0x1.17dc12p-1f},
+            float3{0x1.2d063p-1f, 0x1.1c73b2p-1f, 0x1.2d062ep-1f},
+         },
+         {
+            float3{0x1.2d063p-1f, 0x1.1c73b2p-1f, 0x1.2d062ep-1f},
+            float3{0x1.3f4a26p-1f, 0x1.e2b5ccp-2f, 0x1.3f4a22p-1f},
+         },
+         {
+            float3{0x1.3f4a26p-1f, 0x1.e2b5ccp-2f, 0x1.3f4a22p-1f},
+            float3{0x1.4e7aeap-1f, 0x1.87de2ap-2f, 0x1.4e7ae6p-1f},
+         },
+         {
+            float3{0x1.4e7aeap-1f, 0x1.87de2ap-2f, 0x1.4e7ae6p-1f},
+            float3{0x1.5a730ep-1f, 0x1.29406p-2f, 0x1.5a730ap-1f},
+         },
+         {
+            float3{0x1.5a730ep-1f, 0x1.29406p-2f, 0x1.5a730ap-1f},
+            float3{0x1.63150cp-1f, 0x1.8f8b78p-3f, 0x1.63150ap-1f},
+         },
+         {
+            float3{0x1.63150cp-1f, 0x1.8f8b78p-3f, 0x1.63150ap-1f},
+            float3{0x1.684b9cp-1f, 0x1.917a68p-4f, 0x1.684b9ap-1f},
+         },
+         {
+            float3{0x1.684b9cp-1f, 0x1.917a68p-4f, 0x1.684b9ap-1f},
+            float3{0x1.6a09e8p-1f, -0x1.777a5cp-25f, 0x1.6a09e4p-1f},
+         },
+         {
+            float3{0x1.6a09e8p-1f, -0x1.777a5cp-25f, 0x1.6a09e4p-1f},
+            float3{0x1.684b9cp-1f, -0x1.917a82p-4f, 0x1.684b9ap-1f},
+         },
+         {
+            float3{0x1.684b9cp-1f, -0x1.917a82p-4f, 0x1.684b9ap-1f},
+            float3{0x1.63150cp-1f, -0x1.8f8b84p-3f, 0x1.631508p-1f},
+         },
+         {
+            float3{0x1.63150cp-1f, -0x1.8f8b84p-3f, 0x1.631508p-1f},
+            float3{0x1.5a730cp-1f, -0x1.294064p-2f, 0x1.5a730ap-1f},
+         },
+         {
+            float3{0x1.5a730cp-1f, -0x1.294064p-2f, 0x1.5a730ap-1f},
+            float3{0x1.4e7aeap-1f, -0x1.87de3p-2f, 0x1.4e7ae6p-1f},
+         },
+         {
+            float3{0x1.4e7aeap-1f, -0x1.87de3p-2f, 0x1.4e7ae6p-1f},
+            float3{0x1.3f4a24p-1f, -0x1.e2b5d8p-2f, 0x1.3f4a2p-1f},
+         },
+         {
+            float3{0x1.3f4a24p-1f, -0x1.e2b5d8p-2f, 0x1.3f4a2p-1f},
+            float3{0x1.2d062cp-1f, -0x1.1c73b8p-1f, 0x1.2d062cp-1f},
+         },
+         {
+            float3{0x1.2d062cp-1f, -0x1.1c73b8p-1f, 0x1.2d062cp-1f},
+            float3{0x1.17dc16p-1f, -0x1.44cf32p-1f, 0x1.17dc12p-1f},
+         },
+         {
+            float3{0x1.17dc16p-1f, -0x1.44cf32p-1f, 0x1.17dc12p-1f},
+            float3{0x1p-1f, -0x1.6a09e4p-1f, 0x1.fffffcp-2f},
+         },
+         {
+            float3{0x1p-1f, -0x1.6a09e4p-1f, 0x1.fffffcp-2f},
+            float3{0x1.cb598cp-2f, -0x1.8bc806p-1f, 0x1.cb598ap-2f},
+         },
+         {
+            float3{0x1.cb598cp-2f, -0x1.8bc806p-1f, 0x1.cb598ap-2f},
+            float3{0x1.92469ap-2f, -0x1.a9b664p-1f, 0x1.924698p-2f},
+         },
+         {
+            float3{0x1.92469ap-2f, -0x1.a9b664p-1f, 0x1.924698p-2f},
+            float3{0x1.5553ep-2f, -0x1.c38b3p-1f, 0x1.5553dcp-2f},
+         },
+         {
+            float3{0x1.5553ep-2f, -0x1.c38b3p-1f, 0x1.5553dcp-2f},
+            float3{0x1.1517ap-2f, -0x1.d906cp-1f, 0x1.15179ep-2f},
+         },
+         {
+            float3{0x1.1517ap-2f, -0x1.d906cp-1f, 0x1.15179ep-2f},
+            float3{0x1.a4609p-3f, -0x1.e9f414p-1f, 0x1.a4608cp-3f},
+         },
+         {
+            float3{0x1.a4609p-3f, -0x1.e9f414p-1f, 0x1.a4608cp-3f},
+            float3{0x1.1a855ep-3f, -0x1.f6297cp-1f, 0x1.1a855ap-3f},
+         },
+         {
+            float3{0x1.1a855ep-3f, -0x1.f6297cp-1f, 0x1.1a855ap-3f},
+            float3{0x1.1be348p-4f, -0x1.fd88d8p-1f, 0x1.1be348p-4f},
+         },
+         {
+            float3{0x1.1be348p-4f, -0x1.fd88d8p-1f, 0x1.1be348p-4f},
+            float3{-0x1.0980c6p-24f, -0x1p+0f, -0x1.0980c4p-24f},
+         },
+         {
+            float3{-0x1.0980c6p-24f, -0x1p+0f, -0x1.0980c4p-24f},
+            float3{-0x1.1be36ap-4f, -0x1.fd88d8p-1f, -0x1.1be368p-4f},
+         },
+         {
+            float3{-0x1.1be36ap-4f, -0x1.fd88d8p-1f, -0x1.1be368p-4f},
+            float3{-0x1.1a856ep-3f, -0x1.f6297cp-1f, -0x1.1a856cp-3f},
+         },
+         {
+            float3{-0x1.1a856ep-3f, -0x1.f6297cp-1f, -0x1.1a856cp-3f},
+            float3{-0x1.a4609ep-3f, -0x1.e9f414p-1f, -0x1.a4609ap-3f},
+         },
+         {
+            float3{-0x1.a4609ep-3f, -0x1.e9f414p-1f, -0x1.a4609ap-3f},
+            float3{-0x1.1517a8p-2f, -0x1.d906bcp-1f, -0x1.1517a6p-2f},
+         },
+         {
+            float3{-0x1.1517a8p-2f, -0x1.d906bcp-1f, -0x1.1517a6p-2f},
+            float3{-0x1.5553e8p-2f, -0x1.c38b2cp-1f, -0x1.5553e4p-2f},
+         },
+         {
+            float3{-0x1.5553e8p-2f, -0x1.c38b2cp-1f, -0x1.5553e4p-2f},
+            float3{-0x1.9246ap-2f, -0x1.a9b66p-1f, -0x1.92469cp-2f},
+         },
+         {
+            float3{-0x1.9246ap-2f, -0x1.a9b66p-1f, -0x1.92469cp-2f},
+            float3{-0x1.cb5992p-2f, -0x1.8bc802p-1f, -0x1.cb598ep-2f},
+         },
+         {
+            float3{-0x1.cb5992p-2f, -0x1.8bc802p-1f, -0x1.cb598ep-2f},
+            float3{-0x1.000004p-1f, -0x1.6a09ep-1f, -0x1p-1f},
+         },
+         {
+            float3{-0x1.000004p-1f, -0x1.6a09ep-1f, -0x1p-1f},
+            float3{-0x1.17dc14p-1f, -0x1.44cf34p-1f, -0x1.17dc12p-1f},
+         },
+         {
+            float3{-0x1.17dc14p-1f, -0x1.44cf34p-1f, -0x1.17dc12p-1f},
+            float3{-0x1.2d0634p-1f, -0x1.1c73acp-1f, -0x1.2d063p-1f},
+         },
+         {
+            float3{-0x1.2d0634p-1f, -0x1.1c73acp-1f, -0x1.2d063p-1f},
+            float3{-0x1.3f4a26p-1f, -0x1.e2b5dp-2f, -0x1.3f4a22p-1f},
+         },
+         {
+            float3{-0x1.3f4a26p-1f, -0x1.e2b5dp-2f, -0x1.3f4a22p-1f},
+            float3{-0x1.4e7aeep-1f, -0x1.87de16p-2f, -0x1.4e7aeap-1f},
+         },
+         {
+            float3{-0x1.4e7aeep-1f, -0x1.87de16p-2f, -0x1.4e7aeap-1f},
+            float3{-0x1.5a730ep-1f, -0x1.29405ap-2f, -0x1.5a730ap-1f},
+         },
+         {
+            float3{-0x1.5a730ep-1f, -0x1.29405ap-2f, -0x1.5a730ap-1f},
+            float3{-0x1.63150cp-1f, -0x1.8f8b8cp-3f, -0x1.631508p-1f},
+         },
+         {
+            float3{-0x1.63150cp-1f, -0x1.8f8b8cp-3f, -0x1.631508p-1f},
+            float3{-0x1.684b9cp-1f, -0x1.917a34p-4f, -0x1.684b9ap-1f},
+         },
+         {
+            float3{-0x1.684b9cp-1f, -0x1.917a34p-4f, -0x1.684b9ap-1f},
+            float3{-0x1.6a09e8p-1f, 0x1.99bc5cp-27f, -0x1.6a09e4p-1f},
+         },
+         {
+            float3{-0x1.6a09e8p-1f, 0x1.99bc5cp-27f, -0x1.6a09e4p-1f},
+            float3{-0x1.684b9cp-1f, 0x1.917ab8p-4f, -0x1.684b9ap-1f},
+         },
+         {
+            float3{-0x1.684b9cp-1f, 0x1.917ab8p-4f, -0x1.684b9ap-1f},
+            float3{-0x1.63150cp-1f, 0x1.8f8b8ep-3f, -0x1.631508p-1f},
+         },
+         {
+            float3{-0x1.63150cp-1f, 0x1.8f8b8ep-3f, -0x1.631508p-1f},
+            float3{-0x1.5a730ap-1f, 0x1.294078p-2f, -0x1.5a7308p-1f},
+         },
+         {
+            float3{-0x1.5a730ap-1f, 0x1.294078p-2f, -0x1.5a7308p-1f},
+            float3{-0x1.4e7ae8p-1f, 0x1.87de36p-2f, -0x1.4e7ae4p-1f},
+         },
+         {
+            float3{-0x1.4e7ae8p-1f, 0x1.87de36p-2f, -0x1.4e7ae4p-1f},
+            float3{-0x1.3f4a26p-1f, 0x1.e2b5dp-2f, -0x1.3f4a22p-1f},
+         },
+         {
+            float3{-0x1.3f4a26p-1f, 0x1.e2b5dp-2f, -0x1.3f4a22p-1f},
+            float3{-0x1.2d062cp-1f, 0x1.1c73b8p-1f, -0x1.2d062ap-1f},
+         },
+         {
+            float3{-0x1.2d062cp-1f, 0x1.1c73b8p-1f, -0x1.2d062ap-1f},
+            float3{-0x1.17dc14p-1f, 0x1.44cf34p-1f, -0x1.17dc12p-1f},
+         },
+         {
+            float3{-0x1.17dc14p-1f, 0x1.44cf34p-1f, -0x1.17dc12p-1f},
+            float3{-0x1.fffff4p-2f, 0x1.6a09ecp-1f, -0x1.fffffp-2f},
+         },
+         {
+            float3{-0x1.fffff4p-2f, 0x1.6a09ecp-1f, -0x1.fffffp-2f},
+            float3{-0x1.cb5986p-2f, 0x1.8bc808p-1f, -0x1.cb5984p-2f},
+         },
+         {
+            float3{-0x1.cb5986p-2f, 0x1.8bc808p-1f, -0x1.cb5984p-2f},
+            float3{-0x1.9246ap-2f, 0x1.a9b66p-1f, -0x1.92469cp-2f},
+         },
+         {
+            float3{-0x1.9246ap-2f, 0x1.a9b66p-1f, -0x1.92469cp-2f},
+            float3{-0x1.5553dcp-2f, 0x1.c38b3p-1f, -0x1.5553d8p-2f},
+         },
+         {
+            float3{-0x1.5553dcp-2f, 0x1.c38b3p-1f, -0x1.5553d8p-2f},
+            float3{-0x1.1517a8p-2f, 0x1.d906bcp-1f, -0x1.1517a6p-2f},
+         },
+         {
+            float3{-0x1.1517a8p-2f, 0x1.d906bcp-1f, -0x1.1517a6p-2f},
+            float3{-0x1.a46072p-3f, 0x1.e9f418p-1f, -0x1.a4606ep-3f},
+         },
+         {
+            float3{-0x1.a46072p-3f, 0x1.e9f418p-1f, -0x1.a4606ep-3f},
+            float3{-0x1.1a8556p-3f, 0x1.f6297cp-1f, -0x1.1a8554p-3f},
+         },
+         {
+            float3{-0x1.1a8556p-3f, 0x1.f6297cp-1f, -0x1.1a8554p-3f},
+            float3{-0x1.1be30cp-4f, 0x1.fd88dcp-1f, -0x1.1be30ap-4f},
+         },
+         {
+            float3{-0x1.1be30cp-4f, 0x1.fd88dcp-1f, -0x1.1be30ap-4f},
+            float3{0x1.0980c6p-23f, 0x1p+0f, 0x1.0980c4p-23f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.fffffep-1f, 0x0p-1022f},
+            float3{0x1.917a6cp-4f, 0x1.fd88d8p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.917a6cp-4f, 0x1.fd88d8p-1f, 0x0p-1022f},
+            float3{0x1.8f8b84p-3f, 0x1.f6297ap-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.8f8b84p-3f, 0x1.f6297ap-1f, 0x0p-1022f},
+            float3{0x1.29406p-2f, 0x1.e9f414p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.29406p-2f, 0x1.e9f414p-1f, 0x0p-1022f},
+            float3{0x1.87de2ap-2f, 0x1.d906bap-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.87de2ap-2f, 0x1.d906bap-1f, 0x0p-1022f},
+            float3{0x1.e2b5d4p-2f, 0x1.c38b2cp-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.e2b5d4p-2f, 0x1.c38b2cp-1f, 0x0p-1022f},
+            float3{0x1.1c73b4p-1f, 0x1.a9b66p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.1c73b4p-1f, 0x1.a9b66p-1f, 0x0p-1022f},
+            float3{0x1.44cf32p-1f, 0x1.8bc806p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.44cf32p-1f, 0x1.8bc806p-1f, 0x0p-1022f},
+            float3{0x1.6a09e4p-1f, 0x1.6a09e4p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.6a09e4p-1f, 0x1.6a09e4p-1f, 0x0p-1022f},
+            float3{0x1.8bc806p-1f, 0x1.44cf32p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.8bc806p-1f, 0x1.44cf32p-1f, 0x0p-1022f},
+            float3{0x1.a9b664p-1f, 0x1.1c73b2p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.a9b664p-1f, 0x1.1c73b2p-1f, 0x0p-1022f},
+            float3{0x1.c38b3p-1f, 0x1.e2b5cep-2f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.c38b3p-1f, 0x1.e2b5cep-2f, 0x0p-1022f},
+            float3{0x1.d906bap-1f, 0x1.87de2ap-2f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.d906bap-1f, 0x1.87de2ap-2f, 0x0p-1022f},
+            float3{0x1.e9f414p-1f, 0x1.29406p-2f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.e9f414p-1f, 0x1.29406p-2f, 0x0p-1022f},
+            float3{0x1.f6297ep-1f, 0x1.8f8b78p-3f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.f6297ep-1f, 0x1.8f8b78p-3f, 0x0p-1022f},
+            float3{0x1.fd88d8p-1f, 0x1.917a6ap-4f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.fd88d8p-1f, 0x1.917a6ap-4f, 0x0p-1022f},
+            float3{0x1.fffffep-1f, -0x1.777a5cp-25f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.fffffep-1f, -0x1.777a5cp-25f, 0x0p-1022f},
+            float3{0x1.fd88d8p-1f, -0x1.917a8p-4f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.fd88d8p-1f, -0x1.917a8p-4f, 0x0p-1022f},
+            float3{0x1.f6297ap-1f, -0x1.8f8b84p-3f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.f6297ap-1f, -0x1.8f8b84p-3f, 0x0p-1022f},
+            float3{0x1.e9f414p-1f, -0x1.294064p-2f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.e9f414p-1f, -0x1.294064p-2f, 0x0p-1022f},
+            float3{0x1.d906bap-1f, -0x1.87de3p-2f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.d906bap-1f, -0x1.87de3p-2f, 0x0p-1022f},
+            float3{0x1.c38b2cp-1f, -0x1.e2b5d8p-2f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.c38b2cp-1f, -0x1.e2b5d8p-2f, 0x0p-1022f},
+            float3{0x1.a9b65ep-1f, -0x1.1c73b8p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.a9b65ep-1f, -0x1.1c73b8p-1f, 0x0p-1022f},
+            float3{0x1.8bc806p-1f, -0x1.44cf32p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.8bc806p-1f, -0x1.44cf32p-1f, 0x0p-1022f},
+            float3{0x1.6a09e4p-1f, -0x1.6a09e4p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.6a09e4p-1f, -0x1.6a09e4p-1f, 0x0p-1022f},
+            float3{0x1.44cf32p-1f, -0x1.8bc806p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.44cf32p-1f, -0x1.8bc806p-1f, 0x0p-1022f},
+            float3{0x1.1c73b2p-1f, -0x1.a9b664p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.1c73b2p-1f, -0x1.a9b664p-1f, 0x0p-1022f},
+            float3{0x1.e2b5cap-2f, -0x1.c38b32p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.e2b5cap-2f, -0x1.c38b32p-1f, 0x0p-1022f},
+            float3{0x1.87de2p-2f, -0x1.d906bep-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.87de2p-2f, -0x1.d906bep-1f, 0x0p-1022f},
+            float3{0x1.294064p-2f, -0x1.e9f414p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.294064p-2f, -0x1.e9f414p-1f, 0x0p-1022f},
+            float3{0x1.8f8b8p-3f, -0x1.f6297ep-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.8f8b8p-3f, -0x1.f6297ep-1f, 0x0p-1022f},
+            float3{0x1.917a5ep-4f, -0x1.fd88d8p-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x1.917a5ep-4f, -0x1.fd88d8p-1f, 0x0p-1022f},
+            float3{-0x1.777a5cp-24f, -0x1.fffffep-1f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.777a5cp-24f, -0x1.fffffep-1f, -0x0p-1022f},
+            float3{-0x1.917a8ep-4f, -0x1.fd88d8p-1f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.917a8ep-4f, -0x1.fd88d8p-1f, -0x0p-1022f},
+            float3{-0x1.8f8b9ap-3f, -0x1.f6297ap-1f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.8f8b9ap-3f, -0x1.f6297ap-1f, -0x0p-1022f},
+            float3{-0x1.29406ep-2f, -0x1.e9f414p-1f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.29406ep-2f, -0x1.e9f414p-1f, -0x0p-1022f},
+            float3{-0x1.87de2ap-2f, -0x1.d906bap-1f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.87de2ap-2f, -0x1.d906bap-1f, -0x0p-1022f},
+            float3{-0x1.e2b5d6p-2f, -0x1.c38b2cp-1f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.e2b5d6p-2f, -0x1.c38b2cp-1f, -0x0p-1022f},
+            float3{-0x1.1c73b4p-1f, -0x1.a9b65ep-1f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.1c73b4p-1f, -0x1.a9b65ep-1f, -0x0p-1022f},
+            float3{-0x1.44cf36p-1f, -0x1.8bc804p-1f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.44cf36p-1f, -0x1.8bc804p-1f, -0x0p-1022f},
+            float3{-0x1.6a09e8p-1f, -0x1.6a09e2p-1f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.6a09e8p-1f, -0x1.6a09e2p-1f, -0x0p-1022f},
+            float3{-0x1.8bc806p-1f, -0x1.44cf32p-1f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.8bc806p-1f, -0x1.44cf32p-1f, -0x0p-1022f},
+            float3{-0x1.a9b666p-1f, -0x1.1c73aap-1f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.a9b666p-1f, -0x1.1c73aap-1f, -0x0p-1022f},
+            float3{-0x1.c38b3p-1f, -0x1.e2b5dp-2f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.c38b3p-1f, -0x1.e2b5dp-2f, -0x0p-1022f},
+            float3{-0x1.d906cp-1f, -0x1.87de14p-2f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.d906cp-1f, -0x1.87de14p-2f, -0x0p-1022f},
+            float3{-0x1.e9f414p-1f, -0x1.29405ap-2f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.e9f414p-1f, -0x1.29405ap-2f, -0x0p-1022f},
+            float3{-0x1.f6297ap-1f, -0x1.8f8b8cp-3f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.f6297ap-1f, -0x1.8f8b8cp-3f, -0x0p-1022f},
+            float3{-0x1.fd88d8p-1f, -0x1.917a34p-4f, -0x0p-1022f},
+         },
+         {
+            float3{-0x1.fd88d8p-1f, -0x1.917a34p-4f, -0x0p-1022f},
+            float3{-0x1.fffffep-1f, 0x1.99bc5ap-27f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.fffffep-1f, 0x1.99bc5ap-27f, 0x0p-1022f},
+            float3{-0x1.fd88d8p-1f, 0x1.917ab8p-4f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.fd88d8p-1f, 0x1.917ab8p-4f, 0x0p-1022f},
+            float3{-0x1.f6297ap-1f, 0x1.8f8b8ep-3f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.f6297ap-1f, 0x1.8f8b8ep-3f, 0x0p-1022f},
+            float3{-0x1.e9f412p-1f, 0x1.294078p-2f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.e9f412p-1f, 0x1.294078p-2f, 0x0p-1022f},
+            float3{-0x1.d906b8p-1f, 0x1.87de36p-2f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.d906b8p-1f, 0x1.87de36p-2f, 0x0p-1022f},
+            float3{-0x1.c38b3p-1f, 0x1.e2b5dp-2f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.c38b3p-1f, 0x1.e2b5dp-2f, 0x0p-1022f},
+            float3{-0x1.a9b65ep-1f, 0x1.1c73b8p-1f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.a9b65ep-1f, 0x1.1c73b8p-1f, 0x0p-1022f},
+            float3{-0x1.8bc806p-1f, 0x1.44cf32p-1f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.8bc806p-1f, 0x1.44cf32p-1f, 0x0p-1022f},
+            float3{-0x1.6a09dep-1f, 0x1.6a09eep-1f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.6a09dep-1f, 0x1.6a09eep-1f, 0x0p-1022f},
+            float3{-0x1.44cf2ep-1f, 0x1.8bc80ap-1f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.44cf2ep-1f, 0x1.8bc80ap-1f, 0x0p-1022f},
+            float3{-0x1.1c73b4p-1f, 0x1.a9b66p-1f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.1c73b4p-1f, 0x1.a9b66p-1f, 0x0p-1022f},
+            float3{-0x1.e2b5c4p-2f, 0x1.c38b32p-1f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.e2b5c4p-2f, 0x1.c38b32p-1f, 0x0p-1022f},
+            float3{-0x1.87de2ap-2f, 0x1.d906bep-1f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.87de2ap-2f, 0x1.d906bep-1f, 0x0p-1022f},
+            float3{-0x1.29405p-2f, 0x1.e9f418p-1f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.29405p-2f, 0x1.e9f418p-1f, 0x0p-1022f},
+            float3{-0x1.8f8b78p-3f, 0x1.f6297ep-1f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.8f8b78p-3f, 0x1.f6297ep-1f, 0x0p-1022f},
+            float3{-0x1.917a06p-4f, 0x1.fd88dcp-1f, 0x0p-1022f},
+         },
+         {
+            float3{-0x1.917a06p-4f, 0x1.fd88dcp-1f, 0x0p-1022f},
+            float3{0x1.777a5cp-23f, 0x1.fffffep-1f, 0x0p-1022f},
+         },
+         {
+            float3{0x0p-1022f, 0x1.fffffep-1f, 0x0p-1022f},
+            float3{0x1.1be35p-4f, 0x1.fd88d8p-1f, -0x1.1be352p-4f},
+         },
+         {
+            float3{0x1.1be35p-4f, 0x1.fd88d8p-1f, -0x1.1be352p-4f},
+            float3{0x1.1a855cp-3f, 0x1.f6297ap-1f, -0x1.1a855ep-3f},
+         },
+         {
+            float3{0x1.1a855cp-3f, 0x1.f6297ap-1f, -0x1.1a855ep-3f},
+            float3{0x1.a46088p-3f, 0x1.e9f414p-1f, -0x1.a46088p-3f},
+         },
+         {
+            float3{0x1.a46088p-3f, 0x1.e9f414p-1f, -0x1.a46088p-3f},
+            float3{0x1.1517a8p-2f, 0x1.d906bcp-1f, -0x1.1517a8p-2f},
+         },
+         {
+            float3{0x1.1517a8p-2f, 0x1.d906bcp-1f, -0x1.1517a8p-2f},
+            float3{0x1.5553e4p-2f, 0x1.c38b2ap-1f, -0x1.5553e4p-2f},
+         },
+         {
+            float3{0x1.5553e4p-2f, 0x1.c38b2ap-1f, -0x1.5553e4p-2f},
+            float3{0x1.92469cp-2f, 0x1.a9b65ep-1f, -0x1.92469cp-2f},
+         },
+         {
+            float3{0x1.92469cp-2f, 0x1.a9b65ep-1f, -0x1.92469cp-2f},
+            float3{0x1.cb598ep-2f, 0x1.8bc804p-1f, -0x1.cb598ep-2f},
+         },
+         {
+            float3{0x1.cb598ep-2f, 0x1.8bc804p-1f, -0x1.cb598ep-2f},
+            float3{0x1.fffffep-2f, 0x1.6a09e4p-1f, -0x1.fffffep-2f},
+         },
+         {
+            float3{0x1.fffffep-2f, 0x1.6a09e4p-1f, -0x1.fffffep-2f},
+            float3{0x1.17dc12p-1f, 0x1.44cf32p-1f, -0x1.17dc14p-1f},
+         },
+         {
+            float3{0x1.17dc12p-1f, 0x1.44cf32p-1f, -0x1.17dc14p-1f},
+            float3{0x1.2d062ep-1f, 0x1.1c73bp-1f, -0x1.2d063p-1f},
+         },
+         {
+            float3{0x1.2d062ep-1f, 0x1.1c73bp-1f, -0x1.2d063p-1f},
+            float3{0x1.3f4a22p-1f, 0x1.e2b5ccp-2f, -0x1.3f4a24p-1f},
+         },
+         {
+            float3{0x1.3f4a22p-1f, 0x1.e2b5ccp-2f, -0x1.3f4a24p-1f},
+            float3{0x1.4e7ae8p-1f, 0x1.87de28p-2f, -0x1.4e7ae8p-1f},
+         },
+         {
+            float3{0x1.4e7ae8p-1f, 0x1.87de28p-2f, -0x1.4e7ae8p-1f},
+            float3{0x1.5a730cp-1f, 0x1.29406p-2f, -0x1.5a730cp-1f},
+         },
+         {
+            float3{0x1.5a730cp-1f, 0x1.29406p-2f, -0x1.5a730cp-1f},
+            float3{0x1.63150ap-1f, 0x1.8f8b76p-3f, -0x1.63150cp-1f},
+         },
+         {
+            float3{0x1.63150ap-1f, 0x1.8f8b76p-3f, -0x1.63150cp-1f},
+            float3{0x1.684b9cp-1f, 0x1.917a68p-4f, -0x1.684b9cp-1f},
+         },
+         {
+            float3{0x1.684b9cp-1f, 0x1.917a68p-4f, -0x1.684b9cp-1f},
+            float3{0x1.6a09e6p-1f, -0x1.777a5ap-25f, -0x1.6a09e6p-1f},
+         },
+         {
+            float3{0x1.6a09e6p-1f, -0x1.777a5ap-25f, -0x1.6a09e6p-1f},
+            float3{0x1.684b9cp-1f, -0x1.917a8p-4f, -0x1.684b9cp-1f},
+         },
+         {
+            float3{0x1.684b9cp-1f, -0x1.917a8p-4f, -0x1.684b9cp-1f},
+            float3{0x1.63150ap-1f, -0x1.8f8b7ep-3f, -0x1.63150ap-1f},
+         },
+         {
+            float3{0x1.63150ap-1f, -0x1.8f8b7ep-3f, -0x1.63150ap-1f},
+            float3{0x1.5a730ap-1f, -0x1.294068p-2f, -0x1.5a730cp-1f},
+         },
+         {
+            float3{0x1.5a730ap-1f, -0x1.294068p-2f, -0x1.5a730cp-1f},
+            float3{0x1.4e7ae8p-1f, -0x1.87de2cp-2f, -0x1.4e7ae8p-1f},
+         },
+         {
+            float3{0x1.4e7ae8p-1f, -0x1.87de2cp-2f, -0x1.4e7ae8p-1f},
+            float3{0x1.3f4a22p-1f, -0x1.e2b5d8p-2f, -0x1.3f4a22p-1f},
+         },
+         {
+            float3{0x1.3f4a22p-1f, -0x1.e2b5d8p-2f, -0x1.3f4a22p-1f},
+            float3{0x1.2d062cp-1f, -0x1.1c73b8p-1f, -0x1.2d062cp-1f},
+         },
+         {
+            float3{0x1.2d062cp-1f, -0x1.1c73b8p-1f, -0x1.2d062cp-1f},
+            float3{0x1.17dc14p-1f, -0x1.44cf32p-1f, -0x1.17dc14p-1f},
+         },
+         {
+            float3{0x1.17dc14p-1f, -0x1.44cf32p-1f, -0x1.17dc14p-1f},
+            float3{0x1.fffffep-2f, -0x1.6a09e4p-1f, -0x1.fffffep-2f},
+         },
+         {
+            float3{0x1.fffffep-2f, -0x1.6a09e4p-1f, -0x1.fffffep-2f},
+            float3{0x1.cb598cp-2f, -0x1.8bc804p-1f, -0x1.cb598cp-2f},
+         },
+         {
+            float3{0x1.cb598cp-2f, -0x1.8bc804p-1f, -0x1.cb598cp-2f},
+            float3{0x1.924698p-2f, -0x1.a9b66p-1f, -0x1.92469ap-2f},
+         },
+         {
+            float3{0x1.924698p-2f, -0x1.a9b66p-1f, -0x1.92469ap-2f},
+            float3{0x1.5553dep-2f, -0x1.c38b2ep-1f, -0x1.5553dep-2f},
+         },
+         {
+            float3{0x1.5553dep-2f, -0x1.c38b2ep-1f, -0x1.5553dep-2f},
+            float3{0x1.1517ap-2f, -0x1.d906bep-1f, -0x1.1517ap-2f},
+         },
+         {
+            float3{0x1.1517ap-2f, -0x1.d906bep-1f, -0x1.1517ap-2f},
+            float3{0x1.a4609p-3f, -0x1.e9f414p-1f, -0x1.a4608ep-3f},
+         },
+         {
+            float3{0x1.a4609p-3f, -0x1.e9f414p-1f, -0x1.a4608ep-3f},
+            float3{0x1.1a855cp-3f, -0x1.f6297cp-1f, -0x1.1a855cp-3f},
+         },
+         {
+            float3{0x1.1a855cp-3f, -0x1.f6297cp-1f, -0x1.1a855cp-3f},
+            float3{0x1.1be348p-4f, -0x1.fd88d8p-1f, -0x1.1be348p-4f},
+         },
+         {
+            float3{0x1.1be348p-4f, -0x1.fd88d8p-1f, -0x1.1be348p-4f},
+            float3{-0x1.0980c4p-24f, -0x1.fffffep-1f, 0x1.0980c6p-24f},
+         },
+         {
+            float3{-0x1.0980c4p-24f, -0x1.fffffep-1f, 0x1.0980c6p-24f},
+            float3{-0x1.1be368p-4f, -0x1.fd88d8p-1f, 0x1.1be36ap-4f},
+         },
+         {
+            float3{-0x1.1be368p-4f, -0x1.fd88d8p-1f, 0x1.1be36ap-4f},
+            float3{-0x1.1a856ep-3f, -0x1.f6297ap-1f, 0x1.1a856ep-3f},
+         },
+         {
+            float3{-0x1.1a856ep-3f, -0x1.f6297ap-1f, 0x1.1a856ep-3f},
+            float3{-0x1.a4609cp-3f, -0x1.e9f41p-1f, 0x1.a4609cp-3f},
+         },
+         {
+            float3{-0x1.a4609cp-3f, -0x1.e9f41p-1f, 0x1.a4609cp-3f},
+            float3{-0x1.1517a8p-2f, -0x1.d906bcp-1f, 0x1.1517a8p-2f},
+         },
+         {
+            float3{-0x1.1517a8p-2f, -0x1.d906bcp-1f, 0x1.1517a8p-2f},
+            float3{-0x1.5553e6p-2f, -0x1.c38b2ap-1f, 0x1.5553e6p-2f},
+         },
+         {
+            float3{-0x1.5553e6p-2f, -0x1.c38b2ap-1f, 0x1.5553e6p-2f},
+            float3{-0x1.9246ap-2f, -0x1.a9b66p-1f, 0x1.92469ep-2f},
+         },
+         {
+            float3{-0x1.9246ap-2f, -0x1.a9b66p-1f, 0x1.92469ep-2f},
+            float3{-0x1.cb5992p-2f, -0x1.8bc802p-1f, 0x1.cb5992p-2f},
+         },
+         {
+            float3{-0x1.cb5992p-2f, -0x1.8bc802p-1f, 0x1.cb5992p-2f},
+            float3{-0x1.000002p-1f, -0x1.6a09ep-1f, 0x1.000002p-1f},
+         },
+         {
+            float3{-0x1.000002p-1f, -0x1.6a09ep-1f, 0x1.000002p-1f},
+            float3{-0x1.17dc12p-1f, -0x1.44cf34p-1f, 0x1.17dc14p-1f},
+         },
+         {
+            float3{-0x1.17dc12p-1f, -0x1.44cf34p-1f, 0x1.17dc14p-1f},
+            float3{-0x1.2d0632p-1f, -0x1.1c73aap-1f, 0x1.2d0632p-1f},
+         },
+         {
+            float3{-0x1.2d0632p-1f, -0x1.1c73aap-1f, 0x1.2d0632p-1f},
+            float3{-0x1.3f4a22p-1f, -0x1.e2b5cep-2f, 0x1.3f4a24p-1f},
+         },
+         {
+            float3{-0x1.3f4a22p-1f, -0x1.e2b5cep-2f, 0x1.3f4a24p-1f},
+            float3{-0x1.4e7aeap-1f, -0x1.87de14p-2f, 0x1.4e7aecp-1f},
+         },
+         {
+            float3{-0x1.4e7aeap-1f, -0x1.87de14p-2f, 0x1.4e7aecp-1f},
+            float3{-0x1.5a730cp-1f, -0x1.294058p-2f, 0x1.5a730cp-1f},
+         },
+         {
+            float3{-0x1.5a730cp-1f, -0x1.294058p-2f, 0x1.5a730cp-1f},
+            float3{-0x1.63150ap-1f, -0x1.8f8b88p-3f, 0x1.63150ap-1f},
+         },
+         {
+            float3{-0x1.63150ap-1f, -0x1.8f8b88p-3f, 0x1.63150ap-1f},
+            float3{-0x1.684b9cp-1f, -0x1.917a2ep-4f, 0x1.684b9cp-1f},
+         },
+         {
+            float3{-0x1.684b9cp-1f, -0x1.917a2ep-4f, 0x1.684b9cp-1f},
+            float3{-0x1.6a09e6p-1f, 0x1.99bc58p-27f, 0x1.6a09e6p-1f},
+         },
+         {
+            float3{-0x1.6a09e6p-1f, 0x1.99bc58p-27f, 0x1.6a09e6p-1f},
+            float3{-0x1.684b9cp-1f, 0x1.917ab8p-4f, 0x1.684b9cp-1f},
+         },
+         {
+            float3{-0x1.684b9cp-1f, 0x1.917ab8p-4f, 0x1.684b9cp-1f},
+            float3{-0x1.63150ap-1f, 0x1.8f8b8ep-3f, 0x1.63150ap-1f},
+         },
+         {
+            float3{-0x1.63150ap-1f, 0x1.8f8b8ep-3f, 0x1.63150ap-1f},
+            float3{-0x1.5a7308p-1f, 0x1.294078p-2f, 0x1.5a730ap-1f},
+         },
+         {
+            float3{-0x1.5a7308p-1f, 0x1.294078p-2f, 0x1.5a730ap-1f},
+            float3{-0x1.4e7ae6p-1f, 0x1.87de34p-2f, 0x1.4e7ae6p-1f},
+         },
+         {
+            float3{-0x1.4e7ae6p-1f, 0x1.87de34p-2f, 0x1.4e7ae6p-1f},
+            float3{-0x1.3f4a22p-1f, 0x1.e2b5cep-2f, 0x1.3f4a24p-1f},
+         },
+         {
+            float3{-0x1.3f4a22p-1f, 0x1.e2b5cep-2f, 0x1.3f4a24p-1f},
+            float3{-0x1.2d062cp-1f, 0x1.1c73bap-1f, 0x1.2d062cp-1f},
+         },
+         {
+            float3{-0x1.2d062cp-1f, 0x1.1c73bap-1f, 0x1.2d062cp-1f},
+            float3{-0x1.17dc12p-1f, 0x1.44cf34p-1f, 0x1.17dc14p-1f},
+         },
+         {
+            float3{-0x1.17dc12p-1f, 0x1.44cf34p-1f, 0x1.17dc14p-1f},
+            float3{-0x1.fffff2p-2f, 0x1.6a09eap-1f, 0x1.fffff4p-2f},
+         },
+         {
+            float3{-0x1.fffff2p-2f, 0x1.6a09eap-1f, 0x1.fffff4p-2f},
+            float3{-0x1.cb5986p-2f, 0x1.8bc806p-1f, 0x1.cb5986p-2f},
+         },
+         {
+            float3{-0x1.cb5986p-2f, 0x1.8bc806p-1f, 0x1.cb5986p-2f},
+            float3{-0x1.9246ap-2f, 0x1.a9b65ep-1f, 0x1.92469ep-2f},
+         },
+         {
+            float3{-0x1.9246ap-2f, 0x1.a9b65ep-1f, 0x1.92469ep-2f},
+            float3{-0x1.5553d8p-2f, 0x1.c38b2ep-1f, 0x1.5553dap-2f},
+         },
+         {
+            float3{-0x1.5553d8p-2f, 0x1.c38b2ep-1f, 0x1.5553dap-2f},
+            float3{-0x1.1517a8p-2f, 0x1.d906bap-1f, 0x1.1517a8p-2f},
+         },
+         {
+            float3{-0x1.1517a8p-2f, 0x1.d906bap-1f, 0x1.1517a8p-2f},
+            float3{-0x1.a4606ep-3f, 0x1.e9f416p-1f, 0x1.a4607p-3f},
+         },
+         {
+            float3{-0x1.a4606ep-3f, 0x1.e9f416p-1f, 0x1.a4607p-3f},
+            float3{-0x1.1a8554p-3f, 0x1.f6297cp-1f, 0x1.1a8556p-3f},
+         },
+         {
+            float3{-0x1.1a8554p-3f, 0x1.f6297cp-1f, 0x1.1a8556p-3f},
+            float3{-0x1.1be30ap-4f, 0x1.fd88d6p-1f, 0x1.1be30ap-4f},
+         },
+         {
+            float3{-0x1.1be30ap-4f, 0x1.fd88d6p-1f, 0x1.1be30ap-4f},
+            float3{0x1.0980c4p-23f, 0x1.fffffep-1f, -0x1.0980c6p-23f},
+         },
+      }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment)
+      std::array<std::array<uint16, 3>, 512> line_sphere_indices = {{
+         {0, 16384, 32768},   {0, 32768, 49152},   {1, 16385, 32769},
+         {1, 32769, 49153},   {2, 16386, 32770},   {2, 32770, 49154},
+         {3, 16387, 32771},   {3, 32771, 49155},   {4, 16388, 32772},
+         {4, 32772, 49156},   {5, 16389, 32773},   {5, 32773, 49157},
+         {6, 16390, 32774},   {6, 32774, 49158},   {7, 16391, 32775},
+         {7, 32775, 49159},   {8, 16392, 32776},   {8, 32776, 49160},
+         {9, 16393, 32777},   {9, 32777, 49161},   {10, 16394, 32778},
+         {10, 32778, 49162},  {11, 16395, 32779},  {11, 32779, 49163},
+         {12, 16396, 32780},  {12, 32780, 49164},  {13, 16397, 32781},
+         {13, 32781, 49165},  {14, 16398, 32782},  {14, 32782, 49166},
+         {15, 16399, 32783},  {15, 32783, 49167},  {16, 16400, 32784},
+         {16, 32784, 49168},  {17, 16401, 32785},  {17, 32785, 49169},
+         {18, 16402, 32786},  {18, 32786, 49170},  {19, 16403, 32787},
+         {19, 32787, 49171},  {20, 16404, 32788},  {20, 32788, 49172},
+         {21, 16405, 32789},  {21, 32789, 49173},  {22, 16406, 32790},
+         {22, 32790, 49174},  {23, 16407, 32791},  {23, 32791, 49175},
+         {24, 16408, 32792},  {24, 32792, 49176},  {25, 16409, 32793},
+         {25, 32793, 49177},  {26, 16410, 32794},  {26, 32794, 49178},
+         {27, 16411, 32795},  {27, 32795, 49179},  {28, 16412, 32796},
+         {28, 32796, 49180},  {29, 16413, 32797},  {29, 32797, 49181},
+         {30, 16414, 32798},  {30, 32798, 49182},  {31, 16415, 32799},
+         {31, 32799, 49183},  {32, 16416, 32800},  {32, 32800, 49184},
+         {33, 16417, 32801},  {33, 32801, 49185},  {34, 16418, 32802},
+         {34, 32802, 49186},  {35, 16419, 32803},  {35, 32803, 49187},
+         {36, 16420, 32804},  {36, 32804, 49188},  {37, 16421, 32805},
+         {37, 32805, 49189},  {38, 16422, 32806},  {38, 32806, 49190},
+         {39, 16423, 32807},  {39, 32807, 49191},  {40, 16424, 32808},
+         {40, 32808, 49192},  {41, 16425, 32809},  {41, 32809, 49193},
+         {42, 16426, 32810},  {42, 32810, 49194},  {43, 16427, 32811},
+         {43, 32811, 49195},  {44, 16428, 32812},  {44, 32812, 49196},
+         {45, 16429, 32813},  {45, 32813, 49197},  {46, 16430, 32814},
+         {46, 32814, 49198},  {47, 16431, 32815},  {47, 32815, 49199},
+         {48, 16432, 32816},  {48, 32816, 49200},  {49, 16433, 32817},
+         {49, 32817, 49201},  {50, 16434, 32818},  {50, 32818, 49202},
+         {51, 16435, 32819},  {51, 32819, 49203},  {52, 16436, 32820},
+         {52, 32820, 49204},  {53, 16437, 32821},  {53, 32821, 49205},
+         {54, 16438, 32822},  {54, 32822, 49206},  {55, 16439, 32823},
+         {55, 32823, 49207},  {56, 16440, 32824},  {56, 32824, 49208},
+         {57, 16441, 32825},  {57, 32825, 49209},  {58, 16442, 32826},
+         {58, 32826, 49210},  {59, 16443, 32827},  {59, 32827, 49211},
+         {60, 16444, 32828},  {60, 32828, 49212},  {61, 16445, 32829},
+         {61, 32829, 49213},  {62, 16446, 32830},  {62, 32830, 49214},
+         {63, 16447, 32831},  {63, 32831, 49215},  {64, 16448, 32832},
+         {64, 32832, 49216},  {65, 16449, 32833},  {65, 32833, 49217},
+         {66, 16450, 32834},  {66, 32834, 49218},  {67, 16451, 32835},
+         {67, 32835, 49219},  {68, 16452, 32836},  {68, 32836, 49220},
+         {69, 16453, 32837},  {69, 32837, 49221},  {70, 16454, 32838},
+         {70, 32838, 49222},  {71, 16455, 32839},  {71, 32839, 49223},
+         {72, 16456, 32840},  {72, 32840, 49224},  {73, 16457, 32841},
+         {73, 32841, 49225},  {74, 16458, 32842},  {74, 32842, 49226},
+         {75, 16459, 32843},  {75, 32843, 49227},  {76, 16460, 32844},
+         {76, 32844, 49228},  {77, 16461, 32845},  {77, 32845, 49229},
+         {78, 16462, 32846},  {78, 32846, 49230},  {79, 16463, 32847},
+         {79, 32847, 49231},  {80, 16464, 32848},  {80, 32848, 49232},
+         {81, 16465, 32849},  {81, 32849, 49233},  {82, 16466, 32850},
+         {82, 32850, 49234},  {83, 16467, 32851},  {83, 32851, 49235},
+         {84, 16468, 32852},  {84, 32852, 49236},  {85, 16469, 32853},
+         {85, 32853, 49237},  {86, 16470, 32854},  {86, 32854, 49238},
+         {87, 16471, 32855},  {87, 32855, 49239},  {88, 16472, 32856},
+         {88, 32856, 49240},  {89, 16473, 32857},  {89, 32857, 49241},
+         {90, 16474, 32858},  {90, 32858, 49242},  {91, 16475, 32859},
+         {91, 32859, 49243},  {92, 16476, 32860},  {92, 32860, 49244},
+         {93, 16477, 32861},  {93, 32861, 49245},  {94, 16478, 32862},
+         {94, 32862, 49246},  {95, 16479, 32863},  {95, 32863, 49247},
+         {96, 16480, 32864},  {96, 32864, 49248},  {97, 16481, 32865},
+         {97, 32865, 49249},  {98, 16482, 32866},  {98, 32866, 49250},
+         {99, 16483, 32867},  {99, 32867, 49251},  {100, 16484, 32868},
+         {100, 32868, 49252}, {101, 16485, 32869}, {101, 32869, 49253},
+         {102, 16486, 32870}, {102, 32870, 49254}, {103, 16487, 32871},
+         {103, 32871, 49255}, {104, 16488, 32872}, {104, 32872, 49256},
+         {105, 16489, 32873}, {105, 32873, 49257}, {106, 16490, 32874},
+         {106, 32874, 49258}, {107, 16491, 32875}, {107, 32875, 49259},
+         {108, 16492, 32876}, {108, 32876, 49260}, {109, 16493, 32877},
+         {109, 32877, 49261}, {110, 16494, 32878}, {110, 32878, 49262},
+         {111, 16495, 32879}, {111, 32879, 49263}, {112, 16496, 32880},
+         {112, 32880, 49264}, {113, 16497, 32881}, {113, 32881, 49265},
+         {114, 16498, 32882}, {114, 32882, 49266}, {115, 16499, 32883},
+         {115, 32883, 49267}, {116, 16500, 32884}, {116, 32884, 49268},
+         {117, 16501, 32885}, {117, 32885, 49269}, {118, 16502, 32886},
+         {118, 32886, 49270}, {119, 16503, 32887}, {119, 32887, 49271},
+         {120, 16504, 32888}, {120, 32888, 49272}, {121, 16505, 32889},
+         {121, 32889, 49273}, {122, 16506, 32890}, {122, 32890, 49274},
+         {123, 16507, 32891}, {123, 32891, 49275}, {124, 16508, 32892},
+         {124, 32892, 49276}, {125, 16509, 32893}, {125, 32893, 49277},
+         {126, 16510, 32894}, {126, 32894, 49278}, {127, 16511, 32895},
+         {127, 32895, 49279}, {128, 16512, 32896}, {128, 32896, 49280},
+         {129, 16513, 32897}, {129, 32897, 49281}, {130, 16514, 32898},
+         {130, 32898, 49282}, {131, 16515, 32899}, {131, 32899, 49283},
+         {132, 16516, 32900}, {132, 32900, 49284}, {133, 16517, 32901},
+         {133, 32901, 49285}, {134, 16518, 32902}, {134, 32902, 49286},
+         {135, 16519, 32903}, {135, 32903, 49287}, {136, 16520, 32904},
+         {136, 32904, 49288}, {137, 16521, 32905}, {137, 32905, 49289},
+         {138, 16522, 32906}, {138, 32906, 49290}, {139, 16523, 32907},
+         {139, 32907, 49291}, {140, 16524, 32908}, {140, 32908, 49292},
+         {141, 16525, 32909}, {141, 32909, 49293}, {142, 16526, 32910},
+         {142, 32910, 49294}, {143, 16527, 32911}, {143, 32911, 49295},
+         {144, 16528, 32912}, {144, 32912, 49296}, {145, 16529, 32913},
+         {145, 32913, 49297}, {146, 16530, 32914}, {146, 32914, 49298},
+         {147, 16531, 32915}, {147, 32915, 49299}, {148, 16532, 32916},
+         {148, 32916, 49300}, {149, 16533, 32917}, {149, 32917, 49301},
+         {150, 16534, 32918}, {150, 32918, 49302}, {151, 16535, 32919},
+         {151, 32919, 49303}, {152, 16536, 32920}, {152, 32920, 49304},
+         {153, 16537, 32921}, {153, 32921, 49305}, {154, 16538, 32922},
+         {154, 32922, 49306}, {155, 16539, 32923}, {155, 32923, 49307},
+         {156, 16540, 32924}, {156, 32924, 49308}, {157, 16541, 32925},
+         {157, 32925, 49309}, {158, 16542, 32926}, {158, 32926, 49310},
+         {159, 16543, 32927}, {159, 32927, 49311}, {160, 16544, 32928},
+         {160, 32928, 49312}, {161, 16545, 32929}, {161, 32929, 49313},
+         {162, 16546, 32930}, {162, 32930, 49314}, {163, 16547, 32931},
+         {163, 32931, 49315}, {164, 16548, 32932}, {164, 32932, 49316},
+         {165, 16549, 32933}, {165, 32933, 49317}, {166, 16550, 32934},
+         {166, 32934, 49318}, {167, 16551, 32935}, {167, 32935, 49319},
+         {168, 16552, 32936}, {168, 32936, 49320}, {169, 16553, 32937},
+         {169, 32937, 49321}, {170, 16554, 32938}, {170, 32938, 49322},
+         {171, 16555, 32939}, {171, 32939, 49323}, {172, 16556, 32940},
+         {172, 32940, 49324}, {173, 16557, 32941}, {173, 32941, 49325},
+         {174, 16558, 32942}, {174, 32942, 49326}, {175, 16559, 32943},
+         {175, 32943, 49327}, {176, 16560, 32944}, {176, 32944, 49328},
+         {177, 16561, 32945}, {177, 32945, 49329}, {178, 16562, 32946},
+         {178, 32946, 49330}, {179, 16563, 32947}, {179, 32947, 49331},
+         {180, 16564, 32948}, {180, 32948, 49332}, {181, 16565, 32949},
+         {181, 32949, 49333}, {182, 16566, 32950}, {182, 32950, 49334},
+         {183, 16567, 32951}, {183, 32951, 49335}, {184, 16568, 32952},
+         {184, 32952, 49336}, {185, 16569, 32953}, {185, 32953, 49337},
+         {186, 16570, 32954}, {186, 32954, 49338}, {187, 16571, 32955},
+         {187, 32955, 49339}, {188, 16572, 32956}, {188, 32956, 49340},
+         {189, 16573, 32957}, {189, 32957, 49341}, {190, 16574, 32958},
+         {190, 32958, 49342}, {191, 16575, 32959}, {191, 32959, 49343},
+         {192, 16576, 32960}, {192, 32960, 49344}, {193, 16577, 32961},
+         {193, 32961, 49345}, {194, 16578, 32962}, {194, 32962, 49346},
+         {195, 16579, 32963}, {195, 32963, 49347}, {196, 16580, 32964},
+         {196, 32964, 49348}, {197, 16581, 32965}, {197, 32965, 49349},
+         {198, 16582, 32966}, {198, 32966, 49350}, {199, 16583, 32967},
+         {199, 32967, 49351}, {200, 16584, 32968}, {200, 32968, 49352},
+         {201, 16585, 32969}, {201, 32969, 49353}, {202, 16586, 32970},
+         {202, 32970, 49354}, {203, 16587, 32971}, {203, 32971, 49355},
+         {204, 16588, 32972}, {204, 32972, 49356}, {205, 16589, 32973},
+         {205, 32973, 49357}, {206, 16590, 32974}, {206, 32974, 49358},
+         {207, 16591, 32975}, {207, 32975, 49359}, {208, 16592, 32976},
+         {208, 32976, 49360}, {209, 16593, 32977}, {209, 32977, 49361},
+         {210, 16594, 32978}, {210, 32978, 49362}, {211, 16595, 32979},
+         {211, 32979, 49363}, {212, 16596, 32980}, {212, 32980, 49364},
+         {213, 16597, 32981}, {213, 32981, 49365}, {214, 16598, 32982},
+         {214, 32982, 49366}, {215, 16599, 32983}, {215, 32983, 49367},
+         {216, 16600, 32984}, {216, 32984, 49368}, {217, 16601, 32985},
+         {217, 32985, 49369}, {218, 16602, 32986}, {218, 32986, 49370},
+         {219, 16603, 32987}, {219, 32987, 49371}, {220, 16604, 32988},
+         {220, 32988, 49372}, {221, 16605, 32989}, {221, 32989, 49373},
+         {222, 16606, 32990}, {222, 32990, 49374}, {223, 16607, 32991},
+         {223, 32991, 49375}, {224, 16608, 32992}, {224, 32992, 49376},
+         {225, 16609, 32993}, {225, 32993, 49377}, {226, 16610, 32994},
+         {226, 32994, 49378}, {227, 16611, 32995}, {227, 32995, 49379},
+         {228, 16612, 32996}, {228, 32996, 49380}, {229, 16613, 32997},
+         {229, 32997, 49381}, {230, 16614, 32998}, {230, 32998, 49382},
+         {231, 16615, 32999}, {231, 32999, 49383}, {232, 16616, 33000},
+         {232, 33000, 49384}, {233, 16617, 33001}, {233, 33001, 49385},
+         {234, 16618, 33002}, {234, 33002, 49386}, {235, 16619, 33003},
+         {235, 33003, 49387}, {236, 16620, 33004}, {236, 33004, 49388},
+         {237, 16621, 33005}, {237, 33005, 49389}, {238, 16622, 33006},
+         {238, 33006, 49390}, {239, 16623, 33007}, {239, 33007, 49391},
+         {240, 16624, 33008}, {240, 33008, 49392}, {241, 16625, 33009},
+         {241, 33009, 49393}, {242, 16626, 33010}, {242, 33010, 49394},
+         {243, 16627, 33011}, {243, 33011, 49395}, {244, 16628, 33012},
+         {244, 33012, 49396}, {245, 16629, 33013}, {245, 33013, 49397},
+         {246, 16630, 33014}, {246, 33014, 49398}, {247, 16631, 33015},
+         {247, 33015, 49399}, {248, 16632, 33016}, {248, 33016, 49400},
+         {249, 16633, 33017}, {249, 33017, 49401}, {250, 16634, 33018},
+         {250, 33018, 49402}, {251, 16635, 33019}, {251, 33019, 49403},
+         {252, 16636, 33020}, {252, 33020, 49404}, {253, 16637, 33021},
+         {253, 33021, 49405}, {254, 16638, 33022}, {254, 33022, 49406},
+         {255, 16639, 33023}, {255, 33023, 49407},
+      }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment) std::array<std::array<float3, 2>, 12> line_box_vertices = {{
+      {
+         float3{-0x1p+0f, 0x1p+0f, -0x1p+0f},
+         float3{0x1p+0f, 0x1p+0f, -0x1p+0f},
+      },
+      {
+         float3{0x1p+0f, 0x1p+0f, -0x1p+0f},
+         float3{0x1p+0f, 0x1p+0f, 0x1p+0f},
+      },
+      {
+         float3{0x1p+0f, 0x1p+0f, 0x1p+0f},
+         float3{-0x1p+0f, 0x1p+0f, 0x1p+0f},
+      },
+      {
+         float3{-0x1p+0f, 0x1p+0f, 0x1p+0f},
+         float3{-0x1p+0f, 0x1p+0f, -0x1p+0f},
+      },
+      {
+         float3{-0x1p+0f, -0x1p+0f, -0x1p+0f},
+         float3{0x1p+0f, -0x1p+0f, -0x1p+0f},
+      },
+      {
+         float3{0x1p+0f, -0x1p+0f, -0x1p+0f},
+         float3{0x1p+0f, -0x1p+0f, 0x1p+0f},
+      },
+      {
+         float3{0x1p+0f, -0x1p+0f, 0x1p+0f},
+         float3{-0x1p+0f, -0x1p+0f, 0x1p+0f},
+      },
+      {
+         float3{-0x1p+0f, -0x1p+0f, 0x1p+0f},
+         float3{-0x1p+0f, -0x1p+0f, -0x1p+0f},
+      },
+      {
+         float3{-0x1p+0f, 0x1p+0f, -0x1p+0f},
+         float3{-0x1p+0f, -0x1p+0f, -0x1p+0f},
+      },
+      {
+         float3{0x1p+0f, 0x1p+0f, -0x1p+0f},
+         float3{0x1p+0f, -0x1p+0f, -0x1p+0f},
+      },
+      {
+         float3{0x1p+0f, 0x1p+0f, 0x1p+0f},
+         float3{0x1p+0f, -0x1p+0f, 0x1p+0f},
+      },
+      {
+         float3{-0x1p+0f, 0x1p+0f, 0x1p+0f},
+         float3{-0x1p+0f, -0x1p+0f, 0x1p+0f},
+      },
+   }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment) std::array<std::array<uint16, 3>, 24> line_box_indices = {{
+      {0, 16384, 32768},  {0, 32768, 49152},  {1, 16385, 32769},
+      {1, 32769, 49153},  {2, 16386, 32770},  {2, 32770, 49154},
+      {3, 16387, 32771},  {3, 32771, 49155},  {4, 16388, 32772},
+      {4, 32772, 49156},  {5, 16389, 32773},  {5, 32773, 49157},
+      {6, 16390, 32774},  {6, 32774, 49158},  {7, 16391, 32775},
+      {7, 32775, 49159},  {8, 16392, 32776},  {8, 32776, 49160},
+      {9, 16393, 32777},  {9, 32777, 49161},  {10, 16394, 32778},
+      {10, 32778, 49162}, {11, 16395, 32779}, {11, 32779, 49163},
+   }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment)
+      std::array<std::array<float3, 2>, 18> line_arrow_vertices = {{
+         {
+            float3{0x1.391276p-1f, 0x1.77afa8p-2f, 0x1.5dc832p-4f},
+            float3{0x1.391276p-1f, -0x1.77afa8p-2f, 0x1.5dc832p-4f},
+         },
+         {
+            float3{-0x1.391276p-1f, 0x1.77afa8p-2f, 0x1.5dc832p-4f},
+            float3{-0x1.391276p-1f, -0x1.77afa8p-2f, 0x1.5dc832p-4f},
+         },
+         {
+            float3{-0x1.391276p-1f, 0x1.77afa8p-2f, 0x1.5dc832p-4f},
+            float3{0x0p-1022f, 0x0p-1022f, 0x1.00aa54p+0f},
+         },
+         {
+            float3{-0x1.391276p-1f, -0x1.77afa8p-2f, 0x1.5dc832p-4f},
+            float3{0x0p-1022f, 0x0p-1022f, 0x1.00aa54p+0f},
+         },
+         {
+            float3{0x1.391276p-1f, -0x1.77afa8p-2f, 0x1.5dc832p-4f},
+            float3{0x0p-1022f, 0x0p-1022f, 0x1.00aa54p+0f},
+         },
+         {
+            float3{0x1.391276p-1f, 0x1.77afa8p-2f, 0x1.5dc832p-4f},
+            float3{0x0p-1022f, 0x0p-1022f, 0x1.00aa54p+0f},
+         },
+         {
+            float3{0x1.391298p-2f, -0x1.77afa8p-2f, 0x1.5dc832p-4f},
+            float3{0x1.391298p-2f, -0x1.77afa8p-2f, -0x1.f82752p-1f},
+         },
+         {
+            float3{0x1.391298p-2f, -0x1.77afa8p-2f, -0x1.f82752p-1f},
+            float3{0x1.391298p-2f, 0x1.77afa8p-2f, -0x1.f82752p-1f},
+         },
+         {
+            float3{0x1.391298p-2f, 0x1.77afa8p-2f, -0x1.f82752p-1f},
+            float3{0x1.391298p-2f, 0x1.77afa8p-2f, 0x1.5dc832p-4f},
+         },
+         {
+            float3{-0x1.391298p-2f, -0x1.77afa8p-2f, -0x1.f82752p-1f},
+            float3{-0x1.391298p-2f, -0x1.77afa8p-2f, 0x1.5dc832p-4f},
+         },
+         {
+            float3{-0x1.391298p-2f, 0x1.77afa8p-2f, 0x1.5dc832p-4f},
+            float3{-0x1.391298p-2f, 0x1.77afa8p-2f, -0x1.f82752p-1f},
+         },
+         {
+            float3{-0x1.391298p-2f, 0x1.77afa8p-2f, -0x1.f82752p-1f},
+            float3{-0x1.391298p-2f, -0x1.77afa8p-2f, -0x1.f82752p-1f},
+         },
+         {
+            float3{0x1.391298p-2f, -0x1.77afa8p-2f, -0x1.f82752p-1f},
+            float3{-0x1.391298p-2f, -0x1.77afa8p-2f, -0x1.f82752p-1f},
+         },
+         {
+            float3{-0x1.391298p-2f, 0x1.77afa8p-2f, -0x1.f82752p-1f},
+            float3{0x1.391298p-2f, 0x1.77afa8p-2f, -0x1.f82752p-1f},
+         },
+         {
+            float3{0x1.391276p-1f, 0x1.77afa8p-2f, 0x1.5dc832p-4f},
+            float3{0x1.391298p-2f, 0x1.77afa8p-2f, 0x1.5dc832p-4f},
+         },
+         {
+            float3{0x1.391276p-1f, -0x1.77afa8p-2f, 0x1.5dc832p-4f},
+            float3{0x1.391298p-2f, -0x1.77afa8p-2f, 0x1.5dc832p-4f},
+         },
+         {
+            float3{-0x1.391276p-1f, 0x1.77afa8p-2f, 0x1.5dc832p-4f},
+            float3{-0x1.391298p-2f, 0x1.77afa8p-2f, 0x1.5dc832p-4f},
+         },
+         {
+            float3{-0x1.391276p-1f, -0x1.77afa8p-2f, 0x1.5dc832p-4f},
+            float3{-0x1.391298p-2f, -0x1.77afa8p-2f, 0x1.5dc832p-4f},
+         },
+      }};
+
+   alignas(gpu::raw_uav_srv_byte_alignment) std::array<std::array<uint16, 3>, 36> line_arrow_indices = {{
+      {0, 16384, 32768},  {0, 32768, 49152},  {1, 16385, 32769},
+      {1, 32769, 49153},  {2, 16386, 32770},  {2, 32770, 49154},
+      {3, 16387, 32771},  {3, 32771, 49155},  {4, 16388, 32772},
+      {4, 32772, 49156},  {5, 16389, 32773},  {5, 32773, 49157},
+      {6, 16390, 32774},  {6, 32774, 49158},  {7, 16391, 32775},
+      {7, 32775, 49159},  {8, 16392, 32776},  {8, 32776, 49160},
+      {9, 16393, 32777},  {9, 32777, 49161},  {10, 16394, 32778},
+      {10, 32778, 49162}, {11, 16395, 32779}, {11, 32779, 49163},
+      {12, 16396, 32780}, {12, 32780, 49164}, {13, 16397, 32781},
+      {13, 32781, 49165}, {14, 16398, 32782}, {14, 32782, 49166},
+      {15, 16399, 32783}, {15, 32783, 49167}, {16, 16400, 32784},
+      {16, 32784, 49168}, {17, 16401, 32785}, {17, 32785, 49169},
+   }};
 };
 
 constexpr geometric_shapes_buffer shapes_buffer;
@@ -1152,6 +3652,116 @@ void geometric_shapes::init_shapes(gpu::device& device)
                gpu_address + offsetof(geometric_shapes_buffer, light_icon_vertices),
             .size_in_bytes = sizeof(geometric_shapes_buffer::light_icon_vertices),
             .stride_in_bytes = sizeof(float2),
+         },
+   };
+
+   _line_circle_32 = {
+      .index_count =
+         static_cast<uint32>(shapes_buffer.line_circle_32_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location = gpu_address + offsetof(geometric_shapes_buffer,
+                                                      line_circle_32_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::line_circle_32_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location = gpu_address + offsetof(geometric_shapes_buffer,
+                                                      line_circle_32_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::line_circle_32_vertices),
+            .stride_in_bytes = sizeof(
+               decltype(geometric_shapes_buffer::line_circle_32_vertices)::value_type),
+         },
+   };
+
+   _line_cone = {
+      .index_count = static_cast<uint32>(shapes_buffer.line_cone_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, line_cone_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::line_cone_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, line_cone_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::line_cone_vertices),
+            .stride_in_bytes = sizeof(
+               decltype(geometric_shapes_buffer::line_cone_vertices)::value_type),
+         },
+   };
+
+   _line_cylinder = {
+      .index_count =
+         static_cast<uint32>(shapes_buffer.line_cylinder_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location = gpu_address + offsetof(geometric_shapes_buffer,
+                                                      line_cylinder_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::line_cylinder_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location = gpu_address + offsetof(geometric_shapes_buffer,
+                                                      line_cylinder_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::line_cylinder_vertices),
+            .stride_in_bytes = sizeof(
+               decltype(geometric_shapes_buffer::line_cylinder_vertices)::value_type),
+         },
+   };
+
+   _line_sphere = {
+      .index_count = static_cast<uint32>(shapes_buffer.line_sphere_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, line_sphere_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::line_sphere_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location = gpu_address + offsetof(geometric_shapes_buffer,
+                                                      line_sphere_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::line_sphere_vertices),
+            .stride_in_bytes = sizeof(
+               decltype(geometric_shapes_buffer::line_sphere_vertices)::value_type),
+         },
+   };
+
+   _line_box = {
+      .index_count = static_cast<uint32>(shapes_buffer.line_box_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, line_box_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::line_box_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, line_box_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::line_box_vertices),
+            .stride_in_bytes = sizeof(
+               decltype(geometric_shapes_buffer::line_box_vertices)::value_type),
+         },
+   };
+
+   _line_arrow = {
+      .index_count = static_cast<uint32>(shapes_buffer.line_arrow_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, line_arrow_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::line_arrow_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, line_arrow_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::line_arrow_vertices),
+            .stride_in_bytes = sizeof(
+               decltype(geometric_shapes_buffer::line_arrow_vertices)::value_type),
          },
    };
 }

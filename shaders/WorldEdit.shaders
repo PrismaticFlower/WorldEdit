@@ -67,6 +67,7 @@ meta_draw_shapeVS
 meta_draw_sphereVS
 meta_draw_linePS
 meta_draw_lineVS
+meta_draw_line_shapeVS
 meta_draw_iconVS
 meta_draw_icon_circleVS .entrypoint = mainVS .file = meta_draw_icon_circle.hlsl
 meta_draw_icon_circlePS .entrypoint = mainPS .file = meta_draw_icon_circle.hlsl

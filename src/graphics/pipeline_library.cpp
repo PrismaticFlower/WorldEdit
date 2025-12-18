@@ -1057,6 +1057,27 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                                  .debug_name = "meta_draw_line_overlay"sv}),
                              device};
 
+   meta_draw_line_shape =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.meta_draw.get(),
+
+           .vs_bytecode = shader_library["meta_draw_line_shapeVS"sv],
+           .ps_bytecode = shader_library["meta_draw_linePS"sv],
+
+           .blend_state = blend_alpha,
+           .rasterizer_state = {.cull_mode = gpu::cull_mode::none,
+                                .depth_bias = 500,
+                                .depth_bias_clamp = 0.00005f},
+           .depth_stencil_state = depth_stencil_readonly_greater_equal,
+           .primitive_type = gpu::primitive_type::triangle,
+
+           .render_target_count = 1,
+           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+
+           .debug_name = "meta_draw_line_shape"sv}),
+       device};
+
    meta_draw_triangle = {device.create_graphics_pipeline(
                             {.root_signature = root_signature_library.meta_draw.get(),
 

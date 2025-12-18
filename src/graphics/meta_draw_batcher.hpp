@@ -52,6 +52,13 @@ struct alignas(16) meta_draw_line {
 
 static_assert(sizeof(meta_draw_line) == 32);
 
+struct alignas(16) meta_draw_line_shape {
+   std::array<float3, 4> world_from_local;
+   float4 color;
+};
+
+static_assert(sizeof(meta_draw_line_shape) == 64);
+
 struct alignas(16) meta_draw_icon {
    float3 positionVS;
    float radius;
@@ -96,16 +103,20 @@ struct meta_draw_batcher {
                        const uint32 color_b);
 
    void add_arrow_outline_solid(const float4x4& transform,
-                                const float arrow_offset, const uint32 color);
+                                const float arrow_offset, const float4& color);
 
-   void add_box_outline_solid(const float4x4& transform, const uint32 color);
+   void add_arrow_outline_solid(const float4x4& transform, const float4& color);
+
+   void add_box_outline_solid(const float4x4& transform, const float4& color);
 
    void add_sphere_outline_solid(const float3& position, const float radius,
-                                 const uint32 color);
+                                 const float4& color);
 
-   void add_cylinder_outline_solid(const float4x4& transform, const uint32 color);
+   void add_cylinder_outline_solid(const float4x4& transform, const float4& color);
 
-   void add_cone_outline_solid(const float4x4& transform, const uint32 color);
+   void add_cone_outline_solid(const float4x4& transform, const float4& color);
+
+   void add_circle_outline_solid(const float4x4& transform, const float4& color);
 
    void add_octahedron_wireframe(const float4x4& transform, const float3& color);
 
@@ -161,6 +172,13 @@ private:
    std::vector<meta_draw_object> _pyramids;
    std::vector<meta_draw_vertex> _triangles;
    std::vector<meta_draw_line> _lines_solid;
+
+   std::vector<meta_draw_line_shape> _circle_outlines;
+   std::vector<meta_draw_line_shape> _cone_outlines;
+   std::vector<meta_draw_line_shape> _cylinder_outlines;
+   std::vector<meta_draw_line_shape> _sphere_outlines;
+   std::vector<meta_draw_line_shape> _box_outlines;
+   std::vector<meta_draw_line_shape> _arrow_outlines;
 
    std::vector<meta_draw_object> _octahedrons_wireframe;
    std::vector<meta_draw_object> _hint_hexahedrons_wireframe;
