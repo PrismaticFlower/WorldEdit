@@ -3280,34 +3280,7 @@ void renderer_impl::draw_interaction_targets(
          _meta_draw_batcher.add_line_overlay(corners[2], corners[3], packed_color);
          _meta_draw_batcher.add_line_overlay(corners[3], corners[0], packed_color);
 
-         const float3 height_offset = {0.0f, barrier_height, 0.0f};
-
-         _meta_draw_batcher.add_line_solid(corners[0] + height_offset,
-                                           corners[0] - height_offset, packed_color);
-         _meta_draw_batcher.add_line_solid(corners[1] + height_offset,
-                                           corners[1] - height_offset, packed_color);
-         _meta_draw_batcher.add_line_solid(corners[2] + height_offset,
-                                           corners[2] - height_offset, packed_color);
-         _meta_draw_batcher.add_line_solid(corners[3] + height_offset,
-                                           corners[3] - height_offset, packed_color);
-
-         _meta_draw_batcher.add_line_solid(corners[0] + height_offset,
-                                           corners[1] + height_offset, packed_color);
-         _meta_draw_batcher.add_line_solid(corners[1] + height_offset,
-                                           corners[2] + height_offset, packed_color);
-         _meta_draw_batcher.add_line_solid(corners[2] + height_offset,
-                                           corners[3] + height_offset, packed_color);
-         _meta_draw_batcher.add_line_solid(corners[3] + height_offset,
-                                           corners[0] + height_offset, packed_color);
-
-         _meta_draw_batcher.add_line_solid(corners[0] - height_offset,
-                                           corners[1] - height_offset, packed_color);
-         _meta_draw_batcher.add_line_solid(corners[1] - height_offset,
-                                           corners[2] - height_offset, packed_color);
-         _meta_draw_batcher.add_line_solid(corners[2] - height_offset,
-                                           corners[3] - height_offset, packed_color);
-         _meta_draw_batcher.add_line_solid(corners[3] - height_offset,
-                                           corners[0] - height_offset, packed_color);
+         _meta_draw_batcher.add_box_outline_solid(transform, {color, 1.0f});
       },
       [&](const world::planning_hub& hub, const float3 color) {
          _meta_draw_batcher.add_circle_outline_solid(
