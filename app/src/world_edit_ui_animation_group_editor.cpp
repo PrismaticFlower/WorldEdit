@@ -1,17 +1,22 @@
+#include "world_edit.hpp"
+
 #include "edits/add_animation_group.hpp"
 #include "edits/add_animation_group_entry.hpp"
 #include "edits/delete_animation_group.hpp"
 #include "edits/delete_animation_group_entry.hpp"
 #include "edits/imgui_ext.hpp"
 #include "edits/set_value.hpp"
+
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
+
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
+
 #include "world/utility/animation.hpp"
+#include "world/utility/raycast.hpp"
 #include "world/utility/world_utilities.hpp"
-#include "world_edit.hpp"
 
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
@@ -638,15 +643,34 @@ void world_edit::ui_show_animation_group_editor() noexcept
       }
    }
 
-   if (_animation_group_editor_context.pick_object.finish) {
-      if (_interaction_targets.hovered_entity.is<world::object_id>()) {
-         const world::object* object =
-            world::find_entity(_world.objects,
-                               _interaction_targets.hovered_entity.get<world::object_id>());
+   std::optional<world::raycast_result<world::object>> hovered_object;
 
-         if (object) {
-            _animation_group_editor_config.new_entry_object_name = object->name;
+   if (_animation_group_editor_context.pick_object.active and
+       not ImGui::GetIO().WantCaptureMouse and not _gizmos.want_capture_mouse()) {
+      const graphics::camera_ray rayWS =
+         make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                         {ImGui::GetMainViewport()->Size.x,
+                          ImGui::GetMainViewport()->Size.y});
+
+      hovered_object =
+         world::raycast(rayWS.origin, rayWS.direction, _world_layers_hit_mask,
+                        _world.objects, _object_classes);
+
+      if (hovered_object) {
+         if (not _world.objects[hovered_object->index].name.empty()) {
+            _interaction_targets.hovered_entity = hovered_object->id;
          }
+         else {
+            hovered_object = std::nullopt;
+         }
+      }
+   }
+
+   if (_animation_group_editor_context.pick_object.finish) {
+      if (hovered_object) {
+         const world::object& object = _world.objects[hovered_object->index];
+
+         _animation_group_editor_config.new_entry_object_name = object.name;
       }
 
       _animation_group_editor_context.pick_object = {};

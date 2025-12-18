@@ -1,12 +1,16 @@
 #include "world_edit.hpp"
 
+#include "imgui_ext.hpp"
+
 #include "edits/add_animation_hierarchy.hpp"
 #include "edits/add_animation_hierarchy_child.hpp"
 #include "edits/delete_animation_hierarchy.hpp"
 #include "edits/delete_animation_hierarchy_child.hpp"
 #include "edits/set_value.hpp"
-#include "imgui_ext.hpp"
+
 #include "utility/string_icompare.hpp"
+
+#include "world/utility/raycast.hpp"
 #include "world/utility/world_utilities.hpp"
 
 #include <imgui.h>
@@ -317,53 +321,69 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
 
    if (not _animation_hierarchy_editor_open) return;
 
+   std::optional<world::raycast_result<world::object>> hovered_object;
+
+   if (_animation_hierarchy_editor_context.pick_object.active and
+       not ImGui::GetIO().WantCaptureMouse and not _gizmos.want_capture_mouse()) {
+      const graphics::camera_ray rayWS =
+         make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                         {ImGui::GetMainViewport()->Size.x,
+                          ImGui::GetMainViewport()->Size.y});
+
+      hovered_object =
+         world::raycast(rayWS.origin, rayWS.direction, _world_layers_hit_mask,
+                        _world.objects, _object_classes);
+
+      if (hovered_object) {
+         if (not _world.objects[hovered_object->index].name.empty()) {
+            _interaction_targets.hovered_entity = hovered_object->id;
+         }
+         else {
+            hovered_object = std::nullopt;
+         }
+      }
+   }
+
    if (_animation_hierarchy_editor_context.pick_object.finish) {
-      if (_interaction_targets.hovered_entity.is<world::object_id>()) {
-         const world::object* object =
-            world::find_entity(_world.objects,
-                               _interaction_targets.hovered_entity.get<world::object_id>());
-         if (object and not object->name.empty()) {
-            if (_animation_hierarchy_editor_context.pick_object.target ==
-                animation_hierarchy_editor_context::pick_object::target::root) {
-               if (_world.animation_hierarchies.size() <
-                   _world.animation_hierarchies.max_size()) {
-                  world::animation_hierarchy_id id =
-                     _world.next_id.animation_hierarchies.aquire();
+      if (hovered_object) {
+         const world::object& object = _world.objects[hovered_object->index];
 
-                  _edit_stack_world.apply(edits::make_add_animation_hierarchy(
-                                             {.root_object = object->name, .id = id}),
-                                          _edit_context);
+         if (_animation_hierarchy_editor_context.pick_object.target ==
+             animation_hierarchy_editor_context::pick_object::target::root) {
+            if (_world.animation_hierarchies.size() <
+                _world.animation_hierarchies.max_size()) {
+               world::animation_hierarchy_id id =
+                  _world.next_id.animation_hierarchies.aquire();
 
-                  _animation_hierarchy_editor_context.selected.id = id;
-               }
-               else {
-                  MessageBoxA(
-                     _window,
-                     fmt::format("Max Animation Hierarchies ({}) Reached",
-                                 _world.animation_hierarchies.max_size())
-                        .c_str(),
-                     "Limit Reached", MB_OK);
-               }
+               _edit_stack_world.apply(edits::make_add_animation_hierarchy(
+                                          {.root_object = object.name, .id = id}),
+                                       _edit_context);
 
-               _animation_hierarchy_editor_config.new_root_object_name.clear();
+               _animation_hierarchy_editor_context.selected.id = id;
             }
-            else if (_animation_hierarchy_editor_context.pick_object.target ==
-                     animation_hierarchy_editor_context::pick_object::target::child) {
-               world::animation_hierarchy* selected_hierarchy =
-                  world::find_entity(_world.animation_hierarchies,
-                                     _animation_hierarchy_editor_context
-                                        .selected.id);
-
-               if (selected_hierarchy and
-                   not has_child(*selected_hierarchy, object->name)) {
-                  _edit_stack_world.apply(edits::make_add_animation_hierarchy_child(
-                                             &selected_hierarchy->objects,
-                                             object->name),
-                                          _edit_context);
-               }
-
-               _animation_hierarchy_editor_config.new_child_object_name.clear();
+            else {
+               MessageBoxA(_window,
+                           fmt::format("Max Animation Hierarchies ({}) Reached",
+                                       _world.animation_hierarchies.max_size())
+                              .c_str(),
+                           "Limit Reached", MB_OK);
             }
+
+            _animation_hierarchy_editor_config.new_root_object_name.clear();
+         }
+         else if (_animation_hierarchy_editor_context.pick_object.target ==
+                  animation_hierarchy_editor_context::pick_object::target::child) {
+            world::animation_hierarchy* selected_hierarchy =
+               world::find_entity(_world.animation_hierarchies,
+                                  _animation_hierarchy_editor_context.selected.id);
+
+            if (selected_hierarchy and not has_child(*selected_hierarchy, object.name)) {
+               _edit_stack_world.apply(edits::make_add_animation_hierarchy_child(
+                                          &selected_hierarchy->objects, object.name),
+                                       _edit_context);
+            }
+
+            _animation_hierarchy_editor_config.new_child_object_name.clear();
          }
       }
 

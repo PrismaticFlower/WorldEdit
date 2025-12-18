@@ -374,6 +374,11 @@ void world_edit::update_hovered_entity() noexcept
       if (_block_editor_context.tool != block_edit_tool::draw) return;
    }
 
+   if (_animation_editor_open or _animation_group_editor_open or
+       _animation_hierarchy_editor_open) {
+      return;
+   }
+
    world::active_entity_types raycast_mask = _world_hit_mask;
 
    if (_interaction_targets.creation_entity.holds_entity()) {
@@ -649,20 +654,6 @@ void world_edit::update_hovered_entity() noexcept
          pick_sector_wants_hover or pick_sector_object_wants_hover;
 
       if (not tool_wants_hover) {
-         _interaction_targets.hovered_entity = {};
-      }
-   }
-
-   if (_animation_editor_open or _animation_group_editor_open or
-       _animation_hierarchy_editor_open) {
-      const bool pick_object_wants_hover =
-         (_animation_editor_open and _animation_editor_context.pick_object.active) or
-         (_animation_group_editor_open and
-          _animation_group_editor_context.pick_object.active) or
-         (_animation_hierarchy_editor_open and
-          _animation_hierarchy_editor_context.pick_object.active);
-
-      if (not pick_object_wants_hover) {
          _interaction_targets.hovered_entity = {};
       }
    }
