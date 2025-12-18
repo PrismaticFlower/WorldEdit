@@ -671,6 +671,19 @@ void world_edit::ui_show_animation_group_editor() noexcept
          const world::object& object = _world.objects[hovered_object->index];
 
          _animation_group_editor_config.new_entry_object_name = object.name;
+
+         if (selected_group and
+             not _animation_group_editor_config.new_entry_animation_name.empty()) {
+            _edit_stack_world.apply(
+               edits::make_add_animation_group_entry(
+                  &selected_group->entries,
+                  {.animation = _animation_group_editor_config.new_entry_animation_name,
+                   .object = _animation_group_editor_config.new_entry_object_name}),
+               _edit_context);
+
+            _animation_group_editor_config.new_entry_animation_name.clear();
+            _animation_group_editor_config.new_entry_object_name.clear();
+         }
       }
 
       _animation_group_editor_context.pick_object = {};
