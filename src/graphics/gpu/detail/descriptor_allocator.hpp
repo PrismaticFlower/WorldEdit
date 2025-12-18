@@ -107,7 +107,8 @@ struct unique_descriptor_releaser {
       this->swap(discard);
    }
 
-   auto operator=(unique_descriptor_releaser&& other) -> unique_descriptor_releaser&
+   auto operator=(unique_descriptor_releaser&& other) noexcept
+      -> unique_descriptor_releaser&
    {
       unique_descriptor_releaser discard;
 
