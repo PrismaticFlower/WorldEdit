@@ -63,7 +63,7 @@ struct munge_context {
    project project;
    tool_set tool_set;
 
-   io::path game_directory;
+   io::path deploy_directory;
 
    munge_feedback feedback;
    async::thread_pool& thread_pool;
@@ -1548,7 +1548,7 @@ void deploy_addon(munge_context& context)
    }
 
    const io::path addon_directory =
-      io::compose_path(context.game_directory, fmt::format(R"(Addon\{})", addon_name));
+      io::compose_path(context.deploy_directory, addon_name);
 
    if (not io::create_directories(addon_directory)) {
       context.feedback.add_error({
@@ -2296,7 +2296,7 @@ auto run_munge(munge_context& context) -> report
    context.feedback.print_output("Munge Finished");
    context.feedback.print_output(fmt::format("Time Taken: {:.3f}s", timer.elapsed()));
 
-   if (context.project.deploy and not context.game_directory.empty()) {
+   if (context.project.deploy and not context.deploy_directory.empty()) {
       deploy_addon(context);
    }
    else if (context.project.deploy) {
@@ -2657,7 +2657,7 @@ struct manager::impl {
       }
    }
 
-   void start_munge(const io::path& game_directory) noexcept
+   void start_munge(const io::path& deploy_directory) noexcept
    {
       if (_munge_task.valid() and not _munge_task.ready()) {
          return;
@@ -2670,13 +2670,13 @@ struct manager::impl {
       _munge_task = _thread_pool.exec(
          async::task_priority::low,
          [platform = get_platform(), project = _project,
-          game_directory = game_directory, &standard_output = _standard_output,
+          deploy_directory = deploy_directory, &standard_output = _standard_output,
           &standard_error = _standard_error, &thread_pool = _thread_pool] {
             try {
                munge_context context = {
                   .platform = platform,
                   .project = project,
-                  .game_directory = game_directory,
+                  .deploy_directory = deploy_directory,
                   .feedback = munge_feedback{standard_output, standard_error},
                   .thread_pool = thread_pool,
                };
@@ -2757,6 +2757,13 @@ struct manager::impl {
       return _munge_task.valid() and not _munge_task.ready();
    }
 
+   void wait_for_idle() const noexcept
+   {
+      if (not _munge_task.valid()) return;
+
+      _munge_task.wait_no_execute();
+   }
+
    auto view_standard_output_lines() noexcept -> std::span<const std::string_view>
    {
       return _standard_output.view_lines();
@@ -2812,9 +2819,9 @@ void manager::close_project() noexcept
    return impl->close_project();
 }
 
-void manager::start_munge(const io::path& game_directory) noexcept
+void manager::start_munge(const io::path& deploy_directory) noexcept
 {
-   impl->start_munge(game_directory);
+   impl->start_munge(deploy_directory);
 }
 
 void manager::start_clean() noexcept
@@ -2830,6 +2837,11 @@ auto manager::get_munge_report() noexcept -> const report&
 bool manager::is_busy() const noexcept
 {
    return impl->is_busy();
+}
+
+void manager::wait_for_idle() const noexcept
+{
+   return impl->wait_for_idle();
 }
 
 auto manager::view_standard_output_lines() noexcept -> std::span<const std::string_view>

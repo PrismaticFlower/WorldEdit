@@ -136,6 +136,37 @@ TEST_CASE("async task typed wait", "[Async][ThreadPool]")
    REQUIRE(task.get() == 0);
 }
 
+TEST_CASE("async task typed wait_no_execute", "[Async][ThreadPool]")
+{
+   std::shared_ptr context = std::make_shared<detail::task_context<int>>();
+
+   int task_invoked = 0;
+
+   context->execute_function = [&] {
+      task_invoked += 1;
+      context->executed_latch.count_down();
+
+      return 0;
+   };
+   context->owning_thread_pool = {}; // we have no thread_pool to assign here so cancel can not be tested here
+
+   task<int> task{context};
+
+   REQUIRE(task.valid());
+   REQUIRE(not task.ready());
+
+   context->execute_function();
+
+   task.wait_no_execute();
+
+   REQUIRE(task.ready());
+
+   task.wait_no_execute(); // waiting mutliple times should cause no issues
+
+   REQUIRE(task_invoked == 1);
+   REQUIRE(task.get() == 0);
+}
+
 TEST_CASE("async task void", "[Async][ThreadPool]")
 {
    std::shared_ptr context = std::make_shared<detail::task_context<void>>();

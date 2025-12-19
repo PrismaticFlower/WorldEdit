@@ -386,6 +386,27 @@ bool copy_file(const path& src, const path& dest) noexcept
    return CopyFileW(io::wide_path{src}.c_str(), io::wide_path{dest}.c_str(), false) != 0;
 }
 
+auto current_directory() noexcept -> io::path
+{
+   std::vector<wchar_t> chars;
+
+   while (true) {
+      DWORD needed_chars =
+         GetCurrentDirectoryW(static_cast<DWORD>(chars.size()), chars.data());
+
+      if (needed_chars == 0) return "";
+
+      if (needed_chars > chars.size()) {
+         chars.resize(needed_chars);
+      }
+      else {
+         break;
+      }
+   }
+
+   return make_path_from_wide_cstring(chars.data());
+}
+
 struct directory_iterator::impl {
    impl(const path& directory, const bool) noexcept;
 

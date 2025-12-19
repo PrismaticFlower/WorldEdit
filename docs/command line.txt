@@ -4,6 +4,12 @@
 -world <path>
    Sets a world to be automatically loaded.
 
+-munge
+   Don't launch WorldEdit, just munge a project instead.
+
+-clean
+   Don't launch WorldEdit, just clean a project instead.
+
 -gpu_prefer_high_performance
   Prefer high performance GPUs (as judged by the OS) when selecting a GPU to use. The default is no preference.
 

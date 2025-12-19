@@ -41,6 +41,9 @@ struct manager {
 
    bool is_busy() const noexcept;
 
+   /// @brief Wait for the munge manager to be idle.
+   void wait_for_idle() const noexcept;
+
    /// @brief Get the standard output from the currently running (or most recently ran) task.
    /// @return The lines of the output. Valid until the next call to view_standard_output_lines.
    auto view_standard_output_lines() noexcept -> std::span<const std::string_view>;

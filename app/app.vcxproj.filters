@@ -55,10 +55,12 @@
     <ClCompile Include="src\world_edit_ui_texture_pick.cpp" />
     <ClCompile Include="src\world_edit_ui_effects_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_world_config_editor.cpp" />
+    <ClCompile Include="src\run_munge.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />
     <ClInclude Include="src\resource.h" />
+    <ClInclude Include="src\run_munge.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\resource.rc" />

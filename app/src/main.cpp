@@ -1,8 +1,10 @@
+#include "resource.h"
+#include "run_munge.hpp"
+#include "world_edit.hpp"
 
 #include "container/enum_array.hpp"
-#include "resource.h"
+
 #include "utility/command_line.hpp"
-#include "world_edit.hpp"
 
 #include <atomic>
 #include <concepts>
@@ -23,10 +25,12 @@ using we::utility::command_line;
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg,
                                               WPARAM wParam, LPARAM lParam);
 
+namespace we {
+
 // This is a documented cursor but has no IDC_ define.
 #define WE_IDC_PEN MAKEINTRESOURCE(32631)
 
-const static we::container::enum_array<HCURSOR, we::mouse_cursor> mouse_cursors = {
+const static container::enum_array<HCURSOR, mouse_cursor> mouse_cursors = {
    nullptr,
    LoadCursorW(nullptr, IDC_ARROW),
    LoadCursorW(nullptr, IDC_IBEAM),
@@ -66,7 +70,7 @@ const static we::container::enum_array<HCURSOR, we::mouse_cursor> mouse_cursors 
    }(),
 };
 
-void static process_mouse_input(we::world_edit& app, const RAWMOUSE& mouse) noexcept
+void static process_mouse_input(world_edit& app, const RAWMOUSE& mouse) noexcept
 {
    if (mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
       double width = 0.0;
@@ -160,8 +164,8 @@ void run_application(command_line command_line)
 
    ShowWindowAsync(window_handle.get(), SW_SHOWMAXIMIZED);
 
-   we::world_edit app{window_handle.get(), command_line};
-   we::mouse_cursor app_cursor = app.get_mouse_cursor();
+   world_edit app{window_handle.get(), command_line};
+   mouse_cursor app_cursor = app.get_mouse_cursor();
 
    // const DWORD my_thread_id = GetCurrentThreadId();
 
@@ -244,62 +248,62 @@ void run_application(command_line command_line)
          return 0;
       }
       case WM_KEYDOWN: {
-         app.key_down(we::translate_virtual_key(wparam));
+         app.key_down(translate_virtual_key(wparam));
 
          return 0;
       }
       case WM_SYSKEYDOWN: {
-         app.key_down(we::translate_virtual_key(wparam));
+         app.key_down(translate_virtual_key(wparam));
 
          return DefWindowProcW(window, message, wparam, lparam);
       }
       case WM_KEYUP: {
-         app.key_up(we::translate_virtual_key(wparam));
+         app.key_up(translate_virtual_key(wparam));
 
          return 0;
       }
       case WM_SYSKEYUP: {
-         app.key_up(we::translate_virtual_key(wparam));
+         app.key_up(translate_virtual_key(wparam));
 
          return DefWindowProcW(window, message, wparam, lparam);
       }
       case WM_LBUTTONDOWN: {
-         app.key_down(we::key::mouse1);
+         app.key_down(key::mouse1);
 
          return 0;
       }
       case WM_LBUTTONUP: {
-         app.key_up(we::key::mouse1);
+         app.key_up(key::mouse1);
 
          return 0;
       }
       case WM_RBUTTONDOWN: {
-         app.key_down(we::key::mouse2);
+         app.key_down(key::mouse2);
 
          return 0;
       }
       case WM_RBUTTONUP: {
-         app.key_up(we::key::mouse2);
+         app.key_up(key::mouse2);
 
          return 0;
       }
       case WM_MBUTTONDOWN: {
-         app.key_down(we::key::mouse3);
+         app.key_down(key::mouse3);
 
          return 0;
       }
       case WM_MBUTTONUP: {
-         app.key_up(we::key::mouse3);
+         app.key_up(key::mouse3);
 
          return 0;
       }
       case WM_XBUTTONDOWN: {
          if (const int button = GET_XBUTTON_WPARAM(wparam) == XBUTTON1;
              button == XBUTTON1) {
-            app.key_down(we::key::mouse4);
+            app.key_down(key::mouse4);
          }
          else if (button == XBUTTON2) {
-            app.key_down(we::key::mouse5);
+            app.key_down(key::mouse5);
          }
 
          return 0;
@@ -307,10 +311,10 @@ void run_application(command_line command_line)
       case WM_XBUTTONUP: {
          if (const int button = GET_XBUTTON_WPARAM(wparam) == XBUTTON1;
              button == XBUTTON1) {
-            app.key_up(we::key::mouse4);
+            app.key_up(key::mouse4);
          }
          else if (button == XBUTTON2) {
-            app.key_up(we::key::mouse5);
+            app.key_up(key::mouse5);
          }
 
          return 0;
@@ -323,8 +327,7 @@ void run_application(command_line command_line)
          const int steps = delta / WHEEL_DELTA;
 
          for (int i = 0; i < std::abs(steps); ++i) {
-            const we::key key = delta > 0 ? we::key::mouse_wheel_forward
-                                          : we::key::mouse_wheel_back;
+            const key key = delta > 0 ? key::mouse_wheel_forward : key::mouse_wheel_back;
 
             app.key_down(key);
             app.key_up(key);
@@ -462,7 +465,7 @@ void run_application(command_line command_line)
       }
 
       if (app.mouse_over()) {
-         const we::mouse_cursor old_app_cursor = app_cursor;
+         const mouse_cursor old_app_cursor = app_cursor;
 
          app_cursor = app.get_mouse_cursor();
 
@@ -490,6 +493,8 @@ void run_application(command_line command_line)
    } while (true);
 }
 
+}
+
 int main(int arg_count, const char** args)
 {
    DXGIDeclareAdapterRemovalSupport();
@@ -502,7 +507,17 @@ int main(int arg_count, const char** args)
          return ::operator delete(allocation);
       });
 
-   run_application(command_line{arg_count, args});
+   command_line command_line{arg_count, args};
+
+   if (command_line.get_flag("-munge")) {
+      return we::run_munge(command_line);
+   }
+   else if (command_line.get_flag("-clean")) {
+      return we::run_clean(command_line);
+   }
+   else {
+      we::run_application(command_line);
+   }
 }
 
 // Export Nahimic's kill switch. Should stop issues like: https://github.com/ocornut/imgui/issues/4542

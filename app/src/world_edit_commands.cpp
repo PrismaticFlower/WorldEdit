@@ -746,7 +746,10 @@ void world_edit::initialize_commands() noexcept
 
    _commands.add("munge_manager.munge"s, [this] {
       if (not _munge_manager.is_busy()) {
-         _munge_manager.start_munge(io::path{_settings.preferences.game_install_path});
+         _munge_manager.start_munge(
+            not _settings.preferences.game_install_path.empty()
+               ? io::compose_path(io::path{_settings.preferences.game_install_path}, "Addon")
+               : "");
       }
 
       _munge_manager_open = true;

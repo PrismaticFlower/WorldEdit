@@ -54,6 +54,12 @@ struct task_context_base {
       executed_latch.wait();
    }
 
+   /// @brief Wait for a task to be ready, will not execute the task if it's still pending.
+   void wait_no_execute() const noexcept
+   {
+      executed_latch.wait();
+   }
+
    /// @brief Tries to execute a task directly if it's not already being executed by the thread_pool.
    /// @return True if the task was executed directly, false if it is being executed by the thread_pool.
    bool try_direct_execute() noexcept
@@ -194,6 +200,14 @@ public:
       if (!_context) std::terminate();
 
       _context->wait();
+   }
+
+   /// @brief Waits for the task's result to be ready without starting it's execution.
+   void wait_no_execute() const noexcept
+   {
+      if (!_context) std::terminate();
+
+      _context->wait_no_execute();
    }
 
    /// @brief Checks if the task object refers to a task scheduled on a thread_pool.

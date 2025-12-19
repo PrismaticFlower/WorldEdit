@@ -94,3 +94,52 @@ Custom clean directories are are simpler than commands. You specify a directory,
 | `%PLATFORM%` | Expands to the platform being munged, i.e `pc`. |
 
 > Example: `%PROJECT_PATH%..\PC_SP` when cleaning the `rep` side will clean everything in `DATA_MOD\_BUILD\Sides\REP\MUNGED\PC_SP`.
+
+# Commandline
+The munge runner can also be used from the commandline without having to launch WorldEdit fully. This is done by passing `-munge` or `-clean` when launching WorldEdit.
+
+For instance running `WorldEdit -munge -project C:\BF2_ModTools\data_MOD -toolsfl_bin C:\BF2_ModTools\ToolsFL\bin` will munge the mod at `C:\BF2_ModTools\data_MOD` with default options. And likewise `WorldEdit -clean -project C:\BF2_ModTools\data_MOD -toolsfl_bin C:\BF2_ModTools\ToolsFL\bin` will clean the mod at the same location with default options.
+
+## Munge Runner Commandline Arguments
+Below is a full listing of commandline arguments for the munge runner and some brief documentation on what they do.
+
+### Base
+These control if WorldEdit will launch as the munge runner or not. Without either of them WorldEdit will start normally.
+
+| Argument | Parameter | Description        |
+|----------|-----------|--------------------|
+|-munge    | N/A       | Munge the project. |
+|-clean    | N/A       | Clean the project. |
+
+### Project
+These let the munge runner know what project to munge and where to find the munge tools. If launching from your mod directory with an existing munge config you may not need them.
+| Argument    | Parameter | Description                                                                             |
+|-------------|-----------|-----------------------------------------------------------------------------------------|
+|-project     | \<path\>  | Set the path to the project. Without this the current directory will be used.           |
+|-toolsfl_bin | \<path\>  | Set the path to ToolsFL\bin. This is required if missing from the saved project config. |
+
+### Deploy
+This controls where to put the munged project (addon). Without the munged project will not be deployed, typically you might set this to the path to your addon folder or to a folder you'll use to package the mod up for publishing.
+| Argument | Parameter | Description                                                                             |
+|----------|-----------|-----------------------------------------------------------------|
+|-deploy   | \<path\>  | Set the path to deploy the munged project to. This is optional. |
+
+### Control
+These control what will be munged. If unspecified, Addme, Common, Sides, Worlds and Sounds will all be munged.
+| Argument | Description                                            |
+|----------|--------------------------------------------------------|
+|-all      | Process everything.                                    |
+|-none     | Process nothing, turn individual items on using flags. |
+|-config   | Process using the saved project config from WorldEdit. |
+
+#### Control Flags
+These flags can be used with `-none` or `-config` to select exactly what you want to be munged. So passing `-none -sides` will munge sides and nothing else.
+| Argument | Description     |
+|----------|-----------------|
+|-addme    | Process addme.  |
+|-common   | Process common. |
+|-load     | Process load.   |
+|-shell    | Process shell.  |
+|-sides    | Process sides.  |
+|-worlds   | Process worlds. |
+|-sounds   | Process sounds. |
