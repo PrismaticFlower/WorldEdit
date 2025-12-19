@@ -8,8 +8,6 @@
 
 #include <fmt/format.h>
 
-#include <stdlib.h>
-
 namespace we {
 
 namespace {
@@ -40,6 +38,11 @@ constexpr std::string_view usage_instructions = R"(WorldEdit Munge Runner Usage 
 )";
 
 enum class run_type { munge, clean };
+
+enum run_result : int {
+   run_result_success = 0,
+   run_result_error = 1,
+};
 
 template<typename T>
 void activate(std::vector<T>& children) noexcept
@@ -206,11 +209,11 @@ int run_generic(utility::command_line command_line, run_type run_type) noexcept
    if (command_line.get_flag("-?") or command_line.get_flag("/?")) {
       fmt::println("{}", usage_instructions);
 
-      return EXIT_SUCCESS;
+      return run_result_success;
    }
 
    if (not open_project(command_line, manager)) {
-      return EXIT_FAILURE;
+      return run_result_error;
    }
 
    if (run_type == run_type::munge) {
@@ -255,7 +258,7 @@ int run_generic(utility::command_line command_line, run_type run_type) noexcept
                    message.file.string_view(), message.message);
    }
 
-   return report.errors.empty() ? EXIT_SUCCESS : EXIT_FAILURE;
+   return report.errors.empty() ? run_result_success : run_result_error;
 }
 
 }

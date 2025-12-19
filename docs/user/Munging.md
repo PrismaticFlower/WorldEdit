@@ -100,6 +100,9 @@ The munge runner can also be used from the commandline without having to launch 
 
 For instance running `WorldEdit -munge -project C:\BF2_ModTools\data_MOD -toolsfl_bin C:\BF2_ModTools\ToolsFL\bin` will munge the mod at `C:\BF2_ModTools\data_MOD` with default options. And likewise `WorldEdit -clean -project C:\BF2_ModTools\data_MOD -toolsfl_bin C:\BF2_ModTools\ToolsFL\bin` will clean the mod at the same location with default options.
 
+WorldEdit will return 0 if it detects no errors during the mungge (this isn't always reliable as the modtools munge tools always return 0) or 
+1 if it detects an eror occured. Standard Output and Standard Error will be printed at the end of the munge.
+
 ## Munge Runner Commandline Arguments
 Below is a full listing of commandline arguments for the munge runner and some brief documentation on what they do.
 
