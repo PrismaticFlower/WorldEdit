@@ -74,11 +74,11 @@ void execute_munge(const munge_config& config, const tool_context& context)
    os::process process = os::process_create_desc{
       .executable_path =
          io::compose_path(context.toolsfl_bin_path, config.tool_name, ".exe"),
-      .command_line =
-         fmt::format("-inputfile $*.{} -checkdate -platform {} -sourcedir {} "
-                     "-outputdir {}",
-                     config.input, context.platform, context.source_path.string_view(),
-                     context.output_path.string_view()),
+      .command_line = fmt::format(
+         "-inputfile $*.{} -checkdate -continue -platform {} -sourcedir {} "
+         "-outputdir {}",
+         config.input, context.platform, context.source_path.string_view(),
+         context.output_path.string_view()),
       .working_directory = context.toolsfl_bin_path,
       .capture_stdout = true,
       .capture_stderr = true,
@@ -99,12 +99,12 @@ void execute_config_munge(const config_munge_config& config, const tool_context&
    os::process process = os::process_create_desc{
       .executable_path =
          io::compose_path(context.toolsfl_bin_path, "ConfigMunge.exe"),
-      .command_line =
-         fmt::format("-inputfile $*.{} -checkdate -platform {} -sourcedir {} "
-                     "-outputdir {} -chunkid {} -ext {}{}",
-                     config.input, context.platform, context.source_path.string_view(),
-                     context.output_path.string_view(), config.chunk,
-                     config.output, config.hash_string ? " -hashstrings" : ""),
+      .command_line = fmt::format(
+         "-inputfile $*.{} -checkdate -continue -platform {} -sourcedir {} "
+         "-outputdir {} -chunkid {} -ext {}{}",
+         config.input, context.platform, context.source_path.string_view(),
+         context.output_path.string_view(), config.chunk, config.output,
+         config.hash_string ? " -hashstrings" : ""),
       .working_directory = context.toolsfl_bin_path,
       .capture_stdout = true,
       .capture_stderr = true,
@@ -272,7 +272,7 @@ void execute_localize_munge(const tool_context& context)
          .executable_path =
             io::compose_path(context.toolsfl_bin_path, "LocalizeMunge.exe"),
          .command_line =
-            fmt::format("-inputfile *.cfg -platform {} -sourcedir {} "
+            fmt::format("-inputfile *.cfg -continue -platform {} -sourcedir {} "
                         "-outputdir {}",
                         context.platform, merge_source_path.string_view(),
                         context.output_path.string_view()),
@@ -358,13 +358,13 @@ void execute_level_pack(const level_pack_inputs& level_pack, const tool_context&
    os::process process = os::process_create_desc{
       .executable_path =
          io::compose_path(context.toolsfl_bin_path, "LevelPack.exe"),
-      .command_line = fmt::format("-inputfile {} {} {} {} -platform {} "
-                                  "-sourcedir {} {} -outputdir {}",
-                                  level_pack.input_file.empty()
-                                     ? input_file
-                                     : level_pack.input_file.string_view(),
-                                  common_files, only_files, write_files, context.platform,
-                                  source_dir.string_view(), input_dir, output_dir),
+      .command_line =
+         fmt::format("-inputfile {} {} {} {} -continue -platform {} "
+                     "-sourcedir {} {} -outputdir {}",
+                     level_pack.input_file.empty() ? input_file
+                                                   : level_pack.input_file.string_view(),
+                     common_files, only_files, write_files, context.platform,
+                     source_dir.string_view(), input_dir, output_dir),
       .working_directory = context.toolsfl_bin_path,
       .capture_stdout = true,
       .capture_stderr = true,
@@ -546,11 +546,11 @@ void execute_script_munge(const tool_context& context)
    os::process process = os::process_create_desc{
       .executable_path =
          io::compose_path(context.toolsfl_bin_path, "ScriptMunge.exe"),
-      .command_line =
-         fmt::format("-inputfile $*.lua -checkdate -platform {} -sourcedir {} "
-                     "-outputdir {}",
-                     context.platform, context.source_path.string_view(),
-                     context.output_path.string_view()),
+      .command_line = fmt::format(
+         "-inputfile $*.lua -continue -checkdate -platform {} -sourcedir {} "
+         "-outputdir {}",
+         context.platform, context.source_path.string_view(),
+         context.output_path.string_view()),
       .working_directory = context.toolsfl_bin_path,
       .capture_stdout = true,
       .capture_stderr = true,
@@ -571,12 +571,11 @@ void execute_shader_munge(const munge_config& config, const tool_context& contex
    os::process process = os::process_create_desc{
       .executable_path =
          io::compose_path(context.toolsfl_bin_path, config.tool_name, ".exe"),
-      .command_line =
-         fmt::format("-inputfile $*.{} -checkdate -platform {} -sourcedir {} "
-                     "-outputdir {} -I {}",
-                     config.input, context.platform, context.source_path.string_view(),
-                     context.output_path.string_view(),
-                     context.source_path.string_view()),
+      .command_line = fmt::format(
+         "-inputfile $*.{} -continue -checkdate -platform {} -sourcedir {} "
+         "-outputdir {} -I {}",
+         config.input, context.platform, context.source_path.string_view(),
+         context.output_path.string_view(), context.source_path.string_view()),
       .working_directory = context.toolsfl_bin_path,
       .capture_stdout = true,
       .capture_stderr = true,
@@ -625,7 +624,7 @@ void execute_sound_munge(const sound_munge_inputs& sound_munge, const tool_conte
          .executable_path = sound_fl_munge_path,
          .command_line =
             fmt::format("-platform {} -banklistinput {} -bankoutput {}\\ {} "
-                        "-checkdate -checkid -resample",
+                        "-checkdate -checkid noabort -resample",
                         platform, entry.path.string_view(),
                         context.output_path.string_view(),
                         sound_munge.stream ? "-stream" : ""),

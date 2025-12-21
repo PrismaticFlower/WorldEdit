@@ -51,6 +51,9 @@ struct munge_feedback::impl {
 
             last_message = &_errors.back();
          }
+         else if (line == " [continuing]") {
+            break;
+         }
          else if (line.starts_with("   ") and line.ends_with("Warnings")) {
             break;
          }
