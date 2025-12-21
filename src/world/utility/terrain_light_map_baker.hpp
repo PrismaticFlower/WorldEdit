@@ -27,6 +27,7 @@ struct terrain_light_map_baker_config {
    bool include_block_shadows = true;
    bool ambient_occlusion = true;
    bool bake_ps2_light_map = false;
+   bool srgb_bake = false;
 
    int32 triangle_samples = 8;
    int32 ambient_occlusion_samples = 32;

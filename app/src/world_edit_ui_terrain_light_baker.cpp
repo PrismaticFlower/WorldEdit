@@ -59,6 +59,12 @@ void world_edit::ui_show_terrain_light_baker() noexcept
          "Bake the extra PS2 light map. Only needed when targetting the PS2. "
          "Significantly increases bake time.");
 
+      ImGui::Checkbox("sRGB Aware Bake", &config.srgb_bake);
+
+      ImGui::SetItemTooltip("Bake in a linear colour space. This won't match "
+                            "ZE can be useful to match other programs or you "
+                            "may just prefer the more \"accurate\" bake.");
+
       ImGui::Separator();
 
       if (ImGui::Button("Bake!", {ImGui::CalcItemWidth(), 0.0f})) {

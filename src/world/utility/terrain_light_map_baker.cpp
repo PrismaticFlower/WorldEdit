@@ -689,15 +689,36 @@ auto build_filtered_light_map(const int32 terrain_length,
    return light_map;
 }
 
-auto pack_light_map(const container::dynamic_array_2d<float4>& light_map) noexcept
+auto pack_light_map(const container::dynamic_array_2d<float4>& light_map,
+                    const bool srgb_bake) noexcept
    -> container::dynamic_array_2d<uint32>
 {
    container::dynamic_array_2d<uint32> packed = {light_map.s_width(),
                                                  light_map.s_height()};
 
-   for (int32 z = 0; z < light_map.s_height(); ++z) {
-      for (int32 x = 0; x < light_map.s_width(); ++x) {
-         packed[{x, z}] = utility::pack_srgb_bgra(light_map[{x, z}]);
+   if (srgb_bake) {
+      for (int32 z = 0; z < light_map.s_height(); ++z) {
+         for (int32 x = 0; x < light_map.s_width(); ++x) {
+            packed[{x, z}] = utility::pack_srgb_bgra(light_map[{x, z}]);
+         }
+      }
+   }
+   else {
+      for (int32 z = 0; z < light_map.s_height(); ++z) {
+         for (int32 x = 0; x < light_map.s_width(); ++x) {
+            const auto pack_unorm = [](const float v) -> uint32 {
+               return static_cast<uint32>(std::clamp(v, 0.0f, 1.0f) * 255.0f + 0.5f);
+            };
+
+            uint32 u32 = 0;
+
+            u32 |= pack_unorm((light_map[{x, z}].z));
+            u32 |= pack_unorm((light_map[{x, z}].y)) << 8;
+            u32 |= pack_unorm((light_map[{x, z}].x)) << 16;
+            u32 |= pack_unorm((light_map[{x, z}].w)) << 24;
+
+            packed[{x, z}] = u32;
+         }
       }
    }
 
@@ -725,10 +746,16 @@ struct detail::terrain_light_map_baker_impl {
          std::terminate();
       }
 
-      _ambient_ground_color =
-         utility::decompress_srgb(world.global_lights.ambient_ground_color);
-      _ambient_sky_color =
-         utility::decompress_srgb(world.global_lights.ambient_sky_color);
+      if (config.srgb_bake) {
+         _ambient_ground_color =
+            utility::decompress_srgb(world.global_lights.ambient_ground_color);
+         _ambient_sky_color =
+            utility::decompress_srgb(world.global_lights.ambient_sky_color);
+      }
+      else {
+         _ambient_ground_color = world.global_lights.ambient_ground_color;
+         _ambient_sky_color = world.global_lights.ambient_sky_color;
+      }
 
       _terrain_length = world.terrain.length;
       _terrain_length_quads = _terrain_length - 1;
@@ -920,7 +947,8 @@ private:
 
       _light_map = pack_light_map(build_filtered_light_map(_terrain_length,
                                                            _triangle_sample_coords,
-                                                           _bake_triangles));
+                                                           _bake_triangles),
+                                  _config.srgb_bake);
 
       if (_config.bake_ps2_light_map) {
          _status.store(terrain_light_map_baker_status::sampling_ps2,
@@ -958,9 +986,10 @@ private:
          _status.store(terrain_light_map_baker_status::filtering_ps2,
                        std::memory_order_relaxed);
 
-         _light_map_dynamic_ps2 = pack_light_map(
-            build_filtered_light_map(_terrain_length, _triangle_sample_coords,
-                                     _bake_triangles));
+         _light_map_dynamic_ps2 =
+            pack_light_map(build_filtered_light_map(_terrain_length, _triangle_sample_coords,
+                                                    _bake_triangles),
+                           _config.srgb_bake);
       }
    }
 
