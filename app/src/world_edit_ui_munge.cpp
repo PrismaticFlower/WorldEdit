@@ -867,7 +867,9 @@ void world_edit::ui_show_munge_config_editor() noexcept
                     ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
       munge::project_config& config = _munge_manager.get_project().config;
 
-      if (ImGui::BeginTable("Common", 2, ImGuiTableFlags_SizingStretchSame)) {
+      if (ImGui::BeginTable("Common", 2,
+                            ImGuiTableFlags_BordersInnerH |
+                               ImGuiTableFlags_SizingStretchSame)) {
          ImGui::TableNextColumn();
 
          if (ImGui::BeginCombo("Tool Set", "SWBF2")) {
@@ -888,6 +890,15 @@ void world_edit::ui_show_munge_config_editor() noexcept
 
             ImGui::EndCombo();
          }
+
+         ImGui::TableNextRow();
+
+         ImGui::TableNextColumn();
+
+         ImGui::Checkbox("Use Builtin Munge Tools", &config.use_builtin_tools);
+
+         ImGui::SetItemTooltip("Use builtin munge tools when possible. Does "
+                               "not affect blocks munging.");
 
          ImGui::EndTable();
       }

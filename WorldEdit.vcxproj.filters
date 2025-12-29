@@ -293,6 +293,16 @@
     <ClCompile Include="src\graphics\shaders\meta_draw_icon_circlePS.cpp" />
     <ClCompile Include="src\graphics\shaders\meta_draw_icon_circleVS.cpp" />
     <ClCompile Include="src\graphics\shaders\meta_draw_line_shapeVS.cpp" />
+    <ClCompile Include="src\munge\builtin\texture_munge.cpp" />
+    <ClCompile Include="src\munge\builtin\texture_munge\texture.cpp" />
+    <ClCompile Include="src\munge\builtin\texture_munge\load_texture.cpp" />
+    <ClCompile Include="src\munge\builtin\texture_munge\load_options.cpp" />
+    <ClCompile Include="src\munge\builtin\texture_munge\texture_ops.cpp" />
+    <ClCompile Include="src\munge\builtin\texture_munge\write_texture.cpp" />
+    <ClCompile Include="src\munge\builtin\texture_munge\texture_format.cpp" />
+    <ClCompile Include="src\munge\builtin\texture_munge\texture_convert.cpp" />
+    <ClCompile Include="src\munge\builtin\texture_munge\texture_transmuted.cpp" />
+    <ClCompile Include="src\munge\builtin\texture_munge\error.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -645,6 +655,17 @@
     <ClInclude Include="src\munge\tool_set.hpp" />
     <ClInclude Include="src\edits\swap_terrain_textures.hpp" />
     <ClInclude Include="src\world\configuration.hpp" />
+    <ClInclude Include="src\munge\builtin\texture_munge.hpp" />
+    <ClInclude Include="src\munge\builtin\texture_munge\texture.hpp" />
+    <ClInclude Include="src\munge\builtin\texture_munge\load_texture.hpp" />
+    <ClInclude Include="src\munge\builtin\texture_munge\error.hpp" />
+    <ClInclude Include="src\munge\builtin\texture_munge\options.hpp" />
+    <ClInclude Include="src\munge\builtin\texture_munge\load_options.hpp" />
+    <ClInclude Include="src\munge\builtin\texture_munge\texture_ops.hpp" />
+    <ClInclude Include="src\munge\builtin\texture_munge\write_texture.hpp" />
+    <ClInclude Include="src\munge\builtin\texture_munge\texture_transmuted.hpp" />
+    <ClInclude Include="src\munge\builtin\texture_munge\texture_format.hpp" />
+    <ClInclude Include="src\munge\builtin\texture_munge\texture_convert.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

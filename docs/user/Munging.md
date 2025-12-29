@@ -14,6 +14,18 @@ these cases by clicking Display Standard Error Output above the output box.
 
 For structured errors you can go to the problem file in Explorer (if it exists) by clicking on them. Error/warning messages can be copied by right clicking them and pressing Copy.
 
+# Builtin Mungers
+For some file types WorldEdit has builtin mungers it can use instead of the ones shipped with the modtools. These builtin mungers can be faster than the modtools' 
+one, support extra features (like `DXT5`/`BC3` textures) or just might have been made in order to move towards being able to munge maps without the modtools.
+
+All that said currently there is only one for textures.
+
+If you'd rather not use builtin mungers you can open your Munge Config Editor and turn them off there.
+
+## Builtin Mungers List
+
+- [Texture Munge](Builtin%20Mungers/Texture%20Munge.md)
+
 # Sounds
 
 ## Sound Stream Localizations

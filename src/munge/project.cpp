@@ -199,6 +199,7 @@ void save_project(const project& project, const io::path& path) noexcept
       out.write_ln("{");
       out.write_ln("   ToolsFLBin({:?});",
                    project.config.toolsfl_bin_path.string_view());
+      out.write_ln("   UseBuiltinTools({:d});", project.config.use_builtin_tools);
 
       out.write_ln("   CustomMungeCommands()");
       out.write_ln("   {");
@@ -347,6 +348,10 @@ auto load_project(const io::path& path) noexcept -> project
                if (iequals("ToolsFLBin", config_key_node.key)) {
                   project.config.toolsfl_bin_path =
                      io::path{config_key_node.values.get<std::string>(0)};
+               }
+               else if (iequals("UseBuiltinTools", config_key_node.key)) {
+                  project.config.use_builtin_tools =
+                     config_key_node.values.get<int>(0) != 0;
                }
                else if (iequals("CustomMungeCommands", config_key_node.key)) {
                   project_custom_commands& custom_commands =

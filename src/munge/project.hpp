@@ -57,6 +57,8 @@ struct project_config {
    io::path toolsfl_bin_path;
    project_platform platform = project_platform::pc;
 
+   bool use_builtin_tools = true;
+
    project_custom_commands custom_commands;
    project_custom_clean_directories custom_clean_directories;
 

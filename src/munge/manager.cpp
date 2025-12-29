@@ -7,6 +7,7 @@
 #include "tool_set.hpp"
 
 #include "builtin/blocks_munge.hpp"
+#include "builtin/texture_munge.hpp"
 
 #include "async/for_each.hpp"
 #include "async/thread_pool.hpp"
@@ -1269,7 +1270,13 @@ void execute_tool(const tool& tool, const tool_context& context)
       execute_munge({"TerrainMunge", "ter"}, context);
    } break;
    case tool_type::texture_munge: {
-      execute_munge({"pc_TextureMunge", "tga"}, context);
+      if (context.use_builtin_tools and
+          string::iequals(context.platform, "PC")) {
+         execute_texture_munge(context);
+      }
+      else {
+         execute_munge({"pc_TextureMunge", "tga"}, context);
+      }
    } break;
    case tool_type::world_munge: {
       execute_munge({"WorldMunge", tool.world_munge.layers ? "lyr" : "wld"}, context);
@@ -1806,6 +1813,8 @@ auto run_munge(munge_context& context) -> report
       .project_path = context.project.directory,
       .platform = context.platform,
       .feedback = context.feedback,
+      .thread_pool = context.thread_pool,
+      .use_builtin_tools = context.project.config.use_builtin_tools,
    };
 
    const project_custom_commands& custom_commands =

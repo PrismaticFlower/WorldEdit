@@ -2,6 +2,8 @@
 
 #include "feedback.hpp"
 
+#include "async/thread_pool.hpp"
+
 #include "io/path.hpp"
 
 #include <string>
@@ -20,6 +22,8 @@ struct tool_context {
    std::vector<io::path> common_files = {};
    std::vector<std::string> sound_languages;
    munge_feedback& feedback;
+   async::thread_pool& thread_pool;
+   bool use_builtin_tools = false;
 };
 
 }
