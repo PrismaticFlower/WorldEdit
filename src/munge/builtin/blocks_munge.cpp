@@ -126,7 +126,7 @@ void combine_and_edit_modl(ucfb::reader modl, ucfb::writer& out)
    }
 }
 
-void combine_and_edit_model(ucfb::reader reader, ucfb::writer& out)
+void combine_and_edit_model(ucfb::reader reader, ucfb::writer_root& out)
 {
    while (reader) {
       ucfb::reader child = reader.read_child();
@@ -147,8 +147,7 @@ void combine_munged_files(const io::path& output_file_path,
                           const std::string_view world_name,
                           const std::size_t object_count)
 {
-   io::output_file file{output_file_path};
-   ucfb::writer ucfb_out{"ucfb"_id, file, ucfb::writer_options{}};
+   ucfb::writer_root ucfb_out{"ucfb"_id, output_file_path, ucfb::writer_options{}};
 
    absl::btree_set<std::string> needed_textures;
 
