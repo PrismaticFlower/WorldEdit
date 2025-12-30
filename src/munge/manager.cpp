@@ -2647,6 +2647,17 @@ struct manager::impl {
       _loaded_project.directory = project_directory;
 
       merge_loaded_project(_project, _loaded_project);
+
+      if (_project.config.toolsfl_bin_path.empty() or
+          not io::exists(_project.config.toolsfl_bin_path)) {
+         const io::path candidate_toolsfl_bin_path =
+            io::compose_path(_project.directory.parent_path(), R"(ToolsFL\bin)");
+
+         if (io::exists(io::compose_path(candidate_toolsfl_bin_path,
+                                         "LevelPack.exe"))) {
+            _project.config.toolsfl_bin_path = candidate_toolsfl_bin_path;
+         }
+      }
    }
 
    void close_project() noexcept

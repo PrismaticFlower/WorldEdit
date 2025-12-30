@@ -664,23 +664,11 @@ void world_edit::ui_show_munge_manager() noexcept
 
    ImGui::End();
 
-   if (_munge_manager.get_project().config.toolsfl_bin_path.empty()) {
+   if (not _munge_context.prompted_browse_modtools and
+       _munge_manager.get_project().config.toolsfl_bin_path.empty()) {
       io::path& toolsfl_bin_path = _munge_manager.get_project().config.toolsfl_bin_path;
 
-      if (not _munge_context.tried_auto_find_toolsfl) {
-         const io::path candidate_toolsfl_bin_path =
-            io::compose_path(_project_dir.parent_path(), R"(ToolsFL\bin)");
-
-         if (io::exists(io::compose_path(candidate_toolsfl_bin_path,
-                                         "LevelPack.exe"))) {
-            toolsfl_bin_path = candidate_toolsfl_bin_path;
-         }
-
-         _munge_context.tried_auto_find_toolsfl = true;
-      }
-      else if (not _munge_context.prompted_browse_modtools) {
-         ImGui::OpenPopup("Browse for Modtools");
-      }
+      ImGui::OpenPopup("Browse for Modtools");
 
       ImGui::SetNextWindowSizeConstraints({415.0f * _display_scale, -1.0f},
                                           {FLT_MAX, FLT_MAX});
