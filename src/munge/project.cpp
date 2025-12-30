@@ -531,6 +531,8 @@ void merge_loaded_project(project& current_project, const project& loaded_projec
       current_project.config.toolsfl_bin_path = loaded_project.config.toolsfl_bin_path;
    }
 
+   current_project.config.use_builtin_tools = loaded_project.config.use_builtin_tools;
+
    current_project.config.custom_commands = loaded_project.config.custom_commands;
    current_project.config.custom_clean_directories =
       loaded_project.config.custom_clean_directories;
