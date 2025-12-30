@@ -1442,7 +1442,6 @@ template<std::ranges::random_access_range random_access_range,
          std::invocable<std::ranges::range_const_reference_t<random_access_range>> callback_t>
 void execute_par_for_each(munge_context& context, const random_access_range& range,
                           const callback_t& func) noexcept
-   requires(std::is_nothrow_invocable_v<callback_t, std::ranges::range_const_reference_t<random_access_range>>)
 {
    using T = std::ranges::range_value_t<random_access_range>;
 
@@ -1693,7 +1692,7 @@ void run_side_munge(const project_child& side, munge_context& context,
       return;
    }
 
-   execute_par_for_each(context, context.tool_set.side, [&](const tool& tool) noexcept {
+   execute_par_for_each(context, context.tool_set.side, [&](const tool& tool) {
       execute_tool(tool, side_context);
    });
 
@@ -1779,7 +1778,7 @@ void run_world_munge(const project_child& world, munge_context& context,
       return;
    }
 
-   execute_par_for_each(context, context.tool_set.world, [&](const tool& tool) noexcept {
+   execute_par_for_each(context, context.tool_set.world, [&](const tool& tool) {
       execute_tool(tool, world_context);
    });
 
@@ -1834,7 +1833,7 @@ auto run_munge(munge_context& context) -> report
    tasks.reserve(6);
 
    if (context.project.addme_active) {
-      tasks.push_back(execute_async_task(context, [&]() noexcept {
+      tasks.push_back(execute_async_task(context, [&]() {
          tool_context addme_context = root_context;
 
          addme_context.source_path =
@@ -1886,10 +1885,9 @@ auto run_munge(munge_context& context) -> report
          });
       }
       else {
-         execute_par_for_each(context, context.tool_set.common,
-                              [&](const tool& tool) noexcept {
-                                 execute_tool(tool, common_context);
-                              });
+         execute_par_for_each(context, context.tool_set.common, [&](const tool& tool) {
+            execute_tool(tool, common_context);
+         });
 
          execute_custom_commands(custom_commands.common, common_context);
 
@@ -1945,7 +1943,7 @@ auto run_munge(munge_context& context) -> report
    }
 
    if (context.project.load_active) {
-      tasks.push_back(execute_async_task(context, [&]() noexcept {
+      tasks.push_back(execute_async_task(context, [&]() {
          tool_context load_context = root_context;
 
          load_context.source_path =
@@ -1977,10 +1975,9 @@ auto run_munge(munge_context& context) -> report
             });
          }
          else {
-            execute_par_for_each(context, context.tool_set.load,
-                                 [&](const tool& tool) noexcept {
-                                    execute_tool(tool, load_context);
-                                 });
+            execute_par_for_each(context, context.tool_set.load, [&](const tool& tool) {
+               execute_tool(tool, load_context);
+            });
 
             execute_custom_commands(custom_commands.load, load_context);
 
@@ -1994,7 +1991,7 @@ auto run_munge(munge_context& context) -> report
    }
 
    if (context.project.shell_active) {
-      tasks.push_back(execute_async_task(context, [&]() noexcept {
+      tasks.push_back(execute_async_task(context, [&]() {
          tool_context shell_context = root_context;
 
          shell_context.source_path =
@@ -2026,10 +2023,9 @@ auto run_munge(munge_context& context) -> report
             });
          }
          else {
-            execute_par_for_each(context, context.tool_set.shell,
-                                 [&](const tool& tool) noexcept {
-                                    execute_tool(tool, shell_context);
-                                 });
+            execute_par_for_each(context, context.tool_set.shell, [&](const tool& tool) {
+               execute_tool(tool, shell_context);
+            });
 
             execute_custom_commands(custom_commands.shell, shell_context);
 
@@ -2051,7 +2047,7 @@ auto run_munge(munge_context& context) -> report
    }
 
    if (not context.project.sides.empty()) {
-      tasks.push_back(execute_async_task(context, [&]() noexcept {
+      tasks.push_back(execute_async_task(context, [&]() {
          std::span<const project_child> sides = context.project.sides;
 
          if (string::iequals(sides[0].name, "Common")) {
@@ -2060,7 +2056,7 @@ auto run_munge(munge_context& context) -> report
             sides = sides.subspan(1);
          }
 
-         execute_par_for_each(context, sides, [&](const project_child& side) noexcept {
+         execute_par_for_each(context, sides, [&](const project_child& side) {
             run_side_munge(side, context, root_context);
          });
       }));
@@ -2076,14 +2072,14 @@ auto run_munge(munge_context& context) -> report
             worlds = worlds.subspan(1);
          }
 
-         execute_par_for_each(context, worlds, [&](const project_child& world) noexcept {
+         execute_par_for_each(context, worlds, [&](const project_child& world) {
             run_world_munge(world, context, root_context);
          });
       }));
    }
 
    if (context.project.sound_active) {
-      tasks.push_back(execute_async_task(context, [&]() noexcept {
+      tasks.push_back(execute_async_task(context, [&]() {
          std::vector<io::path> shared_pack_input_directories;
          shared_pack_input_directories.reserve(context.project.sound_shared.size());
 
@@ -2098,10 +2094,10 @@ auto run_munge(munge_context& context) -> report
                                             shared_sound.name, root_context.platform)));
          }
 
-         async::task<void> shared_sound_task = execute_async_task(context, [&]() noexcept {
+         async::task<void> shared_sound_task = execute_async_task(context, [&]() {
             execute_par_for_each(
                context, context.project.sound_shared,
-               [&](const project_child_sound_shared& shared_sound) noexcept {
+               [&](const project_child_sound_shared& shared_sound) {
                   tool_context sound_context = root_context;
 
                   sound_context.source_path =
@@ -2148,55 +2144,53 @@ auto run_munge(munge_context& context) -> report
                });
          });
 
-         async::task<void> shared_worlds_task = execute_async_task(context, [&]() noexcept {
-            execute_par_for_each(
-               context, context.project.sound_worlds,
-               [&](const project_child_sound_world& world) noexcept {
-                  if (not world.active) return;
+         async::task<void> shared_worlds_task = execute_async_task(context, [&]() {
+            execute_par_for_each(context, context.project.sound_worlds, [&](const project_child_sound_world& world) {
+               if (not world.active) return;
 
-                  tool_context sound_context = root_context;
+               tool_context sound_context = root_context;
 
-                  sound_context.source_path =
-                     io::compose_path(sound_context.project_path,
-                                      fmt::format(R"(Sound\Worlds\{})", world.name));
-                  sound_context.output_path =
-                     io::compose_path(sound_context.project_path,
-                                      fmt::format(R"(_BUILD\Sound\worlds\{}\MUNGED\{})",
-                                                  world.name, sound_context.platform));
-                  sound_context.lvl_output_path =
-                     io::compose_path(sound_context.project_path,
-                                      fmt::format(R"(_LVL_{}\sound)",
-                                                  sound_context.platform));
+               sound_context.source_path =
+                  io::compose_path(sound_context.project_path,
+                                   fmt::format(R"(Sound\Worlds\{})", world.name));
+               sound_context.output_path =
+                  io::compose_path(sound_context.project_path,
+                                   fmt::format(R"(_BUILD\Sound\worlds\{}\MUNGED\{})",
+                                               world.name, sound_context.platform));
+               sound_context.lvl_output_path =
+                  io::compose_path(sound_context.project_path,
+                                   fmt::format(R"(_LVL_{}\sound)",
+                                               sound_context.platform));
 
-                  if (not io::create_directories(sound_context.output_path)) {
-                     context.feedback.add_error({
-                        .file = sound_context.output_path,
-                        .tool = "Create Directory",
-                        .message =
-                           "Failed to create directory for use as output path.",
-                     });
+               if (not io::create_directories(sound_context.output_path)) {
+                  context.feedback.add_error({
+                     .file = sound_context.output_path,
+                     .tool = "Create Directory",
+                     .message =
+                        "Failed to create directory for use as output path.",
+                  });
 
-                     return;
-                  }
+                  return;
+               }
 
-                  if (not io::create_directories(sound_context.lvl_output_path)) {
-                     context.feedback.add_error({
-                        .file = sound_context.lvl_output_path,
-                        .tool = "Create Directory",
-                        .message =
-                           "Failed to create directory for use as output path.",
-                     });
+               if (not io::create_directories(sound_context.lvl_output_path)) {
+                  context.feedback.add_error({
+                     .file = sound_context.lvl_output_path,
+                     .tool = "Create Directory",
+                     .message =
+                        "Failed to create directory for use as output path.",
+                  });
 
-                     return;
-                  }
+                  return;
+               }
 
-                  execute_sound_directory_munge(
-                     {.create_common_bank = create_common_bank,
-                      .localizations = world.localized
-                                          ? context.project.sound_localizations
-                                          : std::span<project_sound_localization>{}},
-                     sound_context);
-               });
+               execute_sound_directory_munge(
+                  {.create_common_bank = create_common_bank,
+                   .localizations = world.localized
+                                       ? context.project.sound_localizations
+                                       : std::span<project_sound_localization>{}},
+                  sound_context);
+            });
          });
 
          shared_sound_task.wait();
