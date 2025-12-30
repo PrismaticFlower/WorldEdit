@@ -12,6 +12,26 @@
 #include <absl/container/btree_map.h>
 
 template<>
+struct fmt::formatter<we::munge::project_platform>
+   : fmt::formatter<std::string_view> {
+   auto format(we::munge::project_platform v, format_context& ctx) const -> fmt::appender
+   {
+      switch (v) {
+      default:
+      case we::munge::project_platform::pc: {
+         return fmt::formatter<std::string_view>::format("PC", ctx);
+      };
+      case we::munge::project_platform::ps2: {
+         return fmt::formatter<std::string_view>::format("PS2", ctx);
+      };
+      case we::munge::project_platform::xbox: {
+         return fmt::formatter<std::string_view>::format("Xbox", ctx);
+      };
+      }
+   }
+};
+
+template<>
 struct fmt::formatter<we::munge::project_platform_filter>
    : fmt::formatter<std::string_view> {
    auto format(we::munge::project_platform_filter v, format_context& ctx) const
@@ -200,6 +220,7 @@ void save_project(const project& project, const io::path& path) noexcept
       out.write_ln("   ToolsFLBin({:?});",
                    project.config.toolsfl_bin_path.string_view());
       out.write_ln("   UseBuiltinTools({:d});", project.config.use_builtin_tools);
+      out.write_ln("   Platform(\"{}\");", project.config.platform);
 
       out.write_ln("   CustomMungeCommands()");
       out.write_ln("   {");
@@ -348,6 +369,20 @@ auto load_project(const io::path& path) noexcept -> project
                if (iequals("ToolsFLBin", config_key_node.key)) {
                   project.config.toolsfl_bin_path =
                      io::path{config_key_node.values.get<std::string>(0)};
+               }
+               else if (iequals("Project", config_key_node.key)) {
+                  const std::string_view platform =
+                     config_key_node.values.get<std::string_view>(0);
+
+                  if (iequals(platform, "PC")) {
+                     project.config.platform = project_platform::pc;
+                  }
+                  else if (iequals(platform, "PS2")) {
+                     project.config.platform = project_platform::ps2;
+                  }
+                  else if (iequals(platform, "Xbox")) {
+                     project.config.platform = project_platform::xbox;
+                  }
                }
                else if (iequals("UseBuiltinTools", config_key_node.key)) {
                   project.config.use_builtin_tools =
@@ -531,6 +566,7 @@ void merge_loaded_project(project& current_project, const project& loaded_projec
       current_project.config.toolsfl_bin_path = loaded_project.config.toolsfl_bin_path;
    }
 
+   current_project.config.platform = loaded_project.config.platform;
    current_project.config.use_builtin_tools = loaded_project.config.use_builtin_tools;
 
    current_project.config.custom_commands = loaded_project.config.custom_commands;
