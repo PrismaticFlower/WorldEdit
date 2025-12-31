@@ -100,9 +100,8 @@ void execute_texture_munge(const tool_context& context) noexcept
    catch (std::exception& e) {
       context.feedback.add_error(
          {.tool = "TextureMunge",
-          .message =
-             fmt::format("Unknown error occured while enumerating textures "
-                         "texture. Unhelpful Message: {}",
+          .message = fmt::format("Unknown error occured while enumerating "
+                                 "textures. Unhelpful Message: {}",
                          e.what())});
    }
 
