@@ -283,7 +283,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       ImGui::LayerPick("Layer", &object.layer, _edit_stack_world, _edit_context);
 
       if (string::iequals(_object_classes[object.class_handle]
-                             .definition->header.class_label,
+                             .definition->header.base,
                           "commandpost")) {
          ImGui::SeparatorText("Command Post");
 
@@ -3073,8 +3073,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                const assets::odf::definition& definition =
                   *_object_classes[object.class_handle].definition;
 
-               if (string::iequals(definition.header.class_label,
-                                   "commandpost")) {
+               if (string::iequals(definition.header.base, "commandpost")) {
                   if (ImGui::Selectable(object.name.c_str())) {
                      _edit_stack_world.apply(edits::make_set_value(&hintnode.command_post,
                                                                    object.name),

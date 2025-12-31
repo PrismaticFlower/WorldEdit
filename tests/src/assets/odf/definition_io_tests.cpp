@@ -38,6 +38,36 @@ const std::string_view valid_odf_test_mixed_line_breaks =
    "SemiquotedProp = \"quoted values do not need an ending quote // this is "
    "part of the value \r\n";
 
+const std::string_view valid_odf_test_class_parent = R"([GameObjectClass] 
+
+ClassParent = "test_prop_water"
+GeometryName = "test_prop_plane.msh"
+
+[Properties]
+
+GeometryName = test_prop_plane)";
+
+const std::string_view valid_odf_test_explosion_class = R"([ExplosionClass] 
+
+ClassName = "explosion"
+
+[Properties]
+)";
+
+const std::string_view valid_odf_test_ordnance_class = R"([OrdnanceClass] 
+
+ClassName = "bullet"
+
+[Properties]
+)";
+
+const std::string_view valid_odf_test_weapon_class = R"([WeaponClass] 
+
+ClassName = "cannon"
+
+[Properties]
+)";
+
 const std::string_view invalid_odf_test_bad_header_name =
    R"([FameObjectGlass] // Line #1 Expect Error Here
 
@@ -80,7 +110,7 @@ TEST_CASE(".odf reading", "[Assets][ODF]")
 
    REQUIRE(definition.type == type::game_object_class);
 
-   CHECK(definition.header.class_label == "prop"sv);
+   CHECK(definition.header.base == "prop"sv);
    CHECK(definition.header.geometry_name == "test_prop_sphere.msh"sv);
 
    CHECK(definition.properties["GeometryName"sv] == "test_prop_sphere"sv);
@@ -98,11 +128,42 @@ TEST_CASE(".odf reading mixed line breaks", "[Assets][ODF]")
 
    REQUIRE(definition.type == type::game_object_class);
 
-   CHECK(definition.header.class_label == "prop"sv);
+   CHECK(definition.header.base == "prop"sv);
    CHECK(definition.header.geometry_name == "test_prop_sphere.msh"sv);
    CHECK(definition.properties["SemiquotedProp"sv] ==
          "quoted values do not need an ending quote // this is "
          "part of the value "sv);
+}
+
+TEST_CASE(".odf reading class parent", "[Assets][ODF]")
+{
+   auto definition = read_definition(to_vector(valid_odf_test_class_parent));
+
+   REQUIRE(definition.type == type::game_object_class);
+
+   CHECK(definition.header.base == "test_prop_water"sv);
+   CHECK(definition.header.geometry_name == "test_prop_plane.msh"sv);
+}
+
+TEST_CASE(".odf reading explosion class", "[Assets][ODF]")
+{
+   auto definition = read_definition(to_vector(valid_odf_test_explosion_class));
+
+   REQUIRE(definition.type == type::explosion_class);
+}
+
+TEST_CASE(".odf reading ordnance class", "[Assets][ODF]")
+{
+   auto definition = read_definition(to_vector(valid_odf_test_ordnance_class));
+
+   REQUIRE(definition.type == type::ordnance_class);
+}
+
+TEST_CASE(".odf reading weapon class", "[Assets][ODF]")
+{
+   auto definition = read_definition(to_vector(valid_odf_test_weapon_class));
+
+   REQUIRE(definition.type == type::weapon_class);
 }
 
 TEST_CASE(".odf failed reading bad header", "[Assets][ODF]")

@@ -102,7 +102,7 @@ void execute_texture_munge(const tool_context& context) noexcept
          {.tool = "TextureMunge",
           .message = fmt::format("Unknown error occured while enumerating "
                                  "textures. Unhelpful Message: {}",
-                         e.what())});
+                                 e.what())});
    }
 
    for (std::ptrdiff_t i = std::ssize(munge_tasks) - 1; i >= 0; --i) {

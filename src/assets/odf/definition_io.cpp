@@ -125,7 +125,7 @@ void read_definition(std::string_view str, T& result)
             case section::none:
                throw std::runtime_error{
                   fmt::format("Error in .odf on line #{}! Non-empty line is "
-                              "before any .odf header.!",
+                              "before any .odf header!",
                               line.number)};
             }
          }
@@ -135,7 +135,10 @@ void read_definition(std::string_view str, T& result)
                const property property = read_property(line);
 
                if (string::iequals(property.key, "ClassLabel"sv)) {
-                  result.header.class_label = property.value;
+                  result.header.base = property.value;
+               }
+               else if (string::iequals(property.key, "ClassParent"sv)) {
+                  result.header.base = property.value;
                }
                else if (string::iequals(property.key, "GeometryName"sv)) {
                   result.header.geometry_name = property.value;
@@ -151,7 +154,7 @@ void read_definition(std::string_view str, T& result)
             case section::none:
                throw std::runtime_error{
                   fmt::format("Error in .odf on line #{}! Non-empty line is "
-                              "before any .odf header.!",
+                              "before any .odf header!",
                               line.number)};
             }
          }

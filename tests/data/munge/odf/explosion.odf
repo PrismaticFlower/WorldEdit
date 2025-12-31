@@ -1,0 +1,7 @@
+[ExplosionClass]       
+
+ClassLabel          = "explosion"
+
+[Properties]        
+
+Push = 0.5

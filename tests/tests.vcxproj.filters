@@ -136,6 +136,8 @@
     <ClCompile Include="src\edits\swap_terrain_textures_test.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge_tests.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge\load_texture_tests.cpp" />
+    <ClCompile Include="src\munge\builtin\odf_munge_tests.cpp" />
+    <ClCompile Include="src\munge\builtin\utility\bf_fnv_1a_hash_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

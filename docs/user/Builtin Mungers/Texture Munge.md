@@ -74,8 +74,8 @@ Below is the layout for an unfolded cubemap given in ASCII art form.
  ‾‾‾‾‾‾‾‾‾‾‾
 ```
 
-## Error Codes
-Below is a list of error codes the texture munger may produce.
+## Errors
+Below is a list of errors the texture munger may produce.
 
 ### TGA_LOAD_FAIL
 

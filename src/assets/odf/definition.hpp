@@ -13,7 +13,7 @@ enum class type {
 
 struct definition {
    struct header {
-      std::string_view class_label;
+      std::string_view base;
       std::string_view geometry_name;
    };
 

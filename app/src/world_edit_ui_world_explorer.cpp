@@ -115,7 +115,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                const int name_column = 0;
                const int class_name_column = 1;
-               const int class_label_column = 2;
+               const int base_column = 2;
                const int layer_column = 3;
                const int hidden_column = 4;
 
@@ -135,14 +135,14 @@ void world_edit::ui_show_world_explorer() noexcept
                                       _world.objects[right].class_name);
                                 });
                }
-               else if (sort_specs.ColumnIndex == class_label_column) {
+               else if (sort_specs.ColumnIndex == base_column) {
                   fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
                                 [&](const uint32 left, const uint32 right) {
                                    return string::iless_than(
                                       _object_classes[_world.objects[left].class_handle]
-                                         .definition->header.class_label,
+                                         .definition->header.base,
                                       _object_classes[_world.objects[right].class_handle]
-                                         .definition->header.class_label);
+                                         .definition->header.base);
                                 });
                }
                else if (sort_specs.ColumnIndex == layer_column) {
@@ -201,11 +201,10 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::TableNextColumn();
                ImGui::Text(object.class_name.c_str());
                ImGui::TableNextColumn();
-               const std::string_view class_label =
-                  _object_classes[object.class_handle].definition->header.class_label;
+               const std::string_view base =
+                  _object_classes[object.class_handle].definition->header.base;
 
-               ImGui::TextUnformatted(class_label.data(),
-                                      class_label.data() + class_label.size());
+               ImGui::TextUnformatted(base.data(), base.data() + base.size());
                ImGui::TableNextColumn();
                ImGui::Text(_world.layer_descriptions[object.layer].name.c_str());
                ImGui::TableNextColumn();

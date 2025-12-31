@@ -215,6 +215,7 @@
     <ClCompile Include="src\assets\msh\flat_model_terrain_cut_bvh.cpp" />
     <ClCompile Include="src\assets\msh\scene.cpp" />
     <ClCompile Include="src\assets\msh\scene_io_save.cpp" />
+    <ClCompile Include="src\assets\req\builder.cpp" />
     <ClCompile Include="src\assets\req\io.cpp" />
     <ClCompile Include="src\assets\sky\io.cpp" />
     <ClCompile Include="src\assets\terrain\dirty_rect_tracker.cpp" />
@@ -387,6 +388,8 @@
     <ClCompile Include="src\math\matrix_funcs.cpp" />
     <ClCompile Include="src\math\scalar_funcs.cpp" />
     <ClCompile Include="src\munge\builtin\blocks_munge.cpp" />
+    <ClCompile Include="src\munge\builtin\odf_munge.cpp" />
+    <ClCompile Include="src\munge\builtin\odf_munge\error.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge\error.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge\load_options.cpp" />
@@ -397,6 +400,7 @@
     <ClCompile Include="src\munge\builtin\texture_munge\texture_ops.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge\texture_transmuted.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge\write_texture.cpp" />
+    <ClCompile Include="src\munge\builtin\utility\bf_fnv_1a_hash.cpp" />
     <ClCompile Include="src\munge\feedback.cpp" />
     <ClCompile Include="src\munge\manager.cpp" />
     <ClCompile Include="src\munge\output.cpp" />
@@ -549,6 +553,7 @@
     <ClInclude Include="src\assets\odf\definition_io.hpp" />
     <ClInclude Include="src\assets\odf\properties.hpp" />
     <ClInclude Include="src\assets\option_file.hpp" />
+    <ClInclude Include="src\assets\req\builder.hpp" />
     <ClInclude Include="src\assets\req\io.hpp" />
     <ClInclude Include="src\assets\req\requirement_list.hpp" />
     <ClInclude Include="src\assets\sky\io.hpp" />
@@ -693,6 +698,8 @@
     <ClInclude Include="src\math\scalar_funcs.hpp" />
     <ClInclude Include="src\math\vector_funcs.hpp" />
     <ClInclude Include="src\munge\builtin\blocks_munge.hpp" />
+    <ClInclude Include="src\munge\builtin\odf_munge.hpp" />
+    <ClInclude Include="src\munge\builtin\odf_munge\error.hpp" />
     <ClInclude Include="src\munge\builtin\texture_munge.hpp" />
     <ClInclude Include="src\munge\builtin\texture_munge\error.hpp" />
     <ClInclude Include="src\munge\builtin\texture_munge\texture_convert.hpp" />
@@ -704,6 +711,7 @@
     <ClInclude Include="src\munge\builtin\texture_munge\options.hpp" />
     <ClInclude Include="src\munge\builtin\texture_munge\texture.hpp" />
     <ClInclude Include="src\munge\builtin\texture_munge\write_texture.hpp" />
+    <ClInclude Include="src\munge\builtin\utility\bf_fnv_1a_hash.hpp" />
     <ClInclude Include="src\munge\feedback.hpp" />
     <ClInclude Include="src\munge\manager.hpp" />
     <ClInclude Include="src\munge\message.hpp" />

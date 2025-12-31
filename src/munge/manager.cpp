@@ -7,6 +7,7 @@
 #include "tool_set.hpp"
 
 #include "builtin/blocks_munge.hpp"
+#include "builtin/odf_munge.hpp"
 #include "builtin/texture_munge.hpp"
 
 #include "async/for_each.hpp"
@@ -1228,7 +1229,12 @@ void execute_tool(const tool& tool, const tool_context& context)
       execute_movie_munge(child_context);
    } break;
    case tool_type::odf_munge: {
-      execute_munge({"OdfMunge", "odf"}, context);
+      if (context.use_builtin_tools) {
+         execute_odf_munge(context);
+      }
+      else {
+         execute_munge({"OdfMunge", "odf"}, context);
+      }
    } break;
    case tool_type::path_munge: {
       execute_path_munge(context);

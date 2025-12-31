@@ -1,0 +1,7 @@
+[WeaponClass]       
+
+ClassLabel          = "cannon"
+
+[Properties]        
+
+ShotDelay = 0.1

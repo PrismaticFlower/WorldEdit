@@ -1,0 +1,7 @@
+[OrdnanceClass]       
+
+ClassLabel          = "bullet"
+
+[Properties]        
+
+Damage = 20.0

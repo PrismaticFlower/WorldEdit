@@ -1,0 +1,7 @@
+[OrdnanceClass]       
+
+ClassParent          = "parent"
+
+[Properties]        
+
+Damage = 40.0

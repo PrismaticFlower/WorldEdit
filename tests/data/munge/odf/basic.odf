@@ -1,0 +1,8 @@
+[GameObjectClass]       
+
+ClassLabel          = "commandflyer"
+
+[Properties]        
+
+Acceleraton = 20.0
+MinSpeed    = 1.0
