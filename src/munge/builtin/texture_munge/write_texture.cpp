@@ -124,7 +124,9 @@ void write_texture(const io::path& output_file_path,
                    const write_texture_options& options)
 {
    try {
-      ucfb::writer_root ucfb{"ucfb"_id, output_file_path, {}};
+      io::output_file out{output_file_path};
+
+      ucfb::writer ucfb{"ucfb"_id, out, {}};
 
       // tex_
       {

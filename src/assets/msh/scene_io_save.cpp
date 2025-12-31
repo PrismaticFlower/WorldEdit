@@ -242,11 +242,11 @@ void write_modl(ucfb::writer& modl, const node& node)
 
 void save_scene(const io::path& path, const scene& scene)
 {
+   io::output_file file{path};
+
    // HEDR
    {
-      ucfb::writer_root hedr{"HEDR"_id,
-                             path,
-                             {.child_trail_alignment_padding_included = true}};
+      ucfb::writer hedr{"HEDR"_id, file, {.child_trail_alignment_padding_included = true}};
 
       // MSH2
       {

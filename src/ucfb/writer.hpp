@@ -2,9 +2,7 @@
 
 #include "chunk_id.hpp"
 
-#include "io/path.hpp"
-
-#include "utility/implementation_storage.hpp"
+#include "io/output_file.hpp"
 
 #include <span>
 #include <string_view>
@@ -17,10 +15,9 @@ struct writer_options {
    bool child_trail_alignment_padding_included = false;
 };
 
-struct writer_output;
-
 struct writer {
-   writer(writer_output& out, uint32& size_out, writer* parent = nullptr);
+   writer(chunk_id id, io::output_file& file, const writer_options options,
+          writer* parent = nullptr);
 
    ~writer();
 
@@ -46,41 +43,11 @@ struct writer {
    auto operator=(writer&&) noexcept -> writer& = delete;
 
 private:
-   writer_output& _out;
-   uint32& _size_out;
+   io::output_file& _out;
    uint64 _written_bytes = 0;
-   writer* _parent = nullptr;
-};
-
-struct writer_root {
-   writer_root(chunk_id id, const io::path& file, const writer_options options);
-
-   ~writer_root();
-
-   void write(const std::string_view str);
-
-   void write(const char* str);
-
-   void write(std::span<const std::byte> bytes);
-
-   template<typename... Ts>
-      requires std::conjunction_v<std::is_trivially_copyable<Ts>...>
-   void write(const Ts&... values)
-   {
-      (..., write(std::as_bytes(std::span{&values, 1})));
-   }
-
-   auto write_child(chunk_id id) -> writer;
-
-   writer_root(const writer_root&) = delete;
-   auto operator=(const writer_root&) -> writer_root& = delete;
-
-   writer_root(writer_root&&) noexcept = delete;
-   auto operator=(writer_root&&) noexcept -> writer_root& = delete;
-
-private:
-   implementation_storage<writer_output, 256> _out;
-   writer _writer;
+   io::file_write_offset _size_offset = {};
+   writer_options _options;
+   writer* const _parent = nullptr;
 };
 
 }
