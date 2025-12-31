@@ -485,7 +485,9 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
             if (not _munge_manager.is_busy()) {
                _munge_manager.start_munge(
-                  io::path{_settings.preferences.game_install_path});
+                  not _settings.preferences.game_install_path.empty()
+                     ? io::compose_path(io::path{_settings.preferences.game_install_path}, "Addon")
+                     : "");
             }
          }
 
