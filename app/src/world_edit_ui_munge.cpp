@@ -151,6 +151,10 @@ void world_edit::ui_show_munge_manager() noexcept
          (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 3.0f) / 4.0f;
 
       if (ImGui::Button("Munge", {header_button_width, 0.0f})) {
+         if (_edit_stack_world.modified_flag() and not _world_path.empty()) {
+            save_world(_world_path);
+         }
+
          _munge_manager.start_munge(
             not _settings.preferences.game_install_path.empty()
                ? io::compose_path(io::path{_settings.preferences.game_install_path}, "Addon")

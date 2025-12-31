@@ -484,6 +484,10 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _munge_manager_open = true;
 
             if (not _munge_manager.is_busy()) {
+               if (_edit_stack_world.modified_flag() and not _world_path.empty()) {
+                  save_world(_world_path);
+               }
+
                _munge_manager.start_munge(
                   not _settings.preferences.game_install_path.empty()
                      ? io::compose_path(io::path{_settings.preferences.game_install_path}, "Addon")
