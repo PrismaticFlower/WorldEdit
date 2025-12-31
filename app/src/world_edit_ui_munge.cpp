@@ -532,6 +532,7 @@ void world_edit::ui_show_munge_manager() noexcept
       if (ImGui::TreeNode("Warnings", "Warnings %zu", report.warnings.size())) {
          if (ImGui::BeginTable("Messages", 3,
                                ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
+                                  ImGuiTableFlags_Borders |
                                   ImGuiTableFlags_SizingStretchProp)) {
 
             ImGui::TableSetupColumn("Tool");
@@ -575,8 +576,10 @@ void world_edit::ui_show_munge_manager() noexcept
                }
 
                ImGui::TableNextColumn();
+               ImGui::PushTextWrapPos();
                ImGui::TextUnformatted(warning.message.c_str(),
                                       warning.message.c_str() + warning.message.size());
+               ImGui::PopTextWrapPos();
 
                if (ImGui::BeginPopupContextItem("##message_context")) {
                   if (ImGui::MenuItem("Copy")) {
@@ -598,6 +601,7 @@ void world_edit::ui_show_munge_manager() noexcept
       if (ImGui::TreeNode("Errors", "Errors %zu", report.errors.size())) {
          if (ImGui::BeginTable("Messages", 3,
                                ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
+                                  ImGuiTableFlags_Borders |
                                   ImGuiTableFlags_SizingStretchProp)) {
 
             ImGui::TableSetupColumn("Tool");
@@ -641,8 +645,10 @@ void world_edit::ui_show_munge_manager() noexcept
                }
 
                ImGui::TableNextColumn();
+               ImGui::PushTextWrapPos();
                ImGui::TextUnformatted(error.message.c_str(),
                                       error.message.c_str() + error.message.size());
+               ImGui::PopTextWrapPos();
 
                if (ImGui::BeginPopupContextItem("##message_context")) {
                   if (ImGui::MenuItem("Copy")) {
