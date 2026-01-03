@@ -20,6 +20,8 @@
 
 #include <fmt/format.h>
 
+#include <cstring>
+
 using namespace we::string;
 using namespace we::ucfb::literals;
 
@@ -73,6 +75,9 @@ auto build_req_lists(const assets::odf::definition& definition) -> req_lists
    }
 
    for (const assets::odf::property& prop : definition.properties) {
+      if (prop.value.empty()) continue;
+      if (not std::isalpha(prop.value[0])) continue;
+
       if (iequals(prop.key, "AnimationAddon") or //
           iequals(prop.key, "AnimationName") or  //
           iequals(prop.key, "AnimationLowres")) {

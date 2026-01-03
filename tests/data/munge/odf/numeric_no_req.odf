@@ -1,0 +1,12 @@
+[GameObjectClass]
+
+ClassLabel          = "prop"
+
+[Properties]
+
+WEAPONSECTION = 1
+FOVEFFectMinCamOffset3rd = 0.0 8.0 20.0
+FOVEFFectMaxCamOffset3rd = 0.0 13.0 15.0
+ContrailEffectMinScale = 0.8
+ContrailEffectMaxScale = 1.0
+DamageEffectScale = 0.5

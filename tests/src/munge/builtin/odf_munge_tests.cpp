@@ -106,4 +106,9 @@ TEST_CASE("odf_munge parented_req", "[Munge]")
    REQUIRE(golden_ref_req_test("parented_req"));
 }
 
+TEST_CASE("odf_munge numeric_no_req", "[Munge]")
+{
+   REQUIRE(golden_ref_req_test("numeric_no_req"));
+}
+
 }
