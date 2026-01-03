@@ -59,9 +59,13 @@ void execute_texture_munge(const tool_context& context) noexcept
          const io::directory_entry& entry = *it;
 
          if (entry.is_file and iequals(entry.path.extension(), ".tga")) {
-            if (entry.last_write_time <
-                io::get_last_write_time(
-                   io::compose_path(context.output_path, entry.path.stem(), ".texture"))) {
+            const uint64 output_last_write_time = io::get_last_write_time(
+               io::compose_path(context.output_path, entry.path.stem(), ".texture"));
+            const uint64 option_file_last_write_time = io::get_last_write_time(
+               io::make_path_with_new_extension(entry.path, ".tga.option"));
+
+            if (entry.last_write_time < output_last_write_time and
+                option_file_last_write_time < output_last_write_time) {
                continue;
             }
 
