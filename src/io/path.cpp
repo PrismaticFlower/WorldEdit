@@ -342,7 +342,8 @@ auto get_last_write_time(const path& path) noexcept -> uint64
 
 bool create_directory(const path& path) noexcept
 {
-   return CreateDirectoryW(wide_path{path}.c_str(), nullptr) != 0;
+   return CreateDirectoryW(wide_path{path}.c_str(), nullptr) != 0 or
+          GetLastError() == ERROR_ALREADY_EXISTS;
 }
 
 bool create_directories(const path& directory) noexcept

@@ -55,6 +55,17 @@ sound banks will be placed into a `common.bnk` just like the stock game.
 While this is here for completeness in case anyone ever wanted to reproduce the stock game files in WorldEdit there is likely nothing stopping you from using this in an
 addon either. Just load `common.bnk` in your mission script before your regular sound.lvls, using the same calls you would to load them.
 
+# Customizing Output Directories
+
+## Customizing World Output Directory
+You can customize the directory that world .lvl files will be placed in by opening the Munge Config Editor and editing the "World .lvl Output Path" property. This controls where WorldEdit's munge runner will output world .lvl files.
+It is relative to `_LVL_PC` (or `_LVL_{PLATFORM}` more specifically) and by default it is set to `%WORLD_NAME%`.
+
+It supports the following environment variable and no regular environment variables.
+| Variable | Expansion |
+| -------- | --------- |
+| `%WORLD_NAME%` | Expands to the path to world name/ID. i.e `TEST` |
+
 # Custom Munge Tools
 
 While WorldEdit completely supports rebuilding the game's stock files sometimes you might want to run extra tools during the munge process. With VisualMunge, ZeroMunge or the raw .bats this is easy, just edit the .bat file and you're good to go.

@@ -916,6 +916,20 @@ void world_edit::ui_show_munge_config_editor() noexcept
       ImGui::SetItemTooltip("Clear ToolsFL\\bin Path. WorldEdit will prompt "
                             "for it again if needed.");
 
+      ImGui::InputText("World .lvl Output Path", &config.world_lvl_output_path);
+
+      if (ImGui::BeginPopupContextItem()) {
+         if (ImGui::MenuItem("Reset")) {
+            config.world_lvl_output_path = "%WORLD_NAME%";
+         }
+
+         ImGui::EndPopup();
+      }
+
+      ImGui::SetItemTooltip(
+         "Output path (relative to _LVL_%s) for world .lvl files.",
+         to_ui_string(config.platform));
+
       ImGui::SeparatorText("Custom Munge Commands");
 
       for (const custom::command_group& group : custom::command_groups) {

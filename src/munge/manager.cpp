@@ -1759,10 +1759,13 @@ void run_world_munge(const project_child& world, munge_context& context,
       io::compose_path(world_context.project_path,
                        fmt::format(R"(_BUILD\Worlds\{}\MUNGED\{})", world.name,
                                    world_context.platform));
-   world_context.lvl_output_path =
-      io::compose_path(world_context.project_path,
-                       fmt::format(R"(_LVL_{}\{})", world_context.platform,
-                                   world.name));
+   world_context.lvl_output_path = io::compose_path(
+      world_context.project_path,
+      fmt::format(R"(_LVL_{}\{})", world_context.platform,
+                  string::resolve_template(
+                     context.project.config.world_lvl_output_path,
+                     {string::template_string_var{.key = "WORLD_NAME",
+                                                  .value = world.name}})));
 
    if (not io::create_directories(world_context.output_path)) {
       context.feedback.add_error({
@@ -2434,8 +2437,11 @@ auto run_clean(munge_context& context) noexcept -> report
          fmt::format(R"(_BUILD\Worlds\{}\MUNGED\{})", world.name, platform);
 
       clean_directory(build_relative_directory, project_directory, context.feedback);
-
-      clean_directory(fmt::format(R"(_LVL_{}\{})", platform, world.name),
+      clean_directory(fmt::format(R"(_LVL_{}\{})", platform,
+                                  string::resolve_template(
+                                     context.project.config.world_lvl_output_path,
+                                     {string::template_string_var{
+                                        .key = "WORLD_NAME", .value = world.name}})),
                       project_directory, context.feedback);
 
       clean_custom_directories(custom_clean_directories.world, platform,

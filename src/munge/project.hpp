@@ -55,6 +55,9 @@ struct project_custom_clean_directories {
 
 struct project_config {
    io::path toolsfl_bin_path;
+
+   std::string world_lvl_output_path = "%WORLD_NAME%";
+
    project_platform platform = project_platform::pc;
 
    bool use_builtin_tools = true;

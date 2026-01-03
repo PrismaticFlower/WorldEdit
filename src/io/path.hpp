@@ -140,7 +140,7 @@ auto get_last_write_time(const path& path) noexcept -> uint64;
 
 /// @brief Create a directory.
 /// @param path The directory to create, the parent path must already exist.
-/// @return True if successful, false otherwise.
+/// @return True if successful (or if the directory already exists), false otherwise.
 [[nodiscard]] bool create_directory(const path& path) noexcept;
 
 /// @brief Create a directory and any parent directories needed.
