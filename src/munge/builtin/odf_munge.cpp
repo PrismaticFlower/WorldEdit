@@ -76,7 +76,7 @@ auto build_req_lists(const assets::odf::definition& definition) -> req_lists
 
    for (const assets::odf::property& prop : definition.properties) {
       if (prop.value.empty()) continue;
-      if (not std::isalpha(prop.value[0])) continue;
+      if (not std::isalpha(prop.value[0]) and prop.value[0] != '_') continue;
 
       if (iequals(prop.key, "AnimationAddon") or //
           iequals(prop.key, "AnimationName") or  //

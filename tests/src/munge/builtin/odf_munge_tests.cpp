@@ -111,4 +111,9 @@ TEST_CASE("odf_munge numeric_no_req", "[Munge]")
    REQUIRE(golden_ref_req_test("numeric_no_req"));
 }
 
+TEST_CASE("odf_munge underscore_req", "[Munge]")
+{
+   REQUIRE(golden_ref_req_test("underscore_req"));
+}
+
 }
