@@ -66,6 +66,11 @@ TEST_CASE("odf_munge parented", "[Munge]")
    REQUIRE(golden_ref_test("parented"));
 }
 
+TEST_CASE("odf_munge empty_property", "[Munge]")
+{
+   REQUIRE(golden_ref_test("empty_property"));
+}
+
 TEST_CASE("odf_munge req_test", "[Munge]")
 {
    const std::string_view file_name = "req_fill";

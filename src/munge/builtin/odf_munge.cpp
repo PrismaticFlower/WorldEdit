@@ -232,6 +232,8 @@ void write_class(const io::path& output_file_path, const assets::odf::definition
          cls.write_child("TYPE"_id).write(output_file_path.stem());
 
          for (const assets::odf::property& odf_prop : definition.properties) {
+            if (odf_prop.value.empty()) continue;
+
             ucfb::writer prop = cls.write_child("PROP"_id);
 
             prop.write(bf_fnv_1a_hash(odf_prop.key));
