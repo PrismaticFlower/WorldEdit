@@ -135,10 +135,10 @@ void read_definition(std::string_view str, T& result)
                const property property = read_property(line);
 
                if (string::iequals(property.key, "ClassLabel"sv)) {
-                  result.header.base = property.value;
+                  result.header.class_label = property.value;
                }
                else if (string::iequals(property.key, "ClassParent"sv)) {
-                  result.header.base = property.value;
+                  result.header.class_parent = property.value;
                }
                else if (string::iequals(property.key, "GeometryName"sv)) {
                   result.header.geometry_name = property.value;

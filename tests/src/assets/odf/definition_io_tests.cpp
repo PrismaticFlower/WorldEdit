@@ -110,7 +110,7 @@ TEST_CASE(".odf reading", "[Assets][ODF]")
 
    REQUIRE(definition.type == type::game_object_class);
 
-   CHECK(definition.header.base == "prop"sv);
+   CHECK(definition.header.class_label == "prop"sv);
    CHECK(definition.header.geometry_name == "test_prop_sphere.msh"sv);
 
    CHECK(definition.properties["GeometryName"sv] == "test_prop_sphere"sv);
@@ -128,7 +128,7 @@ TEST_CASE(".odf reading mixed line breaks", "[Assets][ODF]")
 
    REQUIRE(definition.type == type::game_object_class);
 
-   CHECK(definition.header.base == "prop"sv);
+   CHECK(definition.header.class_label == "prop"sv);
    CHECK(definition.header.geometry_name == "test_prop_sphere.msh"sv);
    CHECK(definition.properties["SemiquotedProp"sv] ==
          "quoted values do not need an ending quote // this is "
@@ -141,7 +141,7 @@ TEST_CASE(".odf reading class parent", "[Assets][ODF]")
 
    REQUIRE(definition.type == type::game_object_class);
 
-   CHECK(definition.header.base == "test_prop_water"sv);
+   CHECK(definition.header.class_parent == "test_prop_water"sv);
    CHECK(definition.header.geometry_name == "test_prop_plane.msh"sv);
 }
 

@@ -68,6 +68,10 @@ auto build_req_lists(const assets::odf::definition& definition) -> req_lists
 
    using assets::req::add_to;
 
+   if (not definition.header.class_parent.empty()) {
+      add_to(requirements.class_, definition.header.class_parent);
+   }
+
    for (const assets::odf::property& prop : definition.properties) {
       if (iequals(prop.key, "AnimationAddon") or //
           iequals(prop.key, "AnimationName") or  //
@@ -228,7 +232,11 @@ void write_class(const io::path& output_file_path, const assets::odf::definition
 
          ucfb::writer cls = ucfb.write_child(root_id);
 
-         cls.write_child("BASE"_id).write(definition.header.base);
+         const std::string_view class_base = definition.header.class_parent.empty()
+                                                ? definition.header.class_label
+                                                : definition.header.class_parent;
+
+         cls.write_child("BASE"_id).write(class_base);
          cls.write_child("TYPE"_id).write(output_file_path.stem());
 
          for (const assets::odf::property& odf_prop : definition.properties) {

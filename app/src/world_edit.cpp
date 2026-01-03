@@ -1422,7 +1422,7 @@ void world_edit::place_creation_entity() noexcept
 
       if (_entity_creation_config.command_post_auto_place_meta_entities and
           string::iequals(_object_classes[object.class_handle]
-                             .definition->header.base,
+                             .definition->header.class_label,
                           "commandpost")) {
          command_post_auto_place_meta_entities(_world.objects.back());
       }

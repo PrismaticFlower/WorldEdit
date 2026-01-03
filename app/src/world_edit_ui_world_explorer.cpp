@@ -140,9 +140,9 @@ void world_edit::ui_show_world_explorer() noexcept
                                 [&](const uint32 left, const uint32 right) {
                                    return string::iless_than(
                                       _object_classes[_world.objects[left].class_handle]
-                                         .definition->header.base,
+                                         .definition->header.class_label,
                                       _object_classes[_world.objects[right].class_handle]
-                                         .definition->header.base);
+                                         .definition->header.class_label);
                                 });
                }
                else if (sort_specs.ColumnIndex == layer_column) {
@@ -202,7 +202,7 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text(object.class_name.c_str());
                ImGui::TableNextColumn();
                const std::string_view base =
-                  _object_classes[object.class_handle].definition->header.base;
+                  _object_classes[object.class_handle].definition->header.class_label;
 
                ImGui::TextUnformatted(base.data(), base.data() + base.size());
                ImGui::TableNextColumn();

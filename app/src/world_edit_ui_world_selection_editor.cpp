@@ -1344,7 +1344,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                         const assets::odf::definition& definition =
                            *_object_classes[object.class_handle].definition;
 
-                        if (string::iequals(definition.header.base,
+                        if (string::iequals(definition.header.class_label,
                                             "commandpost")) {
                            if (ImGui::Selectable(object.name.c_str())) {
                               _edit_stack_world
@@ -6448,7 +6448,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                const assets::odf::definition& definition =
                   *_object_classes[object.class_handle].definition;
 
-               if (string::iequals(definition.header.base, "commandpost")) {
+               if (string::iequals(definition.header.class_label,
+                                   "commandpost")) {
                   if (ImGui::Selectable(object.name.c_str())) {
                      edits::bundle_vector edit_bundle;
                      edit_bundle.reserve(properties.hintnode.type.count());
