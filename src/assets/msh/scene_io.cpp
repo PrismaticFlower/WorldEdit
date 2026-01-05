@@ -1,14 +1,17 @@
 
 #include "scene_io.hpp"
-#include "../option_file.hpp"
-#include "io/read_file.hpp"
-#include "ucfb/reader.hpp"
+#include "error.hpp"
 #include "utility/string_icompare.hpp"
 #include "validate_scene.hpp"
 
+#include "../option_file.hpp"
+
+#include "io/read_file.hpp"
+
+#include "ucfb/reader.hpp"
+
 #include <charconv>
 #include <numeric>
-#include <stdexcept>
 
 #include <fmt/core.h>
 
@@ -315,10 +318,12 @@ auto read_matl(ucfb::reader_strict<"MATL"_id> matl) -> std::vector<material>
 
    for (int i = 0; i < count; ++i) {
       if (!matl) {
-         throw std::runtime_error{fmt::format(
-            ".msh file material list (MATL) ended after {} materials but the "
-            "declared count was {}.",
-            i, count)};
+         throw read_error{
+            fmt::format(".msh file material list (MATL) ended after "
+                        "{} materials but the "
+                        "declared count was {}.",
+                        i, count),
+            read_ec::read_matl_list_too_short};
       }
 
       materials.emplace_back(read_matd(matl.read_child_strict<"MATD"_id>()));
@@ -351,26 +356,45 @@ auto read_msh2(ucfb::reader_strict<"MSH2"_id> msh2) -> scene
 
 auto read_scene(const std::span<const std::byte> bytes) -> scene
 {
-   ucfb::reader_strict<"HEDR"_id> hedr{bytes, {.aligned_children = false}};
+   try {
+      ucfb::reader_strict<"HEDR"_id> hedr{bytes, {.aligned_children = false}};
 
-   while (hedr) {
-      auto msh_ = hedr.read_child();
+      while (hedr) {
+         auto msh_ = hedr.read_child();
 
-      if (msh_.id() == "MSH1"_id) {
-         throw std::runtime_error{"Version 1 .msh files are not supported."};
+         if (msh_.id() == "MSH1"_id) {
+            throw read_error{"Version 1 .msh files are not supported.",
+                             read_ec::read_version_not_supported};
+         }
+         else if (msh_.id() != "MSH2"_id) {
+            continue;
+         }
+
+         scene result = read_msh2(ucfb::reader_strict<"MSH2"_id>{msh_});
+
+         validate_scene(result);
+
+         return result;
       }
-      else if (msh_.id() != "MSH2"_id) {
-         continue;
+   }
+   catch (ucfb::read_error& e) {
+      switch (e.code()) {
+      case ucfb::read_ec::memory_too_small_minimum:
+         throw read_error{e.what(), read_ec::ucfb_memory_too_small_minimum};
+      case ucfb::read_ec::memory_too_small_chunk:
+         throw read_error{e.what(), read_ec::ucfb_memory_too_small_chunk};
+      case ucfb::read_ec::chunk_read_child_id_mismatch:
+         throw read_error{e.what(), read_ec::ucfb_chunk_read_child_id_mismatch};
+      case ucfb::read_ec::chunk_read_overrun:
+         throw read_error{e.what(), read_ec::ucfb_chunk_read_overrun};
+      case ucfb::read_ec::strict_reader_id_mismatch:
+         throw read_error{e.what(), read_ec::ucfb_strict_reader_id_mismatch};
       }
 
-      scene result = read_msh2(ucfb::reader_strict<"MSH2"_id>{msh_});
-
-      validate_scene(result);
-
-      return result;
+      throw read_error{e.what(), read_ec::ucfb_unknown};
    }
 
-   throw std::runtime_error{".msh file contained no scene."};
+   throw read_error{".msh file contained no scene.", read_ec::read_no_scene};
 }
 
 auto read_scene(const io::path& path) -> scene

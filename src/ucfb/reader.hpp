@@ -21,6 +21,41 @@
 
 namespace we::ucfb {
 
+enum class read_ec {
+   memory_too_small_minimum,
+   memory_too_small_chunk,
+
+   chunk_read_child_id_mismatch,
+   chunk_read_overrun,
+
+   strict_reader_id_mismatch,
+};
+
+/// @brief Indicates an error reading a ucfb file.
+struct read_error : std::runtime_error {
+   /// @brief Construct a read_error from a message and error code.
+   /// @param message The message.
+   /// @param code The error code.
+   read_error(const std::string& message, read_ec ec) noexcept
+      : std::runtime_error{message}, _code{ec} {};
+
+   /// @brief Construct a read_error from a message and error code.
+   /// @param message The message.
+   /// @param code The error code.
+   read_error(const char* message, read_ec ec) noexcept
+      : std::runtime_error{message}, _code{ec} {};
+
+   /// @brief Gets the error code for the error.
+   /// @return The error code.
+   auto code() const noexcept -> read_ec
+   {
+      return _code;
+   }
+
+private:
+   read_ec _code;
+};
+
 template<chunk_id type_id>
 class reader_strict;
 
@@ -43,15 +78,17 @@ public:
         _aligned_children{options.aligned_children}
    {
       if (bytes.size() < 8) {
-         throw std::runtime_error{
+         throw read_error{
             "Unable to construct ucfb reader! Size of supplied memory is less "
-            "than the minimum of 8 bytes."};
+            "than the minimum of 8 bytes.",
+            read_ec::memory_too_small_minimum};
       }
 
       if (_size > static_cast<std::size_t>(bytes.size() - 8)) {
-         throw std::runtime_error{
+         throw read_error{
             "Unable to construct ucfb reader! Size of supplied memory is less "
-            "than size of supposed chunk."};
+            "than size of supposed chunk.",
+            read_ec::memory_too_small_chunk};
       }
 
       _trace_stack.push_back({.id = _id, .offset = 0});
@@ -264,10 +301,12 @@ private:
       if (child.id() != child_id) {
          _head = old_head;
 
-         throw std::runtime_error{fmt::format(
-            "Chunk ID mistmatch when performing strict read of child chunk. "
-            "Read chunk ID is {} expected was {}. Chunk Trace Stack: \n{}",
-            to_string(child.id()), to_string(child_id), string::indent(1, trace()))};
+         throw read_error{
+            fmt::format(
+               "Chunk ID mistmatch when performing strict read of child chunk. "
+               "Read chunk ID is {} expected was {}. Chunk Trace Stack: \n{}",
+               to_string(child.id()), to_string(child_id), string::indent(1, trace())),
+            read_ec::chunk_read_child_id_mismatch};
       }
 
       return child;
@@ -285,10 +324,11 @@ private:
       using namespace std::literals;
 
       if (_head > _size) {
-         throw std::runtime_error{
+         throw read_error{
             fmt::format("Attempt to read {} bytes past end of chunk {}. Chunk "
                         "Trace Stack: \n{}",
-                        _head - _size, to_string(id()), string::indent(1, trace()))};
+                        _head - _size, to_string(id()), string::indent(1, trace())),
+            read_ec::chunk_read_overrun};
       }
    }
 
@@ -304,11 +344,11 @@ private:
       using namespace std::literals;
 
       if (new_head > _size) {
-         throw std::runtime_error{
+         throw read_error{
             fmt::format("Attempt to read {} bytes past end of chunk {}. Chunk "
                         "Trace Stack: \n{}",
-                        new_head - _size, to_string(id()),
-                        string::indent(1, trace()))};
+                        new_head - _size, to_string(id()), string::indent(1, trace())),
+            read_ec::chunk_read_overrun};
       }
    }
 
@@ -340,9 +380,10 @@ public:
    explicit reader_strict(reader ucfb_reader) : reader{ucfb_reader}
    {
       if (id() != type_id) {
-         throw std::runtime_error{
+         throw read_error{
             fmt::format("ucfb reader chunk ID is {} but {} was required!",
-                        to_string(id()), to_string(type_id))};
+                        to_string(id()), to_string(type_id)),
+            read_ec::strict_reader_id_mismatch};
       }
    }
 
