@@ -55,9 +55,7 @@ memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
                                    std::system_category()
                                       .default_error_condition(system_error)
                                       .message()),
-                       system_error == ERROR_SHARING_VIOLATION
-                          ? open_error_code::sharing_violation
-                          : open_error_code::generic};
+                       map_os_open_error_code(system_error)};
    }
 
    const LARGE_INTEGER file_size{.QuadPart = static_cast<LONGLONG>(params.size)};
@@ -74,7 +72,7 @@ memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
                         std::system_category()
                            .default_error_condition(system_error)
                            .message()),
-            open_error_code::generic};
+            map_os_open_error_code(system_error)};
       }
 
       if (not SetEndOfFile(file.get())) {
@@ -86,7 +84,7 @@ memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
                         std::system_category()
                            .default_error_condition(system_error)
                            .message()),
-            open_error_code::generic};
+            map_os_open_error_code(system_error)};
       }
    }
 
@@ -102,7 +100,7 @@ memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
             "Failed to create file mapping for '{}'.\n   Reason: {}",
             params.path.string_view(),
             std::system_category().default_error_condition(system_error).message()),
-         open_error_code::generic};
+         map_os_open_error_code(system_error)};
    }
 
    wil::unique_mapview_ptr<void> mapped_view{
@@ -117,7 +115,7 @@ memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
             "Failed to map file '{}' into memory.\n   Reason: {}",
             params.path.string_view(),
             std::system_category().default_error_condition(system_error).message()),
-         open_error_code::generic};
+         map_os_open_error_code(system_error)};
    }
 
    _bytes = static_cast<std::byte*>(mapped_view.release());

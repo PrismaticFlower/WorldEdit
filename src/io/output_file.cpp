@@ -85,9 +85,7 @@ output_file::output_file(const io::path& path, output_open_mode output_mode)
                                    std::system_category()
                                       .default_error_condition(system_error)
                                       .message()),
-                       system_error == ERROR_SHARING_VIOLATION
-                          ? open_error_code::sharing_violation
-                          : open_error_code::generic};
+                       map_os_open_error_code(system_error)};
    }
 
    _buffer = std::make_unique<std::byte[]>(buffer_max_size);

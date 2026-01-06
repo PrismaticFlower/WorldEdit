@@ -5,7 +5,7 @@
 namespace we::io {
 
 /// @brief IO open error codes.
-enum class open_error_code { generic, sharing_violation };
+enum class open_error_code { generic, file_not_found, sharing_violation };
 
 /// @brief Base class for IO errors.
 class error : public std::runtime_error {
@@ -40,5 +40,10 @@ class read_error : public error {
 public:
    using error::error;
 };
+
+/// @brief Map an OS error code to an open_error_code
+/// @param os_code The OS error code.
+/// @return The open_error_code representing the OS error code.
+auto map_os_open_error_code(unsigned int os_code) noexcept -> open_error_code;
 
 }

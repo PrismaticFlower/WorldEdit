@@ -30,16 +30,17 @@ auto read_file_impl(const io::path& path) -> Out
                                    std::system_category()
                                       .default_error_condition(system_error)
                                       .message()),
-                       system_error == ERROR_SHARING_VIOLATION
-                          ? open_error_code::sharing_violation
-                          : open_error_code::generic};
+                       map_os_open_error_code(system_error)};
    }
 
    LARGE_INTEGER file_size = {};
 
    [[unlikely]] if (not GetFileSizeEx(file.get(), &file_size)) {
-      throw open_error{
-         fmt::format("Couldn't get size of file '{}'.\n", path.string_view())};
+      const DWORD system_error = GetLastError();
+
+      throw open_error{fmt::format("Couldn't get size of file '{}'.\n",
+                                   path.string_view()),
+                       map_os_open_error_code(system_error)};
    }
 
    [[unlikely]] if (file_size.QuadPart > std::numeric_limits<DWORD>::max()) {
