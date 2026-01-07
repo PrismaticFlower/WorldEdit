@@ -376,6 +376,7 @@
     <ClCompile Include="src\hotkeys.cpp" />
     <ClCompile Include="src\hotkeys_io.cpp" />
     <ClCompile Include="src\imgui_ext.cpp" />
+    <ClCompile Include="src\io\error.cpp" />
     <ClCompile Include="src\io\memory_mapped_file.cpp" />
     <ClCompile Include="src\io\output_file.cpp" />
     <ClCompile Include="src\io\path.cpp" />
@@ -388,6 +389,9 @@
     <ClCompile Include="src\math\matrix_funcs.cpp" />
     <ClCompile Include="src\math\scalar_funcs.cpp" />
     <ClCompile Include="src\munge\builtin\blocks_munge.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\error.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\load_model.cpp" />
     <ClCompile Include="src\munge\builtin\odf_munge.cpp" />
     <ClCompile Include="src\munge\builtin\odf_munge\error.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge.cpp" />
@@ -536,6 +540,7 @@
     <ClInclude Include="src\assets\config\key_node.hpp" />
     <ClInclude Include="src\assets\config\values.hpp" />
     <ClInclude Include="src\assets\msh\default_missing_scene.hpp" />
+    <ClInclude Include="src\assets\msh\error.hpp" />
     <ClInclude Include="src\assets\msh\flat_model.hpp" />
     <ClInclude Include="src\assets\msh\flat_model_bvh.hpp" />
     <ClInclude Include="src\assets\msh\flat_model_terrain_cut_bvh.hpp" />
@@ -698,6 +703,10 @@
     <ClInclude Include="src\math\scalar_funcs.hpp" />
     <ClInclude Include="src\math\vector_funcs.hpp" />
     <ClInclude Include="src\munge\builtin\blocks_munge.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\error.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\load_model.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\model.hpp" />
     <ClInclude Include="src\munge\builtin\odf_munge.hpp" />
     <ClInclude Include="src\munge\builtin\odf_munge\error.hpp" />
     <ClInclude Include="src\munge\builtin\texture_munge.hpp" />

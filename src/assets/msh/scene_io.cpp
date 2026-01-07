@@ -6,6 +6,7 @@
 
 #include "../option_file.hpp"
 
+#include "io/error.hpp"
 #include "io/read_file.hpp"
 
 #include "ucfb/reader.hpp"
@@ -17,6 +18,7 @@
 
 #pragma warning(disable : 4063) // case is not a valid value for switch of enum
 
+using we::string::iequals;
 using namespace we::ucfb::literals;
 using namespace std::literals;
 
@@ -352,6 +354,270 @@ auto read_msh2(ucfb::reader_strict<"MSH2"_id> msh2) -> scene
    return scene;
 }
 
+void read_scene_option(const option& opt, scene_options& out)
+{
+   if (iequals(opt.name, "-keep"sv)) {
+      if (opt.arguments.empty()) {
+         throw read_error{"Invalid -keep option.", read_ec::option_load_bad_keep};
+      }
+
+      out.keep_nodes.append_range(opt.arguments);
+   }
+   else if (iequals(opt.name, "-keepall"sv)) {
+      out.keep_all = true;
+   }
+   else if (iequals(opt.name, "-keepmaterial"sv)) {
+      if (opt.arguments.empty()) {
+         throw read_error{"Invalid -keepmaterial option.",
+                          read_ec::option_load_bad_keep_material};
+      }
+
+      out.keep_materials.append_range(opt.arguments);
+   }
+   else if (iequals(opt.name, "-righthanded"sv)) {
+      out.left_handed = false;
+   }
+   else if (iequals(opt.name, "-lefthanded"sv)) {
+      out.left_handed = true;
+   }
+   else if (iequals(opt.name, "-scale"sv)) {
+      float scale = 1.0f;
+
+      if (opt.arguments.empty() or
+          std::from_chars(opt.arguments[0].data(),
+                          opt.arguments[0].data() + opt.arguments[0].size(), scale)
+                .ec != std::errc{}) {
+         throw read_error{"Invalid -scale option.", read_ec::option_load_bad_scale};
+      }
+
+      out.scale = scale;
+   }
+   else if (iequals(opt.name, "-maxbones"sv)) {
+      uint32 max_bones = 15;
+
+      if (opt.arguments.empty() or
+          std::from_chars(opt.arguments[0].data(),
+                          opt.arguments[0].data() + opt.arguments[0].size(), max_bones)
+                .ec != std::errc{}) {
+         throw read_error{"Invalid -maxbones option.",
+                          read_ec::option_load_bad_max_bones};
+      }
+
+      out.max_bones = max_bones;
+   }
+   else if (iequals(opt.name, "-lodgroup"sv)) {
+      if (opt.arguments.empty()) {
+         throw read_error{"Invalid -lodgroup option.",
+                          read_ec::option_load_bad_lod_group};
+      }
+
+      if (iequals(opt.arguments[0], "model")) {
+         out.lod_group = lod_group::model;
+      }
+      else if (iequals(opt.arguments[0], "bigmodel")) {
+         out.lod_group = lod_group::big_model;
+      }
+      else if (iequals(opt.arguments[0], "soldier")) {
+         out.lod_group = lod_group::soldier;
+      }
+      else if (iequals(opt.arguments[0], "hugemodel")) {
+         out.lod_group = lod_group::huge_model;
+      }
+      else {
+         throw read_error{"Invalid -lodgroup option.",
+                          read_ec::option_load_bad_lod_group};
+      }
+   }
+   else if (iequals(opt.name, "-lodbias"sv)) {
+      float lod_bias = 1.0f;
+
+      if (opt.arguments.empty() or
+          std::from_chars(opt.arguments[0].data(),
+                          opt.arguments[0].data() + opt.arguments[0].size(), lod_bias)
+                .ec != std::errc{}) {
+         throw read_error{"Invalid -lodbias option.", read_ec::option_load_bad_lod_bias};
+      }
+
+      out.lod_bias = lod_bias;
+   }
+   else if (iequals(opt.name, "-nocollision"sv)) {
+      out.no_collision = true;
+   }
+   else if (iequals(opt.name, "-nogamemodel"sv)) {
+      out.no_game_model = true;
+   }
+   else if (iequals(opt.name, "-hiresshadow"sv)) {
+      out.high_res_shadow = 0;
+
+      if (not opt.arguments.empty()) {
+         uint8 high_res_shadow_lod = 0;
+
+         if (std::from_chars(opt.arguments[0].data(),
+                             opt.arguments[0].data() + opt.arguments[0].size(),
+                             high_res_shadow_lod)
+                .ec != std::errc{}) {
+            throw read_error{"Invalid -hiresshadow option.",
+                             read_ec::option_load_bad_hi_res_shadow};
+         }
+
+         out.high_res_shadow_lod = high_res_shadow_lod;
+      }
+   }
+   else if (iequals(opt.name, "-shadowon"sv)) {
+      out.shadow_on = true;
+   }
+   else if (iequals(opt.name, "-softskinshadow"sv)) {
+      out.soft_skin_shadow = true;
+   }
+   else if (iequals(opt.name, "-hardskinonly"sv)) {
+      out.hard_skin_only = true;
+   }
+   else if (iequals(opt.name, "-softskin"sv)) {
+      out.soft_skin = true;
+   }
+   else if (iequals(opt.name, "-donotmergeskins"sv)) {
+      out.do_not_merge_skins = true;
+   }
+   else if (iequals(opt.name, "-vertexlighting"sv)) {
+      out.vertex_lighting = true;
+   }
+   else if (iequals(opt.name, "-additiveemissive"sv)) {
+      out.additive_emissive = true;
+   }
+   else if (iequals(opt.name, "-bump"sv)) {
+      if (opt.arguments.empty()) {
+         throw read_error{"Invalid -bump option.", read_ec::option_load_bad_bump};
+      }
+
+      out.normal_maps.append_range(opt.arguments);
+   }
+   else if (iequals(opt.name, "-boundingboxscale"sv)) {
+      float bounding_box_scale = 1.0f;
+
+      if (opt.arguments.empty() or
+          std::from_chars(opt.arguments[0].data(),
+                          opt.arguments[0].data() + opt.arguments[0].size(),
+                          bounding_box_scale)
+                .ec != std::errc{}) {
+         throw read_error{"Invalid -boundingboxscale option.",
+                          read_ec::option_load_bad_bounding_box_scale};
+      }
+
+      out.bounding_box_scale = bounding_box_scale;
+   }
+   else if (iequals(opt.name, "-boundingboxoffsetx"sv)) {
+      float offset = 0.0f;
+
+      if (opt.arguments.empty() or
+          std::from_chars(opt.arguments[0].data(),
+                          opt.arguments[0].data() + opt.arguments[0].size(), offset)
+                .ec != std::errc{}) {
+         throw read_error{"Invalid -boundingboxoffsetx option.",
+                          read_ec::option_load_bad_bounding_box_offset};
+      }
+
+      out.bounding_box_offset.x = offset;
+   }
+   else if (iequals(opt.name, "-boundingboxoffsety"sv)) {
+      float offset = 0.0f;
+
+      if (opt.arguments.empty() or
+          std::from_chars(opt.arguments[0].data(),
+                          opt.arguments[0].data() + opt.arguments[0].size(), offset)
+                .ec != std::errc{}) {
+         throw read_error{"Invalid -boundingboxoffsety option.",
+                          read_ec::option_load_bad_bounding_box_offset};
+      }
+
+      out.bounding_box_offset.y = offset;
+   }
+   else if (iequals(opt.name, "-boundingboxoffsetz"sv)) {
+      float offset = 0.0f;
+
+      if (opt.arguments.empty() or
+          std::from_chars(opt.arguments[0].data(),
+                          opt.arguments[0].data() + opt.arguments[0].size(), offset)
+                .ec != std::errc{}) {
+         throw read_error{"Invalid -boundingboxoffsety option.",
+                          read_ec::option_load_bad_bounding_box_offset};
+      }
+
+      out.bounding_box_offset.z = offset;
+   }
+   else if (iequals(opt.name, "-boundingboxoffsetnz"sv)) {
+      float offset = 0.0f;
+
+      if (opt.arguments.empty() or
+          std::from_chars(opt.arguments[0].data(),
+                          opt.arguments[0].data() + opt.arguments[0].size(), offset)
+                .ec != std::errc{}) {
+         throw read_error{"Invalid -boundingboxoffsetnz option.",
+                          read_ec::option_load_bad_bounding_box_offset};
+      }
+
+      out.bounding_box_offset.z = -offset;
+   }
+   else if (iequals(opt.name, "-kcollision"sv)) {
+      out.k_collision = true;
+   }
+   else if (iequals(opt.name, "-donotmergecollision"sv)) {
+      out.do_not_merge_collision = true;
+   }
+   else if (iequals(opt.name, "-removeverticesonmerge"sv)) {
+      out.remove_vertices_on_merge = true;
+   }
+   else if (iequals(opt.name, "-ambientlighting"sv)) {
+      if (opt.arguments.empty()) {
+         throw read_error{"Invalid -ambientlighting option.",
+                          read_ec::option_load_bad_ambient_lighting};
+      }
+
+      float3 ambient_lighting = {};
+
+      const std::string_view red = string::split_first_of_exclusive(
+         string::split_first_of_exclusive(opt.arguments[0], "r=")[1], " ")[0];
+      const std::string_view green = string::split_first_of_exclusive(
+         string::split_first_of_exclusive(opt.arguments[0], "g=")[1], " ")[0];
+      const std::string_view blue = string::split_first_of_exclusive(
+         string::split_first_of_exclusive(opt.arguments[0], "b=")[1], " ")[0];
+
+      if (red.empty()) {
+         throw read_error{"Invalid -ambientlighting option.",
+                          read_ec::option_load_bad_ambient_lighting};
+      }
+      else if (green.empty()) {
+         throw read_error{"Invalid -ambientlighting option.",
+                          read_ec::option_load_bad_ambient_lighting};
+      }
+      else if (blue.empty()) {
+         throw read_error{"Invalid -ambientlighting option.",
+                          read_ec::option_load_bad_ambient_lighting};
+      }
+
+      if (std::from_chars(red.data(), red.data() + red.size(), ambient_lighting.x)
+             .ec != std::error_code{}) {
+         throw read_error{"Invalid -ambientlighting option.",
+                          read_ec::option_load_bad_ambient_lighting};
+      }
+
+      if (std::from_chars(green.data(), green.data() + green.size(),
+                          ambient_lighting.y)
+             .ec != std::error_code{}) {
+         throw read_error{"Invalid -ambientlighting option.",
+                          read_ec::option_load_bad_ambient_lighting};
+      }
+
+      if (std::from_chars(blue.data(), blue.data() + blue.size(),
+                          ambient_lighting.z)
+             .ec != std::error_code{}) {
+         throw read_error{"Invalid -ambientlighting option.",
+                          read_ec::option_load_bad_ambient_lighting};
+      }
+
+      out.ambient_lighting = ambient_lighting;
+   }
+}
+
 }
 
 auto read_scene(const std::span<const std::byte> bytes) -> scene
@@ -397,71 +663,39 @@ auto read_scene(const std::span<const std::byte> bytes) -> scene
    throw read_error{".msh file contained no scene.", read_ec::read_no_scene};
 }
 
-auto read_scene(const io::path& path) -> scene
+auto read_scene(const io::path& path, const options& directory_options) -> scene
 {
    auto file = io::read_file_to_bytes(path);
    auto scene = read_scene(file);
 
-   if (auto option_path = io::path{path} += ".option"sv; io::exists(option_path)) {
-      scene.options = read_scene_options(option_path);
-   }
+   scene.options =
+      read_scene_options(io::path{path} += ".option"sv, directory_options);
 
    return scene;
 }
 
-auto read_scene_options(const io::path& path) -> options
+auto read_scene_options(const io::path& path, const options& directory_options) -> scene_options
 {
-   options results;
+   options file_options;
 
-   for (auto& opt : parse_options(io::read_file_to_string(path))) {
-      if (string::iequals(opt.name, "-bump"sv)) {
-         results.normal_maps.assign(opt.arguments.begin(), opt.arguments.end());
+   try {
+      file_options = parse_options(io::read_file_to_string(path));
+   }
+   catch (io::open_error& e) {
+      if (e.code() != io::open_error_code::file_not_found) {
+         throw read_error{e.what(), read_ec::option_load_io_open_error};
       }
-      else if (string::iequals(opt.name, "-additiveemissive"sv)) {
-         results.additive_emissive = true;
-      }
-      else if (string::iequals(opt.name, "-vertexlighting"sv)) {
-         results.vertex_lighting = true;
-      }
-      else if (string::iequals(opt.name, "-ambientlighting"sv) and
-               not opt.arguments.empty()) {
-         float3 ambient_lighting = {};
+   }
+   catch (io::error& e) {
+      throw read_error{e.what(), read_ec::option_load_io_generic_error};
+   }
 
-         const std::string_view red = string::split_first_of_exclusive(
-            string::split_first_of_exclusive(opt.arguments[0], "r=")[1], " ")[0];
-         const std::string_view green = string::split_first_of_exclusive(
-            string::split_first_of_exclusive(opt.arguments[0], "g=")[1], " ")[0];
-         const std::string_view blue = string::split_first_of_exclusive(
-            string::split_first_of_exclusive(opt.arguments[0], "b=")[1], " ")[0];
+   scene_options results;
 
-         if (std::from_chars(red.data(), red.data() + red.size(),
-                             ambient_lighting.x)
-                .ec != std::error_code{}) {
-            ambient_lighting.x = 0.0f;
-         }
-
-         if (std::from_chars(green.data(), green.data() + green.size(),
-                             ambient_lighting.y)
-                .ec != std::error_code{}) {
-            ambient_lighting.y = 0.0f;
-         }
-
-         if (std::from_chars(blue.data(), blue.data() + blue.size(),
-                             ambient_lighting.z)
-                .ec != std::error_code{}) {
-            ambient_lighting.z = 0.0f;
-         }
-
-         results.ambient_lighting = ambient_lighting;
-      }
-      else if (string::iequals(opt.name, "-scale"sv) and not opt.arguments.empty()) {
-         if (std::from_chars(opt.arguments[0].data(),
-                             opt.arguments[0].data() + opt.arguments[0].size(),
-                             results.scale)
-                .ec != std::error_code{}) {
-            results.scale = 1.0f;
-         }
-      }
+   for (const std::span<const assets::option>& options :
+        {std::span<const assets::option>{directory_options},
+         std::span<const assets::option>{file_options}}) {
+      for (const option& opt : options) read_scene_option(opt, results);
    }
 
    return results;

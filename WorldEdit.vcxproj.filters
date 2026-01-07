@@ -307,6 +307,10 @@
     <ClCompile Include="src\assets\req\builder.cpp" />
     <ClCompile Include="src\munge\builtin\utility\bf_fnv_1a_hash.cpp" />
     <ClCompile Include="src\munge\builtin\odf_munge\error.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\error.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\load_model.cpp" />
+    <ClCompile Include="src\io\error.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -674,6 +678,11 @@
     <ClInclude Include="src\munge\builtin\odf_munge\error.hpp" />
     <ClInclude Include="src\assets\req\builder.hpp" />
     <ClInclude Include="src\munge\builtin\utility\bf_fnv_1a_hash.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\model.hpp" />
+    <ClInclude Include="src\assets\msh\error.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\error.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\load_model.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

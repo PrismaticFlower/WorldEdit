@@ -24,6 +24,13 @@ enum class collision_primitive_shape : int32 {
    box = 4
 };
 
+enum class lod_group : uint32 {
+   model = 0,
+   big_model = 1,
+   soldier = 2,
+   huge_model = 3,
+};
+
 struct transform {
    float3 translation = {0.0f, 0.0f, 0.0f};
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
@@ -62,17 +69,42 @@ struct node {
    std::optional<collision_primitive> collision_primitive;
 };
 
-struct options {
-   bool additive_emissive = false;
-   bool vertex_lighting = false;
+struct scene_options {
+   std::vector<std::string> keep_nodes;
+   std::vector<std::string> keep_materials;
    std::vector<std::string> normal_maps;
+
+   bool keep_all = false;
+   bool left_handed = false;
+   bool no_collision = false;
+   bool no_game_model = false;
+   bool high_res_shadow = false;
+   uint8 high_res_shadow_lod = 0;
+   bool shadow_on = false;
+   bool soft_skin_shadow = false;
+   bool hard_skin_only = false;
+   bool soft_skin = false;
+   bool do_not_merge_skins = false;
+   bool vertex_lighting = false;
+   bool additive_emissive = false;
+   bool k_collision = false;
+   bool do_not_merge_collision = false;
+   bool remove_vertices_on_merge = false;
+
    float scale = 1.0f;
+   uint32 max_bones = 0;
+   lod_group lod_group = lod_group::model;
+   float lod_bias = 1.0f;
+
    std::optional<float3> ambient_lighting;
+
+   float bounding_box_scale = 1.0f;
+   float3 bounding_box_offset = {0.0f, 0.0f, 0.0f};
 };
 
 struct scene {
    std::vector<material> materials;
    std::vector<node> nodes;
-   options options;
+   scene_options options;
 };
 }

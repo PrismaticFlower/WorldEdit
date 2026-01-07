@@ -155,7 +155,7 @@ auto generate_normals(std::span<const float3> positions,
    return normals;
 }
 
-void patch_materials_with_options(std::vector<mesh>& meshes, const options& opts)
+void patch_materials_with_options(std::vector<mesh>& meshes, const scene_options& opts)
 {
    for (auto& mesh : meshes) {
       for (auto& normal_map : opts.normal_maps) {
@@ -257,7 +257,7 @@ void flat_model::regenerate_bounding_boxes() noexcept
 void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>& segments,
                                             const float4x4& node_to_object,
                                             const std::vector<material>& scene_materials,
-                                            const options& options)
+                                            const scene_options& options)
 {
    for (const auto& segment : segments) {
       if (segment.triangles.empty()) continue;
@@ -309,7 +309,7 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
 
 void flat_model::flatten_segments_to_terrain_cut(
    const std::vector<geometry_segment>& segments, const float4x4& node_to_object,
-   const std::string_view node_name, const options& options)
+   const std::string_view node_name, const scene_options& options)
 {
    std::size_t vertices_count = 0;
    std::size_t triangles_count = 0;
@@ -382,7 +382,7 @@ void flat_model::flatten_segments_to_terrain_cut(
 
 auto flat_model::select_mesh_for_segment(const geometry_segment& segment,
                                          const material& material,
-                                         const options& options) -> mesh&
+                                         const scene_options& options) -> mesh&
 {
    const auto search_for_suitable_mesh = [&](std::vector<mesh>::iterator begin) {
       return std::find_if(begin, meshes.end(), [&](const mesh& mesh) {
@@ -421,7 +421,7 @@ auto flat_model::select_mesh_for_segment(const geometry_segment& segment,
 
 void flat_model::flatten_node_to_collision(const node& node,
                                            const float4x4& node_to_object,
-                                           const options& options)
+                                           const scene_options& options)
 {
    auto& flat_collision = collision.emplace_back();
 
@@ -477,7 +477,7 @@ void flat_model::generate_tangents_for_meshes()
    }
 }
 
-void flat_model::apply_ambient_lighting(const options& options) noexcept
+void flat_model::apply_ambient_lighting(const scene_options& options) noexcept
 {
    if (not options.ambient_lighting) return;
 

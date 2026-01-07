@@ -27,6 +27,20 @@ enum class read_ec {
    ucfb_chunk_read_overrun,
    ucfb_strict_reader_id_mismatch,
    ucfb_unknown,
+
+   option_load_bad_keep,
+   option_load_bad_keep_material,
+   option_load_bad_scale,
+   option_load_bad_max_bones,
+   option_load_bad_lod_group,
+   option_load_bad_lod_bias,
+   option_load_bad_hi_res_shadow,
+   option_load_bad_bump,
+   option_load_bad_bounding_box_scale,
+   option_load_bad_bounding_box_offset,
+   option_load_bad_ambient_lighting,
+   option_load_io_open_error,
+   option_load_io_generic_error,
 };
 
 /// @brief Indicates an error munging a msh.

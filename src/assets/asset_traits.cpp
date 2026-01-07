@@ -15,7 +15,7 @@ auto asset_traits<odf::definition>::load(const io::path& path) -> odf::definitio
 
 auto asset_traits<msh::flat_model>::load(const io::path& path) -> msh::flat_model
 {
-   return msh::flat_model{msh::read_scene(path)};
+   return msh::flat_model{msh::read_scene(path, {})};
 }
 
 auto asset_traits<texture::texture>::load(const io::path& path) -> texture::texture

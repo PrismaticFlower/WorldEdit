@@ -95,22 +95,22 @@ private:
    void flatten_segments_to_meshes(const std::vector<geometry_segment>& segments,
                                    const float4x4& node_to_object,
                                    const std::vector<material>& scene_materials,
-                                   const options& options);
+                                   const scene_options& options);
 
    void flatten_segments_to_terrain_cut(const std::vector<geometry_segment>& segments,
                                         const float4x4& node_to_object,
                                         const std::string_view node_name,
-                                        const options& options);
+                                        const scene_options& options);
 
    void flatten_node_to_collision(const node& node, const float4x4& node_to_object,
-                                  const options& options);
+                                  const scene_options& options);
 
    auto select_mesh_for_segment(const geometry_segment& segment, const material& material,
-                                const options& options) -> mesh&;
+                                const scene_options& options) -> mesh&;
 
    void generate_tangents_for_meshes();
 
-   void apply_ambient_lighting(const options& options) noexcept;
+   void apply_ambient_lighting(const scene_options& options) noexcept;
 };
 
 }
