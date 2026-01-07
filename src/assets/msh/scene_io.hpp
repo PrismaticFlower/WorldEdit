@@ -15,10 +15,7 @@ namespace we::assets::msh {
 
 auto read_scene(const std::span<const std::byte> bytes) -> scene;
 
-auto read_scene(const io::path& path, const options& directory_options) -> scene;
-
-auto read_scene_options(const io::path& path, const options& directory_options)
-   -> scene_options;
+auto load_scene(const io::path& path, const options& directory_options) -> scene;
 
 void save_scene(const io::path& path, const scene& scene);
 

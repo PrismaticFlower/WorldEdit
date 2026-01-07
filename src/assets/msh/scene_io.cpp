@@ -618,6 +618,33 @@ void read_scene_option(const option& opt, scene_options& out)
    }
 }
 
+auto load_scene_options(const io::path& path, const options& directory_options) -> scene_options
+{
+   options file_options;
+
+   try {
+      file_options = parse_options(io::read_file_to_string(path));
+   }
+   catch (io::open_error& e) {
+      if (e.code() != io::open_error_code::file_not_found) {
+         throw read_error{e.what(), read_ec::option_load_io_open_error};
+      }
+   }
+   catch (io::error& e) {
+      throw read_error{e.what(), read_ec::option_load_io_generic_error};
+   }
+
+   scene_options results;
+
+   for (const std::span<const assets::option>& options :
+        {std::span<const assets::option>{directory_options},
+         std::span<const assets::option>{file_options}}) {
+      for (const option& opt : options) read_scene_option(opt, results);
+   }
+
+   return results;
+}
+
 }
 
 auto read_scene(const std::span<const std::byte> bytes) -> scene
@@ -663,42 +690,14 @@ auto read_scene(const std::span<const std::byte> bytes) -> scene
    throw read_error{".msh file contained no scene.", read_ec::read_no_scene};
 }
 
-auto read_scene(const io::path& path, const options& directory_options) -> scene
+auto load_scene(const io::path& path, const options& directory_options) -> scene
 {
    auto file = io::read_file_to_bytes(path);
    auto scene = read_scene(file);
 
    scene.options =
-      read_scene_options(io::path{path} += ".option"sv, directory_options);
+      load_scene_options(io::path{path} += ".option"sv, directory_options);
 
    return scene;
 }
-
-auto read_scene_options(const io::path& path, const options& directory_options) -> scene_options
-{
-   options file_options;
-
-   try {
-      file_options = parse_options(io::read_file_to_string(path));
-   }
-   catch (io::open_error& e) {
-      if (e.code() != io::open_error_code::file_not_found) {
-         throw read_error{e.what(), read_ec::option_load_io_open_error};
-      }
-   }
-   catch (io::error& e) {
-      throw read_error{e.what(), read_ec::option_load_io_generic_error};
-   }
-
-   scene_options results;
-
-   for (const std::span<const assets::option>& options :
-        {std::span<const assets::option>{directory_options},
-         std::span<const assets::option>{file_options}}) {
-      for (const option& opt : options) read_scene_option(opt, results);
-   }
-
-   return results;
-}
-
 }

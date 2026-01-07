@@ -13,7 +13,7 @@ namespace we::assets::msh::tests {
 
 TEST_CASE(".msh reading", "[Assets][MSH]")
 {
-   auto scene = read_scene("data/sand_test.msh", {});
+   auto scene = load_scene("data/sand_test.msh", {});
 
    // Materials Checks
    {
@@ -148,7 +148,7 @@ TEST_CASE(".msh reading", "[Assets][MSH]")
 
 TEST_CASE(".msh reading scale option", "[Assets][MSH]")
 {
-   auto scene = read_scene("data/sand_test_scale.msh", {});
+   auto scene = load_scene("data/sand_test_scale.msh", {});
 
    CHECK(scene.options.scale == 2.5f);
 
@@ -159,7 +159,7 @@ TEST_CASE(".msh reading scale option", "[Assets][MSH]")
 
 TEST_CASE(".msh reading ambientlighting option", "[Assets][MSH]")
 {
-   auto scene = read_scene("data/sand_test_ambientlighting.msh", {});
+   auto scene = load_scene("data/sand_test_ambientlighting.msh", {});
 
    CHECK(scene.options.ambient_lighting == float3{-1.0f, 0.5f, 1.0f});
 
@@ -170,7 +170,7 @@ TEST_CASE(".msh reading ambientlighting option", "[Assets][MSH]")
 
 TEST_CASE(".msh reading CLRB", "[Assets][MSH]")
 {
-   auto scene = read_scene("data/sand_test_clrb.msh", {});
+   auto scene = load_scene("data/sand_test_clrb.msh", {});
 
    // Node Checks
    {
