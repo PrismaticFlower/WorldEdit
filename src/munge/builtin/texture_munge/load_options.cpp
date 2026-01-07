@@ -319,7 +319,9 @@ auto read_options(const std::vector<assets::option>& file_options,
 {
    texture_munge_options out;
 
-   for (std::span<const assets::option> options : {folder_options, file_options}) {
+   for (const std::span<const assets::option>& options :
+        {std::span<const assets::option>{folder_options},
+         std::span<const assets::option>{file_options}}) {
       for (const assets::option& option : options) {
          read_option(option, out);
       }
