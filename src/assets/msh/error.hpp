@@ -22,6 +22,7 @@ enum class read_ec {
    validation_fail_geometry_segment_triangles_index_valid,
    validation_fail_geometry_segment_non_empty,
    validation_fail_geometry_segment_no_nans,
+   validation_fail_geometry_segment_weights_bone_indices_valid,
    validation_fail_collision_primitive_shape_valid,
 
    ucfb_memory_too_small_minimum,

@@ -278,4 +278,78 @@ TEST_CASE(".msh reading envl test", "[Assets][MSH]")
    CHECK(scene.nodes[4].bone_map[2] == 3);
 }
 
+TEST_CASE(".msh reading wght test", "[Assets][MSH]")
+{
+   auto scene = load_scene("data/test_wght.msh", {});
+
+   REQUIRE(scene.nodes.size() == 5);
+
+   CHECK(scene.nodes[0].name == "root");
+   CHECK(scene.nodes[1].name == "bone_a");
+   CHECK(scene.nodes[2].name == "bone_b");
+   CHECK(scene.nodes[3].name == "bone_c");
+   CHECK(scene.nodes[4].name == "tri");
+
+   // Node 4
+   {
+      const node& node = scene.nodes[4];
+
+      REQUIRE(node.bone_map.size() == 3);
+      CHECK(node.bone_map[0] == 1);
+      CHECK(node.bone_map[1] == 2);
+      CHECK(node.bone_map[2] == 3);
+
+      REQUIRE(node.segments.size() == 1);
+
+      const geometry_segment& segment = node.segments[0];
+
+      REQUIRE(segment.positions.size() == 3);
+      CHECK(segment.positions[0] == float3{1.0f, 0.0f, 1.0f});
+      CHECK(segment.positions[1] == float3{-1.0f, 0.0f, 1.0f});
+      CHECK(segment.positions[2] == float3{1.0f, 0.0f, -1.0f});
+
+      REQUIRE(segment.weights);
+      REQUIRE(segment.weights->size() == 3);
+
+      CHECK((*segment.weights)[0][0].bone_index == 0);
+      CHECK((*segment.weights)[0][0].weight == 0.25f);
+      CHECK((*segment.weights)[0][1].bone_index == 1);
+      CHECK((*segment.weights)[0][1].weight == 0.5f);
+      CHECK((*segment.weights)[0][2].bone_index == 2);
+      CHECK((*segment.weights)[0][2].weight == 0.25f);
+      CHECK((*segment.weights)[0][3].bone_index == 0);
+      CHECK((*segment.weights)[0][3].weight == 0.0f);
+
+      CHECK((*segment.weights)[1][0].bone_index == 1);
+      CHECK((*segment.weights)[1][0].weight == 0.35f);
+      CHECK((*segment.weights)[1][1].bone_index == 2);
+      CHECK((*segment.weights)[1][1].weight == 0.15f);
+      CHECK((*segment.weights)[1][2].bone_index == 0);
+      CHECK((*segment.weights)[1][2].weight == 0.45f);
+      CHECK((*segment.weights)[1][3].bone_index == 0);
+      CHECK((*segment.weights)[1][3].weight == 0.0f);
+
+      CHECK((*segment.weights)[2][0].bone_index == 2);
+      CHECK((*segment.weights)[2][0].weight == 0.125f);
+      CHECK((*segment.weights)[2][1].bone_index == 0);
+      CHECK((*segment.weights)[2][1].weight == 0.125f);
+      CHECK((*segment.weights)[2][2].bone_index == 1);
+      CHECK((*segment.weights)[2][2].weight == 0.125f);
+      CHECK((*segment.weights)[2][3].bone_index == 0);
+      CHECK((*segment.weights)[2][3].weight == 0.0f);
+
+      REQUIRE(segment.normals);
+      REQUIRE(segment.normals->size() == 3);
+      CHECK((*segment.normals)[0] == float3{0.0f, -1.0f, 0.0f});
+      CHECK((*segment.normals)[1] == float3{0.0f, -1.0f, 0.0f});
+      CHECK((*segment.normals)[2] == float3{0.0f, -1.0f, 0.0f});
+
+      REQUIRE(segment.texcoords);
+      REQUIRE(segment.texcoords->size() == 3);
+      CHECK((*segment.texcoords)[0] == float2{0.0f, 1.0f});
+      CHECK((*segment.texcoords)[1] == float2{1.0f, 1.0f});
+      CHECK((*segment.texcoords)[2] == float2{1.0f, 0.0f});
+   }
+}
+
 }

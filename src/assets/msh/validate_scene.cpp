@@ -128,13 +128,12 @@ void check_geometry_segment_attibutes_count_matches(const scene& scene)
          const auto& segment = node.segments[index];
 
          const std::size_t positions_count = segment.positions.size();
-         const std::array attribute_counts{segment.normals ? segment.normals->size()
-                                                           : positions_count,
-                                           segment.texcoords
-                                              ? segment.texcoords->size()
-                                              : positions_count,
-                                           segment.colors ? segment.colors->size()
-                                                          : positions_count};
+         const std::array attribute_counts{
+            segment.weights ? segment.weights->size() : positions_count,
+            segment.normals ? segment.normals->size() : positions_count,
+            segment.texcoords ? segment.texcoords->size() : positions_count,
+            segment.colors ? segment.colors->size() : positions_count,
+         };
 
          if (not std::ranges::all_of(attribute_counts, [=](const std::size_t size) {
                 return size == positions_count;
@@ -144,10 +143,13 @@ void check_geometry_segment_attibutes_count_matches(const scene& scene)
                            "#{} in node '{}'  "
                            " has mismatched vertex attribute counts.\n"
                            "   position count: {}\n"
+                           "   weights count: {}\n"
                            "   normals count: {}\n"
                            "   texcoords count: {}\n"
                            "   colors count: {}",
                            index, node.name, positions_count,
+                           segment.weights ? std::to_string(segment.weights->size())
+                                           : "nullopt"s,
                            segment.normals ? std::to_string(segment.normals->size())
                                            : "nullopt"s,
                            segment.texcoords ? std::to_string(segment.texcoords->size())
@@ -252,6 +254,32 @@ void check_geometry_segment_no_nans(const scene& scene)
    }
 }
 
+void check_geometry_segment_weights_bone_indices_validity(const scene& scene)
+{
+   for (const node& node : scene.nodes) {
+      for (std::size_t index = 0; index < node.segments.size(); ++index) {
+         const geometry_segment& segment = node.segments[index];
+
+         if (not segment.weights) continue;
+
+         for (const std::array<vertex_weight, 4>& weights : *segment.weights) {
+            for (const vertex_weight& weight : weights) {
+               if (weight.bone_index >= node.bone_map.size()) {
+                  throw read_error{
+                     fmt::format(
+                        ".msh file validation failure! A vertex weight in "
+                        "geometry segment #{} in node '{}' contains a "
+                        "bone index that is out of range! "
+                        "Bone map (ENVL) size '{}', out of range index '{}'.",
+                        index, node.name, node.bone_map.size(), weight.bone_index),
+                     read_ec::validation_fail_geometry_segment_weights_bone_indices_valid};
+               }
+            }
+         }
+      }
+   }
+}
+
 void check_collision_primitive_shape_validity(const scene& scene)
 {
    for (const auto& node : scene.nodes) {
@@ -287,6 +315,7 @@ void validate_scene(const scene& scene)
                                           check_geometry_segment_triangles_index_validity,
                                           check_geometry_segment_non_empty,
                                           check_geometry_segment_no_nans,
+                                          check_geometry_segment_weights_bone_indices_validity,
                                           check_collision_primitive_shape_validity};
 
    for (auto check : validation_checks) {

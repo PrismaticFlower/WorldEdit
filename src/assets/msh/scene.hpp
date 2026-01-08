@@ -38,6 +38,11 @@ struct transform {
    explicit operator float4x4() const noexcept;
 };
 
+struct vertex_weight {
+   uint32 bone_index = 0;
+   float weight = 0.0f;
+};
+
 struct geometry_segment {
    constexpr static std::size_t max_vertex_count = 0x8000;
 
@@ -47,6 +52,7 @@ struct geometry_segment {
    std::optional<std::vector<float3>> normals;
    std::optional<std::vector<uint32>> colors;
    std::optional<std::vector<float2>> texcoords;
+   std::optional<std::vector<std::array<vertex_weight, 4>>> weights;
 
    std::vector<std::array<uint16, 3>> triangles;
 };

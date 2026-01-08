@@ -26,7 +26,7 @@ namespace we::assets::msh {
 
 namespace {
 
-auto from_msh_space(float3 vec) -> float3
+auto from_msh_space(const float3& vec) -> const float3&
 {
    return vec;
 }
@@ -39,6 +39,12 @@ auto from_msh_space(float2 vec) -> float2
 auto from_msh_space(uint32 color) -> uint32
 {
    return color;
+}
+
+auto from_msh_space(const std::array<vertex_weight, 4>& weights)
+   -> const std::array<vertex_weight, 4>&
+{
+   return weights;
 }
 
 auto count_triangles_in_strips(const std::vector<std::vector<uint16>>& strips) noexcept
@@ -194,6 +200,9 @@ auto read_segm(ucfb::reader_strict<"SEGM"_id> segm) -> geometry_segment
          continue;
       case "POSL"_id:
          segment.positions = read_vertex_atrb<float3>(child);
+         continue;
+      case "WGHT"_id:
+         segment.weights = read_vertex_atrb<std::array<vertex_weight, 4>>(child);
          continue;
       case "NRML"_id:
          segment.normals = read_vertex_atrb<float3>(child);
