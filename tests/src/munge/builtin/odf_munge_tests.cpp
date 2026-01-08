@@ -116,4 +116,9 @@ TEST_CASE("odf_munge underscore_req", "[Munge]")
    REQUIRE(golden_ref_req_test("underscore_req"));
 }
 
+TEST_CASE("odf_munge req_fill_trailing_space", "[Munge]")
+{
+   REQUIRE(golden_ref_req_test("req_fill_trailing_space"));
+}
+
 }

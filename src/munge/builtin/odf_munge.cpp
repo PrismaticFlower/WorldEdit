@@ -78,17 +78,19 @@ auto build_req_lists(const assets::odf::definition& definition) -> req_lists
       if (prop.value.empty()) continue;
       if (not std::isalpha(prop.value[0]) and prop.value[0] != '_') continue;
 
+      const std::string_view value = string::trim_trailing_whitespace(prop.value);
+
       if (iequals(prop.key, "AnimationAddon") or //
           iequals(prop.key, "AnimationName") or  //
           iequals(prop.key, "AnimationLowres")) {
-         add_to(requirements.animbank, prop.value);
+         add_to(requirements.animbank, value);
       }
       else if (iequals(prop.key, "PilotAnimation") or
                iequals(prop.key, "SoldierAnimation")) {
-         add_to(requirements.anim, fmt::format("human_{}", prop.value));
+         add_to(requirements.anim, fmt::format("human_{}", value));
       }
       else if (iequals(prop.key, "ComboAnimationBank")) {
-         auto [animset, id_combo] = split_first_of_exclusive(prop.value, " ");
+         auto [animset, id_combo] = split_first_of_exclusive(value, " ");
 
          id_combo = trim_leading_whitespace(id_combo);
 
@@ -105,15 +107,15 @@ auto build_req_lists(const assets::odf::definition& definition) -> req_lists
       }
       else if (iequals(prop.key, "AnimationBank") or //
                iequals(prop.key, "CustomAnimationBank")) {
-         if (prop.value.contains('_')) {
-            add_to(requirements.animset, prop.value);
+         if (value.contains('_')) {
+            add_to(requirements.animset, value);
          }
          else {
-            add_to(requirements.animset, fmt::format("human_{}", prop.value));
+            add_to(requirements.animset, fmt::format("human_{}", value));
          }
       }
       else if (iequals(prop.key, "AttachTrigger")) {
-         auto [hp, args6] = split_first_of_exclusive(prop.value, " ");
+         auto [hp, args6] = split_first_of_exclusive(value, " ");
 
          args6 = trim_leading_whitespace(args6);
 
@@ -137,30 +139,30 @@ auto build_req_lists(const assets::odf::definition& definition) -> req_lists
          // These create no references.
       }
       else if (icontains(prop.key, "Animation")) {
-         add_to(requirements.anim, prop.value);
+         add_to(requirements.anim, value);
       }
       else if (icontains(prop.key, "Effect") or
                icontains(prop.key, "Emitter")) {
-         add_to(requirements.config, prop.value);
+         add_to(requirements.config, value);
       }
       else if (icontains(prop.key, "Explosion") or //
                icontains(prop.key, "Odf") or       //
                icontains(prop.key, "Ordnance") or  //
                icontains(prop.key, "Weapon")) {
-         add_to(requirements.class_, prop.value);
+         add_to(requirements.class_, value);
       }
       else if (icontains(prop.key, "Geometry") or //
                icontains(prop.key, "Model")) {
-         add_to(requirements.model, prop.value);
+         add_to(requirements.model, value);
       }
       else if (icontains(prop.key, "Skeleton")) {
-         add_to(requirements.animbank, prop.value);
+         add_to(requirements.animbank, value);
       }
       else if (icontains(prop.key, "Sprite")) {
-         add_to(requirements.sprite, prop.value);
+         add_to(requirements.sprite, value);
       }
       else if (icontains(prop.key, "Texture")) {
-         add_to(requirements.texture, prop.value);
+         add_to(requirements.texture, value);
       }
    }
 
