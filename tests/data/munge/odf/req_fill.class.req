@@ -56,5 +56,7 @@ ucft
 		"config"
 		"emitter"
 		"effect"
+      "test_inf_brawler"
+      "avi_inf_striker"
 	}
 }

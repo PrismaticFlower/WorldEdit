@@ -57,11 +57,11 @@ CustomAnimationBank = "temple2"
 // Creates "animset" reference to "bird_temple2"
 CustomAnimationBank = "bird_temple2"
 
-// Creates "animset" reference to "human_combo"
-ComboAnimationBank  = "combo"
+// Creates "animset" reference to "human_combo" and config reference to "test_inf_brawler"
+ComboAnimationBank  = "combo melee test_inf_brawler"
 
-// Creates "animset" reference to "bird_combo"
-ComboAnimationBank  = "bird_combo"
+// Creates "animset" reference to "bird_combo" and config reference to "avi_inf_striker"
+ComboAnimationBank  = "bird_combo melee avi_inf_striker"
 
 // Creates "anim" references to "grab" and "human_thrown"
 AttachTrigger      = "hp_first 1.0 grab thrown 1.0 hp_other die"

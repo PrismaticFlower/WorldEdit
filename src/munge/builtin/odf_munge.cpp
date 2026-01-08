@@ -87,9 +87,24 @@ auto build_req_lists(const assets::odf::definition& definition) -> req_lists
                iequals(prop.key, "SoldierAnimation")) {
          add_to(requirements.anim, fmt::format("human_{}", prop.value));
       }
-      else if (iequals(prop.key, "AnimationBank") or       //
-               iequals(prop.key, "CustomAnimationBank") or //
-               iequals(prop.key, "ComboAnimationBank")) {
+      else if (iequals(prop.key, "ComboAnimationBank")) {
+         auto [animset, id_combo] = split_first_of_exclusive(prop.value, " ");
+
+         id_combo = trim_leading_whitespace(id_combo);
+
+         auto [id, combo] = split_first_of_exclusive(id_combo, " ");
+
+         if (animset.contains('_')) {
+            add_to(requirements.animset, animset);
+         }
+         else {
+            add_to(requirements.animset, fmt::format("human_{}", animset));
+         }
+
+         add_to(requirements.config, combo);
+      }
+      else if (iequals(prop.key, "AnimationBank") or //
+               iequals(prop.key, "CustomAnimationBank")) {
          if (prop.value.contains('_')) {
             add_to(requirements.animset, prop.value);
          }
