@@ -91,6 +91,35 @@ bool is_valid_collision_primitive_shape(const collision_primitive_shape shape) n
    return false;
 }
 
+void remap_bone_maps(scene& scene, const std::vector<uint32>& node_index)
+{
+   uint32 max_node = 0;
+
+   for (uint32 index : node_index) max_node = std::max(max_node, index);
+
+   std::vector<uint32> remap;
+   remap.resize(max_node + 1, 0xff'ff'ff'ffu);
+
+   for (uint32 new_index = 0; new_index < node_index.size(); ++new_index) {
+      remap[node_index[new_index]] = new_index;
+   }
+
+   for (node& node : scene.nodes) {
+      for (uint32& bone_index : node.bone_map) {
+         if (bone_index > remap.size()) {
+            throw read_error{".msh file ENVL entry out of valid range!",
+                             read_ec::read_envl_entry_out_of_range};
+         }
+         else if (remap[bone_index] == 0xff'ff'ff'ffu) {
+            throw read_error{".msh file ENVL entry references missing node!",
+                             read_ec::read_envl_entry_missing_node};
+         }
+
+         bone_index = remap[bone_index];
+      }
+   }
+}
+
 auto read_swci(ucfb::reader_strict<"SWCI"_id> swci) -> collision_primitive
 {
    collision_primitive primitive;
@@ -191,10 +220,12 @@ auto read_segm(ucfb::reader_strict<"SEGM"_id> segm) -> geometry_segment
    return segment;
 }
 
-auto read_geom(ucfb::reader_strict<"GEOM"_id> geom) -> std::vector<geometry_segment>
+void read_geom(ucfb::reader_strict<"GEOM"_id> geom, node& node_out)
 {
    std::vector<geometry_segment> segments;
    segments.reserve(4);
+
+   std::vector<uint32> bone_map;
 
    while (geom) {
       auto child = geom.read_child();
@@ -203,10 +234,14 @@ auto read_geom(ucfb::reader_strict<"GEOM"_id> geom) -> std::vector<geometry_segm
       case "SEGM"_id:
          segments.emplace_back(read_segm(ucfb::reader_strict<"SEGM"_id>{child}));
          continue;
+      case "ENVL"_id:
+         bone_map = read_vertex_atrb<uint32>(child);
+         continue;
       }
    }
 
-   return segments;
+   node_out.segments = std::move(segments);
+   node_out.bone_map = std::move(bone_map);
 }
 
 auto read_tran(ucfb::reader_strict<"TRAN"_id> tran) -> transform
@@ -222,9 +257,11 @@ auto read_tran(ucfb::reader_strict<"TRAN"_id> tran) -> transform
    return transform;
 }
 
-auto read_modl(ucfb::reader_strict<"MODL"_id> modl) -> node
+void read_modl(ucfb::reader_strict<"MODL"_id> modl,
+               std::vector<node>& nodes_out, std::vector<uint32>& node_index_out)
 {
    node node;
+   std::optional<uint32> node_index;
 
    while (modl) {
       auto child = modl.read_child();
@@ -232,6 +269,9 @@ auto read_modl(ucfb::reader_strict<"MODL"_id> modl) -> node
       switch (child.id()) {
       case "MTYP"_id:
          node.type = child.read<node_type>();
+         continue;
+      case "MNDX"_id:
+         node_index = child.read<uint32>();
          continue;
       case "NAME"_id:
          node.name = child.read_string();
@@ -246,7 +286,7 @@ auto read_modl(ucfb::reader_strict<"MODL"_id> modl) -> node
          node.transform = read_tran(ucfb::reader_strict<"TRAN"_id>{child});
          continue;
       case "GEOM"_id:
-         node.segments = read_geom(ucfb::reader_strict<"GEOM"_id>{child});
+         read_geom(ucfb::reader_strict<"GEOM"_id>{child}, node);
          continue;
       case "SWCI"_id:
          node.collision_primitive = read_swci(ucfb::reader_strict<"SWCI"_id>{child});
@@ -254,7 +294,16 @@ auto read_modl(ucfb::reader_strict<"MODL"_id> modl) -> node
       }
    }
 
-   return node;
+   if (not node_index) {
+      modl.reset_head();
+
+      throw read_error{fmt::format(".msh file MODL chunk missing MNDX!\n\n{}",
+                                   modl.trace()),
+                       read_ec::read_mndx_missing};
+   }
+
+   nodes_out.push_back(std::move(node));
+   node_index_out.push_back(*node_index);
 }
 
 auto read_txnd(ucfb::reader txnd) -> std::string
@@ -337,6 +386,7 @@ auto read_matl(ucfb::reader_strict<"MATL"_id> matl) -> std::vector<material>
 auto read_msh2(ucfb::reader_strict<"MSH2"_id> msh2) -> scene
 {
    scene scene;
+   std::vector<uint32> node_index;
 
    while (msh2) {
       auto child = msh2.read_child();
@@ -346,10 +396,12 @@ auto read_msh2(ucfb::reader_strict<"MSH2"_id> msh2) -> scene
          scene.materials = read_matl(ucfb::reader_strict<"MATL"_id>{child});
          continue;
       case "MODL"_id:
-         scene.nodes.emplace_back(read_modl(ucfb::reader_strict<"MODL"_id>{child}));
+         read_modl(ucfb::reader_strict<"MODL"_id>{child}, scene.nodes, node_index);
          continue;
       }
    }
+
+   remap_bone_maps(scene, node_index);
 
    return scene;
 }

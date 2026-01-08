@@ -8,6 +8,9 @@ enum class read_ec {
    read_version_not_supported,
    read_no_scene,
    read_matl_list_too_short,
+   read_mndx_missing,
+   read_envl_entry_out_of_range,
+   read_envl_entry_missing_node,
 
    validation_fail_node_name_unique,
    validation_fail_node_type_valid,

@@ -260,4 +260,22 @@ TEST_CASE(".msh reading CLRB", "[Assets][MSH]")
    }
 }
 
+TEST_CASE(".msh reading envl test", "[Assets][MSH]")
+{
+   auto scene = load_scene("data/test_envl.msh", {});
+
+   REQUIRE(scene.nodes.size() == 5);
+
+   CHECK(scene.nodes[0].name == "root");
+   CHECK(scene.nodes[1].name == "bone_a");
+   CHECK(scene.nodes[2].name == "bone_b");
+   CHECK(scene.nodes[3].name == "bone_c");
+   CHECK(scene.nodes[4].name == "tri");
+
+   REQUIRE(scene.nodes[4].bone_map.size() == 3);
+   CHECK(scene.nodes[4].bone_map[0] == 1);
+   CHECK(scene.nodes[4].bone_map[1] == 2);
+   CHECK(scene.nodes[4].bone_map[2] == 3);
+}
+
 }

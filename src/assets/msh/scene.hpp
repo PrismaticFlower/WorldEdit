@@ -66,6 +66,7 @@ struct node {
    bool hidden = false;
 
    std::vector<geometry_segment> segments;
+   std::vector<uint32> bone_map;
    std::optional<collision_primitive> collision_primitive;
 };
 
