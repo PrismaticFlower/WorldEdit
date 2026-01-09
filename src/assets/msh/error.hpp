@@ -12,6 +12,7 @@ enum class read_ec {
    read_envl_entry_out_of_range,
    read_envl_entry_missing_node,
 
+   validation_fail_not_empty,
    validation_fail_node_name_unique,
    validation_fail_node_type_valid,
    validation_fail_node_parents_valid,

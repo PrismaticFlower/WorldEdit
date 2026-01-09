@@ -16,6 +16,14 @@ namespace we::assets::msh {
 
 namespace {
 
+void check_not_empty(const scene& scene)
+{
+   if (scene.nodes.empty()) {
+      throw read_error{".msh file validation failure! No nodes in .msh file.",
+                       read_ec::validation_fail_not_empty};
+   }
+}
+
 void check_node_name_uniqueness(const scene& scene)
 {
    for (const auto& node : scene.nodes) {
@@ -305,7 +313,8 @@ void check_collision_primitive_shape_validity(const scene& scene)
 
 void validate_scene(const scene& scene)
 {
-   constexpr std::array validation_checks{check_node_name_uniqueness,
+   constexpr std::array validation_checks{check_not_empty,
+                                          check_node_name_uniqueness,
                                           check_node_type_validity,
                                           check_node_parents_validity,
                                           check_node_parents_noncircular,
