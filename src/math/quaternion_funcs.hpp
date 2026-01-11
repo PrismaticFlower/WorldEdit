@@ -87,24 +87,40 @@ inline auto make_quat_from_matrix(const float4x4& matrix) noexcept -> quaternion
 
 inline auto to_matrix(quaternion quat) noexcept -> float4x4
 {
-   quat = normalize(quat);
+   // Quaternion to Matrix Method from EuclideanSpace - https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/index.htm
 
-   float4 quat_sq{quat.x * quat.x, quat.y * quat.y, quat.z * quat.z,
-                  quat.w * quat.w};
+   const float ww = quat.w * quat.w;
+   const float xx = quat.x * quat.x;
+   const float yy = quat.y * quat.y;
+   const float zz = quat.z * quat.z;
 
-   const float3 row0 = {1.0f - 2.0f * quat_sq.y - 2.0f * quat_sq.z,
-                        2.0f * quat.x * quat.y + 2.0f * quat.z * quat.w,
-                        2.0f * quat.x * quat.z - 2.0f * quat.y * quat.w};
+   const float inv_sq_len = 1.0f / (ww + xx + yy + zz);
 
-   const float3 row1 = {2.0f * quat.x * quat.y - 2.0f * quat.z * quat.w,
-                        1.0f - 2.0f * quat_sq.x - 2.0f * quat_sq.z,
-                        2.0f * quat.y * quat.z + 2.0f * quat.x * quat.w};
+   float4x4 m;
 
-   const float3 row2 = {2.0f * quat.x * quat.z + 2.0f * quat.y * quat.w,
-                        2.0f * quat.y * quat.z - 2.0f * quat.x * quat.w,
-                        1.0f - 2.0f * quat_sq.x - 2.0f * quat_sq.y};
+   m[0].x = (xx - yy - zz + ww) * inv_sq_len;
+   m[1].y = (-xx + yy - zz + ww) * inv_sq_len;
+   m[2].z = (-xx - yy + zz + ww) * inv_sq_len;
 
-   return float4x4{{row0, 0.0f}, {row1, 0.0f}, {row2, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}};
+   const float xy = quat.x * quat.y;
+   const float zw = quat.x * quat.y;
+
+   m[0].y = 2.0f * (xy + zw) * inv_sq_len;
+   m[1].x = 2.0f * (xy - zw) * inv_sq_len;
+
+   const float xz = quat.x * quat.z;
+   const float yw = quat.y * quat.w;
+
+   m[0].z = 2.0f * (xz - yw) * inv_sq_len;
+   m[2].x = 2.0f * (xz + yw) * inv_sq_len;
+
+   const float yz = quat.y * quat.z;
+   const float xw = quat.x * quat.w;
+
+   m[1].z = 2.0f * (yz + xw) * inv_sq_len;
+   m[2].y = 2.0f * (yz - xw) * inv_sq_len;
+
+   return m;
 }
 
 inline auto make_quat_from_euler(const float3& vec) noexcept -> quaternion
