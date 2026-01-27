@@ -389,9 +389,6 @@
     <ClCompile Include="src\math\matrix_funcs.cpp" />
     <ClCompile Include="src\math\scalar_funcs.cpp" />
     <ClCompile Include="src\munge\builtin\blocks_munge.cpp" />
-    <ClCompile Include="src\munge\builtin\model_munge.cpp" />
-    <ClCompile Include="src\munge\builtin\model_munge\error.cpp" />
-    <ClCompile Include="src\munge\builtin\model_munge\load_model.cpp" />
     <ClCompile Include="src\munge\builtin\odf_munge.cpp" />
     <ClCompile Include="src\munge\builtin\odf_munge\error.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge.cpp" />
@@ -703,10 +700,6 @@
     <ClInclude Include="src\math\scalar_funcs.hpp" />
     <ClInclude Include="src\math\vector_funcs.hpp" />
     <ClInclude Include="src\munge\builtin\blocks_munge.hpp" />
-    <ClInclude Include="src\munge\builtin\model_munge.hpp" />
-    <ClInclude Include="src\munge\builtin\model_munge\error.hpp" />
-    <ClInclude Include="src\munge\builtin\model_munge\load_model.hpp" />
-    <ClInclude Include="src\munge\builtin\model_munge\model.hpp" />
     <ClInclude Include="src\munge\builtin\odf_munge.hpp" />
     <ClInclude Include="src\munge\builtin\odf_munge\error.hpp" />
     <ClInclude Include="src\munge\builtin\texture_munge.hpp" />
