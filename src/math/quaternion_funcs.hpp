@@ -85,40 +85,38 @@ inline auto make_quat_from_matrix(const float4x4& matrix) noexcept -> quaternion
    return make_quat_from_matrix(float3x3{matrix});
 }
 
-inline auto to_matrix(quaternion quat) noexcept -> float4x4
+inline auto to_matrix(const quaternion& quat) noexcept -> float4x4
 {
    // Quaternion to Matrix Method from EuclideanSpace - https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/index.htm
-
    const float ww = quat.w * quat.w;
    const float xx = quat.x * quat.x;
    const float yy = quat.y * quat.y;
    const float zz = quat.z * quat.z;
+
+   const float xy = quat.x * quat.y;
+   const float zw = quat.z * quat.w;
+
+   const float xz = quat.x * quat.z;
+   const float yw = quat.y * quat.w;
+
+   const float yz = quat.y * quat.z;
+   const float xw = quat.x * quat.w;
 
    const float inv_sq_len = 1.0f / (ww + xx + yy + zz);
 
    float4x4 m;
 
    m[0].x = (xx - yy - zz + ww) * inv_sq_len;
-   m[1].y = (-xx + yy - zz + ww) * inv_sq_len;
-   m[2].z = (-xx - yy + zz + ww) * inv_sq_len;
-
-   const float xy = quat.x * quat.y;
-   const float zw = quat.x * quat.y;
-
-   m[0].y = 2.0f * (xy + zw) * inv_sq_len;
    m[1].x = 2.0f * (xy - zw) * inv_sq_len;
-
-   const float xz = quat.x * quat.z;
-   const float yw = quat.y * quat.w;
-
-   m[0].z = 2.0f * (xz - yw) * inv_sq_len;
    m[2].x = 2.0f * (xz + yw) * inv_sq_len;
 
-   const float yz = quat.y * quat.z;
-   const float xw = quat.x * quat.w;
-
-   m[1].z = 2.0f * (yz + xw) * inv_sq_len;
+   m[0].y = 2.0f * (xy + zw) * inv_sq_len;
+   m[1].y = (-xx + yy - zz + ww) * inv_sq_len;
    m[2].y = 2.0f * (yz - xw) * inv_sq_len;
+
+   m[0].z = 2.0f * (xz - yw) * inv_sq_len;
+   m[1].z = 2.0f * (yz + xw) * inv_sq_len;
+   m[2].z = (-xx - yy + zz + ww) * inv_sq_len;
 
    return m;
 }
