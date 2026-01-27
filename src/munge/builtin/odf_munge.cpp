@@ -78,7 +78,7 @@ auto build_req_lists(const assets::odf::definition& definition) -> req_lists
       if (prop.value.empty()) continue;
       if (not std::isalpha(prop.value[0]) and prop.value[0] != '_') continue;
 
-      const std::string_view value = string::trim_trailing_whitespace(prop.value);
+      const std::string_view value = split_first_of_exclusive(prop.value, " ")[0];
 
       if (iequals(prop.key, "AnimationAddon") or //
           iequals(prop.key, "AnimationName") or  //
@@ -90,11 +90,13 @@ auto build_req_lists(const assets::odf::definition& definition) -> req_lists
          add_to(requirements.anim, fmt::format("human_{}", value));
       }
       else if (iequals(prop.key, "ComboAnimationBank")) {
-         auto [animset, id_combo] = split_first_of_exclusive(value, " ");
+         auto [animset, id_combo] = split_first_of_exclusive(prop.value, " ");
 
          id_combo = trim_leading_whitespace(id_combo);
 
          auto [id, combo] = split_first_of_exclusive(id_combo, " ");
+
+         combo = trim_trailing_whitespace(combo);
 
          if (animset.contains('_')) {
             add_to(requirements.animset, animset);
@@ -115,7 +117,7 @@ auto build_req_lists(const assets::odf::definition& definition) -> req_lists
          }
       }
       else if (iequals(prop.key, "AttachTrigger")) {
-         auto [hp, args6] = split_first_of_exclusive(value, " ");
+         auto [hp, args6] = split_first_of_exclusive(prop.value, " ");
 
          args6 = trim_leading_whitespace(args6);
 

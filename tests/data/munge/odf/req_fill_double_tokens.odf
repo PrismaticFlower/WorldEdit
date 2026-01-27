@@ -1,0 +1,44 @@
+[GameObjectClass]
+
+ClassLabel          = "prop"
+
+[Properties]
+
+// Test for properties containing key words
+Wow_Geometry        = "geom second"
+Wow_Model           = "modl second"
+Wow_Texture         = "tex second"
+Wow_Sprite          = "sprt second"
+Wow_Odf             = "odf second"
+Wow_Weapon          = "weapon second"
+Wow_Explosion       = "explosion second"
+Wow_Ordnance        = "ordnance second"
+Wow_Emitter         = "emitter second"
+Wow_Effect          = "effect second"
+Wow_Skeleton        = "skeleton second"
+Wow_Animation       = "animation second"
+
+// Creates "animbank" reference but not "anim" reference
+AnimationName       = "test_anim second"
+AnimationLowres     = "test_anim_lowres second"
+
+// Creates "animbank" reference
+AnimationAddon      = "cape_addon second"
+
+// Creates "anim" reference to "human_pose"
+PilotAnimation      = "pose second"
+
+// Creates "anim" reference to "human_soldier"
+SoldierAnimation    = "soldier second"
+
+// Creates "animset" reference to "human_temple"
+AnimationBank       = "temple second"
+
+// Creates "animset" reference to "bird_temple"
+AnimationBank       = "bird_temple second"
+
+// Creates "animset" reference to "human_temple2"
+CustomAnimationBank = "temple2 second"
+
+// Creates "animset" reference to "bird_temple2"
+CustomAnimationBank = "bird_temple2 second"

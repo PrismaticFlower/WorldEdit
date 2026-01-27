@@ -121,4 +121,9 @@ TEST_CASE("odf_munge req_fill_trailing_space", "[Munge]")
    REQUIRE(golden_ref_req_test("req_fill_trailing_space"));
 }
 
+TEST_CASE("odf_munge req_fill_double_tokens", "[Munge]")
+{
+   REQUIRE(golden_ref_req_test("req_fill_double_tokens"));
+}
+
 }
