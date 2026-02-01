@@ -136,7 +136,7 @@ auto make_material(const block_material& material) noexcept -> assets::msh::mate
    msh_material.textures[3] = material.env_map;
    msh_material.data0 = material.detail_tiling[0];
    msh_material.data1 = material.detail_tiling[1];
-   msh_material.specular_color = material.specular_color;
+   msh_material.specular_color = {material.specular_color, 1.0f};
 
    if (not material.env_map.empty()) {
       if (not material.normal_map.empty()) {

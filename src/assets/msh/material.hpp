@@ -36,8 +36,8 @@ enum class rendertype : uint8 {
    detail = glow, // SWBF1
    refraction = 22,
    normalmap_tiled = 24,
-   normalmap_envmapped = 26,
    blinking = 25,
+   normalmap_envmapped = 26,
    normalmap = 27,
    normalmap_specular = 28,
    normalmap_tiled_envmapped = 29
@@ -45,11 +45,11 @@ enum class rendertype : uint8 {
 
 struct material {
    std::string name;
-   float3 specular_color = {1.0f, 1.0f, 1.0f};
+   float4 specular_color = {1.0f, 1.0f, 1.0f, 1.0f};
    material_flags flags = material_flags::none;
    rendertype rendertype = rendertype::normal;
-   uint8 data0 = 0;
-   uint8 data1 = 0;
+   int8 data0 = 0;
+   int8 data1 = 0;
 
    std::array<std::string, 4> textures{};
 

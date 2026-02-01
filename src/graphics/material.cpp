@@ -248,8 +248,12 @@ void material::init_constant_buffer(const assets::msh::material& material,
       material.rendertype == assets::msh::rendertype::normalmap_specular;
    const bool is_scrolling = material.rendertype == assets::msh::rendertype::scrolling;
 
+   const float3 material_specular_color =
+      float3{material.specular_color.x, material.specular_color.y,
+             material.specular_color.z};
+
    const float3 specular_color =
-      has_specular ? material.specular_color : float3{0.0f, 0.0f, 0.0f};
+      has_specular ? material_specular_color : float3{0.0f, 0.0f, 0.0f};
    const float2 scrolling_amount =
       is_scrolling ? float2{material.data0 / 255.0f, material.data1 / 255.0f}
                    : float2{0.f, 0.0f};
@@ -268,7 +272,7 @@ void material::init_constant_buffer(const assets::msh::material& material,
       .env_map = textures.env_map->srv_srgb.index,
       .scrolling_amount = scrolling_amount,
       .detail_scale = detail_scale,
-      .env_color = material.specular_color};
+      .env_color = material_specular_color};
 
    if (constant_buffer_upload_memory.size() != sizeof(normal_material_constants)) {
       std::terminate();

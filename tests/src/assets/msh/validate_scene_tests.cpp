@@ -14,7 +14,7 @@ namespace {
 const scene input_scene{
    .materials = {{
                     .name = "snow"s,
-                    .specular_color = {0.75f, 0.75f, 0.75f},
+                    .specular_color = {0.75f, 0.75f, 0.75f, 1.0f},
                     .flags = material_flags::specular,
                     .rendertype = rendertype::normalmap,
                     .textures = {"snow.png"s, "snow_normalmap.png"s},
@@ -22,7 +22,7 @@ const scene input_scene{
 
                  {
                     .name = "dirt"s,
-                    .specular_color = {0.0f, 0.0f, 0.0f},
+                    .specular_color = {0.0f, 0.0f, 0.0f, 1.0f},
                     .flags = material_flags::none,
                     .rendertype = rendertype::normalmap,
                     .textures = {"dirt.png"s, "dirt_normalmap.png"s},

@@ -23,7 +23,7 @@ TEST_CASE(".msh reading", "[Assets][MSH]")
 
       CHECK(material.name == "Material"sv);
       CHECK(approx_equals(material.specular_color, {0.0125864427536726f, 0.013322648592293262f,
-                                                    0.009387092664837837f}));
+                                                    0.009387092664837837f, 1.0f}));
       CHECK(material.flags == material_flags::specular);
       CHECK(material.rendertype == rendertype::normalmap);
       CHECK(material.data0 == 0);

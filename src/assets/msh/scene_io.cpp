@@ -340,8 +340,7 @@ auto read_matd(ucfb::reader_strict<"MATD"_id> matd) -> material
          continue;
       case "DATA"_id:
          child.read<float4>(); // Diffuse Colour, seams to get ignored by modelmunge
-         material.specular_color = child.read<float3>();
-         child.read<float>(); // Specular Colour Alpha, effectively just padding
+         material.specular_color = child.read<float4>();
          child.read<float4>(); // Ambient Colour, ignored by modelmunge and Zero(?)
          child.read<float>(); // Specular Exponent/Decay (Gets ignored by RedEngine in SWBFII for all known materials)
          continue;

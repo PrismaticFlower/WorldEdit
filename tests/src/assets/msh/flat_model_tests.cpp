@@ -17,7 +17,7 @@ namespace {
 const scene input_scene{
    .materials = {{
                     .name = "snow"s,
-                    .specular_color = {0.75f, 0.75f, 0.75f},
+                    .specular_color = {0.75f, 0.75f, 0.75f, 1.0f},
                     .flags = material_flags::specular,
                     .rendertype = rendertype::normalmap,
                     .textures = {"snow"s, "snow_normalmap"s},
@@ -25,7 +25,7 @@ const scene input_scene{
 
                  {
                     .name = "dirt"s,
-                    .specular_color = {0.0f, 0.0f, 0.0f},
+                    .specular_color = {0.0f, 0.0f, 0.0f, 1.0f},
                     .flags = material_flags::none,
                     .rendertype = rendertype::normalmap,
                     .textures = {"dirt"s, "dirt_normalmap"s},
@@ -408,7 +408,7 @@ TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
    const scene input_scene{
       .materials = {{
          .name = "snow"s,
-         .specular_color = {0.75f, 0.75f, 0.75f},
+         .specular_color = {0.75f, 0.75f, 0.75f, 1.0f},
          .flags = material_flags::specular,
          .rendertype = rendertype::normalmap,
          .textures = {"snow"s, "snow_normalmap"s},
@@ -709,7 +709,7 @@ TEST_CASE(".msh flat model creation root transform skip", "[Assets][MSH]")
    const scene input_scene{
       .materials = {{
          .name = "snow"s,
-         .specular_color = {0.75f, 0.75f, 0.75f},
+         .specular_color = {0.75f, 0.75f, 0.75f, 1.0f},
          .flags = material_flags::specular,
          .rendertype = rendertype::normalmap,
          .textures = {"snow"s, "snow_normalmap"s},
@@ -808,7 +808,7 @@ TEST_CASE(".msh flat model creation with ambient lighting", "[Assets][MSH]")
    const scene input_scene{
       .materials = {{
          .name = "snow"s,
-         .specular_color = {0.75f, 0.75f, 0.75f},
+         .specular_color = {0.75f, 0.75f, 0.75f, 1.0f},
          .flags = material_flags::specular,
          .rendertype = rendertype::normalmap,
          .textures = {"snow"s, "snow_normalmap"s},
@@ -875,7 +875,7 @@ TEST_CASE(".msh flat excessive vertices test", "[Assets][MSH]")
    scene input_scene{
       .materials = {{
                        .name = "snow"s,
-                       .specular_color = {0.75f, 0.75f, 0.75f},
+                       .specular_color = {0.75f, 0.75f, 0.75f, 1.0f},
                        .flags = material_flags::specular,
                        .rendertype = rendertype::normalmap,
                        .textures = {"snow"s, "snow_normalmap"s},
@@ -883,7 +883,7 @@ TEST_CASE(".msh flat excessive vertices test", "[Assets][MSH]")
 
                     {
                        .name = "dirt"s,
-                       .specular_color = {0.0f, 0.0f, 0.0f},
+                       .specular_color = {0.0f, 0.0f, 0.0f, 1.0f},
                        .flags = material_flags::none,
                        .rendertype = rendertype::normalmap,
                        .textures = {"dirt"s, "dirt_normalmap"s},
@@ -915,7 +915,7 @@ TEST_CASE(".msh flat excessive terrain cut test", "[Assets][MSH]")
    scene input_scene{
       .materials = {{
                        .name = "snow"s,
-                       .specular_color = {0.75f, 0.75f, 0.75f},
+                       .specular_color = {0.75f, 0.75f, 0.75f, 1.0f},
                        .flags = material_flags::specular,
                        .rendertype = rendertype::normalmap,
                        .textures = {"snow"s, "snow_normalmap"s},
@@ -923,7 +923,7 @@ TEST_CASE(".msh flat excessive terrain cut test", "[Assets][MSH]")
 
                     {
                        .name = "dirt"s,
-                       .specular_color = {0.0f, 0.0f, 0.0f},
+                       .specular_color = {0.0f, 0.0f, 0.0f, 1.0f},
                        .flags = material_flags::none,
                        .rendertype = rendertype::normalmap,
                        .textures = {"dirt"s, "dirt_normalmap"s},
