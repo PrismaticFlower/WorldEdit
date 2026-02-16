@@ -44,6 +44,7 @@ enum class read_ec {
    option_load_bad_bounding_box_scale,
    option_load_bad_bounding_box_offset,
    option_load_bad_ambient_lighting,
+   option_load_bad_attach_light,
    option_load_io_open_error,
    option_load_io_generic_error,
 };

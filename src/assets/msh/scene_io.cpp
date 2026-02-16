@@ -626,6 +626,9 @@ void read_scene_option(const option& opt, scene_options& out)
    else if (iequals(opt.name, "-removeverticesonmerge"sv)) {
       out.remove_vertices_on_merge = true;
    }
+   else if (iequals(opt.name, "-noprojectionlights"sv)) {
+      out.no_projection_lights = true;
+   }
    else if (iequals(opt.name, "-ambientlighting"sv)) {
       if (opt.arguments.empty()) {
          throw read_error{"Invalid -ambientlighting option.",
@@ -675,6 +678,22 @@ void read_scene_option(const option& opt, scene_options& out)
       }
 
       out.ambient_lighting = ambient_lighting;
+   }
+   else if (iequals(opt.name, "-attachlight"sv)) {
+      for (const std::string& value : opt.arguments) {
+         auto [node, light_name] = string::split_first_of_exclusive_whitespace(value);
+
+         node = string::trim_whitespace(node);
+         light_name = string::trim_whitespace(light_name);
+
+         if (node.empty() or light_name.empty()) {
+            throw read_error{"Invalid -attachlight option.",
+                             read_ec::option_load_bad_attach_light};
+         }
+
+         out.attach_lights.push_back({.node_name = std::string{node},
+                                      .light_name = std::string{light_name}});
+      }
    }
 }
 

@@ -76,10 +76,16 @@ struct node {
    std::optional<collision_primitive> collision_primitive;
 };
 
+struct scene_option_attach_light {
+   std::string node_name;
+   std::string light_name;
+};
+
 struct scene_options {
    std::vector<std::string> keep_nodes;
    std::vector<std::string> keep_materials;
    std::vector<std::string> normal_maps;
+   std::vector<scene_option_attach_light> attach_lights;
 
    bool keep_all = false;
    bool left_handed = false;
@@ -97,6 +103,7 @@ struct scene_options {
    bool k_collision = false;
    bool do_not_merge_collision = false;
    bool remove_vertices_on_merge = false;
+   bool no_projection_lights = false;
 
    float scale = 1.0f;
    uint32 max_bones = 0;
