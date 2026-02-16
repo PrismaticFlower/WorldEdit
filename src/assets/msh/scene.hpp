@@ -24,6 +24,12 @@ enum class collision_primitive_shape : int32 {
    box = 4
 };
 
+enum class cloth_collision_primitive_shape : uint32 {
+   sphere = 0,
+   cylinder = 1,
+   cube = 2
+};
+
 enum class lod_group : uint32 {
    model = 0,
    big_model = 1,
@@ -64,6 +70,30 @@ struct collision_primitive {
    float length = 0.0f;
 };
 
+struct cloth_collision_primitive {
+   std::string name;
+   std::string parent;
+   cloth_collision_primitive_shape shape = cloth_collision_primitive_shape::sphere;
+   float3 size;
+};
+
+struct cloth {
+   std::string texture_name;
+   std::vector<float3> positions;
+   std::vector<float2> texcoords;
+
+   std::vector<uint32> fixed_indices;
+   std::vector<std::string> fixed_weights;
+
+   std::vector<std::array<uint32, 3>> triangles;
+
+   std::vector<std::array<uint16, 2>> stretch_constraints;
+   std::vector<std::array<uint16, 2>> cross_constraints;
+   std::vector<std::array<uint16, 2>> bend_constraints;
+
+   std::vector<cloth_collision_primitive> collision;
+};
+
 struct node {
    std::string name;
    std::optional<std::string> parent;
@@ -74,6 +104,7 @@ struct node {
    std::vector<geometry_segment> segments;
    std::vector<uint32> bone_map;
    std::optional<collision_primitive> collision_primitive;
+   std::optional<cloth> cloth;
 };
 
 struct scene_option_attach_light {

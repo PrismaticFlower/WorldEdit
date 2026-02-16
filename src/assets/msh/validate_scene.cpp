@@ -288,6 +288,235 @@ void check_geometry_segment_weights_bone_indices_validity(const scene& scene)
    }
 }
 
+void check_cloth_attibutes_count_matches(const scene& scene)
+{
+   for (const node& node : scene.nodes) {
+      if (not node.cloth) continue;
+
+      const cloth& cloth = *node.cloth;
+
+      if (cloth.positions.size() != cloth.texcoords.size()) {
+         throw read_error{
+            fmt::format(".msh file validation failure! Cloth in node '{}' has "
+                        "mismatched vertex attribute counts.\n"
+                        "   position count: {}\n"
+                        "   texcoords count: {}",
+                        node.name, cloth.positions.size(), cloth.texcoords.size()),
+            read_ec::validation_fail_cloth_attibutes_count_matches};
+      }
+   }
+}
+
+void check_cloth_fixed_weights_count_matches(const scene& scene)
+{
+   for (const auto& node : scene.nodes) {
+      if (not node.cloth) continue;
+
+      const cloth& cloth = *node.cloth;
+
+      if (cloth.fixed_indices.size() != cloth.fixed_weights.size()) {
+         throw read_error{
+            fmt::format(".msh file validation failure! Fixed weight index size "
+                        "'{}' does not match fixed weights bones size '{}'.",
+                        cloth.fixed_indices.size(), cloth.fixed_weights.size()),
+            read_ec::validation_fail_cloth_fixed_weight_count_matches};
+      }
+   }
+}
+
+void check_cloth_fixed_index_validity(const scene& scene)
+{
+   for (const auto& node : scene.nodes) {
+      if (not node.cloth) continue;
+
+      const cloth& cloth = *node.cloth;
+
+      for (uint32 fixed_index : cloth.fixed_indices) {
+         if (fixed_index > cloth.positions.size()) {
+            throw read_error{
+               fmt::format(".msh file validation failure! Fixed weight index "
+                           "'{}' in cloth in node '{}'"
+                           " is out of range. Vertex count is '{}'.",
+                           fixed_index, node.name, cloth.positions.size()),
+               read_ec::validation_fail_cloth_fixed_index_valid};
+         }
+      }
+   }
+}
+
+void check_cloth_fixed_weights_validity(const scene& scene)
+{
+   for (const auto& node : scene.nodes) {
+      if (not node.cloth) continue;
+
+      const cloth& cloth = *node.cloth;
+
+      for (std::string_view fixed_weight : cloth.fixed_weights) {
+         bool found = false;
+         bool is_bone = false;
+
+         for (const auto& other_node : scene.nodes) {
+            if (other_node.name == fixed_weight) {
+               found = true;
+               is_bone = other_node.type == node_type::bone;
+
+               break;
+            }
+         }
+
+         if (not found) {
+            throw read_error{
+               fmt::format(
+                  ".msh file validation failure! Node for fixed weight "
+                  "'{}' in cloth in node '{}' does not exist.",
+                  fixed_weight, node.name),
+               read_ec::validation_fail_cloth_fixed_weight_valid};
+         }
+         else if (not is_bone) {
+            throw read_error{
+               fmt::format(
+                  ".msh file validation failure! Node for fixed weight "
+                  "'{}' in cloth in node '{}' exists but is not a bone.",
+                  fixed_weight, node.name),
+               read_ec::validation_fail_cloth_fixed_weight_valid};
+         }
+      }
+   }
+}
+
+void check_cloth_triangles_index_validity(const scene& scene)
+{
+   for (const auto& node : scene.nodes) {
+      if (not node.cloth) continue;
+
+      const cloth& cloth = *node.cloth;
+
+      for (const std::array<uint32, 3>& tri : cloth.triangles) {
+         for (uint32 index : tri) {
+            if (index > cloth.positions.size()) {
+               throw read_error{
+                  fmt::format(".msh file validation failure! A triangle in "
+                              "cloth in node '{}' contains a "
+                              "vertex index that is out of range! "
+                              "Vertex count '{}', out of range index '{}'.",
+                              node.name, cloth.positions.size(), index),
+                  read_ec::validation_fail_cloth_triangles_index_valid};
+            }
+         }
+      }
+   }
+}
+
+void check_cloth_constraints_validity(const scene& scene)
+{
+   for (const auto& node : scene.nodes) {
+      if (not node.cloth) continue;
+
+      const cloth& cloth = *node.cloth;
+
+      for (const std::array<uint16, 2>& constraint : cloth.stretch_constraints) {
+         for (uint16 index : constraint) {
+            if (index > cloth.positions.size()) {
+               throw read_error{
+                  fmt::format(".msh file validation failure! A stretch "
+                              "constraint pair in "
+                              "cloth in node '{}' contains a "
+                              "vertex index that is out of range! "
+                              "Vertex count '{}', out of range index '{}'.",
+                              node.name, cloth.positions.size(), index),
+                  read_ec::validation_fail_cloth_constraints_valid};
+            }
+         }
+      }
+
+      for (const std::array<uint16, 2>& constraint : cloth.cross_constraints) {
+         for (uint16 index : constraint) {
+            if (index > cloth.positions.size()) {
+               throw read_error{
+                  fmt::format(".msh file validation failure! A cross "
+                              "constraint pair in "
+                              "cloth in node '{}' contains a "
+                              "vertex index that is out of range! "
+                              "Vertex count '{}', out of range index '{}'.",
+                              node.name, cloth.positions.size(), index),
+                  read_ec::validation_fail_cloth_constraints_valid};
+            }
+         }
+      }
+
+      for (const std::array<uint16, 2>& constraint : cloth.bend_constraints) {
+         for (uint16 index : constraint) {
+            if (index > cloth.positions.size()) {
+               throw read_error{
+                  fmt::format(".msh file validation failure! A bend "
+                              "constraint pair in "
+                              "cloth in node '{}' contains a "
+                              "vertex index that is out of range! "
+                              "Vertex count '{}', out of range index '{}'.",
+                              node.name, cloth.positions.size(), index),
+                  read_ec::validation_fail_cloth_constraints_valid};
+            }
+         }
+      }
+   }
+}
+
+void check_cloth_collision_parent_validity(const scene& scene)
+{
+   for (const auto& node : scene.nodes) {
+      if (not node.cloth) continue;
+
+      const cloth& cloth = *node.cloth;
+
+      for (const cloth_collision_primitive& collision : cloth.collision) {
+         bool found = false;
+
+         for (const auto& other_node : scene.nodes) {
+            if (other_node.name == collision.parent) {
+               found = true;
+
+               break;
+            }
+         }
+
+         if (not found) {
+            throw read_error{
+               fmt::format(
+                  ".msh file validation failure! Parent for collision "
+                  "primitive '{}' in cloth in node '{}' does not exist.",
+                  collision.name, collision.parent, node.name),
+               read_ec::validation_fail_cloth_collision_parent_valid};
+         }
+      }
+   }
+}
+
+void check_cloth_collision_shape_validity(const scene& scene)
+{
+   for (const auto& node : scene.nodes) {
+      if (not node.cloth) continue;
+
+      const cloth& cloth = *node.cloth;
+
+      for (const cloth_collision_primitive& collision : cloth.collision) {
+         switch (collision.shape) {
+         case cloth_collision_primitive_shape::sphere:
+         case cloth_collision_primitive_shape::cylinder:
+         case cloth_collision_primitive_shape::cube:
+            break;
+         default:
+            throw read_error{
+               fmt::format(".msh file validation failure! Collision "
+                           "primitive '{}' in cloth in node '{}' has invalid "
+                           "shape '{}'.",
+                           collision.name, node.name,
+                           static_cast<uint32>(collision.shape)),
+               read_ec::validation_fail_cloth_collision_shape_valid};
+         }
+      }
+   }
+}
+
 void check_collision_primitive_shape_validity(const scene& scene)
 {
    for (const auto& node : scene.nodes) {
@@ -325,11 +554,18 @@ void validate_scene(const scene& scene)
                                           check_geometry_segment_non_empty,
                                           check_geometry_segment_no_nans,
                                           check_geometry_segment_weights_bone_indices_validity,
+                                          check_cloth_attibutes_count_matches,
+                                          check_cloth_fixed_weights_count_matches,
+                                          check_cloth_fixed_index_validity,
+                                          check_cloth_fixed_weights_validity,
+                                          check_cloth_triangles_index_validity,
+                                          check_cloth_constraints_validity,
+                                          check_cloth_collision_parent_validity,
+                                          check_cloth_collision_shape_validity,
                                           check_collision_primitive_shape_validity};
 
    for (auto check : validation_checks) {
       check(scene);
    }
 }
-
 }

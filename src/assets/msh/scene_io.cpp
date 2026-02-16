@@ -26,27 +26,6 @@ namespace we::assets::msh {
 
 namespace {
 
-auto from_msh_space(const float3& vec) -> const float3&
-{
-   return vec;
-}
-
-auto from_msh_space(float2 vec) -> float2
-{
-   return {vec.x, 1.0f - vec.y};
-}
-
-auto from_msh_space(uint32 color) -> uint32
-{
-   return color;
-}
-
-auto from_msh_space(const std::array<vertex_weight, 4>& weights)
-   -> const std::array<vertex_weight, 4>&
-{
-   return weights;
-}
-
 auto count_triangles_in_strips(const std::vector<std::vector<uint16>>& strips) noexcept
    -> std::size_t
 {
@@ -172,15 +151,31 @@ auto read_strp(ucfb::reader_strict<"STRP"_id> strp)
 }
 
 template<typename Type>
-auto read_vertex_atrb(ucfb::reader reader) -> std::vector<Type>
+auto read_array(ucfb::reader reader) -> std::vector<Type>
 {
-   const auto count = reader.read<int32>();
+   const uint32 count = reader.read<uint32>();
 
    std::vector<Type> result;
    result.reserve(count);
 
-   for (int i = 0; i < count; ++i) {
-      result.emplace_back(from_msh_space(reader.read<Type>()));
+   for (std::size_t i = 0; i < count; ++i) {
+      result.push_back(reader.read<Type>());
+   }
+
+   return result;
+}
+
+auto read_uv(ucfb::reader uv) -> std::vector<float2>
+{
+   const uint32 count = uv.read<uint32>();
+
+   std::vector<float2> result;
+   result.reserve(count);
+
+   for (std::size_t i = 0; i < count; ++i) {
+      const float2 texcoords = uv.read<float2>();
+
+      result.emplace_back(texcoords.x, 1.0f - texcoords.y);
    }
 
    return result;
@@ -199,19 +194,19 @@ auto read_segm(ucfb::reader_strict<"SEGM"_id> segm) -> geometry_segment
          segment.material_index = child.read<int32>();
          continue;
       case "POSL"_id:
-         segment.positions = read_vertex_atrb<float3>(child);
+         segment.positions = read_array<float3>(child);
          continue;
       case "WGHT"_id:
-         segment.weights = read_vertex_atrb<std::array<vertex_weight, 4>>(child);
+         segment.weights = read_array<std::array<vertex_weight, 4>>(child);
          continue;
       case "NRML"_id:
-         segment.normals = read_vertex_atrb<float3>(child);
+         segment.normals = read_array<float3>(child);
          continue;
       case "UV0L"_id:
-         segment.texcoords = read_vertex_atrb<float2>(child);
+         segment.texcoords = read_uv(child);
          continue;
       case "CLRL"_id:
-         segment.colors = read_vertex_atrb<uint32>(child);
+         segment.colors = read_array<uint32>(child);
          continue;
       case "CLRB"_id:
          segment_color = child.read<uint32>();
@@ -229,6 +224,98 @@ auto read_segm(ucfb::reader_strict<"SEGM"_id> segm) -> geometry_segment
    return segment;
 }
 
+auto read_tex(ucfb::reader tex) -> std::string
+{
+   auto name = tex.read_string();
+
+   if (const auto ext_offset = name.find_last_of('.');
+       ext_offset != std::string_view::npos) {
+      return std::string{name.substr(0, ext_offset)};
+   }
+
+   return std::string{name};
+}
+
+auto read_fwgt(ucfb::reader_strict<"FWGT"_id> fwgt) -> std::vector<std::string>
+{
+   const uint32 count = fwgt.read<uint32>();
+
+   std::vector<std::string> result;
+   result.reserve(count);
+
+   for (std::size_t i = 0; i < count; ++i) {
+      result.emplace_back(fwgt.read_string());
+   }
+
+   return result;
+}
+
+auto read_coll(ucfb::reader_strict<"COLL"_id> coll)
+   -> std::vector<cloth_collision_primitive>
+{
+   const uint32 count = coll.read<uint32>();
+
+   std::vector<cloth_collision_primitive> primitives;
+   primitives.reserve(count);
+
+   for (std::size_t i = 0; i < count; ++i) {
+      cloth_collision_primitive primitve;
+
+      primitve.name = coll.read_string();
+      primitve.parent = coll.read_string();
+      primitve.shape = coll.read<cloth_collision_primitive_shape>();
+      primitve.size = coll.read<float3>();
+
+      primitives.push_back(std::move(primitve));
+   }
+
+   return primitives;
+}
+
+auto read_clth(ucfb::reader_strict<"CLTH"_id> clth) -> cloth
+{
+   cloth cloth;
+
+   while (clth) {
+      auto child = clth.read_child();
+
+      switch (child.id()) {
+      case "CTEX"_id:
+         cloth.texture_name = read_tex(child);
+         continue;
+      case "CPOS"_id:
+         cloth.positions = read_array<float3>(child);
+         continue;
+      case "CUV0"_id:
+         cloth.texcoords = read_uv(child);
+         continue;
+      case "FIDX"_id:
+         cloth.fixed_indices = read_array<uint32>(child);
+         continue;
+      case "FWGT"_id:
+         cloth.fixed_weights = read_fwgt(ucfb::reader_strict<"FWGT"_id>{child});
+         continue;
+      case "CMSH"_id:
+         cloth.triangles = read_array<std::array<uint32, 3>>(child);
+         continue;
+      case "SPRS"_id:
+         cloth.stretch_constraints = read_array<std::array<uint16, 2>>(child);
+         continue;
+      case "CPRS"_id:
+         cloth.cross_constraints = read_array<std::array<uint16, 2>>(child);
+         continue;
+      case "BPRS"_id:
+         cloth.bend_constraints = read_array<std::array<uint16, 2>>(child);
+         continue;
+      case "COLL"_id:
+         cloth.collision = read_coll(ucfb::reader_strict<"COLL"_id>{child});
+         continue;
+      }
+   }
+
+   return cloth;
+}
+
 void read_geom(ucfb::reader_strict<"GEOM"_id> geom, node& node_out)
 {
    std::vector<geometry_segment> segments;
@@ -244,7 +331,10 @@ void read_geom(ucfb::reader_strict<"GEOM"_id> geom, node& node_out)
          segments.emplace_back(read_segm(ucfb::reader_strict<"SEGM"_id>{child}));
          continue;
       case "ENVL"_id:
-         bone_map = read_vertex_atrb<uint32>(child);
+         bone_map = read_array<uint32>(child);
+         continue;
+      case "CLTH"_id:
+         node_out.cloth = read_clth(ucfb::reader_strict<"CLTH"_id>{child});
          continue;
       }
    }
@@ -315,18 +405,6 @@ void read_modl(ucfb::reader_strict<"MODL"_id> modl,
    node_index_out.push_back(*node_index);
 }
 
-auto read_txnd(ucfb::reader txnd) -> std::string
-{
-   auto name = txnd.read_string();
-
-   if (const auto ext_offset = name.find_last_of('.');
-       ext_offset != std::string_view::npos) {
-      return std::string{name.substr(0, ext_offset)};
-   }
-
-   return std::string{name};
-}
-
 auto read_matd(ucfb::reader_strict<"MATD"_id> matd) -> material
 {
    material material;
@@ -351,16 +429,16 @@ auto read_matd(ucfb::reader_strict<"MATD"_id> matd) -> material
          material.data1 = child.read<uint8>();
          continue;
       case "TX0D"_id:
-         material.textures[0] = read_txnd(child);
+         material.textures[0] = read_tex(child);
          continue;
       case "TX1D"_id:
-         material.textures[1] = read_txnd(child);
+         material.textures[1] = read_tex(child);
          continue;
       case "TX2D"_id:
-         material.textures[2] = read_txnd(child);
+         material.textures[2] = read_tex(child);
          continue;
       case "TX3D"_id:
-         material.textures[3] = read_txnd(child);
+         material.textures[3] = read_tex(child);
          continue;
       }
    }

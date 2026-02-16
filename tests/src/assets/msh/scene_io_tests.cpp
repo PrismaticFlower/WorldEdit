@@ -352,4 +352,106 @@ TEST_CASE(".msh reading wght test", "[Assets][MSH]")
    }
 }
 
+TEST_CASE(".msh reading CLTH test", "[Assets][MSH]")
+{
+   auto scene = load_scene("data/cloth_test.msh", {});
+
+   REQUIRE(scene.nodes.size() == 6);
+
+   CHECK(scene.nodes[0].name == "root");
+   CHECK(scene.nodes[1].name == "bone_a");
+   CHECK(scene.nodes[2].name == "bone_b");
+   CHECK(scene.nodes[3].name == "bone_c");
+   CHECK(scene.nodes[4].name == "tri");
+   CHECK(scene.nodes[5].name == "cloth_a");
+
+   const node& node = scene.nodes[5];
+
+   REQUIRE(node.type == node_type::cloth);
+   REQUIRE(node.cloth);
+
+   const cloth& cloth = *node.cloth;
+
+   CHECK(cloth.texture_name == "flag");
+
+   REQUIRE(cloth.positions.size() == 9);
+
+   CHECK(cloth.positions[0] == float3{1.0f, 0.0f, -1.0f});
+   CHECK(cloth.positions[1] == float3{0.0f, 0.0f, -1.0f});
+   CHECK(cloth.positions[2] == float3{0.0f, 0.0f, 0.0f});
+   CHECK(cloth.positions[3] == float3{1.0f, 0.0f, 0.0f});
+   CHECK(cloth.positions[4] == float3{-1.0f, 0.0f, -1.0f});
+   CHECK(cloth.positions[5] == float3{-1.0f, 0.0f, 0.0f});
+   CHECK(cloth.positions[6] == float3{0.0f, 0.0f, 1.0f});
+   CHECK(cloth.positions[7] == float3{1.0f, 0.0f, 1.0f});
+   CHECK(cloth.positions[8] == float3{-1.0f, 0.0f, 1.0f});
+
+   REQUIRE(cloth.texcoords.size() == 9);
+
+   CHECK(cloth.texcoords[0] == float2{0.0f, 1.0f});
+   CHECK(cloth.texcoords[1] == float2{0.5f, 1.0f});
+   CHECK(cloth.texcoords[2] == float2{0.5f, 0.5f});
+   CHECK(cloth.texcoords[3] == float2{0.0f, 0.5f});
+   CHECK(cloth.texcoords[4] == float2{1.0f, 1.0f});
+   CHECK(cloth.texcoords[5] == float2{1.0f, 0.5f});
+   CHECK(cloth.texcoords[6] == float2{0.5f, 0.0f});
+   CHECK(cloth.texcoords[7] == float2{0.0f, 0.0f});
+   CHECK(cloth.texcoords[8] == float2{1.0f, 0.0f});
+
+   REQUIRE(cloth.fixed_indices.size() == 3);
+
+   CHECK(cloth.fixed_indices[0] == 3);
+   CHECK(cloth.fixed_indices[1] == 4);
+   CHECK(cloth.fixed_indices[2] == 5);
+
+   REQUIRE(cloth.fixed_weights.size() == 3);
+
+   CHECK(cloth.fixed_weights[0] == "bone_c");
+   CHECK(cloth.fixed_weights[1] == "bone_a");
+   CHECK(cloth.fixed_weights[2] == "bone_b");
+
+   REQUIRE(cloth.triangles.size() == 8);
+
+   CHECK(cloth.triangles[0] == std::array{0u, 1u, 2u});
+   CHECK(cloth.triangles[1] == std::array{0u, 2u, 3u});
+   CHECK(cloth.triangles[2] == std::array{1u, 4u, 5u});
+   CHECK(cloth.triangles[3] == std::array{1u, 5u, 2u});
+   CHECK(cloth.triangles[4] == std::array{3u, 2u, 6u});
+   CHECK(cloth.triangles[5] == std::array{3u, 6u, 7u});
+   CHECK(cloth.triangles[6] == std::array{2u, 5u, 8u});
+   CHECK(cloth.triangles[7] == std::array{2u, 8u, 6u});
+
+   REQUIRE(cloth.stretch_constraints.size() == 2);
+
+   CHECK(cloth.stretch_constraints[0] == std::array<uint16, 2>{1u, 2u});
+   CHECK(cloth.stretch_constraints[1] == std::array<uint16, 2>{4u, 5u});
+
+   REQUIRE(cloth.cross_constraints.size() == 2);
+
+   CHECK(cloth.cross_constraints[0] == std::array<uint16, 2>{1u, 6u});
+   CHECK(cloth.cross_constraints[1] == std::array<uint16, 2>{2u, 7u});
+
+   REQUIRE(cloth.bend_constraints.size() == 2);
+
+   CHECK(cloth.bend_constraints[0] == std::array<uint16, 2>{3u, 6u});
+   CHECK(cloth.bend_constraints[1] == std::array<uint16, 2>{4u, 6u});
+
+   REQUIRE(cloth.collision.size() == 3);
+
+   CHECK(cloth.collision[0].name == "c_bone_a");
+   CHECK(cloth.collision[0].parent == "bone_a");
+   CHECK(cloth.collision[0].shape == cloth_collision_primitive_shape::sphere);
+   CHECK(cloth.collision[0].size == float3{1.0f, 2.0f, 3.0f});
+
+   CHECK(cloth.collision[1].name == "c_bone_b");
+   CHECK(cloth.collision[1].parent == "bone_b");
+   CHECK(cloth.collision[1].shape == cloth_collision_primitive_shape::cylinder);
+   CHECK(cloth.collision[1].size == float3{4.0f, 5.0f, 6.0f});
+
+   CHECK(cloth.collision[2].name == "c_bone_c");
+   CHECK(cloth.collision[2].parent == "bone_c");
+   CHECK(cloth.collision[2].shape == cloth_collision_primitive_shape::cube);
+   CHECK(cloth.collision[2].size == float3{7.0f, 8.0f, 9.0f});
+}
+
 }
