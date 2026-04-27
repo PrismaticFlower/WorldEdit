@@ -187,6 +187,8 @@ void world_edit::update()
             handle_gpu_error(e);
          }
       }
+
+      _window_resized = false;
    }
 
    if (_applied_user_display_scale != _settings.ui.extra_scaling) {
