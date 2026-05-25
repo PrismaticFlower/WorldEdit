@@ -308,6 +308,17 @@
     <ClCompile Include="src\munge\builtin\utility\bf_fnv_1a_hash.cpp" />
     <ClCompile Include="src\munge\builtin\odf_munge\error.cpp" />
     <ClCompile Include="src\io\error.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\write_model.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\error.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\load_model.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\split_segments.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\generate_tangents.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\optimize_segments.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\build_collision_mesh.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\simplify_mesh.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\build_shadow_segments.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\triangulate_polygon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -676,6 +687,18 @@
     <ClInclude Include="src\assets\req\builder.hpp" />
     <ClInclude Include="src\munge\builtin\utility\bf_fnv_1a_hash.hpp" />
     <ClInclude Include="src\assets\msh\error.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\error.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\load_model.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\write_model.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\model.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\split_segments.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\generate_tangents.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\optimize_segments.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\build_collision_mesh.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\simplify_mesh.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\build_shadow_segments.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\triangulate_polygon.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

@@ -110,7 +110,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)third_party\lib\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>abseil-cpp.lib;DirectXTex.lib;fmt.lib;freetype2.lib;mimalloc.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>abseil-cpp.lib;DirectXTex.lib;fmt.lib;freetype2.lib;meshoptimizer.lib;mimalloc.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <CETCompat>true</CETCompat>
     </Link>
     <Manifest>
@@ -151,7 +151,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)third_party\lib\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>abseil-cpp.lib;DirectXTex.lib;fmt.lib;freetype2.lib;mimalloc.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>abseil-cpp.lib;DirectXTex.lib;fmt.lib;freetype2.lib;meshoptimizer.lib;mimalloc.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <CETCompat>true</CETCompat>
     </Link>
     <Manifest>
@@ -194,7 +194,7 @@
       <OptimizeReferences>false</OptimizeReferences>
       <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)third_party\lib\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>abseil-cpp.lib;DirectXTex.lib;fmt.lib;freetype2.lib;mimalloc.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>abseil-cpp.lib;DirectXTex.lib;fmt.lib;freetype2.lib;meshoptimizer.lib;mimalloc.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <CETCompat>true</CETCompat>
     </Link>
     <Manifest>
@@ -293,6 +293,7 @@
     <ClCompile Include="src\math\bounding_box_tests.cpp" />
     <ClCompile Include="src\math\matrix_funcs_tests.cpp" />
     <ClCompile Include="src\math\vector_funcs_tests.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge_tests.cpp" />
     <ClCompile Include="src\munge\builtin\odf_munge_tests.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge\load_texture_tests.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge_tests.cpp" />

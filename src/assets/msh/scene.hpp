@@ -27,7 +27,7 @@ enum class collision_primitive_shape : int32 {
 enum class cloth_collision_primitive_shape : uint32 {
    sphere = 0,
    cylinder = 1,
-   cube = 2
+   box = 2,
 };
 
 enum class lod_group : uint32 {
@@ -61,6 +61,17 @@ struct geometry_segment {
    std::optional<std::vector<std::array<vertex_weight, 4>>> weights;
 
    std::vector<std::array<uint16, 3>> triangles;
+};
+
+struct shadow_volume_half_edge {
+   uint16 vertex = 0;
+   uint16 next = 0;
+   uint16 twin = 0;
+};
+
+struct shadow_volume {
+   std::vector<float3> positions;
+   std::vector<shadow_volume_half_edge> edges;
 };
 
 struct collision_primitive {
@@ -103,6 +114,7 @@ struct node {
 
    std::vector<geometry_segment> segments;
    std::vector<uint32> bone_map;
+   std::vector<shadow_volume> shadow_volumes;
    std::optional<collision_primitive> collision_primitive;
    std::optional<cloth> cloth;
 };
@@ -124,16 +136,11 @@ struct scene_options {
    bool no_game_model = false;
    bool high_res_shadow = false;
    uint8 high_res_shadow_lod = 0;
-   bool shadow_on = false;
    bool soft_skin_shadow = false;
-   bool hard_skin_only = false;
    bool soft_skin = false;
-   bool do_not_merge_skins = false;
    bool vertex_lighting = false;
    bool additive_emissive = false;
-   bool k_collision = false;
    bool do_not_merge_collision = false;
-   bool remove_vertices_on_merge = false;
    bool no_projection_lights = false;
 
    float scale = 1.0f;

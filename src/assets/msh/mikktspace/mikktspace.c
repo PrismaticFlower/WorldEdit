@@ -92,13 +92,6 @@ static float Sqrt(float v) // WorldEdit change
    return v;
 }
 
-static float RSqrt(float v) // WorldEdit change
-{
-   _mm_store_ss(&v, _mm_rsqrt_ss(_mm_load_ss(&v)));
-
-   return v;
-}
-
 static float LengthSquared(const SVec3 v)
 {
    return v.x * v.x + v.y * v.y + v.z * v.z;
@@ -111,7 +104,7 @@ static float Length(const SVec3 v)
 
 static SVec3 Normalize(const SVec3 v)
 {
-   return vscale(RSqrt(LengthSquared(v)), v); // WorldEdit change
+   return vscale(1 / Length(v), v);
 }
 
 static float vdot(const SVec3 v1, const SVec3 v2)

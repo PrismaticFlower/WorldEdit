@@ -82,10 +82,19 @@ void remap_bone_maps(scene& scene, const std::vector<uint32>& node_index)
 
    for (uint32 index : node_index) max_node = std::max(max_node, index);
 
+   const uint32 noindex = 0xff'ff'ff'ffu;
+
    std::vector<uint32> remap;
-   remap.resize(max_node + 1, 0xff'ff'ff'ffu);
+   remap.resize(max_node + 1, noindex);
 
    for (uint32 new_index = 0; new_index < node_index.size(); ++new_index) {
+      if (remap[node_index[new_index]] != noindex) {
+         throw read_error{
+            fmt::format(".msh file two nodes have the same MDNX ({})!",
+                        node_index[new_index]),
+            read_ec::read_mndx_duplicate};
+      }
+
       remap[node_index[new_index]] = new_index;
    }
 
@@ -95,7 +104,7 @@ void remap_bone_maps(scene& scene, const std::vector<uint32>& node_index)
             throw read_error{".msh file ENVL entry out of valid range!",
                              read_ec::read_envl_entry_out_of_range};
          }
-         else if (remap[bone_index] == 0xff'ff'ff'ffu) {
+         else if (remap[bone_index] == noindex) {
             throw read_error{".msh file ENVL entry references missing node!",
                              read_ec::read_envl_entry_missing_node};
          }
@@ -181,9 +190,37 @@ auto read_uv(ucfb::reader uv) -> std::vector<float2>
    return result;
 }
 
-auto read_segm(ucfb::reader_strict<"SEGM"_id> segm) -> geometry_segment
+auto read_shdw(ucfb::reader_strict<"SHDW"_id> shdw) -> shadow_volume
 {
+   const uint32 vertex_count = shdw.read<uint32>();
+
+   shadow_volume shadow_volume;
+   shadow_volume.positions.reserve(vertex_count);
+
+   for (std::size_t i = 0; i < vertex_count; ++i) {
+      shadow_volume.positions.emplace_back(shdw.read<float3>());
+   }
+
+   const uint32 edge_count = shdw.read<uint32>();
+
+   shadow_volume.edges.reserve(edge_count);
+
+   for (std::size_t i = 0; i < edge_count; ++i) {
+      shadow_volume.edges.emplace_back(shdw.read<shadow_volume_half_edge>());
+
+      shdw.consume(sizeof(uint16)); // Skip reserved 0xffff field.
+   }
+
+   return shadow_volume;
+}
+
+void read_segm(ucfb::reader_strict<"SEGM"_id> segm, node& node_out)
+{
+   bool has_segment = false;
+   bool has_shadow_volume = false;
+
    geometry_segment segment;
+   shadow_volume shadow_volume;
    std::optional<uint32> segment_color;
 
    while (segm) {
@@ -192,27 +229,39 @@ auto read_segm(ucfb::reader_strict<"SEGM"_id> segm) -> geometry_segment
       switch (child.id()) {
       case "MATI"_id:
          segment.material_index = child.read<int32>();
+         has_segment = true;
          continue;
       case "POSL"_id:
          segment.positions = read_array<float3>(child);
+         has_segment = true;
          continue;
       case "WGHT"_id:
          segment.weights = read_array<std::array<vertex_weight, 4>>(child);
+         has_segment = true;
          continue;
       case "NRML"_id:
          segment.normals = read_array<float3>(child);
+         has_segment = true;
          continue;
       case "UV0L"_id:
          segment.texcoords = read_uv(child);
+         has_segment = true;
          continue;
       case "CLRL"_id:
          segment.colors = read_array<uint32>(child);
+         has_segment = true;
          continue;
       case "CLRB"_id:
          segment_color = child.read<uint32>();
+         has_segment = true;
          continue;
       case "STRP"_id:
          segment.triangles = read_strp(ucfb::reader_strict<"STRP"_id>{child});
+         has_segment = true;
+         continue;
+      case "SHDW"_id:
+         shadow_volume = read_shdw(ucfb::reader_strict<"SHDW"_id>{child});
+         has_shadow_volume = true;
          continue;
       }
    }
@@ -221,7 +270,10 @@ auto read_segm(ucfb::reader_strict<"SEGM"_id> segm) -> geometry_segment
       segment.colors.emplace(segment.positions.size(), *segment_color);
    }
 
-   return segment;
+   if (has_segment) node_out.segments.push_back(std::move(segment));
+   if (has_shadow_volume) {
+      node_out.shadow_volumes.push_back(std::move(shadow_volume));
+   }
 }
 
 auto read_tex(ucfb::reader tex) -> std::string
@@ -318,29 +370,23 @@ auto read_clth(ucfb::reader_strict<"CLTH"_id> clth) -> cloth
 
 void read_geom(ucfb::reader_strict<"GEOM"_id> geom, node& node_out)
 {
-   std::vector<geometry_segment> segments;
-   segments.reserve(4);
-
-   std::vector<uint32> bone_map;
+   node_out.segments.reserve(4);
 
    while (geom) {
       auto child = geom.read_child();
 
       switch (child.id()) {
       case "SEGM"_id:
-         segments.emplace_back(read_segm(ucfb::reader_strict<"SEGM"_id>{child}));
+         read_segm(ucfb::reader_strict<"SEGM"_id>{child}, node_out);
          continue;
       case "ENVL"_id:
-         bone_map = read_array<uint32>(child);
+         node_out.bone_map = read_array<uint32>(child);
          continue;
       case "CLTH"_id:
          node_out.cloth = read_clth(ucfb::reader_strict<"CLTH"_id>{child});
          continue;
       }
    }
-
-   node_out.segments = std::move(segments);
-   node_out.bone_map = std::move(bone_map);
 }
 
 auto read_tran(ucfb::reader_strict<"TRAN"_id> tran) -> transform
@@ -585,7 +631,7 @@ void read_scene_option(const option& opt, scene_options& out)
       out.no_game_model = true;
    }
    else if (iequals(opt.name, "-hiresshadow"sv)) {
-      out.high_res_shadow = 0;
+      out.high_res_shadow = true;
 
       if (not opt.arguments.empty()) {
          uint8 high_res_shadow_lod = 0;
@@ -601,20 +647,11 @@ void read_scene_option(const option& opt, scene_options& out)
          out.high_res_shadow_lod = high_res_shadow_lod;
       }
    }
-   else if (iequals(opt.name, "-shadowon"sv)) {
-      out.shadow_on = true;
-   }
    else if (iequals(opt.name, "-softskinshadow"sv)) {
       out.soft_skin_shadow = true;
    }
-   else if (iequals(opt.name, "-hardskinonly"sv)) {
-      out.hard_skin_only = true;
-   }
    else if (iequals(opt.name, "-softskin"sv)) {
       out.soft_skin = true;
-   }
-   else if (iequals(opt.name, "-donotmergeskins"sv)) {
-      out.do_not_merge_skins = true;
    }
    else if (iequals(opt.name, "-vertexlighting"sv)) {
       out.vertex_lighting = true;
@@ -695,14 +732,8 @@ void read_scene_option(const option& opt, scene_options& out)
 
       out.bounding_box_offset.z = -offset;
    }
-   else if (iequals(opt.name, "-kcollision"sv)) {
-      out.k_collision = true;
-   }
    else if (iequals(opt.name, "-donotmergecollision"sv)) {
       out.do_not_merge_collision = true;
-   }
-   else if (iequals(opt.name, "-removeverticesonmerge"sv)) {
-      out.remove_vertices_on_merge = true;
    }
    else if (iequals(opt.name, "-noprojectionlights"sv)) {
       out.no_projection_lights = true;

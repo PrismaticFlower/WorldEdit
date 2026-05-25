@@ -90,7 +90,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -131,7 +131,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -174,7 +174,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -389,6 +389,17 @@
     <ClCompile Include="src\math\matrix_funcs.cpp" />
     <ClCompile Include="src\math\scalar_funcs.cpp" />
     <ClCompile Include="src\munge\builtin\blocks_munge.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\build_collision_mesh.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\build_shadow_segments.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\error.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\generate_tangents.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\load_model.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\optimize_segments.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\simplify_mesh.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\split_segments.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\triangulate_polygon.cpp" />
+    <ClCompile Include="src\munge\builtin\model_munge\write_model.cpp" />
     <ClCompile Include="src\munge\builtin\odf_munge.cpp" />
     <ClCompile Include="src\munge\builtin\odf_munge\error.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge.cpp" />
@@ -700,6 +711,18 @@
     <ClInclude Include="src\math\scalar_funcs.hpp" />
     <ClInclude Include="src\math\vector_funcs.hpp" />
     <ClInclude Include="src\munge\builtin\blocks_munge.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\build_collision_mesh.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\build_shadow_segments.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\error.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\generate_tangents.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\load_model.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\model.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\optimize_segments.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\simplify_mesh.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\split_segments.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\triangulate_polygon.hpp" />
+    <ClInclude Include="src\munge\builtin\model_munge\write_model.hpp" />
     <ClInclude Include="src\munge\builtin\odf_munge.hpp" />
     <ClInclude Include="src\munge\builtin\odf_munge\error.hpp" />
     <ClInclude Include="src\munge\builtin\texture_munge.hpp" />

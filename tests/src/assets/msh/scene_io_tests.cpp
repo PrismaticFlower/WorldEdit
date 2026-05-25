@@ -450,8 +450,59 @@ TEST_CASE(".msh reading CLTH test", "[Assets][MSH]")
 
    CHECK(cloth.collision[2].name == "c_bone_c");
    CHECK(cloth.collision[2].parent == "bone_c");
-   CHECK(cloth.collision[2].shape == cloth_collision_primitive_shape::cube);
+   CHECK(cloth.collision[2].shape == cloth_collision_primitive_shape::box);
    CHECK(cloth.collision[2].size == float3{7.0f, 8.0f, 9.0f});
+}
+
+TEST_CASE(".msh reading SHDW test", "[Assets][MSH]")
+{
+   auto scene = load_scene("data/test_shdw.msh", {});
+
+   REQUIRE(scene.nodes.size() == 3);
+
+   CHECK(scene.nodes[0].name == "root");
+   CHECK(scene.nodes[1].name == "shadowvolume");
+   CHECK(scene.nodes[2].name == "tri");
+
+   // Node 1
+   {
+      const node& node = scene.nodes[1];
+
+      REQUIRE(node.shadow_volumes.size() == 1);
+
+      const shadow_volume& shadow_volume = node.shadow_volumes[0];
+
+      REQUIRE(shadow_volume.positions.size() == 3);
+      CHECK(shadow_volume.positions[0] == float3{0.8660254f, 0.0f, -0.5f});
+      CHECK(shadow_volume.positions[1] == float3{-0.8660254f, 0.0f, -0.5f});
+      CHECK(shadow_volume.positions[2] == float3{0.0f, 0.0f, 1.0f});
+
+      REQUIRE(shadow_volume.edges.size() == 6);
+
+      CHECK(shadow_volume.edges[0].vertex == 0);
+      CHECK(shadow_volume.edges[0].next == 1);
+      CHECK(shadow_volume.edges[0].twin == 4);
+
+      CHECK(shadow_volume.edges[1].vertex == 1);
+      CHECK(shadow_volume.edges[1].next == 2);
+      CHECK(shadow_volume.edges[1].twin == 3);
+
+      CHECK(shadow_volume.edges[2].vertex == 2);
+      CHECK(shadow_volume.edges[2].next == 0);
+      CHECK(shadow_volume.edges[2].twin == 5);
+
+      CHECK(shadow_volume.edges[3].vertex == 2);
+      CHECK(shadow_volume.edges[3].next == 4);
+      CHECK(shadow_volume.edges[3].twin == 1);
+
+      CHECK(shadow_volume.edges[4].vertex == 1);
+      CHECK(shadow_volume.edges[4].next == 5);
+      CHECK(shadow_volume.edges[4].twin == 0);
+
+      CHECK(shadow_volume.edges[5].vertex == 0);
+      CHECK(shadow_volume.edges[5].next == 3);
+      CHECK(shadow_volume.edges[5].twin == 2);
+   }
 }
 
 }

@@ -109,6 +109,30 @@ void check_node_parents_noncircular(const scene& scene)
    }
 }
 
+void check_node_mesh_data(const scene& scene)
+{
+   for (const auto& node : scene.nodes | std::ranges::views::filter([](const auto& node) {
+                              return node.type == node_type::null or
+                                     node.type == node_type::skinned_mesh or
+                                     node.type == node_type::cloth or
+                                     node.type == node_type::static_mesh;
+                           })) {
+      for (const auto& segment : node.segments) {
+         if (not segment.triangles.empty()) return;
+      }
+
+      if (node.type == node_type::cloth and node.cloth) {
+         if (not node.cloth->triangles.empty()) return;
+      }
+
+      if (node.collision_primitive and node.name.starts_with("p_")) return;
+   }
+
+   throw read_error{
+      fmt::format(".msh file validation failure! No node contains mesh data."),
+      read_ec::validation_fail_node_mesh_data};
+}
+
 void check_geometry_segment_material_index_validity(const scene& scene)
 {
    for (const auto& node : scene.nodes) {
@@ -215,28 +239,6 @@ void check_geometry_segment_triangles_index_validity(const scene& scene)
    }
 }
 
-void check_geometry_segment_non_empty(const scene& scene)
-{
-   bool empty = true;
-
-   for (const auto& node : scene.nodes | std::ranges::views::filter([](const auto& node) {
-                              return node.type == node_type::null or
-                                     node.type == node_type::skinned_mesh or
-                                     node.type == node_type::static_mesh;
-                           })) {
-      for (const auto& segment : node.segments) {
-         if (not segment.triangles.empty()) empty = false;
-      }
-   }
-
-   if (empty) {
-      throw read_error{
-         fmt::format(
-            ".msh file validation failure! No node contains mesh data."),
-         read_ec::validation_fail_geometry_segment_non_empty};
-   }
-}
-
 void check_geometry_segment_no_nans(const scene& scene)
 {
    for (const auto& node : scene.nodes) {
@@ -282,6 +284,120 @@ void check_geometry_segment_weights_bone_indices_validity(const scene& scene)
                         index, node.name, node.bone_map.size(), weight.bone_index),
                      read_ec::validation_fail_geometry_segment_weights_bone_indices_valid};
                }
+            }
+         }
+      }
+   }
+}
+
+void check_shadow_volume_edges_validity(const scene& scene)
+{
+   // We validate 3 things in order here.
+   // - That vertex, next edge and twin edge indices are valid. (We can use them without going out of bounds.)
+   // - That twins are valid.
+   // - That every edge is part of a valid loop.
+
+   std::vector<bool> visited;
+
+   for (const node& node : scene.nodes) {
+      for (std::size_t index = 0; index < node.shadow_volumes.size(); ++index) {
+         const shadow_volume& shadow_volume = node.shadow_volumes[index];
+
+         for (std::size_t edge_index = 0;
+              edge_index < shadow_volume.edges.size(); ++edge_index) {
+            const shadow_volume_half_edge& edge = shadow_volume.edges[edge_index];
+
+            if (edge.vertex >= shadow_volume.positions.size()) {
+               throw read_error{
+                  fmt::format(".msh file validation failure! Shadow volume #{} "
+                              "in node '{}' is invalid! "
+                              "Vertex for edge #{} is out of range (Vertex "
+                              "'{}' Vertex Count '{}'.",
+                              index, node.name, edge_index, edge.vertex,
+                              shadow_volume.positions.size()),
+                  read_ec::validation_fail_shadow_volume_edges_valid};
+            }
+
+            if (edge.next >= shadow_volume.edges.size()) {
+               throw read_error{
+                  fmt::format(
+                     ".msh file validation failure! Shadow volume #{} "
+                     "in node '{}' is invalid! "
+                     "Next edge for edge #{} is out of range (Next Edge "
+                     "'{}' Edge Count '{}'.",
+                     index, node.name, edge_index, edge.next,
+                     shadow_volume.edges.size()),
+                  read_ec::validation_fail_shadow_volume_edges_valid};
+            }
+
+            if (edge.twin >= shadow_volume.edges.size()) {
+               throw read_error{
+                  fmt::format(
+                     ".msh file validation failure! Shadow volume #{} "
+                     "in node '{}' is invalid! "
+                     "Twin edge for edge #{} is out of range (Next Edge "
+                     "'{}' Edge Count '{}'.",
+                     index, node.name, edge_index, edge.twin,
+                     shadow_volume.edges.size()),
+                  read_ec::validation_fail_shadow_volume_edges_valid};
+            }
+         }
+
+         for (std::size_t edge_index = 0;
+              edge_index < shadow_volume.edges.size(); ++edge_index) {
+            const shadow_volume_half_edge& edge = shadow_volume.edges[edge_index];
+            const shadow_volume_half_edge& twin_edge = shadow_volume.edges[edge.twin];
+
+            if (edge.vertex != shadow_volume.edges[twin_edge.next].vertex) {
+               throw read_error{
+                  fmt::format(".msh file validation failure! Shadow volume #{} "
+                              "in node '{}' is invalid! "
+                              "Twin edge for edge #{} is invalid. Vertices do "
+                              "not match! Edge Vertex "
+                              "'{}' Twin Next Vertex '{}'.",
+                              index, node.name, edge_index, edge.vertex,
+                              shadow_volume.edges[twin_edge.next].vertex),
+                  read_ec::validation_fail_shadow_volume_edges_valid};
+            }
+
+            if (twin_edge.vertex != shadow_volume.edges[edge.next].vertex) {
+               throw read_error{
+                  fmt::format(".msh file validation failure! Shadow volume #{} "
+                              "in node '{}' is invalid! "
+                              "Twin edge for edge #{} is invalid. Vertices do "
+                              "not match! Twin Vertex "
+                              "'{}' Edge Next Vertex '{}'.",
+                              index, node.name, edge_index, twin_edge.vertex,
+                              shadow_volume.edges[edge.next].vertex),
+                  read_ec::validation_fail_shadow_volume_edges_valid};
+            }
+         }
+
+         visited.clear();
+         visited.resize(shadow_volume.edges.size(), false);
+
+         for (std::size_t edge_index = 0;
+              edge_index < shadow_volume.edges.size(); ++edge_index) {
+            if (visited[edge_index]) continue;
+
+            visited[edge_index] = true;
+
+            for (std::size_t current_edge_index =
+                    shadow_volume.edges[edge_index].next;
+                 current_edge_index != edge_index;
+                 current_edge_index = shadow_volume.edges[current_edge_index].next) {
+               if (visited[current_edge_index]) {
+                  throw read_error{
+                     fmt::format(
+                        ".msh file validation failure! Shadow volume #{} "
+                        "in node '{}' is invalid! "
+                        "Edge #{} does not form a valid, unqiue loop. Double "
+                        "Visited Edge Index '{}'",
+                        index, node.name, edge_index, current_edge_index),
+                     read_ec::validation_fail_shadow_volume_edges_valid};
+               }
+
+               visited[current_edge_index] = true;
             }
          }
       }
@@ -502,7 +618,7 @@ void check_cloth_collision_shape_validity(const scene& scene)
          switch (collision.shape) {
          case cloth_collision_primitive_shape::sphere:
          case cloth_collision_primitive_shape::cylinder:
-         case cloth_collision_primitive_shape::cube:
+         case cloth_collision_primitive_shape::box:
             break;
          default:
             throw read_error{
@@ -547,13 +663,14 @@ void validate_scene(const scene& scene)
                                           check_node_type_validity,
                                           check_node_parents_validity,
                                           check_node_parents_noncircular,
+                                          check_node_mesh_data,
                                           check_geometry_segment_material_index_validity,
                                           check_geometry_segment_attibutes_count_matches,
                                           check_geometry_segment_vertex_count_limit,
                                           check_geometry_segment_triangles_index_validity,
-                                          check_geometry_segment_non_empty,
                                           check_geometry_segment_no_nans,
                                           check_geometry_segment_weights_bone_indices_validity,
+                                          check_shadow_volume_edges_validity,
                                           check_cloth_attibutes_count_matches,
                                           check_cloth_fixed_weights_count_matches,
                                           check_cloth_fixed_index_validity,
