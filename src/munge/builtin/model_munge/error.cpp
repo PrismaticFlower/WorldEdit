@@ -211,18 +211,6 @@ This error shouldn't typically be encountered. The Exception Message below may h
 
 An unknow error occured while reading the .msh file's structure.)";
 
-   case model_ec::msh_option_load_bad_keep:
-      return R"(MSH_OPTION_LOAD_BAD_KEEP
-
-Bad "-keep" option in .msh.option file. "-keep" must be followed by the name of the node to keep.
-
-i.e "-keep light_attach")";
-   case model_ec::msh_option_load_bad_keep_material:
-      return R"(MSH_OPTION_LOAD_BAD_KEEP_MATERIAL
-
-Bad "-keepmaterial" option in .msh.option file. "-keepmaterial" must be followed by the name of the node to keep.
-
-i.e "-keepmaterial override_texture")";
    case model_ec::msh_option_load_bad_scale:
       return R"(MSH_OPTION_LOAD_BAD_SCALE
 
@@ -260,12 +248,6 @@ i.e "-lodbias 2.0")";
 Bad "-hiresshadow" option in .msh.option file. When "-hiresshadow" is followed by an argument it must be an unsigned integer setting the LOD to use for the shadow.
 
 i.e "-hiresshadow 1")";
-   case model_ec::msh_option_load_bad_bump:
-      return R"(MSH_OPTION_LOAD_BAD_BUMP
-
-Bad "-bump" option in .msh.option file. "-bump" must be followed by the name of a texture to add a bump map to.
-
-i.e "-bump test_main_01")";
    case model_ec::msh_option_load_bad_bounding_box_scale:
       return R"(MSH_OPTION_LOAD_BAD_BOUNDING_BOX_SCALE
 
@@ -504,10 +486,6 @@ model_error::model_error(const assets::msh::read_error& e) noexcept
            case read_ec::ucfb_unknown:
               return model_ec::msh_ucfb_unknown;
 
-           case read_ec::option_load_bad_keep:
-              return model_ec::msh_option_load_bad_keep;
-           case read_ec::option_load_bad_keep_material:
-              return model_ec::msh_option_load_bad_keep_material;
            case read_ec::option_load_bad_scale:
               return model_ec::msh_option_load_bad_scale;
            case read_ec::option_load_bad_max_bones:
@@ -518,8 +496,6 @@ model_error::model_error(const assets::msh::read_error& e) noexcept
               return model_ec::msh_option_load_bad_lod_bias;
            case read_ec::option_load_bad_hi_res_shadow:
               return model_ec::msh_option_load_bad_hi_res_shadow;
-           case read_ec::option_load_bad_bump:
-              return model_ec::msh_option_load_bad_bump;
            case read_ec::option_load_bad_bounding_box_scale:
               return model_ec::msh_option_load_bad_bounding_box_scale;
            case read_ec::option_load_bad_bounding_box_offset:

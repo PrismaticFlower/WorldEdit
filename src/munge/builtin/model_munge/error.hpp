@@ -44,14 +44,11 @@ enum class model_ec {
    msh_ucfb_strict_reader_id_mismatch,
    msh_ucfb_unknown,
 
-   msh_option_load_bad_keep,
-   msh_option_load_bad_keep_material,
    msh_option_load_bad_scale,
    msh_option_load_bad_max_bones,
    msh_option_load_bad_lod_group,
    msh_option_load_bad_lod_bias,
    msh_option_load_bad_hi_res_shadow,
-   msh_option_load_bad_bump,
    msh_option_load_bad_bounding_box_scale,
    msh_option_load_bad_bounding_box_offset,
    msh_option_load_bad_ambient_lighting,
@@ -129,6 +126,7 @@ enum class model_wc {
 
    missing_keep_node,
    missing_keep_material,
+   missing_attach_light,
    missing_bump_map,
 
    possible_typo_hp,

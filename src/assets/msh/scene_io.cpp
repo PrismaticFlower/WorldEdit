@@ -536,21 +536,12 @@ auto read_msh2(ucfb::reader_strict<"MSH2"_id> msh2) -> scene
 void read_scene_option(const option& opt, scene_options& out)
 {
    if (iequals(opt.name, "-keep"sv)) {
-      if (opt.arguments.empty()) {
-         throw read_error{"Invalid -keep option.", read_ec::option_load_bad_keep};
-      }
-
       out.keep_nodes.append_range(opt.arguments);
    }
    else if (iequals(opt.name, "-keepall"sv)) {
       out.keep_all = true;
    }
    else if (iequals(opt.name, "-keepmaterial"sv)) {
-      if (opt.arguments.empty()) {
-         throw read_error{"Invalid -keepmaterial option.",
-                          read_ec::option_load_bad_keep_material};
-      }
-
       out.keep_materials.append_range(opt.arguments);
    }
    else if (iequals(opt.name, "-righthanded"sv)) {
@@ -655,10 +646,6 @@ void read_scene_option(const option& opt, scene_options& out)
       out.additive_emissive = true;
    }
    else if (iequals(opt.name, "-bump"sv)) {
-      if (opt.arguments.empty()) {
-         throw read_error{"Invalid -bump option.", read_ec::option_load_bad_bump};
-      }
-
       out.normal_maps.append_range(opt.arguments);
    }
    else if (iequals(opt.name, "-boundingboxscale"sv)) {
