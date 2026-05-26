@@ -416,6 +416,8 @@ void optimize_mesh_buffers(std::span<model_segment> segments)
       for (std::size_t i = 0; i < new_vertex_count; ++i) {
          const uint32 new_index = vertex_remap[i];
 
+         if (new_index == remap_noindex) continue;
+
          if (segment.vertices.positionSS) {
             segment.vertices.positionSS[new_index] = old_vertices.positionSS[i];
          }
@@ -523,6 +525,8 @@ void optimize_mesh_buffers(std::span<model_shadow> segments)
          for (std::size_t i = 0; i < new_vertex_count; ++i) {
             const uint32 new_index = vertex_remap[i];
 
+            if (new_index == remap_noindex) continue;
+
             new_vertices[new_index] = segment.vertices.unskinned[i];
          }
 
@@ -535,6 +539,8 @@ void optimize_mesh_buffers(std::span<model_shadow> segments)
          for (std::size_t i = 0; i < new_vertex_count; ++i) {
             const uint32 new_index = vertex_remap[i];
 
+            if (new_index == remap_noindex) continue;
+
             new_vertices[new_index] = segment.vertices.hard_skinned[i];
          }
 
@@ -546,6 +552,8 @@ void optimize_mesh_buffers(std::span<model_shadow> segments)
 
          for (std::size_t i = 0; i < new_vertex_count; ++i) {
             const uint32 new_index = vertex_remap[i];
+
+            if (new_index == remap_noindex) continue;
 
             new_vertices[new_index] = segment.vertices.soft_skinned[i];
          }
