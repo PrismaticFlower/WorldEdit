@@ -1375,6 +1375,7 @@ auto build_cloth(const msh::scene& scene, const msh::node& node) -> cloth
          {vertex_remap[tri[0]], vertex_remap[tri[1]], vertex_remap[tri[2]]});
    }
 
+   out.fixed_point_count = static_cast<uint32>(cloth.fixed_indices.size());
    out.fixed_weights = cloth.fixed_weights;
 
    out.stretch_constraints.reserve(cloth.stretch_constraints.size());

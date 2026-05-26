@@ -294,6 +294,8 @@ struct cloth {
 
    std::vector<std::array<uint32, 3>> triangles;
 
+   uint32 fixed_point_count = 0;
+
    std::vector<std::string> fixed_weights;
 
    std::vector<std::array<uint32, 2>> stretch_constraints;

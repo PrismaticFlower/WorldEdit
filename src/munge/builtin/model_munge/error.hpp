@@ -30,7 +30,6 @@ enum class model_ec {
    msh_validation_fail_geometry_segment_weights_bone_indices_valid,
    msh_validation_fail_shadow_volume_edges_valid,
    msh_validation_fail_cloth_attibutes_count_matches,
-   msh_validation_fail_cloth_fixed_weight_count_matches,
    msh_validation_fail_cloth_fixed_index_valid,
    msh_validation_fail_cloth_fixed_weight_valid,
    msh_validation_fail_cloth_triangles_index_valid,

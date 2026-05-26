@@ -423,23 +423,6 @@ void check_cloth_attibutes_count_matches(const scene& scene)
    }
 }
 
-void check_cloth_fixed_weights_count_matches(const scene& scene)
-{
-   for (const auto& node : scene.nodes) {
-      if (not node.cloth) continue;
-
-      const cloth& cloth = *node.cloth;
-
-      if (cloth.fixed_indices.size() != cloth.fixed_weights.size()) {
-         throw read_error{
-            fmt::format(".msh file validation failure! Fixed weight index size "
-                        "'{}' does not match fixed weights bones size '{}'.",
-                        cloth.fixed_indices.size(), cloth.fixed_weights.size()),
-            read_ec::validation_fail_cloth_fixed_weight_count_matches};
-      }
-   }
-}
-
 void check_cloth_fixed_index_validity(const scene& scene)
 {
    for (const auto& node : scene.nodes) {
@@ -651,7 +634,6 @@ void validate_scene(const scene& scene)
                                           check_geometry_segment_weights_bone_indices_validity,
                                           check_shadow_volume_edges_validity,
                                           check_cloth_attibutes_count_matches,
-                                          check_cloth_fixed_weights_count_matches,
                                           check_cloth_fixed_index_validity,
                                           check_cloth_fixed_weights_validity,
                                           check_cloth_triangles_index_validity,

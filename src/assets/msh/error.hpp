@@ -26,7 +26,6 @@ enum class read_ec {
    validation_fail_geometry_segment_weights_bone_indices_valid,
    validation_fail_shadow_volume_edges_valid,
    validation_fail_cloth_attibutes_count_matches,
-   validation_fail_cloth_fixed_weight_count_matches,
    validation_fail_cloth_fixed_index_valid,
    validation_fail_cloth_fixed_weight_valid,
    validation_fail_cloth_triangles_index_valid,

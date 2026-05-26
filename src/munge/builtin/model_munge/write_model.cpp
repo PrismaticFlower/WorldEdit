@@ -1012,7 +1012,7 @@ void write_clth(ucfb::writer& clth, const cloth& cloth, std::string_view model_n
       data.write(std::as_bytes(std::span{cloth.vertices.texcoords.get(),
                                          cloth.vertices.vertex_count}));
 
-      data.write(static_cast<uint32>(cloth.fixed_weights.size()));
+      data.write(cloth.fixed_point_count);
       data.write(static_cast<uint32>(cloth.fixed_weights.size()));
 
       for (const std::string& bone : cloth.fixed_weights) {

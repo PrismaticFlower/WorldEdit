@@ -137,14 +137,6 @@ The position and texcoords counts for a cloth segment is mismatched.
 You might able to use an external tool (like Softimage or Blender) to repair the file.
 
 The Exception Message below may have more information and context.)";
-   case model_ec::msh_validation_fail_cloth_fixed_weight_count_matches:
-      return R"(MSH_VALIDATION_FAIL_CLOTH_FIXED_WEIGHT_COUNT_MATCHES
-
-The fixed weights and fixed indices array sizes for a cloth segment are mismatched. 
-
-You might able to use an external tool (like Softimage or Blender) to repair the file.
-
-The Exception Message below may have more information and context.)";
    case model_ec::msh_validation_fail_cloth_fixed_index_valid:
       return R"(MSH_VALIDATION_FAIL_CLOTH_FIXED_INDEX_VALID
 
@@ -486,8 +478,6 @@ model_error::model_error(const assets::msh::read_error& e) noexcept
               return model_ec::msh_validation_fail_shadow_volume_edges_valid;
            case read_ec::validation_fail_cloth_attibutes_count_matches:
               return model_ec::msh_validation_fail_cloth_attibutes_count_matches;
-           case read_ec::validation_fail_cloth_fixed_weight_count_matches:
-              return model_ec::msh_validation_fail_cloth_fixed_weight_count_matches;
            case read_ec::validation_fail_cloth_fixed_index_valid:
               return model_ec::msh_validation_fail_cloth_fixed_index_valid;
            case read_ec::validation_fail_cloth_fixed_weight_valid:
