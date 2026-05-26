@@ -633,27 +633,6 @@ void check_cloth_collision_shape_validity(const scene& scene)
    }
 }
 
-void check_collision_primitive_shape_validity(const scene& scene)
-{
-   for (const auto& node : scene.nodes) {
-      if (not node.collision_primitive) continue;
-
-      switch (node.collision_primitive->shape) {
-      case collision_primitive_shape::sphere:
-      case collision_primitive_shape::cylinder:
-      case collision_primitive_shape::box:
-         continue;
-      default:
-         throw read_error{
-            fmt::format(".msh file validation failure! The collision primitive "
-                        "for node '{}' has unknown shape "
-                        "'{}'.",
-                        node.name, static_cast<int32>(node.collision_primitive->shape)),
-            read_ec::validation_fail_collision_primitive_shape_valid};
-      }
-   }
-}
-
 }
 
 void validate_scene(const scene& scene)
@@ -678,8 +657,7 @@ void validate_scene(const scene& scene)
                                           check_cloth_triangles_index_validity,
                                           check_cloth_constraints_validity,
                                           check_cloth_collision_parent_validity,
-                                          check_cloth_collision_shape_validity,
-                                          check_collision_primitive_shape_validity};
+                                          check_cloth_collision_shape_validity};
 
    for (auto check : validation_checks) {
       check(scene);

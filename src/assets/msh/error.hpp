@@ -7,7 +7,6 @@ namespace we::assets::msh {
 enum class read_ec {
    read_version_not_supported,
    read_no_scene,
-   read_matl_list_too_short,
    read_mndx_missing,
    read_mndx_duplicate,
    read_envl_entry_out_of_range,
@@ -34,7 +33,6 @@ enum class read_ec {
    validation_fail_cloth_constraints_valid,
    validation_fail_cloth_collision_parent_valid,
    validation_fail_cloth_collision_shape_valid,
-   validation_fail_collision_primitive_shape_valid,
 
    ucfb_memory_too_small_minimum,
    ucfb_memory_too_small_chunk,

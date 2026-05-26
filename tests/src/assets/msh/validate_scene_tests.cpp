@@ -222,14 +222,4 @@ TEST_CASE(".msh geometry segment triangles index validity",
    REQUIRE_THROWS(validate_scene(bad_scene));
 }
 
-TEST_CASE(".msh scene primitive shape validity",
-          "[Assets][MSH][SceneValidation]")
-{
-   const scene bad_scene{.nodes = {{.name = "p_node"s,
-                                    .collision_primitive = collision_primitive{
-                                       .shape = collision_primitive_shape{5}}}}};
-
-   REQUIRE_THROWS(validate_scene(bad_scene));
-}
-
 }

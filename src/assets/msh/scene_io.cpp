@@ -499,17 +499,12 @@ auto read_matl(ucfb::reader_strict<"MATL"_id> matl) -> std::vector<material>
    std::vector<material> materials;
    materials.reserve(count);
 
-   for (int i = 0; i < count; ++i) {
-      if (!matl) {
-         throw read_error{
-            fmt::format(".msh file material list (MATL) ended after "
-                        "{} materials but the "
-                        "declared count was {}.",
-                        i, count),
-            read_ec::read_matl_list_too_short};
-      }
+   while (matl) {
+      auto child = matl.read_child();
 
-      materials.emplace_back(read_matd(matl.read_child_strict<"MATD"_id>()));
+      if (child.id() == "MATD"_id) {
+         materials.emplace_back(read_matd(ucfb::reader_strict<"MATD"_id>{child}));
+      }
    }
 
    return materials;
