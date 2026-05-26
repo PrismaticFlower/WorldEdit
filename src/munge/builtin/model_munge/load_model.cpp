@@ -770,6 +770,8 @@ void build_segments(const std::size_t node_index, const msh::scene& scene,
    const msh::node& node = scene.nodes[node_index];
 
    for (const msh::geometry_segment& geometry : node.segments) {
+      if (geometry.triangles.empty()) continue;
+
       model_segment segment = {
          .material = build_material(scene, node, geometry, context),
       };
@@ -1007,6 +1009,8 @@ void build_shadow_segments(const std::size_t node_index, const msh::scene& scene
    }
    else {
       for (const msh::geometry_segment& geometry : node.segments) {
+         if (geometry.triangles.empty()) continue;
+
          model_segment segment = {};
 
          segment.index_buffer = geometry.triangles;
