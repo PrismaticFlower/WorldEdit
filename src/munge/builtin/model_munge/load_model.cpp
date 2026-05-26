@@ -151,15 +151,6 @@ void warning_check_scene(const msh::scene& scene, const build_context& context)
                 fmt::format(".msh node ('{}') has possible typo.\n\n{}", node.name,
                             get_descriptive_message(model_wc::possible_typo_hp))});
       }
-      else if (node.name.starts_with("P_")) {
-         context.feedback.add_warning(
-            {.file = context.path,
-             .tool = "ModelMunge",
-             .message =
-                fmt::format(".msh node ('{}') has possible typo.\n\n{}", node.name,
-                            get_descriptive_message(
-                               model_wc::possible_typo_collision_primitive))});
-      }
       else if (node.name.starts_with("sV_") or node.name.starts_with("Sv_") or
                node.name.starts_with("SV_")) {
          context.feedback.add_warning(

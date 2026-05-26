@@ -11,7 +11,6 @@ namespace we::munge {
 enum class model_ec {
    msh_read_version_not_supported,
    msh_read_no_scene,
-   msh_read_matl_list_too_short,
    msh_read_mndx_missing,
    msh_read_mndx_duplicate,
    msh_read_envl_entry_out_of_range,
@@ -38,7 +37,6 @@ enum class model_ec {
    msh_validation_fail_cloth_constraints_valid,
    msh_validation_fail_cloth_collision_parent_valid,
    msh_validation_fail_cloth_collision_shape_valid,
-   msh_validation_fail_collision_primitive_shape_valid,
 
    msh_ucfb_memory_too_small_minimum,
    msh_ucfb_memory_too_small_chunk,
@@ -58,6 +56,7 @@ enum class model_ec {
    msh_option_load_bad_bounding_box_scale,
    msh_option_load_bad_bounding_box_offset,
    msh_option_load_bad_ambient_lighting,
+   msh_option_load_bad_attach_light,
    msh_option_load_io_open_error,
    msh_option_load_io_generic_error,
 
@@ -85,6 +84,9 @@ enum class model_ec {
    collision_mesh_bad_triangle_count,
    collision_mesh_too_many_vertices,
    collision_mesh_simplified_face_invalid,
+
+   req_write_io_open_error,
+   req_write_io_generic_error,
 
    write_io_open_error,
    write_io_generic_error,
@@ -131,7 +133,6 @@ enum class model_wc {
    missing_bump_map,
 
    possible_typo_hp,
-   possible_typo_collision_primitive,
    possible_typo_shadowvolume,
 
    model_shadow_mesh_discarded_degenerate_triangle,

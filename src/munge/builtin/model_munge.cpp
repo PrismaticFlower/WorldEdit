@@ -1,5 +1,6 @@
 #include "model_munge.hpp"
 
+#include "model_munge/error.hpp"
 #include "model_munge/load_model.hpp"
 #include "model_munge/model.hpp"
 #include "model_munge/write_model.hpp"
@@ -7,6 +8,8 @@
 #include "assets/req/builder.hpp"
 #include "assets/req/io.hpp"
 #include "assets/req/requirement_list.hpp"
+
+#include "io/error.hpp"
 
 namespace we::munge {
 
@@ -29,7 +32,15 @@ void write_req(const io::path& output_file_path, const model_container& model_co
 
    if (textures.entries.empty()) return;
 
-   assets::req::save(output_file_path, std::span{&textures, 1});
+   try {
+      assets::req::save(output_file_path, std::span{&textures, 1});
+   }
+   catch (io::open_error& e) {
+      throw model_error{e.what(), model_ec::req_write_io_open_error};
+   }
+   catch (io::error& e) {
+      throw model_error{e.what(), model_ec::req_write_io_generic_error};
+   }
 }
 
 }
