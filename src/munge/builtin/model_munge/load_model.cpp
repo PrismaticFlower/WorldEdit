@@ -141,6 +141,28 @@ void warning_check_scene(const msh::scene& scene, const build_context& context)
       }
    }
 
+   for (const msh::scene_option_attach_light& attachment : scene.options.attach_lights) {
+      bool found_node = false;
+
+      for (const msh::node& node : scene.nodes) {
+         if (iequals(attachment.node_name, node.name)) {
+            found_node = true;
+
+            break;
+         }
+      }
+
+      if (not found_node) {
+         context.feedback.add_warning(
+            {.file = context.path,
+             .tool = "ModelMunge",
+             .message = fmt::format(
+                ".msh missing node ('{}') named in -attachlight option.\n\n{}",
+                attachment.node_name,
+                get_descriptive_message(model_wc::missing_attach_light))});
+      }
+   }
+
    for (const msh::node& node : scene.nodes) {
       if (node.name.starts_with("hP_") or node.name.starts_with("Hp_") or
           node.name.starts_with("HP_")) {

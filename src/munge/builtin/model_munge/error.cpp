@@ -569,6 +569,10 @@ The node named in a "-keep" option does not exist in the .msh file. This could i
       return R"(MISSING_KEEP_MATERIAL
 
 The node named in a "-keepmaterial" option does not exist in the .msh file. This could indicate a typo.)";
+   case model_wc::missing_attach_light:
+      return R"(MISSING_ATTACH_LIGHT
+
+The node named in a "-attachlight" option does not exist in the .msh file. This could indicate a typo.)";
    case model_wc::missing_bump_map:
       return R"(MISSING_BUMP_MAP
 
