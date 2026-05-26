@@ -222,7 +222,7 @@ i.e "-keep light_attach")";
 
 Bad "-keepmaterial" option in .msh.option file. "-keepmaterial" must be followed by the name of the node to keep.
 
-i.e "-keepmaterial OverrideTexture")";
+i.e "-keepmaterial override_texture")";
    case model_ec::msh_option_load_bad_scale:
       return R"(MSH_OPTION_LOAD_BAD_SCALE
 
