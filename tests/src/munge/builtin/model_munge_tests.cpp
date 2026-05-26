@@ -121,6 +121,11 @@ TEST_CASE("model_munge model_clrl_ambientlighting", "[Munge]")
    REQUIRE(golden_ref_test("model_clrl_ambientlighting", 856));
 }
 
+TEST_CASE("model_munge model_clrl_nomerge", "[Munge]")
+{
+   REQUIRE(golden_ref_test("model_clrl_nomerge", 496));
+}
+
 TEST_CASE("model_munge model_clrl_vertexlighting", "[Munge]")
 {
    REQUIRE(golden_ref_test("model_clrl_vertexlighting", 504));

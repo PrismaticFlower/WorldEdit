@@ -48,9 +48,24 @@ bool is_same(const material& l, const material& r) noexcept
           iequals(l.textures[3], r.textures[3]);
 }
 
+bool is_compatible(const model_segment_vertices& l, const model_segment_vertices& r)
+{
+   if ((l.positionSS != nullptr) != (r.positionSS != nullptr)) return false;
+   if ((l.positionLS != nullptr) != (r.positionLS != nullptr)) return false;
+   if ((l.bone_weights != nullptr) != (r.bone_weights != nullptr)) return false;
+   if ((l.bone_indices != nullptr) != (r.bone_indices != nullptr)) return false;
+   if ((l.normalSS != nullptr) != (r.normalSS != nullptr)) return false;
+   if ((l.tangents != nullptr) != (r.tangents != nullptr)) return false;
+   if ((l.color != nullptr) != (r.color != nullptr)) return false;
+   if ((l.texcoords != nullptr) != (r.texcoords != nullptr)) return false;
+
+   return true;
+}
+
 bool can_merge_segments(const model_segment& l, const model_segment& r)
 {
-   return is_same(l.material, r.material) and l.bone_name == r.bone_name;
+   return is_same(l.material, r.material) and
+          is_compatible(l.vertices, r.vertices) and l.bone_name == r.bone_name;
 }
 
 auto count_missing_bones(const model_segment& to, const model_segment& from) -> std::size_t
