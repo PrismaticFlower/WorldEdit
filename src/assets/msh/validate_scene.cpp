@@ -111,12 +111,7 @@ void check_node_parents_noncircular(const scene& scene)
 
 void check_node_mesh_data(const scene& scene)
 {
-   for (const auto& node : scene.nodes | std::ranges::views::filter([](const auto& node) {
-                              return node.type == node_type::null or
-                                     node.type == node_type::skinned_mesh or
-                                     node.type == node_type::cloth or
-                                     node.type == node_type::static_mesh;
-                           })) {
+   for (const auto& node : scene.nodes) {
       for (const auto& segment : node.segments) {
          if (not segment.triangles.empty()) return;
       }
