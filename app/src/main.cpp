@@ -70,6 +70,19 @@ const static container::enum_array<HCURSOR, mouse_cursor> mouse_cursors = {
    }(),
 };
 
+/// @brief Try and call DXGIDeclareAdapterRemovalSupport if supported.
+void static declare_adapter_removal_support()
+{
+   const decltype(&DXGIDeclareAdapterRemovalSupport) DXGIDeclareAdapterRemovalSupportProc =
+      reinterpret_cast<decltype(&DXGIDeclareAdapterRemovalSupport)>(
+         GetProcAddress(LoadLibraryW(L"dxgi.dll"),
+                        "DXGIDeclareAdapterRemovalSupport"));
+
+   if (DXGIDeclareAdapterRemovalSupportProc) {
+      DXGIDeclareAdapterRemovalSupportProc();
+   }
+}
+
 void static process_mouse_input(world_edit& app, const RAWMOUSE& mouse) noexcept
 {
    if (mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
@@ -497,7 +510,7 @@ void run_application(command_line command_line)
 
 int main(int arg_count, const char** args)
 {
-   DXGIDeclareAdapterRemovalSupport();
+   we::declare_adapter_removal_support();
 
    ImGui::SetAllocatorFunctions(
       [](std::size_t size, [[maybe_unused]] void* user_data) noexcept {
