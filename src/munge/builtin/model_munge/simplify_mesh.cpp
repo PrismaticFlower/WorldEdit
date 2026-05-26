@@ -303,7 +303,11 @@ auto simplify_collision_mesh(std::span<const float3> vertices,
       const float3& v1 = vertices[tri[1]];
       const float3& v2 = vertices[tri[2]];
 
-      const quantized_plane plane{make_plane(v0, v1, v2)};
+      float3 normal = cross(v1 - v0, v2 - v0);
+
+      if (normal == float3{}) continue; // Discard degenerate triangles.
+
+      const quantized_plane plane{make_plane_from_point(v0, normalize(normal))};
 
       const uint32 face_index = static_cast<uint32>(faces.size());
 
