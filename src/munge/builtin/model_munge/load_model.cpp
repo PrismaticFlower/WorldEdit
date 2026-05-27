@@ -1307,6 +1307,10 @@ auto build_models(const msh::scene& scene, const skeleton& skeleton,
       }
    }
 
+   if (lod0.empty() and lod1.empty() and lod2.empty()) {
+      lod0 = std::move(lod_lowd);
+   }
+
    if (scene.options.high_res_shadow) {
       if (scene.options.high_res_shadow_lod >= 3 and not lod_lowd.empty()) {
          shadow = lod_lowd;
@@ -1337,7 +1341,7 @@ auto build_models(const msh::scene& scene, const skeleton& skeleton,
       models.push_back(build_model(model_lod::lod2, lod2, {}, scene, skeleton, context));
    }
 
-   if (not lod2.empty()) {
+   if (not lod_lowd.empty()) {
       models.push_back(
          build_model(model_lod::lowd, lod_lowd, {}, scene, skeleton, context));
    }

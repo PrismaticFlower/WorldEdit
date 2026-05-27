@@ -136,6 +136,11 @@ TEST_CASE("model_munge model_lods", "[Munge]")
    REQUIRE(golden_ref_test("model_lods", 124));
 }
 
+TEST_CASE("model_munge model_lowres_only", "[Munge]")
+{
+   REQUIRE(golden_ref_test("model_lowres_only", 700));
+}
+
 TEST_CASE("model_munge model_mtrl_00_00", "[Munge]")
 {
    REQUIRE(golden_ref_test("model_mtrl_00_00", 304));
