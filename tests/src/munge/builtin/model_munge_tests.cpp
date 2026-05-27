@@ -445,6 +445,11 @@ TEST_CASE("model_munge model_shadow_tri", "[Munge]")
    REQUIRE(golden_ref_test("model_shadow_tri", 136));
 }
 
+TEST_CASE("model_munge model_shadow_unhidden", "[Munge]")
+{
+   REQUIRE(golden_ref_test("model_shadow_unhidden", 140));
+}
+
 TEST_CASE("model_munge model_shadowvolume", "[Munge]")
 {
    REQUIRE(golden_ref_test("model_shadowvolume", 136));

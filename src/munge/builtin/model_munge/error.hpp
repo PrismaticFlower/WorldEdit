@@ -130,7 +130,9 @@ enum class model_wc {
    missing_bump_map,
 
    possible_typo_hp,
-   possible_typo_shadowvolume,
+   possible_typo_shadow_volume,
+
+   unhidden_shadow_volume,
 
    model_shadow_mesh_discarded_degenerate_triangle,
    model_shadow_mesh_merged_nonidentical_vertices,

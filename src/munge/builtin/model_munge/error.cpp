@@ -560,12 +560,19 @@ The texture named in a "-bump" option is not used by any material. This could in
 A possible typo has been detected. Only nodes that start with lowercase "hp_" are treated as hardpoints, nodes that start with "HP_", "hP_" or "Hp_" are not.
 
 If you want the node to be a hardpoint you should rename it or use "-keep" in the .msh.option file on it.")";
-   case model_wc::possible_typo_shadowvolume:
-      return R"(POSSIBLE_TYPO_SHADOWVOLUME
+   case model_wc::possible_typo_shadow_volume:
+      return R"(POSSIBLE_TYPO_SHADOW_VOLUME
 
 A possible typo has been detected. Only nodes that start with lowercase "sv_" are treated meshes to be converted to shadow volumes, nodes that start with "SV_", "sV_" or "Sv_" are not.
 
 If you want the node to be a shadow volume you should rename it.)";
+
+   case model_wc::unhidden_shadow_volume:
+      return R"(UNHIDDEN_SHADOW_VOLUME
+
+A shadow volume node is not hidden. The node will also be treated as a regular mesh.
+
+If you want the node to only be a shadow volume you should hide it.)";
 
    case model_wc::model_shadow_mesh_discarded_degenerate_triangle:
       return R"(MODEL_SHADOW_MESH_DISCARDED_DEGENERATE_TRIANGLE

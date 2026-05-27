@@ -178,9 +178,18 @@ void warning_check_scene(const msh::scene& scene, const build_context& context)
          context.feedback.add_warning(
             {.file = context.path,
              .tool = "ModelMunge",
-             .message =
-                fmt::format(".msh node ('{}') has possible typo.\n\n{}", node.name,
-                            get_descriptive_message(model_wc::possible_typo_shadowvolume))});
+             .message = fmt::format(".msh node ('{}') has possible typo.\n\n{}",
+                                    node.name,
+                                    get_descriptive_message(
+                                       model_wc::possible_typo_shadow_volume))});
+      }
+      else if (not node.hidden and node.name.starts_with("sv_")) {
+         context.feedback.add_warning(
+            {.file = context.path,
+             .tool = "ModelMunge",
+             .message = fmt::format(
+                ".msh node ('{}') is shadow volume and is not hidden.\n\n{}",
+                node.name, get_descriptive_message(model_wc::unhidden_shadow_volume))});
       }
    }
 
@@ -500,7 +509,6 @@ bool is_geometry_node(const msh::node& node)
    }
    if (node.type == msh::node_type::cloth) return false;
 
-   if (node.name.starts_with("sv_")) return false;
    if (node.name.starts_with("p_")) return false;
    if (node.name.starts_with("hp_")) return false;
 
@@ -1293,7 +1301,8 @@ auto build_models(const msh::scene& scene, const skeleton& skeleton,
             lod0.push_back(i);
          }
       }
-      else if (is_shadow_node(node)) {
+
+      if (is_shadow_node(node)) {
          shadow.push_back(i);
       }
    }
