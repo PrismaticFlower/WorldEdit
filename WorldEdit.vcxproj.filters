@@ -319,6 +319,7 @@
     <ClCompile Include="src\munge\builtin\model_munge\simplify_mesh.cpp" />
     <ClCompile Include="src\munge\builtin\model_munge\build_shadow_segments.cpp" />
     <ClCompile Include="src\munge\builtin\model_munge\triangulate_polygon.cpp" />
+    <ClCompile Include="src\munge\builtin\utility\bf_crc32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -699,6 +700,7 @@
     <ClInclude Include="src\munge\builtin\model_munge\simplify_mesh.hpp" />
     <ClInclude Include="src\munge\builtin\model_munge\build_shadow_segments.hpp" />
     <ClInclude Include="src\munge\builtin\model_munge\triangulate_polygon.hpp" />
+    <ClInclude Include="src\munge\builtin\utility\bf_crc32.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
