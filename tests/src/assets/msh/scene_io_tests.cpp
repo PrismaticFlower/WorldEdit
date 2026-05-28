@@ -505,4 +505,15 @@ TEST_CASE(".msh reading SHDW test", "[Assets][MSH]")
    }
 }
 
+TEST_CASE(".msh reading BLN2 test", "[Assets][MSH]")
+{
+   auto scene = load_scene("data/test_bln2.msh", {});
+
+   REQUIRE(scene.blend_bone_list.size() == 3);
+
+   CHECK(scene.blend_bone_list[0] == 0);
+   CHECK(scene.blend_bone_list[1] == 1);
+   CHECK(scene.blend_bone_list[2] == 2);
+}
+
 }

@@ -157,6 +157,7 @@ struct scene_options {
 struct scene {
    std::vector<material> materials;
    std::vector<node> nodes;
+   std::vector<uint32> blend_bone_list;
    scene_options options;
 };
 }

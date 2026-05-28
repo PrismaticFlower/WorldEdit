@@ -10,7 +10,6 @@ namespace we::munge {
 
 enum class model_ec {
    msh_read_version_not_supported,
-   msh_read_no_scene,
    msh_read_mndx_missing,
    msh_read_mndx_duplicate,
    msh_read_envl_entry_out_of_range,

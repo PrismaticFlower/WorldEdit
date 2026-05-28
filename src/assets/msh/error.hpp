@@ -6,7 +6,6 @@ namespace we::assets::msh {
 
 enum class read_ec {
    read_version_not_supported,
-   read_no_scene,
    read_mndx_missing,
    read_mndx_duplicate,
    read_envl_entry_out_of_range,

@@ -15,14 +15,6 @@ auto get_description(const model_ec c) noexcept -> std::string_view
       return R"(MSH_READ_VERSION_NOT_SUPPORTED
 
 The .msh file can not be read as it contains a MSH1 chunk instead of a MSH2 chunk.)";
-   case model_ec::msh_read_no_scene:
-      return R"(MSH_READ_NO_SCENE
-
-The .msh file was read successfully but contained no scene.
-
-Use an external tool (like Softimage, Blender or a msh viewer) to validate that the file contains a scene.
-
-If it does try re-exporting the .msh file. Then try reading the .msh file again.)";
    case model_ec::msh_read_mndx_missing:
       return R"(MSH_READ_MNDX_MISSING
 
@@ -421,8 +413,6 @@ model_error::model_error(const assets::msh::read_error& e) noexcept
            switch (ec) {
            case read_ec::read_version_not_supported:
               return model_ec::msh_read_version_not_supported;
-           case read_ec::read_no_scene:
-              return model_ec::msh_read_no_scene;
            case read_ec::read_mndx_missing:
               return model_ec::msh_read_mndx_missing;
            case read_ec::read_mndx_duplicate:

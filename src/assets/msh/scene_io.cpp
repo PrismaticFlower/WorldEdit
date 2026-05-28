@@ -510,9 +510,8 @@ auto read_matl(ucfb::reader_strict<"MATL"_id> matl) -> std::vector<material>
    return materials;
 }
 
-auto read_msh2(ucfb::reader_strict<"MSH2"_id> msh2) -> scene
+void read_msh2(ucfb::reader_strict<"MSH2"_id> msh2, scene& out)
 {
-   scene scene;
    std::vector<uint32> node_index;
 
    while (msh2) {
@@ -520,17 +519,34 @@ auto read_msh2(ucfb::reader_strict<"MSH2"_id> msh2) -> scene
 
       switch (child.id()) {
       case "MATL"_id:
-         scene.materials = read_matl(ucfb::reader_strict<"MATL"_id>{child});
+         out.materials = read_matl(ucfb::reader_strict<"MATL"_id>{child});
          continue;
       case "MODL"_id:
-         read_modl(ucfb::reader_strict<"MODL"_id>{child}, scene.nodes, node_index);
+         read_modl(ucfb::reader_strict<"MODL"_id>{child}, out.nodes, node_index);
          continue;
       }
    }
 
-   remap_bone_maps(scene, node_index);
+   remap_bone_maps(out, node_index);
+}
 
-   return scene;
+auto read_bln2(ucfb::reader_strict<"BLN2"_id> bln2) -> std::vector<uint32>
+{
+   const uint32 bone_count = bln2.read<uint32>();
+
+   std::vector<uint32> bone_list;
+   bone_list.reserve(bone_count);
+
+   for (std::size_t i = 0; i < bone_count; ++i) {
+      const uint32 bone_crc = bln2.read<uint32>();
+      const uint32 info_count = bln2.read<uint32>();
+
+      if (info_count > 0) bln2.consume(info_count * sizeof(uint32) * 2);
+
+      bone_list.push_back(bone_crc);
+   }
+
+   return bone_list;
 }
 
 void read_scene_option(const option& opt, scene_options& out)
@@ -822,23 +838,24 @@ auto read_scene(const std::span<const std::byte> bytes) -> scene
    try {
       ucfb::reader_strict<"HEDR"_id> hedr{bytes, {.aligned_children = false}};
 
-      while (hedr) {
-         auto msh_ = hedr.read_child();
+      scene result;
 
-         if (msh_.id() == "MSH1"_id) {
+      while (hedr) {
+         auto child = hedr.read_child();
+
+         if (child.id() == "MSH1"_id) {
             throw read_error{"Version 1 .msh files are not supported.",
                              read_ec::read_version_not_supported};
          }
-         else if (msh_.id() != "MSH2"_id) {
-            continue;
+         else if (child.id() == "MSH2"_id) {
+            read_msh2(ucfb::reader_strict<"MSH2"_id>{child}, result);
          }
-
-         scene result = read_msh2(ucfb::reader_strict<"MSH2"_id>{msh_});
-
-         validate_scene(result);
-
-         return result;
+         else if (child.id() == "BLN2"_id) {
+            result.blend_bone_list = read_bln2(ucfb::reader_strict<"BLN2"_id>{child});
+         }
       }
+
+      return result;
    }
    catch (ucfb::read_error& e) {
       switch (e.code()) {
@@ -856,8 +873,6 @@ auto read_scene(const std::span<const std::byte> bytes) -> scene
 
       throw read_error{e.what(), read_ec::ucfb_unknown};
    }
-
-   throw read_error{".msh file contained no scene.", read_ec::read_no_scene};
 }
 
 auto load_scene(const io::path& path, const options& directory_options) -> scene
