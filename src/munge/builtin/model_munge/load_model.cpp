@@ -1372,11 +1372,14 @@ auto build_game_model(const msh::scene& scene) -> game_model
    };
 }
 
-auto build_cloth(const msh::scene& scene, const msh::node& node) -> cloth
+auto build_cloth(const msh::scene& scene, const std::size_t node_index,
+                 const skeleton& skeleton) -> cloth
 {
+   const msh::node& node = scene.nodes[node_index];
+
    cloth out = {
       .name = node.name,
-      .parent = node.parent.value_or(""),
+      .parent = skeleton.bones[skeleton.node_parent_remap[node_index]].name,
       .transform = float4x4{node.transform},
    };
 
@@ -1474,14 +1477,17 @@ auto build_cloth(const msh::scene& scene, const msh::node& node) -> cloth
    return out;
 }
 
-auto build_cloths(const msh::scene& scene) -> std::vector<cloth>
+auto build_cloths(const msh::scene& scene, const skeleton& skeleton)
+   -> std::vector<cloth>
 {
    std::vector<cloth> cloths;
 
-   for (const msh::node& node : scene.nodes) {
+   for (std::size_t i = 0; i < scene.nodes.size(); ++i) {
+      const msh::node& node = scene.nodes[i];
+
       if (node.type != msh::node_type::cloth) continue;
 
-      cloths.push_back(build_cloth(scene, node));
+      cloths.push_back(build_cloth(scene, i, skeleton));
    }
 
    return cloths;
@@ -1774,7 +1780,7 @@ auto load_model(const io::path& path,
    model.collision_mesh = build_collision_mesh(scene, model.skeleton, context);
    model.collision_primitives =
       build_collision_primitives(scene, model.skeleton, context);
-   model.cloths = build_cloths(scene);
+   model.cloths = build_cloths(scene, model.skeleton);
 
    return model;
 }

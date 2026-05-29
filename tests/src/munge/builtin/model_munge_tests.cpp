@@ -689,4 +689,9 @@ TEST_CASE("model_munge cloth_scale", "[Munge]")
    REQUIRE(golden_ref_test("cloth_scale", 1080));
 }
 
+TEST_CASE("model_munge cloth_reparent", "[Munge]")
+{
+   REQUIRE(golden_ref_test("cloth_reparent", 900));
+}
+
 }
