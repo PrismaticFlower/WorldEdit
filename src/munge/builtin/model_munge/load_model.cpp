@@ -415,23 +415,50 @@ auto build_skeleton(const msh::scene& scene, const build_context& context) -> sk
       if (keep_node[i] or keep_as_nameless_node[i]) bone_count += 1;
    }
 
+   if (bone_count > max_skeleton_bones) {
+      throw model_error{fmt::format("Too many bones ({}) max is {}!",
+                                    bone_count, max_skeleton_bones),
+                        model_ec::skeleton_too_many_bones};
+   }
+
+   std::vector<bool> added_nodes;
+   added_nodes.resize(scene.nodes.size());
+
+   std::vector<uint32> skeleton_nodes;
+   skeleton_nodes.reserve(bone_count);
+
+   for (std::size_t i = 0; i < scene.nodes.size(); ++i) {
+      const msh::node& node = scene.nodes[i];
+
+      for (uint32 bone_map_entry : node.bone_map) {
+         if (keep_node[bone_map_entry] and not added_nodes[bone_map_entry]) {
+            added_nodes[bone_map_entry] = true;
+            skeleton_nodes.push_back(bone_map_entry);
+         }
+      }
+
+      if (keep_node[i] and not added_nodes[i]) {
+         added_nodes[i] = true;
+         skeleton_nodes.push_back(static_cast<uint32>(i));
+      }
+   }
+
    skeleton skeleton;
    skeleton.bones.reserve(bone_count);
    skeleton.bone_remap.resize(scene.nodes.size());
    skeleton.node_parent_remap.resize(scene.nodes.size());
 
-   for (std::size_t i = 0; i < scene.nodes.size(); ++i) {
-      if (not keep_node[i]) continue;
-
-      const msh::node& node = scene.nodes[i];
+   for (const uint32 node_index : skeleton_nodes) {
+      const msh::node& node = scene.nodes[node_index];
 
       const float4x4 bone_from_parent =
-         build_bone_from_parent(i, scene, keep_node, keep_as_nameless_node, node_parents);
+         build_bone_from_parent(node_index, scene, keep_node,
+                                keep_as_nameless_node, node_parents);
 
-      skeleton.bone_remap[i] = static_cast<uint8>(skeleton.bones.size());
+      skeleton.bone_remap[node_index] = static_cast<uint8>(skeleton.bones.size());
       skeleton.bones.push_back({
          .name = node.name,
-         .parent = node.parent ? scene.nodes[node_parent_remap[i]].name : "",
+         .parent = node.parent ? scene.nodes[node_parent_remap[node_index]].name : "",
          .bone_from_parent = node.parent ? bone_from_parent : float4x4{},
       });
    }
@@ -484,12 +511,6 @@ auto build_skeleton(const msh::scene& scene, const build_context& context) -> sk
 
    for (std::size_t i = 0; i < skeleton.node_parent_remap.size(); ++i) {
       skeleton.node_parent_remap[i] = skeleton.bone_remap[node_parent_remap[i]];
-   }
-
-   if (skeleton.bones.size() > max_skeleton_bones) {
-      throw model_error{fmt::format("Too many bones ({}) max is {}!",
-                                    skeleton.bones.size(), max_skeleton_bones),
-                        model_ec::skeleton_too_many_bones};
    }
 
    skeleton.node_from_vertex.resize(scene.nodes.size());
