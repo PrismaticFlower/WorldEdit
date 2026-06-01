@@ -684,14 +684,14 @@ TEST_CASE("model_munge cloth_nofixedweights", "[Munge]")
    REQUIRE(golden_ref_test("cloth_nofixedweights", 1128));
 }
 
-TEST_CASE("model_munge cloth_scale", "[Munge]")
-{
-   REQUIRE(golden_ref_test("cloth_scale", 1080));
-}
-
 TEST_CASE("model_munge cloth_reparent", "[Munge]")
 {
    REQUIRE(golden_ref_test("cloth_reparent", 900));
+}
+
+TEST_CASE("model_munge cloth_scale", "[Munge]")
+{
+   REQUIRE(golden_ref_test("cloth_scale", 1080));
 }
 
 }
