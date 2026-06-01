@@ -56,6 +56,11 @@ TEST_CASE("model_munge skeleton_bln2", "[Munge]")
    REQUIRE(golden_ref_test("skeleton_bln2", 8));
 }
 
+TEST_CASE("model_munge skeleton_cloth_collision", "[Munge]")
+{
+   REQUIRE(golden_ref_test("skeleton_cloth_collision", 8));
+}
+
 TEST_CASE("model_munge skeleton_keep", "[Munge]")
 {
    REQUIRE(golden_ref_test("skeleton_keep", 8));

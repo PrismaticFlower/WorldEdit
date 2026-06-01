@@ -348,6 +348,24 @@ auto build_skeleton(const msh::scene& scene, const build_context& context) -> sk
                break;
             }
          }
+
+         if (keep_node[i]) continue;
+
+         for (const msh::node& other_node : scene.nodes) {
+            if (not other_node.cloth) continue;
+
+            for (const msh::cloth_collision_primitive& primitive :
+                 other_node.cloth->collision) {
+               if (iequals(node.name, primitive.parent)) {
+
+                  keep_node[i] = true;
+
+                  break;
+               }
+            }
+
+            if (keep_node[i]) break;
+         }
       }
    }
 
