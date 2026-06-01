@@ -30,6 +30,12 @@ void write_req(const io::path& output_file_path, const model_container& model_co
       }
    }
 
+   for (const cloth& cloth : model_container.cloths) {
+      if (cloth.texture_name.empty()) continue;
+
+      assets::req::add_to(textures.entries, cloth.texture_name);
+   }
+
    if (textures.entries.empty()) return;
 
    try {
