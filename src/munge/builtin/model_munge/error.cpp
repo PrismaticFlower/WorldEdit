@@ -622,6 +622,10 @@ Valid Flags:
    o
    f
 )";
+   case model_wc::cloth_fixed_weight_unkept_node:
+      return R"(CLOTH_FIXED_WEIGHT_UNKEPT_NODE
+
+A cloth fixed weight entry references as unkept node. It is possible this will crash ingame. Either use -keep in the .msh.option file to force the node to be kept or edit the .msh file itself and make sure the referenced node is setup as a bone.)";
    }
 
    return "Unknown Warning";

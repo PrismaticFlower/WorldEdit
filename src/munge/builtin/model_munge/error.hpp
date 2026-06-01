@@ -146,6 +146,8 @@ enum class model_wc {
    collision_primitive_wrong_prefix,
    collision_primitive_missing_data,
    collision_invalid_flag,
+
+   cloth_fixed_weight_unkept_node,
 };
 
 auto get_descriptive_message(const model_wc c) noexcept -> std::string_view;

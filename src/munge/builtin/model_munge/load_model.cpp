@@ -1373,7 +1373,7 @@ auto build_game_model(const msh::scene& scene) -> game_model
 }
 
 auto build_cloth(const msh::scene& scene, const std::size_t node_index,
-                 const skeleton& skeleton) -> cloth
+                 const skeleton& skeleton, const build_context& context) -> cloth
 {
    const msh::node& node = scene.nodes[node_index];
 
@@ -1474,11 +1474,32 @@ auto build_cloth(const msh::scene& scene, const std::size_t node_index,
                                .size = primitive.size});
    }
 
+   for (const std::string& fixed_weight_name : out.fixed_weights) {
+      bool found = false;
+
+      for (const skeleton_bone& bone : skeleton.bones) {
+         if (iequals(bone.name, fixed_weight_name)) {
+            found = true;
+
+            break;
+         }
+      }
+
+      if (not found) {
+         context.feedback.add_warning(
+            {.file = context.path,
+             .tool = "ModelMunge",
+             .message = fmt::format(
+                "Cloth has fixed weight referencing unkept node: '{}'.\n\n{}", fixed_weight_name,
+                get_descriptive_message(model_wc::cloth_fixed_weight_unkept_node))});
+      }
+   }
+
    return out;
 }
 
-auto build_cloths(const msh::scene& scene, const skeleton& skeleton)
-   -> std::vector<cloth>
+auto build_cloths(const msh::scene& scene, const skeleton& skeleton,
+                  const build_context& context) -> std::vector<cloth>
 {
    std::vector<cloth> cloths;
 
@@ -1487,7 +1508,7 @@ auto build_cloths(const msh::scene& scene, const skeleton& skeleton)
 
       if (node.type != msh::node_type::cloth) continue;
 
-      cloths.push_back(build_cloth(scene, i, skeleton));
+      cloths.push_back(build_cloth(scene, i, skeleton, context));
    }
 
    return cloths;
@@ -1780,7 +1801,7 @@ auto load_model(const io::path& path,
    model.collision_mesh = build_collision_mesh(scene, model.skeleton, context);
    model.collision_primitives =
       build_collision_primitives(scene, model.skeleton, context);
-   model.cloths = build_cloths(scene, model.skeleton);
+   model.cloths = build_cloths(scene, model.skeleton, context);
 
    return model;
 }
