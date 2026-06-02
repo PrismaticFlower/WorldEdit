@@ -360,19 +360,17 @@ void optimize_mesh_buffers(std::span<model_segment> segments)
       std::vector<uint32> vertex_remap;
       vertex_remap.resize(segment.vertices.vertex_count, remap_noindex);
 
-      std::size_t next_vertex = 0;
+      uint32 next_vertex = 0;
 
       for (std::array<uint16, 3>& tri : segment.index_buffer) {
          for (uint16& index : tri) {
-            uint32& remapped_index = vertex_remap[index];
-
-            if (remapped_index == remap_noindex) {
-               remapped_index = static_cast<uint32>(next_vertex);
+            if (vertex_remap[index] == remap_noindex) {
+               vertex_remap[index] = next_vertex;
 
                next_vertex += 1;
             }
 
-            index = static_cast<uint16>(remapped_index);
+            index = static_cast<uint16>(vertex_remap[index]);
          }
       }
 
@@ -428,7 +426,7 @@ void optimize_mesh_buffers(std::span<model_segment> segments)
             std::make_unique_for_overwrite<float2[]>(new_vertex_count);
       }
 
-      for (std::size_t i = 0; i < new_vertex_count; ++i) {
+      for (std::size_t i = 0; i < old_vertices.vertex_count; ++i) {
          const uint32 new_index = vertex_remap[i];
 
          if (new_index == remap_noindex) continue;
@@ -509,19 +507,17 @@ void optimize_mesh_buffers(std::span<model_shadow> segments)
       std::vector<uint32> vertex_remap;
       vertex_remap.resize(vertex_count, remap_noindex);
 
-      std::size_t next_vertex = 0;
+      uint32 next_vertex = 0;
 
       for (std::array<uint16, 3>& tri : segment.index_buffer) {
          for (uint16& index : tri) {
-            uint32& remapped_index = vertex_remap[index];
-
-            if (remapped_index == remap_noindex) {
-               remapped_index = static_cast<uint32>(next_vertex);
+            if (vertex_remap[index] == remap_noindex) {
+               vertex_remap[index] = next_vertex;
 
                next_vertex += 1;
             }
 
-            index = static_cast<uint16>(remapped_index);
+            index = static_cast<uint16>(vertex_remap[index]);
          }
       }
 
@@ -537,7 +533,7 @@ void optimize_mesh_buffers(std::span<model_shadow> segments)
          std::vector<model_shadow_unskinned_vertex> new_vertices;
          new_vertices.resize(new_vertex_count);
 
-         for (std::size_t i = 0; i < new_vertex_count; ++i) {
+         for (std::size_t i = 0; i < vertex_count; ++i) {
             const uint32 new_index = vertex_remap[i];
 
             if (new_index == remap_noindex) continue;
@@ -551,7 +547,7 @@ void optimize_mesh_buffers(std::span<model_shadow> segments)
          std::vector<model_shadow_hard_skinned_vertex> new_vertices;
          new_vertices.resize(new_vertex_count);
 
-         for (std::size_t i = 0; i < new_vertex_count; ++i) {
+         for (std::size_t i = 0; i < vertex_count; ++i) {
             const uint32 new_index = vertex_remap[i];
 
             if (new_index == remap_noindex) continue;
@@ -565,7 +561,7 @@ void optimize_mesh_buffers(std::span<model_shadow> segments)
          std::vector<model_shadow_soft_skinned_vertex> new_vertices;
          new_vertices.resize(new_vertex_count);
 
-         for (std::size_t i = 0; i < new_vertex_count; ++i) {
+         for (std::size_t i = 0; i < vertex_count; ++i) {
             const uint32 new_index = vertex_remap[i];
 
             if (new_index == remap_noindex) continue;
