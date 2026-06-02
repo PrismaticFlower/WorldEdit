@@ -2050,14 +2050,25 @@ auto build_shadow_segments(std::span<const assets::msh::shadow_volume_half_edge>
 
       uint32 vertex_count = 1;
 
+      float3 normalSS;
+
       for (uint32 edge_index = static_cast<uint32>(edge_face_index);;) {
          half_edge& edge = mesh.half_edges[edge_index];
+         half_edge& next_edge = mesh.half_edges[edge.next_edge];
 
-         mesh.half_edges[edge.next_edge].previous_edge = edge_index;
+         next_edge.previous_edge = edge_index;
 
          edge.face = face_index;
 
          visited_edges[edge_index] = true;
+
+         // Calculate the polygon's normal using Newell's Method.
+         const float3& v0 = mesh.positionSS[edge.vertex];
+         const float3& v1 = mesh.positionSS[next_edge.vertex];
+
+         normalSS.x += (v0.y - v1.y) * (v0.z + v1.z);
+         normalSS.y += (v0.z - v1.z) * (v0.x + v1.x);
+         normalSS.z += (v0.x - v1.x) * (v0.y + v1.y);
 
          vertex_count += 1;
 
@@ -2066,13 +2077,7 @@ auto build_shadow_segments(std::span<const assets::msh::shadow_volume_half_edge>
          if (edge_index == edge_face_index) break;
       }
 
-      half_edge& edge = mesh.half_edges[edge_face_index];
-
-      const float3& v0 = mesh.positionSS[edge.vertex];
-      const float3& v1 = mesh.positionSS[mesh.half_edges[edge.next_edge].vertex];
-      const float3& v2 = mesh.positionSS[mesh.half_edges[edge.previous_edge].vertex];
-
-      const float3 normalSS = normalize(cross(v1 - v0, v2 - v0));
+      normalSS = normalize(normalSS);
 
       mesh.faces.push_back({
          .first_edge = static_cast<uint32>(edge_face_index),
