@@ -1016,7 +1016,7 @@ void build_segments(const std::size_t node_index, const msh::scene& scene,
          for (model_segment& split_segment :
               split_skinned_segments(segment, target_segment_bones)) {
             if (need_tangents) {
-               for (model_segment& tangents_segment : generate_tangents(segment)) {
+               for (model_segment& tangents_segment : generate_tangents(split_segment)) {
                   if (need_apply_inverse_bind_pose) {
                      apply_inverse_bind_pose(node_index, skeleton, tangents_segment);
                   }

@@ -489,6 +489,11 @@ TEST_CASE("model_munge model_skin_split", "[Munge]")
    REQUIRE(golden_ref_test("model_skin_split", 1688));
 }
 
+TEST_CASE("model_munge model_skin_split_generate_tangents", "[Munge]")
+{
+   REQUIRE(golden_ref_test("model_skin_split_generate_tangents", 1704));
+}
+
 TEST_CASE("model_munge model_skin_split2", "[Munge]")
 {
    REQUIRE(golden_ref_test("model_skin_split2", 1744));
