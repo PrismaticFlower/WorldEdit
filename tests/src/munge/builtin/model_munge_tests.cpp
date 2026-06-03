@@ -96,6 +96,16 @@ TEST_CASE("model_munge model_basic", "[Munge]")
    REQUIRE(golden_ref_test("model_basic", 488));
 }
 
+TEST_CASE("model_munge model_bone_geom", "[Munge]")
+{
+   REQUIRE(golden_ref_test("model_bone_geom", 372));
+}
+
+TEST_CASE("model_munge model_bone_geom_wght", "[Munge]")
+{
+   REQUIRE(golden_ref_test("model_bone_geom_wght", 500));
+}
+
 TEST_CASE("model_munge model_boundingboxoffset", "[Munge]")
 {
    REQUIRE(golden_ref_test("model_boundingboxoffset", 1048));

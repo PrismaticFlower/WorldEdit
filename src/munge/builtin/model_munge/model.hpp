@@ -34,6 +34,9 @@ struct skeleton {
    /// @brief Map node index to parent bone index.
    std::vector<uint32> node_parent_remap;
 
+   /// @brief Map node index to bone (or parent bone) index.
+   std::vector<uint32> node_remap;
+
    /// @brief Transforms from the space of an untransformed vertex in a node to the space of the node.
    std::vector<float4x4> node_from_vertex;
 

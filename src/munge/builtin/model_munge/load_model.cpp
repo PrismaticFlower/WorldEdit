@@ -264,6 +264,8 @@ auto build_node_from_vertex(const std::size_t node_index, const msh::scene& scen
 
    if (not node.parent) return {};
 
+   if (keep_node[node_index]) return {};
+
    const float4x4 node_from_vertex{node.transform};
 
    const std::size_t parent_index = node_parents[node_index];
@@ -287,7 +289,8 @@ auto build_local_from_node(const std::size_t node_index, const msh::scene& scene
 
    const std::size_t parent_index = node_parents[node_index];
 
-   if (not entered_keep_chain and not keep_node[parent_index]) {
+   if (not entered_keep_chain and not keep_node[node_index] and
+       not keep_node[parent_index]) {
       return build_local_from_node(parent_index, scene, keep_node, node_parents, false);
    }
 
@@ -427,6 +430,25 @@ auto build_skeleton(const msh::scene& scene, const build_context& context) -> sk
       node_parent_remap[node_index] = parent_index;
    }
 
+   std::vector<uint32> node_remap;
+   node_remap.resize(scene.nodes.size());
+
+   for (std::size_t node_index = 0; node_index < scene.nodes.size(); ++node_index) {
+      if (keep_node[node_index]) {
+         node_remap[node_index] = static_cast<uint32>(node_index);
+
+         continue;
+      }
+
+      uint32 parent_index = node_parents[node_index];
+
+      while (not keep_node[parent_index]) {
+         parent_index = node_parents[parent_index];
+      }
+
+      node_remap[node_index] = parent_index;
+   }
+
    std::size_t bone_count = 0;
 
    for (std::size_t i = 0; i < scene.nodes.size(); ++i) {
@@ -465,6 +487,7 @@ auto build_skeleton(const msh::scene& scene, const build_context& context) -> sk
    skeleton.bones.reserve(bone_count);
    skeleton.bone_remap.resize(scene.nodes.size());
    skeleton.node_parent_remap.resize(scene.nodes.size());
+   skeleton.node_remap.resize(scene.nodes.size());
 
    for (const uint32 node_index : skeleton_nodes) {
       const msh::node& node = scene.nodes[node_index];
@@ -527,8 +550,9 @@ auto build_skeleton(const msh::scene& scene, const build_context& context) -> sk
       bone.vertex_from_bone = vertex_from_bone;
    }
 
-   for (std::size_t i = 0; i < skeleton.node_parent_remap.size(); ++i) {
+   for (std::size_t i = 0; i < scene.nodes.size(); ++i) {
       skeleton.node_parent_remap[i] = skeleton.bone_remap[node_parent_remap[i]];
+      skeleton.node_remap[i] = skeleton.bone_remap[node_remap[i]];
    }
 
    skeleton.node_from_vertex.resize(scene.nodes.size());
@@ -980,8 +1004,7 @@ void build_segments(const std::size_t node_index, const msh::scene& scene,
          }
       }
       else {
-         segment.bone_name =
-            skeleton.bones[skeleton.node_parent_remap[node_index]].name;
+         segment.bone_name = skeleton.bones[skeleton.node_remap[node_index]].name;
       }
 
       if (scene.options.ambient_lighting and scene.options.vertex_lighting and
@@ -1085,7 +1108,7 @@ void build_shadow_segments(const std::size_t node_index, const msh::scene& scene
 
          for (model_shadow& shadow_segment : build_shadow_segments(
                  shadow_volume.edges, std::move(vertices),
-                 skeleton.bones[skeleton.node_parent_remap[node_index]].name)) {
+                 skeleton.bones[skeleton.node_remap[node_index]].name)) {
             out.push_back(std::move(shadow_segment));
          }
       }
@@ -1191,8 +1214,7 @@ void build_shadow_segments(const std::size_t node_index, const msh::scene& scene
             }
          }
          else {
-            segment.bone_name =
-               skeleton.bones[skeleton.node_parent_remap[node_index]].name;
+            segment.bone_name = skeleton.bones[skeleton.node_remap[node_index]].name;
          }
 
          for (model_shadow& shadow_segment :
