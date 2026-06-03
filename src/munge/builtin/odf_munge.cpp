@@ -1,5 +1,7 @@
 #include "odf_munge.hpp"
 
+#include "executor.hpp"
+
 #include "utility/bf_fnv_1a_hash.hpp"
 
 #include "assets/odf/definition_io.hpp"
@@ -28,11 +30,6 @@ using namespace we::ucfb::literals;
 namespace we::munge {
 
 namespace {
-
-struct queued_munge {
-   io::path path;
-   async::task<void> task;
-};
 
 auto load_definition(const io::path& input_file_path) -> assets::odf::definition
 {
@@ -285,63 +282,16 @@ void write_class(const io::path& output_file_path, const assets::odf::definition
 
 void execute_odf_munge(const tool_context& context) noexcept
 {
-   std::vector<queued_munge> munge_tasks;
-
-   try {
-      for (io::directory_iterator it = io::directory_iterator{context.source_path};
-           it != it.end(); ++it) {
-         const io::directory_entry& entry = *it;
-
-         if (entry.is_file and iequals(entry.path.extension(), ".odf")) {
-            if (entry.last_write_time <
-                io::get_last_write_time(
-                   io::compose_path(context.output_path, entry.path.stem(), ".class"))) {
-               continue;
-            }
-
-            munge_tasks.emplace_back(
-               entry.path,
-               context.thread_pool.exec(async::task_priority::low,
-                                        [input_file_path = entry.path, &context] {
-                                           execute_odf_munge(input_file_path, context);
-                                        }));
-         }
-         else if (entry.is_directory) {
-            if (iequals(entry.path.stem(), "PC") or iequals(entry.path.stem(), "PS2") or
-                iequals(entry.path.stem(), "XBOX")) {
-               if (not iequals(entry.path.stem(), context.platform)) {
-                  it.skip_directory();
-               }
-            }
-         }
-      }
-   }
-   catch (std::exception& e) {
-      context.feedback.add_error(
-         {.tool = "OdfMunge", .message = fmt::format("Unknown error occured while enumerating ODFs. Unhelpful Message: {}", e.what())});
-   }
-
-   for (std::ptrdiff_t i = std::ssize(munge_tasks) - 1; i >= 0; --i) {
-      try {
-         munge_tasks[i].task.get();
-      }
-      catch (odf_error& e) {
-         context.feedback.add_error({.file = munge_tasks[i].path,
-                                     .tool = "OdfMunge",
-                                     .message = get_descriptive_message(e)});
-      }
-      catch (std::exception& e) {
-         context.feedback.add_error(
-            {.file = munge_tasks[i].path,
-             .tool = "OdfMunge",
-             .message = fmt::format("Unknown error occured while munging "
-                                    "ODF. Unhelpful Message: {}",
-                                    e.what())});
-      }
-   }
+   execute_builtin_munge({.input_extension = "odf",
+                          .output_extension = "class",
+                          .tool_name = "OdfMunge",
+                          .execute_munge = execute_odf_munge},
+                         context);
 }
 
-void execute_odf_munge(const io::path& input_file_path, const tool_context& context)
+void execute_odf_munge(const io::path& input_file_path,
+                       [[maybe_unused]] const std::vector<assets::option>& folder_options,
+                       const tool_context& context)
 {
    context.feedback.print_output(fmt::format("Munging {}", input_file_path.filename()));
 

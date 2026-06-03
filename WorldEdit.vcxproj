@@ -414,6 +414,7 @@
     <ClCompile Include="src\munge\builtin\texture_munge\write_texture.cpp" />
     <ClCompile Include="src\munge\builtin\utility\bf_crc32.cpp" />
     <ClCompile Include="src\munge\builtin\utility\bf_fnv_1a_hash.cpp" />
+    <ClCompile Include="src\munge\builtin\executor.cpp" />
     <ClCompile Include="src\munge\feedback.cpp" />
     <ClCompile Include="src\munge\manager.cpp" />
     <ClCompile Include="src\munge\output.cpp" />
@@ -726,6 +727,7 @@
     <ClInclude Include="src\munge\builtin\model_munge\write_model.hpp" />
     <ClInclude Include="src\munge\builtin\odf_munge.hpp" />
     <ClInclude Include="src\munge\builtin\odf_munge\error.hpp" />
+    <ClInclude Include="src\munge\builtin\executor.hpp" />
     <ClInclude Include="src\munge\builtin\texture_munge.hpp" />
     <ClInclude Include="src\munge\builtin\texture_munge\error.hpp" />
     <ClInclude Include="src\munge\builtin\texture_munge\texture_convert.hpp" />

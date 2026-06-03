@@ -7,126 +7,23 @@
 #include "texture_munge/texture_ops.hpp"
 #include "texture_munge/write_texture.hpp"
 
+#include "executor.hpp"
+
 #include "types.hpp"
 
-#include "assets/option_file.hpp"
-
-#include "io/path.hpp"
 #include "io/read_file.hpp"
-
-#include "utility/string_icompare.hpp"
-
-#include <forward_list>
 
 #include <fmt/format.h>
 
-using we::string::iequals;
-
 namespace we::munge {
-
-namespace {
-
-struct queued_munge {
-   io::path path;
-   async::task<void> task;
-};
-
-}
 
 void execute_texture_munge(const tool_context& context) noexcept
 {
-   std::forward_list<std::vector<assets::option>> directory_options;
-   std::vector<queued_munge> munge_tasks;
-
-   try {
-      std::vector<assets::option>* folder_options = nullptr;
-
-      {
-         const io::path root_options_path =
-            io::compose_path(context.source_path, "tga.option");
-
-         try {
-            folder_options = &directory_options.emplace_front(
-               assets::parse_options(io::read_file_to_string(root_options_path)));
-         }
-         catch (std::exception&) {
-            folder_options = nullptr;
-         }
-      }
-
-      for (io::directory_iterator it = io::directory_iterator{context.source_path};
-           it != it.end(); ++it) {
-         const io::directory_entry& entry = *it;
-
-         if (entry.is_file and iequals(entry.path.extension(), ".tga")) {
-            const uint64 output_last_write_time = io::get_last_write_time(
-               io::compose_path(context.output_path, entry.path.stem(), ".texture"));
-            const uint64 option_file_last_write_time = io::get_last_write_time(
-               io::make_path_with_new_extension(entry.path, ".tga.option"));
-
-            if (entry.last_write_time < output_last_write_time and
-                option_file_last_write_time < output_last_write_time) {
-               continue;
-            }
-
-            munge_tasks.emplace_back(
-               entry.path,
-               context.thread_pool.exec(async::task_priority::low, [input_file_path =
-                                                                       entry.path,
-                                                                    folder_options = folder_options,
-                                                                    &context] {
-                  execute_texture_munge(input_file_path,
-                                        folder_options
-                                           ? *folder_options
-                                           : std::vector<assets::option>{},
-                                        context);
-               }));
-         }
-         else if (entry.is_directory) {
-            if (iequals(entry.path.stem(), "PS2")) it.skip_directory();
-            if (iequals(entry.path.stem(), "XBOX")) it.skip_directory();
-
-            {
-               const io::path options_path =
-                  io::compose_path(context.source_path, "tga.option");
-
-               try {
-                  folder_options = &directory_options.emplace_front(
-                     assets::parse_options(io::read_file_to_string(options_path)));
-               }
-               catch (std::exception&) {
-                  folder_options = nullptr;
-               }
-            }
-         }
-      }
-   }
-   catch (std::exception& e) {
-      context.feedback.add_error(
-         {.tool = "TextureMunge",
-          .message = fmt::format("Unknown error occured while enumerating "
-                                 "textures. Unhelpful Message: {}",
-                                 e.what())});
-   }
-
-   for (std::ptrdiff_t i = std::ssize(munge_tasks) - 1; i >= 0; --i) {
-      try {
-         munge_tasks[i].task.get();
-      }
-      catch (texture_error& e) {
-         context.feedback.add_error({.file = munge_tasks[i].path,
-                                     .tool = "TextureMunge",
-                                     .message = get_descriptive_message(e)});
-      }
-      catch (std::exception& e) {
-         context.feedback.add_error(
-            {.file = munge_tasks[i].path,
-             .tool = "TextureMunge",
-             .message = fmt::format("Unknown error occured while munging "
-                                    "texture. Unhelpful Message: {}",
-                                    e.what())});
-      }
-   }
+   execute_builtin_munge({.input_extension = "tga",
+                          .output_extension = "texture",
+                          .tool_name = "TextureMunge",
+                          .execute_munge = execute_texture_munge},
+                         context);
 }
 
 void execute_texture_munge(const io::path& input_file_path,

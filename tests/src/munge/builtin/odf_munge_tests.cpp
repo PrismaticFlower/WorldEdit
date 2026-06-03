@@ -3,6 +3,8 @@
 #include "munge/builtin/odf_munge.hpp"
 #include "munge/feedback.hpp"
 
+#include "assets/option_file.hpp"
+
 #include "io/read_file.hpp"
 
 namespace we::munge::tests {
@@ -28,7 +30,8 @@ bool golden_ref_test(const std::string_view file_name)
                            .feedback = feedback,
                            .thread_pool = *thread_pool};
 
-   execute_odf_munge(io::compose_path(input_path, file_name, ".odf"), context);
+   execute_odf_munge(io::compose_path(input_path, file_name, ".odf"),
+                     std::vector<assets::option>{}, context);
 
    return io::read_file_to_bytes(output_file_path) ==
           io::read_file_to_bytes(io::compose_path(input_path, file_name, ".class"));
@@ -53,7 +56,8 @@ bool golden_ref_req_test(const std::string_view file_name)
                            .feedback = feedback,
                            .thread_pool = *thread_pool};
 
-   execute_odf_munge(io::compose_path(input_path, file_name, ".odf"), context);
+   execute_odf_munge(io::compose_path(input_path, file_name, ".odf"),
+                     std::vector<assets::option>{}, context);
 
    return io::read_file_to_string(output_file_path) ==
           io::read_file_to_string(io::compose_path(input_path, file_name, ".class.req"));

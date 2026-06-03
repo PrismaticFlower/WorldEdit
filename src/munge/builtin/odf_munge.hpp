@@ -4,6 +4,10 @@
 
 #include <vector>
 
+namespace we::assets {
+struct option;
+}
+
 namespace we::munge {
 
 /// @brief Munge .odf files into .class and .class.req files.
@@ -13,6 +17,8 @@ void execute_odf_munge(const tool_context& context) noexcept;
 /// @brief Munge a single .odf file into a .class file and .class.req file.
 /// @param input_file_path The path to the texture file.
 /// @param context The munge context.
-void execute_odf_munge(const io::path& input_file_path, const tool_context& context);
+void execute_odf_munge(const io::path& input_file_path,
+                       const std::vector<assets::option>& folder_options,
+                       const tool_context& context);
 
 }
