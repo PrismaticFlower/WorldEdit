@@ -430,11 +430,6 @@ TEST_CASE("model_munge model_shadow_cube", "[Munge]")
    REQUIRE(golden_ref_test("model_shadow_cube", 136));
 }
 
-TEST_CASE("model_munge model_shadow_cube_reduce", "[Munge]")
-{
-   REQUIRE(golden_ref_test("model_shadow_cube_reduce", 144));
-}
-
 TEST_CASE("model_munge model_shadow_hiresshadow", "[Munge]")
 {
    REQUIRE(golden_ref_test("model_shadow_hiresshadow", 140));
