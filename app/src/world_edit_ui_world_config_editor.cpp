@@ -15,7 +15,7 @@ void world_edit::ui_show_world_config_editor() noexcept
                                        {std::numeric_limits<float>::max(),
                                         std::numeric_limits<float>::max()});
 
-   if (ImGui::Begin("World Configuration", &_world_layers_editor_open)) {
+   if (ImGui::Begin("World Configuration", &_world_config_editor_open)) {
       ImGui::Checkbox("Save in BF1 Format", &_world.configuration.save_bf1_format,
                       _edit_stack_world, _edit_context);
 
