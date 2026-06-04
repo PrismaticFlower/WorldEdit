@@ -221,7 +221,7 @@ void execute_localize_munge(const tool_context& context)
             temp_files.push_back(entry_merge_path);
 
             try {
-               merge_out.write(io::read_file_to_string(entry.path));
+               merge_out.write(io::read_file_to_string(entry_platform_path));
             }
             catch (io::open_error& error) {
                context.feedback.add_error(
@@ -238,7 +238,7 @@ void execute_localize_munge(const tool_context& context)
             }
 
             try {
-               merge_out.write(io::read_file_to_string(entry_platform_path));
+               merge_out.write(io::read_file_to_string(entry.path));
             }
             catch (io::open_error& error) {
                context.feedback.add_error(
