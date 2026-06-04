@@ -31,7 +31,8 @@ namespace we::munge {
 
 namespace {
 
-auto load_definition(const io::path& input_file_path) -> assets::odf::definition
+auto load_definition(const io::path& input_file_path, const tool_context& context)
+   -> assets::odf::definition
 {
    std::vector<char> odf_contents;
 
@@ -43,7 +44,7 @@ auto load_definition(const io::path& input_file_path) -> assets::odf::definition
    }
 
    try {
-      return assets::odf::read_definition(std::move(odf_contents));
+      return assets::odf::read_definition(std::move(odf_contents), context.platform);
    }
    catch (std::exception& e) {
       throw odf_error{e.what(), odf_ec::odf_load_parse_error};
@@ -295,7 +296,8 @@ void execute_odf_munge(const io::path& input_file_path,
 {
    context.feedback.print_output(fmt::format("Munging {}", input_file_path.filename()));
 
-   const assets::odf::definition definition = load_definition(input_file_path);
+   const assets::odf::definition definition =
+      load_definition(input_file_path, context);
 
    write_req(io::compose_path(context.output_path, input_file_path.stem(), ".class.req"),
              build_req_lists(definition));

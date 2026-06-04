@@ -68,6 +68,20 @@ ClassName = "cannon"
 [Properties]
 )";
 
+const std::string_view valid_odf_test_platform_filter = R"([GameObjectClass] 
+
+pc:ClassLabel = "prop"
+XBOX:ClassLabel = "building"
+PS2:ClassLabel = "animatedprop"
+
+[Properties]
+
+PC:Acceleraton = 20.0
+XBOX:Acceleraton = 80.0
+PS2:Acceleraton = 160.0
+
+)";
+
 const std::string_view invalid_odf_test_bad_header_name =
    R"([FameObjectGlass] // Line #1 Expect Error Here
 
@@ -106,7 +120,7 @@ auto to_vector(std::string_view string) -> std::vector<char>
 
 TEST_CASE(".odf reading", "[Assets][ODF]")
 {
-   auto definition = read_definition(to_vector(valid_odf_test));
+   auto definition = read_definition(to_vector(valid_odf_test), "PC");
 
    REQUIRE(definition.type == type::game_object_class);
 
@@ -124,7 +138,8 @@ TEST_CASE(".odf reading", "[Assets][ODF]")
 
 TEST_CASE(".odf reading mixed line breaks", "[Assets][ODF]")
 {
-   auto definition = read_definition(to_vector(valid_odf_test_mixed_line_breaks));
+   auto definition =
+      read_definition(to_vector(valid_odf_test_mixed_line_breaks), "PC");
 
    REQUIRE(definition.type == type::game_object_class);
 
@@ -137,7 +152,8 @@ TEST_CASE(".odf reading mixed line breaks", "[Assets][ODF]")
 
 TEST_CASE(".odf reading class parent", "[Assets][ODF]")
 {
-   auto definition = read_definition(to_vector(valid_odf_test_class_parent));
+   auto definition =
+      read_definition(to_vector(valid_odf_test_class_parent), "PC");
 
    REQUIRE(definition.type == type::game_object_class);
 
@@ -147,42 +163,59 @@ TEST_CASE(".odf reading class parent", "[Assets][ODF]")
 
 TEST_CASE(".odf reading explosion class", "[Assets][ODF]")
 {
-   auto definition = read_definition(to_vector(valid_odf_test_explosion_class));
+   auto definition = read_definition(to_vector(valid_odf_test_explosion_class), "PC");
 
    REQUIRE(definition.type == type::explosion_class);
 }
 
 TEST_CASE(".odf reading ordnance class", "[Assets][ODF]")
 {
-   auto definition = read_definition(to_vector(valid_odf_test_ordnance_class));
+   auto definition = read_definition(to_vector(valid_odf_test_ordnance_class), "PC");
 
    REQUIRE(definition.type == type::ordnance_class);
 }
 
 TEST_CASE(".odf reading weapon class", "[Assets][ODF]")
 {
-   auto definition = read_definition(to_vector(valid_odf_test_weapon_class));
+   auto definition =
+      read_definition(to_vector(valid_odf_test_weapon_class), "PC");
 
    REQUIRE(definition.type == type::weapon_class);
 }
 
+TEST_CASE(".odf reading platform filter", "[Assets][ODF]")
+{
+   auto definition = read_definition(to_vector(valid_odf_test_platform_filter), "PC");
+
+   REQUIRE(definition.type == type::game_object_class);
+
+   CHECK(definition.header.class_label == "prop");
+
+   REQUIRE(definition.properties.size() == 1);
+   CHECK(definition.properties[0].key == "Acceleraton");
+   CHECK(definition.properties[0].value == "20.0");
+}
+
 TEST_CASE(".odf failed reading bad header", "[Assets][ODF]")
 {
-   REQUIRE_THROWS(read_definition(to_vector(invalid_odf_test_bad_header_name)));
+   REQUIRE_THROWS(read_definition(to_vector(invalid_odf_test_bad_header_name), "PC"));
 }
 
 TEST_CASE(".odf failed reading bad key value", "[Assets][ODF]")
 {
-   REQUIRE_THROWS(read_definition(to_vector(invalid_odf_test_bad_key_value)));
+   REQUIRE_THROWS(
+      read_definition(to_vector(invalid_odf_test_bad_key_value), "PC"));
 }
 
 TEST_CASE(".odf failed reading empty value", "[Assets][ODF]")
 {
-   REQUIRE_THROWS(read_definition(to_vector(invalid_odf_test_empty_value)));
+   REQUIRE_THROWS(
+      read_definition(to_vector(invalid_odf_test_empty_value), "PC"));
 }
 
 TEST_CASE(".odf failed reading no assignment", "[Assets][ODF]")
 {
-   REQUIRE_THROWS(read_definition(to_vector(invalid_odf_test_no_assignment)));
+   REQUIRE_THROWS(
+      read_definition(to_vector(invalid_odf_test_no_assignment), "PC"));
 }
 }

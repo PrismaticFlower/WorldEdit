@@ -1,0 +1,10 @@
+[GameObjectClass]       
+
+ClassLabel          = "commandflyer"
+
+[Properties]        
+
+pc:Acceleraton = 20.0
+XBOX:Acceleraton = 80.0
+PS2:Acceleraton = 160.0
+MinSpeed    = 1.0

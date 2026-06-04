@@ -27,6 +27,7 @@ bool golden_ref_test(const std::string_view file_name)
    output output;
    munge_feedback feedback{output, output};
    tool_context context = {.output_path = output_path,
+                           .platform = "PC",
                            .feedback = feedback,
                            .thread_pool = *thread_pool};
 
@@ -53,6 +54,7 @@ bool golden_ref_req_test(const std::string_view file_name)
    output output;
    munge_feedback feedback{output, output};
    tool_context context = {.output_path = output_path,
+                           .platform = "PC",
                            .feedback = feedback,
                            .thread_pool = *thread_pool};
 
@@ -98,6 +100,11 @@ TEST_CASE("odf_munge parented", "[Munge]")
 TEST_CASE("odf_munge empty_property", "[Munge]")
 {
    REQUIRE(golden_ref_test("empty_property"));
+}
+
+TEST_CASE("odf_munge platform", "[Munge]")
+{
+   REQUIRE(golden_ref_test("platform"));
 }
 
 TEST_CASE("odf_munge req_test", "[Munge]")

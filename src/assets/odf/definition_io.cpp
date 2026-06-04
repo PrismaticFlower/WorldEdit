@@ -26,6 +26,19 @@ struct property_counts {
    std::size_t instance_properties = 0;
 };
 
+bool is_property_filtered(string::line line, std::string_view platform_filter)
+{
+   if (not line.string.contains(':')) return false;
+
+   std::string_view key = string::split_first_of_exclusive(line.string, "="sv)[0];
+
+   key = string::trim_trailing_whitespace(key);
+
+   const std::string_view platform = string::split_first_of_exclusive(key, ":"sv)[0];
+
+   return not string::iequals(platform, platform_filter);
+}
+
 auto read_property(string::line line) -> property
 {
    auto [key, value] = string::split_first_of_exclusive(line.string, "="sv);
@@ -40,6 +53,10 @@ auto read_property(string::line line) -> property
 
    key = string::trim_trailing_whitespace(key);
    value = string::trim_leading_whitespace(value);
+
+   if (key.contains(':')) {
+      key = string::split_first_of_exclusive(key, ":"sv)[1];
+   }
 
    if (line.string.contains("="sv) and value.empty()) {
       throw std::runtime_error{
@@ -67,7 +84,7 @@ auto read_property(string::line line) -> property
 }
 
 template<typename T>
-void read_definition(std::string_view str, T& result)
+void read_definition(std::string_view str, std::string_view platform_filter, T& result)
 {
    type definition_type = type::game_object_class;
 
@@ -111,6 +128,8 @@ void read_definition(std::string_view str, T& result)
                         string::split_first_of_inclusive(line.string, "]"sv).front())};
       }
       else {
+         if (is_property_filtered(line, platform_filter)) continue;
+
          if constexpr (std::is_same_v<T, property_counts>) {
             switch (current_section) {
             case section::header:
@@ -168,7 +187,8 @@ void read_definition(std::string_view str, T& result)
 
 }
 
-auto read_definition(std::vector<char> string_storage) -> definition
+auto read_definition(std::vector<char> string_storage,
+                     std::string_view platform_filter) -> definition
 {
    definition definition{.storage = std::move(string_storage)};
 
@@ -176,12 +196,12 @@ auto read_definition(std::vector<char> string_storage) -> definition
 
    property_counts property_counts;
 
-   read_definition(str, property_counts);
+   read_definition(str, platform_filter, property_counts);
 
    definition.properties.reserve(property_counts.properties);
    definition.instance_properties.reserve(property_counts.instance_properties);
 
-   read_definition(str, definition);
+   read_definition(str, platform_filter, definition);
 
    return definition;
 }
