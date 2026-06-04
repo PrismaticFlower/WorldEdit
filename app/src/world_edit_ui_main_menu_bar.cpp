@@ -481,24 +481,11 @@ void world_edit::ui_show_main_menu_bar() noexcept
          if (ImGui::MenuItem("Munge",
                              get_display_string(_hotkeys.query_binding("Global", "Run Munge")),
                              nullptr, not _munge_manager.is_busy())) {
-            _munge_manager_open = true;
-
-            if (not _munge_manager.is_busy()) {
-               if (_edit_stack_world.modified_flag() and not _world_path.empty()) {
-                  save_world(_world_path);
-               }
-
-               _munge_manager.start_munge(
-                  not _settings.preferences.game_install_path.empty()
-                     ? io::compose_path(io::path{_settings.preferences.game_install_path}, "Addon")
-                     : "");
-            }
+            try_start_munge();
          }
 
          if (ImGui::MenuItem("Clean", nullptr, nullptr, not _munge_manager.is_busy())) {
-            _munge_manager_open = true;
-
-            if (not _munge_manager.is_busy()) _munge_manager.start_clean();
+            try_start_clean();
          }
 
          ImGui::Separator();

@@ -744,20 +744,7 @@ void world_edit::initialize_commands() noexcept
    _commands.add("export_selection.cancel"s,
                  [this] { _export_selection_open = false; });
 
-   _commands.add("munge_manager.munge"s, [this] {
-      if (not _munge_manager.is_busy()) {
-         if (_edit_stack_world.modified_flag() and not _world_path.empty()) {
-            save_world(_world_path);
-         }
-
-         _munge_manager.start_munge(
-            not _settings.preferences.game_install_path.empty()
-               ? io::compose_path(io::path{_settings.preferences.game_install_path}, "Addon")
-               : "");
-      }
-
-      _munge_manager_open = true;
-   });
+   _commands.add("munge_manager.munge"s, [this] { try_start_munge(); });
    _commands.add("munge_manager.close"s, [this] { _munge_manager_open = false; });
    _commands.add("effects_editor.close"s,
                  [this] { _effects_editor_open = false; });

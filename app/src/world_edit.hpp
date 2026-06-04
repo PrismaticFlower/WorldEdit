@@ -523,6 +523,10 @@ private:
 
    void enumerate_project_worlds() noexcept;
 
+   void try_start_munge() noexcept;
+
+   void try_start_clean() noexcept;
+
    void open_odfs_for_selected() noexcept;
 
    void open_odf_in_text_editor(const lowercase_string& asset_name) noexcept;

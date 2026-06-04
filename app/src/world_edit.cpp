@@ -4342,6 +4342,36 @@ void world_edit::enumerate_project_worlds() noexcept
    }
 }
 
+void world_edit::try_start_munge() noexcept
+{
+   _munge_manager_open = true;
+
+   if (_munge_manager.is_busy()) return;
+
+   if (not _munge_context.prompted_browse_game_install and
+       _settings.preferences.game_install_path.empty()) {
+      return;
+   }
+
+   if (_edit_stack_world.modified_flag() and not _world_path.empty()) {
+      save_world(_world_path);
+   }
+
+   _munge_manager.start_munge(
+      not _settings.preferences.game_install_path.empty()
+         ? io::compose_path(io::path{_settings.preferences.game_install_path}, "Addon")
+         : "");
+}
+
+void world_edit::try_start_clean() noexcept
+{
+   _munge_manager_open = true;
+
+   if (_munge_manager.is_busy()) return;
+
+   _munge_manager.start_clean();
+}
+
 void world_edit::open_odfs_for_selected() noexcept
 {
    for (auto& selected : _interaction_targets.selection) {
