@@ -19,6 +19,10 @@
 
 using namespace std::literals;
 
+using we::string::icontains;
+using we::string::iequals;
+using we::string::istarts_with;
+
 namespace we::assets::msh {
 
 namespace {
@@ -74,39 +78,33 @@ auto build_node_to_object_transforms(const scene& scene) -> std::vector<float4x4
 
 bool is_mesh_node(const node& node) noexcept
 {
-   switch (node.type) {
-   case node_type::cloth:
-   case node_type::bone:
-   case node_type::shadow_volume:
-      return false;
-   }
-
    if (node.hidden) return false;
-   if (node.name.starts_with("sv_"sv)) return false;
-   if (node.name.starts_with("shadowvolume"sv)) return false;
-   if (node.name.starts_with("p_"sv)) return false;
-   if (node.name.starts_with("hp_"sv)) return false;
-   if (string::istarts_with(node.name, "collision"sv)) return false;
-   if (string::istarts_with(node.name, "terraincutter"sv)) return false;
 
-   // TODO: LOD Support
-   if (string::iends_with(node.name, "lod2"sv)) return false;
-   if (string::iends_with(node.name, "lod3"sv)) return false;
-   if (string::iends_with(node.name, "lowres"sv)) return false;
-   if (string::iends_with(node.name, "lowrez"sv)) return false;
+   if (node.type == msh::node_type::cloth) return false;
+
+   if (node.name.starts_with("p_")) return false;
+   if (node.name.starts_with("hp_")) return false;
+
+   if (istarts_with(node.name, "collision")) return false;
+   if (istarts_with(node.name, "terraincutter")) return false;
+
+   if (icontains(node.name, "lod2")) return false;
+   if (icontains(node.name, "lod3")) return false;
+   if (icontains(node.name, "lowres")) return false;
+   if (icontains(node.name, "lowrez")) return false;
 
    return true;
 }
 
 bool is_terrain_cut_node(const node& node) noexcept
 {
-   return string::istarts_with(node.name, "terraincutter"sv);
+   return istarts_with(node.name, "terraincutter"sv);
 }
 
 bool is_collision_node(const node& node) noexcept
 {
    if (node.name.starts_with("p_"sv)) return true;
-   if (string::istarts_with(node.name, "collision"sv)) return true;
+   if (istarts_with(node.name, "collision"sv)) return true;
 
    return false;
 }
@@ -159,7 +157,7 @@ void patch_materials_with_options(std::vector<mesh>& meshes, const scene_options
 {
    for (auto& mesh : meshes) {
       for (auto& normal_map : opts.normal_maps) {
-         if (string::iequals(mesh.material.textures[0], normal_map)) {
+         if (iequals(mesh.material.textures[0], normal_map)) {
             mesh.material.textures[1] = mesh.material.textures[0] + "_bump";
             mesh.material.flags |= material_flags::perpixel;
          }
