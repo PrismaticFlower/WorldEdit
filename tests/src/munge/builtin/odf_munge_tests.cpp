@@ -112,6 +112,11 @@ TEST_CASE("odf_munge req_test", "[Munge]")
    REQUIRE(golden_ref_req_test("req_fill"));
 }
 
+TEST_CASE("odf_munge req_fill_first_token", "[Munge]")
+{
+   REQUIRE(golden_ref_req_test("req_fill_first_token"));
+}
+
 TEST_CASE("odf_munge parented_req", "[Munge]")
 {
    REQUIRE(golden_ref_req_test("parented_req"));

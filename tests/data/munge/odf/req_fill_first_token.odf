@@ -1,0 +1,44 @@
+[GameObjectClass]
+
+ClassLabel          = "prop"
+
+[Properties]
+
+// Test for properties containing key words
+Wow_Geometry        = "geom not"
+Wow_Model           = "modl not"
+Wow_Texture         = "tex not"
+Wow_Sprite          = "sprt not"
+Wow_Odf             = "odf not"
+Wow_Weapon          = "weapon not"
+Wow_Explosion       = "explosion not"
+Wow_Ordnance        = "ordnance not"
+Wow_Emitter         = "emitter not"
+Wow_Effect          = "effect not"
+Wow_Skeleton        = "skeleton not"
+Wow_Animation       = "animation not"
+
+// Creates "animbank" reference but not "anim" reference
+AnimationName       = "test_anim not"
+AnimationLowres     = "test_anim_lowres not"
+
+// Creates "animbank" reference
+AnimationAddon      = "cape_addon not"
+
+// Creates "anim" reference to "human_pose"
+PilotAnimation      = "pose not"
+
+// Creates "anim" reference to "human_soldier"
+SoldierAnimation    = "soldier not"
+
+// Creates "animset" reference to "human_temple"
+AnimationBank       = "temple not"
+
+// Creates "animset" reference to "bird_temple"
+AnimationBank       = "bird_temple not"
+
+// Creates "animset" reference to "human_temple2"
+CustomAnimationBank = "temple2 not"
+
+// Creates "animset" reference to "bird_temple2"
+CustomAnimationBank = "bird_temple2 not"
