@@ -911,6 +911,8 @@ void world_edit::ui_show_munge_config_editor() noexcept
 
       if (ImGui::Button("Clear##ToolsFL\\bin Path", {ImGui::CalcItemWidth(), 0.0f})) {
          config.toolsfl_bin_path = {};
+
+         _munge_context.prompted_browse_modtools = false;
       }
 
       ImGui::SetItemTooltip("Clear ToolsFL\\bin Path. WorldEdit will prompt "
