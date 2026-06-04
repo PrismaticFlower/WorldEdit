@@ -9,7 +9,11 @@
 #include "assets/req/io.hpp"
 #include "assets/req/requirement_list.hpp"
 
+#include "executor.hpp"
+
 #include "io/error.hpp"
+
+#include <fmt/format.h>
 
 namespace we::munge {
 
@@ -51,12 +55,21 @@ void write_req(const io::path& output_file_path, const model_container& model_co
 
 }
 
-void execute_model_munge(const tool_context& context) noexcept;
+void execute_model_munge(const tool_context& context) noexcept
+{
+   execute_builtin_munge({.input_extension = "msh",
+                          .output_extension = "model",
+                          .tool_name = "ModelMunge",
+                          .execute_munge = execute_model_munge},
+                         context);
+}
 
 void execute_model_munge(const io::path& input_file_path,
                          const std::vector<assets::option>& directory_options,
                          const tool_context& context)
 {
+   context.feedback.print_output(fmt::format("Munging {}", input_file_path.filename()));
+
    const model_container model =
       load_model(input_file_path, directory_options, context.feedback);
 

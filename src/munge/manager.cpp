@@ -7,6 +7,7 @@
 #include "tool_set.hpp"
 
 #include "builtin/blocks_munge.hpp"
+#include "builtin/model_munge.hpp"
 #include "builtin/odf_munge.hpp"
 #include "builtin/texture_munge.hpp"
 
@@ -1217,7 +1218,13 @@ void execute_tool(const tool& tool, const tool_context& context)
       execute_localize_munge(child_context);
    } break;
    case tool_type::model_munge: {
-      execute_munge({"pc_ModelMunge", "msh"}, context);
+      if (context.use_builtin_tools and
+          string::iequals(context.platform, "PC")) {
+         execute_model_munge(context);
+      }
+      else {
+         execute_munge({"pc_ModelMunge", "msh"}, context);
+      }
    } break;
    case tool_type::movie_munge: {
       tool_context child_context = context;
