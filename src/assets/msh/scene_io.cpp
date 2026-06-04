@@ -855,6 +855,8 @@ auto read_scene(const std::span<const std::byte> bytes) -> scene
          }
       }
 
+      validate_scene(result);
+
       return result;
    }
    catch (ucfb::read_error& e) {
