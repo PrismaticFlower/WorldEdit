@@ -571,7 +571,7 @@ void world_edit::ui_show_munge_manager() noexcept
                   ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
                }
 
-               if (ImGui::BeginItemTooltip()) {
+               if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
                   ImGui::TextUnformatted(warning.file.c_str(),
                                          warning.file.c_str() +
                                             warning.file.string_view().size());
@@ -640,7 +640,7 @@ void world_edit::ui_show_munge_manager() noexcept
                   ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
                }
 
-               if (ImGui::BeginItemTooltip()) {
+               if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
                   ImGui::TextUnformatted(error.file.c_str(),
                                          error.file.c_str() +
                                             error.file.string_view().size());
