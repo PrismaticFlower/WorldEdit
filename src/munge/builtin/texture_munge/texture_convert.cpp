@@ -2,12 +2,40 @@
 #include "error.hpp"
 
 #include <BC.h> // BC.h from DirectXTex
+#include <icbc.h>
+#include <rgbcx_bc4.h>
 
 #include <array>
+#include <mutex>
 
 namespace we::munge {
 
 namespace {
+
+// It may seem odd to use 3 different libraries for encoding/compressing the textures but each fills a different role.
+//
+// - icbc for BC1 blocks. It's the fastest and has good quality but it doesn't support BC4 blocks or BC1 with alpha.
+// - rgbcx for BC4 blocks.
+// - DirectXTex for BC1 blocks with alpha.
+
+constexpr std::array<float, 16> icbc_input_weights = {1.0f, 1.0f, 1.0f, 1.0f,
+                                                      1.0f, 1.0f, 1.0f, 1.0f,
+                                                      1.0f, 1.0f, 1.0f, 1.0f,
+                                                      1.0f, 1.0f, 1.0f, 1.0f};
+
+constexpr std::array<float, 3> icbc_color_weights = {1.0f, 1.0f, 1.0f};
+
+struct bc2_block {
+   std::array<uint16, 4> alpha = {};
+   std::array<uint8, 8> bc1_block = {};
+};
+
+struct bc3_block {
+   std::array<uint8, 8> bc4_block = {};
+   std::array<uint8, 8> bc1_block = {};
+};
+
+std::once_flag icbc_initialized;
 
 template<typename T>
 void write_texel(const uint32 width, std::span<std::byte> output, uint32 x,
@@ -32,6 +60,45 @@ void convert_slice_dxt1(texture_slice input, std::span<std::byte> output)
 
    for (uint32 block_y = 0; block_y < blocks_height; ++block_y) {
       for (uint32 block_x = 0; block_x < blocks_width; ++block_x) {
+         std::array<uint8, 8> compressed_block = {};
+         std::array<float4, 16> src_block = {};
+
+         for (uint32 y = 0; y < 4; ++y) {
+            for (uint32 x = 0; x < 4; ++x) {
+               const uint32 texel = input.at(block_x * 4 + x, block_y * 4 + y);
+
+               src_block[y * 4 + x] = {
+                  ((texel >> 16) & 0xff) / 255.0f,
+                  ((texel >> 8) & 0xff) / 255.0f,
+                  (texel & 0xff) / 255.0f,
+                  1.0f,
+               };
+            }
+         }
+
+         icbc::compress_bc1(icbc::Quality_Default, &src_block[0].x,
+                            icbc_input_weights.data(), icbc_color_weights.data(),
+                            true, false, compressed_block.data());
+
+         write_texel(blocks_width, output, block_x, block_y, compressed_block);
+      }
+   }
+}
+
+void convert_slice_dxt1_alpha(texture_slice input, std::span<std::byte> output)
+{
+   const uint32 blocks_width = (input.width() + 3) / 4;
+   const uint32 blocks_height = (input.height() + 3) / 4;
+
+   if (blocks_width * blocks_height * sizeof(uint8[8]) > output.size()) {
+      throw texture_error{"Not enough memory to convert format.",
+                          texture_ec::format_convert_not_enough_memory};
+   }
+
+   for (uint32 block_y = 0; block_y < blocks_height; ++block_y) {
+      for (uint32 block_x = 0; block_x < blocks_width; ++block_x) {
+         // icbc and rgbcx don't support BC1 with alpha so we use DirectXTex's encoder for it.
+
          std::array<uint8, 8> compressed_block = {};
          std::array<DirectX::XMVECTOR, 16> src_block = {};
 
@@ -63,19 +130,34 @@ void convert_slice_dxt3(texture_slice input, std::span<std::byte> output)
 
    for (uint32 block_y = 0; block_y < blocks_height; ++block_y) {
       for (uint32 block_x = 0; block_x < blocks_width; ++block_x) {
-         std::array<uint8, 16> compressed_block = {};
-         std::array<DirectX::XMVECTOR, 16> src_block = {};
+         bc2_block compressed_block = {};
+         std::array<float4, 16> src_block = {};
+         std::array<uint8, 16> src_alpha_block = {};
 
          for (uint32 y = 0; y < 4; ++y) {
             for (uint32 x = 0; x < 4; ++x) {
-               DirectX::PackedVector::XMCOLOR color{
-                  input.at(block_x * 4 + x, block_y * 4 + y)};
+               const uint32 texel = input.at(block_x * 4 + x, block_y * 4 + y);
 
-               src_block[y * 4 + x] = DirectX::PackedVector::XMLoadColor(&color);
+               src_block[y * 4 + x] = {
+                  ((texel >> 16) & 0xff) / 255.0f,
+                  ((texel >> 8) & 0xff) / 255.0f,
+                  (texel & 0xff) / 255.0f,
+                  1.0f,
+               };
+               src_alpha_block[y * 4 + x] = static_cast<uint8>((texel >> 24) & 0xff);
             }
          }
 
-         DirectX::D3DXEncodeBC2(compressed_block.data(), src_block.data(), 0);
+         icbc::compress_bc1(icbc::Quality_Default, &src_block[0].x,
+                            icbc_input_weights.data(), icbc_color_weights.data(),
+                            false, false, compressed_block.bc1_block.data());
+
+         for (uint32 y = 0; y < 4; ++y) {
+            for (uint32 x = 0; x < 4; ++x) {
+               compressed_block.alpha[y] |= (src_alpha_block[y * 4 + x] >> 4u)
+                                            << x * 4;
+            }
+         }
 
          write_texel(blocks_width, output, block_x, block_y, compressed_block);
       }
@@ -94,19 +176,30 @@ void convert_slice_dxt5(texture_slice input, std::span<std::byte> output)
 
    for (uint32 block_y = 0; block_y < blocks_height; ++block_y) {
       for (uint32 block_x = 0; block_x < blocks_width; ++block_x) {
-         std::array<uint8, 16> compressed_block = {};
-         std::array<DirectX::XMVECTOR, 16> src_block = {};
+         bc3_block compressed_block = {};
+         std::array<float4, 16> src_block = {};
+         std::array<uint8, 16> src_alpha_block = {};
 
          for (uint32 y = 0; y < 4; ++y) {
             for (uint32 x = 0; x < 4; ++x) {
-               DirectX::PackedVector::XMCOLOR color{
-                  input.at(block_x * 4 + x, block_y * 4 + y)};
+               const uint32 texel = input.at(block_x * 4 + x, block_y * 4 + y);
 
-               src_block[y * 4 + x] = DirectX::PackedVector::XMLoadColor(&color);
+               src_block[y * 4 + x] = {
+                  ((texel >> 16) & 0xff) / 255.0f,
+                  ((texel >> 8) & 0xff) / 255.0f,
+                  (texel & 0xff) / 255.0f,
+                  1.0f,
+               };
+               src_alpha_block[y * 4 + x] = static_cast<uint8>((texel >> 24) & 0xff);
             }
          }
 
-         DirectX::D3DXEncodeBC3(compressed_block.data(), src_block.data(), 0);
+         icbc::compress_bc1(icbc::Quality_Default, &src_block[0].x,
+                            icbc_input_weights.data(), icbc_color_weights.data(),
+                            false, false, compressed_block.bc1_block.data());
+
+         rgbcx::encode_bc4(compressed_block.bc4_block.data(),
+                           src_alpha_block.data(), 1);
 
          write_texel(blocks_width, output, block_x, block_y, compressed_block);
       }
@@ -327,9 +420,14 @@ auto convert_texture(texture& input, texture_write_format format,
 auto convert_texture(texture& texture, const texture_write_format format)
    -> texture_transmuted_view
 {
+
+   std::call_once(icbc_initialized, icbc::init, icbc::Decoder_D3D10);
+
    switch (format) {
    case texture_write_format::dxt1:
       return convert_texture(texture, format, convert_slice_dxt1);
+   case texture_write_format::dxt1_alpha:
+      return convert_texture(texture, format, convert_slice_dxt1_alpha);
    case texture_write_format::dxt3:
       return convert_texture(texture, format, convert_slice_dxt3);
    case texture_write_format::dxt5:

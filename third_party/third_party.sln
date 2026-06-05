@@ -17,6 +17,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OffsetAllocator", "OffsetAl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "meshoptimizer", "meshoptimizer.vcxproj", "{FBBF950C-9ECA-4130-AE4B-B99560183FEF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bc7enc_rdo", "bc7enc_rdo.vcxproj", "{D4DC2FC9-3A64-4879-8BC6-ABDB3C09CC9F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "icbc", "icbc.vcxproj", "{3AA9DA6C-D15D-43B2-99CE-A4837FF7002F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -66,6 +70,18 @@ Global
 		{FBBF950C-9ECA-4130-AE4B-B99560183FEF}.Develop|x64.Build.0 = Develop|x64
 		{FBBF950C-9ECA-4130-AE4B-B99560183FEF}.Release|x64.ActiveCfg = Release|x64
 		{FBBF950C-9ECA-4130-AE4B-B99560183FEF}.Release|x64.Build.0 = Release|x64
+		{D4DC2FC9-3A64-4879-8BC6-ABDB3C09CC9F}.Debug|x64.ActiveCfg = Debug|x64
+		{D4DC2FC9-3A64-4879-8BC6-ABDB3C09CC9F}.Debug|x64.Build.0 = Debug|x64
+		{D4DC2FC9-3A64-4879-8BC6-ABDB3C09CC9F}.Develop|x64.ActiveCfg = Develop|x64
+		{D4DC2FC9-3A64-4879-8BC6-ABDB3C09CC9F}.Develop|x64.Build.0 = Develop|x64
+		{D4DC2FC9-3A64-4879-8BC6-ABDB3C09CC9F}.Release|x64.ActiveCfg = Release|x64
+		{D4DC2FC9-3A64-4879-8BC6-ABDB3C09CC9F}.Release|x64.Build.0 = Release|x64
+		{3AA9DA6C-D15D-43B2-99CE-A4837FF7002F}.Debug|x64.ActiveCfg = Debug|x64
+		{3AA9DA6C-D15D-43B2-99CE-A4837FF7002F}.Debug|x64.Build.0 = Debug|x64
+		{3AA9DA6C-D15D-43B2-99CE-A4837FF7002F}.Develop|x64.ActiveCfg = Develop|x64
+		{3AA9DA6C-D15D-43B2-99CE-A4837FF7002F}.Develop|x64.Build.0 = Develop|x64
+		{3AA9DA6C-D15D-43B2-99CE-A4837FF7002F}.Release|x64.ActiveCfg = Release|x64
+		{3AA9DA6C-D15D-43B2-99CE-A4837FF7002F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

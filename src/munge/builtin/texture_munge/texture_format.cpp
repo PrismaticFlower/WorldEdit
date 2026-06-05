@@ -59,8 +59,11 @@ auto get_write_format(const texture& texture, const texture_format format,
       }
    } break;
    case texture_format::meta_bump_alpha: {
-      if (traits.has_single_bit_alpha and not non_power_of_2) {
+      if (not traits.has_alpha and not non_power_of_2) {
          return texture_write_format::dxt1;
+      }
+      else if (traits.has_single_bit_alpha and not non_power_of_2) {
+         return texture_write_format::dxt1_alpha;
       }
       else if (traits.has_alpha and not non_power_of_2) {
          return texture_write_format::dxt5;
@@ -88,8 +91,11 @@ auto get_write_format(const texture& texture, const texture_format format,
       if (traits.is_greyscale and not traits.has_alpha) {
          return texture_write_format::l8;
       }
-      else if (traits.has_single_bit_alpha and not non_power_of_2) {
+      else if (not traits.has_alpha and not non_power_of_2) {
          return texture_write_format::dxt1;
+      }
+      else if (traits.has_single_bit_alpha and not non_power_of_2) {
+         return texture_write_format::dxt1_alpha;
       }
       else if (not non_power_of_2) {
          return texture_write_format::dxt5;
@@ -112,7 +118,12 @@ auto get_write_format(const texture& texture, const texture_format format,
             texture_ec::format_select_dxt1_non_pow2};
       }
 
-      return texture_write_format::dxt1;
+      if (traits.has_alpha) {
+         return texture_write_format::dxt1_alpha;
+      }
+      else {
+         return texture_write_format::dxt1;
+      }
    } break;
    case texture_format::dxt3: {
       if (non_power_of_2) {
@@ -167,6 +178,7 @@ auto bytes_per_texel(const texture_write_format format) noexcept -> uint32
 {
    switch (format) {
    case texture_write_format::dxt1:
+   case texture_write_format::dxt1_alpha:
    case texture_write_format::dxt3:
    case texture_write_format::dxt5:
       return 0;
@@ -197,6 +209,7 @@ auto bytes_per_block(const texture_write_format format) noexcept -> uint32
 {
    switch (format) {
    case texture_write_format::dxt1:
+   case texture_write_format::dxt1_alpha:
       return 8;
    case texture_write_format::dxt3:
    case texture_write_format::dxt5:
@@ -220,6 +233,7 @@ bool is_block_compressed(const texture_write_format format) noexcept
 {
    switch (format) {
    case texture_write_format::dxt1:
+   case texture_write_format::dxt1_alpha:
    case texture_write_format::dxt3:
    case texture_write_format::dxt5:
       return true;
@@ -242,6 +256,7 @@ auto to_d3dformat(const texture_write_format format) noexcept -> uint32
 {
    switch (format) {
    case texture_write_format::dxt1:
+   case texture_write_format::dxt1_alpha:
       return D3DFMT_DXT1;
    case texture_write_format::dxt3:
       return D3DFMT_DXT3;

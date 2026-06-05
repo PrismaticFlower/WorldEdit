@@ -36,6 +36,7 @@ enum class texture_format {
 
 enum class texture_write_format {
    dxt1,
+   dxt1_alpha,
    dxt3,
    dxt5,
 

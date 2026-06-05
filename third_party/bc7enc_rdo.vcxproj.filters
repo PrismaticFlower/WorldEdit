@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="bc7enc_rdo\rgbcx.h" />
+    <ClInclude Include="bc7enc_rdo\rgbcx_bc4.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="bc7enc_rdo\rgbcx_bc4.cpp" />
+  </ItemGroup>
+</Project>

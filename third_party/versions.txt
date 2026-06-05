@@ -5,3 +5,5 @@ DirectXTex Oct 2024
 wil (commit: 27d66a24b55a2f7baf91c06c196ba1a2d256c2db)
 abseil-cpp (commit: f0e59054ffd7b4be7838d24725a760066964dfbe)
 meshoptimizer v1.0
+bc7enc_rdo (rgbcx files only, commit: dbe416d28a5530b4e8cc45b14bf034dc6b96bbde)
+icbc (commit: f06e053377feaaa1fe6d433459f625622f8081d9)
