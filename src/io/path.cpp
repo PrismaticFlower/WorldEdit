@@ -294,9 +294,23 @@ bool exists(const path& path) noexcept
 
 bool remove(const path& path) noexcept
 {
-   if (DeleteFileW(wide_path{path}.c_str())) return true;
+   const wide_path wpath{path};
 
-   if (RemoveDirectoryW(wide_path{path}.c_str())) return true;
+   if (DeleteFileW(wpath.c_str())) return true;
+
+   if (GetLastError() == ERROR_ACCESS_DENIED) {
+      const DWORD file_attributes = GetFileAttributesW(wpath.c_str());
+
+      if (file_attributes != INVALID_FILE_ATTRIBUTES and
+          (file_attributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+         if (SetFileAttributesW(wpath.c_str(),
+                                file_attributes & ~FILE_ATTRIBUTE_READONLY)) {
+            if (DeleteFileW(wpath.c_str())) return true;
+         }
+      }
+   }
+
+   if (RemoveDirectoryW(wpath.c_str())) return true;
 
    return false;
 }
