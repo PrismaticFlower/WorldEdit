@@ -141,7 +141,7 @@ enum class model_wc {
    model_shadow_mesh_close_unable_to_loop_back_to_start,
    model_shadow_mesh_close_still_open_after_fill,
 
-   collision_mesh_parent_transformed,
+   collision_mesh_parent_not_root,
    collision_mesh_has_vertex_weights,
    collision_primitive_wrong_prefix,
    collision_primitive_missing_data,

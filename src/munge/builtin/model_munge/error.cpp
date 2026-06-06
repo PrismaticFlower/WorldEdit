@@ -593,10 +593,10 @@ Unable to gather holes needed to fill mesh holes. You should make sure your inpu
 
 The shadow mesh is still open after attempting to close holes. Falling back to brute force shadow mesh construction (this produces much more expensive shadow volumes at runtime). You should make sure your input mesh is closed to fix this.)";
 
-   case model_wc::collision_mesh_parent_transformed:
-      return R"(COLLISION_MESH_PARENT_TRANSFORMED
+   case model_wc::collision_mesh_parent_not_root:
+      return R"(COLLISION_MESH_PARENT_NOT_ROOT
 
-A collision mesh has been parented to a bone without an identity transform. This is likely not intentional as ingame collision meshes will not have parents.)";
+A collision mesh has been parented to a bone that is not the root bone. This is likely not intentional as ingame collision meshes can not be attached to bones.)";
    case model_wc::collision_mesh_has_vertex_weights:
       return R"(COLLISION_MESH_HAS_VERTEX_WEIGHTS
 

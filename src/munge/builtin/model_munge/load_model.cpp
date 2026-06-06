@@ -1729,21 +1729,18 @@ auto build_collision_mesh(const msh::scene& scene, const skeleton& skeleton,
       const msh::node& node = scene.nodes[node_index];
       const float4x4& node_from_vertex = skeleton.node_from_vertex[node_index];
 
-      if (const skeleton_bone& parent_bone =
-             skeleton.bones[skeleton.node_parent_remap[node_index]];
-          parent_bone.bone_from_vertex[0] != float4{1.0f, 0.0f, 0.0f, 0.0f} and
-          parent_bone.bone_from_vertex[1] != float4{0.0f, 1.0f, 0.0f, 0.0f} and
-          parent_bone.bone_from_vertex[2] != float4{0.0f, 0.0f, 1.0f, 0.0f} and
-          parent_bone.bone_from_vertex[3] != float4{0.0f, 0.0f, 0.0f, 1.0f}) {
+      if (skeleton.node_parent_remap[node_index] != 0) {
+         const skeleton_bone& parent_bone =
+            skeleton.bones[skeleton.node_parent_remap[node_index]];
+
          context.feedback.add_warning(
             {.file = context.path,
              .tool = "ModelMunge",
-             .message =
-                fmt::format("Bone ('{}') collision mesh ('{}') is parented to "
-                            "has non-identity transform.\n\n{}",
-                            parent_bone.name, node.name,
-                            get_descriptive_message(
-                               model_wc::collision_mesh_parent_transformed))});
+             .message = fmt::format("Bone ('{}') collision mesh ('{}') is "
+                                    "parented to is not the root bone.\n\n{}",
+                                    parent_bone.name, node.name,
+                                    get_descriptive_message(
+                                       model_wc::collision_mesh_parent_not_root))});
       }
 
       for (const msh::geometry_segment& segment : node.segments) {
