@@ -166,7 +166,12 @@ void world_edit::ui_show_munge_manager() noexcept
       ImGui::SameLine();
 
       if (ImGui::Button("Clean", {header_button_width, 0.0f})) {
-         _munge_manager.start_clean();
+         if (_settings.preferences.ask_confirmation_before_clean) {
+            _munge_context.prompt_for_clean = true;
+         }
+         else {
+            _munge_manager.start_clean();
+         }
       }
 
       ImGui::SameLine();
@@ -852,6 +857,35 @@ void world_edit::ui_show_munge_manager() noexcept
 
          ImGui::EndPopup();
       }
+   }
+
+   if (_munge_context.prompt_for_clean) {
+      _munge_context.prompt_for_clean = false;
+
+      ImGui::OpenPopup("Confirm Clean");
+   }
+
+   if (ImGui::BeginPopupModal("Confirm Clean", nullptr,
+                              ImGuiWindowFlags_AlwaysAutoResize |
+                                 ImGuiWindowFlags_NoSavedSettings)) {
+      ImGui::TextUnformatted("Are you sure you want to clean?");
+
+      const float button_width =
+         (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2.0f;
+
+      if (ImGui::Button("Yes", {button_width, 0.0f})) {
+         if (not _munge_manager.is_busy()) _munge_manager.start_clean();
+
+         ImGui::CloseCurrentPopup();
+      }
+
+      ImGui::SameLine();
+
+      if (ImGui::Button("No", {button_width, 0.0f})) {
+         ImGui::CloseCurrentPopup();
+      }
+
+      ImGui::EndPopup();
    }
 }
 

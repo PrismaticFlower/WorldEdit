@@ -183,6 +183,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(save_blocks_into_layer);
             setting_entry(dont_ask_to_add_animation_to_group);
             setting_entry(dont_extrapolate_new_animation_keys);
+            setting_entry(ask_confirmation_before_clean);
             setting_entry(disable_double_click_select);
          }
 #undef setting_entry
@@ -305,6 +306,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(save_blocks_into_layer));
       write(file, name_value(dont_ask_to_add_animation_to_group));
       write(file, name_value(dont_extrapolate_new_animation_keys));
+      write(file, name_value(ask_confirmation_before_clean));
       write(file, name_value(disable_double_click_select));
 
 #undef name_value

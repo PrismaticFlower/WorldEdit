@@ -4369,6 +4369,12 @@ void world_edit::try_start_clean() noexcept
 
    if (_munge_manager.is_busy()) return;
 
+   if (_settings.preferences.ask_confirmation_before_clean) {
+      _munge_context.prompt_for_clean = true;
+
+      return;
+   }
+
    _munge_manager.start_clean();
 }
 

@@ -156,6 +156,9 @@ void show_imgui_editor(settings& settings, bool& open,
             ImGui::Checkbox("Disable Double-click Select",
                             &preferences.disable_double_click_select);
 
+            ImGui::Checkbox("Ask for Confirmation Before Clean",
+                            &preferences.ask_confirmation_before_clean);
+
             ImGui::SeparatorText("World Configuration Defaults");
 
             ImGui::SetItemTooltip(

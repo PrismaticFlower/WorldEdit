@@ -1290,6 +1290,8 @@ private:
       std::vector<bool> selected_output_lines;
       bool show_stdout = true;
 
+      bool prompt_for_clean = false;
+
       bool prompted_browse_modtools = false;
       bool prompted_browse_modtools_failed = false;
       bool prompted_browse_game_install = false;

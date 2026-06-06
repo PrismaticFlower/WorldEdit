@@ -19,6 +19,7 @@ struct preferences {
    bool save_blocks_into_layer = true;
    bool dont_ask_to_add_animation_to_group = false;
    bool dont_extrapolate_new_animation_keys = false;
+   bool ask_confirmation_before_clean = false;
 
    bool disable_double_click_select = false;
 
