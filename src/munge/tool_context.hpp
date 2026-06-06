@@ -23,7 +23,10 @@ struct tool_context {
    std::vector<std::string> sound_languages;
    munge_feedback& feedback;
    async::thread_pool& thread_pool;
-   bool use_builtin_tools = false;
+
+   bool use_builtin_model_munge = true;
+   bool use_builtin_odf_munge = true;
+   bool use_builtin_texture_munge = true;
 };
 
 }

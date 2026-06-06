@@ -7,6 +7,8 @@
 
 #include "utility/file_pickers.hpp"
 
+#include "imgui_ext.hpp"
+
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
@@ -893,10 +895,35 @@ void world_edit::ui_show_munge_config_editor() noexcept
 
          ImGui::TableNextColumn();
 
-         ImGui::Checkbox("Use Builtin Munge Tools", &config.use_builtin_tools);
+         const int builtin_tool_count = 3;
+         const int use_builtin_tools_count = config.use_builtin_model_munge +
+                                             config.use_builtin_odf_munge +
+                                             config.use_builtin_texture_munge;
+
+         if (bool use_builtin_tools = use_builtin_tools_count != 0;
+             ImGui::CheckboxTristate("Use Builtin Munge Tools", &use_builtin_tools,
+                                     use_builtin_tools_count > 0 and
+                                        use_builtin_tools_count != builtin_tool_count)) {
+            config.use_builtin_model_munge = use_builtin_tools;
+            config.use_builtin_odf_munge = use_builtin_tools;
+            config.use_builtin_texture_munge = use_builtin_tools;
+         }
 
          ImGui::SetItemTooltip("Use builtin munge tools when possible. Does "
                                "not affect blocks munging.");
+
+         if (ImGui::TreeNode("Builtin Munge Tools")) {
+            ImGui::Checkbox("Use Builtin ModelMunge", &config.use_builtin_model_munge);
+            ImGui::Checkbox("Use Builtin OdfMunge", &config.use_builtin_odf_munge);
+            ImGui::Checkbox("Use Builtin TextureMunge",
+                            &config.use_builtin_texture_munge);
+
+            ImGui::TreePop();
+         }
+         else {
+            ImGui::SetItemTooltip(
+               "Select individual builtin munge tools to enable or disable.");
+         }
 
          ImGui::EndTable();
       }

@@ -60,7 +60,9 @@ struct project_config {
 
    project_platform platform = project_platform::pc;
 
-   bool use_builtin_tools = true;
+   bool use_builtin_model_munge = true;
+   bool use_builtin_odf_munge = true;
+   bool use_builtin_texture_munge = true;
 
    project_custom_commands custom_commands;
    project_custom_clean_directories custom_clean_directories;

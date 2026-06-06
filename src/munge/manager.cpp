@@ -1218,7 +1218,7 @@ void execute_tool(const tool& tool, const tool_context& context)
       execute_localize_munge(child_context);
    } break;
    case tool_type::model_munge: {
-      if (context.use_builtin_tools and
+      if (context.use_builtin_model_munge and
           string::iequals(context.platform, "PC")) {
          execute_model_munge(context);
       }
@@ -1236,7 +1236,7 @@ void execute_tool(const tool& tool, const tool_context& context)
       execute_movie_munge(child_context);
    } break;
    case tool_type::odf_munge: {
-      if (context.use_builtin_tools) {
+      if (context.use_builtin_odf_munge) {
          execute_odf_munge(context);
       }
       else {
@@ -1283,7 +1283,7 @@ void execute_tool(const tool& tool, const tool_context& context)
       execute_munge({"TerrainMunge", "ter"}, context);
    } break;
    case tool_type::texture_munge: {
-      if (context.use_builtin_tools and
+      if (context.use_builtin_texture_munge and
           string::iequals(context.platform, "PC")) {
          execute_texture_munge(context);
       }
@@ -1829,7 +1829,10 @@ auto run_munge(munge_context& context) -> report
       .platform = context.platform,
       .feedback = context.feedback,
       .thread_pool = context.thread_pool,
-      .use_builtin_tools = context.project.config.use_builtin_tools,
+
+      .use_builtin_model_munge = context.project.config.use_builtin_model_munge,
+      .use_builtin_odf_munge = context.project.config.use_builtin_odf_munge,
+      .use_builtin_texture_munge = context.project.config.use_builtin_texture_munge,
    };
 
    const project_custom_commands& custom_commands =

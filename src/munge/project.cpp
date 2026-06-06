@@ -220,7 +220,12 @@ void save_project(const project& project, const io::path& path) noexcept
       out.write_ln("   ToolsFLBin({:?});",
                    project.config.toolsfl_bin_path.string_view());
       out.write_ln("   WorldLVLOutputPath({:?});", project.config.world_lvl_output_path);
-      out.write_ln("   UseBuiltinTools({:d});", project.config.use_builtin_tools);
+      out.write_ln("   BuiltinTools()");
+      out.write_ln("   {");
+      out.write_ln("      ModelMunge({:d});", project.config.use_builtin_model_munge);
+      out.write_ln("      OdfMunge({:d});", project.config.use_builtin_odf_munge);
+      out.write_ln("      TextureMunge({:d});", project.config.use_builtin_texture_munge);
+      out.write_ln("   }");
       out.write_ln("   Platform(\"{}\");", project.config.platform);
 
       out.write_ln("   CustomMungeCommands()");
@@ -390,8 +395,28 @@ auto load_project(const io::path& path) noexcept -> project
                   }
                }
                else if (iequals("UseBuiltinTools", config_key_node.key)) {
-                  project.config.use_builtin_tools =
+                  const bool use_builtin_tools =
                      config_key_node.values.get<int>(0) != 0;
+
+                  project.config.use_builtin_model_munge = use_builtin_tools;
+                  project.config.use_builtin_odf_munge = use_builtin_tools;
+                  project.config.use_builtin_texture_munge = use_builtin_tools;
+               }
+               else if (iequals("BuiltinTools", config_key_node.key)) {
+                  for (const config::key_node& builtin_key_node : config_key_node) {
+                     if (iequals("ModelMunge", builtin_key_node.key)) {
+                        project.config.use_builtin_model_munge =
+                           builtin_key_node.values.get<int>(0) != 0;
+                     }
+                     else if (iequals("OdfMunge", builtin_key_node.key)) {
+                        project.config.use_builtin_odf_munge =
+                           builtin_key_node.values.get<int>(0) != 0;
+                     }
+                     else if (iequals("TextureMunge", builtin_key_node.key)) {
+                        project.config.use_builtin_texture_munge =
+                           builtin_key_node.values.get<int>(0) != 0;
+                     }
+                  }
                }
                else if (iequals("CustomMungeCommands", config_key_node.key)) {
                   project_custom_commands& custom_commands =
@@ -572,7 +597,12 @@ void merge_loaded_project(project& current_project, const project& loaded_projec
    }
 
    current_project.config.platform = loaded_project.config.platform;
-   current_project.config.use_builtin_tools = loaded_project.config.use_builtin_tools;
+   current_project.config.use_builtin_model_munge =
+      loaded_project.config.use_builtin_model_munge;
+   current_project.config.use_builtin_odf_munge =
+      loaded_project.config.use_builtin_odf_munge;
+   current_project.config.use_builtin_texture_munge =
+      loaded_project.config.use_builtin_texture_munge;
    current_project.config.world_lvl_output_path =
       loaded_project.config.world_lvl_output_path;
 
