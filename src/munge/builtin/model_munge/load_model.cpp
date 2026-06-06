@@ -1245,6 +1245,7 @@ bool has_pre_inverse_transformed_vertices(const model& model, const msh::scene& 
 auto build_model(const model_lod lod, const std::span<const std::size_t> model_nodes,
                  const std::span<const std::size_t> shadow_nodes,
                  const msh::scene& scene, const skeleton& skeleton,
+                 const std::optional<math::bounding_box>& collision_bboxLS,
                  const build_context& context) -> model
 {
    model model{
@@ -1294,6 +1295,10 @@ auto build_model(const model_lod lod, const std::span<const std::size_t> model_n
          model.vertex_box = math::combine(model.vertex_box, shadow.bboxSS);
          model.visibility_box = math::combine(model.visibility_box, shadow.bboxLS);
       }
+   }
+
+   if (collision_bboxLS) {
+      model.visibility_box = math::combine(model.visibility_box, *collision_bboxLS);
    }
 
    const float3 model_centreLS =
@@ -1350,6 +1355,7 @@ auto build_model(const model_lod lod, const std::span<const std::size_t> model_n
 }
 
 auto build_models(const msh::scene& scene, const skeleton& skeleton,
+                  const std::optional<math::bounding_box>& collision_bboxLS,
                   const build_context& context) -> std::vector<model>
 {
    std::vector<std::size_t> shadow;
@@ -1404,21 +1410,23 @@ auto build_models(const msh::scene& scene, const skeleton& skeleton,
    std::vector<model> models;
 
    if (not lod0.empty()) {
-      models.push_back(
-         build_model(model_lod::lod0, lod0, shadow, scene, skeleton, context));
+      models.push_back(build_model(model_lod::lod0, lod0, shadow, scene,
+                                   skeleton, collision_bboxLS, context));
    }
 
    if (not lod1.empty()) {
-      models.push_back(build_model(model_lod::lod1, lod1, {}, scene, skeleton, context));
+      models.push_back(build_model(model_lod::lod1, lod1, {}, scene, skeleton,
+                                   collision_bboxLS, context));
    }
 
    if (not lod2.empty()) {
-      models.push_back(build_model(model_lod::lod2, lod2, {}, scene, skeleton, context));
+      models.push_back(build_model(model_lod::lod2, lod2, {}, scene, skeleton,
+                                   collision_bboxLS, context));
    }
 
    if (not lod_lowd.empty()) {
-      models.push_back(
-         build_model(model_lod::lowd, lod_lowd, {}, scene, skeleton, context));
+      models.push_back(build_model(model_lod::lowd, lod_lowd, {}, scene,
+                                   skeleton, collision_bboxLS, context));
    }
 
    return models;
@@ -1826,11 +1834,51 @@ auto build_collision_primitives(const msh::scene& scene, const skeleton& skeleto
          }
       }
 
+      math::bounding_box bboxLS;
+
+      const float4x4& local_from_vertex = skeleton.local_from_vertex[node_index];
+
+      switch (node.collision_primitive->shape) {
+      default:
+      case msh::collision_primitive_shape::sphere: {
+         const float3 centreLS = {local_from_vertex[3].x, local_from_vertex[3].y,
+                                  local_from_vertex[3].z};
+
+         bboxLS.min = centreLS - node.collision_primitive->radius;
+         bboxLS.max = centreLS + node.collision_primitive->radius;
+      } break;
+      case msh::collision_primitive_shape::cylinder: {
+         // Inigo Quilez - Cylinder Bounding Box https://iquilezles.org/articles/bboxes3d/
+
+         const float3 topLS =
+            local_from_vertex * float3{0.0f, node.collision_primitive->height, 0.0f};
+         const float3 bottomLS =
+            local_from_vertex * float3{0.0f, -node.collision_primitive->height, 0.0f};
+
+         const float3 a = bottomLS - topLS;
+         const float3 e =
+            node.collision_primitive->radius * sqrt(1.0f - a * a / dot(a, a));
+
+         bboxLS.min = min(topLS, bottomLS) - e;
+         bboxLS.max = max(topLS, bottomLS) + e;
+      } break;
+      case msh::collision_primitive_shape::box: {
+         const float3 size = {node.collision_primitive->radius,
+                              node.collision_primitive->height,
+                              node.collision_primitive->length};
+
+         const math::bounding_box bboxVS = {.min = -size, .max = size};
+
+         bboxLS = local_from_vertex * bboxVS;
+      } break;
+      }
+
       primitives.push_back({
          .name = node.name,
          .parent = skeleton.bones[skeleton.node_parent_remap[node_index]].name,
          .mask = flags,
          .transform = skeleton.node_from_parent[node_index],
+         .bboxLS = bboxLS,
          .shape = static_cast<uint32>(node.collision_primitive->shape),
          .size = {node.collision_primitive->radius, node.collision_primitive->height,
                   node.collision_primitive->length},
@@ -1838,6 +1886,30 @@ auto build_collision_primitives(const msh::scene& scene, const skeleton& skeleto
    }
 
    return primitives;
+}
+
+auto build_collision_bboxLS(const std::optional<collision_mesh>& collision_mesh,
+                            std::span<const collision_primitive> collision_primitives)
+   -> std::optional<math::bounding_box>
+{
+   std::optional<math::bounding_box> bboxLS;
+
+   if (collision_mesh) bboxLS = collision_mesh->bbox;
+
+   if (not collision_primitives.empty()) {
+      if (not bboxLS) {
+         bboxLS = collision_primitives[0].bboxLS;
+      }
+      else {
+         bboxLS = math::combine(*bboxLS, collision_primitives[0].bboxLS);
+      }
+   }
+
+   for (std::size_t i = 1; i < collision_primitives.size(); ++i) {
+      bboxLS = math::combine(*bboxLS, collision_primitives[i].bboxLS);
+   }
+
+   return bboxLS;
 }
 
 }
@@ -1857,11 +1929,16 @@ auto load_model(const io::path& path,
 
    model.name = path.stem();
    model.skeleton = build_skeleton(scene, context);
-   model.models = build_models(scene, model.skeleton, context);
-   model.game_model = build_game_model(scene);
+
    model.collision_mesh = build_collision_mesh(scene, model.skeleton, context);
    model.collision_primitives =
       build_collision_primitives(scene, model.skeleton, context);
+
+   const std::optional<math::bounding_box> collision_bboxLS =
+      build_collision_bboxLS(model.collision_mesh, model.collision_primitives);
+
+   model.models = build_models(scene, model.skeleton, collision_bboxLS, context);
+   model.game_model = build_game_model(scene);
    model.cloths = build_cloths(scene, model.skeleton, context);
 
    return model;

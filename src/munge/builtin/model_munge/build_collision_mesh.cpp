@@ -4,6 +4,8 @@
 
 #include "math/vector_funcs.hpp"
 
+#include "io/output_file.hpp"
+
 namespace we::munge {
 
 namespace {

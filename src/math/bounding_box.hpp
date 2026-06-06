@@ -21,4 +21,6 @@ auto operator*(const quaternion& quat, const bounding_box& box) noexcept -> boun
 
 auto operator+(const bounding_box& box, const float3& offset) noexcept -> bounding_box;
 
+auto operator*(const float4x4& matrix, const bounding_box& box) noexcept -> bounding_box;
+
 }

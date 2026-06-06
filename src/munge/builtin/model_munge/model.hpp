@@ -267,6 +267,8 @@ struct collision_primitive {
 
    float4x4 transform;
 
+   math::bounding_box bboxLS;
+
    uint32 shape;
    float3 size;
 };

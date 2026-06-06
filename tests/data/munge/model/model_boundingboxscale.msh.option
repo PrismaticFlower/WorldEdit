@@ -1,1 +1,1 @@
--boundingboxscale 2.0
+-boundingboxscale 2.0 -nocollision

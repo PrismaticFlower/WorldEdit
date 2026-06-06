@@ -559,6 +559,11 @@ TEST_CASE("model_munge collision_basic", "[Munge]")
    REQUIRE(golden_ref_test("collision_basic", 308));
 }
 
+TEST_CASE("model_munge collision_bbox", "[Munge]")
+{
+   REQUIRE(golden_ref_test("collision_bbox", 196));
+}
+
 TEST_CASE("model_munge collision_flags_b", "[Munge]")
 {
    REQUIRE(golden_ref_test("collision_flags_b", 888));
@@ -642,6 +647,21 @@ TEST_CASE("model_munge collision_vrtx", "[Munge]")
 TEST_CASE("model_munge cprimitive_basic", "[Munge]")
 {
    REQUIRE(golden_ref_test("cprimitive_basic", 312));
+}
+
+TEST_CASE("model_munge cprimitive_bbox_box", "[Munge]")
+{
+   REQUIRE(golden_ref_test("cprimitive_bbox_box", 204));
+}
+
+TEST_CASE("model_munge cprimitive_bbox_cylinder", "[Munge]")
+{
+   REQUIRE(golden_ref_test("cprimitive_bbox_cylinder", 220));
+}
+
+TEST_CASE("model_munge cprimitive_bbox_sphere", "[Munge]")
+{
+   REQUIRE(golden_ref_test("cprimitive_bbox_sphere", 212));
 }
 
 TEST_CASE("model_munge cprimitive_flags_b", "[Munge]")

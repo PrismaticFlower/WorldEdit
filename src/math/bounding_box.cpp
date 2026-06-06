@@ -1,5 +1,7 @@
 
 #include "bounding_box.hpp"
+
+#include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
@@ -61,6 +63,20 @@ auto operator*(const quaternion& quat, const bounding_box& box) noexcept -> boun
 auto operator+(const bounding_box& box, const float3& offset) noexcept -> bounding_box
 {
    return {.min = box.min + offset, .max = box.max + offset};
+}
+
+auto operator*(const float4x4& matrix, const bounding_box& box) noexcept -> bounding_box
+{
+   const std::array<float3, 8> vertices = to_corners(box);
+
+   bounding_box new_box{matrix * vertices[0], matrix * vertices[0]};
+
+   for (std::size_t i = 1; i < vertices.size(); ++i) {
+      new_box.min = min(new_box.min, matrix * vertices[i]);
+      new_box.max = max(new_box.max, matrix * vertices[i]);
+   }
+
+   return new_box;
 }
 
 }
