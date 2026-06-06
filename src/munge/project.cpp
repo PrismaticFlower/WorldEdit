@@ -375,7 +375,7 @@ auto load_project(const io::path& path) noexcept -> project
                   project.config.world_lvl_output_path =
                      config_key_node.values.get<std::string>(0);
                }
-               else if (iequals("Project", config_key_node.key)) {
+               else if (iequals("Platform", config_key_node.key)) {
                   const std::string_view platform =
                      config_key_node.values.get<std::string_view>(0);
 
