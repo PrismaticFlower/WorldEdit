@@ -246,6 +246,11 @@ void save_project(const project& project, const io::path& path) noexcept
       out.write_ln("      TextureMunge({:d});", project.config.use_builtin_texture_munge);
       out.write_ln("   }");
       out.write_ln("   TextureQuality(\"{}\");", project.config.texture_quality);
+      out.write_ln("   Deploy()");
+      out.write_ln("   {");
+      out.write_ln("      Checkdate({:d});", project.config.deploy_checkdate);
+      out.write_ln("      AllowHardlinks({:d});", project.config.deploy_allow_hard_links);
+      out.write_ln("   }");
       out.write_ln("   Platform(\"{}\");", project.config.platform);
 
       out.write_ln("   CustomMungeCommands()");
@@ -452,6 +457,18 @@ auto load_project(const io::path& path) noexcept -> project
                      project.config.texture_quality = texture_quality::max;
                   }
                }
+               else if (iequals("Deploy", config_key_node.key)) {
+                  for (const config::key_node& builtin_key_node : config_key_node) {
+                     if (iequals("Checkdate", builtin_key_node.key)) {
+                        project.config.deploy_checkdate =
+                           builtin_key_node.values.get<int>(0) != 0;
+                     }
+                     else if (iequals("AllowHardlinks", builtin_key_node.key)) {
+                        project.config.deploy_allow_hard_links =
+                           builtin_key_node.values.get<int>(0) != 0;
+                     }
+                  }
+               }
                else if (iequals("CustomMungeCommands", config_key_node.key)) {
                   project_custom_commands& custom_commands =
                      project.config.custom_commands;
@@ -638,6 +655,9 @@ void merge_loaded_project(project& current_project, const project& loaded_projec
    current_project.config.use_builtin_texture_munge =
       loaded_project.config.use_builtin_texture_munge;
    current_project.config.texture_quality = loaded_project.config.texture_quality;
+   current_project.config.deploy_checkdate = loaded_project.config.deploy_checkdate;
+   current_project.config.deploy_allow_hard_links =
+      loaded_project.config.deploy_allow_hard_links;
    current_project.config.world_lvl_output_path =
       loaded_project.config.world_lvl_output_path;
 

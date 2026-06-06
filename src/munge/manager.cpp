@@ -1624,6 +1624,8 @@ void deploy_addon(munge_context& context)
       return;
    }
 
+   bool use_hard_links = context.project.config.deploy_allow_hard_links;
+
    for (const io::directory_entry& entry : io::directory_iterator{lvl_src_path}) {
       const std::string_view relative_entry_path =
          entry.path.string_view().substr(lvl_src_path.string_view().size() + 1);
@@ -1647,6 +1649,27 @@ void deploy_addon(munge_context& context)
       else if (entry.is_file) {
          const io::path dest_file =
             io::compose_path(lvl_dest_path, relative_entry_path);
+
+         if (context.project.config.deploy_checkdate) {
+            if (io::get_last_write_time(dest_file) >=
+                io::get_last_write_time(entry.path)) {
+               continue;
+            }
+         }
+
+         if (use_hard_links) {
+            (void)io::remove(dest_file);
+
+            if (io::create_hard_link(entry.path, dest_file)) {
+               continue;
+            }
+            else {
+               // If we've failed to create a hard link it could mean the filesystem doesn't support them or
+               // the user might be deploying across drives. In either case we stop trying to use them to save an
+               // OS call and just fallback to regular copies.
+               use_hard_links = false;
+            }
+         }
 
          if (not io::copy_file(entry.path, dest_file)) {
             context.feedback.add_error({

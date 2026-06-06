@@ -154,6 +154,12 @@ auto get_last_write_time(const path& path) noexcept -> uint64;
 /// @return True if successful, false otherwise.
 [[nodiscard]] bool copy_file(const path& src, const path& dest) noexcept;
 
+/// @brief Create a hard link.
+/// @param link_src The source file path.
+/// @param dest The destination file path.
+/// @return True if successful, false otherwise.
+[[nodiscard]] bool create_hard_link(const path& link_src, const path& dest) noexcept;
+
 /// @brief Get the current directory for a process.
 /// @return The current directory for a process.
 [[nodiscard]] auto current_directory() noexcept -> io::path;

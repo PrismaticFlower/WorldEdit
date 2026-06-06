@@ -998,6 +998,25 @@ void world_edit::ui_show_munge_config_editor() noexcept
             ImGui::EndCombo();
          }
 
+         ImGui::TableNextRow();
+
+         ImGui::TableNextColumn();
+
+         ImGui::Checkbox("Deploy Checkdate", &config.deploy_checkdate);
+
+         ImGui::SetItemTooltip(
+            "When deploying munged files check the last write time on the "
+            "destination file and only replace it if the new file is more "
+            "recent. This can speed up partial deploys.");
+
+         ImGui::Checkbox("Deploy Allow Hard Links", &config.deploy_allow_hard_links);
+
+         ImGui::SetItemTooltip(
+            "Allow using hard links when deploying. This can significantly "
+            "speed up deploying the addon but may make sound munge or movie "
+            "munge fail if the game is running and currently streaming those "
+            "files.");
+
          ImGui::EndTable();
       }
 

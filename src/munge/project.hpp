@@ -66,6 +66,9 @@ struct project_config {
    bool use_builtin_odf_munge = true;
    bool use_builtin_texture_munge = true;
 
+   bool deploy_checkdate = true;
+   bool deploy_allow_hard_links = false;
+
    texture_quality texture_quality = texture_quality::default_;
 
    project_custom_commands custom_commands;

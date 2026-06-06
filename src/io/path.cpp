@@ -401,6 +401,12 @@ bool copy_file(const path& src, const path& dest) noexcept
    return CopyFileW(io::wide_path{src}.c_str(), io::wide_path{dest}.c_str(), false) != 0;
 }
 
+bool create_hard_link(const path& link_src, const path& dest) noexcept
+{
+   return CreateHardLinkW(io::wide_path{dest}.c_str(),
+                          io::wide_path{link_src}.c_str(), nullptr) != 0;
+}
+
 auto current_directory() noexcept -> io::path
 {
    std::vector<wchar_t> chars;
