@@ -37,6 +37,19 @@ struct bc3_block {
 
 std::once_flag icbc_initialized;
 
+auto to_icbc_quality(texture_quality quality) -> icbc::Quality
+{
+   switch (quality) {
+   case texture_quality::fast:
+      return icbc::Quality_Fast;
+   default:
+   case texture_quality::default_:
+      return icbc::Quality_Default;
+   case texture_quality::max:
+      return icbc::Quality_Max;
+   }
+}
+
 template<typename T>
 void write_texel(const uint32 width, std::span<std::byte> output, uint32 x,
                  uint32 y, const T& texel) noexcept
@@ -48,8 +61,10 @@ void write_texel(const uint32 width, std::span<std::byte> output, uint32 x,
    std::memcpy(&output[offset], &texel, sizeof(T));
 }
 
-void convert_slice_dxt1(texture_slice input, std::span<std::byte> output)
+void convert_slice_dxt1(texture_slice input, texture_quality quality,
+                        std::span<std::byte> output)
 {
+   const icbc::Quality icbc_quality = to_icbc_quality(quality);
    const uint32 blocks_width = (input.width() + 3) / 4;
    const uint32 blocks_height = (input.height() + 3) / 4;
 
@@ -76,7 +91,7 @@ void convert_slice_dxt1(texture_slice input, std::span<std::byte> output)
             }
          }
 
-         icbc::compress_bc1(icbc::Quality_Default, &src_block[0].x,
+         icbc::compress_bc1(icbc_quality, &src_block[0].x,
                             icbc_input_weights.data(), icbc_color_weights.data(),
                             true, false, compressed_block.data());
 
@@ -85,7 +100,9 @@ void convert_slice_dxt1(texture_slice input, std::span<std::byte> output)
    }
 }
 
-void convert_slice_dxt1_alpha(texture_slice input, std::span<std::byte> output)
+void convert_slice_dxt1_alpha(texture_slice input,
+                              [[maybe_unused]] texture_quality quality,
+                              std::span<std::byte> output)
 {
    const uint32 blocks_width = (input.width() + 3) / 4;
    const uint32 blocks_height = (input.height() + 3) / 4;
@@ -118,8 +135,10 @@ void convert_slice_dxt1_alpha(texture_slice input, std::span<std::byte> output)
    }
 }
 
-void convert_slice_dxt3(texture_slice input, std::span<std::byte> output)
+void convert_slice_dxt3(texture_slice input, texture_quality quality,
+                        std::span<std::byte> output)
 {
+   const icbc::Quality icbc_quality = to_icbc_quality(quality);
    const uint32 blocks_width = (input.width() + 3) / 4;
    const uint32 blocks_height = (input.height() + 3) / 4;
 
@@ -148,7 +167,7 @@ void convert_slice_dxt3(texture_slice input, std::span<std::byte> output)
             }
          }
 
-         icbc::compress_bc1(icbc::Quality_Default, &src_block[0].x,
+         icbc::compress_bc1(icbc_quality, &src_block[0].x,
                             icbc_input_weights.data(), icbc_color_weights.data(),
                             false, false, compressed_block.bc1_block.data());
 
@@ -164,8 +183,10 @@ void convert_slice_dxt3(texture_slice input, std::span<std::byte> output)
    }
 }
 
-void convert_slice_dxt5(texture_slice input, std::span<std::byte> output)
+void convert_slice_dxt5(texture_slice input, texture_quality quality,
+                        std::span<std::byte> output)
 {
+   const icbc::Quality icbc_quality = to_icbc_quality(quality);
    const uint32 blocks_width = (input.width() + 3) / 4;
    const uint32 blocks_height = (input.height() + 3) / 4;
 
@@ -194,7 +215,7 @@ void convert_slice_dxt5(texture_slice input, std::span<std::byte> output)
             }
          }
 
-         icbc::compress_bc1(icbc::Quality_Default, &src_block[0].x,
+         icbc::compress_bc1(icbc_quality, &src_block[0].x,
                             icbc_input_weights.data(), icbc_color_weights.data(),
                             false, false, compressed_block.bc1_block.data());
 
@@ -206,12 +227,12 @@ void convert_slice_dxt5(texture_slice input, std::span<std::byte> output)
    }
 }
 
-void convert_slice_a8r8g8b8([[maybe_unused]] texture_slice input,
-                            [[maybe_unused]] std::span<std::byte> output)
+void convert_slice_a8r8g8b8(texture_slice, texture_quality, std::span<std::byte>)
 {
 }
 
-void convert_slice_a4r4g4b4(texture_slice input, std::span<std::byte> output)
+void convert_slice_a4r4g4b4(texture_slice input, texture_quality,
+                            std::span<std::byte> output)
 {
    if (input.width() * input.height() * sizeof(uint16) > output.size()) {
       throw texture_error{"Not enough memory to convert format.",
@@ -238,7 +259,8 @@ void convert_slice_a4r4g4b4(texture_slice input, std::span<std::byte> output)
    }
 }
 
-void convert_slice_a1r5g5b5(texture_slice input, std::span<std::byte> output)
+void convert_slice_a1r5g5b5(texture_slice input, texture_quality,
+                            std::span<std::byte> output)
 {
    if (input.width() * input.height() * sizeof(uint16) > output.size()) {
       throw texture_error{"Not enough memory to convert format.",
@@ -265,7 +287,8 @@ void convert_slice_a1r5g5b5(texture_slice input, std::span<std::byte> output)
    }
 }
 
-void convert_slice_r5g6b5(texture_slice input, std::span<std::byte> output)
+void convert_slice_r5g6b5(texture_slice input, texture_quality,
+                          std::span<std::byte> output)
 {
    if (input.width() * input.height() * sizeof(uint16) > output.size()) {
       throw texture_error{"Not enough memory to convert format.",
@@ -290,7 +313,7 @@ void convert_slice_r5g6b5(texture_slice input, std::span<std::byte> output)
    }
 }
 
-void convert_slice_a8l8(texture_slice input, std::span<std::byte> output)
+void convert_slice_a8l8(texture_slice input, texture_quality, std::span<std::byte> output)
 {
    if (input.width() * input.height() * sizeof(uint16) > output.size()) {
       throw texture_error{"Not enough memory to convert format.",
@@ -313,7 +336,7 @@ void convert_slice_a8l8(texture_slice input, std::span<std::byte> output)
    }
 }
 
-void convert_slice_a8(texture_slice input, std::span<std::byte> output)
+void convert_slice_a8(texture_slice input, texture_quality, std::span<std::byte> output)
 {
    if (input.width() * input.height() > output.size()) {
       throw texture_error{"Not enough memory to convert format.",
@@ -329,7 +352,7 @@ void convert_slice_a8(texture_slice input, std::span<std::byte> output)
    }
 }
 
-void convert_slice_l8(texture_slice input, std::span<std::byte> output)
+void convert_slice_l8(texture_slice input, texture_quality, std::span<std::byte> output)
 {
    if (input.width() * input.height() > output.size()) {
       throw texture_error{"Not enough memory to convert format.",
@@ -345,7 +368,7 @@ void convert_slice_l8(texture_slice input, std::span<std::byte> output)
    }
 }
 
-void convert_slice_a4l4(texture_slice input, std::span<std::byte> output)
+void convert_slice_a4l4(texture_slice input, texture_quality, std::span<std::byte> output)
 {
    if (input.width() * input.height() > output.size()) {
       throw texture_error{"Not enough memory to convert format.",
@@ -368,7 +391,7 @@ void convert_slice_a4l4(texture_slice input, std::span<std::byte> output)
    }
 }
 
-void convert_slice_v8u8(texture_slice input, std::span<std::byte> output)
+void convert_slice_v8u8(texture_slice input, texture_quality, std::span<std::byte> output)
 {
    if (input.width() * input.height() * sizeof(uint16) > output.size()) {
       throw texture_error{"Not enough memory to convert format.",
@@ -393,8 +416,8 @@ void convert_slice_v8u8(texture_slice input, std::span<std::byte> output)
    }
 }
 
-auto convert_texture(texture& input, texture_write_format format,
-                     void (*convert_slice)(texture_slice input,
+auto convert_texture(texture& input, texture_write_format format, texture_quality quality,
+                     void (*convert_slice)(texture_slice input, texture_quality quality,
                                            std::span<std::byte> output)) -> texture_transmuted_view
 {
    texture_transmuted_view output{input, format};
@@ -407,7 +430,8 @@ auto convert_texture(texture& input, texture_write_format format,
             output.subresource({.array_index = array_index, .mip_level = mip_level});
 
          for (uint32 z = 0; z < input_subresource.depth(); ++z) {
-            convert_slice(input_subresource.slice(z), out_subresource.slice(z));
+            convert_slice(input_subresource.slice(z), quality,
+                          out_subresource.slice(z));
          }
       }
    }
@@ -417,39 +441,39 @@ auto convert_texture(texture& input, texture_write_format format,
 
 }
 
-auto convert_texture(texture& texture, const texture_write_format format)
-   -> texture_transmuted_view
+auto convert_texture(texture& texture, const texture_write_format format,
+                     const texture_quality quality) -> texture_transmuted_view
 {
 
    std::call_once(icbc_initialized, icbc::init, icbc::Decoder_D3D10);
 
    switch (format) {
    case texture_write_format::dxt1:
-      return convert_texture(texture, format, convert_slice_dxt1);
+      return convert_texture(texture, format, quality, convert_slice_dxt1);
    case texture_write_format::dxt1_alpha:
-      return convert_texture(texture, format, convert_slice_dxt1_alpha);
+      return convert_texture(texture, format, quality, convert_slice_dxt1_alpha);
    case texture_write_format::dxt3:
-      return convert_texture(texture, format, convert_slice_dxt3);
+      return convert_texture(texture, format, quality, convert_slice_dxt3);
    case texture_write_format::dxt5:
-      return convert_texture(texture, format, convert_slice_dxt5);
+      return convert_texture(texture, format, quality, convert_slice_dxt5);
    case texture_write_format::a8r8g8b8:
-      return convert_texture(texture, format, convert_slice_a8r8g8b8);
+      return convert_texture(texture, format, quality, convert_slice_a8r8g8b8);
    case texture_write_format::a4r4g4b4:
-      return convert_texture(texture, format, convert_slice_a4r4g4b4);
+      return convert_texture(texture, format, quality, convert_slice_a4r4g4b4);
    case texture_write_format::a1r5g5b5:
-      return convert_texture(texture, format, convert_slice_a1r5g5b5);
+      return convert_texture(texture, format, quality, convert_slice_a1r5g5b5);
    case texture_write_format::r5g6b5:
-      return convert_texture(texture, format, convert_slice_r5g6b5);
+      return convert_texture(texture, format, quality, convert_slice_r5g6b5);
    case texture_write_format::a8l8:
-      return convert_texture(texture, format, convert_slice_a8l8);
+      return convert_texture(texture, format, quality, convert_slice_a8l8);
    case texture_write_format::a8:
-      return convert_texture(texture, format, convert_slice_a8);
+      return convert_texture(texture, format, quality, convert_slice_a8);
    case texture_write_format::l8:
-      return convert_texture(texture, format, convert_slice_l8);
+      return convert_texture(texture, format, quality, convert_slice_l8);
    case texture_write_format::a4l4:
-      return convert_texture(texture, format, convert_slice_a4l4);
+      return convert_texture(texture, format, quality, convert_slice_a4l4);
    case texture_write_format::v8u8:
-      return convert_texture(texture, format, convert_slice_v8u8);
+      return convert_texture(texture, format, quality, convert_slice_v8u8);
    }
 
    std::unreachable();

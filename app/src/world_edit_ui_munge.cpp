@@ -925,6 +925,45 @@ void world_edit::ui_show_munge_config_editor() noexcept
                "Select individual builtin munge tools to enable or disable.");
          }
 
+         ImGui::TableNextColumn();
+
+         if (ImGui::BeginCombo("Texture Quality", [&] {
+                switch (config.texture_quality) {
+                default:
+                case munge::texture_quality::fast:
+                   return "Fast";
+                case munge::texture_quality::default_:
+                   return "Default";
+                case munge::texture_quality::max:
+                   return "Max";
+                }
+             }())) {
+            if (ImGui::Selectable("Fast", config.texture_quality ==
+                                             munge::texture_quality::fast)) {
+               config.texture_quality = munge::texture_quality::fast;
+            }
+
+            ImGui::SetItemTooltip(
+               "Faster texture compression but lower quality.");
+
+            if (ImGui::Selectable("Default", config.texture_quality ==
+                                                munge::texture_quality::default_)) {
+               config.texture_quality = munge::texture_quality::default_;
+            }
+
+            ImGui::SetItemTooltip("Default texture compression quality.");
+
+            if (ImGui::Selectable("Max", config.texture_quality ==
+                                            munge::texture_quality::max)) {
+               config.texture_quality = munge::texture_quality::max;
+            }
+
+            ImGui::SetItemTooltip("Max texture compression quality. This can "
+                                  "be much slower to munge.");
+
+            ImGui::EndCombo();
+         }
+
          ImGui::EndTable();
       }
 

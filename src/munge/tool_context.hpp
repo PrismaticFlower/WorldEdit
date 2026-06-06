@@ -1,10 +1,13 @@
 #pragma once
 
 #include "feedback.hpp"
+#include "shared.hpp"
 
 #include "async/thread_pool.hpp"
 
 #include "io/path.hpp"
+
+#include "os/process.hpp"
 
 #include <string>
 #include <string_view>
@@ -27,6 +30,10 @@ struct tool_context {
    bool use_builtin_model_munge = true;
    bool use_builtin_odf_munge = true;
    bool use_builtin_texture_munge = true;
+
+   texture_quality texture_quality = texture_quality::default_;
+
+   os::process_priority munge_process_priority = os::process_priority::below_normal;
 };
 
 }

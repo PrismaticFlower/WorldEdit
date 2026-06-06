@@ -49,7 +49,7 @@ void munge_raw_files(const tool_context& context)
          .working_directory = context.toolsfl_bin_path,
          .capture_stdout = true,
          .capture_stderr = true,
-         .priority = munge_process_priority,
+         .priority = context.munge_process_priority,
       };
 
       std::string standard_error = process.get_standard_error();
@@ -74,7 +74,7 @@ void munge_raw_files(const tool_context& context)
          .working_directory = context.toolsfl_bin_path,
          .capture_stdout = true,
          .capture_stderr = true,
-         .priority = munge_process_priority,
+         .priority = context.munge_process_priority,
       };
 
       std::string standard_error = process.get_standard_error();

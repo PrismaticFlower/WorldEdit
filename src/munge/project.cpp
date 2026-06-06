@@ -56,6 +56,25 @@ struct fmt::formatter<we::munge::project_platform_filter>
    }
 };
 
+template<>
+struct fmt::formatter<we::munge::texture_quality> : fmt::formatter<std::string_view> {
+   auto format(we::munge::texture_quality v, format_context& ctx) const -> fmt::appender
+   {
+      switch (v) {
+      default:
+      case we::munge::texture_quality::fast: {
+         return fmt::formatter<std::string_view>::format("Fast", ctx);
+      };
+      case we::munge::texture_quality::default_: {
+         return fmt::formatter<std::string_view>::format("Default", ctx);
+      };
+      case we::munge::texture_quality::max: {
+         return fmt::formatter<std::string_view>::format("Max", ctx);
+      };
+      }
+   }
+};
+
 namespace we::munge {
 
 namespace {
@@ -226,6 +245,7 @@ void save_project(const project& project, const io::path& path) noexcept
       out.write_ln("      OdfMunge({:d});", project.config.use_builtin_odf_munge);
       out.write_ln("      TextureMunge({:d});", project.config.use_builtin_texture_munge);
       out.write_ln("   }");
+      out.write_ln("   TextureQuality(\"{}\");", project.config.texture_quality);
       out.write_ln("   Platform(\"{}\");", project.config.platform);
 
       out.write_ln("   CustomMungeCommands()");
@@ -418,6 +438,20 @@ auto load_project(const io::path& path) noexcept -> project
                      }
                   }
                }
+               else if (iequals("TextureQuality", config_key_node.key)) {
+                  const std::string_view quality =
+                     config_key_node.values.get<std::string_view>(0);
+
+                  if (iequals(quality, "Fast")) {
+                     project.config.texture_quality = texture_quality::fast;
+                  }
+                  else if (iequals(quality, "Default")) {
+                     project.config.texture_quality = texture_quality::default_;
+                  }
+                  else if (iequals(quality, "Max")) {
+                     project.config.texture_quality = texture_quality::max;
+                  }
+               }
                else if (iequals("CustomMungeCommands", config_key_node.key)) {
                   project_custom_commands& custom_commands =
                      project.config.custom_commands;
@@ -603,6 +637,7 @@ void merge_loaded_project(project& current_project, const project& loaded_projec
       loaded_project.config.use_builtin_odf_munge;
    current_project.config.use_builtin_texture_munge =
       loaded_project.config.use_builtin_texture_munge;
+   current_project.config.texture_quality = loaded_project.config.texture_quality;
    current_project.config.world_lvl_output_path =
       loaded_project.config.world_lvl_output_path;
 

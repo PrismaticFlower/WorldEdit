@@ -123,7 +123,7 @@ void execute_texture_munge(const io::path& input_file_path,
       get_write_format(texture, options.format, load_result.traits);
 
    write_texture(io::compose_path(context.output_path, input_file_path.stem(), ".texture"),
-                 convert_texture(texture, format),
+                 convert_texture(texture, format, context.texture_quality),
                  {.type = options.type, .detail_bias = options.detail_bias});
 }
 

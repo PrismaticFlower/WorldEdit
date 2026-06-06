@@ -85,7 +85,7 @@ void execute_munge(const munge_config& config, const tool_context& context)
       .working_directory = context.toolsfl_bin_path,
       .capture_stdout = true,
       .capture_stderr = true,
-      .priority = munge_process_priority,
+      .priority = context.munge_process_priority,
    };
 
    std::string standard_error = process.get_standard_error();
@@ -111,7 +111,7 @@ void execute_config_munge(const config_munge_config& config, const tool_context&
       .working_directory = context.toolsfl_bin_path,
       .capture_stdout = true,
       .capture_stderr = true,
-      .priority = munge_process_priority,
+      .priority = context.munge_process_priority,
    };
 
    std::string standard_error = process.get_standard_error();
@@ -155,7 +155,7 @@ void execute_movie_munge(const tool_context& context)
          .working_directory = context.source_path.parent_path(),
          .capture_stdout = true,
          .capture_stderr = true,
-         .priority = munge_process_priority,
+         .priority = context.munge_process_priority,
       };
 
       std::string standard_error = process.get_standard_error();
@@ -282,7 +282,7 @@ void execute_localize_munge(const tool_context& context)
          .working_directory = context.toolsfl_bin_path,
          .capture_stdout = true,
          .capture_stderr = true,
-         .priority = munge_process_priority,
+         .priority = context.munge_process_priority,
       };
 
       std::string standard_error = process.get_standard_error();
@@ -371,7 +371,7 @@ void execute_level_pack(const level_pack_inputs& level_pack, const tool_context&
       .working_directory = context.toolsfl_bin_path,
       .capture_stdout = true,
       .capture_stderr = true,
-      .priority = munge_process_priority,
+      .priority = context.munge_process_priority,
    };
 
    std::string standard_error = process.get_standard_error();
@@ -530,7 +530,7 @@ void execute_path_munge(const tool_context& context)
             .working_directory = context.toolsfl_bin_path,
             .capture_stdout = true,
             .capture_stderr = true,
-            .priority = munge_process_priority,
+            .priority = context.munge_process_priority,
          };
 
          std::string standard_error = process.get_standard_error();
@@ -557,7 +557,7 @@ void execute_script_munge(const tool_context& context)
       .working_directory = context.toolsfl_bin_path,
       .capture_stdout = true,
       .capture_stderr = true,
-      .priority = munge_process_priority,
+      .priority = context.munge_process_priority,
    };
 
    std::string standard_error = process.get_standard_error();
@@ -582,7 +582,7 @@ void execute_shader_munge(const munge_config& config, const tool_context& contex
       .working_directory = context.toolsfl_bin_path,
       .capture_stdout = true,
       .capture_stderr = true,
-      .priority = munge_process_priority,
+      .priority = context.munge_process_priority,
    };
 
    std::string standard_error = process.get_standard_error();
@@ -634,7 +634,7 @@ void execute_sound_munge(const sound_munge_inputs& sound_munge, const tool_conte
          .working_directory = entry.path.parent_path(),
          .capture_stdout = true,
          .capture_stderr = true,
-         .priority = munge_process_priority,
+         .priority = context.munge_process_priority,
       };
 
       std::string standard_error = process.get_standard_error();
@@ -661,7 +661,7 @@ void execute_sound_config_munge(std::string input_files, const tool_context& con
       .working_directory = context.toolsfl_bin_path,
       .capture_stdout = true,
       .capture_stderr = true,
-      .priority = munge_process_priority,
+      .priority = context.munge_process_priority,
    };
 
    std::string standard_error = process.get_standard_error();
@@ -713,7 +713,7 @@ void execute_sound_directory_munge(const sound_directory_munge& sound_munge,
             .working_directory = context.toolsfl_bin_path,
             .capture_stdout = true,
             .capture_stderr = true,
-            .priority = munge_process_priority,
+            .priority = context.munge_process_priority,
          };
 
          std::string standard_error = process.get_standard_error();
@@ -739,7 +739,7 @@ void execute_sound_directory_munge(const sound_directory_munge& sound_munge,
             .working_directory = context.toolsfl_bin_path,
             .capture_stdout = true,
             .capture_stderr = true,
-            .priority = munge_process_priority,
+            .priority = context.munge_process_priority,
          };
 
          std::string standard_error = process.get_standard_error();
@@ -761,7 +761,7 @@ void execute_sound_directory_munge(const sound_directory_munge& sound_munge,
             .working_directory = context.toolsfl_bin_path,
             .capture_stdout = true,
             .capture_stderr = true,
-            .priority = munge_process_priority,
+            .priority = context.munge_process_priority,
          };
 
          std::string standard_error = process.get_standard_error();
@@ -825,7 +825,7 @@ void execute_sound_directory_munge(const sound_directory_munge& sound_munge,
                .working_directory = localization_context.toolsfl_bin_path,
                .capture_stdout = true,
                .capture_stderr = true,
-               .priority = munge_process_priority,
+               .priority = context.munge_process_priority,
             };
 
             std::string standard_error = process.get_standard_error();
@@ -849,7 +849,7 @@ void execute_sound_directory_munge(const sound_directory_munge& sound_munge,
                .working_directory = localization_context.toolsfl_bin_path,
                .capture_stdout = true,
                .capture_stderr = true,
-               .priority = munge_process_priority,
+               .priority = context.munge_process_priority,
             };
 
             std::string standard_error = process.get_standard_error();
@@ -898,7 +898,7 @@ void execute_sound_directory_children_pack(const sound_directory_pack& sound_pac
          .working_directory = context.toolsfl_bin_path,
          .capture_stdout = true,
          .capture_stderr = true,
-         .priority = munge_process_priority,
+         .priority = context.munge_process_priority,
       };
 
       std::string standard_error = process.get_standard_error();
@@ -952,7 +952,7 @@ void execute_sound_directory_children_pack(const sound_directory_pack& sound_pac
             .working_directory = context.toolsfl_bin_path,
             .capture_stdout = true,
             .capture_stderr = true,
-            .priority = munge_process_priority,
+            .priority = context.munge_process_priority,
          };
 
          std::string standard_error = process.get_standard_error();
@@ -999,7 +999,7 @@ void execute_sound_directory_pack(const sound_directory_pack& sound_pack,
          .working_directory = context.toolsfl_bin_path,
          .capture_stdout = true,
          .capture_stderr = true,
-         .priority = munge_process_priority,
+         .priority = context.munge_process_priority,
       };
 
       std::string standard_error = process.get_standard_error();
@@ -1045,7 +1045,7 @@ void execute_sound_directory_pack(const sound_directory_pack& sound_pack,
          .working_directory = context.toolsfl_bin_path,
          .capture_stdout = true,
          .capture_stderr = true,
-         .priority = munge_process_priority,
+         .priority = context.munge_process_priority,
       };
 
       std::string standard_error = process.get_standard_error();
@@ -1097,7 +1097,7 @@ void execute_sound_common_bank_munge(const tool_context& context)
       .working_directory = context.toolsfl_bin_path,
       .capture_stdout = true,
       .capture_stderr = true,
-      .priority = munge_process_priority,
+      .priority = context.munge_process_priority,
    };
 
    std::string standard_error = process.get_standard_error();
@@ -1218,8 +1218,7 @@ void execute_tool(const tool& tool, const tool_context& context)
       execute_localize_munge(child_context);
    } break;
    case tool_type::model_munge: {
-      if (context.use_builtin_model_munge and
-          string::iequals(context.platform, "PC")) {
+      if (context.use_builtin_model_munge and string::iequals(context.platform, "PC")) {
          execute_model_munge(context);
       }
       else {
@@ -1387,7 +1386,7 @@ void execute_custom_commands(const std::span<const project_custom_command> comma
             .working_directory = context.project_path,
             .capture_stdout = not command.detach,
             .capture_stderr = not command.detach,
-            .priority = command.detach ? munge_process_priority
+            .priority = command.detach ? context.munge_process_priority
                                        : os::process_priority::normal,
          };
 
@@ -1833,6 +1832,8 @@ auto run_munge(munge_context& context) -> report
       .use_builtin_model_munge = context.project.config.use_builtin_model_munge,
       .use_builtin_odf_munge = context.project.config.use_builtin_odf_munge,
       .use_builtin_texture_munge = context.project.config.use_builtin_texture_munge,
+
+      .texture_quality = context.project.config.texture_quality,
    };
 
    const project_custom_commands& custom_commands =
