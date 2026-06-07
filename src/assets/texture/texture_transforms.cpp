@@ -1,22 +1,16 @@
 
 #include "texture_transforms.hpp"
+
 #include "math/vector_funcs.hpp"
+#include "math/scalar_funcs.hpp"
 
 #include <bit>
 #include <stdexcept>
 
-#include <immintrin.h>
 
 namespace we::assets::texture {
 
 namespace {
-
-auto fast_rsqrt(float v) -> float
-{
-   _mm_store_ss(&v, _mm_rsqrt_ss(_mm_load_ss(&v)));
-
-   return v;
-}
 
 void generate_normal_map(const texture_subresource_view& input,
                          texture_subresource_view& output, const float bump_scale)

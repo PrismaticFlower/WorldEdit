@@ -9,12 +9,28 @@
 #include <cassert>
 #include <vector>
 
+#ifdef _M_X64
+#define WE_BVH_X64
+
+#ifdef __AVX__
+#define WE_BVH_AVX
+#else
+#define WE_BVH_SSE2
+#endif
+
+#else
+#define WE_BVH_SCALAR
+#endif
+
+#ifdef WE_BVH_X64
 #include <immintrin.h>
+#endif
 
 namespace we {
 
 namespace {
 
+constexpr int32 simd_alignment = 16;
 constexpr int32 split_bin_count = 8;
 
 bool check_indices_in_range(std::span<const std::array<uint16, 3>> indices,
@@ -44,6 +60,12 @@ auto area(const math::bounding_box& bbox) noexcept -> float
 
    return extents.x * extents.y + extents.y * extents.z + extents.z * extents.x;
 }
+
+#ifdef WE_BVH_X64
+
+#ifdef WE_BVH_SSE2
+#define _mm_broadcast_ss _mm_load1_ps
+#endif
 
 [[msvc::forceinline]] auto __vectorcall intersect_aabb(
    const __m128 ray_origin_x,        //
@@ -115,7 +137,7 @@ auto area(const math::bounding_box& bbox) noexcept -> float
 }
 
 [[msvc::forceinline]] auto __vectorcall inside_corners(
-   const frustum& frustum, const float float3::*axis,
+   const frustum& frustum, const float float3::* axis,
    const __m128 bbox_corner_min, const __m128 bbox_corner_max) noexcept -> __m128
 {
    __m128 inside_min_mask = _mm_setzero_ps();
@@ -195,6 +217,8 @@ auto area(const math::bounding_box& bbox) noexcept -> float
 
    return intersects;
 }
+
+#endif
 
 }
 
@@ -288,6 +312,7 @@ struct detail::bvh_impl {
    bvh_impl(bvh_impl&&) noexcept = delete;
    auto operator=(bvh_impl&&) -> bvh_impl& = delete;
 
+#ifdef WE_BVH_X64
    [[nodiscard]] auto raycast(const float3& ray_origin,
                               const float3& ray_direction, const float max_distance,
                               const bvh_ray_flags flags) const noexcept
@@ -599,6 +624,261 @@ struct detail::bvh_impl {
 
       return false;
    }
+#elifdef WE_BVH_SCALAR
+   [[nodiscard]] auto raycast(const float3& ray_origin,
+                              const float3& ray_direction, const float max_distance,
+                              const bvh_ray_flags flags) const noexcept
+      -> std::optional<bvh::ray_hit>
+   {
+      const float3 inv_ray_direction = 1.0f / ray_direction;
+
+      std::array<int32, 64> stack = {
+         _root_node_index,
+      };
+      int32 stack_ptr = 0;
+
+      float closest_hit = max_distance;
+      float3 hit_normal = {};
+      uint32 hit_mesh_tri_index = 0;
+
+      while (stack_ptr >= 0) {
+         const node_packed_x4& node = _nodes[stack[stack_ptr]];
+
+         stack_ptr -= 1;
+
+         for (std::size_t lane_index = 0; lane_index < node.bbox.min_x.size();
+              ++lane_index) {
+            float hit_distance = 0.0f;
+
+            if (not intersect_aabb(
+                   ray_origin, inv_ray_direction,
+                   math::bounding_box{.min = {node.bbox.min_x[lane_index],
+                                              node.bbox.min_y[lane_index],
+                                              node.bbox.min_z[lane_index]},
+
+                                      .max = {node.bbox.max_x[lane_index],
+                                              node.bbox.max_y[lane_index],
+                                              node.bbox.max_z[lane_index]}},
+                   closest_hit, hit_distance)) {
+               continue;
+            }
+
+            const bool is_leaf = node.tri_count[lane_index] != 0;
+
+            if (is_leaf) {
+               const int32 last_tri = node.children_or_first_tri[lane_index] +
+                                      node.tri_count[lane_index];
+
+               for (int32 tri_index = node.children_or_first_tri[lane_index];
+                    tri_index < last_tri; ++tri_index) {
+                  const std::array<uint16, 3>& tri = _indices[_triangles[tri_index]];
+
+                  const float3& v0 = _positions[tri[0]];
+                  const float3& v1 = _positions[tri[1]];
+                  const float3& v2 = _positions[tri[2]];
+
+                  [[msvc::forceinline_calls]] //
+                  if (float hit = 0.0f;
+                      intersect_tri(ray_origin, ray_direction, v0, v1, v2, hit) and
+                      hit < closest_hit) {
+
+                     const float3 normal = cross(v1 - v0, v2 - v0);
+
+                     if (flags.allow_backface_cull and
+                         dot(-ray_direction, normal) < 0.0f and not _no_backface_cull) {
+                        continue;
+                     }
+
+                     closest_hit = hit;
+                     hit_normal = normal;
+                     hit_mesh_tri_index = _triangles[tri_index];
+
+                     if (flags.accept_first_hit) {
+                        return std::optional{
+                           bvh::ray_hit{.distance = hit,
+                                        .unnormalized_normal = hit_normal,
+                                        .tri_index = hit_mesh_tri_index}};
+                     }
+                  }
+               }
+            }
+            else {
+               stack_ptr += 1;
+
+               stack[stack_ptr] = node.children_or_first_tri[lane_index];
+            }
+         }
+      }
+
+      return closest_hit < max_distance
+                ? std::optional{bvh::ray_hit{.distance = closest_hit,
+                                             .unnormalized_normal = hit_normal,
+                                             .tri_index = hit_mesh_tri_index}}
+                : std::nullopt;
+   }
+
+   [[nodiscard]] bool intersects(const frustum& frustum) const noexcept
+   {
+      std::array<int32, 64> stack = {
+         _root_node_index,
+      };
+      int32 stack_ptr = 0;
+
+      while (stack_ptr >= 0) {
+         const node_packed_x4& node = _nodes[stack[stack_ptr]];
+
+         stack_ptr -= 1;
+
+         for (std::size_t lane_index = 0; lane_index < node.bbox.min_x.size();
+              ++lane_index) {
+            if (not we::intersects(
+                   frustum,
+                   math::bounding_box{.min = {node.bbox.min_x[lane_index],
+                                              node.bbox.min_y[lane_index],
+                                              node.bbox.min_z[lane_index]},
+
+                                      .max = {node.bbox.max_x[lane_index],
+                                              node.bbox.max_y[lane_index],
+                                              node.bbox.max_z[lane_index]}})) {
+               continue;
+            }
+
+            const bool is_leaf = node.tri_count[lane_index] != 0;
+
+            if (is_leaf) {
+               const int32 last_tri = node.children_or_first_tri[lane_index] +
+                                      node.tri_count[lane_index];
+
+               for (int32 tri_index = node.children_or_first_tri[lane_index];
+                    tri_index < last_tri; ++tri_index) {
+                  const std::array<uint16, 3>& tri_indices =
+                     _indices[_triangles[tri_index]];
+
+                  // See comment under WE_BVH_X64 for an explaination of this code.
+
+                  const float3& v0 = _positions[tri_indices[0]];
+                  const float3& v1 = _positions[tri_indices[1]];
+                  const float3& v2 = _positions[tri_indices[2]];
+
+                  if (we::intersects(frustum, v0, 0.0f) or
+                      we::intersects(frustum, v1, 0.0f) or
+                      we::intersects(frustum, v2, 0.0f)) {
+                     return true;
+                  }
+
+                  const std::array<float3, 3> tri_edge_vectors = {
+                     v1 - v0, // origin 0
+                     v2 - v1, // origin 1
+                     v0 - v2, // origin 2
+                  };
+
+                  const std::array<float, 3> tri_edge_lengths = {
+                     length(tri_edge_vectors[0]), // origin 0
+                     length(tri_edge_vectors[1]), // origin 1
+                     length(tri_edge_vectors[2]), // origin 2
+                  };
+
+                  const std::array<float3, 3> tri_edge_directions = {
+                     tri_edge_vectors[0] / tri_edge_lengths[0], // origin 0
+                     tri_edge_vectors[1] / tri_edge_lengths[1], // origin 1
+                     tri_edge_vectors[2] / tri_edge_lengths[2], // origin 2
+                  };
+
+                  // These don't all face out. But it doesn't matter for our use.
+                  constexpr static std::array<std::array<frustum_corner, 4>, 6> frustum_faces = {{
+                     // Near Face
+                     {frustum_corner::bottom_left_near, frustum_corner::top_left_near,
+                      frustum_corner::top_right_near, frustum_corner::bottom_right_near},
+
+                     // Far Face
+                     {frustum_corner::bottom_left_far, frustum_corner::top_left_far,
+                      frustum_corner::top_right_far, frustum_corner::bottom_right_far},
+
+                     // Left Face
+                     {frustum_corner::bottom_left_near, frustum_corner::top_left_near,
+                      frustum_corner::top_left_far, frustum_corner::bottom_left_far},
+
+                     // Right Face
+                     {frustum_corner::bottom_right_near, frustum_corner::top_right_near,
+                      frustum_corner::top_right_far, frustum_corner::bottom_right_far},
+
+                     // Top Face
+                     {frustum_corner::top_left_near, frustum_corner::top_left_far,
+                      frustum_corner::top_right_far, frustum_corner::top_right_near},
+
+                     // Bottom Face
+                     {frustum_corner::bottom_left_near, frustum_corner::bottom_left_far,
+                      frustum_corner::bottom_right_far, frustum_corner::bottom_right_near},
+                  }};
+
+                  const std::array<float3, 3> tri = {v0, v1, v2};
+
+                  for (int32 edge_index = 0; edge_index < 3; ++edge_index) {
+                     for (const auto& [i0, i1, i2, i3] : frustum_faces) {
+
+                        if (float distance = FLT_MAX;
+                            intersect_tri(tri[edge_index], tri_edge_directions[edge_index],
+                                          frustum.corners[i0], frustum.corners[i1],
+                                          frustum.corners[i2], distance) and
+                            distance <= tri_edge_lengths[edge_index]) {
+                           return true;
+                        }
+
+                        if (float distance = FLT_MAX;
+                            intersect_tri(tri[edge_index], tri_edge_directions[edge_index],
+                                          frustum.corners[i2], frustum.corners[i3],
+                                          frustum.corners[i0], distance) and
+                            distance <= tri_edge_lengths[edge_index]) {
+                           return true;
+                        }
+                     }
+                  }
+
+                  constexpr static std::array<std::array<frustum_corner, 2>, 12> frustum_edges = {{
+                     {frustum_corner::top_left_near, frustum_corner::top_left_far},
+                     {frustum_corner::top_left_far, frustum_corner::top_right_far},
+                     {frustum_corner::top_right_far, frustum_corner::top_right_near},
+                     {frustum_corner::top_right_near, frustum_corner::top_left_near},
+
+                     {frustum_corner::bottom_left_near, frustum_corner::bottom_left_far},
+                     {frustum_corner::bottom_left_far, frustum_corner::bottom_right_far},
+                     {frustum_corner::bottom_right_far, frustum_corner::bottom_right_near},
+                     {frustum_corner::bottom_right_near, frustum_corner::bottom_left_near},
+
+                     {frustum_corner::bottom_left_near, frustum_corner::top_left_near},
+                     {frustum_corner::bottom_left_far, frustum_corner::top_left_far},
+                     {frustum_corner::bottom_right_far, frustum_corner::top_right_far},
+                     {frustum_corner::bottom_right_near, frustum_corner::top_right_near},
+                  }};
+
+                  for (const auto& [i0, i1] : frustum_edges) {
+                     const float3 edge_vector =
+                        frustum.corners[i1] - frustum.corners[i0];
+                     const float edge_length = length(edge_vector);
+                     const float3 edge_direction = edge_vector / edge_length;
+
+                     if (float distance = FLT_MAX;
+                         intersect_tri(frustum.corners[i0], edge_direction, v0,
+                                       v1, v2, distance) and
+                         distance <= edge_length) {
+                        return true;
+                     }
+                  }
+               }
+            }
+            else {
+               stack_ptr += 1;
+
+               stack[stack_ptr] = node.children_or_first_tri[lane_index];
+            }
+         }
+      }
+
+      return false;
+   }
+#else
+#error Unknown BVH mode.
+#endif
 
    [[nodiscard]] auto get_debug_boxes() const noexcept -> std::vector<math::bounding_box>
    {
@@ -651,12 +931,12 @@ private:
    };
 
    struct bounding_box_x4 {
-      alignas(__m128) std::array<float, 4> min_x;
-      alignas(__m128) std::array<float, 4> min_y;
-      alignas(__m128) std::array<float, 4> min_z;
-      alignas(__m128) std::array<float, 4> max_x;
-      alignas(__m128) std::array<float, 4> max_y;
-      alignas(__m128) std::array<float, 4> max_z;
+      alignas(simd_alignment) std::array<float, 4> min_x;
+      alignas(simd_alignment) std::array<float, 4> min_y;
+      alignas(simd_alignment) std::array<float, 4> min_z;
+      alignas(simd_alignment) std::array<float, 4> max_x;
+      alignas(simd_alignment) std::array<float, 4> max_y;
+      alignas(simd_alignment) std::array<float, 4> max_z;
    };
 
    struct node_packed_x4 {
@@ -1052,6 +1332,7 @@ struct detail::top_level_bvh_impl {
    top_level_bvh_impl(top_level_bvh_impl&&) noexcept = delete;
    auto operator=(top_level_bvh_impl&&) -> top_level_bvh_impl& = delete;
 
+#ifdef WE_BVH_X64
    [[nodiscard]] auto raycast(const float3& ray_originWS,
                               const float3& ray_directionWS, const float max_distance,
                               const bvh_ray_flags flags) const noexcept
@@ -1152,6 +1433,82 @@ struct detail::top_level_bvh_impl {
       return closest_hit_scalar < max_distance ? std::optional{closest_hit_scalar}
                                                : std::nullopt;
    }
+#elifdef WE_BVH_SCALAR
+   [[nodiscard]] auto raycast(const float3& ray_originWS,
+                              const float3& ray_directionWS, const float max_distance,
+                              const bvh_ray_flags flags) const noexcept
+      -> std::optional<float>
+   {
+      const float3 inv_ray_directionWS = 1.0f / ray_directionWS;
+
+      std::array<int32, 64> stack = {
+         _root_node_index,
+      };
+      int32 stack_ptr = 0;
+
+      float closest_hit = max_distance;
+
+      while (stack_ptr >= 0) {
+         const node_packed_x4& node = _nodes[stack[stack_ptr]];
+
+         stack_ptr -= 1;
+
+         for (std::size_t lane_index = 0; lane_index < node.bbox.min_x.size();
+              ++lane_index) {
+            float hit_distance = 0.0f;
+
+            if (not intersect_aabb(
+                   ray_originWS, inv_ray_directionWS,
+                   math::bounding_box{.min = {node.bbox.min_x[lane_index],
+                                              node.bbox.min_y[lane_index],
+                                              node.bbox.min_z[lane_index]},
+
+                                      .max = {node.bbox.max_x[lane_index],
+                                              node.bbox.max_y[lane_index],
+                                              node.bbox.max_z[lane_index]}},
+                   closest_hit, hit_distance)) {
+               continue;
+            }
+
+            const bool is_leaf = node.instance_count[lane_index] != 0;
+
+            if (is_leaf) {
+               const int32 last_instance =
+                  node.children_or_first_instance[lane_index] +
+                  node.instance_count[lane_index];
+
+               for (int32 instance_index = node.children_or_first_instance[lane_index];
+                    instance_index < last_instance; ++instance_index) {
+                  const instance& instance = _instances[_index[instance_index]];
+
+                  const float3 ray_originIS =
+                     instance.inverse_rotation * ray_originWS + instance.inverse_position;
+                  const float3 ray_directionIS =
+                     normalize(instance.inverse_rotation * ray_directionWS);
+
+                  if (std::optional<bvh::ray_hit> hit =
+                         instance.bvh->raycast(ray_originIS, ray_directionIS,
+                                               closest_hit, flags);
+                      hit) {
+                     if (flags.accept_first_hit) {
+                        return std::optional{hit->distance};
+                     }
+                  }
+               }
+            }
+            else {
+               stack_ptr += 1;
+
+               stack[stack_ptr] = node.children_or_first_instance[lane_index];
+            }
+         }
+      }
+
+      return closest_hit < max_distance ? std::optional{closest_hit} : std::nullopt;
+   }
+#else
+#error Unknown BVH mode.
+#endif
 
    [[nodiscard]] auto get_debug_boxes() const noexcept -> std::vector<math::bounding_box>
    {
@@ -1180,12 +1537,12 @@ private:
    };
 
    struct bounding_box_x4 {
-      alignas(__m128) std::array<float, 4> min_x;
-      alignas(__m128) std::array<float, 4> min_y;
-      alignas(__m128) std::array<float, 4> min_z;
-      alignas(__m128) std::array<float, 4> max_x;
-      alignas(__m128) std::array<float, 4> max_y;
-      alignas(__m128) std::array<float, 4> max_z;
+      alignas(simd_alignment) std::array<float, 4> min_x;
+      alignas(simd_alignment) std::array<float, 4> min_y;
+      alignas(simd_alignment) std::array<float, 4> min_z;
+      alignas(simd_alignment) std::array<float, 4> max_x;
+      alignas(simd_alignment) std::array<float, 4> max_y;
+      alignas(simd_alignment) std::array<float, 4> max_z;
    };
 
    struct node_packed_x4 {

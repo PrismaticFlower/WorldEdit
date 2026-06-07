@@ -30,7 +30,11 @@
 
 #include "mikktspace.h"
 
-#include <immintrin.h>         // WorldEdit change
+// WorldEdit changes
+#ifdef _M_X64
+#include <immintrin.h>         
+#endif
+
 #include <mimalloc-override.h> // WorldEdit change
 
 #define TFALSE 0
@@ -87,9 +91,13 @@ static SVec3 vscale(const float fS, const SVec3 v)
 
 static float Sqrt(float v) // WorldEdit change
 {
+#ifdef _M_X64
    _mm_store_ss(&v, _mm_sqrt_ss(_mm_load_ss(&v)));
 
    return v;
+#else
+   return sqrtf(v);
+#endif
 }
 
 static float LengthSquared(const SVec3 v)
