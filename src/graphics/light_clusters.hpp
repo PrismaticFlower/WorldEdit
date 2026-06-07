@@ -68,7 +68,7 @@ private:
                             copy_command_list_pool& copy_command_list_pool);
 
    void draw_meshes_shadow_map(const world_opaque_mesh_list& meshes,
-                               const std::vector<uint16>& render_list,
+                               const std::span<const uint16> render_list,
                                gpu::pipeline_handle pipeline,
                                gpu::graphics_command_list& command_list) const;
 

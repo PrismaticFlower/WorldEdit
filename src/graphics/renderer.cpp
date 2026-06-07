@@ -1391,11 +1391,10 @@ void renderer_impl::draw_world_render_list(mesh_opaque_flags list_index,
                                            gpu::graphics_command_list& command_list)
 {
    const world_opaque_mesh_list& meshes = _world_mesh_list.opaque[list_index];
-   const std::vector<uint16>& render_list = _world_mesh_render_list.opaque[list_index];
 
    command_list.set_pipeline_state(pipeline);
 
-   for (const uint16 i : render_list) {
+   for (const uint16 i : _world_mesh_render_list.opaque[list_index]) {
       command_list.set_graphics_cbv(rs::mesh::object_cbv, meshes.gpu_constants[i]);
       command_list.set_graphics_cbv(rs::mesh::material_cbv,
                                     meshes.material_constant_buffer[i]);
@@ -1412,11 +1411,10 @@ void renderer_impl::draw_world_render_list(mesh_opaque_flags list_index,
 void renderer_impl::draw_world_render_list_transparent(gpu::graphics_command_list& command_list)
 {
    const world_transparent_mesh_list& meshes = _world_mesh_list.transparent;
-   const std::vector<uint16>& render_list = _world_mesh_render_list.transparent;
 
    material_pipeline_flags pipeline_flags = material_pipeline_flags::COUNT;
 
-   for (const uint16 i : render_list) {
+   for (const uint16 i : _world_mesh_render_list.transparent) {
       if (pipeline_flags != meshes.pipeline_flags[i]) {
          pipeline_flags = meshes.pipeline_flags[i];
 
@@ -4217,18 +4215,30 @@ void renderer_impl::build_world_mesh_render_list(const frustum& view_frustum)
    for (std::size_t i = 0; i < _world_mesh_render_list.opaque.size(); ++i) {
       const world_opaque_mesh_list& meshes = _world_mesh_list.opaque[i];
 
-      cull_objects_avx2(view_frustum, meshes.bbox.min.x, meshes.bbox.min.y,
-                        meshes.bbox.min.z, meshes.bbox.max.x, meshes.bbox.max.y,
-                        meshes.bbox.max.z, _world_mesh_render_list.opaque[i]);
+      if (_world_mesh_render_list.opaque_storage[i].size() < meshes.size()) {
+         _world_mesh_render_list.opaque_storage[i].resize(meshes.size());
+      }
+
+      _world_mesh_render_list.opaque[i] =
+         cull_objects(view_frustum, meshes.bbox.min.x, meshes.bbox.min.y,
+                      meshes.bbox.min.z, meshes.bbox.max.x, meshes.bbox.max.y,
+                      meshes.bbox.max.z, _world_mesh_render_list.opaque_storage[i]);
    }
 
-   cull_objects_avx2(view_frustum, _world_mesh_list.transparent.bbox.min.x,
-                     _world_mesh_list.transparent.bbox.min.y,
-                     _world_mesh_list.transparent.bbox.min.z,
-                     _world_mesh_list.transparent.bbox.max.x,
-                     _world_mesh_list.transparent.bbox.max.y,
-                     _world_mesh_list.transparent.bbox.max.z,
-                     _world_mesh_render_list.transparent);
+   if (_world_mesh_render_list.transparent_storage.size() <
+       _world_mesh_list.transparent.size()) {
+      _world_mesh_render_list.transparent_storage.resize(
+         _world_mesh_list.transparent.size());
+   }
+
+   _world_mesh_render_list.transparent =
+      cull_objects(view_frustum, _world_mesh_list.transparent.bbox.min.x,
+                   _world_mesh_list.transparent.bbox.min.y,
+                   _world_mesh_list.transparent.bbox.min.z,
+                   _world_mesh_list.transparent.bbox.max.x,
+                   _world_mesh_list.transparent.bbox.max.y,
+                   _world_mesh_list.transparent.bbox.max.z,
+                   _world_mesh_render_list.transparent_storage);
 
    std::sort(_world_mesh_render_list.transparent.begin(),
              _world_mesh_render_list.transparent.end(),

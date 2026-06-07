@@ -190,30 +190,25 @@ auto prepare_instances_view(
       culling_storage.resize(bbox_min_x.size());
    }
 
-   uint32 visible_count = 0;
-
-   if (draw == blocks_draw::shadow) {
-      cull_objects_shadow_cascade_avx2(view_frustum, bbox_min_x, bbox_min_y,
-                                       bbox_min_z, bbox_max_x, bbox_max_y,
-                                       bbox_max_z, hidden, layers, active_layers,
-                                       visible_count, culling_storage);
-   }
-   else {
-      cull_objects_avx2(view_frustum, bbox_min_x, bbox_min_y, bbox_min_z,
+   const std::span<const uint32> visible_blocks =
+      draw == blocks_draw::shadow
+         ? cull_objects_shadow_cascade(view_frustum, bbox_min_x, bbox_min_y, bbox_min_z,
+                                       bbox_max_x, bbox_max_y, bbox_max_z, hidden,
+                                       layers, active_layers, culling_storage)
+         : cull_objects(view_frustum, bbox_min_x, bbox_min_y, bbox_min_z,
                         bbox_max_x, bbox_max_y, bbox_max_z, hidden, layers,
-                        active_layers, visible_count, culling_storage);
-   }
+                        active_layers, culling_storage);
 
    blocks::view::instance_list list;
 
-   if (visible_count > 0) {
+   if (not visible_blocks.empty()) {
       const dynamic_buffer_allocator::allocation& instance_index_allocation =
-         dynamic_buffer_allocator.allocate(visible_count * sizeof(uint32));
+         dynamic_buffer_allocator.allocate(visible_blocks.size() * sizeof(uint32));
 
-      std::memcpy(instance_index_allocation.cpu_address, culling_storage.data(),
-                  visible_count * sizeof(uint32));
+      std::memcpy(instance_index_allocation.cpu_address, visible_blocks.data(),
+                  visible_blocks.size() * sizeof(uint32));
 
-      list.count = visible_count;
+      list.count = static_cast<uint32>(visible_blocks.size());
       list.instances = instance_index_allocation.gpu_address;
    }
 
@@ -231,28 +226,24 @@ auto prepare_instances_view(
       culling_storage.resize(bbox_min_x.size());
    }
 
-   uint32 visible_count = 0;
-
-   if (draw == blocks_draw::shadow) {
-      cull_objects_shadow_cascade_avx2(view_frustum, bbox_min_x, bbox_min_y,
+   const std::span<const uint32> visible_blocks =
+      draw == blocks_draw::shadow
+         ? cull_objects_shadow_cascade(view_frustum, bbox_min_x, bbox_min_y,
                                        bbox_min_z, bbox_max_x, bbox_max_y,
-                                       bbox_max_z, visible_count, culling_storage);
-   }
-   else {
-      cull_objects_avx2(view_frustum, bbox_min_x, bbox_min_y, bbox_min_z, bbox_max_x,
-                        bbox_max_y, bbox_max_z, visible_count, culling_storage);
-   }
+                                       bbox_max_z, culling_storage)
+         : cull_objects(view_frustum, bbox_min_x, bbox_min_y, bbox_min_z,
+                        bbox_max_x, bbox_max_y, bbox_max_z, culling_storage);
 
    blocks::view::instance_list list;
 
-   if (visible_count > 0) {
+   if (not visible_blocks.empty()) {
       const dynamic_buffer_allocator::allocation& instance_index_allocation =
-         dynamic_buffer_allocator.allocate(visible_count * sizeof(uint32));
+         dynamic_buffer_allocator.allocate(visible_blocks.size() * sizeof(uint32));
 
-      std::memcpy(instance_index_allocation.cpu_address, culling_storage.data(),
-                  visible_count * sizeof(uint32));
+      std::memcpy(instance_index_allocation.cpu_address, visible_blocks.data(),
+                  visible_blocks.size() * sizeof(uint32));
 
-      list.count = visible_count;
+      list.count = static_cast<uint32>(visible_blocks.size());
       list.instances = instance_index_allocation.gpu_address;
    }
 
@@ -274,30 +265,26 @@ auto prepare_draw_list(
       culling_storage.resize(bbox_min_x.size());
    }
 
-   uint32 visible_count = 0;
-
-   if (draw == blocks_draw::shadow) {
-      cull_objects_shadow_cascade_avx2(view_frustum, bbox_min_x, bbox_min_y,
-                                       bbox_min_z, bbox_max_x, bbox_max_y,
-                                       bbox_max_z, hidden, layers, active_layers,
-                                       visible_count, culling_storage);
-   }
-   else {
-      cull_objects_avx2(view_frustum, bbox_min_x, bbox_min_y, bbox_min_z,
+   const std::span<const uint32> visible_blocks =
+      draw == blocks_draw::shadow
+         ? cull_objects_shadow_cascade(view_frustum, bbox_min_x, bbox_min_y, bbox_min_z,
+                                       bbox_max_x, bbox_max_y, bbox_max_z, hidden,
+                                       layers, active_layers, culling_storage)
+         : cull_objects(view_frustum, bbox_min_x, bbox_min_y, bbox_min_z,
                         bbox_max_x, bbox_max_y, bbox_max_z, hidden, layers,
-                        active_layers, visible_count, culling_storage);
-   }
+                        active_layers, culling_storage);
 
    blocks::view::draw_list list;
 
-   if (visible_count > 0) {
+   if (not visible_blocks.empty()) {
       const dynamic_buffer_allocator::allocation& draw_allocation =
-         dynamic_buffer_allocator.allocate(visible_count * sizeof(block_indirect_draw));
+         dynamic_buffer_allocator.allocate(visible_blocks.size() *
+                                           sizeof(block_indirect_draw));
 
       std::byte* upload_ptr = draw_allocation.cpu_address;
 
-      for (uint32 i = 0; i < visible_count; ++i) {
-         const uint32 instance_index = culling_storage[i];
+      for (std::size_t i = 0; i < visible_blocks.size(); ++i) {
+         const uint32 instance_index = visible_blocks[i];
 
          const blocks::custom_mesh& mesh =
             meshes[world::blocks_custom_mesh_library::unpack_pool_index(mesh_handles[instance_index])];
@@ -313,7 +300,7 @@ auto prepare_draw_list(
          upload_ptr += sizeof(block_indirect_draw);
       }
 
-      list.count = visible_count;
+      list.count = static_cast<uint32>(visible_blocks.size());
       list.draw_buffer = draw_allocation.resource;
       list.draw_buffer_offset = draw_allocation.offset;
    }
@@ -334,28 +321,25 @@ auto prepare_draw_list(
       culling_storage.resize(bbox_min_x.size());
    }
 
-   uint32 visible_count = 0;
-
-   if (draw == blocks_draw::shadow) {
-      cull_objects_shadow_cascade_avx2(view_frustum, bbox_min_x, bbox_min_y,
+   const std::span<const uint32> visible_blocks =
+      draw == blocks_draw::shadow
+         ? cull_objects_shadow_cascade(view_frustum, bbox_min_x, bbox_min_y,
                                        bbox_min_z, bbox_max_x, bbox_max_y,
-                                       bbox_max_z, visible_count, culling_storage);
-   }
-   else {
-      cull_objects_avx2(view_frustum, bbox_min_x, bbox_min_y, bbox_min_z, bbox_max_x,
-                        bbox_max_y, bbox_max_z, visible_count, culling_storage);
-   }
+                                       bbox_max_z, culling_storage)
+         : cull_objects(view_frustum, bbox_min_x, bbox_min_y, bbox_min_z,
+                        bbox_max_x, bbox_max_y, bbox_max_z, culling_storage);
 
    blocks::view::draw_list list;
 
-   if (visible_count > 0) {
+   if (not visible_blocks.empty()) {
       const dynamic_buffer_allocator::allocation& draw_allocation =
-         dynamic_buffer_allocator.allocate(visible_count * sizeof(block_indirect_draw));
+         dynamic_buffer_allocator.allocate(visible_blocks.size() *
+                                           sizeof(block_indirect_draw));
 
       std::byte* upload_ptr = draw_allocation.cpu_address;
 
-      for (uint32 i = 0; i < visible_count; ++i) {
-         const uint32 instance_index = culling_storage[i];
+      for (std::size_t i = 0; i < visible_blocks.size(); ++i) {
+         const uint32 instance_index = visible_blocks[i];
 
          const blocks::custom_mesh& mesh =
             meshes[world::blocks_custom_mesh_library::unpack_pool_index(mesh_handles[instance_index])];
@@ -371,7 +355,7 @@ auto prepare_draw_list(
          upload_ptr += sizeof(block_indirect_draw);
       }
 
-      list.count = visible_count;
+      list.count = static_cast<uint32>(visible_blocks.size());
       list.draw_buffer = draw_allocation.resource;
       list.draw_buffer_offset = draw_allocation.offset;
    }

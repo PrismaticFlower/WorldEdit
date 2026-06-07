@@ -8,6 +8,7 @@
 #include "types.hpp"
 
 #include <functional>
+#include <span>
 #include <vector>
 
 namespace we::graphics {
@@ -164,8 +165,11 @@ struct world_mesh_list {
 };
 
 struct world_mesh_render_list {
-   container::enum_array<std::vector<uint16>, mesh_opaque_flags> opaque;
-   std::vector<uint16> transparent;
+   container::enum_array<std::vector<uint16>, mesh_opaque_flags> opaque_storage;
+   std::vector<uint16> transparent_storage;
+
+   container::enum_array<std::span<uint16>, mesh_opaque_flags> opaque;
+   std::span<uint16> transparent;
 };
 
 }

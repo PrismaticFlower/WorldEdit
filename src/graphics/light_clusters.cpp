@@ -980,76 +980,49 @@ void light_clusters::draw_shadow_maps(
 
       frustum shadow_frustum{shadow_camera.world_from_projection(), 1.0f, 0.0f};
 
-      cull_objects_shadow_cascade_avx2(
-         shadow_frustum, meshes.opaque[mesh_opaque_flags::none].bbox.min.x,
-         meshes.opaque[mesh_opaque_flags::none].bbox.min.y,
-         meshes.opaque[mesh_opaque_flags::none].bbox.min.z,
-         meshes.opaque[mesh_opaque_flags::none].bbox.max.x,
-         meshes.opaque[mesh_opaque_flags::none].bbox.max.y,
-         meshes.opaque[mesh_opaque_flags::none].bbox.max.z, _shadow_render_list);
-
-      draw_meshes_shadow_map(
-         meshes.opaque[mesh_opaque_flags::none], _shadow_render_list,
-         pipelines.mesh_shadow[depth_prepass_pipeline_flags::none].get(),
-         command_list);
-
-      cull_objects_shadow_cascade_avx2(
-         shadow_frustum, meshes.opaque[mesh_opaque_flags::doublesided].bbox.min.x,
-         meshes.opaque[mesh_opaque_flags::doublesided].bbox.min.y,
-         meshes.opaque[mesh_opaque_flags::doublesided].bbox.min.z,
-         meshes.opaque[mesh_opaque_flags::doublesided].bbox.max.x,
-         meshes.opaque[mesh_opaque_flags::doublesided].bbox.max.y,
-         meshes.opaque[mesh_opaque_flags::doublesided].bbox.max.z,
-         _shadow_render_list);
-
-      draw_meshes_shadow_map(
-         meshes.opaque[mesh_opaque_flags::doublesided], _shadow_render_list,
-         pipelines.mesh_shadow[depth_prepass_pipeline_flags::doublesided].get(),
-         command_list);
-
-      cull_objects_shadow_cascade_avx2(
-         shadow_frustum, meshes.opaque[mesh_opaque_flags::alpha_cutout].bbox.min.x,
-         meshes.opaque[mesh_opaque_flags::alpha_cutout].bbox.min.y,
-         meshes.opaque[mesh_opaque_flags::alpha_cutout].bbox.min.z,
-         meshes.opaque[mesh_opaque_flags::alpha_cutout].bbox.max.x,
-         meshes.opaque[mesh_opaque_flags::alpha_cutout].bbox.max.y,
-         meshes.opaque[mesh_opaque_flags::alpha_cutout].bbox.max.z,
-         _shadow_render_list);
-
-      draw_meshes_alpha_cutout_shadow_map(
-         meshes.opaque[mesh_opaque_flags::alpha_cutout], _shadow_render_list,
-         pipelines.mesh_shadow[depth_prepass_pipeline_flags::alpha_cutout].get(),
-         command_list);
-
-      cull_objects_shadow_cascade_avx2(
-         shadow_frustum,
+      const std::size_t max_visible_objects = std::max({
+         meshes.opaque[mesh_opaque_flags::none].size(),
+         meshes.opaque[mesh_opaque_flags::doublesided].size(),
+         meshes.opaque[mesh_opaque_flags::alpha_cutout].size(),
          meshes
             .opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided]
-            .bbox.min.x,
-         meshes
-            .opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided]
-            .bbox.min.y,
-         meshes
-            .opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided]
-            .bbox.min.z,
-         meshes
-            .opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided]
-            .bbox.max.x,
-         meshes
-            .opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided]
-            .bbox.max.y,
-         meshes
-            .opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided]
-            .bbox.max.z,
-         _shadow_render_list);
+            .size(),
+      });
 
-      draw_meshes_alpha_cutout_shadow_map(
-         meshes.opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided],
-         _shadow_render_list,
-         pipelines
-            .mesh_shadow[depth_prepass_pipeline_flags::alpha_cutout | depth_prepass_pipeline_flags::doublesided]
-            .get(),
-         command_list);
+      if (_shadow_render_list.size() < max_visible_objects) {
+         _shadow_render_list.resize(max_visible_objects);
+      }
+
+      struct shadow_batch_flags {
+         mesh_opaque_flags mesh;
+         depth_prepass_pipeline_flags pipeline;
+      };
+
+      for (const shadow_batch_flags batch_flags : {
+              shadow_batch_flags{mesh_opaque_flags::none,
+                                 depth_prepass_pipeline_flags::none},
+              shadow_batch_flags{mesh_opaque_flags::doublesided,
+                                 depth_prepass_pipeline_flags::doublesided},
+              shadow_batch_flags{mesh_opaque_flags::alpha_cutout,
+                                 depth_prepass_pipeline_flags::alpha_cutout},
+              shadow_batch_flags{mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided,
+                                 depth_prepass_pipeline_flags::alpha_cutout |
+                                    depth_prepass_pipeline_flags::doublesided},
+           }) {
+         const std::span<uint16> visible_objects =
+            cull_objects_shadow_cascade(shadow_frustum,
+                                        meshes.opaque[batch_flags.mesh].bbox.min.x,
+                                        meshes.opaque[batch_flags.mesh].bbox.min.y,
+                                        meshes.opaque[batch_flags.mesh].bbox.min.z,
+                                        meshes.opaque[batch_flags.mesh].bbox.max.x,
+                                        meshes.opaque[batch_flags.mesh].bbox.max.y,
+                                        meshes.opaque[batch_flags.mesh].bbox.max.z,
+                                        _shadow_render_list);
+
+         draw_meshes_shadow_map(meshes.opaque[batch_flags.mesh], visible_objects,
+                                pipelines.mesh_shadow[batch_flags.pipeline].get(),
+                                command_list);
+      }
 
       blocks.draw(blocks_draw::shadow, _sun_shadow_blocks_view[cascade_index],
                   frame_cbv, _lights_constant_buffer_view, command_list,
@@ -1131,7 +1104,7 @@ void light_clusters::init_proxy_geometry(gpu::device& device,
 }
 
 void light_clusters::draw_meshes_shadow_map(const world_opaque_mesh_list& meshes,
-                                            const std::vector<uint16>& render_list,
+                                            const std::span<const uint16> render_list,
                                             gpu::pipeline_handle pipeline,
                                             gpu::graphics_command_list& command_list) const
 {
