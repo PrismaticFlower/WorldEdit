@@ -2,9 +2,13 @@
 
 #include <cassert>
 
+#ifdef _M_X64
 #include <immintrin.h>
+#endif
 
 namespace we::graphics {
+
+#ifdef __AVX__
 
 namespace {
 
@@ -598,5 +602,188 @@ auto cull_objects_shadow_cascade(
 
    return out_list.subspan(0, out_count);
 }
+
+#else
+
+auto cull_objects(const frustum& frustum, std::span<const float> bbox_min_x,
+                  std::span<const float> bbox_min_y,
+                  std::span<const float> bbox_min_z, std::span<const float> bbox_max_x,
+                  std::span<const float> bbox_max_y, std::span<const float> bbox_max_z,
+                  std::span<uint16> out_list) noexcept -> std::span<uint16>
+{
+   assert(bbox_min_x.size() == bbox_min_y.size());
+   assert(bbox_min_x.size() == bbox_min_z.size());
+   assert(bbox_min_x.size() == bbox_max_x.size());
+   assert(bbox_min_x.size() == bbox_max_y.size());
+   assert(bbox_min_x.size() == bbox_max_z.size());
+   assert(bbox_min_x.size() <= out_list.size());
+
+   std::size_t out_count = 0;
+
+   for (std::size_t i = 0; i < bbox_min_x.size(); ++i) {
+      if (not intersects(frustum, {{bbox_min_x[i], bbox_min_y[i], bbox_min_z[i]},
+                                   {bbox_max_x[i], bbox_max_y[i], bbox_max_z[i]}})) {
+         continue;
+      }
+
+      out_list[out_count++] = static_cast<uint16>(i);
+   }
+
+   return out_list.subspan(0, out_count);
+}
+
+auto cull_objects(const frustum& frustum, std::span<const float> bbox_min_x,
+                  std::span<const float> bbox_min_y, std::span<const float> bbox_min_z,
+                  std::span<const float> bbox_max_x, std::span<const float> bbox_max_y,
+                  std::span<const float> bbox_max_z, std::span<const bool> hidden,
+                  std::span<const int8> layers, const world::active_layers active_layers,
+                  std::span<uint32> out_list) noexcept -> std::span<uint32>
+{
+   assert(bbox_min_x.size() == bbox_min_y.size());
+   assert(bbox_min_x.size() == bbox_min_z.size());
+   assert(bbox_min_x.size() == bbox_max_x.size());
+   assert(bbox_min_x.size() == bbox_max_y.size());
+   assert(bbox_min_x.size() == bbox_max_z.size());
+   assert(bbox_min_x.size() == hidden.size());
+   assert(bbox_min_x.size() == layers.size());
+   assert(bbox_min_x.size() <= out_list.size());
+
+   std::size_t out_count = 0;
+
+   for (std::size_t i = 0; i < bbox_min_x.size(); ++i) {
+      if (not active_layers[layers[i]] or hidden[i] or
+          not intersects(frustum, {{bbox_min_x[i], bbox_min_y[i], bbox_min_z[i]},
+                                   {bbox_max_x[i], bbox_max_y[i], bbox_max_z[i]}})) {
+         continue;
+      }
+
+      out_list[out_count++] = static_cast<uint32>(i);
+   }
+
+   return out_list.subspan(0, out_count);
+}
+
+auto cull_objects(const frustum& frustum, std::span<const float> bbox_min_x,
+                  std::span<const float> bbox_min_y,
+                  std::span<const float> bbox_min_z, std::span<const float> bbox_max_x,
+                  std::span<const float> bbox_max_y, std::span<const float> bbox_max_z,
+                  std::span<uint32> out_list) noexcept -> std::span<uint32>
+{
+   assert(bbox_min_x.size() == bbox_min_y.size());
+   assert(bbox_min_x.size() == bbox_min_z.size());
+   assert(bbox_min_x.size() == bbox_max_x.size());
+   assert(bbox_min_x.size() == bbox_max_y.size());
+   assert(bbox_min_x.size() == bbox_max_z.size());
+   assert(bbox_min_x.size() <= out_list.size());
+
+   std::size_t out_count = 0;
+
+   for (std::size_t i = 0; i < bbox_min_x.size(); ++i) {
+      if (not intersects(frustum, {{bbox_min_x[i], bbox_min_y[i], bbox_min_z[i]},
+                                   {bbox_max_x[i], bbox_max_y[i], bbox_max_z[i]}})) {
+         continue;
+      }
+
+      out_list[out_count++] = static_cast<uint32>(i);
+   }
+
+   return out_list.subspan(0, out_count);
+}
+
+auto cull_objects_shadow_cascade(
+   const frustum& frustum, std::span<const float> bbox_min_x,
+   std::span<const float> bbox_min_y, std::span<const float> bbox_min_z,
+   std::span<const float> bbox_max_x, std::span<const float> bbox_max_y,
+   std::span<const float> bbox_max_z, std::span<uint16> out_list) noexcept
+   -> std::span<uint16>
+{
+   assert(bbox_min_x.size() == bbox_min_y.size());
+   assert(bbox_min_x.size() == bbox_min_z.size());
+   assert(bbox_min_x.size() == bbox_max_x.size());
+   assert(bbox_min_x.size() == bbox_max_y.size());
+   assert(bbox_min_x.size() == bbox_max_z.size());
+   assert(bbox_min_x.size() <= out_list.size());
+
+   std::size_t out_count = 0;
+
+   for (std::size_t i = 0; i < bbox_min_x.size(); ++i) {
+      if (not intersects_shadow_cascade(frustum, {{bbox_min_x[i], bbox_min_y[i],
+                                                   bbox_min_z[i]},
+                                                  {bbox_max_x[i], bbox_max_y[i],
+                                                   bbox_max_z[i]}})) {
+         continue;
+      }
+
+      out_list[out_count++] = static_cast<uint16>(i);
+   }
+
+   return out_list.subspan(0, out_count);
+}
+
+auto cull_objects_shadow_cascade(
+   const frustum& frustum, std::span<const float> bbox_min_x,
+   std::span<const float> bbox_min_y, std::span<const float> bbox_min_z,
+   std::span<const float> bbox_max_x, std::span<const float> bbox_max_y,
+   std::span<const float> bbox_max_z, std::span<const bool> hidden,
+   std::span<const int8> layers, const world::active_layers active_layers,
+   std::span<uint32> out_list) noexcept -> std::span<uint32>
+{
+   assert(bbox_min_x.size() == bbox_min_y.size());
+   assert(bbox_min_x.size() == bbox_min_z.size());
+   assert(bbox_min_x.size() == bbox_max_x.size());
+   assert(bbox_min_x.size() == bbox_max_y.size());
+   assert(bbox_min_x.size() == bbox_max_z.size());
+   assert(bbox_min_x.size() == hidden.size());
+   assert(bbox_min_x.size() == layers.size());
+   assert(bbox_min_x.size() <= out_list.size());
+
+   std::size_t out_count = 0;
+
+   for (std::size_t i = 0; i < bbox_min_x.size(); ++i) {
+      if (not active_layers[layers[i]] or hidden[i] or
+          not intersects_shadow_cascade(frustum, {{bbox_min_x[i], bbox_min_y[i],
+                                                   bbox_min_z[i]},
+                                                  {bbox_max_x[i], bbox_max_y[i],
+                                                   bbox_max_z[i]}})) {
+         continue;
+      }
+
+      out_list[out_count++] = static_cast<uint32>(i);
+   }
+
+   return out_list.subspan(0, out_count);
+}
+
+auto cull_objects_shadow_cascade(
+   const frustum& frustum, std::span<const float> bbox_min_x,
+   std::span<const float> bbox_min_y, std::span<const float> bbox_min_z,
+   std::span<const float> bbox_max_x, std::span<const float> bbox_max_y,
+   std::span<const float> bbox_max_z, std::span<uint32> out_list) noexcept
+   -> std::span<uint32>
+{
+   assert(bbox_min_x.size() == bbox_min_y.size());
+   assert(bbox_min_x.size() == bbox_min_z.size());
+   assert(bbox_min_x.size() == bbox_max_x.size());
+   assert(bbox_min_x.size() == bbox_max_y.size());
+   assert(bbox_min_x.size() == bbox_max_z.size());
+   assert(bbox_min_x.size() <= out_list.size());
+
+   std::size_t out_count = 0;
+
+   for (std::size_t i = 0; i < bbox_min_x.size(); ++i) {
+      if (not intersects_shadow_cascade(frustum, {{bbox_min_x[i], bbox_min_y[i],
+                                                   bbox_min_z[i]},
+                                                  {bbox_max_x[i], bbox_max_y[i],
+                                                   bbox_max_z[i]}})) {
+         continue;
+      }
+
+      out_list[out_count++] = static_cast<uint32>(i);
+   }
+
+   return out_list.subspan(0, out_count);
+}
+
+#endif
 
 }
