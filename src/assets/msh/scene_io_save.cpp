@@ -180,13 +180,20 @@ void write_geom(ucfb::writer& geom, const node& node)
    }
 }
 
-void write_modl(ucfb::writer& modl, const node& node)
+void write_modl(ucfb::writer& modl, const node& node, const std::size_t node_index)
 {
    // MTYP
    {
       ucfb::writer mtyp = modl.write_child("MTYP"_id);
 
       mtyp.write(node.type);
+   }
+
+   // MNDX
+   {
+      ucfb::writer mndx = modl.write_child("MNDX"_id);
+
+      mndx.write(static_cast<uint32>(node_index));
    }
 
    // NAME
@@ -260,10 +267,10 @@ void save_scene(const io::path& path, const scene& scene)
          }
 
          // MODL
-         for (const node& node : scene.nodes) {
+         for (std::size_t i = 0; i < scene.nodes.size(); ++i) {
             ucfb::writer modl = msh2.write_child("MODL"_id);
 
-            write_modl(modl, node);
+            write_modl(modl, scene.nodes[i], i);
          }
       }
 
