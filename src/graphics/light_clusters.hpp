@@ -73,7 +73,7 @@ private:
                                gpu::graphics_command_list& command_list) const;
 
    void draw_meshes_alpha_cutout_shadow_map(const world_opaque_mesh_list& meshes,
-                                            const std::vector<uint16>& render_list,
+                                            const std::span<const uint16> render_list,
                                             gpu::pipeline_handle pipeline,
                                             gpu::graphics_command_list& command_list) const;
 

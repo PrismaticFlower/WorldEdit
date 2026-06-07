@@ -434,8 +434,10 @@ auto cull_objects_shadow_cascade(
 
    for (std::size_t i = bbox_min_x.size() - scalar_iterations;
         i < bbox_min_x.size(); ++i) {
-      if (not intersects(frustum, {{bbox_min_x[i], bbox_min_y[i], bbox_min_z[i]},
-                                   {bbox_max_x[i], bbox_max_y[i], bbox_max_z[i]}})) {
+      if (not intersects_shadow_cascade(frustum, {{bbox_min_x[i], bbox_min_y[i],
+                                                   bbox_min_z[i]},
+                                                  {bbox_max_x[i], bbox_max_y[i],
+                                                   bbox_max_z[i]}})) {
          continue;
       }
 
@@ -510,8 +512,10 @@ auto cull_objects_shadow_cascade(
    for (std::size_t i = bbox_min_x.size() - scalar_iterations;
         i < bbox_min_x.size(); ++i) {
       if (not active_layers[layers[i]] or hidden[i] or
-          not intersects(frustum, {{bbox_min_x[i], bbox_min_y[i], bbox_min_z[i]},
-                                   {bbox_max_x[i], bbox_max_y[i], bbox_max_z[i]}})) {
+          not intersects_shadow_cascade(frustum, {{bbox_min_x[i], bbox_min_y[i],
+                                                   bbox_min_z[i]},
+                                                  {bbox_max_x[i], bbox_max_y[i],
+                                                   bbox_max_z[i]}})) {
          continue;
       }
 
@@ -582,8 +586,10 @@ auto cull_objects_shadow_cascade(
 
    for (std::size_t i = bbox_min_x.size() - scalar_iterations;
         i < bbox_min_x.size(); ++i) {
-      if (not intersects(frustum, {{bbox_min_x[i], bbox_min_y[i], bbox_min_z[i]},
-                                   {bbox_max_x[i], bbox_max_y[i], bbox_max_z[i]}})) {
+      if (not intersects_shadow_cascade(frustum, {{bbox_min_x[i], bbox_min_y[i],
+                                                   bbox_min_z[i]},
+                                                  {bbox_max_x[i], bbox_max_y[i],
+                                                   bbox_max_z[i]}})) {
          continue;
       }
 

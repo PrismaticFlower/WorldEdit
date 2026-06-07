@@ -1019,9 +1019,16 @@ void light_clusters::draw_shadow_maps(
                                         meshes.opaque[batch_flags.mesh].bbox.max.z,
                                         _shadow_render_list);
 
-         draw_meshes_shadow_map(meshes.opaque[batch_flags.mesh], visible_objects,
-                                pipelines.mesh_shadow[batch_flags.pipeline].get(),
-                                command_list);
+         if (are_flags_set(batch_flags.mesh, mesh_opaque_flags::alpha_cutout)) {
+            draw_meshes_alpha_cutout_shadow_map(
+               meshes.opaque[batch_flags.mesh], visible_objects,
+               pipelines.mesh_shadow[batch_flags.pipeline].get(), command_list);
+         }
+         else {
+            draw_meshes_shadow_map(meshes.opaque[batch_flags.mesh], visible_objects,
+                                   pipelines.mesh_shadow[batch_flags.pipeline].get(),
+                                   command_list);
+         }
       }
 
       blocks.draw(blocks_draw::shadow, _sun_shadow_blocks_view[cascade_index],
@@ -1124,7 +1131,7 @@ void light_clusters::draw_meshes_shadow_map(const world_opaque_mesh_list& meshes
 }
 
 void light_clusters::draw_meshes_alpha_cutout_shadow_map(
-   const world_opaque_mesh_list& meshes, const std::vector<uint16>& render_list,
+   const world_opaque_mesh_list& meshes, const std::span<const uint16> render_list,
    gpu::pipeline_handle pipeline, gpu::graphics_command_list& command_list) const
 {
    command_list.set_pipeline_state(pipeline);

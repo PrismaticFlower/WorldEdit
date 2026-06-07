@@ -106,7 +106,7 @@ bool intersects(const frustum& frustum, const math::bounding_box& bbox) noexcept
       }
    }
 
-   const auto outside_corner = [&](const float float3::*axis, auto comparator,
+   const auto outside_corner = [&](const float float3::* axis, auto comparator,
                                    const float corner) {
       bool outside = true;
 
@@ -129,8 +129,8 @@ bool intersects(const frustum& frustum, const math::bounding_box& bbox) noexcept
 
 bool intersects_shadow_cascade(const frustum& frustum, const math::bounding_box& bbox) noexcept
 {
-   for (std::size_t i = 0; i < (frustum.planes.size() - 1); ++i) {
-      const float4 plane = frustum.planes[i];
+   for (std::size_t i = 1; i < frustum.planes.size(); ++i) {
+      const float4& plane = frustum.planes[i];
 
       if (outside_plane(plane, {bbox.min.x, bbox.min.y, bbox.min.z}) &
           outside_plane(plane, {bbox.max.x, bbox.min.y, bbox.min.z}) &
