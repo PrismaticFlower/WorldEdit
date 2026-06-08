@@ -151,6 +151,11 @@ TEST_CASE("model_munge model_clrl_vertexlighting", "[Munge]")
    REQUIRE(golden_ref_test("model_clrl_vertexlighting", 504));
 }
 
+TEST_CASE("model_munge model_largetexcoords", "[Munge]")
+{
+   REQUIRE(golden_ref_test("model_largetexcoords", 488));
+}
+
 TEST_CASE("model_munge model_lods", "[Munge]")
 {
    REQUIRE(golden_ref_test("model_lods", 124));

@@ -802,6 +802,9 @@ void read_scene_option(const option& opt, scene_options& out)
                                       .light_name = std::string{light_name}});
       }
    }
+   else if (iequals(opt.name, "-largetexcoords"sv)) {
+      out.large_texcoords = true;
+   }
 }
 
 auto load_scene_options(const io::path& path, const options& directory_options) -> scene_options

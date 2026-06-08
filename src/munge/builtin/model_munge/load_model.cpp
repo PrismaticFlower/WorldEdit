@@ -1254,6 +1254,7 @@ auto build_model(const model_lod lod, const std::span<const std::size_t> model_n
 
       .no_projection_lights = scene.options.no_projection_lights,
       .vertex_lighting = scene.options.vertex_lighting,
+      .large_texcoords = scene.options.large_texcoords,
    };
 
    const uint32 requested_segment_bones =

@@ -188,6 +188,7 @@ struct model {
    bool pre_inverse_transformed_vertices = false;
    bool no_projection_lights = false;
    bool vertex_lighting = false;
+   bool large_texcoords = false;
 
    math::bounding_box vertex_box;
    math::bounding_box visibility_box;

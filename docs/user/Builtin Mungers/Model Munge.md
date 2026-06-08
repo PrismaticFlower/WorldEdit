@@ -7,6 +7,8 @@ In addition to being a complete ModelMunge replacment it has extra features too 
 
 - Performing basic optimization of the index buffers of a mesh using [meshoptimizer](https://github.com/zeux/meshoptimizer), so not only can it munge a little faster, it's output may be drawn slightly faster too.
 - Better Diagnostics when an error happens, including [Warnings](#warnings) to help catch issues that don't prevent a munge but are likely indicative of mistakes.
+- Optional support for large texture coordinates/UVs (outside the range [-16, 15.999512]) using a new `-largetexcoords` option.
+
 
 ## Compatibility Differences with Modtools' Model Munge
 
@@ -78,6 +80,7 @@ This does not apply to shadow volumes from "SHDW" chunks as they are already clo
 | -noprojectionlights | | Turn off projection lights for the model. |
 | -ambientlighting | "r=[-1, 1] g=[-1, 1] b=[-1, 1]" | Adjust the vertex colours of the model. The vertex colours are normalized and then have the supplied values added to them so passing `-ambientlighting "r=-1 g=0.5 b=0"` will change a vertex colour of `R: 128 G: 0 B: 64` to `R: 0 G: 128 B: 64`. | 
 | -attachlight | \<node light list> | Attach a light to a node's material, allowing the game to sync the material's brightness to that of the light. i.e. `-attachlight "blinking_node_01 blinking_light_01"`.  Crucially this does not create a light, the light must already exist in the world by other means. |
+| -largetexcoords | | Enables the use of floating point texture coordinates in the model's vertex buffers. Allows having texture coordinates outside the range [-16, 15.999512]. Increases munged model size and causes incompatibility with Shader Patch versions earlier than v1.10, if that matters to you. |
 
 Note: The `-righthanded` option listed in "misc_documentation.doc" is unsupported.
 

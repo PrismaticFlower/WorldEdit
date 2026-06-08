@@ -708,7 +708,7 @@ void write_segm(ucfb::writer& segm, const model_segment& segment, const model& m
                     {.position_compressed = true,
                      .weights_compressed = true,
                      .normals_compressed = true,
-                     .texcoords_compressed = true});
+                     .texcoords_compressed = not model.large_texcoords});
       }
 
       // Uncompressed

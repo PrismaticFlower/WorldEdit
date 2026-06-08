@@ -142,6 +142,7 @@ struct scene_options {
    bool additive_emissive = false;
    bool do_not_merge_collision = false;
    bool no_projection_lights = false;
+   bool large_texcoords = false;
 
    float scale = 1.0f;
    uint32 max_bones = 0;
