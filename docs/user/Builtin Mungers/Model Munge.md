@@ -511,6 +511,10 @@ A shadow volume node is not hidden. The node will also be treated as a regular m
 
 If you want the node to only be a shadow volume you should hide it.
 
+### MODEL_MESH_LARGE_TEXCOORDS
+
+A vertex has large texture coordinates (outside the range [-16, 15.999512]). Consider using "-largetexcoords" to opt-in to floating point texture coordinates.
+
 ### MODEL_SHADOW_MESH_DISCARDED_DEGENERATE_TRIANGLE
 
 A degenerate triangle has been discarded from an input mesh while constructing a shadow mesh.

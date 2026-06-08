@@ -133,6 +133,8 @@ enum class model_wc {
 
    unhidden_shadow_volume,
 
+   model_mesh_large_texcoords,
+
    model_shadow_mesh_discarded_degenerate_triangle,
    model_shadow_mesh_merged_nonidentical_vertices,
    model_shadow_mesh_merged_nonidentical_vertices_bone_weights,

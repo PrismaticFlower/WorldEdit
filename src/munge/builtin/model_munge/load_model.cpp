@@ -965,7 +965,24 @@ void build_segments(const std::size_t node_index, const msh::scene& scene,
          }
 
          if (geometry.texcoords) {
-            segment.vertices.texcoords[i] = (*geometry.texcoords)[i];
+            const float2& texcoords = (*geometry.texcoords)[i];
+
+            segment.vertices.texcoords[i] = texcoords;
+
+            const float min_small_texcoord = -32768.0f / 2048.0f;
+            const float max_small_texcoord = 32767.0f / 2048.0f;
+
+            if (std::min(texcoords.x, texcoords.y) < min_small_texcoord or
+                std::max(texcoords.x, texcoords.y) > max_small_texcoord) {
+               if (not scene.options.large_texcoords) {
+                  context.feedback.add_warning(
+                     {.file = context.path,
+                      .tool = "ModelMunge",
+                      .message = fmt::format(
+                         ".msh node ('{}') has large texcoords.\n\n{}", node.name,
+                         get_descriptive_message(model_wc::model_mesh_large_texcoords))});
+               }
+            }
          }
          else {
             segment.vertices.texcoords[i] = {};
