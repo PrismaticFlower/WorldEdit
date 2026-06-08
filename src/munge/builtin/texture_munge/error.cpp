@@ -72,7 +72,7 @@ Bad "-maps" option in .tga.option file. "-maps" must be followed by an unsigned 
 
 i.e "-maps 2")";
    case texture_ec::option_load_bad_border_color:
-      return R"(option_load_bad_border_color
+      return R"(OPTION_LOAD_BAD_BORDER_COLOR
 
 Bad border color option in .tga.option file. The option must followed by a color in HTML notation or a hexadecimal number representing the color.
 
