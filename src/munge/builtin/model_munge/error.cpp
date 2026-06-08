@@ -518,8 +518,7 @@ auto get_descriptive_message(const model_wc c) noexcept -> std::string_view
 
 An envelope/bone map uses a node that is not a bone and has not been explicitly kept (using "-keep"/"-keepall").
 
-This is valid but the entry in the bone map will instead point towards an unnamed bone with an identity transform. It is unlikely to be 
-what you want.)";
+This is valid but the entry in the bone map will instead point towards an unnamed bone with an identity transform. It is unlikely to be what you want.)";
 
    case model_wc::material_invalid_rendertype:
       return R"(MATERIAL_INVALID_RENDERTYPE
