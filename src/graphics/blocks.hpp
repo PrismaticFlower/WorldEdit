@@ -186,7 +186,7 @@ private:
    bool _initialized_custom_meshes = false;
    std::vector<custom_mesh> _custom_meshes;
 
-   std::vector<uint32> _TEMP_culling_storage;
+   std::vector<uint32> _culling_storage;
 
    std::vector<material> _materials;
 

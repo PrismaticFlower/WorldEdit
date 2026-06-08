@@ -1295,21 +1295,21 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                              blocks.boxes.bbox.max_x, blocks.boxes.bbox.max_y,
                              blocks.boxes.bbox.max_z, blocks.boxes.hidden,
                              blocks.boxes.layer, active_layers,
-                             _TEMP_culling_storage, dynamic_buffer_allocator);
+                             _culling_storage, dynamic_buffer_allocator);
    view.ramps =
       prepare_instances_view(draw, view_frustum, blocks.ramps.bbox.min_x,
                              blocks.ramps.bbox.min_y, blocks.ramps.bbox.min_z,
                              blocks.ramps.bbox.max_x, blocks.ramps.bbox.max_y,
                              blocks.ramps.bbox.max_z, blocks.ramps.hidden,
                              blocks.ramps.layer, active_layers,
-                             _TEMP_culling_storage, dynamic_buffer_allocator);
+                             _culling_storage, dynamic_buffer_allocator);
    view.quads =
       prepare_instances_view(draw, view_frustum, blocks.quads.bbox.min_x,
                              blocks.quads.bbox.min_y, blocks.quads.bbox.min_z,
                              blocks.quads.bbox.max_x, blocks.quads.bbox.max_y,
                              blocks.quads.bbox.max_z, blocks.quads.hidden,
                              blocks.quads.layer, active_layers,
-                             _TEMP_culling_storage, dynamic_buffer_allocator);
+                             _culling_storage, dynamic_buffer_allocator);
 
    view.custom =
       _device.supports_execute_indirect()
@@ -1321,7 +1321,7 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                       blocks.custom.bbox.max_z, blocks.custom.hidden,
                                       blocks.custom.layer, blocks.custom.mesh,
                                       _custom_meshes, active_layers,
-                                      _TEMP_culling_storage, dynamic_buffer_allocator)
+                                      _culling_storage, dynamic_buffer_allocator)
          : prepare_draw_list_direct_fallback(draw, view_frustum,
                                              blocks.custom.bbox.min_x,
                                              blocks.custom.bbox.min_y,
@@ -1331,7 +1331,7 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                              blocks.custom.bbox.max_z,
                                              blocks.custom.hidden, blocks.custom.layer,
                                              blocks.custom.mesh, _custom_meshes,
-                                             active_layers, _TEMP_culling_storage,
+                                             active_layers, _culling_storage,
                                              _temp_buffer_allocator);
    view.hemispheres =
       prepare_instances_view(draw, view_frustum, blocks.hemispheres.bbox.min_x,
@@ -1341,14 +1341,14 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                              blocks.hemispheres.bbox.max_y,
                              blocks.hemispheres.bbox.max_z, blocks.hemispheres.hidden,
                              blocks.hemispheres.layer, active_layers,
-                             _TEMP_culling_storage, dynamic_buffer_allocator);
+                             _culling_storage, dynamic_buffer_allocator);
    view.pyramids =
       prepare_instances_view(draw, view_frustum, blocks.pyramids.bbox.min_x,
                              blocks.pyramids.bbox.min_y, blocks.pyramids.bbox.min_z,
                              blocks.pyramids.bbox.max_x, blocks.pyramids.bbox.max_y,
                              blocks.pyramids.bbox.max_z, blocks.pyramids.hidden,
                              blocks.pyramids.layer, active_layers,
-                             _TEMP_culling_storage, dynamic_buffer_allocator);
+                             _culling_storage, dynamic_buffer_allocator);
 
    [[unlikely]] if (entity_group and _dynamic_blocks) {
       view.dynamic_boxes =
@@ -1358,7 +1358,7 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                 _dynamic_blocks->boxes_bbox.max_x,
                                 _dynamic_blocks->boxes_bbox.max_y,
                                 _dynamic_blocks->boxes_bbox.max_z,
-                                _TEMP_culling_storage, dynamic_buffer_allocator);
+                                _culling_storage, dynamic_buffer_allocator);
 
       view.dynamic_ramps =
          prepare_instances_view(draw, view_frustum, _dynamic_blocks->ramps_bbox.min_x,
@@ -1367,7 +1367,7 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                 _dynamic_blocks->ramps_bbox.max_x,
                                 _dynamic_blocks->ramps_bbox.max_y,
                                 _dynamic_blocks->ramps_bbox.max_z,
-                                _TEMP_culling_storage, dynamic_buffer_allocator);
+                                _culling_storage, dynamic_buffer_allocator);
 
       view.dynamic_quads =
          prepare_instances_view(draw, view_frustum, _dynamic_blocks->quads_bbox.min_x,
@@ -1376,7 +1376,7 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                 _dynamic_blocks->quads_bbox.max_x,
                                 _dynamic_blocks->quads_bbox.max_y,
                                 _dynamic_blocks->quads_bbox.max_z,
-                                _TEMP_culling_storage, dynamic_buffer_allocator);
+                                _culling_storage, dynamic_buffer_allocator);
 
       view.dynamic_custom =
          _device.supports_execute_indirect()
@@ -1388,7 +1388,7 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                          _dynamic_blocks->custom_bbox.max_y,
                                          _dynamic_blocks->custom_bbox.max_z,
                                          entity_group->blocks.custom.mesh,
-                                         _custom_meshes, _TEMP_culling_storage,
+                                         _custom_meshes, _culling_storage,
                                          dynamic_buffer_allocator)
             : prepare_draw_list_direct_fallback(draw, view_frustum,
                                                 _dynamic_blocks->custom_bbox.min_x,
@@ -1398,7 +1398,7 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                                 _dynamic_blocks->custom_bbox.max_y,
                                                 _dynamic_blocks->custom_bbox.max_z,
                                                 entity_group->blocks.custom.mesh,
-                                                _custom_meshes, _TEMP_culling_storage,
+                                                _custom_meshes, _culling_storage,
                                                 _temp_buffer_allocator);
 
       view.dynamic_hemispheres =
@@ -1409,7 +1409,7 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                 _dynamic_blocks->hemispheres_bbox.max_x,
                                 _dynamic_blocks->hemispheres_bbox.max_y,
                                 _dynamic_blocks->hemispheres_bbox.max_z,
-                                _TEMP_culling_storage, dynamic_buffer_allocator);
+                                _culling_storage, dynamic_buffer_allocator);
 
       view.dynamic_pyramids =
          prepare_instances_view(draw, view_frustum,
@@ -1419,7 +1419,7 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                 _dynamic_blocks->pyramids_bbox.max_x,
                                 _dynamic_blocks->pyramids_bbox.max_y,
                                 _dynamic_blocks->pyramids_bbox.max_z,
-                                _TEMP_culling_storage, dynamic_buffer_allocator);
+                                _culling_storage, dynamic_buffer_allocator);
    }
 
    return view;
