@@ -33,3 +33,6 @@
 
 -gpu_no_target_independent_rasterization
   Never make use of Target Independent Rasterization. Even if it is supported by the GPU.
+
+-gpu_no_execute_indirect
+  Never make used of ExecuteIndirect. Even if it is supported by the graphics API.

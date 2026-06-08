@@ -91,6 +91,8 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
         command_line.get_flag("-gpu_no_relaxed_format_casting")},
      _renderer_never_use_target_independent_rasterization{
         command_line.get_flag("-gpu_no_target_independent_rasterization")},
+     _renderer_never_use_execute_indirect{
+        command_line.get_flag("-gpu_no_execute_indirect")},
      _double_click_time{GetDoubleClickTime() / 1000.0f}
 {
    async::task<settings::settings> settings_load = _thread_pool->exec([]() {
@@ -4788,19 +4790,22 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
 
 auto world_edit::get_renderer_init_params() noexcept -> graphics::renderer_init
 {
-   return {.window = _window,
-           .thread_pool = _thread_pool,
-           .asset_libraries = _asset_libraries,
-           .error_output = *_stream,
-           .display_scale = _display_scale.value,
-           .prefer_high_performance_gpu = _renderer_prefer_high_performance_gpu,
-           .use_debug_layer = _renderer_use_debug_layer,
-           .use_legacy_barriers = _renderer_use_legacy_barriers,
-           .never_use_shader_model_6_6 = _renderer_never_use_shader_model_6_6,
-           .never_use_open_existing_heap = _renderer_never_use_open_existing_heap,
-           .never_use_write_buffer_immediate = _renderer_never_use_write_buffer_immediate,
-           .never_use_relaxed_format_casting = _renderer_never_use_relaxed_format_casting,
-           .never_use_target_independent_rasterization =
-              _renderer_never_use_target_independent_rasterization};
+   return {
+      .window = _window,
+      .thread_pool = _thread_pool,
+      .asset_libraries = _asset_libraries,
+      .error_output = *_stream,
+      .display_scale = _display_scale.value,
+      .prefer_high_performance_gpu = _renderer_prefer_high_performance_gpu,
+      .use_debug_layer = _renderer_use_debug_layer,
+      .use_legacy_barriers = _renderer_use_legacy_barriers,
+      .never_use_shader_model_6_6 = _renderer_never_use_shader_model_6_6,
+      .never_use_open_existing_heap = _renderer_never_use_open_existing_heap,
+      .never_use_write_buffer_immediate = _renderer_never_use_write_buffer_immediate,
+      .never_use_relaxed_format_casting = _renderer_never_use_relaxed_format_casting,
+      .never_use_target_independent_rasterization =
+         _renderer_never_use_target_independent_rasterization,
+      .never_use_execute_indirect = _renderer_never_use_execute_indirect,
+   };
 }
 }

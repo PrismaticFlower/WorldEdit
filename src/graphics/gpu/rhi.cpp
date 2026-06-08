@@ -35,6 +35,9 @@ using utility::com_ptr;
 
 namespace {
 
+constexpr GUID IID_ID3D12DXVKInteropDevice =
+   {0x39da4e09, 0xbd1c, 0x4198, {0x9f, 0xae, 0x86, 0xbb, 0xe3, 0xbe, 0x41, 0xfd}};
+
 constexpr uint32 d3d12_srv_all_mips = 0xff'ff'ff'ffu;
 
 constexpr uint32 num_cbv_srv_uav_descriptors = 131'072;
@@ -300,6 +303,18 @@ bool check_casting_fully_typed_format_supported(ID3D12Device& device) noexcept
    return options3.CastingFullyTypedFormatSupported;
 }
 
+bool check_execute_indirect_tier_1_1_supported(ID3D12Device& device) noexcept
+{
+   D3D12_FEATURE_DATA_D3D12_OPTIONS21 options21{};
+
+   if (FAILED(device.CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21,
+                                         &options21, sizeof(options21)))) {
+      return false;
+   }
+
+   return options21.ExecuteIndirectTier == D3D12_EXECUTE_INDIRECT_TIER_1_1;
+}
+
 bool check_target_independent_rasterization_supported(IUnknown& adapter) noexcept
 {
    return D3D12CreateDevice(&adapter, D3D_FEATURE_LEVEL_11_1, IID_ID3D12Device,
@@ -338,8 +353,30 @@ struct device_state {
         supports_target_independent_rasterization{
            desc.force_no_target_independent_rasterization
               ? false
-              : check_target_independent_rasterization_supported(*adapter)}
+              : check_target_independent_rasterization_supported(*adapter)},
+        supports_execute_indirect{not desc.force_no_execute_indirect},
+        supports_execute_indirect_tier_1_1{
+           desc.force_no_execute_indirect
+              ? false
+              : check_execute_indirect_tier_1_1_supported(*device)}
    {
+      // Supported capabilities fixup for running under vkd3d.
+      if (com_ptr<IUnknown> dxvk_interop; SUCCEEDED(
+             this->device->QueryInterface(IID_ID3D12DXVKInteropDevice,
+                                          dxvk_interop.void_clear_and_assign()))) {
+         // Crashes Nvidia Vulkan driver for some reason when used.
+         supports_shader_barycentrics = false;
+
+         // vkd3d straight up just doesn't support this. (I'm guessing it's a Vulkan limitation?)
+         //
+         // In any case trying to use it when vkd3d is ignoring it screws up our gizmo's rendering so we force it off.
+         supports_target_independent_rasterization = false;
+
+         // Tier 1_1 support appears to be a way to detect if ExecuteIndirect is properly supported by vkd3d.
+         supports_execute_indirect = supports_execute_indirect_tier_1_1;
+
+         is_vkd3d = true;
+      }
    }
 
    com_ptr<IDXGIFactory7> factory;
@@ -365,16 +402,18 @@ struct device_state {
                                         .NumDescriptors = num_dsv_descriptors,
                                         .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE}};
 
-   const bool supports_enhanced_barriers : 1;
-   const bool supports_shader_barycentrics : 1 =
-      check_shader_barycentrics_support(*device);
-   const bool supports_conservative_rasterization : 1 =
+   bool supports_enhanced_barriers : 1;
+   bool supports_shader_barycentrics : 1 = check_shader_barycentrics_support(*device);
+   bool supports_conservative_rasterization : 1 =
       check_conservative_rasterization_support(*device);
-   const bool supports_shader_model_6_6 : 1;
-   const bool supports_open_existing_heap : 1;
-   const bool supports_write_buffer_immediate : 1;
-   const bool supports_casting_fully_typed_format : 1;
-   const bool supports_target_independent_rasterization : 1;
+   bool supports_shader_model_6_6 : 1;
+   bool supports_open_existing_heap : 1;
+   bool supports_write_buffer_immediate : 1;
+   bool supports_casting_fully_typed_format : 1;
+   bool supports_target_independent_rasterization : 1;
+   bool supports_execute_indirect : 1;
+   bool supports_execute_indirect_tier_1_1 : 1;
+   bool is_vkd3d : 1 = false;
 };
 
 struct swap_chain_state {
@@ -576,9 +615,16 @@ void device::wait_for_idle()
    // Make sure we're not about to wait on a lost device.
    if (FAILED(state->device->GetDeviceRemovedReason())) return;
 
-   throw_if_fail(state->device->SetEventOnMultipleFenceCompletion(
-      fences.data(), sync_values.data(), static_cast<uint32>(fences.size()),
-      D3D12_MULTIPLE_FENCE_WAIT_FLAG_ALL, nullptr));
+   if (state->is_vkd3d) {
+      for (std::size_t i = 0; i < fences.size(); ++i) {
+         throw_if_fail(fences[i]->SetEventOnCompletion(sync_values[i], nullptr));
+      }
+   }
+   else {
+      throw_if_fail(state->device->SetEventOnMultipleFenceCompletion(
+         fences.data(), sync_values.data(), static_cast<uint32>(fences.size()),
+         D3D12_MULTIPLE_FENCE_WAIT_FLAG_ALL, nullptr));
+   }
 
    // Release resources we now know the GPU to be done with.
 
@@ -1692,7 +1738,7 @@ auto device::create_command_signature(const command_signature_desc& desc,
 
 void device::release_root_signature(root_signature_handle root_signature)
 {
-   for (command_queue device::*queue : command_queue_executable_list) {
+   for (command_queue device::* queue : command_queue_executable_list) {
       unpack_root_signature_handle(root_signature)->AddRef();
 
       (this->*queue).release_root_signature(root_signature);
@@ -1703,7 +1749,7 @@ void device::release_root_signature(root_signature_handle root_signature)
 
 void device::release_pipeline(pipeline_handle pipeline)
 {
-   for (command_queue device::*queue : command_queue_executable_list) {
+   for (command_queue device::* queue : command_queue_executable_list) {
       unpack_pipeline_handle(pipeline)->AddRef();
 
       (this->*queue).release_pipeline(pipeline);
@@ -1714,7 +1760,7 @@ void device::release_pipeline(pipeline_handle pipeline)
 
 void device::release_resource(resource_handle resource)
 {
-   for (command_queue device::*queue : command_queue_list) {
+   for (command_queue device::* queue : command_queue_list) {
       unpack_resource_handle(resource)->AddRef();
 
       (this->*queue).release_resource(resource);
@@ -1725,7 +1771,7 @@ void device::release_resource(resource_handle resource)
 
 void device::release_resource_view(resource_view resource_view)
 {
-   for (command_queue device::*queue : command_queue_executable_list) {
+   for (command_queue device::* queue : command_queue_executable_list) {
       state->srv_uav_descriptor_heap.allocator.add_ref(resource_view.index);
 
       (this->*queue).release_resource_view(resource_view);
@@ -1746,7 +1792,7 @@ void device::release_depth_stencil_view(dsv_handle depth_stencil_view)
 
 void device::release_query_heap(query_heap_handle query_heap)
 {
-   for (command_queue device::*queue : command_queue_list) {
+   for (command_queue device::* queue : command_queue_list) {
       unpack_query_heap_handle(query_heap)->AddRef();
 
       (this->*queue).release_query_heap(query_heap);
@@ -1757,7 +1803,7 @@ void device::release_query_heap(query_heap_handle query_heap)
 
 void device::release_command_signature(command_signature_handle command_signature)
 {
-   for (command_queue device::*queue : command_queue_executable_list) {
+   for (command_queue device::* queue : command_queue_executable_list) {
       unpack_command_signature_handle(command_signature)->AddRef();
 
       (this->*queue).release_command_signature(command_signature);
@@ -1841,6 +1887,11 @@ void device::unsynced_release_command_signature(command_signature_handle command
 [[msvc::forceinline]] bool device::supports_target_independent_rasterization() const noexcept
 {
    return state->supports_target_independent_rasterization;
+}
+
+[[msvc::forceinline]] bool device::supports_execute_indirect() const noexcept
+{
+   return state->supports_execute_indirect;
 }
 
 swap_chain::swap_chain() = default;

@@ -332,6 +332,7 @@ renderer_impl::renderer_impl(const renderer_init& init)
         .force_no_casting_fully_typed_format = init.never_use_relaxed_format_casting,
         .force_no_target_independent_rasterization =
            init.never_use_target_independent_rasterization,
+        .force_no_execute_indirect = init.never_use_execute_indirect,
      }},
      _swap_chain{_device.create_swap_chain({.window = init.window})},
      _texture_manager{_device, _copy_command_list_pool, init.thread_pool,

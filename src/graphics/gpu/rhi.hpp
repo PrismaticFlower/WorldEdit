@@ -1284,6 +1284,9 @@ struct device_desc {
 
    /// @brief Force the device to report target independent rasterization as unsupported.
    bool force_no_target_independent_rasterization = false;
+
+   /// @brief Force the device to report target execute indirect as unsupported.
+   bool force_no_execute_indirect = false;
 };
 
 /// Device Definitions ///
@@ -1442,6 +1445,8 @@ public:
    [[nodiscard]] bool supports_write_buffer_immediate() const noexcept;
 
    [[nodiscard]] bool supports_target_independent_rasterization() const noexcept;
+
+   [[nodiscard]] bool supports_execute_indirect() const noexcept;
 
    /// Constructors/Destructor ///
 

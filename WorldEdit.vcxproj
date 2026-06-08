@@ -209,6 +209,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\allocators\temp_buffer_allocator.cpp" />
     <ClCompile Include="src\allocators\offset_allocator.cpp" />
     <ClCompile Include="src\assets\asset_ref.cpp" />
     <ClCompile Include="src\assets\msh\flat_model_bvh.cpp" />
@@ -540,6 +541,7 @@
     <ClInclude Include="include\world\terrain.hpp" />
     <ClInclude Include="include\world\world.hpp" />
     <ClInclude Include="src\allocators\aligned_allocator.hpp" />
+    <ClInclude Include="src\allocators\temp_buffer_allocator.hpp" />
     <ClInclude Include="src\allocators\offset_allocator.hpp" />
     <ClInclude Include="src\assets\asset_ref.hpp" />
     <ClInclude Include="src\assets\asset_libraries.hpp" />

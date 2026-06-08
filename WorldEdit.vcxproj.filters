@@ -321,6 +321,7 @@
     <ClCompile Include="src\munge\builtin\model_munge\triangulate_polygon.cpp" />
     <ClCompile Include="src\munge\builtin\utility\bf_crc32.cpp" />
     <ClCompile Include="src\munge\builtin\executor.cpp" />
+    <ClCompile Include="src\allocators\temp_buffer_allocator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -703,6 +704,7 @@
     <ClInclude Include="src\munge\builtin\model_munge\triangulate_polygon.hpp" />
     <ClInclude Include="src\munge\builtin\utility\bf_crc32.hpp" />
     <ClInclude Include="src\munge\builtin\executor.hpp" />
+    <ClInclude Include="src\allocators\temp_buffer_allocator.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

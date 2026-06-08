@@ -250,7 +250,7 @@ auto prepare_instances_view(
    return list;
 }
 
-auto prepare_draw_list(
+auto prepare_draw_list_indirect(
    blocks_draw draw, const frustum& view_frustum,
    std::span<const float> bbox_min_x, std::span<const float> bbox_min_y,
    std::span<const float> bbox_min_z, std::span<const float> bbox_max_x,
@@ -301,14 +301,14 @@ auto prepare_draw_list(
       }
 
       list.count = static_cast<uint32>(visible_blocks.size());
-      list.draw_buffer = draw_allocation.resource;
-      list.draw_buffer_offset = draw_allocation.offset;
+      list.data.indirect.draw_buffer = draw_allocation.resource;
+      list.data.indirect.draw_buffer_offset = draw_allocation.offset;
    }
 
    return list;
 }
 
-auto prepare_draw_list(
+auto prepare_draw_list_indirect(
    blocks_draw draw, const frustum& view_frustum,
    std::span<const float> bbox_min_x, std::span<const float> bbox_min_y,
    std::span<const float> bbox_min_z, std::span<const float> bbox_max_x,
@@ -356,8 +356,117 @@ auto prepare_draw_list(
       }
 
       list.count = static_cast<uint32>(visible_blocks.size());
-      list.draw_buffer = draw_allocation.resource;
-      list.draw_buffer_offset = draw_allocation.offset;
+      list.data.indirect.draw_buffer = draw_allocation.resource;
+      list.data.indirect.draw_buffer_offset = draw_allocation.offset;
+   }
+
+   return list;
+}
+
+auto prepare_draw_list_direct_fallback(
+   blocks_draw draw, const frustum& view_frustum,
+   std::span<const float> bbox_min_x, std::span<const float> bbox_min_y,
+   std::span<const float> bbox_min_z, std::span<const float> bbox_max_x,
+   std::span<const float> bbox_max_y, std::span<const float> bbox_max_z,
+   std::span<const bool> hidden, std::span<const int8> layers,
+   std::span<const world::block_custom_mesh_handle> mesh_handles,
+   std::span<const blocks::custom_mesh> meshes,
+   const world::active_layers active_layers, std::vector<uint32>& culling_storage,
+   temp_buffer_allocator& temp_buffer_allocator) -> blocks::view::draw_list
+{
+   if (culling_storage.size() < bbox_min_x.size()) {
+      culling_storage.resize(bbox_min_x.size());
+   }
+
+   const std::span<const uint32> visible_blocks =
+      draw == blocks_draw::shadow
+         ? cull_objects_shadow_cascade(view_frustum, bbox_min_x, bbox_min_y, bbox_min_z,
+                                       bbox_max_x, bbox_max_y, bbox_max_z, hidden,
+                                       layers, active_layers, culling_storage)
+         : cull_objects(view_frustum, bbox_min_x, bbox_min_y, bbox_min_z,
+                        bbox_max_x, bbox_max_y, bbox_max_z, hidden, layers,
+                        active_layers, culling_storage);
+
+   blocks::view::draw_list list;
+
+   if (not visible_blocks.empty()) {
+      std::byte* const draw_allocation =
+         temp_buffer_allocator.allocate<block_indirect_draw>(visible_blocks.size());
+
+      std::byte* draw_ptr = draw_allocation;
+
+      for (std::size_t i = 0; i < visible_blocks.size(); ++i) {
+         const uint32 instance_index = visible_blocks[i];
+
+         const blocks::custom_mesh& mesh =
+            meshes[world::blocks_custom_mesh_library::unpack_pool_index(mesh_handles[instance_index])];
+
+         const block_indirect_draw indirect_draw = {
+            .instance_index = instance_index,
+            .draw_indexed = {mesh.index_count, 1, mesh.start_index_location,
+                             mesh.base_vertex_location, 0},
+         };
+
+         std::memcpy(draw_ptr, &indirect_draw, sizeof(block_indirect_draw));
+
+         draw_ptr += sizeof(block_indirect_draw);
+      }
+
+      list.count = static_cast<uint32>(visible_blocks.size());
+      list.data.direct_fallback.draw_buffer = draw_allocation;
+   }
+
+   return list;
+}
+
+auto prepare_draw_list_direct_fallback(
+   blocks_draw draw, const frustum& view_frustum,
+   std::span<const float> bbox_min_x, std::span<const float> bbox_min_y,
+   std::span<const float> bbox_min_z, std::span<const float> bbox_max_x,
+   std::span<const float> bbox_max_y, std::span<const float> bbox_max_z,
+   std::span<const world::block_custom_mesh_handle> mesh_handles,
+   std::span<const blocks::custom_mesh> meshes, std::vector<uint32>& culling_storage,
+   temp_buffer_allocator& temp_buffer_allocator) -> blocks::view::draw_list
+{
+   if (culling_storage.size() < bbox_min_x.size()) {
+      culling_storage.resize(bbox_min_x.size());
+   }
+
+   const std::span<const uint32> visible_blocks =
+      draw == blocks_draw::shadow
+         ? cull_objects_shadow_cascade(view_frustum, bbox_min_x, bbox_min_y,
+                                       bbox_min_z, bbox_max_x, bbox_max_y,
+                                       bbox_max_z, culling_storage)
+         : cull_objects(view_frustum, bbox_min_x, bbox_min_y, bbox_min_z,
+                        bbox_max_x, bbox_max_y, bbox_max_z, culling_storage);
+
+   blocks::view::draw_list list;
+
+   if (not visible_blocks.empty()) {
+      std::byte* const draw_allocation =
+         temp_buffer_allocator.allocate<block_indirect_draw>(visible_blocks.size());
+
+      std::byte* draw_ptr = draw_allocation;
+
+      for (std::size_t i = 0; i < visible_blocks.size(); ++i) {
+         const uint32 instance_index = visible_blocks[i];
+
+         const blocks::custom_mesh& mesh =
+            meshes[world::blocks_custom_mesh_library::unpack_pool_index(mesh_handles[instance_index])];
+
+         const block_indirect_draw indirect_draw = {
+            .instance_index = instance_index,
+            .draw_indexed = {mesh.index_count, 1, mesh.start_index_location,
+                             mesh.base_vertex_location, 0},
+         };
+
+         std::memcpy(draw_ptr, &indirect_draw, sizeof(block_indirect_draw));
+
+         draw_ptr += sizeof(block_indirect_draw);
+      }
+
+      list.count = static_cast<uint32>(visible_blocks.size());
+      list.data.direct_fallback.draw_buffer = draw_allocation;
    }
 
    return list;
@@ -444,11 +553,13 @@ blocks::blocks(gpu::device& device, copy_command_list_pool& copy_command_list_po
       gpu::indirect_argument_desc{.type = gpu::indirect_argument_type::draw_indexed},
    };
 
-   _custom_mesh_command_signature =
-      {_device.create_command_signature({.byte_stride = sizeof(block_indirect_draw),
-                                         .argument_descs = command_signature_arguments},
-                                        root_signatures.block_custom_mesh.get()),
-       _device};
+   if (_device.supports_execute_indirect()) {
+      _custom_mesh_command_signature =
+         {_device.create_command_signature({.byte_stride = sizeof(block_indirect_draw),
+                                            .argument_descs = command_signature_arguments},
+                                           root_signatures.block_custom_mesh.get()),
+          _device};
+   }
 }
 
 void blocks::update(const world::blocks& blocks, const world::entity_group* entity_group,
@@ -1166,6 +1277,8 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
    else if (_dynamic_blocks) {
       _dynamic_blocks = nullptr;
    }
+
+   _temp_buffer_allocator.reset();
 }
 
 auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
@@ -1199,13 +1312,27 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                              _TEMP_culling_storage, dynamic_buffer_allocator);
 
    view.custom =
-      prepare_draw_list(draw, view_frustum, blocks.custom.bbox.min_x,
-                        blocks.custom.bbox.min_y, blocks.custom.bbox.min_z,
-                        blocks.custom.bbox.max_x, blocks.custom.bbox.max_y,
-                        blocks.custom.bbox.max_z, blocks.custom.hidden,
-                        blocks.custom.layer, blocks.custom.mesh, _custom_meshes,
-                        active_layers, _TEMP_culling_storage,
-                        dynamic_buffer_allocator);
+      _device.supports_execute_indirect()
+         ? prepare_draw_list_indirect(draw, view_frustum, blocks.custom.bbox.min_x,
+                                      blocks.custom.bbox.min_y,
+                                      blocks.custom.bbox.min_z,
+                                      blocks.custom.bbox.max_x,
+                                      blocks.custom.bbox.max_y,
+                                      blocks.custom.bbox.max_z, blocks.custom.hidden,
+                                      blocks.custom.layer, blocks.custom.mesh,
+                                      _custom_meshes, active_layers,
+                                      _TEMP_culling_storage, dynamic_buffer_allocator)
+         : prepare_draw_list_direct_fallback(draw, view_frustum,
+                                             blocks.custom.bbox.min_x,
+                                             blocks.custom.bbox.min_y,
+                                             blocks.custom.bbox.min_z,
+                                             blocks.custom.bbox.max_x,
+                                             blocks.custom.bbox.max_y,
+                                             blocks.custom.bbox.max_z,
+                                             blocks.custom.hidden, blocks.custom.layer,
+                                             blocks.custom.mesh, _custom_meshes,
+                                             active_layers, _TEMP_culling_storage,
+                                             _temp_buffer_allocator);
    view.hemispheres =
       prepare_instances_view(draw, view_frustum, blocks.hemispheres.bbox.min_x,
                              blocks.hemispheres.bbox.min_y,
@@ -1252,14 +1379,27 @@ auto blocks::prepare_view(blocks_draw draw, const world::blocks& blocks,
                                 _TEMP_culling_storage, dynamic_buffer_allocator);
 
       view.dynamic_custom =
-         prepare_draw_list(draw, view_frustum, _dynamic_blocks->custom_bbox.min_x,
-                           _dynamic_blocks->custom_bbox.min_y,
-                           _dynamic_blocks->custom_bbox.min_z,
-                           _dynamic_blocks->custom_bbox.max_x,
-                           _dynamic_blocks->custom_bbox.max_y,
-                           _dynamic_blocks->custom_bbox.max_z,
-                           entity_group->blocks.custom.mesh, _custom_meshes,
-                           _TEMP_culling_storage, dynamic_buffer_allocator);
+         _device.supports_execute_indirect()
+            ? prepare_draw_list_indirect(draw, view_frustum,
+                                         _dynamic_blocks->custom_bbox.min_x,
+                                         _dynamic_blocks->custom_bbox.min_y,
+                                         _dynamic_blocks->custom_bbox.min_z,
+                                         _dynamic_blocks->custom_bbox.max_x,
+                                         _dynamic_blocks->custom_bbox.max_y,
+                                         _dynamic_blocks->custom_bbox.max_z,
+                                         entity_group->blocks.custom.mesh,
+                                         _custom_meshes, _TEMP_culling_storage,
+                                         dynamic_buffer_allocator)
+            : prepare_draw_list_direct_fallback(draw, view_frustum,
+                                                _dynamic_blocks->custom_bbox.min_x,
+                                                _dynamic_blocks->custom_bbox.min_y,
+                                                _dynamic_blocks->custom_bbox.min_z,
+                                                _dynamic_blocks->custom_bbox.max_x,
+                                                _dynamic_blocks->custom_bbox.max_y,
+                                                _dynamic_blocks->custom_bbox.max_z,
+                                                entity_group->blocks.custom.mesh,
+                                                _custom_meshes, _TEMP_culling_storage,
+                                                _temp_buffer_allocator);
 
       view.dynamic_hemispheres =
          prepare_instances_view(draw, view_frustum,
@@ -1546,9 +1686,26 @@ void blocks::draw(blocks_draw draw, const view& view,
                                                .stride_in_bytes =
                                                   sizeof(world::block_vertex)});
 
-      command_list.execute_indirect(_custom_mesh_command_signature.get(),
-                                    view.custom.count, view.custom.draw_buffer,
-                                    view.custom.draw_buffer_offset);
+      if (_device.supports_execute_indirect()) {
+         command_list.execute_indirect(_custom_mesh_command_signature.get(),
+                                       view.custom.count,
+                                       view.custom.data.indirect.draw_buffer,
+                                       view.custom.data.indirect.draw_buffer_offset);
+      }
+      else {
+         for (const block_indirect_draw& block : std::span<const block_indirect_draw>{
+                 reinterpret_cast<const block_indirect_draw*>(
+                    view.custom.data.direct_fallback.draw_buffer),
+                 view.custom.count}) {
+            command_list.set_graphics_32bit_constant(rs::block_custom_mesh::instance_index,
+                                                     block.instance_index, 0);
+            command_list.draw_indexed_instanced(block.draw_indexed.index_count_per_instance,
+                                                block.draw_indexed.instance_count,
+                                                block.draw_indexed.start_index_location,
+                                                block.draw_indexed.base_vertex_location,
+                                                block.draw_indexed.start_instance_location);
+         }
+      }
    }
 
    [[unlikely]] if (_dynamic_blocks) {
@@ -1581,10 +1738,26 @@ void blocks::draw(blocks_draw draw, const view& view,
                   .size_in_bytes = _custom_mesh_buffer_capacity,
                   .stride_in_bytes = sizeof(world::block_vertex)});
 
-         command_list.execute_indirect(_custom_mesh_command_signature.get(),
-                                       view.dynamic_custom.count,
-                                       view.dynamic_custom.draw_buffer,
-                                       view.dynamic_custom.draw_buffer_offset);
+         if (_device.supports_execute_indirect()) {
+            command_list.execute_indirect(_custom_mesh_command_signature.get(),
+                                          view.dynamic_custom.count,
+                                          view.dynamic_custom.data.indirect.draw_buffer,
+                                          view.dynamic_custom.data.indirect.draw_buffer_offset);
+         }
+         else {
+            for (const block_indirect_draw& block : std::span<const block_indirect_draw>{
+                    reinterpret_cast<const block_indirect_draw*>(
+                       view.dynamic_custom.data.direct_fallback.draw_buffer),
+                    view.dynamic_custom.count}) {
+               command_list.set_graphics_32bit_constant(rs::block_custom_mesh::instance_index,
+                                                        block.instance_index, 0);
+               command_list.draw_indexed_instanced(block.draw_indexed.index_count_per_instance,
+                                                   block.draw_indexed.instance_count,
+                                                   block.draw_indexed.start_index_location,
+                                                   block.draw_indexed.base_vertex_location,
+                                                   block.draw_indexed.start_instance_location);
+            }
+         }
       }
    }
 }

@@ -13,6 +13,7 @@
 
 #include "allocators/aligned_allocator.hpp"
 #include "allocators/offset_allocator.hpp"
+#include "allocators/temp_buffer_allocator.hpp"
 
 #include "world/active_elements.hpp"
 #include "world/blocks.hpp"
@@ -34,8 +35,22 @@ struct blocks {
 
       struct draw_list {
          uint32 count = 0;
-         gpu::resource_handle draw_buffer = gpu::null_resource_handle;
-         uint64 draw_buffer_offset = 0;
+
+         struct indirect {
+            gpu::resource_handle draw_buffer = gpu::null_resource_handle;
+            uint64 draw_buffer_offset = 0;
+         };
+
+         struct direct_fallback {
+            void* draw_buffer = nullptr;
+         };
+
+         union data {
+            indirect indirect = {};
+            direct_fallback direct_fallback;
+         };
+
+         data data;
       };
 
       instance_list boxes;
@@ -233,6 +248,7 @@ private:
    };
 
    std::unique_ptr<dynamic_blocks> _dynamic_blocks;
+   temp_buffer_allocator _temp_buffer_allocator{0x10000};
 };
 
 }
