@@ -3,6 +3,7 @@
 #include "gpu/exception.hpp"
 #include "math/align.hpp"
 
+#include <atomic>
 #include <bit>
 
 namespace we::graphics {
@@ -57,20 +58,37 @@ auto dynamic_buffer_allocator::allocate(const std::size_t size) -> allocation
 retry_allocate:
    const std::size_t aligned_size = math::align_up(size, alignment);
 
-   page& page = *_page.load(std::memory_order_acquire);
+   gpu_virtual_address exceeded_gpu_address = 0;
 
-   const std::size_t allocation_offset =
-      std::atomic_ref{page.allocated}.fetch_add(aligned_size, std::memory_order_relaxed);
+   {
+      std::shared_lock lock{_mutex};
 
-   [[unlikely]] if (allocation_offset + size > _page_size) {
-      [[unlikely]] if (size > _page_size) {
-         std::scoped_lock lock{_page_change_mutex};
+      const std::size_t allocation_offset =
+         std::atomic_ref{_page->allocated}.fetch_add(aligned_size,
+                                                     std::memory_order_relaxed);
 
-         if (&page != _page.load(std::memory_order_relaxed)) {
-            goto retry_allocate;
-         }
+      [[likely]]
+      if (allocation_offset + aligned_size <= _page_size) {
+         return {.cpu_address = _page->cpu_base_address + allocation_offset,
+                 .gpu_address = _page->gpu_base_address + allocation_offset,
+                 .size = size,
+                 .resource = _page->buffer,
+                 .offset = allocation_offset};
+      }
 
-         const std::size_t new_page_size = std::bit_ceil(size);
+      exceeded_gpu_address = _page->gpu_base_address;
+   }
+
+   {
+      std::scoped_lock lock{_mutex};
+
+      if (exceeded_gpu_address != _page->gpu_base_address) {
+         goto retry_allocate;
+      }
+
+      [[unlikely]]
+      if (aligned_size > _page_size) {
+         const std::size_t new_page_size = std::bit_ceil(aligned_size);
 
          std::array<std::vector<dynamic_buffer_allocator::page>, gpu::frame_pipeline_length> new_frame_pages;
 
@@ -110,16 +128,9 @@ retry_allocate:
          _deferred_release_frame_pages.push_back(std::move(_frame_pages));
          _frame_pages.swap(new_frame_pages);
          _page_size = new_page_size;
-
-         _page = &_frame_pages[0][0];
+         _page_index = 0;
       }
       else {
-         std::scoped_lock lock{_page_change_mutex};
-
-         if (&page != _page.load(std::memory_order_relaxed)) {
-            goto retry_allocate;
-         }
-
          _page_index += 1;
 
          if (_page_index >= max_pages) {
@@ -129,7 +140,8 @@ retry_allocate:
 
          auto& new_page = _frame_pages[_frame_index][_page_index];
 
-         [[unlikely]] if (new_page.buffer == gpu::null_resource_handle) {
+         [[unlikely]]
+         if (new_page.buffer == gpu::null_resource_handle) {
             new_page.buffer =
                _device.create_buffer({.size = _page_size, .debug_name = "Dynamic Buffer Allocator Page"},
                                      gpu::heap_type::upload);
@@ -138,26 +150,22 @@ retry_allocate:
             new_page.gpu_base_address =
                _device.get_gpu_virtual_address(new_page.buffer);
          }
-
-         _page.store(&new_page);
       }
 
-      goto retry_allocate;
+      _page = &_frame_pages[_frame_index][_page_index];
    }
 
-   return {.cpu_address = page.cpu_base_address + allocation_offset,
-           .gpu_address = page.gpu_base_address + allocation_offset,
-           .size = size,
-           .resource = page.buffer,
-           .offset = allocation_offset};
+   goto retry_allocate;
 }
 
 auto dynamic_buffer_allocator::allocate_aligned(const std::size_t size,
                                                 const std::size_t allocation_alignment)
    -> allocation
 {
-   allocation alloc = allocate(
-      size + std::max(allocation_alignment - alignment, allocation_alignment));
+   const std::size_t allocation_padding =
+      allocation_alignment <= alignment ? 0 : allocation_alignment;
+
+   allocation alloc = allocate(size + allocation_padding);
 
    const uint64 aligned_offset = math::align_up(alloc.offset, allocation_alignment);
    const uint64 alignment_difference = aligned_offset - alloc.offset;
@@ -172,6 +180,8 @@ auto dynamic_buffer_allocator::allocate_aligned(const std::size_t size,
 
 void dynamic_buffer_allocator::reset(const std::size_t new_frame_index)
 {
+   std::scoped_lock lock{_mutex};
+
    _frame_index = new_frame_index;
    _page_index = 0;
    _page = &_frame_pages[_frame_index][0];

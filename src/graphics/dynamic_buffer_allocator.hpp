@@ -3,7 +3,6 @@
 #include "gpu/rhi.hpp"
 
 #include <array>
-#include <atomic>
 #include <cstddef>
 #include <cstring>
 #include <shared_mutex>
@@ -55,9 +54,9 @@ private:
       gpu_virtual_address gpu_base_address = 0;
    };
 
-   std::atomic<page*> _page = nullptr;
+   std::shared_mutex _mutex;
 
-   std::shared_mutex _page_change_mutex;
+   page* _page = nullptr;
 
    std::size_t _page_size = 0;
    std::size_t _frame_index = 0;
