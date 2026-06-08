@@ -69,8 +69,7 @@ The Exception Message below may have more information and context.)";
    case model_ec::msh_validation_fail_node_mesh_data:
       return R"(MSH_VALIDATION_FAIL_NODE_MESH_DATA
 
-No node in the .msh file contains mesh data. This includes regular meshes, cloth and 
-collision primitives.)";
+No node in the .msh file contains mesh data. This includes regular meshes, cloth and collision primitives.)";
    case model_ec::msh_validation_fail_geometry_segment_material_index:
       return R"(MSH_VALIDATION_FAIL_GEOMETRY_SEGMENT_MATERIAL_INDEX
 
