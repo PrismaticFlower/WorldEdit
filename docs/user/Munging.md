@@ -22,6 +22,7 @@ If you'd rather not use builtin mungers you can open your Munge Config Editor an
 
 ## Builtin Mungers List
 
+- [Model Munge](Builtin%20Mungers/Model%20Munge.md)
 - [ODF Munge](Builtin%20Mungers/ODF%20Munge.md)
 - [Texture Munge](Builtin%20Mungers/Texture%20Munge.md)
 
