@@ -958,7 +958,7 @@ void build_segments(const std::size_t node_index, const msh::scene& scene,
 
          if (geometry.normals) {
             segment.vertices.normalSS[i] =
-               float3x3{node_from_vertex} * (*geometry.normals)[i];
+               normalize(float3x3{node_from_vertex} * (*geometry.normals)[i]);
          }
          else {
             segment.vertices.normalSS[i] = {};
