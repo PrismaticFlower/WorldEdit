@@ -114,7 +114,12 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
       _renderer = graphics::make_renderer(get_renderer_init_params());
    }
    catch (graphics::gpu::exception& e) {
-      handle_gpu_error(e);
+      MessageBoxA(_window,
+                  fmt::format("Failed to initialize GPU device.\n\nReason: {}", e.what())
+                     .c_str(),
+                  "GPU Initialization Failed", MB_OK | MB_ICONERROR);
+
+      std::terminate();
    }
 
    initialize_commands();
