@@ -352,8 +352,7 @@ void world_edit::recreate_renderer() noexcept
       else {
          MessageBoxA(_window,
                      fmt::format("Failed to recover from GPU device "
-                                 "removal.\n\n{}\n\nThe editor "
-                                 "will now exit.\n\nSave world?",
+                                 "removal.\n\n{}\n\nThe editor will now exit.",
                                  error_message)
                         .c_str(),
                      "GPU Removed", MB_OK | MB_ICONERROR);
