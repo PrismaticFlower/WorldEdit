@@ -67,8 +67,6 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
-#include <world/blocks/mesh_generate.hpp>
-
 using namespace std::literals;
 
 namespace we {
