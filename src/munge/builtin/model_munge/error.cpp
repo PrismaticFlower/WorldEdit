@@ -233,6 +233,12 @@ hugemodel)";
 Bad "-lodbias" option in .msh.option file. "-lodbias" must be followed by a non-negative float setting the lod bias.
 
 i.e "-lodbias 2.0")";
+   case model_ec::msh_option_load_bad_lod_cost_divisor:
+      return R"(MSH_OPTION_LOAD_BAD_LOD_COST_DIVISOR
+
+Bad "-lodcostdivisor" option in .msh.option file. "-lodbias" must be followed by an unsigned integer setting the lod cost divisor.
+
+i.e "-lodcostdivisor 2")";
    case model_ec::msh_option_load_bad_hi_res_shadow:
       return R"(MSH_OPTION_LOAD_BAD_HI_RES_SHADOW
 
@@ -483,6 +489,8 @@ model_error::model_error(const assets::msh::read_error& e) noexcept
               return model_ec::msh_option_load_bad_lod_group;
            case read_ec::option_load_bad_lod_bias:
               return model_ec::msh_option_load_bad_lod_bias;
+           case read_ec::option_load_bad_lod_cost_divisor:
+              return model_ec::msh_option_load_bad_lod_cost_divisor;
            case read_ec::option_load_bad_hi_res_shadow:
               return model_ec::msh_option_load_bad_hi_res_shadow;
            case read_ec::option_load_bad_bounding_box_scale:

@@ -72,6 +72,7 @@ This does not apply to shadow volumes from "SHDW" chunks as they are already clo
 | -maxbones | \<maxbones> | Sets the max bones per skinned segment. Defaults to and clamped to 15 on PC. |
 | -lodgroup | \<lodgroup> | Sets the LOD group for the model. Can be `model`, `bigmodel`, `soldier` or `hugemodel`. |
 | -lodbias | \<lodbias> | Sets the LOD bias for the model. |
+| -lodcostdivisor | \<divisor> | Sets a divisor to divide the LOD triangle counts by in the written model. Making the game view the model as cheaper to draw than it really is. This is a new option with WorldEdit and is replacement for model-edit's functionality. The divisor has exactly the same meaning as the factor in model-edit. |
 | -nocollision | | Turn off munging collision meshes for the model. Does not affect collision primitives. |
 | -nogamemodel | | Disable saving the "game model" information for the model. Typically used on first person models and prevents a model from being used by an entity normally. |
 | -hiresshadow  | \<lod> (optional) | Generate a shadow volume for the model from the supplied LOD, falling back to the closest one if it's missing. If no LOD is specified it defaults to 0. |
@@ -315,6 +316,12 @@ hugemodel
 Bad "-lodbias" option in .msh.option file. "-lodbias" must be followed by a non-negative float setting the lod bias.
 
 i.e "-lodbias 2.0"
+
+### MSH_OPTION_LOAD_BAD_LOD_COST_DIVISOR
+
+Bad "-lodcostdivisor" option in .msh.option file. "-lodbias" must be followed by an unsigned integer setting the lod cost divisor.
+
+i.e "-lodcostdivisor 2"
 
 ### MSH_OPTION_LOAD_BAD_HI_RES_SHADOW
 

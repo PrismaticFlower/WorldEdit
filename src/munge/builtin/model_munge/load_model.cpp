@@ -1369,6 +1369,12 @@ auto build_model(const model_lod lod, const std::span<const std::size_t> model_n
    optimize_segments(model.segments, {.max_bones = target_segment_bones});
    optimize_segments(model.shadows);
 
+   if (scene.options.lod_cost_divisor > 0) {
+      model.total_triangle_count =
+         std::max(model.total_triangle_count / scene.options.lod_cost_divisor,
+                  uint32{1});
+   }
+
    return model;
 }
 

@@ -47,6 +47,7 @@ enum class model_ec {
    msh_option_load_bad_max_bones,
    msh_option_load_bad_lod_group,
    msh_option_load_bad_lod_bias,
+   msh_option_load_bad_lod_cost_divisor,
    msh_option_load_bad_hi_res_shadow,
    msh_option_load_bad_bounding_box_scale,
    msh_option_load_bad_bounding_box_offset,

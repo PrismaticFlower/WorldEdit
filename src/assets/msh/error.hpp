@@ -43,6 +43,7 @@ enum class read_ec {
    option_load_bad_max_bones,
    option_load_bad_lod_group,
    option_load_bad_lod_bias,
+   option_load_bad_lod_cost_divisor,
    option_load_bad_hi_res_shadow,
    option_load_bad_bounding_box_scale,
    option_load_bad_bounding_box_offset,

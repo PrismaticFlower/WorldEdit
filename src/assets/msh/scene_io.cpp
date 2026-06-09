@@ -626,6 +626,19 @@ void read_scene_option(const option& opt, scene_options& out)
 
       out.lod_bias = lod_bias;
    }
+   else if (iequals(opt.name, "-lodcostdivisor"sv)) {
+      uint32 lod_cost_divisor = 0;
+
+      if (opt.arguments.empty() or
+          std::from_chars(opt.arguments[0].data(),
+                          opt.arguments[0].data() + opt.arguments[0].size(), lod_cost_divisor)
+                .ec != std::errc{}) {
+         throw read_error{"Invalid -lodcostdivisor option.",
+                          read_ec::option_load_bad_lod_cost_divisor};
+      }
+
+      out.lod_cost_divisor = lod_cost_divisor;
+   }
    else if (iequals(opt.name, "-nocollision"sv)) {
       out.no_collision = true;
    }

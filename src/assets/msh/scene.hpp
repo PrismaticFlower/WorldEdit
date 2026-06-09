@@ -148,6 +148,7 @@ struct scene_options {
    uint32 max_bones = 0;
    lod_group lod_group = lod_group::model;
    float lod_bias = 1.0f;
+   uint32 lod_cost_divisor = 0;
 
    std::optional<float3> ambient_lighting;
 

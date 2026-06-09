@@ -156,6 +156,11 @@ TEST_CASE("model_munge model_largetexcoords", "[Munge]")
    REQUIRE(golden_ref_test("model_largetexcoords", 488));
 }
 
+TEST_CASE("model_munge model_lodcostdivisor", "[Munge]")
+{
+   REQUIRE(golden_ref_test("model_lodcostdivisor", 204));
+}
+
 TEST_CASE("model_munge model_lods", "[Munge]")
 {
    REQUIRE(golden_ref_test("model_lods", 124));
@@ -542,6 +547,11 @@ TEST_CASE("model_munge game_model_basic", "[Munge]")
 TEST_CASE("model_munge game_model_lodbias", "[Munge]")
 {
    REQUIRE(golden_ref_test("game_model_lodbias", 2416));
+}
+
+TEST_CASE("model_munge game_model_lodcostdivisor", "[Munge]")
+{
+   REQUIRE(golden_ref_test("game_model_lodcostdivisor", 1044));
 }
 
 TEST_CASE("model_munge game_model_lodgroup_bigmodel", "[Munge]")
