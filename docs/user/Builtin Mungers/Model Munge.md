@@ -46,6 +46,15 @@ The names of nodes in .msh files can have meaning. Below is a list of what model
 | collision | Prefix | No | Marks the node as being a collision mesh. |
 | terraincutter | Prefix | No | Marks the node as being a terrain cutter mesh. This does nothing in model munge except tell it to skip the node. |
 | sv_ | Prefix | Yes | Marks the node as being a shadow volume. This is not mutally exclusive with the node being a regular mesh though, unless hidden it will also be used as such. |
+| reflective_ | Prefix | No | Marks a node as having a reflective surface. See [Reflections](#reflections). | 
+| reflected_ | Prefix | No | Marks a node as being part of a reflection. See [Reflections](#reflections). | 
+
+## Reflections
+Meshes can be marked as being reflective by prefixing their node name with "reflective_". A mesh marked as reflective receives special handling by the game.
+
+Before a reflective mesh is drawn the game first draws the meshes being marked as part of the reflection (by prefixing their node name with "reflected_") and meshes from dynamic objects inside reflection regions. After that it draws the meshes marked as reflective. Then the game draws the rest of the scene as normal.
+
+They key detail that makes this all useful is that the special ordering the game does means that a mesh marked as reflective can have transparency and not cause sorting issues. This is how the reflections on stock maps like the Death Star, meshes with "reflected_" for the reflections of the static parts of the map, "reflective_" + transparency for the floors and reflection regions so units show up in the reflections.
 
 ## Shadow Volumes
 Nodes being turned into shadow volumes (either through the "sv_" prefix or "-hiresshadow") should be closed. If they are not the munger will try and close the mesh. It will often succeed but if it fails it has to fallback to treating each triangle in the mesh as an individual shadow volume, this produces a shadow volume that will technically work but will be very wasteful. If you get the [MODEL_SHADOW_MESH_CLOSE_STILL_OPEN_AFTER_FILL](#MODEL_SHADOW_MESH_CLOSE_STILL_OPEN_AFTER_FILL) warning you strongly encouraged to edit your intended shadow volume mesh and make sure it is closed.
