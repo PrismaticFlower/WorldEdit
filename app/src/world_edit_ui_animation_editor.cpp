@@ -29,6 +29,8 @@ namespace we {
 
 namespace {
 
+constexpr char anim_key_time_payload[] = "ANIM_KEY_TIME";
+
 struct update_auto_tangents_flags {
    bool position_keys = false;
    bool rotation_keys = false;
@@ -80,6 +82,24 @@ bool is_unique_key_time(const std::vector<T>& keys, const float time) noexcept
    }
 
    return true;
+}
+
+template<typename T>
+bool is_time_between_keys(const std::vector<T>& keys, const int32 key_index,
+                          const float time)
+{
+   if (keys.size() == 1) {
+      return true;
+   }
+   else if (key_index == 0) {
+      return time < keys[1].time;
+   }
+   else if (key_index == std::ssize(keys) - 1) {
+      return time > keys[key_index - 1].time;
+   }
+   else {
+      return time > keys[key_index - 1].time and time < keys[key_index + 1].time;
+   }
 }
 
 auto clamp_position(int32 index, const world::animation& animation) noexcept -> int32
@@ -556,6 +576,22 @@ void world_edit::ui_show_animation_editor() noexcept
             ImGui::DragFloat("Runtime", &selected_animation->runtime,
                              _edit_stack_world, _edit_context, 0.05f, 0.0f, 1e10f);
 
+            if (ImGui::BeginDragDropTarget()) {
+               if (const ImGuiPayload* payload =
+                      ImGui::AcceptDragDropPayload(anim_key_time_payload);
+                   payload and payload->DataSize == sizeof(float)) {
+                  float new_time = 0.0f;
+
+                  std::memcpy(&new_time, payload->Data, sizeof(new_time));
+
+                  _edit_stack_world
+                     .apply(edits::make_set_value(&selected_animation->runtime, new_time),
+                            _edit_context, {.closed = true});
+               }
+
+               ImGui::EndDragDropTarget();
+            }
+
             ImGui::Checkbox("Loop", &selected_animation->loop,
                             _edit_stack_world, _edit_context);
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
@@ -609,6 +645,20 @@ void world_edit::ui_show_animation_editor() noexcept
                                    0.0f, selected_animation->runtime, "%.2f")) {
                _animation_editor_context.selected.playback_state =
                   animation_playback_state::paused;
+            }
+
+            if (ImGui::BeginDragDropTarget()) {
+               if (const ImGuiPayload* payload =
+                      ImGui::AcceptDragDropPayload(anim_key_time_payload);
+                   payload and payload->DataSize == sizeof(float)) {
+                  float new_time = 0.0f;
+
+                  std::memcpy(&new_time, payload->Data, sizeof(new_time));
+
+                  _animation_editor_context.selected.playback_time = new_time;
+               }
+
+               ImGui::EndDragDropTarget();
             }
 
             const float button_width =
@@ -679,6 +729,44 @@ void world_edit::ui_show_animation_editor() noexcept
 
                      if (ImGui::IsItemHovered()) hovered_position_key = i;
 
+                     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
+                        ImGui::SetDragDropPayload(
+                           anim_key_time_payload,
+                           &selected_animation->position_keys[i].time,
+                           sizeof(selected_animation->position_keys[i].time));
+
+                        ImGui::Text("Key Time: %.2f",
+                                    selected_animation->position_keys[i].time);
+
+                        ImGui::EndDragDropSource();
+                     }
+
+                     if (ImGui::BeginDragDropTarget()) {
+                        if (const ImGuiPayload* payload =
+                               ImGui::AcceptDragDropPayload(anim_key_time_payload,
+                                                            ImGuiDragDropFlags_AcceptBeforeDelivery);
+                            payload and payload->DataSize == sizeof(float)) {
+                           float new_time = 0.0f;
+
+                           std::memcpy(&new_time, payload->Data, sizeof(new_time));
+
+                           if (not is_time_between_keys(selected_animation->position_keys,
+                                                    i, new_time)) {
+                              ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+                           }
+                           else if (payload->IsDelivery()) {
+                              _edit_stack_world.apply(edits::make_set_vector_value(
+                                                         &selected_animation->position_keys,
+                                                         i, &world::position_key::time,
+                                                         new_time),
+                                                      _edit_context,
+                                                      {.closed = true});
+                           }
+                        }
+
+                        ImGui::EndDragDropTarget();
+                     }
+
                      ImGui::SetCursorPos(cursor);
 
                      ImGui::Text("%.2f", selected_animation->position_keys[i].time);
@@ -701,6 +789,20 @@ void world_edit::ui_show_animation_editor() noexcept
                   _animation_editor_context.selected.new_position_key_time =
                      std::max(_animation_editor_context.selected.new_position_key_time,
                               0.0f);
+               }
+
+               if (ImGui::BeginDragDropTarget()) {
+                  if (const ImGuiPayload* payload =
+                         ImGui::AcceptDragDropPayload(anim_key_time_payload);
+                      payload and payload->DataSize == sizeof(float)) {
+                     float new_time = 0.0f;
+
+                     std::memcpy(&new_time, payload->Data, sizeof(new_time));
+
+                     _animation_editor_context.selected.new_position_key_time = new_time;
+                  }
+
+                  ImGui::EndDragDropTarget();
                }
 
                ImGui::BeginDisabled(
@@ -825,6 +927,44 @@ void world_edit::ui_show_animation_editor() noexcept
 
                      if (ImGui::IsItemHovered()) hovered_rotation_key = i;
 
+                     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
+                        ImGui::SetDragDropPayload(
+                           anim_key_time_payload,
+                           &selected_animation->rotation_keys[i].time,
+                           sizeof(selected_animation->rotation_keys[i].time));
+
+                        ImGui::Text("Key Time: %.2f",
+                                    selected_animation->rotation_keys[i].time);
+
+                        ImGui::EndDragDropSource();
+                     }
+
+                     if (ImGui::BeginDragDropTarget()) {
+                        if (const ImGuiPayload* payload =
+                               ImGui::AcceptDragDropPayload(anim_key_time_payload,
+                                                            ImGuiDragDropFlags_AcceptBeforeDelivery);
+                            payload and payload->DataSize == sizeof(float)) {
+                           float new_time = 0.0f;
+
+                           std::memcpy(&new_time, payload->Data, sizeof(new_time));
+
+                           if (not is_time_between_keys(selected_animation->rotation_keys,
+                                                    i, new_time)) {
+                              ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+                           }
+                           else if (payload->IsDelivery()) {
+                              _edit_stack_world.apply(edits::make_set_vector_value(
+                                                         &selected_animation->rotation_keys,
+                                                         i, &world::rotation_key::time,
+                                                         new_time),
+                                                      _edit_context,
+                                                      {.closed = true});
+                           }
+                        }
+
+                        ImGui::EndDragDropTarget();
+                     }
+
                      ImGui::SetCursorPos(cursor);
 
                      ImGui::Text("%.2f", selected_animation->rotation_keys[i].time);
@@ -847,6 +987,20 @@ void world_edit::ui_show_animation_editor() noexcept
                   _animation_editor_context.selected.new_rotation_key_time =
                      std::max(_animation_editor_context.selected.new_rotation_key_time,
                               0.0f);
+               }
+
+               if (ImGui::BeginDragDropTarget()) {
+                  if (const ImGuiPayload* payload =
+                         ImGui::AcceptDragDropPayload(anim_key_time_payload);
+                      payload and payload->DataSize == sizeof(float)) {
+                     float new_time = 0.0f;
+
+                     std::memcpy(&new_time, payload->Data, sizeof(new_time));
+
+                     _animation_editor_context.selected.new_rotation_key_time = new_time;
+                  }
+
+                  ImGui::EndDragDropTarget();
                }
 
                ImGui::BeginDisabled(
@@ -2100,5 +2254,4 @@ void world_edit::ui_show_animation_editor() noexcept
       }
    }
 }
-
 }
