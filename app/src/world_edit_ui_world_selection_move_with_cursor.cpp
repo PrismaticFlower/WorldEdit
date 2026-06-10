@@ -286,10 +286,12 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
          return new_position;
       };
 
-      const auto update_position = [&](float3* position) {
-         const float3 new_position = create_new_position(*position);
+      const auto update_position = [&](auto* entity) {
+         const float3 new_position = create_new_position(entity->position);
 
-         bundled_edits.push_back(edits::make_set_value(position, new_position));
+         bundled_edits.push_back(
+            edits::make_set_multi_value(&entity->rotation, entity->rotation,
+                                        &entity->position, new_position));
       };
 
       for (const auto& selected : _interaction_targets.selection) {
@@ -297,7 +299,7 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
             world::object* object =
                world::find_entity(_world.objects, selected.get<world::object_id>());
 
-            if (object) update_position(&object->position);
+            if (object) update_position(object);
          }
          else if (selected.is<world::path_id_node_mask>()) {
             const auto& [id, node_mask] = selected.get<world::path_id_node_mask>();
@@ -326,6 +328,10 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
 
                   bundled_edits.push_back(
                      edits::make_set_vector_value(&path->nodes, node_index,
+                                                  &world::path::node::rotation,
+                                                  node.rotation));
+                  bundled_edits.push_back(
+                     edits::make_set_vector_value(&path->nodes, node_index,
                                                   &world::path::node::position,
                                                   new_position));
                }
@@ -335,13 +341,21 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
             world::light* light =
                world::find_entity(_world.lights, selected.get<world::light_id>());
 
-            if (light) update_position(&light->position);
+            if (light) {
+               update_position(light);
+
+               if (world::is_region_light(*light)) {
+                  bundled_edits.push_back(
+                     edits::make_set_value(&light->region_rotation,
+                                           light->region_rotation));
+               }
+            }
          }
          else if (selected.is<world::region_id>()) {
             world::region* region =
                world::find_entity(_world.regions, selected.get<world::region_id>());
 
-            if (region) update_position(&region->position);
+            if (region) update_position(region);
          }
          else if (selected.is<world::sector_id>()) {
             world::sector* sector =
@@ -374,27 +388,36 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
             world::portal* portal =
                world::find_entity(_world.portals, selected.get<world::portal_id>());
 
-            if (portal) update_position(&portal->position);
+            if (portal) update_position(portal);
          }
          else if (selected.is<world::hintnode_id>()) {
             world::hintnode* hintnode =
                world::find_entity(_world.hintnodes,
                                   selected.get<world::hintnode_id>());
 
-            if (hintnode) update_position(&hintnode->position);
+            if (hintnode) update_position(hintnode);
          }
          else if (selected.is<world::barrier_id>()) {
             world::barrier* barrier =
                world::find_entity(_world.barriers, selected.get<world::barrier_id>());
 
-            if (barrier) update_position(&barrier->position);
+            if (barrier) {
+               bundled_edits.push_back(
+                  edits::make_set_multi_value(&barrier->rotation_angle,
+                                              barrier->rotation_angle, &barrier->position,
+                                              create_new_position(barrier->position)));
+            }
          }
          else if (selected.is<world::planning_hub_id>()) {
-            world::planning_hub* planning_hub =
+            world::planning_hub* hub =
                world::find_entity(_world.planning_hubs,
                                   selected.get<world::planning_hub_id>());
 
-            if (planning_hub) update_position(&planning_hub->position);
+            if (hub) {
+               bundled_edits.push_back(
+                  edits::make_set_value(&hub->position,
+                                        create_new_position(hub->position)));
+            }
          }
          else if (selected.is<world::boundary_id>()) {
             world::boundary* boundary =
@@ -423,8 +446,11 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                                   selected.get<world::measurement_id>());
 
             if (measurement) {
-               update_position(&measurement->start);
-               update_position(&measurement->end);
+               bundled_edits.push_back(
+                  edits::make_set_multi_value(&measurement->start,
+                                              create_new_position(measurement->start),
+                                              &measurement->end,
+                                              create_new_position(measurement->end)));
             }
          }
          else if (selected.is<world::block_id>()) {
@@ -651,12 +677,9 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                world::find_entity(_world.objects, selected.get<world::object_id>());
 
             if (object) {
-               bundled_edits.push_back(
-                  edits::make_set_value(&object->rotation, rotation * object->rotation));
-               bundled_edits.push_back(
-                  edits::make_set_value(&object->position,
-                                        (rotation * (object->position - centreWS)) +
-                                           centreWS));
+               bundled_edits.push_back(edits::make_set_multi_value(
+                  &object->rotation, rotation * object->rotation, &object->position,
+                  (rotation * (object->position - centreWS)) + centreWS));
             }
          }
          else if (selected.is<world::light_id>()) {
@@ -664,12 +687,9 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                world::find_entity(_world.lights, selected.get<world::light_id>());
 
             if (light) {
-               bundled_edits.push_back(
-                  edits::make_set_value(&light->rotation, rotation * light->rotation));
-               bundled_edits.push_back(
-                  edits::make_set_value(&light->position,
-                                        (rotation * (light->position - centreWS)) +
-                                           centreWS));
+               bundled_edits.push_back(edits::make_set_multi_value(
+                  &light->rotation, rotation * light->rotation, &light->position,
+                  (rotation * (light->position - centreWS)) + centreWS));
 
                if (world::is_region_light(*light)) {
                   bundled_edits.push_back(
@@ -707,12 +727,9 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                world::find_entity(_world.regions, selected.get<world::region_id>());
 
             if (region) {
-               bundled_edits.push_back(
-                  edits::make_set_value(&region->rotation, rotation * region->rotation));
-               bundled_edits.push_back(
-                  edits::make_set_value(&region->position,
-                                        (rotation * (region->position - centreWS)) +
-                                           centreWS));
+               bundled_edits.push_back(edits::make_set_multi_value(
+                  &region->rotation, rotation * region->rotation, &region->position,
+                  (rotation * (region->position - centreWS)) + centreWS));
             }
          }
          else if (selected.is<world::sector_id>()) {
@@ -746,6 +763,11 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
 
                bundled_edits.push_back(
                   edits::make_set_value(&sector->points, std::move(new_points)));
+
+               if (not _selection_cursor_move_lock_y_axis) {
+                  bundled_edits.push_back(
+                     edits::make_set_value(&sector->base, sector->base));
+               }
             }
          }
          else if (selected.is<world::portal_id>()) {
@@ -753,12 +775,9 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                world::find_entity(_world.portals, selected.get<world::portal_id>());
 
             if (portal) {
-               bundled_edits.push_back(
-                  edits::make_set_value(&portal->rotation, rotation * portal->rotation));
-               bundled_edits.push_back(
-                  edits::make_set_value(&portal->position,
-                                        (rotation * (portal->position - centreWS)) +
-                                           centreWS));
+               bundled_edits.push_back(edits::make_set_multi_value(
+                  &portal->rotation, rotation * portal->rotation, &portal->position,
+                  (rotation * (portal->position - centreWS)) + centreWS));
             }
          }
          else if (selected.is<world::hintnode_id>()) {
@@ -767,13 +786,9 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                                   selected.get<world::hintnode_id>());
 
             if (hintnode) {
-               bundled_edits.push_back(
-                  edits::make_set_value(&hintnode->rotation,
-                                        rotation * hintnode->rotation));
-               bundled_edits.push_back(
-                  edits::make_set_value(&hintnode->position,
-                                        (rotation * (hintnode->position - centreWS)) +
-                                           centreWS));
+               bundled_edits.push_back(edits::make_set_multi_value(
+                  &hintnode->rotation, rotation * hintnode->rotation, &hintnode->position,
+                  (rotation * (hintnode->position - centreWS)) + centreWS));
             }
          }
          else if (selected.is<world::barrier_id>()) {
@@ -781,13 +796,10 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                world::find_entity(_world.barriers, selected.get<world::barrier_id>());
 
             if (barrier) {
-               bundled_edits.push_back(
-                  edits::make_set_value(&barrier->rotation_angle,
-                                        barrier->rotation_angle + rotate_step));
-               bundled_edits.push_back(
-                  edits::make_set_value(&barrier->position,
-                                        (rotation * (barrier->position - centreWS)) +
-                                           centreWS));
+               bundled_edits.push_back(edits::make_set_multi_value(
+                  &barrier->rotation_angle,
+                  barrier->rotation_angle + rotate_step, &barrier->position,
+                  (rotation * (barrier->position - centreWS)) + centreWS));
             }
          }
          else if (selected.is<world::planning_hub_id>()) {
@@ -824,14 +836,11 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                                   selected.get<world::measurement_id>());
 
             if (measurement) {
-               bundled_edits.push_back(
-                  edits::make_set_value(&measurement->start,
-                                        (rotation * (measurement->start - centreWS)) +
-                                           centreWS));
-               bundled_edits.push_back(
-                  edits::make_set_value(&measurement->end,
-                                        (rotation * (measurement->end - centreWS)) +
-                                           centreWS));
+               bundled_edits.push_back(edits::make_set_multi_value(
+                  &measurement->start,
+                  (rotation * (measurement->start - centreWS)) + centreWS,
+                  &measurement->end,
+                  (rotation * (measurement->end - centreWS)) + centreWS));
             }
          }
          else if (selected.is<world::block_id>()) {
@@ -919,12 +928,11 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
       }
 
       if (bundled_edits.size() == 1) {
-         _edit_stack_world.apply(std::move(bundled_edits.back()), _edit_context,
-                                 {.transparent = true});
+         _edit_stack_world.apply(std::move(bundled_edits.back()), _edit_context);
       }
       else if (not bundled_edits.empty()) {
          _edit_stack_world.apply(edits::make_bundle(std::move(bundled_edits)),
-                                 _edit_context, {.transparent = true});
+                                 _edit_context);
       }
 
       _selection_cursor_move_rotate_back = false;
