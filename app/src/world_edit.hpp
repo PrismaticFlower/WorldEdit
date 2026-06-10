@@ -584,8 +584,13 @@ private:
    world::world _world;
    world::interaction_targets _interaction_targets;
    world::hovered_entity _last_clicked_entity;
-   world::active_entity_types _world_draw_mask;
-   world::active_entity_types _world_hit_mask{};
+   world::active_entity_types _world_draw_mask = {
+      .objects = true,
+      .measurements = true,
+      .terrain = true,
+      .blocks = true,
+   };
+   world::active_entity_types _world_hit_mask = _world_draw_mask;
    world::active_layers _world_layers_draw_mask{true};
    world::active_layers _world_layers_hit_mask{true};
    world::tool_visualizers _tool_visualizers;
@@ -1323,7 +1328,7 @@ private:
    bool _selection_cursor_move_lock_z_axis = false;
    bool _selection_cursor_move_rotate_forward = false;
    bool _selection_cursor_move_rotate_back = false;
-   world::active_entity_types _selection_cursor_move_hit_mask;
+   world::active_entity_types _selection_cursor_move_hit_mask = _world_draw_mask;
    float _selection_cursor_move_snap_distance = 0.125f;
 
    float2 _select_start_position;

@@ -429,17 +429,13 @@ void world_edit::update_hovered_entity() noexcept
 
    if (_interaction_targets.creation_entity.holds_entity()) {
       if (_entity_creation_context.tool == entity_creation_tool::from_object_bbox) {
-         raycast_mask = world::active_entity_types{.objects = true, .terrain = false};
+         raycast_mask = world::active_entity_types{.objects = true};
       }
       else if (_interaction_targets.creation_entity.is<world::planning_connection>()) {
-         raycast_mask = world::active_entity_types{.objects = false,
-                                                   .planning_hubs = true,
-                                                   .terrain = false};
+         raycast_mask = world::active_entity_types{.planning_hubs = true};
       }
       else if (_entity_creation_context.tool == entity_creation_tool::pick_sector) {
-         raycast_mask = world::active_entity_types{.objects = false,
-                                                   .sectors = true,
-                                                   .terrain = false};
+         raycast_mask = world::active_entity_types{.sectors = true};
       }
    }
    else if (_selection_edit_tool == selection_edit_tool::pick_sector) {
@@ -449,14 +445,10 @@ void world_edit::update_hovered_entity() noexcept
    else if (_selection_edit_tool == selection_edit_tool::add_branch_weight) {
       switch (_selection_add_branch_weight_context.step) {
       case add_branch_weight_step::connection:
-         raycast_mask = world::active_entity_types{.objects = false,
-                                                   .planning_connections = true,
-                                                   .terrain = false};
+         raycast_mask = world::active_entity_types{.planning_connections = true};
          break;
       case add_branch_weight_step::target:
-         raycast_mask = world::active_entity_types{.objects = false,
-                                                   .planning_hubs = true,
-                                                   .terrain = false};
+         raycast_mask = world::active_entity_types{.planning_hubs = true};
          break;
       }
    }
@@ -4281,8 +4273,13 @@ void world_edit::close_world() noexcept
    _interaction_targets = {};
    _last_clicked_entity = {};
    _entity_creation_context = {};
-   _world_draw_mask = {};
-   _world_hit_mask = {};
+   _world_draw_mask = {
+      .objects = true,
+      .measurements = true,
+      .terrain = true,
+      .blocks = true,
+   };
+   _world_hit_mask = _world_draw_mask;
    _world_layers_draw_mask = {true};
    _world_layers_hit_mask = {true};
    _world_path = "";
