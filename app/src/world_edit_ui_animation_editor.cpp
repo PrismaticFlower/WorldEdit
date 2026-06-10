@@ -838,12 +838,24 @@ void world_edit::ui_show_animation_editor() noexcept
 
                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
-               if (ImGui::SliderFloat("##new_key_time",
-                                      &_animation_editor_context.selected.new_position_key_time,
-                                      0.0f, selected_animation->runtime, "Time: %.2f")) {
-                  _animation_editor_context.selected.new_position_key_time =
-                     std::max(_animation_editor_context.selected.new_position_key_time,
-                              0.0f);
+               if (selected_animation->runtime > 0.0f) {
+                  if (ImGui::SliderFloat("##new_key_time",
+                                         &_animation_editor_context.selected.new_position_key_time,
+                                         0.0f, selected_animation->runtime,
+                                         "Time: %.2f")) {
+                     _animation_editor_context.selected.new_position_key_time =
+                        std::max(_animation_editor_context.selected.new_position_key_time,
+                                 0.0f);
+                  }
+               }
+               else {
+                  if (ImGui::DragFloat("##new_key_time",
+                                       &_animation_editor_context.selected.new_position_key_time,
+                                       1.0f, 0.0f, 1e10f, "Time: %.2f")) {
+                     _animation_editor_context.selected.new_position_key_time =
+                        std::max(_animation_editor_context.selected.new_position_key_time,
+                                 0.0f);
+                  }
                }
 
                if (ImGui::BeginDragDropTarget()) {
@@ -1030,12 +1042,24 @@ void world_edit::ui_show_animation_editor() noexcept
 
                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
-               if (ImGui::SliderFloat("##new_key_time",
-                                      &_animation_editor_context.selected.new_rotation_key_time,
-                                      0.0f, selected_animation->runtime, "Time: %.2f")) {
-                  _animation_editor_context.selected.new_rotation_key_time =
-                     std::max(_animation_editor_context.selected.new_rotation_key_time,
-                              0.0f);
+               if (selected_animation->runtime > 0.0f) {
+                  if (ImGui::SliderFloat("##new_key_time",
+                                         &_animation_editor_context.selected.new_rotation_key_time,
+                                         0.0f, selected_animation->runtime,
+                                         "Time: %.2f")) {
+                     _animation_editor_context.selected.new_rotation_key_time =
+                        std::max(_animation_editor_context.selected.new_rotation_key_time,
+                                 0.0f);
+                  }
+               }
+               else {
+                  if (ImGui::DragFloat("##new_key_time",
+                                       &_animation_editor_context.selected.new_rotation_key_time,
+                                       1.0f, 0.0f, 1e10f, "Time: %.2f")) {
+                     _animation_editor_context.selected.new_rotation_key_time =
+                        std::max(_animation_editor_context.selected.new_rotation_key_time,
+                                 0.0f);
+                  }
                }
 
                if (ImGui::BeginDragDropTarget()) {
