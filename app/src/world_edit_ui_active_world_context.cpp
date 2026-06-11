@@ -4,6 +4,72 @@
 
 namespace we {
 
+namespace {
+
+auto operator~(const world::active_entity_types l) noexcept -> world::active_entity_types
+{
+   return {
+      .objects = not l.objects,
+      .lights = not l.lights,
+      .paths = not l.paths,
+      .regions = not l.regions,
+      .sectors = not l.sectors,
+      .portals = not l.portals,
+      .hintnodes = not l.hintnodes,
+      .barriers = not l.barriers,
+      .planning_hubs = not l.planning_hubs,
+      .planning_connections = not l.planning_connections,
+      .boundaries = not l.boundaries,
+      .measurements = not l.measurements,
+      .terrain = not l.terrain,
+      .blocks = not l.blocks,
+   };
+}
+
+auto operator&(const world::active_entity_types l,
+               const world::active_entity_types r) noexcept -> world::active_entity_types
+{
+   return {
+      .objects = (l.objects & r.objects) != 0,
+      .lights = (l.lights & r.lights) != 0,
+      .paths = (l.paths & r.paths) != 0,
+      .regions = (l.regions & r.regions) != 0,
+      .sectors = (l.sectors & r.sectors) != 0,
+      .portals = (l.portals & r.portals) != 0,
+      .hintnodes = (l.hintnodes & r.hintnodes) != 0,
+      .barriers = (l.barriers & r.barriers) != 0,
+      .planning_hubs = (l.planning_hubs & r.planning_hubs) != 0,
+      .planning_connections = (l.planning_connections & r.planning_connections) != 0,
+      .boundaries = (l.boundaries & r.boundaries) != 0,
+      .measurements = (l.measurements & r.measurements) != 0,
+      .terrain = (l.terrain & r.terrain) != 0,
+      .blocks = (l.blocks & r.blocks) != 0,
+   };
+}
+
+auto operator|(const world::active_entity_types l,
+               const world::active_entity_types r) noexcept -> world::active_entity_types
+{
+   return {
+      .objects = (l.objects | r.objects) != 0,
+      .lights = (l.lights | r.lights) != 0,
+      .paths = (l.paths | r.paths) != 0,
+      .regions = (l.regions | r.regions) != 0,
+      .sectors = (l.sectors | r.sectors) != 0,
+      .portals = (l.portals | r.portals) != 0,
+      .hintnodes = (l.hintnodes | r.hintnodes) != 0,
+      .barriers = (l.barriers | r.barriers) != 0,
+      .planning_hubs = (l.planning_hubs | r.planning_hubs) != 0,
+      .planning_connections = (l.planning_connections | r.planning_connections) != 0,
+      .boundaries = (l.boundaries | r.boundaries) != 0,
+      .measurements = (l.measurements | r.measurements) != 0,
+      .terrain = (l.terrain | r.terrain) != 0,
+      .blocks = (l.blocks | r.blocks) != 0,
+   };
+}
+
+}
+
 void world_edit::ui_show_world_active_context() noexcept
 {
    ImGui::SetNextWindowPos({0.0f, 32.0f * _display_scale});
@@ -47,14 +113,56 @@ void world_edit::ui_show_world_active_context() noexcept
 
          ImGui::TableNextColumn();
          if (bool draw = _world_layers_draw_mask[i]; ImGui::Checkbox("Show", &draw)) {
-            _world_layers_draw_mask[i] = draw;
-            if (not draw) _world_layers_hit_mask[i] = false;
+            if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+               _world_layers_draw_mask = {false};
+               _world_layers_hit_mask = {false};
+            }
+            else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+               _world_layers_draw_mask = {true};
+            }
+            else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+               for (int other_layer = 0;
+                    other_layer < _world.layer_descriptions.size(); ++other_layer) {
+                  if (other_layer != i) {
+                     _world_layers_draw_mask[other_layer] = not draw;
+                     if (draw) _world_layers_hit_mask[other_layer] = false;
+                  }
+               }
+
+               _world_layers_draw_mask[i] = draw;
+               if (not draw) _world_layers_hit_mask[i] = false;
+            }
+            else {
+               _world_layers_draw_mask[i] = draw;
+               if (not draw) _world_layers_hit_mask[i] = false;
+            }
          }
 
          ImGui::TableNextColumn();
          if (bool hit = _world_layers_hit_mask[i]; ImGui::Checkbox("Select", &hit)) {
-            _world_layers_hit_mask[i] = hit;
-            if (hit) _world_layers_draw_mask[i] = true;
+            if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+               _world_layers_hit_mask = {false};
+            }
+            else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+               _world_layers_draw_mask = {true};
+               _world_layers_hit_mask = {true};
+            }
+            else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+               for (int other_layer = 0;
+                    other_layer < _world.layer_descriptions.size(); ++other_layer) {
+                  if (other_layer != i) {
+                     _world_layers_hit_mask[other_layer] = not hit;
+                     if (not hit) _world_layers_draw_mask[other_layer] = true;
+                  }
+               }
+
+               _world_layers_hit_mask[i] = hit;
+               if (hit) _world_layers_draw_mask[i] = true;
+            }
+            else {
+               _world_layers_hit_mask[i] = hit;
+               if (hit) _world_layers_draw_mask[i] = true;
+            }
          }
 
          ImGui::PopID();
@@ -77,15 +185,53 @@ void world_edit::ui_show_world_active_context() noexcept
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.objects;
           ImGui::Checkbox("Show##Objects", &draw)) {
-         _world_draw_mask.objects = draw;
-         if (not draw) _world_hit_mask.objects = false;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_draw_mask = world::active_entity_types{};
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types draw_mask = {
+               .objects = true,
+            };
+
+            if (not draw) draw_mask = ~draw_mask;
+
+            _world_draw_mask = draw_mask;
+            _world_hit_mask = draw_mask & _world_hit_mask;
+         }
+         else {
+            _world_draw_mask.objects = draw;
+            if (not draw) _world_hit_mask.objects = false;
+         }
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.objects;
           ImGui::Checkbox("Select##Objects", &hit)) {
-         _world_hit_mask.objects = hit;
-         if (hit) _world_draw_mask.objects = true;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+            _world_hit_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types hit_mask = {
+               .objects = true,
+            };
+
+            if (not hit) hit_mask = ~hit_mask;
+
+            _world_draw_mask = hit_mask | _world_draw_mask;
+            _world_hit_mask = hit_mask;
+         }
+         else {
+            _world_hit_mask.objects = hit;
+            if (hit) _world_draw_mask.objects = true;
+         }
       }
 
       ImGui::TableNextRow();
@@ -95,14 +241,52 @@ void world_edit::ui_show_world_active_context() noexcept
 
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.lights; ImGui::Checkbox("Show##Lights", &draw)) {
-         _world_draw_mask.lights = draw;
-         if (not draw) _world_hit_mask.lights = false;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_draw_mask = world::active_entity_types{};
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types draw_mask = {
+               .lights = true,
+            };
+
+            if (not draw) draw_mask = ~draw_mask;
+
+            _world_draw_mask = draw_mask;
+            _world_hit_mask = draw_mask & _world_hit_mask;
+         }
+         else {
+            _world_draw_mask.lights = draw;
+            if (not draw) _world_hit_mask.lights = false;
+         }
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.lights; ImGui::Checkbox("Select##Lights", &hit)) {
-         _world_hit_mask.lights = hit;
-         if (hit) _world_draw_mask.lights = true;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+            _world_hit_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types hit_mask = {
+               .lights = true,
+            };
+
+            if (not hit) hit_mask = ~hit_mask;
+
+            _world_draw_mask = hit_mask | _world_draw_mask;
+            _world_hit_mask = hit_mask;
+         }
+         else {
+            _world_hit_mask.lights = hit;
+            if (hit) _world_draw_mask.lights = true;
+         }
       }
 
       ImGui::TableNextRow();
@@ -112,14 +296,52 @@ void world_edit::ui_show_world_active_context() noexcept
 
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.paths; ImGui::Checkbox("Show##Paths", &draw)) {
-         _world_draw_mask.paths = draw;
-         if (not draw) _world_hit_mask.paths = false;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_draw_mask = world::active_entity_types{};
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types draw_mask = {
+               .paths = true,
+            };
+
+            if (not draw) draw_mask = ~draw_mask;
+
+            _world_draw_mask = draw_mask;
+            _world_hit_mask = draw_mask & _world_hit_mask;
+         }
+         else {
+            _world_draw_mask.paths = draw;
+            if (not draw) _world_hit_mask.paths = false;
+         }
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.paths; ImGui::Checkbox("Select##Paths", &hit)) {
-         _world_hit_mask.paths = hit;
-         if (hit) _world_draw_mask.paths = true;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+            _world_hit_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types hit_mask = {
+               .paths = true,
+            };
+
+            if (not hit) hit_mask = ~hit_mask;
+
+            _world_draw_mask = hit_mask | _world_draw_mask;
+            _world_hit_mask = hit_mask;
+         }
+         else {
+            _world_hit_mask.paths = hit;
+            if (hit) _world_draw_mask.paths = true;
+         }
       }
 
       ImGui::TableNextRow();
@@ -130,15 +352,53 @@ void world_edit::ui_show_world_active_context() noexcept
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.regions;
           ImGui::Checkbox("Show##Regions", &draw)) {
-         _world_draw_mask.regions = draw;
-         if (not draw) _world_hit_mask.regions = false;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_draw_mask = world::active_entity_types{};
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types draw_mask = {
+               .regions = true,
+            };
+
+            if (not draw) draw_mask = ~draw_mask;
+
+            _world_draw_mask = draw_mask;
+            _world_hit_mask = draw_mask & _world_hit_mask;
+         }
+         else {
+            _world_draw_mask.regions = draw;
+            if (not draw) _world_hit_mask.regions = false;
+         }
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.regions;
           ImGui::Checkbox("Select##Regions", &hit)) {
-         _world_hit_mask.regions = hit;
-         if (hit) _world_draw_mask.regions = true;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+            _world_hit_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types hit_mask = {
+               .regions = true,
+            };
+
+            if (not hit) hit_mask = ~hit_mask;
+
+            _world_draw_mask = hit_mask | _world_draw_mask;
+            _world_hit_mask = hit_mask;
+         }
+         else {
+            _world_hit_mask.regions = hit;
+            if (hit) _world_draw_mask.regions = true;
+         }
       }
 
       ImGui::TableNextRow();
@@ -149,15 +409,53 @@ void world_edit::ui_show_world_active_context() noexcept
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.sectors;
           ImGui::Checkbox("Show##Sectors", &draw)) {
-         _world_draw_mask.sectors = draw;
-         if (not draw) _world_hit_mask.sectors = false;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_draw_mask = world::active_entity_types{};
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types draw_mask = {
+               .sectors = true,
+            };
+
+            if (not draw) draw_mask = ~draw_mask;
+
+            _world_draw_mask = draw_mask;
+            _world_hit_mask = draw_mask & _world_hit_mask;
+         }
+         else {
+            _world_draw_mask.sectors = draw;
+            if (not draw) _world_hit_mask.sectors = false;
+         }
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.sectors;
           ImGui::Checkbox("Select##Sectors", &hit)) {
-         _world_hit_mask.sectors = hit;
-         if (hit) _world_draw_mask.sectors = true;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+            _world_hit_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types hit_mask = {
+               .sectors = true,
+            };
+
+            if (not hit) hit_mask = ~hit_mask;
+
+            _world_draw_mask = hit_mask | _world_draw_mask;
+            _world_hit_mask = hit_mask;
+         }
+         else {
+            _world_hit_mask.sectors = hit;
+            if (hit) _world_draw_mask.sectors = true;
+         }
       }
 
       ImGui::TableNextRow();
@@ -168,15 +466,53 @@ void world_edit::ui_show_world_active_context() noexcept
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.portals;
           ImGui::Checkbox("Show##Portals", &draw)) {
-         _world_draw_mask.portals = draw;
-         if (not draw) _world_hit_mask.portals = false;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_draw_mask = world::active_entity_types{};
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types draw_mask = {
+               .portals = true,
+            };
+
+            if (not draw) draw_mask = ~draw_mask;
+
+            _world_draw_mask = draw_mask;
+            _world_hit_mask = draw_mask & _world_hit_mask;
+         }
+         else {
+            _world_draw_mask.portals = draw;
+            if (not draw) _world_hit_mask.portals = false;
+         }
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.portals;
           ImGui::Checkbox("Select##Portals", &hit)) {
-         _world_hit_mask.portals = hit;
-         if (hit) _world_draw_mask.portals = true;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+            _world_hit_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types hit_mask = {
+               .portals = true,
+            };
+
+            if (not hit) hit_mask = ~hit_mask;
+
+            _world_draw_mask = hit_mask | _world_draw_mask;
+            _world_hit_mask = hit_mask;
+         }
+         else {
+            _world_hit_mask.portals = hit;
+            if (hit) _world_draw_mask.portals = true;
+         }
       }
 
       ImGui::TableNextRow();
@@ -187,15 +523,53 @@ void world_edit::ui_show_world_active_context() noexcept
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.hintnodes;
           ImGui::Checkbox("Show##Hintnodes", &draw)) {
-         _world_draw_mask.hintnodes = draw;
-         if (not draw) _world_hit_mask.hintnodes = false;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_draw_mask = world::active_entity_types{};
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types draw_mask = {
+               .hintnodes = true,
+            };
+
+            if (not draw) draw_mask = ~draw_mask;
+
+            _world_draw_mask = draw_mask;
+            _world_hit_mask = draw_mask & _world_hit_mask;
+         }
+         else {
+            _world_draw_mask.hintnodes = draw;
+            if (not draw) _world_hit_mask.hintnodes = false;
+         }
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.hintnodes;
           ImGui::Checkbox("Select##Hintnodes", &hit)) {
-         _world_hit_mask.hintnodes = hit;
-         if (hit) _world_draw_mask.hintnodes = true;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+            _world_hit_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types hit_mask = {
+               .hintnodes = true,
+            };
+
+            if (not hit) hit_mask = ~hit_mask;
+
+            _world_draw_mask = hit_mask | _world_draw_mask;
+            _world_hit_mask = hit_mask;
+         }
+         else {
+            _world_hit_mask.hintnodes = hit;
+            if (hit) _world_draw_mask.hintnodes = true;
+         }
       }
 
       ImGui::TableNextRow();
@@ -206,15 +580,53 @@ void world_edit::ui_show_world_active_context() noexcept
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.barriers;
           ImGui::Checkbox("Show##Barriers", &draw)) {
-         _world_draw_mask.barriers = draw;
-         if (not draw) _world_hit_mask.barriers = false;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_draw_mask = world::active_entity_types{};
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types draw_mask = {
+               .barriers = true,
+            };
+
+            if (not draw) draw_mask = ~draw_mask;
+
+            _world_draw_mask = draw_mask;
+            _world_hit_mask = draw_mask & _world_hit_mask;
+         }
+         else {
+            _world_draw_mask.barriers = draw;
+            if (not draw) _world_hit_mask.barriers = false;
+         }
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.barriers;
           ImGui::Checkbox("Select##Barriers", &hit)) {
-         _world_hit_mask.barriers = hit;
-         if (hit) _world_draw_mask.barriers = true;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+            _world_hit_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types hit_mask = {
+               .barriers = true,
+            };
+
+            if (not hit) hit_mask = ~hit_mask;
+
+            _world_draw_mask = hit_mask | _world_draw_mask;
+            _world_hit_mask = hit_mask;
+         }
+         else {
+            _world_hit_mask.barriers = hit;
+            if (hit) _world_draw_mask.barriers = true;
+         }
       }
 
       ImGui::TableNextRow();
@@ -225,24 +637,64 @@ void world_edit::ui_show_world_active_context() noexcept
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.planning_hubs or _world_draw_mask.planning_connections;
           ImGui::Checkbox("Show##AI Planning", &draw)) {
-         _world_draw_mask.planning_hubs = draw;
-         _world_draw_mask.planning_connections = draw;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_draw_mask = world::active_entity_types{};
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types draw_mask = {
+               .planning_hubs = true,
+               .planning_connections = true,
+            };
 
-         if (not draw) {
-            _world_hit_mask.planning_hubs = false;
-            _world_hit_mask.planning_connections = false;
+            if (not draw) draw_mask = ~draw_mask;
+
+            _world_draw_mask = draw_mask;
+            _world_hit_mask = draw_mask & _world_hit_mask;
+         }
+         else {
+            _world_draw_mask.planning_hubs = draw;
+            _world_draw_mask.planning_connections = draw;
+
+            if (not draw) {
+               _world_hit_mask.planning_hubs = false;
+               _world_hit_mask.planning_connections = false;
+            }
          }
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.planning_hubs or _world_hit_mask.planning_connections;
           ImGui::Checkbox("Select##AI Planning", &hit)) {
-         _world_hit_mask.planning_hubs = hit;
-         _world_hit_mask.planning_connections = hit;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+            _world_hit_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types hit_mask = {
+               .planning_hubs = true,
+               .planning_connections = true,
+            };
 
-         if (hit) {
-            _world_draw_mask.planning_hubs = true;
-            _world_draw_mask.planning_connections = true;
+            if (not hit) hit_mask = ~hit_mask;
+
+            _world_draw_mask = hit_mask | _world_draw_mask;
+            _world_hit_mask = hit_mask;
+         }
+         else {
+            _world_hit_mask.planning_hubs = hit;
+            _world_hit_mask.planning_connections = hit;
+
+            if (hit) {
+               _world_draw_mask.planning_hubs = true;
+               _world_draw_mask.planning_connections = true;
+            }
          }
       }
 
@@ -254,15 +706,53 @@ void world_edit::ui_show_world_active_context() noexcept
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.boundaries;
           ImGui::Checkbox("Show##Boundaries", &draw)) {
-         _world_draw_mask.boundaries = draw;
-         if (not draw) _world_hit_mask.boundaries = false;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_draw_mask = world::active_entity_types{};
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types draw_mask = {
+               .boundaries = true,
+            };
+
+            if (not draw) draw_mask = ~draw_mask;
+
+            _world_draw_mask = draw_mask;
+            _world_hit_mask = draw_mask & _world_hit_mask;
+         }
+         else {
+            _world_draw_mask.boundaries = draw;
+            if (not draw) _world_hit_mask.boundaries = false;
+         }
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.boundaries;
           ImGui::Checkbox("Select##Boundaries", &hit)) {
-         _world_hit_mask.boundaries = hit;
-         if (hit) _world_draw_mask.boundaries = true;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+            _world_hit_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types hit_mask = {
+               .boundaries = true,
+            };
+
+            if (not hit) hit_mask = ~hit_mask;
+
+            _world_draw_mask = hit_mask | _world_draw_mask;
+            _world_hit_mask = hit_mask;
+         }
+         else {
+            _world_hit_mask.boundaries = hit;
+            if (hit) _world_draw_mask.boundaries = true;
+         }
       }
 
       ImGui::TableNextRow();
@@ -273,15 +763,53 @@ void world_edit::ui_show_world_active_context() noexcept
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.terrain;
           ImGui::Checkbox("Show##Terrain", &draw)) {
-         _world_draw_mask.terrain = draw;
-         if (not draw) _world_hit_mask.terrain = false;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_draw_mask = world::active_entity_types{};
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types draw_mask = {
+               .terrain = true,
+            };
+
+            if (not draw) draw_mask = ~draw_mask;
+
+            _world_draw_mask = draw_mask;
+            _world_hit_mask = draw_mask & _world_hit_mask;
+         }
+         else {
+            _world_draw_mask.terrain = draw;
+            if (not draw) _world_hit_mask.terrain = false;
+         }
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.terrain;
           ImGui::Checkbox("Select##Terrain", &hit)) {
-         _world_hit_mask.terrain = hit;
-         if (hit) _world_draw_mask.terrain = true;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+            _world_hit_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types hit_mask = {
+               .terrain = true,
+            };
+
+            if (not hit) hit_mask = ~hit_mask;
+
+            _world_draw_mask = hit_mask | _world_draw_mask;
+            _world_hit_mask = hit_mask;
+         }
+         else {
+            _world_hit_mask.terrain = hit;
+            if (hit) _world_draw_mask.terrain = true;
+         }
       }
 
       ImGui::TableNextColumn();
@@ -289,14 +817,52 @@ void world_edit::ui_show_world_active_context() noexcept
 
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.blocks; ImGui::Checkbox("Show##Blocks", &draw)) {
-         _world_draw_mask.blocks = draw;
-         if (not draw) _world_hit_mask.blocks = false;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_draw_mask = world::active_entity_types{};
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types draw_mask = {
+               .blocks = true,
+            };
+
+            if (not draw) draw_mask = ~draw_mask;
+
+            _world_draw_mask = draw_mask;
+            _world_hit_mask = draw_mask & _world_hit_mask;
+         }
+         else {
+            _world_draw_mask.blocks = draw;
+            if (not draw) _world_hit_mask.blocks = false;
+         }
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.blocks; ImGui::Checkbox("Select##Blocks", &hit)) {
-         _world_hit_mask.blocks = hit;
-         if (hit) _world_draw_mask.blocks = true;
+         if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            _world_hit_mask = world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            _world_draw_mask = ~world::active_entity_types{};
+            _world_hit_mask = ~world::active_entity_types{};
+         }
+         else if (ImGui::IsKeyDown(ImGuiMod_Alt)) {
+            world::active_entity_types hit_mask = {
+               .blocks = true,
+            };
+
+            if (not hit) hit_mask = ~hit_mask;
+
+            _world_draw_mask = hit_mask | _world_draw_mask;
+            _world_hit_mask = hit_mask;
+         }
+         else {
+            _world_hit_mask.blocks = hit;
+            if (hit) _world_draw_mask.blocks = true;
+         }
       }
 
       ImGui::EndTable();
