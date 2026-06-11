@@ -135,6 +135,9 @@ void show_imgui_editor(settings& settings, bool& open,
             ImGui::SetItemTooltip("Hide tootlips containing brief descriptions "
                                   "of some entities when hovering them.");
 
+            ImGui::Checkbox("Show ODF Path Object Hover Tooltip",
+                            &ui.show_odf_path_in_object_hover_tooltip);
+
             ImGui::Checkbox("Hide Extra Light Properties",
                             &ui.hide_extra_light_properties);
 

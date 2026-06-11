@@ -7,6 +7,7 @@ struct ui {
    float gizmo_scale = 1.0f;
 
    bool hide_entity_hover_tooltips = false;
+   bool show_odf_path_in_object_hover_tooltip = false;
    bool hide_extra_light_properties = true;
    bool hide_extra_effects_properties = true;
 

@@ -164,6 +164,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(extra_scaling);
             setting_entry(gizmo_scale);
             setting_entry(hide_entity_hover_tooltips);
+            setting_entry(show_odf_path_in_object_hover_tooltip);
             setting_entry(hide_extra_light_properties);
             setting_entry(hide_extra_effects_properties);
          }
@@ -289,6 +290,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(extra_scaling));
       write(file, name_value(gizmo_scale));
       write(file, name_value(hide_entity_hover_tooltips));
+      write(file, name_value(show_odf_path_in_object_hover_tooltip));
       write(file, name_value(hide_extra_light_properties));
       write(file, name_value(hide_extra_effects_properties));
 

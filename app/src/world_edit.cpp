@@ -720,6 +720,12 @@ void world_edit::update_hovered_entity() noexcept
 
                ImGui::Text("Class Name: %s", object.class_name.c_str());
 
+               if (_settings.ui.show_odf_path_in_object_hover_tooltip) {
+                  ImGui::Text("Asset Path: %s", _asset_libraries.odfs
+                                                   .query_path(object.class_name)
+                                                   .c_str());
+               }
+
                ImGui::Text("Layer: %s",
                            _world.layer_descriptions[object.layer].name.c_str());
 
