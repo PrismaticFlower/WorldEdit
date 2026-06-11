@@ -1499,7 +1499,6 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                world::region_type::soundstatic,
                                world::region_type::soundspace,
                                world::region_type::soundtrigger,
-                               world::region_type::foleyfx,
                                world::region_type::shadow,
                                world::region_type::mapbounds,
                                world::region_type::rumble,
