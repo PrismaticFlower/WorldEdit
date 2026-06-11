@@ -132,6 +132,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(overlay_grid_line_width);
             setting_entry(overlay_grid_major_grid_spacing);
             setting_entry(show_light_bounds);
+            setting_entry(show_hint_node_radii);
             setting_entry(visualize_terrain_cutters);
          }
 #undef setting_entry
@@ -256,6 +257,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(overlay_grid_line_width));
       write(file, name_value(overlay_grid_major_grid_spacing));
       write(file, name_value(show_light_bounds));
+      write(file, name_value(show_hint_node_radii));
       write(file, name_value(visualize_terrain_cutters));
 
 #undef name_value

@@ -2137,7 +2137,12 @@ void renderer_impl::draw_world_meta_objects(
                                     const float3& hintnode_positionWS) {
          if (not active_layers[hintnode.layer] or hintnode.hidden) return;
 
-         if (not intersects(view_frustum, hintnode_positionWS, 3.0f)) return;
+         const float visibility_sphere_radius =
+            settings.show_hint_node_radii ? std::max(hintnode.radius, 3.0f) : 3.0f;
+
+         if (not intersects(view_frustum, hintnode_positionWS, visibility_sphere_radius)) {
+            return;
+         }
 
          float4x4 rotation = to_matrix(hintnode_rotation);
 
@@ -2154,6 +2159,18 @@ void renderer_impl::draw_world_meta_objects(
 
          _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 2.4f,
                                                     hintnode_color);
+
+         if (settings.show_hint_node_radii and hintnode.radius > 0.0f) {
+            _meta_draw_batcher.add_circle_outline_solid(
+               {
+                  {hintnode.radius, 0.0f, 0.0f, 0.0f},
+                  {0.0f, 0.0f, 0.0f, 0.0f},
+                  {0.0f, 0.0f, hintnode.radius, 0.0f},
+                  {hintnode_positionWS.x, hintnode_positionWS.y,
+                   hintnode_positionWS.z, 0.0f},
+               },
+               hintnode_color);
+         }
       };
 
       for (const world::hintnode& hintnode : world.hintnodes) {
@@ -3242,6 +3259,17 @@ void renderer_impl::draw_interaction_targets(
 
          _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 2.4f,
                                                     float4{color, 1.0f});
+
+         if (settings.show_hint_node_radii and hintnode.radius > 0.0f) {
+            _meta_draw_batcher.add_circle_outline_solid(
+               {
+                  {hintnode.radius, 0.0f, 0.0f, 0.0f},
+                  {0.0f, 0.0f, 0.0f, 0.0f},
+                  {0.0f, 0.0f, hintnode.radius, 0.0f},
+                  {hintnode.position.x, hintnode.position.y, hintnode.position.z, 0.0f},
+               },
+               float4{color, 1.0f});
+         }
       },
       [&](const world::barrier& barrier, const float3 color) {
          const geometric_shape shape = _geometric_shapes.cube();

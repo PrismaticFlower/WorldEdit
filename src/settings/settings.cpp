@@ -411,6 +411,8 @@ void show_imgui_editor(settings& settings, bool& open,
             ImGui::SetItemTooltip(
                "Show the bounds for point and spot lights in the world.");
 
+            ImGui::Checkbox("Show Hint Node Radii", &graphics.show_hint_node_radii);
+
             ImGui::Checkbox("Visualize Terrain Cutters",
                             &graphics.visualize_terrain_cutters);
 

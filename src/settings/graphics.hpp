@@ -111,6 +111,8 @@ struct graphics {
 
    bool show_light_bounds = false;
 
+   bool show_hint_node_radii = false;
+
    bool colorize_foliage_brush = true;
 
    bool visualize_terrain_cutters = false;
