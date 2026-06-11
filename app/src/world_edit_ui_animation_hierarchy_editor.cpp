@@ -283,6 +283,8 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
 
             ImGui::BeginDisabled(
                _animation_hierarchy_editor_config.new_child_object_name.empty() or
+               string::iequals(selected_hierarchy->root_object,
+                               _animation_hierarchy_editor_config.new_child_object_name) or
                has_child(*selected_hierarchy,
                          _animation_hierarchy_editor_config.new_child_object_name));
 
@@ -377,7 +379,9 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                world::find_entity(_world.animation_hierarchies,
                                   _animation_hierarchy_editor_context.selected.id);
 
-            if (selected_hierarchy and not has_child(*selected_hierarchy, object.name)) {
+            if (selected_hierarchy and
+                not string::iequals(selected_hierarchy->root_object, object.name) and
+                not has_child(*selected_hierarchy, object.name)) {
                _edit_stack_world.apply(edits::make_add_animation_hierarchy_child(
                                           &selected_hierarchy->objects, object.name),
                                        _edit_context);
