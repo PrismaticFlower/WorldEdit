@@ -21,9 +21,8 @@ struct set_terrain final : edit<world::edit_context> {
       context.world.terrain.height_map_dirty.add(
          {0, 0, test_terrain_length, test_terrain_length});
 
-      for (auto& tracker : context.world.terrain.texture_weight_maps_dirty) {
-         tracker.add({0, 0, test_terrain_length, test_terrain_length});
-      }
+      context.world.terrain.texture_weight_maps_dirty.add(
+         {0, 0, test_terrain_length, test_terrain_length});
 
       context.world.terrain.color_or_light_map_dirty.add(
          {0, 0, test_terrain_length, test_terrain_length});

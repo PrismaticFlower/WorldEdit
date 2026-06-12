@@ -539,14 +539,14 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
       _terrain.draw(terrain_draw::foliage_map, view_frustum, _terrain_cut_list,
                     _camera_constant_buffer_view,
                     _light_clusters.lights_constant_buffer_view(), command_list,
-                    _root_signatures, _pipelines, _dynamic_buffer_allocator);
+                    _root_signatures, _pipelines);
    }
 
    if (frame_options.draw_terrain_grid) {
       _terrain.draw(terrain_draw::grid, view_frustum, _terrain_cut_list,
                     _camera_constant_buffer_view,
                     _light_clusters.lights_constant_buffer_view(), command_list,
-                    _root_signatures, _pipelines, _dynamic_buffer_allocator);
+                    _root_signatures, _pipelines);
    }
 
    if (frame_options.draw_overlay_grid) {
@@ -826,8 +826,8 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       if (active_entity_types.terrain) {
          _terrain.draw(terrain_draw::depth_prepass, view_frustum,
                        _terrain_cut_list, _camera_constant_buffer_view,
-                       _light_clusters.lights_constant_buffer_view(), command_list,
-                       _root_signatures, _pipelines, _dynamic_buffer_allocator);
+                       _light_clusters.lights_constant_buffer_view(),
+                       command_list, _root_signatures, _pipelines);
       }
 
       if (active_entity_types.objects) {
@@ -1258,7 +1258,7 @@ void renderer_impl::draw_world(const frustum& view_frustum,
       _terrain.draw(terrain_draw::depth_prepass, view_frustum,
                     _terrain_cut_list, _camera_constant_buffer_view,
                     _light_clusters.lights_constant_buffer_view(), command_list,
-                    _root_signatures, _pipelines, _dynamic_buffer_allocator);
+                    _root_signatures, _pipelines);
    }
 
    if (active_entity_types.objects) {
@@ -1333,7 +1333,7 @@ void renderer_impl::draw_world(const frustum& view_frustum,
       _terrain.draw(terrain_draw::main, view_frustum, _terrain_cut_list,
                     _camera_constant_buffer_view,
                     _light_clusters.lights_constant_buffer_view(), command_list,
-                    _root_signatures, _pipelines, _dynamic_buffer_allocator);
+                    _root_signatures, _pipelines);
    }
 
    if (active_entity_types.blocks) {

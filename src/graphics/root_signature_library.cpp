@@ -20,7 +20,6 @@ constexpr uint32 gizmo_shape_cb_register = 10;
 constexpr uint32 block_materials_cb_register = 11;
 constexpr uint32 block_custom_mesh_cb_register = 12;
 
-constexpr uint32 terrain_patch_data_register = 0;
 constexpr uint32 meta_draw_instance_data_register = 1;
 constexpr uint32 water_patch_data_register = 2;
 constexpr uint32 block_instance_index_register = 3;
@@ -111,19 +110,11 @@ const gpu::root_signature_desc terrain_desc{
             .shader_register = terrain_cb_register,
             .visibility = gpu::root_shader_visibility::all,
          },
-
-         // terrain patch data
-         gpu::root_parameter{
-            .type = gpu::root_parameter_type::shader_resource_view,
-
-            .shader_register = terrain_patch_data_register,
-            .visibility = gpu::root_shader_visibility::vertex,
-         },
       },
 
    .samplers = pixel_static_samplers,
 
-   .flags = {},
+   .flags = {.allow_input_assembler_input_layout = true},
 
    .debug_name = "terrain_root_signature",
 };

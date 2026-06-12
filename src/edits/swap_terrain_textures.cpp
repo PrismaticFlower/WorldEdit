@@ -24,10 +24,7 @@ struct swap_terrain_textures final : edit<world::edit_context> {
 
       const uint32 terrain_length = static_cast<uint32>(context.world.terrain.length);
 
-      terrain.texture_weight_maps_dirty[_left].add(
-         {0, 0, terrain_length, terrain_length});
-      terrain.texture_weight_maps_dirty[_right].add(
-         {0, 0, terrain_length, terrain_length});
+      terrain.texture_weight_maps_dirty.add({0, 0, terrain_length, terrain_length});
    }
 
    void revert(world::edit_context& context) noexcept override

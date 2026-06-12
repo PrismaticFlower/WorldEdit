@@ -42,7 +42,7 @@ struct access_texture_weight_map {
 
    void mark_dirty(world::terrain& terrain, dirty_rect rect)
    {
-      terrain.texture_weight_maps_dirty[_index].add(rect);
+      terrain.texture_weight_maps_dirty.add(rect);
    }
 
    bool can_coalesce(const access_texture_weight_map& other) const noexcept

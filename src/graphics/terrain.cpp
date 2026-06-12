@@ -22,18 +22,17 @@ struct alignas(16) terrain_constants {
    uint32 terrain_max_index;
    float inv_terrain_length;
 
-   uint32 height_map;
-   uint32 texture_weight_maps;
-   uint32 light_map;
    uint32 foliage_map;
 
    float inv_grid_size;
    float grid_line_width;
 
+   std::array<uint32, 3> padding0;
+
    float3 grid_line_color;
    uint32 padding1;
 
-   std::array<std::array<uint32, 4>, terrain::texture_count> diffuse_maps;
+   std::array<std::array<uint32, 4>, terrain::texture_count / 4> diffuse_maps;
 
    std::array<float4, terrain::texture_count> texture_transform_x;
    std::array<float4, terrain::texture_count> texture_transform_y;
@@ -48,48 +47,38 @@ struct alignas(16) terrain_constants {
    uint32 foliage_color_3_pad;
 };
 
-static_assert(sizeof(terrain_constants) == 896);
-
-struct patch_info_shader {
-   uint32 x;
-   uint32 y;
-   uint32 active_textures;
-   uint32 padding;
-};
-
-static_assert(sizeof(patch_info_shader) == 16);
-
-constexpr uint32 patch_grid_count = 16;
-constexpr uint32 patch_point_count = 17;
+static_assert(sizeof(terrain_constants) == 704);
 
 constexpr auto generate_patch_indices()
 {
    using tri = std::array<uint16, 3>;
 
-   std::array<std::array<tri, 2>, patch_grid_count * patch_grid_count> triangles{};
+   std::array<std::array<tri, 2>, terrain::patch_length_grids * terrain::patch_length_grids> triangles{};
 
-   static_assert(sizeof(triangles) ==
-                 sizeof(tri) * patch_grid_count * patch_grid_count * 2);
+   static_assert(sizeof(triangles) == sizeof(tri) * terrain::patch_length_grids *
+                                         terrain::patch_length_grids * 2);
 
-   for (uint16 y = 0; y < patch_grid_count; ++y) {
-      for (uint16 x = 0; x < patch_grid_count; ++x) {
+   for (uint16 y = 0; y < terrain::patch_length_grids; ++y) {
+      for (uint16 x = 0; x < terrain::patch_length_grids; ++x) {
          const auto index = [](uint16 x, uint16 y) -> uint16 {
-            return y * patch_point_count + x;
+            return y * terrain::patch_length_points + x;
          };
 
          if (y & 1) {
-            triangles[y * patch_grid_count + x][0] = {index(x, y), index(x, y + 1),
-                                                      index(x + 1, y)};
-            triangles[y * patch_grid_count + x][1] = {index(x, y + 1),
-                                                      index(x + 1, y + 1),
-                                                      index(x + 1, y)};
+            triangles[y * terrain::patch_length_grids + x][0] = {index(x, y),
+                                                                 index(x, y + 1),
+                                                                 index(x + 1, y)};
+            triangles[y * terrain::patch_length_grids + x][1] = {index(x, y + 1),
+                                                                 index(x + 1, y + 1),
+                                                                 index(x + 1, y)};
          }
          else {
-            triangles[y * patch_grid_count + x][0] = {index(x, y),
-                                                      index(x + 1, y + 1),
-                                                      index(x + 1, y)};
-            triangles[y * patch_grid_count + x][1] = {index(x, y), index(x, y + 1),
-                                                      index(x + 1, y + 1)};
+            triangles[y * terrain::patch_length_grids + x][0] = {index(x, y),
+                                                                 index(x + 1, y + 1),
+                                                                 index(x + 1, y)};
+            triangles[y * terrain::patch_length_grids + x][1] = {index(x, y),
+                                                                 index(x, y + 1),
+                                                                 index(x + 1, y + 1)};
          }
       }
    }
@@ -134,7 +123,7 @@ terrain::terrain(gpu::device& device, copy_command_list_pool& copy_command_list_
                                            .debug_name =
                                               "Terrain Patch Indices"},
                                           gpu::heap_type::default_),
-                     device};
+                    device};
 
    pooled_copy_command_list command_list = copy_command_list_pool.aquire_and_reset();
 
@@ -162,124 +151,278 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
    if (const uint32 length = static_cast<uint32>(terrain.length);
        _terrain_length != length) {
       _terrain_length = length;
-      _patch_count = (_terrain_length + patch_grid_count - 1u) / patch_grid_count;
+      _patches_length = (_terrain_length + patch_length_grids - 1u) / patch_length_grids;
 
-      create_gpu_textures();
-      create_unfilled_patch_info();
+      create_patches();
+      create_gpu_resources();
    }
+
+   const int32 half_terrain_length = static_cast<int32>(_terrain_length / 2);
 
    for (const world::dirty_rect& dirty : terrain.height_map_dirty) {
-      std::byte* const upload_ptr = _height_map_upload_ptr[_device.frame_index()];
-      const uint32 row_pitch = _height_map_upload_row_pitch;
-      const uint32 dirty_width = (dirty.right - dirty.left);
+      uint32 start_x = dirty.left;
+      uint32 end_x = dirty.right;
 
-      for (uint32 y = dirty.top; y < dirty.bottom; ++y) {
-         std::memcpy(upload_ptr + (y * row_pitch) + (dirty.left * sizeof(int16)),
-                     &terrain.height_map[{dirty.left, y}],
-                     dirty_width * sizeof(int16));
+      uint32 start_z = dirty.top;
+      uint32 end_z = dirty.bottom;
+
+      if (start_x > 0) start_x -= 1;
+      if (end_x < _terrain_length) end_x += 1;
+
+      if (start_z > 0) start_z -= 1;
+      if (end_z < _terrain_length) end_z += 1;
+
+      const uint32 start_patch_x = start_x / patch_length_grids;
+      const uint32 end_patch_x = (end_x + patch_length_grids - 1u) / patch_length_grids;
+
+      const uint32 start_patch_z = start_z / patch_length_grids;
+      const uint32 end_patch_z = (end_z + patch_length_grids - 1u) / patch_length_grids;
+
+      for (uint32 patch_z = start_patch_z; patch_z < end_patch_z; ++patch_z) {
+         for (uint32 patch_x = start_patch_x; patch_x < end_patch_x; ++patch_x) {
+            const uint32 patch_index = patch_z * _patches_length + patch_x;
+
+            if (not _dirty_vertex_patches[patch_index]) {
+               _vertex_patches_to_upload.push_back(patch_index);
+               _dirty_vertex_patches[patch_index] = true;
+            }
+
+            int16 min_y = INT16_MAX;
+            int16 max_y = INT16_MIN;
+
+            std::array<terrain_vertex, patch_vertex_count>& vertices =
+               _patch_vertices[patch_index];
+
+            for (uint32 local_z = 0; local_z < patch_length_points; ++local_z) {
+               for (uint32 local_x = 0; local_x < patch_length_points; ++local_x) {
+                  const uint32 x = std::clamp(patch_x * patch_length_grids + local_x,
+                                              0u, terrain.length - 1u);
+                  const uint32 z = std::clamp(patch_z * patch_length_grids + local_z,
+                                              0u, terrain.length - 1u);
+
+                  const int16 height = terrain.height_map[{x, z}];
+
+                  min_y = std::min(height, min_y);
+                  max_y = std::max(height, max_y);
+
+                  vertices[local_z * patch_length_points + local_x].positionCS =
+                     {static_cast<int16>(
+                         static_cast<int32>(patch_x * patch_length_grids + local_x) -
+                         half_terrain_length),
+                      height,
+                      static_cast<int16>(
+                         static_cast<int32>(patch_z * patch_length_grids + local_z) -
+                         half_terrain_length)};
+               }
+            }
+
+            _patches[patch_index].min_y = min_y;
+            _patches[patch_index].max_y = max_y;
+         }
       }
 
-      gpu::box src_box{.left = dirty.left,
-                       .top = dirty.top,
-                       .front = 0,
-                       .right = dirty.right,
-                       .bottom = dirty.bottom,
-                       .back = 1};
+      const float normal_height_scale =
+         terrain.height_scale / (terrain.grid_scale * 2.0f);
 
-      command_list.copy_buffer_to_texture(
-         _height_map.get(), 0, dirty.left, dirty.top, 0, _upload_buffer.get(),
-         {.offset = _height_map_upload_offset[_device.frame_index()],
-          .format = DXGI_FORMAT_R16_SINT,
-          .width = _terrain_length,
-          .height = _terrain_length,
-          .depth = 1,
-          .row_pitch = _height_map_upload_row_pitch},
-         &src_box);
+      for (uint32 patch_z = start_patch_z; patch_z < end_patch_z; ++patch_z) {
+         for (uint32 patch_x = start_patch_x; patch_x < end_patch_x; ++patch_x) {
+            const uint32 patch_index = patch_z * _patches_length + patch_x;
+
+            if (not _dirty_vertex_attributes_patches[patch_index]) {
+               _vertex_attributes_patches_to_upload.push_back(patch_index);
+               _dirty_vertex_attributes_patches[patch_index] = true;
+            }
+
+            std::array<terrain_vertex_attributes, patch_vertex_count>& vertices =
+               _patch_vertex_attributes[patch_index];
+
+            for (uint32 local_z = 0; local_z < patch_length_points; ++local_z) {
+               for (uint32 local_x = 0; local_x < patch_length_points; ++local_x) {
+                  const uint32 x = std::clamp(patch_x * patch_length_grids + local_x,
+                                              0u, terrain.length - 1u);
+                  const uint32 z = std::clamp(patch_z * patch_length_grids + local_z,
+                                              0u, terrain.length - 1u);
+
+                  const uint32 x0 = x > 0 ? x - 1 : x;
+                  const uint32 x1 = x < _terrain_length - 1 ? x + 1 : x;
+                  const uint32 z0 = z > 0 ? z - 1 : z;
+                  const uint32 z1 = z < _terrain_length - 1 ? z + 1 : z;
+
+                  const int16 height0x = terrain.height_map[{x0, z}];
+                  const int16 height1x = terrain.height_map[{x1, z}];
+                  const int16 height0z = terrain.height_map[{x, z0}];
+                  const int16 height1z = terrain.height_map[{x, z1}];
+
+                  const float3 normalWS = normalize(
+                     float3{(height0x - height1x) * normal_height_scale, 1.0f,
+                            (height0z - height1z) * normal_height_scale});
+
+                  float3 normal_snormWS = normalWS * 127.0f;
+
+                  if (normal_snormWS.x >= 0.0f) {
+                     normal_snormWS.x += 0.5f;
+                  }
+                  else {
+                     normal_snormWS.x -= 0.5f;
+                  }
+
+                  if (normal_snormWS.y >= 0.0f) {
+                     normal_snormWS.y += 0.5f;
+                  }
+                  else {
+                     normal_snormWS.y -= 0.5f;
+                  }
+
+                  if (normal_snormWS.z >= 0.0f) {
+                     normal_snormWS.z += 0.5f;
+                  }
+                  else {
+                     normal_snormWS.z -= 0.5f;
+                  }
+
+                  vertices[local_z * patch_length_points + local_x]
+                     .normalWS = {static_cast<int8>(normal_snormWS.x),
+                                  static_cast<int8>(normal_snormWS.y),
+                                  static_cast<int8>(normal_snormWS.z)};
+               }
+            }
+         }
+      }
    }
 
-   for (uint32 i = 0; i < texture_count; ++i) {
-      for (const world::dirty_rect& dirty : terrain.texture_weight_maps_dirty[i]) {
-         std::byte* const upload_ptr =
-            _weight_map_upload_ptr[_device.frame_index()][i];
-         const uint32 row_pitch = _weight_map_upload_row_pitch;
-         const uint32 dirty_width = dirty.right - dirty.left;
+   for (const world::dirty_rect& dirty : terrain.texture_weight_maps_dirty) {
+      uint32 start_x = dirty.left;
+      uint32 end_x = dirty.right;
 
-         for (uint32 y = dirty.top; y < dirty.bottom; ++y) {
-            std::memcpy(upload_ptr + (y * row_pitch) + dirty.left,
-                        &terrain.texture_weight_maps[i][{dirty.left, y}], dirty_width);
+      uint32 start_z = dirty.top;
+      uint32 end_z = dirty.bottom;
+
+      if (start_x > 0) start_x -= 1;
+      if (end_x < _terrain_length) end_x += 1;
+
+      if (start_z > 0) start_z -= 1;
+      if (end_z < _terrain_length) end_z += 1;
+
+      const uint32 start_patch_x = start_x / patch_length_grids;
+      const uint32 end_patch_x = (end_x + patch_length_grids - 1u) / patch_length_grids;
+
+      const uint32 start_patch_z = start_z / patch_length_grids;
+      const uint32 end_patch_z = (end_z + patch_length_grids - 1u) / patch_length_grids;
+
+      for (uint32 patch_z = start_patch_z; patch_z < end_patch_z; ++patch_z) {
+         for (uint32 patch_x = start_patch_x; patch_x < end_patch_x; ++patch_x) {
+            const uint32 patch_index = patch_z * _patches_length + patch_x;
+
+            if (not _dirty_vertex_attributes_patches[patch_index]) {
+               _vertex_attributes_patches_to_upload.push_back(patch_index);
+               _dirty_vertex_attributes_patches[patch_index] = true;
+            }
+
+            std::array<terrain_vertex_attributes, patch_vertex_count>& vertices =
+               _patch_vertex_attributes[patch_index];
+
+            for (uint32 local_z = 0; local_z < patch_length_points; ++local_z) {
+               for (uint32 local_x = 0; local_x < patch_length_points; ++local_x) {
+                  const uint32 x = std::clamp(patch_x * patch_length_grids + local_x,
+                                              0u, terrain.length - 1u);
+                  const uint32 z = std::clamp(patch_z * patch_length_grids + local_z,
+                                              0u, terrain.length - 1u);
+
+                  std::array<uint8, texture_count> weights = {255};
+
+                  for (std::size_t i = 1; i < weights.size(); ++i) {
+                     weights[i] = terrain.texture_weight_maps[i][{x, z}];
+                  }
+
+                  // Zero out weights for fully obsecured textures.
+
+                  std::ptrdiff_t highest_opaque_weight = texture_count - 1;
+
+                  for (; highest_opaque_weight >= 0; --highest_opaque_weight) {
+                     if (weights[highest_opaque_weight] == 255) {
+                        break;
+                     }
+                  }
+
+                  for (std::ptrdiff_t i = highest_opaque_weight - 1; i >= 0; --i) {
+                     weights[i] = 0;
+                  }
+
+                  vertices[local_z * patch_length_points + local_x].weights = weights;
+               }
+            }
          }
-
-         gpu::box src_box{.left = dirty.left,
-                          .top = dirty.top,
-                          .front = 0,
-                          .right = dirty.right,
-                          .bottom = dirty.bottom,
-                          .back = 1};
-
-         command_list.copy_buffer_to_texture(
-            _texture_weight_maps.get(), i, dirty.left, dirty.top, 0,
-            _upload_buffer.get(),
-            {.offset = _weight_map_upload_offset[_device.frame_index()][i],
-             .format = DXGI_FORMAT_R8_UNORM,
-             .width = _terrain_length,
-             .height = _terrain_length,
-             .depth = 1,
-             .row_pitch = _weight_map_upload_row_pitch},
-            &src_box);
       }
    }
 
    for (const world::dirty_rect& dirty : terrain.color_or_light_map_dirty) {
-      std::byte* const upload_ptr = _light_map_upload_ptr[_device.frame_index()];
-      const uint32 row_pitch = _light_map_upload_row_pitch;
+      uint32 start_x = dirty.left;
+      uint32 end_x = dirty.right;
 
-      for (uint32 y = dirty.top; y < dirty.bottom; ++y) {
-         for (uint32 x = dirty.left; x < dirty.right; ++x) {
-            const uint32 u32_base_color = terrain.color_map[{x, y}];
-            const uint32 u32_light = terrain.light_map[{x, y}];
+      uint32 start_z = dirty.top;
+      uint32 end_z = dirty.bottom;
 
-            // We can just ignore BGR order here.
+      if (start_x > 0) start_x -= 1;
+      if (end_x < _terrain_length) end_x += 1;
 
-            const float3 base_color = {
-               ((u32_base_color >> 0u) & 0xffu) * (1.0f / 255.0f),
-               ((u32_base_color >> 8u) & 0xffu) * (1.0f / 255.0f),
-               ((u32_base_color >> 16u) & 0xffu) * (1.0f / 255.0f),
-            };
-            const float3 light = {
-               ((u32_light >> 0u) & 0xffu) * (1.0f / 255.0f),
-               ((u32_light >> 8u) & 0xffu) * (1.0f / 255.0f),
-               ((u32_light >> 16u) & 0xffu) * (1.0f / 255.0f),
-            };
+      if (start_z > 0) start_z -= 1;
+      if (end_z < _terrain_length) end_z += 1;
 
-            const float3 color = base_color * light;
+      const uint32 start_patch_x = start_x / patch_length_grids;
+      const uint32 end_patch_x = (end_x + patch_length_grids - 1u) / patch_length_grids;
 
-            uint32 u32_color = 0xff'00'00'00u;
+      const uint32 start_patch_z = start_z / patch_length_grids;
+      const uint32 end_patch_z = (end_z + patch_length_grids - 1u) / patch_length_grids;
 
-            u32_color |= static_cast<uint8>(color.x * 255.0f + 0.5f) << 0u;
-            u32_color |= static_cast<uint8>(color.y * 255.0f + 0.5f) << 8u;
-            u32_color |= static_cast<uint8>(color.z * 255.0f + 0.5f) << 16u;
+      for (uint32 patch_z = start_patch_z; patch_z < end_patch_z; ++patch_z) {
+         for (uint32 patch_x = start_patch_x; patch_x < end_patch_x; ++patch_x) {
+            const uint32 patch_index = patch_z * _patches_length + patch_x;
 
-            std::memcpy(upload_ptr + (y * row_pitch) + (x * sizeof(uint32)),
-                        &u32_color, sizeof(uint32));
+            if (not _dirty_vertex_attributes_patches[patch_index]) {
+               _vertex_attributes_patches_to_upload.push_back(patch_index);
+               _dirty_vertex_attributes_patches[patch_index] = true;
+            }
+
+            std::array<terrain_vertex_attributes, patch_vertex_count>& vertices =
+               _patch_vertex_attributes[patch_index];
+
+            for (uint32 local_z = 0; local_z < patch_length_points; ++local_z) {
+               for (uint32 local_x = 0; local_x < patch_length_points; ++local_x) {
+                  const uint32 x = std::clamp(patch_x * patch_length_grids + local_x,
+                                              0u, terrain.length - 1u);
+                  const uint32 z = std::clamp(patch_z * patch_length_grids + local_z,
+                                              0u, terrain.length - 1u);
+
+                  const uint32 u32_base_color = terrain.color_map[{x, z}];
+                  const uint32 u32_light = terrain.light_map[{x, z}];
+
+                  // We can just ignore BGR order here.
+
+                  const float3 base_color = {
+                     ((u32_base_color >> 0u) & 0xffu) * (1.0f / 255.0f),
+                     ((u32_base_color >> 8u) & 0xffu) * (1.0f / 255.0f),
+                     ((u32_base_color >> 16u) & 0xffu) * (1.0f / 255.0f),
+                  };
+                  const float3 light = {
+                     ((u32_light >> 0u) & 0xffu) * (1.0f / 255.0f),
+                     ((u32_light >> 8u) & 0xffu) * (1.0f / 255.0f),
+                     ((u32_light >> 16u) & 0xffu) * (1.0f / 255.0f),
+                  };
+
+                  const float3 color = base_color * light;
+
+                  uint32 u32_color = 0xff'00'00'00u;
+
+                  u32_color |= static_cast<uint8>(color.x * 255.0f + 0.5f) << 0u;
+                  u32_color |= static_cast<uint8>(color.y * 255.0f + 0.5f) << 8u;
+                  u32_color |= static_cast<uint8>(color.z * 255.0f + 0.5f) << 16u;
+
+                  vertices[local_z * patch_length_points + local_x].static_light =
+                     u32_color;
+               }
+            }
          }
       }
-
-      gpu::box src_box{.left = dirty.left,
-                       .top = dirty.top,
-                       .front = 0,
-                       .right = dirty.right,
-                       .bottom = dirty.bottom,
-                       .back = 1};
-
-      command_list.copy_buffer_to_texture(
-         _light_map.get(), 0, dirty.left, dirty.top, 0, _upload_buffer.get(),
-         {.offset = _light_map_upload_offset[_device.frame_index()],
-          .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
-          .width = _terrain_length,
-          .height = _terrain_length,
-          .depth = 1,
-          .row_pitch = _light_map_upload_row_pitch},
-         &src_box);
    }
 
    for (uint32 i = 0; i < texture_count; ++i) {
@@ -335,14 +478,11 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
    terrain_constants constants{
       .half_world_size = _terrain_half_world_size,
       .grid_size = _terrain_grid_size,
-      .height_scale = terrain.height_scale * std::numeric_limits<int16>::max(),
+      .height_scale = terrain.height_scale,
 
       .terrain_max_index = _terrain_length - 1u,
       .inv_terrain_length = 1.0f / _terrain_length,
 
-      .height_map = _height_map_srv.get().index,
-      .texture_weight_maps = _texture_weight_maps_srv.get().index,
-      .light_map = _light_map_srv.get().index,
       .foliage_map = _foliage_map_srv.get().index,
 
       .inv_grid_size = 1.0f / _terrain_grid_size,
@@ -356,8 +496,10 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
       .foliage_color_3 = settings.foliage_overlay_layer3_color,
    };
 
-   for (uint32 i = 0; i < texture_count; ++i) {
-      constants.diffuse_maps[i][0] = _diffuse_maps[i]->srv_srgb.index;
+   for (uint32 y = 0; y < texture_count / 4; ++y) {
+      for (uint32 x = 0; x < texture_count / 4; ++x) {
+         constants.diffuse_maps[y][x] = _diffuse_maps[y * 4 + x]->srv_srgb.index;
+      }
    }
 
    for (uint32 i = 0; i < texture_count; ++i) {
@@ -431,72 +573,48 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
    _terrain_grid_size = terrain.grid_scale;
    _terrain_height_scale = terrain.height_scale;
 
-   for (const world::dirty_rect& dirty : terrain.height_map_dirty) {
-      const uint32 start_patch_x = dirty.left / patch_grid_count;
-      const uint32 end_patch_x =
-         (dirty.right + patch_grid_count - 1u) / patch_grid_count;
+   for (uint32 patch_index : _vertex_patches_to_upload) {
+      const std::array<terrain_vertex, patch_vertex_count>& vertices =
+         _patch_vertices[patch_index];
 
-      const uint32 start_patch_y = dirty.top / patch_grid_count;
-      const uint32 end_patch_y =
-         (dirty.bottom + patch_grid_count - 1u) / patch_grid_count;
+      const uint64 patch_offset = patch_index * sizeof(vertices);
 
-      for (uint32 patch_y = start_patch_y; patch_y < end_patch_y; ++patch_y) {
-         for (uint32 patch_x = start_patch_x; patch_x < end_patch_x; ++patch_x) {
-            int16 min_y = std::numeric_limits<int16>::max();
-            int16 max_y = std::numeric_limits<int16>::lowest();
+      std::byte* const upload_ptr = _vertices_upload_ptr[_device.frame_index()];
 
-            for (uint32 local_y = 0; local_y < patch_point_count; ++local_y) {
-               for (uint32 local_x = 0; local_x < patch_point_count; ++local_x) {
-                  const uint32 x = std::clamp(patch_x * patch_grid_count + local_x,
-                                              0u, terrain.length - 1u);
-                  const uint32 y = std::clamp(patch_y * patch_grid_count + local_y,
-                                              0u, terrain.length - 1u);
+      std::memcpy(upload_ptr + patch_offset, &vertices, sizeof(vertices));
 
-                  const int16 height = terrain.height_map[{x, y}];
+      command_list.copy_buffer_region(_vertex_buffer.get(), patch_offset,
+                                      _upload_buffer.get(),
+                                      _vertices_upload_offset[_device.frame_index()] +
+                                         patch_offset,
+                                      sizeof(vertices));
 
-                  min_y = std::min(min_y, height);
-                  max_y = std::max(max_y, height);
-               }
-            }
-
-            _patches[patch_y * _patch_count + patch_x].min_y = min_y;
-            _patches[patch_y * _patch_count + patch_x].max_y = max_y;
-         }
-      }
+      _dirty_vertex_patches[patch_index] = false;
    }
 
-   for (uint32 texture = 0; texture < texture_count; ++texture) {
-      for (const world::dirty_rect& dirty : terrain.texture_weight_maps_dirty[texture]) {
-         const uint32 start_patch_x = dirty.left / patch_grid_count;
-         const uint32 end_patch_x =
-            (dirty.right + patch_grid_count - 1u) / patch_grid_count;
+   for (uint32 patch_index : _vertex_attributes_patches_to_upload) {
+      const std::array<terrain_vertex_attributes, patch_vertex_count>& vertices =
+         _patch_vertex_attributes[patch_index];
 
-         const uint32 start_patch_y = dirty.top / patch_grid_count;
-         const uint32 end_patch_y =
-            (dirty.bottom + patch_grid_count - 1u) / patch_grid_count;
+      const uint64 patch_offset = patch_index * sizeof(vertices);
 
-         for (uint32 patch_y = start_patch_y; patch_y < end_patch_y; ++patch_y) {
-            for (uint32 patch_x = start_patch_x; patch_x < end_patch_x; ++patch_x) {
-               bool texture_active = false;
+      std::byte* const upload_ptr =
+         _vertex_attributes_upload_ptr[_device.frame_index()];
 
-               for (uint32 local_y = 0; local_y < patch_point_count; ++local_y) {
-                  for (uint32 local_x = 0; local_x < patch_point_count; ++local_x) {
-                     const uint32 x = std::clamp(patch_x * patch_grid_count + local_x,
-                                                 0u, terrain.length - 1u);
-                     const uint32 y = std::clamp(patch_y * patch_grid_count + local_y,
-                                                 0u, terrain.length - 1u);
+      std::memcpy(upload_ptr + patch_offset, &vertices, sizeof(vertices));
 
-                     texture_active |=
-                        terrain.texture_weight_maps[texture][{x, y}] > 0;
-                  }
-               }
+      command_list.copy_buffer_region(_vertex_buffer.get(),
+                                      _vertex_attributes_offset + patch_offset,
+                                      _upload_buffer.get(),
+                                      _vertex_attributes_upload_offset[_device.frame_index()] +
+                                         patch_offset,
+                                      sizeof(vertices));
 
-               _patches[patch_y * _patch_count + patch_x].active_textures[texture] =
-                  texture_active;
-            }
-         }
-      }
+      _dirty_vertex_attributes_patches[patch_index] = false;
    }
+
+   _vertex_patches_to_upload.clear();
+   _vertex_attributes_patches_to_upload.clear();
 }
 
 void terrain::draw(const terrain_draw draw, const frustum& view_frustum,
@@ -504,49 +622,9 @@ void terrain::draw(const terrain_draw draw, const frustum& view_frustum,
                    gpu_virtual_address camera_constant_buffer_view,
                    gpu_virtual_address lights_constant_buffer_view,
                    gpu::graphics_command_list& command_list,
-                   root_signature_library& root_signatures, pipeline_library& pipelines,
-                   dynamic_buffer_allocator& dynamic_buffer_allocator)
+                   root_signature_library& root_signatures, pipeline_library& pipelines)
 {
    if (not _active) return;
-
-   auto patches_srv_allocation = dynamic_buffer_allocator.allocate(
-      _patch_count * _patch_count * sizeof(patch_info_shader));
-
-   uint32 visible_patch_count = 0;
-
-   for (uint32 patch_y = 0; patch_y < _patch_count; ++patch_y) {
-      for (uint32 patch_x = 0; patch_x < _patch_count; ++patch_x) {
-         const terrain_patch& patch = _patches[patch_y * _patch_count + patch_x];
-
-         const float min_x = (patch_x * patch_grid_count * _terrain_grid_size) -
-                             _terrain_half_world_size.x;
-         const float max_x = min_x + (patch_grid_count * _terrain_grid_size);
-
-         const float min_y = patch.min_y * _terrain_height_scale;
-         const float max_y = patch.max_y * _terrain_height_scale;
-
-         const float min_z = (patch_y * patch_grid_count * _terrain_grid_size) -
-                             _terrain_half_world_size.y + _terrain_grid_size;
-         const float max_z = min_z + (patch_grid_count * _terrain_grid_size);
-
-         const math::bounding_box bbox{.min = {min_x, min_y, min_z},
-                                       .max = {max_x, max_y, max_z}};
-
-         if (not intersects(view_frustum, bbox)) continue;
-
-         patch_info_shader info{.x = patch_x * patch_grid_count,
-                                .y = patch_y * patch_grid_count,
-                                .active_textures = patch.active_textures.word()};
-
-         std::memcpy(patches_srv_allocation.cpu_address +
-                        (sizeof(patch_info_shader) * visible_patch_count),
-                     &info, sizeof(patch_info_shader));
-
-         ++visible_patch_count;
-      }
-   }
-
-   if (visible_patch_count == 0) return;
 
    command_list.set_pipeline_state(select_pipeline(draw, pipelines));
 
@@ -554,17 +632,41 @@ void terrain::draw(const terrain_draw draw, const frustum& view_frustum,
    command_list.set_graphics_cbv(rs::terrain::frame_cbv, camera_constant_buffer_view);
    command_list.set_graphics_cbv(rs::terrain::lights_cbv, lights_constant_buffer_view);
    command_list.set_graphics_cbv(rs::terrain::terrain_cbv, _terrain_cbv);
-   command_list.set_graphics_srv(rs::terrain::terrain_patch_data_srv,
-                                 patches_srv_allocation.gpu_address);
 
    command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
    command_list.ia_set_index_buffer(
       {.buffer_location = _device.get_gpu_virtual_address(_index_buffer.get()),
        .size_in_bytes = sizeof(terrain_patch_indices)});
+   command_list.ia_set_vertex_buffers(0, _vertex_buffer_views);
 
-   command_list.draw_indexed_instanced(static_cast<uint32>(
-                                          terrain_patch_indices.size() * 2 * 3),
-                                       visible_patch_count, 0, 0, 0);
+   for (uint32 patch_z = 0; patch_z < _patches_length; ++patch_z) {
+      for (uint32 patch_x = 0; patch_x < _patches_length; ++patch_x) {
+         const uint32 patch_index = patch_z * _patches_length + patch_x;
+
+         const terrain_patch& patch = _patches[patch_index];
+
+         const float min_x = (patch_x * patch_length_grids * _terrain_grid_size) -
+                             _terrain_half_world_size.x;
+         const float max_x = min_x + (patch_length_grids * _terrain_grid_size);
+
+         const float min_y = patch.min_y * _terrain_height_scale;
+         const float max_y = patch.max_y * _terrain_height_scale;
+
+         const float min_z = (patch_z * patch_length_grids * _terrain_grid_size) -
+                             _terrain_half_world_size.y + _terrain_grid_size;
+         const float max_z = min_z + (patch_length_grids * _terrain_grid_size);
+
+         const math::bounding_box bbox{.min = {min_x, min_y, min_z},
+                                       .max = {max_x, max_y, max_z}};
+
+         if (not intersects(view_frustum, bbox)) continue;
+
+         command_list.draw_indexed_instanced(static_cast<uint32>(
+                                                terrain_patch_indices.size() * 2 * 3),
+                                             1, 0,
+                                             patch_index * patch_vertex_count, 0);
+      }
+   }
 
    if (draw == terrain_draw::depth_prepass) {
       draw_cuts(view_frustum, terrain_cuts, camera_constant_buffer_view,
@@ -626,49 +728,66 @@ void terrain::process_updated_texture(const updated_textures& updated)
    }
 }
 
-void terrain::create_gpu_textures()
+void terrain::create_patches()
 {
-   _height_map = {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
-                                          .format = DXGI_FORMAT_R16_SNORM,
-                                          .width = _terrain_length,
-                                          .height = _terrain_length,
-                                          .debug_name = "Terrain Height Map"},
-                                         gpu::barrier_layout::common,
-                                         gpu::legacy_resource_state::common),
-                  _device};
+   const uint32 patch_count = _patches_length * _patches_length;
 
-   _height_map_srv = {_device.create_shader_resource_view(_height_map.get(),
-                                                          {.format = DXGI_FORMAT_R16_SNORM}),
-                      _device};
+   _patches.clear();
+   _patches.resize(patch_count);
 
-   _texture_weight_maps =
-      {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
-                               .format = DXGI_FORMAT_R8_UNORM,
-                               .width = _terrain_length,
-                               .height = _terrain_length,
-                               .array_size = texture_count,
-                               .debug_name = "Terrain Texture Weight Maps"},
-                              gpu::barrier_layout::common,
-                              gpu::legacy_resource_state::common),
-       _device};
+   _patch_vertices.clear();
+   _patch_vertices.resize(patch_count);
 
-   _texture_weight_maps_srv =
-      {_device.create_shader_resource_view(_texture_weight_maps.get(),
-                                           {.format = DXGI_FORMAT_R8_UNORM}),
-       _device};
+   _patch_vertex_attributes.clear();
+   _patch_vertex_attributes.resize(patch_count);
 
-   _light_map = {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
-                                         .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
-                                         .width = _terrain_length,
-                                         .height = _terrain_length,
-                                         .debug_name = "Terrain Light Map"},
-                                        gpu::barrier_layout::common,
-                                        gpu::legacy_resource_state::common),
-                 _device};
+   _dirty_vertex_patches.clear();
+   _dirty_vertex_patches.resize(patch_count);
 
-   _light_map_srv = {_device.create_shader_resource_view(_light_map.get(),
-                                                         {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB}),
+   _vertex_patches_to_upload.clear();
+   _vertex_patches_to_upload.reserve(patch_count);
+
+   _dirty_vertex_attributes_patches.clear();
+   _dirty_vertex_attributes_patches.resize(patch_count);
+
+   _vertex_attributes_patches_to_upload.clear();
+   _vertex_attributes_patches_to_upload.reserve(patch_count);
+}
+
+void terrain::create_gpu_resources()
+{
+   const uint32 vertices_size =
+      _patches_length * _patches_length *
+      sizeof(std::array<terrain_vertex, patch_vertex_count>);
+
+   const uint32 aligned_vertices_size =
+      math::align_up(vertices_size, gpu::raw_uav_srv_byte_alignment);
+
+   const uint32 vertex_attributes_size =
+      _patches_length * _patches_length *
+      sizeof(std::array<terrain_vertex_attributes, patch_vertex_count>);
+
+   _vertex_buffer = {_device.create_buffer({.size = aligned_vertices_size + vertex_attributes_size,
+                                            .debug_name =
+                                               "Terrain Vertex Buffer"},
+                                           gpu::heap_type::default_),
                      _device};
+
+   _vertex_attributes_offset = aligned_vertices_size;
+
+   _vertex_buffer_views = {
+      gpu::vertex_buffer_view{
+         .buffer_location = _device.get_gpu_virtual_address(_vertex_buffer.get()),
+         .size_in_bytes = vertices_size,
+         .stride_in_bytes = sizeof(terrain_vertex),
+      },
+      gpu::vertex_buffer_view{
+         .buffer_location = _device.get_gpu_virtual_address(_vertex_buffer.get()) +
+                            _vertex_attributes_offset,
+         .size_in_bytes = vertex_attributes_size,
+         .stride_in_bytes = sizeof(terrain_vertex_attributes),
+      },
+   };
 
    _foliage_map = {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
                                            .format = DXGI_FORMAT_R8_UINT,
@@ -683,36 +802,19 @@ void terrain::create_gpu_textures()
                                                            {.format = DXGI_FORMAT_R8_UINT}),
                        _device};
 
-   _height_map_upload_row_pitch =
-      math::align_up(_terrain_length * uint32{sizeof(uint16)},
-                     gpu::texture_data_pitch_alignment);
-
-   _weight_map_upload_row_pitch =
-      math::align_up(_terrain_length, gpu::texture_data_pitch_alignment);
-
-   _light_map_upload_row_pitch =
-      math::align_up(_terrain_length * uint32{sizeof(uint32)},
-                     gpu::texture_data_pitch_alignment);
-
    _foliage_map_upload_row_pitch =
       math::align_up(_terrain_length / 2, gpu::texture_data_pitch_alignment);
 
-   const uint32 height_map_upload_item_size =
-      math::align_up(_terrain_length * _height_map_upload_row_pitch,
+   const uint32 vertex_upload_size =
+      math::align_up(aligned_vertices_size + vertex_attributes_size,
                      gpu::texture_data_placement_alignment);
-   const uint32 weight_map_upload_item_size =
-      math::align_up(_terrain_length * _weight_map_upload_row_pitch,
-                     gpu::texture_data_placement_alignment);
-   const uint32 light_map_upload_item_size =
-      math::align_up(_terrain_length * _light_map_upload_row_pitch,
-                     gpu::texture_data_placement_alignment);
+
    const uint32 foliage_map_upload_item_size =
       math::align_up((_terrain_length / 2) * _foliage_map_upload_row_pitch,
                      gpu::texture_data_placement_alignment);
 
    const uint32 upload_buffer_frame_size =
-      height_map_upload_item_size + (weight_map_upload_item_size * texture_count) +
-      light_map_upload_item_size + foliage_map_upload_item_size;
+      vertex_upload_size + foliage_map_upload_item_size;
 
    _upload_buffer = {_device.create_buffer({.size = upload_buffer_frame_size * 2,
                                             .debug_name =
@@ -726,32 +828,15 @@ void terrain::create_gpu_textures()
    for (uint32 i = 0; i < gpu::frame_pipeline_length; ++i) {
       const uint32 frame_offset = (upload_buffer_frame_size * i);
 
-      _height_map_upload_offset[i] = frame_offset;
-      _height_map_upload_ptr[i] = upload_buffer_ptr + _height_map_upload_offset[i];
+      _vertices_upload_offset[i] = frame_offset;
+      _vertices_upload_ptr[i] = upload_buffer_ptr + _vertices_upload_offset[i];
 
-      for (uint32 texture = 0; texture < texture_count; ++texture) {
-         _weight_map_upload_offset[i][texture] =
-            frame_offset + height_map_upload_item_size +
-            (texture * weight_map_upload_item_size);
-         _weight_map_upload_ptr[i][texture] =
-            upload_buffer_ptr + _weight_map_upload_offset[i][texture];
-      }
+      _vertex_attributes_upload_offset[i] = frame_offset + aligned_vertices_size;
+      _vertex_attributes_upload_ptr[i] =
+         upload_buffer_ptr + _vertex_attributes_upload_offset[i];
 
-      _light_map_upload_offset[i] = frame_offset + height_map_upload_item_size +
-                                    (weight_map_upload_item_size * texture_count);
-      _light_map_upload_ptr[i] = upload_buffer_ptr + _light_map_upload_offset[i];
-
-      _foliage_map_upload_offset[i] =
-         frame_offset + height_map_upload_item_size +
-         (weight_map_upload_item_size * texture_count) + light_map_upload_item_size;
+      _foliage_map_upload_offset[i] = frame_offset + vertex_upload_size;
       _foliage_map_upload_ptr[i] = upload_buffer_ptr + _foliage_map_upload_offset[i];
    }
 }
-
-void terrain::create_unfilled_patch_info()
-{
-   _patches.clear();
-   _patches.resize(_patch_count * _patch_count);
-}
-
 }

@@ -3,7 +3,7 @@
 #include "terrain_common.hlsli"
 
 [earlydepthstencil]
-float4 main(input_vertex input) : SV_Target0
+float4 main(vertex input) : SV_Target0
 {
    const float2 uv = input.positionWS.xz * terrain_constants.inv_grid_size;
    const float3 color = terrain_constants.grid_line_color;

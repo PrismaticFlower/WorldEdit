@@ -20,7 +20,7 @@ float patch(float2 position)
 
 
 [earlydepthstencil]
-float4 main(input_vertex input) : SV_Target0
+float4 main(vertex input) : SV_Target0
 {
    float2 position = (input.positionWS.xz + terrain_constants.half_world_size)  + float2(0, terrain_constants.grid_size);
 
