@@ -55,12 +55,8 @@ TEST_CASE("edits swap_terrain_textures", "[Edits]")
    CHECK(check_map(world.terrain.texture_weight_maps[1], 0x3));
    CHECK(check_map(world.terrain.texture_weight_maps[3], 0x1));
 
-   REQUIRE(world.terrain.texture_weight_maps_dirty[1].size() == 1);
-   CHECK(world.terrain.texture_weight_maps_dirty[1][0] ==
-         world::dirty_rect{0, 0, 32, 32});
-   REQUIRE(world.terrain.texture_weight_maps_dirty[3].size() == 1);
-   CHECK(world.terrain.texture_weight_maps_dirty[3][0] ==
-         world::dirty_rect{0, 0, 32, 32});
+   REQUIRE(world.terrain.texture_weight_maps_dirty.size() == 1);
+   CHECK(world.terrain.texture_weight_maps_dirty[0] == world::dirty_rect{0, 0, 32, 32});
 
    world.terrain.untracked_clear_dirty_rects();
 
@@ -78,12 +74,8 @@ TEST_CASE("edits swap_terrain_textures", "[Edits]")
    CHECK(check_map(world.terrain.texture_weight_maps[1], 0x1));
    CHECK(check_map(world.terrain.texture_weight_maps[3], 0x3));
 
-   REQUIRE(world.terrain.texture_weight_maps_dirty[1].size() == 1);
-   CHECK(world.terrain.texture_weight_maps_dirty[1][0] ==
-         world::dirty_rect{0, 0, 32, 32});
-   REQUIRE(world.terrain.texture_weight_maps_dirty[3].size() == 1);
-   CHECK(world.terrain.texture_weight_maps_dirty[3][0] ==
-         world::dirty_rect{0, 0, 32, 32});
+   REQUIRE(world.terrain.texture_weight_maps_dirty.size() == 1);
+   CHECK(world.terrain.texture_weight_maps_dirty[0] == world::dirty_rect{0, 0, 32, 32});
 }
 
 }

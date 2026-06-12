@@ -65,11 +65,9 @@ TEST_CASE("edits set_terrain", "[Edits]")
    CHECK(world.terrain.height_map_dirty[0] ==
          world::dirty_rect{0, 0, test_terrain_length, test_terrain_length});
 
-   for (const auto& tracker : world.terrain.texture_weight_maps_dirty) {
-      REQUIRE(tracker.size() == 1);
-      CHECK(tracker[0] ==
-            world::dirty_rect{0, 0, test_terrain_length, test_terrain_length});
-   }
+   REQUIRE(world.terrain.texture_weight_maps_dirty.size() == 1);
+   CHECK(world.terrain.texture_weight_maps_dirty[0] ==
+         world::dirty_rect{0, 0, test_terrain_length, test_terrain_length});
 
    REQUIRE(world.terrain.color_or_light_map_dirty.size() == 1);
    CHECK(world.terrain.color_or_light_map_dirty[0] ==
@@ -110,11 +108,9 @@ TEST_CASE("edits set_terrain", "[Edits]")
    CHECK(world.terrain.height_map_dirty[0] ==
          world::dirty_rect{0, 0, test_world_terrain_length, test_world_terrain_length});
 
-   for (const auto& tracker : world.terrain.texture_weight_maps_dirty) {
-      REQUIRE(tracker.size() == 1);
-      CHECK(tracker[0] == world::dirty_rect{0, 0, test_world_terrain_length,
-                                            test_world_terrain_length});
-   }
+   REQUIRE(world.terrain.texture_weight_maps_dirty.size() == 1);
+   CHECK(world.terrain.texture_weight_maps_dirty[0] ==
+         world::dirty_rect{0, 0, test_terrain_length, test_terrain_length});
 
    REQUIRE(world.terrain.color_or_light_map_dirty.size() == 1);
    CHECK(world.terrain.color_or_light_map_dirty[0] ==
