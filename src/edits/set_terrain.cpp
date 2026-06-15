@@ -27,6 +27,9 @@ struct set_terrain final : edit<world::edit_context> {
       context.world.terrain.color_or_light_map_dirty.add(
          {0, 0, test_terrain_length, test_terrain_length});
 
+      context.world.terrain.foliage_map_dirty.add(
+         {0, 0, test_terrain_length / 2, test_terrain_length / 2});
+
       context.world.terrain.water_map_dirty.add(
          {0, 0, test_terrain_length / 4, test_terrain_length / 4});
    }

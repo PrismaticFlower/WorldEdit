@@ -19,6 +19,7 @@ auto make_test_terrain() -> world::terrain
    for (int16& v : terrain.height_map) v = -1;
    for (uint32& v : terrain.color_map) v = 0xff'00'00'00;
    for (uint8& v : terrain.texture_weight_maps[0]) v = 0xff;
+   for (assets::terrain::foliage_patch& v : terrain.foliage_map) v = {true};
 
    return terrain;
 }
@@ -73,6 +74,10 @@ TEST_CASE("edits set_terrain", "[Edits]")
    CHECK(world.terrain.color_or_light_map_dirty[0] ==
          world::dirty_rect{0, 0, test_terrain_length, test_terrain_length});
 
+   REQUIRE(world.terrain.foliage_map_dirty.size() == 1);
+   CHECK(world.terrain.foliage_map_dirty[0] ==
+         world::dirty_rect{0, 0, test_terrain_length / 2, test_terrain_length / 2});
+
    REQUIRE(world.terrain.water_map_dirty.size() == 1);
    CHECK(world.terrain.water_map_dirty[0] ==
          world::dirty_rect{0, 0, test_terrain_length / 4, test_terrain_length / 4});
@@ -115,6 +120,10 @@ TEST_CASE("edits set_terrain", "[Edits]")
    REQUIRE(world.terrain.color_or_light_map_dirty.size() == 1);
    CHECK(world.terrain.color_or_light_map_dirty[0] ==
          world::dirty_rect{0, 0, test_world_terrain_length, test_world_terrain_length});
+
+   REQUIRE(world.terrain.foliage_map_dirty.size() == 1);
+   CHECK(world.terrain.foliage_map_dirty[0] ==
+         world::dirty_rect{0, 0, test_terrain_length / 2, test_terrain_length / 2});
 
    REQUIRE(world.terrain.water_map_dirty.size() == 1);
    CHECK(world.terrain.water_map_dirty[0] ==
