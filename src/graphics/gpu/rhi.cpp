@@ -336,6 +336,13 @@ struct device_state {
         supports_enhanced_barriers{desc.force_legacy_barriers
                                       ? false
                                       : check_enhanced_barriers_support(*device)},
+        supports_shader_barycentrics{desc.force_no_shader_barycentrics
+                                        ? false
+                                        : check_shader_barycentrics_support(*device)},
+        supports_conservative_rasterization{
+           desc.force_no_conservative_rasterization
+              ? false
+              : check_conservative_rasterization_support(*device)},
         supports_shader_model_6_6{desc.force_no_shader_model_6_6
                                      ? false
                                      : check_shader_model_6_6_support(*device)},
@@ -403,9 +410,8 @@ struct device_state {
                                         .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE}};
 
    bool supports_enhanced_barriers : 1;
-   bool supports_shader_barycentrics : 1 = check_shader_barycentrics_support(*device);
-   bool supports_conservative_rasterization : 1 =
-      check_conservative_rasterization_support(*device);
+   bool supports_shader_barycentrics : 1;
+   bool supports_conservative_rasterization : 1;
    bool supports_shader_model_6_6 : 1;
    bool supports_open_existing_heap : 1;
    bool supports_write_buffer_immediate : 1;

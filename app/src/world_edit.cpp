@@ -79,6 +79,10 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
      _renderer_use_debug_layer{command_line.get_flag("-gpu_debug_layer")},
      _renderer_use_legacy_barriers{
         command_line.get_flag("-gpu_legacy_barriers")},
+     _renderer_never_use_shader_barycentrics{
+        command_line.get_flag("-gpu_no_shader_barycentrics")},
+     _renderer_never_use_conservative_rasterization{
+        command_line.get_flag("-gpu_no_conservative_rasterization")},
      _renderer_never_use_shader_model_6_6{
         command_line.get_flag("-gpu_no_shader_model_6_6")},
      _renderer_never_use_open_existing_heap{
@@ -4805,6 +4809,8 @@ auto world_edit::get_renderer_init_params() noexcept -> graphics::renderer_init
       .use_debug_layer = _renderer_use_debug_layer,
       .use_legacy_barriers = _renderer_use_legacy_barriers,
       .never_use_shader_model_6_6 = _renderer_never_use_shader_model_6_6,
+      .never_use_shader_barycentrics = _renderer_never_use_shader_barycentrics,
+      .never_use_conservative_rasterization = _renderer_never_use_conservative_rasterization,
       .never_use_open_existing_heap = _renderer_never_use_open_existing_heap,
       .never_use_write_buffer_immediate = _renderer_never_use_write_buffer_immediate,
       .never_use_relaxed_format_casting = _renderer_never_use_relaxed_format_casting,

@@ -1271,6 +1271,12 @@ struct device_desc {
    /// @brief Force usage of legacy barriers.
    bool force_legacy_barriers = false;
 
+   /// @brief Force the device to report shader barycentrics as unsupported.
+   bool force_no_shader_barycentrics = false;
+
+   /// @brief Force the device to report conservative rasterization as unsupported.
+   bool force_no_conservative_rasterization = false;
+
    /// @brief Force the device to report SM 6.6 as unsupported.
    bool force_no_shader_model_6_6 = false;
 

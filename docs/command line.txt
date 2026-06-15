@@ -19,6 +19,12 @@
 -gpu_legacy_barriers
    Always use legacy D3D12 barriers.
 
+-gpu_no_shader_barycentrics
+  Never use Shader Barycentrics, even if supported by the GPU.
+
+-gpu_no_conservative_rasterization
+  Never use conservative rasterization, even if supported by the GPU.
+
 -gpu_no_shader_model_6_6
   Never use Shader Model 6.6 shaders, even if supported by the GPU.
 

@@ -605,6 +605,8 @@ private:
    bool _renderer_use_debug_layer = false;
    bool _renderer_use_legacy_barriers = false;
    bool _renderer_never_use_shader_model_6_6 = false;
+   bool _renderer_never_use_shader_barycentrics = false;
+   bool _renderer_never_use_conservative_rasterization = false;
    bool _renderer_never_use_open_existing_heap = false;
    bool _renderer_never_use_write_buffer_immediate = false;
    bool _renderer_never_use_relaxed_format_casting = false;
