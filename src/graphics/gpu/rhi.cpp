@@ -2263,6 +2263,7 @@ command_list::~command_list()
             state->device->async_compute_queue.release_command_allocator(
                pack_command_allocator_handle(allocator.release()));
          });
+      break;
    case D3D12_COMMAND_LIST_TYPE_COPY:
       state->allocator_pool.view_and_clear(
          [&](utility::com_ptr<ID3D12CommandAllocator> allocator) {
@@ -2273,8 +2274,7 @@ command_list::~command_list()
             state->device->background_copy_queue.release_command_allocator(
                pack_command_allocator_handle(allocator_ref_background.release()));
          });
-   default:
-      state->device->wait_for_idle();
+      break;
    }
 }
 
