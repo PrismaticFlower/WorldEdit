@@ -461,7 +461,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
    terrain_depth_prepass = {device.create_graphics_pipeline(
                                {.root_signature = root_signature_library.terrain.get(),
 
-                                .vs_bytecode = shader_library["terrain_patchVS"sv],
+                                .vs_bytecode = shader_library["terrain_patch_depthVS"sv],
 
                                 .rasterizer_state = rasterizer_cull_backfacing,
                                 .depth_stencil_state = depth_stencil_enabled,

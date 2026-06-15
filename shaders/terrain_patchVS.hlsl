@@ -24,3 +24,12 @@ vertex main(input_vertex input)
 
    return output;
 }
+
+float4 main_depth_pass(int3 positionCS : POSITIONCS) : SV_Position
+{
+   const float3 world_form_compress_mul = float3(terrain_constants.grid_size, terrain_constants.height_scale, terrain_constants.grid_size);
+   const float3 world_form_compress_add = float3(0, 0, terrain_constants.grid_size);
+   const float3 positionWS = world_form_compress_mul * positionCS + world_form_compress_add;
+
+   return mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
+}

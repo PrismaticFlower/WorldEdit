@@ -18,6 +18,7 @@ auto mesh_wireframePS() noexcept -> shader_def;
 auto mesh_wireframe_GS_fallbackPS() noexcept -> shader_def;
 auto mesh_wireframe_GS_fallbackGS() noexcept -> shader_def;
 auto terrain_patchVS() noexcept -> shader_def;
+auto terrain_patch_depthVS() noexcept -> shader_def;
 auto terrain_basicPS() noexcept -> shader_def;
 auto terrain_lightingPS() noexcept -> shader_def;
 auto terrain_normalPS() noexcept -> shader_def;
@@ -101,6 +102,7 @@ shaders::mesh_wireframePS(),
 shaders::mesh_wireframe_GS_fallbackPS(),
 shaders::mesh_wireframe_GS_fallbackGS(),
 shaders::terrain_patchVS(),
+shaders::terrain_patch_depthVS(),
 shaders::terrain_basicPS(),
 shaders::terrain_lightingPS(),
 shaders::terrain_normalPS(),

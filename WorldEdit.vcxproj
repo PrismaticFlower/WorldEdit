@@ -552,6 +552,7 @@
     <ClCompile Include="src\graphics\shaders\terrain_lightingPS.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_normalPS.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_patchVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_patch_depthVS.cpp" />
     <ClCompile Include="src\graphics\shaders\thumbnail_downsamplePS.cpp" />
     <ClCompile Include="src\graphics\shaders\thumbnail_downsampleVS.cpp" />
     <ClCompile Include="src\graphics\shaders\thumbnail_meshPS.cpp" />

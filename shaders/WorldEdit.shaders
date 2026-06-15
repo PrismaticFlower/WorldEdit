@@ -22,6 +22,7 @@ mesh_wireframe_GS_fallbackPS
 mesh_wireframe_GS_fallbackGS
  
 terrain_patchVS
+terrain_patch_depthVS .entrypoint = main_depth_pass .file = terrain_patchVS.hlsl
 terrain_basicPS
 terrain_lightingPS
 terrain_normalPS
