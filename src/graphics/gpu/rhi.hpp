@@ -435,6 +435,7 @@ struct root_parameter {
 struct root_signature_flags {
    bool allow_input_assembler_input_layout : 1 = false;
    bool deny_vertex_shader_root_access : 1 = false;
+   bool deny_geometry_shader_root_access : 1 = false;
    bool deny_pixel_shader_root_access : 1 = false;
    bool deny_amplification_shader_root_access : 1 = false;
    bool deny_mesh_shader_root_access : 1 = false;

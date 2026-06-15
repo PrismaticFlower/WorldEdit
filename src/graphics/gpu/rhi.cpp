@@ -734,6 +734,7 @@ auto device::create_root_signature(const root_signature_desc& desc) -> root_sign
    // clang-format off
    if (desc.flags.allow_input_assembler_input_layout) d3d12_desc.Flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
    if (desc.flags.deny_vertex_shader_root_access) d3d12_desc.Flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
+   if (desc.flags.deny_geometry_shader_root_access) d3d12_desc.Flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS; 
    if (desc.flags.deny_pixel_shader_root_access) d3d12_desc.Flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
    if (desc.flags.deny_amplification_shader_root_access) d3d12_desc.Flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS;
    if (desc.flags.deny_mesh_shader_root_access) d3d12_desc.Flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS;

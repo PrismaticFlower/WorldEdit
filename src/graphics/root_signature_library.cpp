@@ -345,7 +345,8 @@ const gpu::root_signature_desc mesh_wireframe_desc{
          frame_constant_buffer,
       },
 
-   .flags = {.allow_input_assembler_input_layout = true},
+   .flags = {.allow_input_assembler_input_layout = true,
+             .deny_geometry_shader_root_access = true},
 
    .debug_name = "mesh_wireframe_root_signature",
 };
