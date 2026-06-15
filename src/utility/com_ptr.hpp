@@ -34,7 +34,7 @@ public:
       _pointer = from;
    }
 
-   com_ptr(std::nullptr_t){};
+   com_ptr(std::nullptr_t) {};
 
    com_ptr(const com_ptr& other) noexcept
    {
@@ -68,7 +68,7 @@ public:
       return *this;
    }
 
-   template<typename Other, typename = std::enable_if_t<std::is_convertible_v<Other*, Class*>>>
+   template<typename Other, typename = std::enable_if_t<std::is_base_of_v<Class, Other>>>
    com_ptr(const com_ptr<Other>& other)
    {
       auto other_copy = other;
@@ -76,7 +76,7 @@ public:
       _pointer = static_cast<Class*>(other_copy.release());
    }
 
-   template<typename Other, typename = std::enable_if_t<std::is_convertible_v<Other*, Class*>>>
+   template<typename Other, typename = std::enable_if_t<std::is_base_of_v<Class, Other>>>
    com_ptr& operator=(const com_ptr<Other>& other) noexcept
    {
       auto other_copy = other;
@@ -86,13 +86,13 @@ public:
       return *this;
    }
 
-   template<typename Other, typename = std::enable_if_t<std::is_convertible_v<Other*, Class*>>>
+   template<typename Other, typename = std::enable_if_t<std::is_base_of_v<Class, Other>>>
    com_ptr(com_ptr<Other>&& other)
    {
       _pointer = static_cast<Class*>(other.release());
    }
 
-   template<typename Other, typename = std::enable_if_t<std::is_convertible_v<Other*, Class*>>>
+   template<typename Other, typename = std::enable_if_t<std::is_base_of_v<Class, Other>>>
    com_ptr& operator=(com_ptr<Other>&& other) noexcept
    {
       reset(static_cast<Class*>(other.release()));
