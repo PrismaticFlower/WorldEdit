@@ -208,6 +208,7 @@ auto load_texture(const io::path& path) -> texture
    DirectX::ScratchImage scratch_image;
 
    if (const HRESULT hr = DirectX::LoadFromTGAFile(io::wide_path{path}.c_str(),
+                                                   DirectX::TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA,
                                                    nullptr, scratch_image);
        FAILED(hr)) {
       throw io::open_error{"Failed to load .TGA file.",
