@@ -1528,14 +1528,10 @@ auto device::create_null_shader_resource_view(const srv_dimension dimension,
                                               const shader_resource_view_desc& desc)
    -> resource_view
 {
-   const D3D12_SHADER_RESOURCE_VIEW_DESC d3d12_desc{
-      .Format = desc.format,
-      .ViewDimension = static_cast<D3D12_SRV_DIMENSION>(dimension),
-      .Shader4ComponentMapping = D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(
-         std::to_underlying(desc.shader_4_component_mapping.component_0),
-         std::to_underlying(desc.shader_4_component_mapping.component_1),
-         std::to_underlying(desc.shader_4_component_mapping.component_2),
-         std::to_underlying(desc.shader_4_component_mapping.component_3))};
+   const D3D12_SHADER_RESOURCE_VIEW_DESC d3d12_desc{.Format = desc.format,
+                                                    .ViewDimension =
+                                                       static_cast<D3D12_SRV_DIMENSION>(
+                                                          dimension)};
 
    descriptor_heap& descriptor_heap = state->srv_uav_descriptor_heap;
 
