@@ -788,6 +788,19 @@ void save_animations(const io::path& path, const world& world)
       }
 
       for (const animation_group::entry_broken& entry : group.entries_broken_links) {
+         bool restored_link = false;
+
+         for (const animation_group::entry& linked_entry : group.entries) {
+            if (string::iequals(world.objects[linked_entry.object_index].name,
+                                entry.object)) {
+               restored_link = true;
+
+               break;
+            }
+         }
+
+         if (restored_link) continue;
+
          file.write_ln("\tAnimation(\"{}\", \"{}\");", entry.animation, entry.object);
       }
 
@@ -809,8 +822,20 @@ void save_animations(const io::path& path, const world& world)
          file.write_ln("\tObj(\"{}\");", world.objects[object_index].name);
       }
 
-      for (const std::string& object : hierarchy.objects_broken_links) {
-         file.write_ln("\tObj(\"{}\");", object);
+      for (const std::string& object_name : hierarchy.objects_broken_links) {
+         bool restored_link = false;
+
+         for (const uint32 linked_object_index : hierarchy.objects) {
+            if (string::iequals(world.objects[linked_object_index].name, object_name)) {
+               restored_link = true;
+
+               break;
+            }
+         }
+
+         if (restored_link) continue;
+
+         file.write_ln("\tObj(\"{}\");", object_name);
       }
 
       file.write_ln("}\n");

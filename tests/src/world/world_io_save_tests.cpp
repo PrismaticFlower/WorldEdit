@@ -2277,6 +2277,11 @@ TEST_CASE("world saving animation object links", "[World][IO]")
                                        animation_group::entry{"Anim", 2},
                                        animation_group::entry{"Anim", 4},
                                     },
+                                 .entries_broken_links =
+                                    {
+                                       animation_group::entry_broken{"Anim",
+                                                                     "Object0"},
+                                    },
                               },
                            }},
 
@@ -2286,6 +2291,7 @@ TEST_CASE("world saving animation object links", "[World][IO]")
                                    animation_hierarchy{
                                       .root_object = 0,
                                       .objects = {1, 3},
+                                      .objects_broken_links = {"Object1"},
                                    },
                                 }},
    };
