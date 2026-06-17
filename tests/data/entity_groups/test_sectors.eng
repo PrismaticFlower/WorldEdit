@@ -1,3 +1,34 @@
+Object("Object0", "object", 0)
+{
+	ChildRotation(1.000, 0.000, 0.000, 0.000);
+	ChildPosition(68.000, 0.000, 4.000);
+}
+
+Object("Object1", "object", 1)
+{
+	ChildRotation(1.000, 0.000, 0.000, 0.000);
+	ChildPosition(68.000, 0.000, 4.000);
+}
+
+Object("Object2", "object", 2)
+{
+	ChildRotation(1.000, 0.000, 0.000, 0.000);
+	ChildPosition(68.000, 0.000, 4.000);
+}
+
+Object("Object3", "object", 3)
+{
+	ChildRotation(1.000, 0.000, 0.000, 0.000);
+	ChildPosition(68.000, 0.000, 4.000);
+}
+
+Object("Object4", "object", 4)
+{
+	ChildRotation(1.000, 0.000, 0.000, 0.000);
+	ChildPosition(68.000, 0.000, 4.000);
+}
+
+
 Sector("sector")
 {
 	Base(0.000000);
@@ -6,7 +37,7 @@ Sector("sector")
 	Point(-227.199097, 7.364827);
 	Point(-228.642029, -40.347687);
 	Point(-159.451279, -40.488800);
-	Object("tat3_bldg_keeper");
+	Object("Object0");
 }
 
 Sector("Sector-1")
@@ -17,8 +48,8 @@ Sector("Sector-1")
 	Point(-195.826218, -49.666763);
 	Point(-271.034851, -48.864563);
 	Point(-274.260132, -128.690567);
-	Object("lod_test120");
-	Object("lod_test2010");
-	Object("lod_test12");
-	Object("lod_test201");
+	Object("Object1");
+	Object("Object2");
+	Object("Object3");
+	Object("Object4");
 }

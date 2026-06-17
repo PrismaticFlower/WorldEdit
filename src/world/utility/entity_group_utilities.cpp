@@ -11,6 +11,8 @@
 
 #include "utility/string_icompare.hpp"
 
+#include <algorithm>
+
 #pragma warning(default : 4061) // enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
 #pragma warning(default : 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
 
@@ -190,6 +192,30 @@ void fill_entity_group_block_materials(entity_group& group, const blocks& blocks
          }
 
          material = *materials_remap[material];
+      }
+   }
+}
+
+void fix_object_links(entity_group& group, std::span<const object> world_objects)
+{
+   for (sector& sector : group.sectors) {
+      sector.objects_broken_links.reserve(sector.objects_broken_links.size() +
+                                          sector.objects.size());
+
+      for (uint32& index : sector.objects) {
+         const std::string_view object_name = world_objects[index].name;
+         const std::vector<object>::iterator object =
+            std::find_if(group.objects.begin(), group.objects.end(),
+                         [&](const auto& object) {
+                            return string::iequals(object_name, object.name);
+                         });
+
+         if (object != group.objects.end()) {
+            index = static_cast<uint32>((object - group.objects.begin()));
+         }
+         else {
+            sector.objects_broken_links.emplace_back(object_name);
+         }
       }
    }
 }
@@ -917,6 +943,7 @@ auto make_entity_group_from_selection(const world& world,
       }
    }
 
+   fix_object_links(group, world.objects);
    fill_entity_group_block_materials(group, world.blocks);
 
    if (layer_tracker.has_layer) group.layer = layer_tracker.layer;
@@ -1039,6 +1066,7 @@ auto make_entity_group_from_layer(const world& world, const int32 layer) noexcep
       }
    }
 
+   fix_object_links(group, world.objects);
    fill_entity_group_block_materials(group, world.blocks);
 
    return group;

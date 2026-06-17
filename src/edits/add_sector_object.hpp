@@ -7,7 +7,7 @@
 
 namespace we::edits {
 
-auto make_add_sector_object(world::sector_id sector_id, std::string object_name)
+auto make_add_sector_object(std::vector<uint32>* objects, uint32 object_index)
    -> std::unique_ptr<edit<world::edit_context>>;
 
 }

@@ -8,8 +8,7 @@
 namespace we::world {
 
 auto sector_fill(const sector& sector, const std::span<const object> world_objects,
-                 const object_class_library& object_classes)
-   -> std::vector<std::string>;
+                 const object_class_library& object_classes) -> std::vector<uint32>;
 
 bool inside_sector(const sector& sector, const object& object,
                    const object_class_library& object_classes);

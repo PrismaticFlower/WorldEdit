@@ -397,6 +397,123 @@ TEST_CASE("world save entity group (sectors)", "[World][IO]")
    const io::path path = "temp/entity_groups/test_sectors.eng";
 
    const std::string_view expected_eng =
+      R"(Object("tat3_bldg_keeper", "")
+{
+	ChildRotation(0.000000, -0.000000, 1.000000, -0.000000);
+	ChildPosition(0.000000, 0.000000, -0.000000);
+	Team(0);
+}
+
+Object("lod_test120", "")
+{
+	ChildRotation(0.000000, -0.000000, 1.000000, -0.000000);
+	ChildPosition(0.000000, 0.000000, -0.000000);
+	Team(0);
+}
+
+Object("lod_test2010", "")
+{
+	ChildRotation(0.000000, -0.000000, 1.000000, -0.000000);
+	ChildPosition(0.000000, 0.000000, -0.000000);
+	Team(0);
+}
+
+Object("lod_test12", "")
+{
+	ChildRotation(0.000000, -0.000000, 1.000000, -0.000000);
+	ChildPosition(0.000000, 0.000000, -0.000000);
+	Team(0);
+}
+
+Object("lod_test201", "")
+{
+	ChildRotation(0.000000, -0.000000, 1.000000, -0.000000);
+	ChildPosition(0.000000, 0.000000, -0.000000);
+	Team(0);
+}
+
+Sector("sector")
+{
+	Base(0.000000);
+	Height(10.000000);
+	Point(-157.581009, 4.900336);
+	Point(-227.199097, 7.364827);
+	Point(-228.642029, -40.347687);
+	Point(-159.451279, -40.488800);
+	Object("tat3_bldg_keeper");
+}
+
+Sector("Sector-1")
+{
+	Base(0.000000);
+	Height(10.000000);
+	Point(-196.648041, -125.908623);
+	Point(-195.826218, -49.666763);
+	Point(-271.034851, -48.864563);
+	Point(-274.260132, -128.690567);
+	Object("lod_test120");
+	Object("lod_test2010");
+	Object("lod_test12");
+	Object("lod_test201");
+}
+
+)";
+
+   world::entity_group group = {
+      .objects =
+         {
+            world::object{.name = "tat3_bldg_keeper"},
+            world::object{.name = "lod_test120"},
+            world::object{.name = "lod_test2010"},
+            world::object{.name = "lod_test12"},
+            world::object{.name = "lod_test201"},
+         },
+
+      .sectors =
+         {
+            world::sector{
+               .name = "sector",
+               .base = 0.0f,
+               .height = 10.0f,
+               .points =
+                  {
+                     float2{-157.581009f, -4.900336f},
+                     float2{-227.199097f, -7.364827f},
+                     float2{-228.642029f, 40.347687f},
+                     float2{-159.451279f, 40.488800f},
+                  },
+               .objects = {0},
+            },
+
+            world::sector{
+               .name = "Sector-1",
+               .base = 0.0f,
+               .height = 10.0f,
+               .points =
+                  {
+                     float2{-196.648041f, 125.908623f},
+                     float2{-195.826218f, 49.666763f},
+                     float2{-271.034851f, 48.864563f},
+                     float2{-274.260132f, 128.690567f},
+                  },
+               .objects = {1, 2, 3, 4},
+            },
+         },
+   };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
+TEST_CASE("world save entity group (sectors, broken links)", "[World][IO]")
+{
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_sectors.eng";
+
+   const std::string_view expected_eng =
       R"(Sector("sector")
 {
 	Base(0.000000);
@@ -438,7 +555,7 @@ Sector("Sector-1")
                      float2{-228.642029f, 40.347687f},
                      float2{-159.451279f, 40.488800f},
                   },
-               .objects = {"tat3_bldg_keeper"},
+               .objects_broken_links = {"tat3_bldg_keeper"},
             },
 
             world::sector{
@@ -452,7 +569,8 @@ Sector("Sector-1")
                      float2{-271.034851f, 48.864563f},
                      float2{-274.260132f, 128.690567f},
                   },
-               .objects = {"lod_test120", "lod_test2010", "lod_test12", "lod_test201"},
+               .objects_broken_links = {"lod_test120", "lod_test2010",
+                                        "lod_test12", "lod_test201"},
             },
          },
    };
@@ -3391,32 +3509,30 @@ TEST_CASE("world save entity group (blocks, terrain_cut_boxes)", "[World][IO]")
 
 )";
 
-   world::entity_group
-      group =
+   world::entity_group group = {
+      .blocks =
          {
-            .blocks =
+            .terrain_cut_boxes =
                {
-                  .terrain_cut_boxes =
-                     {
-                        world::block_description_terrain_cut_box{
-                           .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
-                           .position = {8.5f, 4.5f, 2.0f},
-                           .size = {4.0f, 4.0f, 4.0f},
-                        },
-                        world::block_description_terrain_cut_box{
-                           .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
-                           .position = {10.0f, 16.0f, 12.0f},
-                           .size = {8.0f, 4.0f, 8.0f},
-                        },
-                        world::block_description_terrain_cut_box{
-                           .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
-                           .position = {6.0f, 6.0f, 6.0f},
-                           .size = {5.0f, 5.0f, 5.0f},
-                        },
-                     },
-
+                  world::block_description_terrain_cut_box{
+                     .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
+                     .position = {8.5f, 4.5f, 2.0f},
+                     .size = {4.0f, 4.0f, 4.0f},
+                  },
+                  world::block_description_terrain_cut_box{
+                     .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
+                     .position = {10.0f, 16.0f, 12.0f},
+                     .size = {8.0f, 4.0f, 8.0f},
+                  },
+                  world::block_description_terrain_cut_box{
+                     .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
+                     .position = {6.0f, 6.0f, 6.0f},
+                     .size = {5.0f, 5.0f, 5.0f},
+                  },
                },
-         };
+
+         },
+   };
 
    world::save_entity_group(path, group);
 

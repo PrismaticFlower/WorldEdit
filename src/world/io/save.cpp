@@ -557,8 +557,22 @@ void save_portals_sectors(const io::path& path, const world& world)
          file.write_ln("\tPoint({:f}, {:f});", point.x, -point.y);
       }
 
-      for (auto& object : sector.objects) {
-         file.write_ln("\tObject(\"{}\");", object);
+      for (const uint32 object_index : sector.objects) {
+         file.write_ln("\tObject(\"{}\");", world.objects[object_index].name);
+      }
+
+      for (const std::string& object_name : sector.objects_broken_links) {
+         bool found = false;
+
+         for (const uint32 object_index : sector.objects) {
+            if (string::iequals(object_name, world.objects[object_index].name)) {
+               found = true;
+
+               break;
+            }
+         }
+
+         if (not found) file.write_ln("\tObject(\"{}\");", object_name);
       }
 
       file.write_ln("}");

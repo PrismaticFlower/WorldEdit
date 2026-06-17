@@ -12,6 +12,7 @@
 #include "edits/creation_entity_set.hpp"
 #include "edits/delete_block.hpp"
 #include "edits/delete_entity.hpp"
+#include "edits/delete_sector_object.hpp"
 #include "edits/insert_entity.hpp"
 #include "edits/insert_node.hpp"
 #include "edits/insert_point.hpp"
@@ -1476,7 +1477,7 @@ void world_edit::place_creation_entity() noexcept
       }
 
       if (_entity_creation_config.auto_add_object_to_sectors) {
-         add_object_to_sectors(_world.objects.back());
+         add_object_to_sectors(static_cast<uint32>(_world.objects.size() - 1));
       }
 
       _last_created_entities.last_layer = object.layer;
@@ -2272,9 +2273,26 @@ void world_edit::place_entity_group(const world::entity_group& group,
                  float2{group.position.x, group.position.z};
       }
 
-      for (std::string& object : new_sector.objects) {
-         object = world::get_placed_entity_name(object, _world.objects, group,
-                                                object_base_index);
+      for (uint32& object_index : new_sector.objects) {
+         object_index += object_base_index;
+      }
+
+      std::vector<std::string> objects_broken_links{
+         std::move(new_sector.objects_broken_links)};
+
+      new_sector.objects_broken_links.clear();
+      new_sector.objects_broken_links.reserve(objects_broken_links.size());
+
+      for (std::string& object_name : objects_broken_links) {
+         const world::object* object = world::find_entity(_world.objects, object_name);
+
+         if (object) {
+            new_sector.objects.push_back(
+               static_cast<uint32>(object - _world.objects.data()));
+         }
+         else {
+            new_sector.objects_broken_links.push_back(std::move(object_name));
+         }
       }
 
       new_sector.base += group.position.y;
@@ -2767,17 +2785,42 @@ void world_edit::command_post_auto_place_meta_entities(world::object& object) no
                            _edit_context, {.transparent = true});
 }
 
-void world_edit::add_object_to_sectors(const world::object& object) noexcept
+void world_edit::add_object_to_sectors(const uint32 object_index) noexcept
 {
+   const world::object& object = _world.objects[object_index];
+
    if (object.name.empty()) return;
 
-   for (const auto& sector : _world.sectors) {
+   for (world::sector& sector : _world.sectors) {
+      bool restored_link = false;
+
+      for (uint32 broken_link_index = 0;
+           broken_link_index < sector.objects_broken_links.size();
+           ++broken_link_index) {
+         const std::string& object_name =
+            sector.objects_broken_links[broken_link_index];
+
+         if (string::iequals(object_name, object.name)) {
+            _edit_stack_world.apply(edits::make_delete_sector_object(&sector.objects_broken_links,
+                                                                     broken_link_index),
+                                    _edit_context, {.transparent = true});
+            _edit_stack_world.apply(edits::make_add_sector_object(&sector.objects,
+                                                                  object_index),
+                                    _edit_context, {.transparent = true});
+
+            restored_link = true;
+            break;
+         }
+      }
+
+      if (restored_link) continue;
+
       if (not world::inside_sector(sector, object, _object_classes)) continue;
 
       bool already_exists = false;
 
-      for (const auto& sector_object : sector.objects) {
-         if (string::iequals(sector_object, object.name)) {
+      for (uint32 sector_object_index : sector.objects) {
+         if (sector_object_index == object_index) {
             already_exists = true;
             break;
          }
@@ -2785,7 +2828,7 @@ void world_edit::add_object_to_sectors(const world::object& object) noexcept
 
       if (already_exists) continue;
 
-      _edit_stack_world.apply(edits::make_add_sector_object(sector.id, object.name),
+      _edit_stack_world.apply(edits::make_add_sector_object(&sector.objects, object_index),
                               _edit_context, {.transparent = true});
    }
 }

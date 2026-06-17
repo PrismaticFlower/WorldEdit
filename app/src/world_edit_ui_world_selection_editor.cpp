@@ -1148,7 +1148,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      ImGui::TableNextRow();
 
                      ImGui::TableNextColumn();
-                     ImGui::Text(sector->objects[i].c_str());
+                     ImGui::Text(_world.objects[sector->objects[i]].name.c_str());
 
                      hovered |= ImGui::IsItemHovered();
 
@@ -1162,11 +1162,27 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      hovered |= ImGui::IsItemHovered();
 
                      if (hovered) {
-                        for (const auto& object : _world.objects) {
-                           if (object.name == sector->objects[i]) {
-                              _interaction_targets.hovered_entity = object.id;
-                           }
-                        }
+                        _interaction_targets.hovered_entity =
+                           _world.objects[sector->objects[i]].id;
+                     }
+
+                     ImGui::PopID();
+                  }
+
+                  for (uint32 i = 0; i < sector->objects_broken_links.size(); ++i) {
+                     ImGui::PushID(static_cast<int>(i + sector->objects.size()));
+
+                     ImGui::TableNextRow();
+
+                     ImGui::TableNextColumn();
+                     ImGui::Text("%s (Missing Object)",
+                                 sector->objects_broken_links[i].c_str());
+
+                     ImGui::TableNextColumn();
+                     if (ImGui::SmallButton("X")) {
+                        _edit_stack_world.apply(edits::make_delete_sector_object(
+                                                   &sector->objects_broken_links, i),
+                                                _edit_context);
                      }
 
                      ImGui::PopID();
@@ -1180,7 +1196,11 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      edits::make_set_value(&sector->objects,
                                            world::sector_fill(*sector, _world.objects,
                                                               _object_classes)),
-                     _edit_context);
+                     _edit_context, {.closed = true});
+                  _edit_stack_world.apply(edits::make_set_value(&sector->objects_broken_links,
+                                                                {}),
+                                          _edit_context,
+                                          {.closed = true, .transparent = true});
                }
 
                if (ImGui::Button("Add Object", {ImGui::CalcItemWidth(), 0.0f})) {
@@ -1196,18 +1216,38 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                             _interaction_targets.hovered_entity
                                                .get<world::object_id>());
                       object) {
+                     for (uint32 broken_link_index = 0;
+                          broken_link_index < sector->objects_broken_links.size();
+                          ++broken_link_index) {
+                        const std::string& object_name =
+                           sector->objects_broken_links[broken_link_index];
+
+                        if (string::iequals(object_name, object->name)) {
+                           _edit_stack_world
+                              .apply(edits::make_delete_sector_object(&sector->objects_broken_links,
+                                                                      broken_link_index),
+                                     _edit_context, {.transparent = true});
+                           break;
+                        }
+                     }
+
+                     const uint32 object_index =
+                        static_cast<uint32>(object - _world.objects.data());
+
                      bool already_has_object = false;
 
-                     for (const auto& other_object : sector->objects) {
-                        if (string::iequals(object->name, other_object)) {
+                     for (const uint32 sector_object_index : sector->objects) {
+                        if (sector_object_index == object_index) {
                            already_has_object = true;
+
+                           break;
                         }
                      }
 
                      if (not already_has_object) {
                         _edit_stack_world
-                           .apply(edits::make_add_sector_object(sector->id,
-                                                                object->name),
+                           .apply(edits::make_add_sector_object(&sector->objects,
+                                                                object_index),
                                   _edit_context);
                      }
                   }

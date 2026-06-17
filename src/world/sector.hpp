@@ -17,7 +17,8 @@ struct sector {
    float height = 0.0f;
 
    std::vector<float2> points;
-   std::vector<std::string> objects;
+   std::vector<uint32> objects;
+   std::vector<std::string> objects_broken_links;
 
    id<sector> id{};
 

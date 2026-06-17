@@ -405,7 +405,8 @@ auto read_sector(const assets::config::node& node) -> sector
                                   -sector_prop.values.get<float>(1)});
       }
       else if (string::iequals(sector_prop.key, "Object"sv)) {
-         sector.objects.emplace_back(sector_prop.values.get<std::string>(0));
+         sector.objects_broken_links.emplace_back(
+            sector_prop.values.get<std::string>(0));
       }
    }
 
@@ -1843,6 +1844,34 @@ void add_branch_weights(const std::vector<unlinked_branch_weight>& unlinked_bran
    }
 }
 
+void link_object_refs(entity_group& group)
+{
+   for (sector& sector : group.sectors) {
+      sector.objects.reserve(sector.objects_broken_links.size());
+
+      std::vector<std::string> objects_broken_links{
+         std::move(sector.objects_broken_links)};
+
+      sector.objects_broken_links.clear();
+
+      for (std::string& object_name : objects_broken_links) {
+         const std::vector<object>::iterator object =
+            std::find_if(group.objects.begin(), group.objects.end(),
+                         [&](const auto& object) {
+                            return string::iequals(object_name, object.name);
+                         });
+
+         if (object != group.objects.end()) {
+            sector.objects.push_back(
+               static_cast<uint32>((object - group.objects.begin())));
+         }
+         else {
+            sector.objects_broken_links.push_back(std::move(object_name));
+         }
+      }
+   }
+}
+
 void clamp_block_material_indices(entity_group& group_out, output_stream& output) noexcept
 {
    const std::size_t max_material = group_out.blocks.materials.size();
@@ -2055,6 +2084,8 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
                                                     group.planning_hubs, output);
 
       add_branch_weights(branch_weights, group, output);
+
+      link_object_refs(group);
 
       clamp_block_material_indices(group, output);
 

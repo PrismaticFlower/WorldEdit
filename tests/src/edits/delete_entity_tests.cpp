@@ -26,8 +26,6 @@ TEST_CASE("edits delete_entity object", "[Edits]")
 
    REQUIRE(world.paths[0].properties.size() == 1);
 
-   REQUIRE(world.sectors[0].objects.empty());
-
    REQUIRE(world.hintnodes[0].command_post == "");
 
    edit->revert(edit_context);
@@ -46,9 +44,6 @@ TEST_CASE("edits delete_entity object", "[Edits]")
    REQUIRE(world.paths[0].properties.size() == 2);
    REQUIRE(world.paths[0].properties[1].key == "EnableObject");
    REQUIRE(world.paths[0].properties[1].value == "test_object");
-
-   REQUIRE(world.sectors[0].objects.size() == 1);
-   REQUIRE(world.sectors[0].objects[0] == "test_object");
 
    REQUIRE(world.hintnodes[0].command_post == "test_object");
 }
@@ -750,7 +745,7 @@ TEST_CASE("edits delete_entity multiple refs object", "[Edits]")
                   .base = 0.0f,
                   .height = 0.0f,
                   .points = {{0.0f, 0.0f}, {0.0f, 10.0f}, {10.0f, 10.0f}, {10.0f, 0.0f}},
-                  .objects = {"other_object"s, "test_object"s, "other_object"s, "test_object"s},
+                  .objects = {1, 0, 1, 0},
                },
             },
          },
@@ -771,8 +766,8 @@ TEST_CASE("edits delete_entity multiple refs object", "[Edits]")
          world::path::property{.key = "Key"s, .value = "Value"s});
 
    REQUIRE(world.sectors[0].objects.size() == 2);
-   CHECK(world.sectors[0].objects[0] == "other_object");
-   CHECK(world.sectors[0].objects[1] == "other_object");
+   CHECK(world.sectors[0].objects[0] == 0);
+   CHECK(world.sectors[0].objects[1] == 0);
 
    edit->revert(edit_context);
 
@@ -789,10 +784,10 @@ TEST_CASE("edits delete_entity multiple refs object", "[Edits]")
          world::path::property{.key = "EnableObject"s, .value = "test_object"s});
 
    REQUIRE(world.sectors[0].objects.size() == 4);
-   CHECK(world.sectors[0].objects[0] == "other_object");
-   CHECK(world.sectors[0].objects[1] == "test_object");
-   CHECK(world.sectors[0].objects[2] == "other_object");
-   CHECK(world.sectors[0].objects[3] == "test_object");
+   CHECK(world.sectors[0].objects[0] == 1);
+   CHECK(world.sectors[0].objects[1] == 0);
+   CHECK(world.sectors[0].objects[2] == 1);
+   CHECK(world.sectors[0].objects[3] == 0);
 }
 
 TEST_CASE("edits delete_entity ControlZone ref object", "[Edits]")
@@ -945,6 +940,88 @@ TEST_CASE("edits delete_entity animation ref object", "[Edits]")
    CHECK(world.animation_hierarchies[0].objects[2] == 2);
 
    CHECK(world.animation_hierarchies[1].root_object == 0);
+}
+
+TEST_CASE("edits delete_entity sector ref object", "[Edits]")
+{
+   world::world world = {
+      .name = "Test"s,
+
+      .layer_descriptions = {{.name = "[Base]"s}},
+      .common_layers = {0},
+
+      .objects =
+         {
+            world::entities_init,
+            std::initializer_list{
+               world::object{
+                  .name = "Object0"s,
+
+                  .id = world::object_id{0},
+               },
+               world::object{
+                  .name = "Object1"s,
+
+                  .id = world::object_id{1},
+               },
+               world::object{
+                  .name = "Object2"s,
+
+                  .id = world::object_id{2},
+               },
+               world::object{
+                  .name = "Object3"s,
+
+                  .id = world::object_id{3},
+               },
+               world::object{
+                  .name = "Object4"s,
+
+                  .id = world::object_id{4},
+               },
+               world::object{
+                  .name = "Object5"s,
+
+                  .id = world::object_id{5},
+               },
+            },
+         },
+      .sectors =
+         {
+            world::entities_init,
+            std::initializer_list{world::sector{
+               .name = "sector",
+               .base = 0.0f,
+               .height = 10.0f,
+               .points = {{-157.581009f, -4.900336f},
+                          {-227.199097f, -7.364827f},
+                          {-228.642029f, 40.347687f},
+                          {-159.451279f, 40.488800f}},
+               .objects = {0, 1, 3, 5},
+            }},
+         },
+   };
+
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   auto edit = make_delete_entity(world.objects[0].id, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.sectors[0].objects.size() == 3);
+   CHECK(world.sectors[0].objects[0] == 0);
+   CHECK(world.sectors[0].objects[1] == 2);
+   CHECK(world.sectors[0].objects[2] == 4);
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.sectors[0].objects.size() == 4);
+   CHECK(world.sectors[0].objects[0] == 0);
+   CHECK(world.sectors[0].objects[1] == 1);
+   CHECK(world.sectors[0].objects[2] == 3);
+   CHECK(world.sectors[0].objects[3] == 5);
 }
 
 TEST_CASE("edits delete_entity object class handle liftime", "[Edits]")

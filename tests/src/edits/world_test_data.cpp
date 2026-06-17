@@ -136,7 +136,7 @@ const we::world::world
                    .base = 0.0f,
                    .height = 0.0f,
                    .points = {{0.0f, 0.0f}, {0.0f, 10.0f}, {10.0f, 10.0f}, {10.0f, 0.0f}},
-                   .objects = {"test_object"s},
+                   .objects = {0},
                 },
              },
           },

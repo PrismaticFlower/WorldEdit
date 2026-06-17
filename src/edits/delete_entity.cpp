@@ -45,7 +45,6 @@ struct delete_object final : edit<world::edit_context> {
    struct unlinked_sector_entry {
       uint32 sector_index = 0;
       uint32 entry_index = 0;
-      std::string entry;
    };
 
    struct unlinked_animation_group {
@@ -115,10 +114,8 @@ struct delete_object final : edit<world::edit_context> {
       for (std::ptrdiff_t i = (std::ssize(_unlinked_sector_entries) - 1); i >= 0; --i) {
          unlinked_sector_entry& unlinked = _unlinked_sector_entries[i];
 
-         std::vector<std::string>& objects =
+         std::vector<uint32>& objects =
             context.world.sectors[unlinked.sector_index].objects;
-
-         std::swap(objects[unlinked.entry_index], unlinked.entry);
 
          objects.erase(objects.begin() + unlinked.entry_index);
       }
@@ -160,6 +157,14 @@ struct delete_object final : edit<world::edit_context> {
 
          context.world.animation_hierarchies.erase(
             context.world.animation_hierarchies.begin() + unlinked.hierarchy_index);
+      }
+
+      for (world::sector& sector : context.world.sectors) {
+         for (uint32& sector_object_index : sector.objects) {
+            if (sector_object_index > _object_index) {
+               sector_object_index -= 1;
+            }
+         }
       }
 
       for (world::animation_group& group : context.world.animation_groups) {
@@ -214,6 +219,14 @@ struct delete_object final : edit<world::edit_context> {
          }
       }
 
+      for (world::sector& sector : context.world.sectors) {
+         for (uint32& sector_object_index : sector.objects) {
+            if (sector_object_index >= _object_index) {
+               sector_object_index += 1;
+            }
+         }
+      }
+
       for (unlinked_object_property& unlinked : _unlinked_object_properties) {
          std::swap(context.world.objects[unlinked.object_index]
                       .instance_properties[unlinked.property_index]
@@ -230,11 +243,10 @@ struct delete_object final : edit<world::edit_context> {
       }
 
       for (unlinked_sector_entry& unlinked : _unlinked_sector_entries) {
-         std::vector<std::string>& objects =
+         std::vector<uint32>& objects =
             context.world.sectors[unlinked.sector_index].objects;
 
-         objects.insert(objects.begin() + unlinked.entry_index,
-                        std::move(unlinked.entry));
+         objects.insert(objects.begin() + unlinked.entry_index, _object_index);
       }
 
       for (unlinked_hintnode& unlinked : _unlinked_hintnodes) {
@@ -787,8 +799,8 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
    }
 
    for (const auto& sector : world.sectors) {
-      for (const auto& entry : sector.objects) {
-         if (iequals(entry, object.name)) sector_entry_count += 1;
+      for (const uint32 sector_object_index : sector.objects) {
+         if (sector_object_index == object_index) sector_entry_count += 1;
       }
    }
 
@@ -867,7 +879,7 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
       const world::sector& sector = world.sectors[sector_index];
 
       for (uint32 entry_index = 0; entry_index < sector.objects.size(); ++entry_index) {
-         if (iequals(sector.objects[entry_index], object.name)) {
+         if (sector.objects[entry_index] == object_index) {
             sector_entry_refs.emplace_back(sector_index, entry_index);
          }
       }

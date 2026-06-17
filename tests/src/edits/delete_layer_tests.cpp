@@ -20,6 +20,7 @@ using world::light;
 using world::object;
 using world::path;
 using world::region;
+using world::sector;
 
 const we::world::world layer_delete_test_world = {
    .name = "Test"s,
@@ -596,6 +597,18 @@ TEST_CASE("edits delete_layer unlink objects", "[Edits]")
                    path{.name = "Path2", .layer = 2},
                 }},
 
+      .sectors =
+         {
+            {.max_size = 1},
+            std::initializer_list{
+               sector{
+                  .name = "Sector",
+
+                  .objects = {4, 1},
+               },
+            },
+         },
+
       .hintnodes = {world::entities_init,
                     std::initializer_list{
                        hintnode{.name = "Hintnode0", .layer = 0},
@@ -645,6 +658,9 @@ TEST_CASE("edits delete_layer unlink objects", "[Edits]")
 
    CHECK(world.paths[0].properties.size() == 0);
 
+   REQUIRE(world.sectors[0].objects.size() == 1);
+   CHECK(world.sectors[0].objects[0] == 0);
+
    CHECK(world.hintnodes[2].command_post == "");
 
    REQUIRE(world.animation_groups[0].entries.size() == 1);
@@ -663,6 +679,10 @@ TEST_CASE("edits delete_layer unlink objects", "[Edits]")
    CHECK(world.paths[0].properties.size() == 1);
    CHECK(world.paths[0].properties[0].key == "EnableObject");
    CHECK(world.paths[0].properties[0].value == "Object4");
+
+   REQUIRE(world.sectors[0].objects.size() == 2);
+   CHECK(world.sectors[0].objects[0] == 4);
+   CHECK(world.sectors[0].objects[1] == 1);
 
    CHECK(world.hintnodes[2].command_post == "Object4");
 
@@ -723,6 +743,18 @@ TEST_CASE("edits delete_layer adjust object indices", "[Edits]")
                            object{.name = "Object9", .layer = 1},
                         }},
 
+            .sectors =
+               {
+                  {.max_size = 1},
+                  std::initializer_list{
+                     sector{
+                        .name = "Sector",
+
+                        .objects = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+                     },
+                  },
+               },
+
             .animation_groups =
                {
                   {.max_size = 1},
@@ -766,6 +798,13 @@ TEST_CASE("edits delete_layer adjust object indices", "[Edits]")
 
    edit->apply(edit_context);
 
+   REQUIRE(world.sectors[0].objects.size() == 5);
+   CHECK(world.sectors[0].objects[0] == 0);
+   CHECK(world.sectors[0].objects[1] == 1);
+   CHECK(world.sectors[0].objects[2] == 2);
+   CHECK(world.sectors[0].objects[3] == 3);
+   CHECK(world.sectors[0].objects[4] == 4);
+
    REQUIRE(world.animation_groups[0].entries.size() == 5);
    CHECK(world.animation_groups[0].entries[0].object_index == 0);
    CHECK(world.animation_groups[0].entries[1].object_index == 1);
@@ -783,6 +822,18 @@ TEST_CASE("edits delete_layer adjust object indices", "[Edits]")
    CHECK(world.animation_hierarchies[0].objects[4] == 4);
 
    edit->revert(edit_context);
+
+   REQUIRE(world.sectors[0].objects.size() == 10);
+   CHECK(world.sectors[0].objects[0] == 0);
+   CHECK(world.sectors[0].objects[1] == 1);
+   CHECK(world.sectors[0].objects[2] == 2);
+   CHECK(world.sectors[0].objects[3] == 3);
+   CHECK(world.sectors[0].objects[4] == 4);
+   CHECK(world.sectors[0].objects[5] == 5);
+   CHECK(world.sectors[0].objects[6] == 6);
+   CHECK(world.sectors[0].objects[7] == 7);
+   CHECK(world.sectors[0].objects[8] == 8);
+   CHECK(world.sectors[0].objects[9] == 9);
 
    REQUIRE(world.animation_groups[0].entries.size() == 10);
    CHECK(world.animation_groups[0].entries[0].object_index == 0);

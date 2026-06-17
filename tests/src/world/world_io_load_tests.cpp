@@ -344,8 +344,8 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(approx_equals(world.sectors[0].points[2], {-228.642029f, 40.347687f}));
       CHECK(approx_equals(world.sectors[0].points[3], {-159.451279f, 40.488800f}));
 
-      REQUIRE(world.sectors[0].objects.size() == 1);
-      CHECK(world.sectors[0].objects[0] == "tat3_bldg_keeper"sv);
+      REQUIRE(world.sectors[0].objects_broken_links.size() == 1);
+      CHECK(world.sectors[0].objects_broken_links[0] == "tat3_bldg_keeper"sv);
 
       CHECK(world.sectors[1].name == "Sector-1"sv);
 
@@ -355,11 +355,11 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(approx_equals(world.sectors[1].points[2], {-271.034851f, 48.864563f}));
       CHECK(approx_equals(world.sectors[1].points[3], {-274.260132f, 128.690567f}));
 
-      REQUIRE(world.sectors[1].objects.size() == 4);
-      CHECK(world.sectors[1].objects[0] == "lod_test120"sv);
-      CHECK(world.sectors[1].objects[1] == "lod_test2010"sv);
-      CHECK(world.sectors[1].objects[2] == "lod_test12"sv);
-      CHECK(world.sectors[1].objects[3] == "lod_test201"sv);
+      REQUIRE(world.sectors[1].objects_broken_links.size() == 4);
+      CHECK(world.sectors[1].objects_broken_links[0] == "lod_test120"sv);
+      CHECK(world.sectors[1].objects_broken_links[1] == "lod_test2010"sv);
+      CHECK(world.sectors[1].objects_broken_links[2] == "lod_test12"sv);
+      CHECK(world.sectors[1].objects_broken_links[3] == "lod_test201"sv);
 
       CHECK(is_unique_id(1, world.sectors));
    }
@@ -841,4 +841,41 @@ TEST_CASE("world loading broken animation object links", "[World][IO]")
       CHECK(is_unique_id(0, world.animation_hierarchies));
    }
 }
+
+TEST_CASE("world loading sector object links", "[World][IO]")
+{
+   null_output_stream out;
+   const auto world =
+      load_world("data/world_sector_object_links/test.wld"sv, {}, out);
+
+   // object checks
+   {
+      REQUIRE(world.objects.size() == 5);
+
+      CHECK(world.objects[0].name == "Object0"sv);
+      CHECK(world.objects[1].name == "Object1"sv);
+      CHECK(world.objects[2].name == "Object2"sv);
+      CHECK(world.objects[3].name == "Object3"sv);
+      CHECK(world.objects[4].name == "Object4"sv);
+   }
+
+   // sector checks
+   {
+      REQUIRE(world.sectors.size() == 2);
+
+      CHECK(world.sectors[0].name == "sector"sv);
+
+      REQUIRE(world.sectors[0].objects.size() == 1);
+      CHECK(world.sectors[0].objects[0] == 0);
+
+      CHECK(world.sectors[1].name == "Sector-1"sv);
+
+      REQUIRE(world.sectors[1].objects.size() == 4);
+      CHECK(world.sectors[1].objects[0] == 1);
+      CHECK(world.sectors[1].objects[1] == 2);
+      CHECK(world.sectors[1].objects[2] == 3);
+      CHECK(world.sectors[1].objects[3] == 4);
+   }
+}
+
 }

@@ -298,7 +298,11 @@ void save_entity_group_impl(File& file, const entity_group& group)
          file.write_ln("\tPoint({:f}, {:f});", point.x, -point.y);
       }
 
-      for (auto& object : sector.objects) {
+      for (const uint32 object_index : sector.objects) {
+         file.write_ln("\tObject(\"{}\");", group.objects[object_index].name);
+      }
+
+      for (const std::string& object : sector.objects_broken_links) {
          file.write_ln("\tObject(\"{}\");", object);
       }
 

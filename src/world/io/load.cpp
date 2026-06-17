@@ -663,7 +663,8 @@ void load_portals_sectors(const io::path& filepath, output_stream& output, world
                                            -sector_prop.values.get<float>(1)});
                }
                else if (sector_prop.key == "Object"sv) {
-                  sector.objects.emplace_back(sector_prop.values.get<std::string>(0));
+                  sector.objects_broken_links.emplace_back(
+                     sector_prop.values.get<std::string>(0));
                }
             }
 
@@ -1509,16 +1510,36 @@ void strip_blocks_layer_reference(world& world) noexcept
 
 void connect_object_refs(world& world)
 {
+   for (sector& sector : world.sectors) {
+      sector.objects.reserve(sector.objects_broken_links.size());
+
+      std::vector<std::string> objects_broken_links{
+         std::move(sector.objects_broken_links)};
+
+      sector.objects_broken_links.clear();
+
+      for (std::string& object_name : objects_broken_links) {
+         const object* object = find_entity(world.objects, object_name);
+
+         if (object) {
+            sector.objects.push_back(
+               static_cast<uint32>((object - world.objects.data())));
+         }
+         else {
+            sector.objects_broken_links.push_back(std::move(object_name));
+         }
+      }
+   }
 
    for (animation_group& group : world.animation_groups) {
       group.entries.reserve(group.entries_broken_links.size());
 
-      const std::vector<animation_group::entry_broken> entries_broken_links{
+      std::vector<animation_group::entry_broken> entries_broken_links{
          std::move(group.entries_broken_links)};
 
       group.entries_broken_links.clear();
 
-      for (const animation_group::entry_broken& entry : entries_broken_links) {
+      for (animation_group::entry_broken& entry : entries_broken_links) {
          const object* object = find_entity(world.objects, entry.object);
 
          if (object) {
@@ -1527,7 +1548,7 @@ void connect_object_refs(world& world)
                                         (object - world.objects.data()))});
          }
          else {
-            group.entries_broken_links.push_back(entry);
+            group.entries_broken_links.push_back(std::move(entry));
          }
       }
    }
@@ -1535,12 +1556,12 @@ void connect_object_refs(world& world)
    for (animation_hierarchy& hierarchy : world.animation_hierarchies) {
       hierarchy.objects.reserve(hierarchy.objects.size());
 
-      const std::vector<std::string> objects_broken_links{
+      std::vector<std::string> objects_broken_links{
          std::move(hierarchy.objects_broken_links)};
 
       hierarchy.objects_broken_links.clear();
 
-      for (const std::string& object_name : objects_broken_links) {
+      for (std::string& object_name : objects_broken_links) {
          const object* object = find_entity(world.objects, object_name);
 
          if (object) {
@@ -1548,7 +1569,7 @@ void connect_object_refs(world& world)
                static_cast<uint32>((object - world.objects.data())));
          }
          else {
-            hierarchy.objects_broken_links.push_back(object_name);
+            hierarchy.objects_broken_links.push_back(std::move(object_name));
          }
       }
 

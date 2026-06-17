@@ -88,7 +88,7 @@ bool inside_sector(const std::span<const float2> sector_points,
 }
 
 auto sector_fill(const sector& sector, const std::span<const object> world_objects,
-                 const object_class_library& object_classes) -> std::vector<std::string>
+                 const object_class_library& object_classes) -> std::vector<uint32>
 {
    if (sector.points.empty() or sector.points.size() < 3) return {};
 
@@ -104,10 +104,12 @@ auto sector_fill(const sector& sector, const std::span<const object> world_objec
    sector_min.y = sector.base;
    sector_max.y = sector.base + sector.height;
 
-   std::vector<std::string> sector_objects;
+   std::vector<uint32> sector_objects;
    sector_objects.reserve(32);
 
-   for (auto& object : world_objects) {
+   for (uint32 object_index = 0; object_index < world_objects.size(); ++object_index) {
+      const object& object = world_objects[object_index];
+
       if (object.name.empty()) continue;
 
       const math::bounding_box model_bbox =
@@ -125,7 +127,7 @@ auto sector_fill(const sector& sector, const std::span<const object> world_objec
       if (inside_sector(sector.points, {sector_min.x, sector_min.z},
                         {object_centre.x, object_centre.z}) or
           inside_sector(sector.points, {sector_min.x, sector_min.z}, bbox)) {
-         sector_objects.push_back(object.name);
+         sector_objects.push_back(object_index);
       }
    }
 

@@ -40,7 +40,7 @@ struct unlinked_path_property {
 struct unlinked_sector_entry {
    uint32 sector_index = 0;
    uint32 entry_index = 0;
-   std::string entry;
+   uint32 object_index = 0;
 };
 
 struct unlinked_animation_group {
@@ -225,7 +225,7 @@ auto make_unlink_properties(int layer_index, const world::world& world) -> unlin
 
             for (uint32 entry_index = 0; entry_index < sector.objects.size();
                  ++entry_index) {
-               if (iequals(sector.objects[entry_index], object.name)) {
+               if (sector.objects[entry_index] == object_index) {
                   unlinked_properties.sector_entries.emplace_back(sector_index,
                                                                   entry_index);
                }
@@ -366,15 +366,38 @@ auto make_object_link_adjustments(int layer_index,
 
 void apply_object_link_adjustments(
    world::world& world, std::span<const uint32> link_adjustments,
+   std::vector<object_link_record>& sector_adjustments,
    std::vector<object_link_record>& animation_group_adjustments,
    std::vector<root_object_link_record>& animation_hierarchy_root_adjustments,
    std::vector<object_link_record>& animation_hierarchy_adjustments)
 {
    if (link_adjustments.empty()) return;
 
+   sector_adjustments.clear();
    animation_group_adjustments.clear();
    animation_hierarchy_root_adjustments.clear();
    animation_hierarchy_adjustments.clear();
+
+   for (uint32 sector_index = 0; sector_index < world.sectors.size(); ++sector_index) {
+      world::sector& sector = world.sectors[sector_index];
+
+      for (uint32 entry_index = 0; entry_index < sector.objects.size(); ++entry_index) {
+         uint32& object_index = sector.objects[entry_index];
+
+         auto it = std::lower_bound(link_adjustments.begin(),
+                                    link_adjustments.end(), object_index);
+
+         if (it == link_adjustments.begin()) continue;
+
+         sector_adjustments.push_back({
+            .referer_index = sector_index,
+            .entry_index = entry_index,
+            .object_index = object_index,
+         });
+
+         object_index -= static_cast<uint32>(it - link_adjustments.begin());
+      }
+   }
 
    for (uint32 group_index = 0; group_index < world.animation_groups.size();
         ++group_index) {
@@ -441,10 +464,16 @@ void apply_object_link_adjustments(
 }
 
 void revert_object_link_adjustments(
-   world::world& world, std::vector<object_link_record>& animation_group_adjustments,
+   world::world& world, std::vector<object_link_record>& sector_adjustments,
+   std::vector<object_link_record>& animation_group_adjustments,
    std::vector<root_object_link_record>& animation_hierarchy_root_adjustments,
    std::vector<object_link_record>& animation_hierarchy_adjustments)
 {
+   for (object_link_record& record : sector_adjustments) {
+      world.sectors[record.referer_index].objects[record.entry_index] =
+         record.object_index;
+   }
+
    for (object_link_record& record : animation_group_adjustments) {
       world.animation_groups[record.referer_index].entries[record.entry_index].object_index =
          record.object_index;
@@ -460,6 +489,7 @@ void revert_object_link_adjustments(
          record.object_index;
    }
 
+   sector_adjustments.clear();
    animation_group_adjustments.clear();
    animation_hierarchy_root_adjustments.clear();
    animation_hierarchy_adjustments.clear();
@@ -584,9 +614,9 @@ void apply_unlinked_entities(world::world& world, unlinked_properties& unlinked_
         i >= 0; --i) {
       unlinked_sector_entry& unlinked = unlinked_properties.sector_entries[i];
 
-      std::vector<std::string>& objects = world.sectors[unlinked.sector_index].objects;
+      std::vector<uint32>& objects = world.sectors[unlinked.sector_index].objects;
 
-      std::swap(objects[unlinked.entry_index], unlinked.entry);
+      std::swap(objects[unlinked.entry_index], unlinked.object_index);
 
       objects.erase(objects.begin() + unlinked.entry_index);
    }
@@ -660,9 +690,9 @@ void revert_unlinked_entities(world::world& world, unlinked_properties& unlinked
    }
 
    for (unlinked_sector_entry& unlinked : unlinked_properties.sector_entries) {
-      std::vector<std::string>& objects = world.sectors[unlinked.sector_index].objects;
+      std::vector<uint32>& objects = world.sectors[unlinked.sector_index].objects;
 
-      objects.insert(objects.begin() + unlinked.entry_index, std::move(unlinked.entry));
+      objects.insert(objects.begin() + unlinked.entry_index, unlinked.object_index);
    }
 
    for (unlinked_hintnode& unlinked : unlinked_properties.hintnodes) {
@@ -1191,6 +1221,7 @@ struct delete_layer final : edit<world::edit_context> {
       apply_unlinked_entities(world, _data.unlinked_properties);
 
       apply_object_link_adjustments(world, _data.object_link_adjustments,
+                                    _sector_object_link_adjustments,
                                     _animation_group_object_link_adjustments,
                                     _animation_hierarchy_root_adjustments,
                                     _animation_hierarchy_object_link_adjustments);
@@ -1276,7 +1307,8 @@ struct delete_layer final : edit<world::edit_context> {
       revert_remap_entries(world.blocks.pyramids.layer,
                            _data.remap_blocks_terrain_cut_boxes);
 
-      revert_object_link_adjustments(world, _animation_group_object_link_adjustments,
+      revert_object_link_adjustments(world, _sector_object_link_adjustments,
+                                     _animation_group_object_link_adjustments,
                                      _animation_hierarchy_root_adjustments,
                                      _animation_hierarchy_object_link_adjustments);
 
@@ -1293,6 +1325,7 @@ struct delete_layer final : edit<world::edit_context> {
 private:
    delete_layer_data _data;
 
+   std::vector<object_link_record> _sector_object_link_adjustments;
    std::vector<object_link_record> _animation_group_object_link_adjustments;
    std::vector<root_object_link_record> _animation_hierarchy_root_adjustments;
    std::vector<object_link_record> _animation_hierarchy_object_link_adjustments;
