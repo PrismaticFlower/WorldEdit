@@ -93,25 +93,25 @@ struct remap_entry_block {
 
 template<typename T>
 struct delete_entry {
-   int index = 0;
+   uint32 index = 0;
    T entity;
 };
 
 struct delete_entry_req {
-   int list_index = 0;
-   int entry_index = 0;
+   uint32 list_index = 0;
+   uint32 entry_index = 0;
    std::string entry;
 };
 
 struct delete_entry_game_mode {
-   int game_mode_index = 0;
-   int layer_entry_index = 0;
+   uint32 game_mode_index = 0;
+   uint32 layer_entry_index = 0;
 };
 
 struct delete_entry_req_game_mode {
-   int game_mode_index = 0;
-   int list_index = 0;
-   int entry_index = 0;
+   uint32 game_mode_index = 0;
+   uint32 list_index = 0;
+   uint32 entry_index = 0;
    std::string entry;
 };
 
@@ -203,18 +203,13 @@ auto make_unlink_properties(int layer_index, const world::world& world) -> unlin
 
             if (path.layer == layer_index) continue;
 
-            uint32 delete_offset = 0;
-
             for (uint32 property_index = 0;
                  property_index < path.properties.size(); ++property_index) {
                const auto& [key, value] = path.properties[property_index];
 
                if (iequals(key, "EnableObject") and iequals(value, object.name)) {
                   unlinked_properties.path_properties.emplace_back(path_index,
-                                                                   property_index -
-                                                                      delete_offset);
-
-                  delete_offset += 1;
+                                                                   property_index);
                }
             }
          }
@@ -223,15 +218,11 @@ auto make_unlink_properties(int layer_index, const world::world& world) -> unlin
               ++sector_index) {
             const world::sector& sector = world.sectors[sector_index];
 
-            uint32 delete_offset = 0;
-
             for (uint32 entry_index = 0; entry_index < sector.objects.size();
                  ++entry_index) {
                if (iequals(sector.objects[entry_index], object.name)) {
                   unlinked_properties.sector_entries.emplace_back(sector_index,
-                                                                  entry_index - delete_offset);
-
-                  delete_offset += 1;
+                                                                  entry_index);
                }
             }
          }
@@ -260,8 +251,6 @@ auto make_unlink_properties(int layer_index, const world::world& world) -> unlin
          }
       }
 
-      uint32 hierarchy_delete_offset = 0;
-
       for (uint32 hierarchy_index = 0;
            hierarchy_index < world.animation_hierarchies.size(); ++hierarchy_index) {
          const world::animation_hierarchy& hierarchy =
@@ -276,10 +265,7 @@ auto make_unlink_properties(int layer_index, const world::world& world) -> unlin
          }
 
          if (iequals(hierarchy.root_object, object.name)) {
-            unlinked_properties.animation_hierarchy_roots.emplace_back(
-               hierarchy_index - hierarchy_delete_offset);
-
-            hierarchy_delete_offset += 1;
+            unlinked_properties.animation_hierarchy_roots.emplace_back(hierarchy_index);
          }
       }
    }
@@ -544,7 +530,10 @@ void apply_unlinked_entities(world::world& world, unlinked_properties& unlinked_
                 unlinked.value);
    }
 
-   for (unlinked_path_property& unlinked : unlinked_properties.path_properties) {
+   for (std::ptrdiff_t i = std::ssize(unlinked_properties.path_properties) - 1;
+        i >= 0; --i) {
+      unlinked_path_property& unlinked = unlinked_properties.path_properties[i];
+
       std::vector<world::path::property>& properties =
          world.paths[unlinked.path_index].properties;
 
@@ -553,7 +542,10 @@ void apply_unlinked_entities(world::world& world, unlinked_properties& unlinked_
       properties.erase(properties.begin() + unlinked.property_index);
    }
 
-   for (unlinked_sector_entry& unlinked : unlinked_properties.sector_entries) {
+   for (std::ptrdiff_t i = std::ssize(unlinked_properties.sector_entries) - 1;
+        i >= 0; --i) {
+      unlinked_sector_entry& unlinked = unlinked_properties.sector_entries[i];
+
       std::vector<std::string>& objects = world.sectors[unlinked.sector_index].objects;
 
       std::swap(objects[unlinked.entry_index], unlinked.entry);
@@ -590,8 +582,12 @@ void apply_unlinked_entities(world::world& world, unlinked_properties& unlinked_
       objects.erase(objects.begin() + unlinked.entry_index);
    }
 
-   for (unlinked_animation_hierarchy_root& unlinked :
-        unlinked_properties.animation_hierarchy_roots) {
+   for (std::ptrdiff_t i =
+           std::ssize(unlinked_properties.animation_hierarchy_roots) - 1;
+        i >= 0; --i) {
+      unlinked_animation_hierarchy_root& unlinked =
+         unlinked_properties.animation_hierarchy_roots[i];
+
       std::swap(world.animation_hierarchies[unlinked.hierarchy_index],
                 unlinked.hierarchy);
 
@@ -617,10 +613,7 @@ void revert_unlinked_entities(world::world& world, unlinked_properties& unlinked
                 unlinked.value);
    }
 
-   for (std::ptrdiff_t i = (std::ssize(unlinked_properties.path_properties) - 1);
-        i >= 0; --i) {
-      unlinked_path_property& unlinked = unlinked_properties.path_properties[i];
-
+   for (unlinked_path_property& unlinked : unlinked_properties.path_properties) {
       std::vector<world::path::property>& properties =
          world.paths[unlinked.path_index].properties;
 
@@ -628,19 +621,13 @@ void revert_unlinked_entities(world::world& world, unlinked_properties& unlinked
                          std::move(unlinked.value));
    }
 
-   for (std::ptrdiff_t i = (std::ssize(unlinked_properties.sector_entries) - 1);
-        i >= 0; --i) {
-      unlinked_sector_entry& unlinked = unlinked_properties.sector_entries[i];
-
+   for (unlinked_sector_entry& unlinked : unlinked_properties.sector_entries) {
       std::vector<std::string>& objects = world.sectors[unlinked.sector_index].objects;
 
       objects.insert(objects.begin() + unlinked.entry_index, std::move(unlinked.entry));
    }
 
-   for (std::ptrdiff_t i = (std::ssize(unlinked_properties.hintnodes) - 1);
-        i >= 0; --i) {
-      unlinked_hintnode& unlinked = unlinked_properties.hintnodes[i];
-
+   for (unlinked_hintnode& unlinked : unlinked_properties.hintnodes) {
       std::swap(world.hintnodes[unlinked.hintnode_index].command_post, unlinked.value);
    }
 
@@ -659,12 +646,8 @@ void revert_unlinked_entities(world::world& world, unlinked_properties& unlinked
       objects.insert(objects.begin() + unlinked.entry_index, unlinked.object_index);
    }
 
-   for (std::ptrdiff_t i =
-           (std::ssize(unlinked_properties.animation_hierarchy_roots) - 1);
-        i >= 0; --i) {
-      unlinked_animation_hierarchy_root& unlinked =
-         unlinked_properties.animation_hierarchy_roots[i];
-
+   for (unlinked_animation_hierarchy_root& unlinked :
+        unlinked_properties.animation_hierarchy_roots) {
       world.animation_hierarchies.insert(world.animation_hierarchies.begin() +
                                             unlinked.hierarchy_index,
                                          std::move(unlinked.hierarchy));
@@ -746,12 +729,9 @@ auto make_delete_entries(int layer_index, const pinned_vector<T>& entities)
    std::vector<delete_entry<T>> entries;
    entries.reserve(count);
 
-   int delete_offset = 0;
-
-   for (int i = 0; i < entities.size(); ++i) {
+   for (uint32 i = 0; i < entities.size(); ++i) {
       if (entities[i].layer == layer_index) {
-         entries.emplace_back(i - delete_offset, entities[i]);
-         delete_offset += 1;
+         entries.emplace_back(i, entities[i]);
       }
    }
 
@@ -775,17 +755,14 @@ auto make_requirements_delete_entries(const std::string_view layer_file_name,
    std::vector<delete_entry_req> entries;
    entries.reserve(count);
 
-   for (int list_index = 0; list_index < requirements.size(); ++list_index) {
+   for (uint32 list_index = 0; list_index < requirements.size(); ++list_index) {
       const auto& list = requirements[list_index];
 
       if (not string::iequals(list.file_type, "world")) continue;
 
-      int delete_offset = 0;
-
-      for (int i = 0; i < list.entries.size(); ++i) {
+      for (uint32 i = 0; i < list.entries.size(); ++i) {
          if (string::iequals(list.entries[i], layer_file_name)) {
-            entries.emplace_back(list_index, i - delete_offset, list.entries[i]);
-            delete_offset += 1;
+            entries.emplace_back(list_index, i, list.entries[i]);
          }
       }
    }
@@ -808,13 +785,11 @@ auto make_game_mode_delete_entries(int layer_index,
    std::vector<delete_entry_game_mode> entries;
    entries.reserve(count);
 
-   for (int game_mode_index = 0; game_mode_index < game_modes.size(); ++game_mode_index) {
-      int delete_offset = 0;
-
-      for (int i = 0; i < game_modes[game_mode_index].layers.size(); ++i) {
+   for (uint32 game_mode_index = 0; game_mode_index < game_modes.size();
+        ++game_mode_index) {
+      for (uint32 i = 0; i < game_modes[game_mode_index].layers.size(); ++i) {
          if (game_modes[game_mode_index].layers[i] == layer_index) {
-            entries.emplace_back(game_mode_index, i - delete_offset);
-            delete_offset += 1;
+            entries.emplace_back(game_mode_index, i);
          }
       }
    }
@@ -842,21 +817,19 @@ auto makee_game_mode_requirements_delete_entries(
    std::vector<delete_entry_req_game_mode> entries;
    entries.reserve(count);
 
-   for (int game_mode_index = 0; game_mode_index < game_modes.size(); ++game_mode_index) {
+   for (uint32 game_mode_index = 0; game_mode_index < game_modes.size();
+        ++game_mode_index) {
       const auto& game_mode = game_modes[game_mode_index];
 
-      for (int list_index = 0; list_index < game_mode.requirements.size(); ++list_index) {
+      for (uint32 list_index = 0; list_index < game_mode.requirements.size();
+           ++list_index) {
          const auto& list = game_mode.requirements[list_index];
 
          if (not string::iequals(list.file_type, "world")) continue;
 
-         int delete_offset = 0;
-
-         for (int i = 0; i < list.entries.size(); ++i) {
+         for (uint32 i = 0; i < list.entries.size(); ++i) {
             if (string::iequals(list.entries[i], layer_file_name)) {
-               entries.emplace_back(game_mode_index, list_index,
-                                    i - delete_offset, list.entries[i]);
-               delete_offset += 1;
+               entries.emplace_back(game_mode_index, list_index, i, list.entries[i]);
             }
          }
       }
@@ -878,13 +851,10 @@ auto makee_common_layers_delete_entries(const int layer_index,
    std::vector<int> entries;
    entries.reserve(count);
 
-   int delete_offset = 0;
-
    for (int i = 0; i < common_layers.size(); ++i) {
       if (common_layers[i] != layer_index) continue;
 
-      entries.emplace_back(i - delete_offset);
-      delete_offset += 1;
+      entries.emplace_back(i);
    }
 
    return entries;
@@ -905,19 +875,15 @@ auto make_delete_entries(int layer_index, const Blocks& blocks)
    std::vector<delete_entry_block<block_type>> entries;
    entries.reserve(count);
 
-   uint32 delete_offset = 0;
-
    for (uint32 i = 0; i < blocks.size(); ++i) {
       if (blocks.layer[i] == layer_index) {
          entries.push_back({
-            .index = i - delete_offset,
+            .index = i,
             .hidden = blocks.hidden[i],
             .layer = blocks.layer[i],
             .description = blocks.description[i],
             .id = blocks.ids[i],
          });
-
-         delete_offset += 1;
       }
    }
 
@@ -928,7 +894,9 @@ template<typename T>
 void apply_delete_entries(pinned_vector<T>& entities,
                           std::span<const delete_entry<std::type_identity_t<T>>> entries)
 {
-   for (const auto& [index, entity] : entries) {
+   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
+      const auto& [index, entity] = entries[i];
+
       entities.erase(entities.begin() + index);
    }
 }
@@ -937,9 +905,7 @@ template<typename T>
 void revert_delete_entries(pinned_vector<T>& entities,
                            std::span<const delete_entry<std::type_identity_t<T>>> entries)
 {
-   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
-      const auto& [index, entity] = entries[i];
-
+   for (const auto& [index, entity] : entries) {
       entities.insert(entities.begin() + index, entity);
    }
 }
@@ -948,7 +914,8 @@ void apply_delete_entries(pinned_vector<world::object>& entities,
                           std::span<const delete_entry<world::object>> entries,
                           world::object_class_library& object_class_library)
 {
-   for (const auto& [index, entity] : entries) {
+   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
+      const auto& [index, entity] = entries[i];
       object_class_library.free(entities[index].class_handle);
 
       entities.erase(entities.begin() + index);
@@ -959,9 +926,7 @@ void revert_delete_entries(pinned_vector<world::object>& entities,
                            std::span<const delete_entry<world::object>> entries,
                            world::object_class_library& object_class_library)
 {
-   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
-      const auto& [index, entity] = entries[i];
-
+   for (const auto& [index, entity] : entries) {
       entities.insert(entities.begin() + index, entity);
 
       entities[index].class_handle =
@@ -972,7 +937,9 @@ void revert_delete_entries(pinned_vector<world::object>& entities,
 void apply_delete_entries(std::vector<world::requirement_list>& requirements,
                           std::span<const delete_entry_req> entries)
 {
-   for (const auto& [list_index, entry_index, entry] : entries) {
+   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
+      const auto& [list_index, entry_index, entry] = entries[i];
+
       auto& list = requirements[list_index];
 
       list.entries.erase(list.entries.begin() + entry_index);
@@ -982,8 +949,7 @@ void apply_delete_entries(std::vector<world::requirement_list>& requirements,
 void revert_delete_entries(std::vector<world::requirement_list>& requirements,
                            std::span<const delete_entry_req> entries)
 {
-   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
-      const auto& [list_index, entry_index, entry] = entries[i];
+   for (const auto& [list_index, entry_index, entry] : entries) {
       auto& list = requirements[list_index];
 
       list.entries.emplace(list.entries.begin() + entry_index, entry);
@@ -993,7 +959,9 @@ void revert_delete_entries(std::vector<world::requirement_list>& requirements,
 void apply_delete_entries(std::vector<world::game_mode_description>& game_modes,
                           std::span<const delete_entry_game_mode> entries)
 {
-   for (const auto& [game_mode_index, layer_entry_index] : entries) {
+   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
+      const auto& [game_mode_index, layer_entry_index] = entries[i];
+
       auto& layers = game_modes[game_mode_index].layers;
 
       layers.erase(layers.begin() + layer_entry_index);
@@ -1004,8 +972,7 @@ void revert_delete_entries(std::vector<world::game_mode_description>& game_modes
                            std::span<const delete_entry_game_mode> entries,
                            const int layer_index)
 {
-   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
-      const auto& [game_mode_index, layer_entry_index] = entries[i];
+   for (const auto& [game_mode_index, layer_entry_index] : entries) {
       auto& layers = game_modes[game_mode_index].layers;
 
       layers.insert(layers.begin() + layer_entry_index, layer_index);
@@ -1015,7 +982,9 @@ void revert_delete_entries(std::vector<world::game_mode_description>& game_modes
 void apply_delete_entries(std::vector<world::game_mode_description>& game_modes,
                           std::span<const delete_entry_req_game_mode> entries)
 {
-   for (const auto& [game_mode_index, list_index, entry_index, entry] : entries) {
+   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
+      const auto& [game_mode_index, list_index, entry_index, entry] = entries[i];
+
       auto& list = game_modes[game_mode_index].requirements[list_index];
 
       list.entries.erase(list.entries.begin() + entry_index);
@@ -1025,8 +994,7 @@ void apply_delete_entries(std::vector<world::game_mode_description>& game_modes,
 void revert_delete_entries(std::vector<world::game_mode_description>& game_modes,
                            std::span<const delete_entry_req_game_mode> entries)
 {
-   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
-      const auto& [game_mode_index, list_index, entry_index, entry] = entries[i];
+   for (const auto& [game_mode_index, list_index, entry_index, entry] : entries) {
       auto& list = game_modes[game_mode_index].requirements[list_index];
 
       list.entries.emplace(list.entries.begin() + entry_index, entry);
@@ -1035,16 +1003,16 @@ void revert_delete_entries(std::vector<world::game_mode_description>& game_modes
 
 void apply_delete_entries(std::vector<int>& common_layers, std::span<const int> entries)
 {
-   for (const int index : entries) {
-      common_layers.erase(common_layers.begin() + index);
+   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
+      common_layers.erase(common_layers.begin() + entries[i]);
    }
 }
 
 void revert_delete_entries(std::vector<int>& common_layers, int layer_index,
                            std::span<const int> entries)
 {
-   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
-      common_layers.insert(common_layers.begin() + entries[i], layer_index);
+   for (const int index : entries) {
+      common_layers.insert(common_layers.begin() + index, layer_index);
    }
 }
 
@@ -1055,7 +1023,9 @@ void apply_delete_entries(
 {
    using block_type = decltype(Blocks::description)::value_type;
 
-   for (const delete_entry_block<block_type>& entry : entries) {
+   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
+      const delete_entry_block<block_type>& entry = entries[i];
+
       blocks.bbox.min_x.erase(blocks.bbox.min_x.begin() + entry.index);
       blocks.bbox.min_y.erase(blocks.bbox.min_y.begin() + entry.index);
       blocks.bbox.min_z.erase(blocks.bbox.min_z.begin() + entry.index);
@@ -1082,9 +1052,7 @@ void revert_delete_entries(
 {
    using block_type = decltype(Blocks::description)::value_type;
 
-   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
-      const delete_entry_block<block_type>& entry = entries[i];
-
+   for (const delete_entry_block<block_type>& entry : entries) {
       const math::bounding_box bbox = world::get_bounding_box(entry.description);
 
       blocks.bbox.min_x.insert(blocks.bbox.min_x.begin() + entry.index, bbox.min.x);
@@ -1110,7 +1078,8 @@ void apply_delete_entries(
    world::blocks& blocks,
    std::span<const delete_entry_block<world::block_description_custom>> entries)
 {
-   for (const delete_entry_block<world::block_description_custom>& entry : entries) {
+   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
+      const delete_entry_block<world::block_description_custom>& entry = entries[i];
       blocks.custom_meshes.remove(blocks.custom.mesh[entry.index]);
 
       blocks.custom.bbox.min_x.erase(blocks.custom.bbox.min_x.begin() + entry.index);
@@ -1137,9 +1106,7 @@ void revert_delete_entries(
    world::blocks& blocks,
    std::span<const delete_entry_block<world::block_description_custom>> entries)
 {
-   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
-      const delete_entry_block<world::block_description_custom>& entry = entries[i];
-
+   for (const delete_entry_block<world::block_description_custom>& entry : entries) {
       const math::bounding_box bbox = world::get_bounding_box(entry.description);
 
       blocks.custom.bbox.min_x.insert(blocks.custom.bbox.min_x.begin() + entry.index,
