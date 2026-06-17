@@ -101,7 +101,9 @@ struct delete_object final : edit<world::edit_context> {
                    unlinked.value);
       }
 
-      for (unlinked_path_property& unlinked : _unlinked_path_properties) {
+      for (std::ptrdiff_t i = (std::ssize(_unlinked_path_properties) - 1);
+           i >= 0; --i) {
+         unlinked_path_property& unlinked = _unlinked_path_properties[i];
          std::vector<world::path::property>& properties =
             context.world.paths[unlinked.path_index].properties;
 
@@ -110,7 +112,9 @@ struct delete_object final : edit<world::edit_context> {
          properties.erase(properties.begin() + unlinked.property_index);
       }
 
-      for (unlinked_sector_entry& unlinked : _unlinked_sector_entries) {
+      for (std::ptrdiff_t i = (std::ssize(_unlinked_sector_entries) - 1); i >= 0; --i) {
+         unlinked_sector_entry& unlinked = _unlinked_sector_entries[i];
+
          std::vector<std::string>& objects =
             context.world.sectors[unlinked.sector_index].objects;
 
@@ -124,7 +128,10 @@ struct delete_object final : edit<world::edit_context> {
                    unlinked.value);
       }
 
-      for (unlinked_animation_group& unlinked : _unlinked_animation_groups) {
+      for (std::ptrdiff_t i = (std::ssize(_unlinked_animation_groups) - 1);
+           i >= 0; --i) {
+         unlinked_animation_group& unlinked = _unlinked_animation_groups[i];
+
          std::vector<world::animation_group::entry>& entries =
             context.world.animation_groups[unlinked.group_index].entries;
 
@@ -133,15 +140,21 @@ struct delete_object final : edit<world::edit_context> {
          entries.erase(entries.begin() + unlinked.entry_index);
       }
 
-      for (unlinked_animation_hierarchy& unlinked : _unlinked_animation_hierarchies) {
+      for (std::ptrdiff_t i = (std::ssize(_unlinked_animation_hierarchies) - 1);
+           i >= 0; --i) {
+         unlinked_animation_hierarchy& unlinked = _unlinked_animation_hierarchies[i];
+
          std::vector<uint32>& objects =
             context.world.animation_hierarchies[unlinked.hierarchy_index].objects;
 
          objects.erase(objects.begin() + unlinked.entry_index);
       }
 
-      for (unlinked_animation_hierarchy_root& unlinked :
-           _unlinked_animation_hierarchy_roots) {
+      for (std::ptrdiff_t i = (std::ssize(_unlinked_animation_hierarchy_roots) - 1);
+           i >= 0; --i) {
+         unlinked_animation_hierarchy_root& unlinked =
+            _unlinked_animation_hierarchy_roots[i];
+
          std::swap(context.world.animation_hierarchies[unlinked.hierarchy_index],
                    unlinked.hierarchy);
 
@@ -208,10 +221,7 @@ struct delete_object final : edit<world::edit_context> {
                    unlinked.value);
       }
 
-      for (std::ptrdiff_t i = (std::ssize(_unlinked_path_properties) - 1);
-           i >= 0; --i) {
-         unlinked_path_property& unlinked = _unlinked_path_properties[i];
-
+      for (unlinked_path_property& unlinked : _unlinked_path_properties) {
          std::vector<world::path::property>& properties =
             context.world.paths[unlinked.path_index].properties;
 
@@ -219,9 +229,7 @@ struct delete_object final : edit<world::edit_context> {
                             std::move(unlinked.value));
       }
 
-      for (std::ptrdiff_t i = (std::ssize(_unlinked_sector_entries) - 1); i >= 0; --i) {
-         unlinked_sector_entry& unlinked = _unlinked_sector_entries[i];
-
+      for (unlinked_sector_entry& unlinked : _unlinked_sector_entries) {
          std::vector<std::string>& objects =
             context.world.sectors[unlinked.sector_index].objects;
 
@@ -229,17 +237,12 @@ struct delete_object final : edit<world::edit_context> {
                         std::move(unlinked.entry));
       }
 
-      for (std::ptrdiff_t i = (std::ssize(_unlinked_hintnodes) - 1); i >= 0; --i) {
-         unlinked_hintnode& unlinked = _unlinked_hintnodes[i];
-
+      for (unlinked_hintnode& unlinked : _unlinked_hintnodes) {
          std::swap(context.world.hintnodes[unlinked.hintnode_index].command_post,
                    unlinked.value);
       }
 
-      for (std::ptrdiff_t i = (std::ssize(_unlinked_animation_groups) - 1);
-           i >= 0; --i) {
-         unlinked_animation_group& unlinked = _unlinked_animation_groups[i];
-
+      for (unlinked_animation_group& unlinked : _unlinked_animation_groups) {
          std::vector<world::animation_group::entry>& entries =
             context.world.animation_groups[unlinked.group_index].entries;
 
@@ -248,21 +251,15 @@ struct delete_object final : edit<world::edit_context> {
                          .object_index = _object_index});
       }
 
-      for (std::ptrdiff_t i = (std::ssize(_unlinked_animation_hierarchies) - 1);
-           i >= 0; --i) {
-         unlinked_animation_hierarchy& unlinked = _unlinked_animation_hierarchies[i];
-
+      for (unlinked_animation_hierarchy& unlinked : _unlinked_animation_hierarchies) {
          std::vector<uint32>& objects =
             context.world.animation_hierarchies[unlinked.hierarchy_index].objects;
 
          objects.insert(objects.begin() + unlinked.entry_index, _object_index);
       }
 
-      for (std::ptrdiff_t i = (std::ssize(_unlinked_animation_hierarchy_roots) - 1);
-           i >= 0; --i) {
-         unlinked_animation_hierarchy_root& unlinked =
-            _unlinked_animation_hierarchy_roots[i];
-
+      for (unlinked_animation_hierarchy_root& unlinked :
+           _unlinked_animation_hierarchy_roots) {
          context.world.animation_hierarchies
             .insert(context.world.animation_hierarchies.begin() + unlinked.hierarchy_index,
                     std::move(unlinked.hierarchy));
@@ -856,16 +853,12 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
    for (uint32 path_index = 0; path_index < world.paths.size(); ++path_index) {
       const world::path& path = world.paths[path_index];
 
-      uint32 delete_offset = 0;
-
       for (uint32 property_index = 0; property_index < path.properties.size();
            ++property_index) {
          const auto& [key, value] = path.properties[property_index];
 
          if (iequals(key, "EnableObject") and iequals(value, object.name)) {
-            path_property_refs.emplace_back(path_index, property_index - delete_offset);
-
-            delete_offset += 1;
+            path_property_refs.emplace_back(path_index, property_index);
          }
       }
    }
@@ -873,13 +866,9 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
    for (uint32 sector_index = 0; sector_index < world.sectors.size(); ++sector_index) {
       const world::sector& sector = world.sectors[sector_index];
 
-      uint32 delete_offset = 0;
-
       for (uint32 entry_index = 0; entry_index < sector.objects.size(); ++entry_index) {
          if (iequals(sector.objects[entry_index], object.name)) {
-            sector_entry_refs.emplace_back(sector_index, entry_index - delete_offset);
-
-            delete_offset += 1;
+            sector_entry_refs.emplace_back(sector_index, entry_index);
          }
       }
    }
@@ -897,50 +886,33 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
         ++group_index) {
       const world::animation_group& group = world.animation_groups[group_index];
 
-      uint32 delete_offset = 0;
-
       for (uint32 entry_index = 0; entry_index < group.entries.size(); ++entry_index) {
          if (group.entries[entry_index].object_index == object_index) {
-            animation_group_refs.emplace_back(group_index, entry_index - delete_offset);
-
-            delete_offset += 1;
+            animation_group_refs.emplace_back(group_index, entry_index);
          }
       }
    }
-
-   uint32 hierarchy_delete_offset = 0;
 
    for (uint32 hierarchy_index = 0;
         hierarchy_index < world.animation_hierarchies.size(); ++hierarchy_index) {
       const world::animation_hierarchy& hierarchy =
          world.animation_hierarchies[hierarchy_index];
 
-      uint32 delete_offset = 0;
-
       for (uint32 entry_index = 0; entry_index < hierarchy.objects.size();
            ++entry_index) {
          if (hierarchy.objects[entry_index] == object_index) {
-            animation_hierarchy_refs.emplace_back(hierarchy_index,
-                                                  entry_index - delete_offset);
-
-            delete_offset += 1;
+            animation_hierarchy_refs.emplace_back(hierarchy_index, entry_index);
          }
       }
 
       if (hierarchy.root_object.has_index()) {
          if (hierarchy.root_object.index() == object_index) {
-            animation_hierarchy_root_refs.emplace_back(hierarchy_index -
-                                                       hierarchy_delete_offset);
-
-            hierarchy_delete_offset += 1;
+            animation_hierarchy_root_refs.emplace_back(hierarchy_index);
          }
       }
       else {
          if (iequals(hierarchy.root_object.name(), object.name)) {
-            animation_hierarchy_root_refs.emplace_back(hierarchy_index -
-                                                       hierarchy_delete_offset);
-
-            hierarchy_delete_offset += 1;
+            animation_hierarchy_root_refs.emplace_back(hierarchy_index);
          }
       }
    }
