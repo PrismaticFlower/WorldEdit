@@ -628,7 +628,7 @@ TEST_CASE("world loading", "[World][IO]")
 
       const animation_hierarchy& hierarchy = world.animation_hierarchies[0];
 
-      CHECK(hierarchy.root_object == "com_inv_col_8"sv);
+      CHECK(hierarchy.root_object == 2);
 
       REQUIRE(hierarchy.objects.size() == 1);
       CHECK(hierarchy.objects[0] == 0);
@@ -832,7 +832,8 @@ TEST_CASE("world loading broken animation object links", "[World][IO]")
 
       const animation_hierarchy& hierarchy = world.animation_hierarchies[0];
 
-      CHECK(hierarchy.root_object == "com_inv_col_8"sv);
+      REQUIRE(hierarchy.root_object.has_name());
+      CHECK(hierarchy.root_object.name() == "com_inv_col_8"sv);
 
       REQUIRE(hierarchy.objects_broken_links.size() == 1);
       CHECK(hierarchy.objects_broken_links[0] == "Box");

@@ -58,14 +58,14 @@ auto evaluate_animation(const animation& animation, const quaternion& base_rotat
          const rotation_key& b = animation.rotation_keys[rotation_index + 1];
 
          switch (a.transition) {
-         case world::animation_transition::pop: {
+         case animation_transition::pop: {
             euler_rotation = a.rotation;
          } break;
-         case world::animation_transition::linear: {
+         case animation_transition::linear: {
             euler_rotation =
                linear_interpolate(a.rotation, a.time, b.rotation, b.time, t);
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             euler_rotation =
                hermite_interpolate(a.rotation, a.tangent, a.time, b.rotation,
                                    a.tangent_next, b.time, t);
@@ -80,14 +80,14 @@ auto evaluate_animation(const animation& animation, const quaternion& base_rotat
          b.time = animation.runtime;
 
          switch (a.transition) {
-         case world::animation_transition::pop: {
+         case animation_transition::pop: {
             euler_rotation = a.rotation;
          } break;
-         case world::animation_transition::linear: {
+         case animation_transition::linear: {
             euler_rotation =
                linear_interpolate(a.rotation, a.time, b.rotation, b.time, t);
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             euler_rotation =
                hermite_interpolate(a.rotation, a.tangent, a.time, b.rotation,
                                    a.tangent_next, b.time, t);
@@ -121,14 +121,14 @@ auto evaluate_animation(const animation& animation, const quaternion& base_rotat
          const position_key& b = animation.position_keys[position_index + 1];
 
          switch (a.transition) {
-         case world::animation_transition::pop: {
+         case animation_transition::pop: {
             local_position = a.position;
          } break;
-         case world::animation_transition::linear: {
+         case animation_transition::linear: {
             local_position =
                linear_interpolate(a.position, a.time, b.position, b.time, t);
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             local_position =
                hermite_interpolate(a.position, a.tangent, a.time, b.position,
                                    a.tangent_next, b.time, t);
@@ -143,14 +143,14 @@ auto evaluate_animation(const animation& animation, const quaternion& base_rotat
          b.time = animation.runtime;
 
          switch (a.transition) {
-         case world::animation_transition::pop: {
+         case animation_transition::pop: {
             local_position = a.position;
          } break;
-         case world::animation_transition::linear: {
+         case animation_transition::linear: {
             local_position =
                linear_interpolate(a.position, a.time, b.position, b.time, t);
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             local_position =
                hermite_interpolate(a.position, a.tangent, a.time, b.position,
                                    a.tangent_next, b.time, t);
@@ -208,13 +208,13 @@ auto evaluate_animation_local_translation(
          const rotation_key& b = animation.rotation_keys[rotation_index + 1];
 
          switch (a.transition) {
-         case world::animation_transition::pop: {
+         case animation_transition::pop: {
             rotation = a.rotation;
          } break;
-         case world::animation_transition::linear: {
+         case animation_transition::linear: {
             rotation = linear_interpolate(a.rotation, a.time, b.rotation, b.time, t);
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             rotation = hermite_interpolate(a.rotation, a.tangent, a.time,
                                            b.rotation, a.tangent_next, b.time, t);
          } break;
@@ -228,13 +228,13 @@ auto evaluate_animation_local_translation(
          b.time = animation.runtime;
 
          switch (a.transition) {
-         case world::animation_transition::pop: {
+         case animation_transition::pop: {
             rotation = a.rotation;
          } break;
-         case world::animation_transition::linear: {
+         case animation_transition::linear: {
             rotation = linear_interpolate(a.rotation, a.time, b.rotation, b.time, t);
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             rotation = hermite_interpolate(a.rotation, a.tangent, a.time,
                                            b.rotation, a.tangent_next, b.time, t);
          } break;
@@ -259,13 +259,13 @@ auto evaluate_animation_local_translation(
          const position_key& b = animation.position_keys[position_index + 1];
 
          switch (a.transition) {
-         case world::animation_transition::pop: {
+         case animation_transition::pop: {
             position = a.position;
          } break;
-         case world::animation_transition::linear: {
+         case animation_transition::linear: {
             position = linear_interpolate(a.position, a.time, b.position, b.time, t);
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             position = hermite_interpolate(a.position, a.tangent, a.time,
                                            b.position, a.tangent_next, b.time, t);
          } break;
@@ -279,13 +279,13 @@ auto evaluate_animation_local_translation(
          b.time = animation.runtime;
 
          switch (a.transition) {
-         case world::animation_transition::pop: {
+         case animation_transition::pop: {
             position = a.position;
          } break;
-         case world::animation_transition::linear: {
+         case animation_transition::linear: {
             position = linear_interpolate(a.position, a.time, b.position, b.time, t);
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             position = hermite_interpolate(a.position, a.tangent, a.time,
                                            b.position, a.tangent_next, b.time, t);
          } break;
@@ -352,13 +352,13 @@ void build_local_translation_transforms(const animation& animation,
          float3 rotation = last_rotation;
 
          switch (start.transition) {
-         case world::animation_transition::pop: {
+         case animation_transition::pop: {
             rotation = start.rotation;
          } break;
-         case world::animation_transition::linear: {
+         case animation_transition::linear: {
             rotation = (1.0f - step_norm) * start.rotation + step_norm * end.rotation;
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             rotation = hermite_interpolate(start.rotation, start.tangent,
                                            start.time, end.rotation,
                                            start.tangent_next, end.time, t);
@@ -379,14 +379,14 @@ void build_local_translation_transforms(const animation& animation,
                const position_key& b = animation.position_keys[position_index + 1];
 
                switch (a.transition) {
-               case world::animation_transition::pop: {
+               case animation_transition::pop: {
                   position = a.position;
                } break;
-               case world::animation_transition::linear: {
+               case animation_transition::linear: {
                   position =
                      linear_interpolate(a.position, a.time, b.position, b.time, t);
                } break;
-               case world::animation_transition::spline: {
+               case animation_transition::spline: {
                   position =
                      hermite_interpolate(a.position, a.tangent, a.time,
                                          b.position, a.tangent_next, b.time, t);
@@ -401,14 +401,14 @@ void build_local_translation_transforms(const animation& animation,
                b.time = animation.runtime;
 
                switch (a.transition) {
-               case world::animation_transition::pop: {
+               case animation_transition::pop: {
                   position = a.position;
                } break;
-               case world::animation_transition::linear: {
+               case animation_transition::linear: {
                   position =
                      linear_interpolate(a.position, a.time, b.position, b.time, t);
                } break;
-               case world::animation_transition::spline: {
+               case animation_transition::spline: {
                   position =
                      hermite_interpolate(a.position, a.tangent, a.time,
                                          b.position, a.tangent_next, b.time, t);
@@ -461,13 +461,13 @@ void build_local_translation_transforms(const animation& animation,
          float3 rotation = last_rotation;
 
          switch (start.transition) {
-         case world::animation_transition::pop: {
+         case animation_transition::pop: {
             rotation = start.rotation;
          } break;
-         case world::animation_transition::linear: {
+         case animation_transition::linear: {
             rotation = (1.0f - step_norm) * start.rotation + step_norm * end.rotation;
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             rotation = hermite_interpolate(start.rotation, start.tangent,
                                            start.time, end.rotation,
                                            start.tangent_next, end.time, t);
@@ -488,14 +488,14 @@ void build_local_translation_transforms(const animation& animation,
                const position_key& b = animation.position_keys[position_index + 1];
 
                switch (a.transition) {
-               case world::animation_transition::pop: {
+               case animation_transition::pop: {
                   position = a.position;
                } break;
-               case world::animation_transition::linear: {
+               case animation_transition::linear: {
                   position =
                      linear_interpolate(a.position, a.time, b.position, b.time, t);
                } break;
-               case world::animation_transition::spline: {
+               case animation_transition::spline: {
                   position =
                      hermite_interpolate(a.position, a.tangent, a.time,
                                          b.position, a.tangent_next, b.time, t);
@@ -510,14 +510,14 @@ void build_local_translation_transforms(const animation& animation,
                b.time = animation.runtime;
 
                switch (a.transition) {
-               case world::animation_transition::pop: {
+               case animation_transition::pop: {
                   position = a.position;
                } break;
-               case world::animation_transition::linear: {
+               case animation_transition::linear: {
                   position =
                      linear_interpolate(a.position, a.time, b.position, b.time, t);
                } break;
-               case world::animation_transition::spline: {
+               case animation_transition::spline: {
                   position =
                      hermite_interpolate(a.position, a.tangent, a.time,
                                          b.position, a.tangent_next, b.time, t);
@@ -598,11 +598,11 @@ auto make_position_key_for_time(const animation& animation, float t) noexcept ->
          const float local_t = (t - a.time) / (b.time - a.time);
 
          switch (a.transition) {
-         case world::animation_transition::pop:
-         case world::animation_transition::linear: {
+         case animation_transition::pop:
+         case animation_transition::linear: {
             new_key.position = (1.0f - local_t) * a.position + local_t * b.position;
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             new_key.position =
                hermite_interpolate(a.position, a.tangent, a.time, b.position,
                                    a.tangent_next, b.time, t);
@@ -623,11 +623,11 @@ auto make_position_key_for_time(const animation& animation, float t) noexcept ->
          const float local_t = (t - a.time) / (b.time - a.time);
 
          switch (a.transition) {
-         case world::animation_transition::pop:
-         case world::animation_transition::linear: {
+         case animation_transition::pop:
+         case animation_transition::linear: {
             new_key.position = (1.0f - local_t) * a.position + local_t * b.position;
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             new_key.position =
                hermite_interpolate(a.position, a.tangent, a.time, b.position,
                                    a.tangent_next, b.time, t);
@@ -676,11 +676,11 @@ auto make_rotation_key_for_time(const animation& animation, float t) noexcept ->
          const float local_t = (t - a.time) / (b.time - a.time);
 
          switch (a.transition) {
-         case world::animation_transition::pop:
-         case world::animation_transition::linear: {
+         case animation_transition::pop:
+         case animation_transition::linear: {
             new_key.rotation = (1.0f - local_t) * a.rotation + local_t * b.rotation;
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             new_key.rotation =
                hermite_interpolate(a.rotation, a.tangent, a.time, b.rotation,
                                    a.tangent_next, b.time, t);
@@ -701,11 +701,11 @@ auto make_rotation_key_for_time(const animation& animation, float t) noexcept ->
          const float local_t = (t - a.time) / (b.time - a.time);
 
          switch (a.transition) {
-         case world::animation_transition::pop:
-         case world::animation_transition::linear: {
+         case animation_transition::pop:
+         case animation_transition::linear: {
             new_key.rotation = (1.0f - local_t) * a.rotation + local_t * b.rotation;
          } break;
-         case world::animation_transition::spline: {
+         case animation_transition::spline: {
             new_key.rotation =
                hermite_interpolate(a.rotation, a.tangent, a.time, b.rotation,
                                    a.tangent_next, b.time, t);
@@ -758,8 +758,8 @@ auto make_rotation_tangent(const animation& animation, int32 index, float smooth
       forward_index = (forward_index + key_count) % key_count;
    }
 
-   const world::rotation_key& key_back = animation.rotation_keys[back_index];
-   const world::rotation_key& key_forward = animation.rotation_keys[forward_index];
+   const rotation_key& key_back = animation.rotation_keys[back_index];
+   const rotation_key& key_forward = animation.rotation_keys[forward_index];
 
    const float3 rotation_back =
       back_index == override.index ? override.rotation : key_back.rotation;
@@ -798,8 +798,8 @@ auto make_position_tangent(const animation& animation, int32 index, float smooth
       forward_index = (forward_index + key_count) % key_count;
    }
 
-   const world::position_key& key_back = animation.position_keys[back_index];
-   const world::position_key& key_forward = animation.position_keys[forward_index];
+   const position_key& key_back = animation.position_keys[back_index];
+   const position_key& key_forward = animation.position_keys[forward_index];
 
    const float3 position_back =
       back_index == override.index ? override.position : key_back.position;

@@ -13,13 +13,13 @@ TEST_CASE("edits add_animation_hierarchy", "[Edits]")
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   auto edit = make_add_animation_hierarchy(
-      world::animation_hierarchy{.root_object = "door"});
+   auto edit =
+      make_add_animation_hierarchy(world::animation_hierarchy{.root_object = 2});
 
    edit->apply(edit_context);
 
    REQUIRE(world.animation_hierarchies.size() == 1);
-   CHECK(world.animation_hierarchies[0].root_object == "door");
+   CHECK(world.animation_hierarchies[0].root_object == 2);
 
    edit->revert(edit_context);
 

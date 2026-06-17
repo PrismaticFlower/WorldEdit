@@ -14,7 +14,7 @@ const we::world::world test_world_add_animation_hierarchy_child = {
       world::entities_init,
       std::initializer_list{
          world::animation_hierarchy{
-            .root_object = "ship",
+            .root_object = world::object_optional_link{"ship"},
          },
       },
    }};

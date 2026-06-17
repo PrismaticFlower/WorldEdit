@@ -55,26 +55,25 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                                {0.0f, ImGui::GetContentRegionAvail().y -
                                          130.0f * _display_scale})) {
             for (int32 i = 0; i < std::ssize(_world.animation_hierarchies); ++i) {
+               const world::animation_hierarchy& hierarchy =
+                  _world.animation_hierarchies[i];
+
                ImGui::PushID(i);
 
-               if (ImGui::Selectable(
-                      _world.animation_hierarchies[i].root_object.c_str(),
-                      _animation_hierarchy_editor_context.selected.id ==
-                         _world.animation_hierarchies[i].id)) {
-                  _animation_hierarchy_editor_context.selected = {
-                     .id = _world.animation_hierarchies[i].id};
+               if (ImGui::Selectable(hierarchy.root_object.name_lookup(_world).c_str(),
+                                     _animation_hierarchy_editor_context
+                                           .selected.id == hierarchy.id)) {
+                  _animation_hierarchy_editor_context.selected = {.id =
+                                                                     hierarchy.id};
                }
 
-               if (ImGui::IsItemHovered()) {
-                  const world::object* object =
-                     world::find_entity(_world.objects,
-                                        _world.animation_hierarchies[i].root_object);
+               if (hierarchy.root_object.has_index() and ImGui::IsItemHovered()) {
+                  _interaction_targets.hovered_entity =
+                     _world.objects[hierarchy.root_object.index()].id;
 
-                  if (object) _interaction_targets.hovered_entity = object->id;
-
-                  if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft) and
-                      object) {
-                     _interaction_targets.selection.add(object->id);
+                  if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
+                     _interaction_targets.selection.add(
+                        _world.objects[hierarchy.root_object.index()].id);
 
                      ImGui::SetWindowFocus("Selection");
                   }
@@ -138,28 +137,38 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
             _animation_hierarchy_editor_config.new_root_object_name.empty());
 
          if (ImGui::Button("Add", {ImGui::GetContentRegionAvail().x, 0.0f})) {
-            if (_world.animation_hierarchies.size() <
-                _world.animation_hierarchies.max_size()) {
-               world::animation_hierarchy_id id =
-                  _world.next_id.animation_hierarchies.aquire();
+            const world::object* object =
+               world::find_entity(_world.objects,
+                                  _animation_hierarchy_editor_config.new_root_object_name);
 
-               _edit_stack_world.apply(edits::make_add_animation_hierarchy(
-                                          {.root_object =
-                                              _animation_hierarchy_editor_config.new_root_object_name,
-                                           .id = id}),
-                                       _edit_context);
+            if (object) {
+               if (_world.animation_hierarchies.size() <
+                   _world.animation_hierarchies.max_size()) {
+                  world::animation_hierarchy_id id =
+                     _world.next_id.animation_hierarchies.aquire();
 
-               _animation_hierarchy_editor_context.selected.id = id;
+                  _edit_stack_world.apply(edits::make_add_animation_hierarchy(
+                                             {.root_object = static_cast<uint32>(
+                                                 object - _world.objects.data()),
+                                              .id = id}),
+                                          _edit_context);
+
+                  _animation_hierarchy_editor_context.selected.id = id;
+               }
+               else {
+                  MessageBoxA(
+                     _window,
+                     fmt::format("Max Animation Hierarchies ({}) Reached",
+                                 _world.animation_hierarchies.max_size())
+                        .c_str(),
+                     "Limit Reached", MB_OK);
+               }
+
+               _animation_hierarchy_editor_config.new_root_object_name.clear();
             }
             else {
-               MessageBoxA(_window,
-                           fmt::format("Max Animation Hierarchies ({}) Reached",
-                                       _world.animation_hierarchies.max_size())
-                              .c_str(),
-                           "Limit Reached", MB_OK);
+               ImGui::OpenPopup("Missing Object");
             }
-
-            _animation_hierarchy_editor_config.new_root_object_name.clear();
          }
 
          ImGui::EndDisabled();
@@ -168,6 +177,13 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
             _animation_hierarchy_editor_context.pick_object =
                {.target = animation_hierarchy_editor_context::pick_object::target::root,
                 .active = true};
+         }
+
+         if (ImGui::BeginPopup("Missing Object")) {
+            ImGui::Text("Object %s does not exist.",
+                        _animation_hierarchy_editor_config.new_root_object_name.c_str());
+
+            ImGui::EndPopup();
          }
       }
 
@@ -180,7 +196,8 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                             _animation_hierarchy_editor_context.selected.id);
 
       if (ImGui::BeginChild("##selected") and selected_hierarchy) {
-         ImGui::SeparatorText(selected_hierarchy->root_object.c_str());
+         ImGui::SeparatorText(
+            selected_hierarchy->root_object.name_lookup(_world).c_str());
 
          if (ImGui::BeginChild("##children",
                                {0.0f, ImGui::GetContentRegionAvail().y -
@@ -304,7 +321,7 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
 
             ImGui::BeginDisabled(
                _animation_hierarchy_editor_config.new_child_object_name.empty() or
-               string::iequals(selected_hierarchy->root_object,
+               string::iequals(selected_hierarchy->root_object.name_lookup(_world),
                                _animation_hierarchy_editor_config.new_child_object_name) or
                has_child(*selected_hierarchy, _world,
                          _animation_hierarchy_editor_config.new_child_object_name));
@@ -397,7 +414,8 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                   _world.next_id.animation_hierarchies.aquire();
 
                _edit_stack_world.apply(edits::make_add_animation_hierarchy(
-                                          {.root_object = object.name, .id = id}),
+                                          {.root_object = hovered_object->index,
+                                           .id = id}),
                                        _edit_context);
 
                _animation_hierarchy_editor_context.selected.id = id;
@@ -419,7 +437,7 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                                   _animation_hierarchy_editor_context.selected.id);
 
             if (selected_hierarchy and
-                not string::iequals(selected_hierarchy->root_object, object.name) and
+                selected_hierarchy->root_object != hovered_object->index and
                 not has_child(*selected_hierarchy, _world, object.name)) {
 
                _edit_stack_world.apply(edits::make_add_animation_hierarchy_child(

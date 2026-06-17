@@ -1,6 +1,7 @@
 #pragma once
 
 #include "id.hpp"
+#include "object_optional_link.hpp"
 #include "types.hpp"
 
 #include <string>
@@ -65,7 +66,7 @@ struct animation_group {
 };
 
 struct animation_hierarchy {
-   std::string root_object;
+   object_optional_link root_object;
 
    std::vector<uint32> objects;
    std::vector<std::string> objects_broken_links;

@@ -158,6 +158,11 @@ struct delete_object final : edit<world::edit_context> {
       }
 
       for (world::animation_hierarchy& hierarchy : context.world.animation_hierarchies) {
+         if (hierarchy.root_object.has_index() and
+             hierarchy.root_object.index() > _object_index) {
+            hierarchy.root_object = hierarchy.root_object.index() - 1;
+         }
+
          for (uint32& hierarchy_object_index : hierarchy.objects) {
             if (hierarchy_object_index > _object_index) {
                hierarchy_object_index -= 1;
@@ -176,6 +181,11 @@ struct delete_object final : edit<world::edit_context> {
                                    _object);
 
       for (world::animation_hierarchy& hierarchy : context.world.animation_hierarchies) {
+         if (hierarchy.root_object.has_index() and
+             hierarchy.root_object.index() >= _object_index) {
+            hierarchy.root_object = hierarchy.root_object.index() + 1;
+         }
+
          for (uint32& hierarchy_object_index : hierarchy.objects) {
             if (hierarchy_object_index >= _object_index) {
                hierarchy_object_index += 1;
@@ -800,8 +810,15 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
          if (other_object_index == object_index) animation_hierarchy_count += 1;
       }
 
-      if (iequals(hierarchy.root_object, object.name)) {
-         animation_hierarchy_root_count += 1;
+      if (hierarchy.root_object.has_index()) {
+         if (hierarchy.root_object.index() == object_index) {
+            animation_hierarchy_root_count += 1;
+         }
+      }
+      else {
+         if (iequals(hierarchy.root_object.name(), object.name)) {
+            animation_hierarchy_root_count += 1;
+         }
       }
    }
 
@@ -910,11 +927,21 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
          }
       }
 
-      if (iequals(hierarchy.root_object, object.name)) {
-         animation_hierarchy_root_refs.emplace_back(hierarchy_index -
-                                                    hierarchy_delete_offset);
+      if (hierarchy.root_object.has_index()) {
+         if (hierarchy.root_object.index() == object_index) {
+            animation_hierarchy_root_refs.emplace_back(hierarchy_index -
+                                                       hierarchy_delete_offset);
 
-         hierarchy_delete_offset += 1;
+            hierarchy_delete_offset += 1;
+         }
+      }
+      else {
+         if (iequals(hierarchy.root_object.name(), object.name)) {
+            animation_hierarchy_root_refs.emplace_back(hierarchy_index -
+                                                       hierarchy_delete_offset);
+
+            hierarchy_delete_offset += 1;
+         }
       }
    }
 

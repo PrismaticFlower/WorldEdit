@@ -567,8 +567,7 @@ void world_edit::ui_show_animation_group_editor() noexcept
                                         cache_entry.animation_hierarchy);
 
                   if (hierarchy) {
-                     if (not string::iequals(_world.objects[entry.object_index].name,
-                                             hierarchy->root_object)) {
+                     if (entry.object_index != hierarchy->root_object) {
                         playback_cache_dirty = true;
                      }
 
@@ -628,8 +627,10 @@ void world_edit::ui_show_animation_group_editor() noexcept
 
             for (const world::animation_hierarchy& hierarchy :
                  _world.animation_hierarchies) {
+               if (not hierarchy.root_object.has_index()) continue;
+
                for (playback_cache_entry& entry : playback_cache) {
-                  if (string::iequals(hierarchy.root_object, entry.object_name)) {
+                  if (_world.objects[hierarchy.root_object.index()].id == entry.object) {
                      entry.children.reserve(hierarchy.objects.size());
 
                      for (const uint32 object_index : hierarchy.objects) {

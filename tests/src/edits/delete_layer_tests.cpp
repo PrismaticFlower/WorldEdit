@@ -623,12 +623,12 @@ TEST_CASE("edits delete_layer unlink objects", "[Edits]")
             {.max_size = 1},
             std::initializer_list{
                animation_hierarchy{
-                  .root_object = "Object3",
+                  .root_object = 3,
 
                   .objects = {4, 1},
                },
                animation_hierarchy{
-                  .root_object = "Object4",
+                  .root_object = 4,
                },
             },
          },
@@ -651,6 +651,7 @@ TEST_CASE("edits delete_layer unlink objects", "[Edits]")
    CHECK(world.animation_groups[0].entries[0].object_index == 0);
 
    REQUIRE(world.animation_hierarchies.size() == 1);
+   CHECK(world.animation_hierarchies[0].root_object == 2);
 
    REQUIRE(world.animation_hierarchies[0].objects.size() == 1);
    CHECK(world.animation_hierarchies[0].objects[0] == 0);
@@ -671,11 +672,13 @@ TEST_CASE("edits delete_layer unlink objects", "[Edits]")
 
    REQUIRE(world.animation_hierarchies.size() == 2);
 
+   CHECK(world.animation_hierarchies[0].root_object == 3);
+
    REQUIRE(world.animation_hierarchies[0].objects.size() == 2);
    CHECK(world.animation_hierarchies[0].objects[0] == 4);
    CHECK(world.animation_hierarchies[0].objects[1] == 1);
 
-   CHECK(world.animation_hierarchies[1].root_object == "Object4");
+   CHECK(world.animation_hierarchies[1].root_object == 4);
 }
 
 TEST_CASE("edits delete_layer adjust object indices", "[Edits]")
@@ -748,7 +751,7 @@ TEST_CASE("edits delete_layer adjust object indices", "[Edits]")
                   {.max_size = 1},
                   std::initializer_list{
                      animation_hierarchy{
-                        .root_object = "Object3",
+                        .root_object = 3,
 
                         .objects = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
                      },
@@ -770,6 +773,8 @@ TEST_CASE("edits delete_layer adjust object indices", "[Edits]")
    CHECK(world.animation_groups[0].entries[3].object_index == 3);
    CHECK(world.animation_groups[0].entries[4].object_index == 4);
 
+   CHECK(world.animation_hierarchies[0].root_object == 1);
+
    REQUIRE(world.animation_hierarchies[0].objects.size() == 5);
    CHECK(world.animation_hierarchies[0].objects[0] == 0);
    CHECK(world.animation_hierarchies[0].objects[1] == 1);
@@ -790,6 +795,8 @@ TEST_CASE("edits delete_layer adjust object indices", "[Edits]")
    CHECK(world.animation_groups[0].entries[7].object_index == 7);
    CHECK(world.animation_groups[0].entries[8].object_index == 8);
    CHECK(world.animation_groups[0].entries[9].object_index == 9);
+
+   CHECK(world.animation_hierarchies[0].root_object == 3);
 
    REQUIRE(world.animation_hierarchies[0].objects.size() == 10);
    CHECK(world.animation_hierarchies[0].objects[0] == 0);

@@ -1183,7 +1183,8 @@ void load_animations(const io::path& filepath, output_stream& output, world& wor
 
             auto& hierarchy = world_out.animation_hierarchies.emplace_back();
 
-            hierarchy.root_object = key_node.values.get<std::string>(0);
+            hierarchy.root_object =
+               object_optional_link{key_node.values.get<std::string>(0)};
             hierarchy.id = world_out.next_id.animation_hierarchies.aquire();
 
             for (auto& child_key_node : key_node) {
@@ -1196,7 +1197,7 @@ void load_animations(const io::path& filepath, output_stream& output, world& wor
             if (verbose_output) {
                output
                   .write("Loaded animation hierarchy with root object '{}'\n",
-                         hierarchy.root_object);
+                         hierarchy.root_object.name());
             }
          }
       }
@@ -1549,6 +1550,15 @@ void connect_object_refs(world& world)
          else {
             hierarchy.objects_broken_links.push_back(object_name);
          }
+      }
+
+      assert(hierarchy.root_object.has_name());
+
+      if (const object* object =
+             find_entity(world.objects, hierarchy.root_object.name());
+          object) {
+         hierarchy.root_object =
+            static_cast<uint32>((object - world.objects.data()));
       }
    }
 }

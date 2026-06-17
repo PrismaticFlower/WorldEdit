@@ -781,7 +781,12 @@ void save_animations(const io::path& path, const world& world)
    }
 
    for (auto& hierarchy : world.animation_hierarchies) {
-      file.write_ln("Hierarchy(\"{}\")", hierarchy.root_object);
+      const std::string_view name =
+         hierarchy.root_object.has_index()
+            ? world.objects[hierarchy.root_object.index()].name
+            : hierarchy.root_object.name();
+
+      file.write_ln("Hierarchy(\"{}\")", name);
       file.write_ln("{");
 
       for (const uint32 object_index : hierarchy.objects) {

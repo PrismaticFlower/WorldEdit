@@ -20,6 +20,11 @@ struct object_link_record {
    uint32 object_index = 0;
 };
 
+struct root_object_link_record {
+   uint32 hierarchy_index = 0;
+   uint32 object_index = 0;
+};
+
 struct unlinked_object_property {
    uint32 object_index = 0;
    uint32 property_index = 0;
@@ -264,8 +269,15 @@ auto make_unlink_properties(int layer_index, const world::world& world) -> unlin
             }
          }
 
-         if (iequals(hierarchy.root_object, object.name)) {
-            unlinked_properties.animation_hierarchy_roots.emplace_back(hierarchy_index);
+         if (hierarchy.root_object.has_index()) {
+            if (hierarchy.root_object.index() == object_index) {
+               unlinked_properties.animation_hierarchy_roots.emplace_back(hierarchy_index);
+            }
+         }
+         else {
+            if (iequals(hierarchy.root_object.name(), object.name)) {
+               unlinked_properties.animation_hierarchy_roots.emplace_back(hierarchy_index);
+            }
          }
       }
    }
@@ -355,11 +367,13 @@ auto make_object_link_adjustments(int layer_index,
 void apply_object_link_adjustments(
    world::world& world, std::span<const uint32> link_adjustments,
    std::vector<object_link_record>& animation_group_adjustments,
+   std::vector<root_object_link_record>& animation_hierarchy_root_adjustments,
    std::vector<object_link_record>& animation_hierarchy_adjustments)
 {
    if (link_adjustments.empty()) return;
 
    animation_group_adjustments.clear();
+   animation_hierarchy_root_adjustments.clear();
    animation_hierarchy_adjustments.clear();
 
    for (uint32 group_index = 0; group_index < world.animation_groups.size();
@@ -389,6 +403,23 @@ void apply_object_link_adjustments(
       world::animation_hierarchy& hierarchy =
          world.animation_hierarchies[hierarchy_index];
 
+      if (hierarchy.root_object.has_index()) {
+         const uint32 root_object_index = hierarchy.root_object.index();
+
+         auto it = std::lower_bound(link_adjustments.begin(),
+                                    link_adjustments.end(), root_object_index);
+
+         if (it != link_adjustments.begin()) {
+            animation_hierarchy_root_adjustments.push_back({
+               .hierarchy_index = hierarchy_index,
+               .object_index = root_object_index,
+            });
+
+            hierarchy.root_object =
+               root_object_index - static_cast<uint32>(it - link_adjustments.begin());
+         }
+      }
+
       for (uint32 entry_index = 0; entry_index < hierarchy.objects.size();
            ++entry_index) {
          uint32& object_index = hierarchy.objects[entry_index];
@@ -411,10 +442,16 @@ void apply_object_link_adjustments(
 
 void revert_object_link_adjustments(
    world::world& world, std::vector<object_link_record>& animation_group_adjustments,
+   std::vector<root_object_link_record>& animation_hierarchy_root_adjustments,
    std::vector<object_link_record>& animation_hierarchy_adjustments)
 {
    for (object_link_record& record : animation_group_adjustments) {
       world.animation_groups[record.referer_index].entries[record.entry_index].object_index =
+         record.object_index;
+   }
+
+   for (root_object_link_record& record : animation_hierarchy_root_adjustments) {
+      world.animation_hierarchies[record.hierarchy_index].root_object =
          record.object_index;
    }
 
@@ -424,6 +461,7 @@ void revert_object_link_adjustments(
    }
 
    animation_group_adjustments.clear();
+   animation_hierarchy_root_adjustments.clear();
    animation_hierarchy_adjustments.clear();
 }
 
@@ -1154,6 +1192,7 @@ struct delete_layer final : edit<world::edit_context> {
 
       apply_object_link_adjustments(world, _data.object_link_adjustments,
                                     _animation_group_object_link_adjustments,
+                                    _animation_hierarchy_root_adjustments,
                                     _animation_hierarchy_object_link_adjustments);
 
       apply_remap_entries(world.objects, _data.remap_objects);
@@ -1238,6 +1277,7 @@ struct delete_layer final : edit<world::edit_context> {
                            _data.remap_blocks_terrain_cut_boxes);
 
       revert_object_link_adjustments(world, _animation_group_object_link_adjustments,
+                                     _animation_hierarchy_root_adjustments,
                                      _animation_hierarchy_object_link_adjustments);
 
       revert_unlinked_entities(world, _data.unlinked_properties);
@@ -1254,6 +1294,7 @@ private:
    delete_layer_data _data;
 
    std::vector<object_link_record> _animation_group_object_link_adjustments;
+   std::vector<root_object_link_record> _animation_hierarchy_root_adjustments;
    std::vector<object_link_record> _animation_hierarchy_object_link_adjustments;
 
    world::object_class_library& _object_class_library;

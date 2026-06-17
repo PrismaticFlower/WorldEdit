@@ -893,10 +893,11 @@ TEST_CASE("edits delete_entity animation ref object", "[Edits]")
             pinned_vector_init{world::max_animation_hierarchies, 256},
             std::initializer_list{
                world::animation_hierarchy{
+                  .root_object = 1,
                   .objects = {1, 0, 2},
                },
                world::animation_hierarchy{
-                  .root_object = "test_object",
+                  .root_object = 0,
                },
             },
          },
@@ -918,6 +919,8 @@ TEST_CASE("edits delete_entity animation ref object", "[Edits]")
 
    REQUIRE(world.animation_hierarchies.size() == 1);
 
+   CHECK(world.animation_hierarchies[0].root_object == 0);
+
    REQUIRE(world.animation_hierarchies[0].objects.size() == 2);
    CHECK(world.animation_hierarchies[0].objects[0] == 0);
    CHECK(world.animation_hierarchies[0].objects[1] == 1);
@@ -934,12 +937,14 @@ TEST_CASE("edits delete_entity animation ref object", "[Edits]")
 
    REQUIRE(world.animation_hierarchies.size() == 2);
 
+   CHECK(world.animation_hierarchies[0].root_object == 1);
+
    REQUIRE(world.animation_hierarchies[0].objects.size() == 3);
    CHECK(world.animation_hierarchies[0].objects[0] == 1);
    CHECK(world.animation_hierarchies[0].objects[1] == 0);
    CHECK(world.animation_hierarchies[0].objects[2] == 2);
 
-   CHECK(world.animation_hierarchies[1].root_object == "test_object");
+   CHECK(world.animation_hierarchies[1].root_object == 0);
 }
 
 TEST_CASE("edits delete_entity object class handle liftime", "[Edits]")

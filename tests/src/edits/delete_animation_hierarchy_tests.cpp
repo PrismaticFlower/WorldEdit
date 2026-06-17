@@ -13,9 +13,9 @@ const we::world::world test_world_delete_animation_hierarchy = {
    .animation_hierarchies = {
       world::entities_init,
       std::initializer_list{
-         world::animation_hierarchy{.root_object = "object_0"},
-         world::animation_hierarchy{.root_object = "object_1"},
-         world::animation_hierarchy{.root_object = "object_2"},
+         world::animation_hierarchy{.root_object = 0},
+         world::animation_hierarchy{.root_object = 1},
+         world::animation_hierarchy{.root_object = 2},
       },
    }};
 
@@ -32,14 +32,14 @@ TEST_CASE("edits delete_animation_hierarchy", "[Edits]")
    edit->apply(edit_context);
 
    REQUIRE(world.animation_hierarchies.size() == 2);
-   CHECK(world.animation_hierarchies[0].root_object == "object_0");
-   CHECK(world.animation_hierarchies[1].root_object == "object_2");
+   CHECK(world.animation_hierarchies[0].root_object == 0);
+   CHECK(world.animation_hierarchies[1].root_object == 2);
 
    edit->revert(edit_context);
 
    REQUIRE(world.animation_hierarchies.size() == 3);
-   CHECK(world.animation_hierarchies[0].root_object == "object_0");
-   CHECK(world.animation_hierarchies[1].root_object == "object_1");
-   CHECK(world.animation_hierarchies[2].root_object == "object_2");
+   CHECK(world.animation_hierarchies[0].root_object == 0);
+   CHECK(world.animation_hierarchies[1].root_object == 1);
+   CHECK(world.animation_hierarchies[2].root_object == 2);
 }
 }

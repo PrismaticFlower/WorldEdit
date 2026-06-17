@@ -1558,7 +1558,7 @@ TEST_CASE("world saving", "[World][IO]")
          {pinned_vector_init{max_animation_hierarchies, max_animation_hierarchies},
           std::initializer_list{
              animation_hierarchy{
-                .root_object = "com_inv_col_8",
+                .root_object = object_optional_link{"com_inv_col_8"},
                 .objects_broken_links = {"com_item_healthrecharge"},
              },
           }},
@@ -2284,7 +2284,7 @@ TEST_CASE("world saving animation object links", "[World][IO]")
                                                    max_animation_hierarchies},
                                 std::initializer_list{
                                    animation_hierarchy{
-                                      .root_object = "Object0",
+                                      .root_object = 0,
                                       .objects = {1, 3},
                                    },
                                 }},
