@@ -9,6 +9,25 @@ using namespace std::literals;
 
 namespace we::string {
 
+namespace {
+
+bool is_whitespace_char(char c) noexcept
+{
+   switch (c) {
+   case '\t':
+   case '\n':
+   case '\v':
+   case '\f':
+   case '\r':
+   case ' ':
+      return true;
+   default:
+      return false;
+   }
+}
+
+}
+
 auto count_lines(const std::string_view str) noexcept -> std::size_t
 {
    return std::count(str.cbegin(), str.cend(), '\n');
@@ -90,13 +109,13 @@ auto trim_leading_whitespace(std::string_view str) noexcept -> std::string_view
 {
    return str.substr(
       std::distance(str.begin(),
-                    std::find_if_not(str.begin(), str.end(), std::isspace)));
+                    std::find_if_not(str.begin(), str.end(), is_whitespace_char)));
 }
 
 auto trim_trailing_whitespace(std::string_view str) noexcept -> std::string_view
 {
    return str.substr(0, std::distance(str.begin(),
-                                      std::find_if_not(str.rbegin(), str.rend(), std::isspace)
+                                      std::find_if_not(str.rbegin(), str.rend(), is_whitespace_char)
                                          .base()));
 }
 
@@ -150,7 +169,7 @@ auto quoted_read_with_escapes(std::string_view str) noexcept
 
 bool is_whitespace(const std::string_view str) noexcept
 {
-   return std::all_of(str.cbegin(), str.cend(), std::isspace);
+   return std::all_of(str.cbegin(), str.cend(), is_whitespace_char);
 }
 
 auto substr_distance(const std::string_view str, const std::string_view substr) noexcept
