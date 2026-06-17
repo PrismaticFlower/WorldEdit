@@ -7,8 +7,7 @@
 
 namespace we::edits {
 
-auto make_delete_sector_point(world::sector_id sector_id,
-                              const std::size_t point_index, const world::world& world)
+auto make_delete_sector_point(std::vector<float2>* points, const uint32 point_index)
    -> std::unique_ptr<edit<world::edit_context>>;
 
 }

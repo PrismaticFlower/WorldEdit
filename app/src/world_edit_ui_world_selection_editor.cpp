@@ -1086,7 +1086,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
                   if (ImGui::Button("X")) {
                      _edit_stack_world
-                        .apply(edits::make_delete_sector_point(sector->id, i, _world),
+                        .apply(edits::make_delete_sector_point(&sector->points, i),
                                _edit_context);
                   }
 
@@ -1140,7 +1140,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
                if (ImGui::BeginTable("Contained Objects", 3,
                                      ImGuiTableFlags_SizingFixedFit)) {
-                  for (int i = 0; i < sector->objects.size(); ++i) {
+                  for (uint32 i = 0; i < sector->objects.size(); ++i) {
                      ImGui::PushID(i);
 
                      bool hovered = false;
@@ -1155,7 +1155,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      ImGui::TableNextColumn();
                      if (ImGui::SmallButton("X")) {
                         _edit_stack_world
-                           .apply(edits::make_delete_sector_object(sector->id, i, _world),
+                           .apply(edits::make_delete_sector_object(&sector->objects, i),
                                   _edit_context);
                      }
 

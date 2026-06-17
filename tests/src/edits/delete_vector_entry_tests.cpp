@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "edits/delete_sector_point.hpp"
+#include "edits/delete_vector_entry.hpp"
 #include "world/world.hpp"
 #include "world_test_data.hpp"
 
@@ -8,13 +8,13 @@ using namespace std::literals;
 
 namespace we::edits::tests {
 
-TEST_CASE("edits delete_sector_point", "[Edits]")
+TEST_CASE("edits delete_vector_entry", "[Edits]")
 {
    world::world world = test_world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   auto edit_0 = make_delete_sector_point(world.sectors[0].id, 2, world);
+   auto edit_0 = make_delete_vector_entry(&world.sectors[0].points, 2);
 
    edit_0->apply(edit_context);
 
@@ -24,7 +24,7 @@ TEST_CASE("edits delete_sector_point", "[Edits]")
    CHECK(world.sectors[0].points[1] == float2{0.0f, 10.0f});
    CHECK(world.sectors[0].points[2] == float2{10.0f, 0.0f});
 
-   auto edit_1 = make_delete_sector_point(world.sectors[0].id, 1, world);
+   auto edit_1 = make_delete_vector_entry(&world.sectors[0].points, 1);
 
    edit_1->apply(edit_context);
 
@@ -33,7 +33,7 @@ TEST_CASE("edits delete_sector_point", "[Edits]")
    CHECK(world.sectors[0].points[0] == float2{0.0f, 0.0f});
    CHECK(world.sectors[0].points[1] == float2{10.0f, 0.0f});
 
-   auto edit_2 = make_delete_sector_point(world.sectors[0].id, 0, world);
+   auto edit_2 = make_delete_vector_entry(&world.sectors[0].points, 0);
 
    edit_2->apply(edit_context);
 
@@ -41,7 +41,7 @@ TEST_CASE("edits delete_sector_point", "[Edits]")
    REQUIRE(world.sectors[0].points.size() == 1);
    CHECK(world.sectors[0].points[0] == float2{10.0f, 0.0f});
 
-   auto edit_3 = make_delete_sector_point(world.sectors[0].id, 0, world);
+   auto edit_3 = make_delete_vector_entry(&world.sectors[0].points, 0);
 
    edit_3->apply(edit_context);
 

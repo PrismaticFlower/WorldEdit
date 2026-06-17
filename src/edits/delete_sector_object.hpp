@@ -7,8 +7,10 @@
 
 namespace we::edits {
 
-auto make_delete_sector_object(world::sector_id sector_id, const std::size_t object_index,
-                               const world::world& world)
+auto make_delete_sector_object(std::vector<uint32>* objects, const uint32 object_index)
+   -> std::unique_ptr<edit<world::edit_context>>;
+
+auto make_delete_sector_object(std::vector<std::string>* objects, const uint32 object_index)
    -> std::unique_ptr<edit<world::edit_context>>;
 
 }
