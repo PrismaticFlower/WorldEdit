@@ -1686,18 +1686,15 @@ void world_edit::ui_show_animation_editor() noexcept
       world::object_id animated_object_id = world::max_id;
 
       for (const world::animation_group& group : _world.animation_groups) {
-         for (const world::animation_group::entry& entry : group.entries) {
-            if (string::iequals(entry.animation, selected_animation->name)) {
-               for (const world::object& object : _world.objects) {
-                  if (string::iequals(entry.object, object.name)) {
-                     base_rotation = normalize(object.rotation);
-                     base_position = object.position;
-                     animated_object_id = object.id;
+         if (not group.entries.empty()) {
+            const world::object& object =
+               _world.objects[group.entries[0].object_index];
 
-                     break;
-                  }
-               }
-            }
+            base_rotation = normalize(object.rotation);
+            base_position = object.position;
+            animated_object_id = object.id;
+
+            break;
          }
       }
 
@@ -2350,16 +2347,33 @@ void world_edit::ui_show_animation_editor() noexcept
          if (_world.animation_groups.size() < _world.animation_groups.max_size()) {
             const world::animation_group_id id =
                _world.next_id.animation_groups.aquire();
+            const world::object* object =
+               world::find_entity(_world.objects,
+                                  _animation_editor_context.add_new_object);
 
-            _edit_stack_world.apply(
-               edits::make_add_animation_group(
-                  {.name = world::create_unique_name(_world.animation_groups,
-                                                     _world.animations.back().name),
-                   .entries = {world::animation_group::entry{
-                      .animation = _world.animations.back().name,
-                      .object = _animation_editor_context.add_new_object}},
-                   .id = id}),
-               _edit_context);
+            if (object) {
+               _edit_stack_world.apply(
+                  edits::make_add_animation_group(
+                     {.name = world::create_unique_name(_world.animation_groups,
+                                                        _world.animations.back().name),
+                      .entries = {world::animation_group::entry{
+                         .animation = _world.animations.back().name,
+                         .object_index =
+                            static_cast<uint32>(object - _world.objects.data())}},
+                      .id = id}),
+                  _edit_context);
+            }
+            else {
+               _edit_stack_world.apply(
+                  edits::make_add_animation_group(
+                     {.name = world::create_unique_name(_world.animation_groups,
+                                                        _world.animations.back().name),
+                      .entries_broken_links = {world::animation_group::entry_broken{
+                         .animation = _world.animations.back().name,
+                         .object = _animation_editor_context.add_new_object}},
+                      .id = id}),
+                  _edit_context);
+            }
          }
          else {
             MessageBoxA(_window,
@@ -2373,13 +2387,18 @@ void world_edit::ui_show_animation_editor() noexcept
          world::animation_group* group =
             world::find_entity(_world.animation_groups,
                                _animation_editor_context.add_new_group);
+         const world::object* object =
+            world::find_entity(_world.objects, _animation_editor_context.add_new_object);
 
          if (group) {
-            _edit_stack_world.apply(edits::make_add_animation_group_entry(
-                                       &group->entries,
-                                       {.animation = _world.animations.back().name,
-                                        .object = _animation_editor_context.add_new_object}),
-                                    _edit_context);
+            if (object) {
+               _edit_stack_world.apply(edits::make_add_animation_group_entry(
+                                          &group->entries,
+                                          {.animation = _world.animations.back().name,
+                                           .object_index = static_cast<uint32>(
+                                              object - _world.objects.data())}),
+                                       _edit_context);
+            }
          }
       }
    }

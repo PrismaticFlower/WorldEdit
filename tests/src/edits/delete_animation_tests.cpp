@@ -9,62 +9,60 @@ namespace we::edits::tests {
 
 namespace {
 
-const we::world::world
-   test_world_delete_animation =
+const we::world::world test_world_delete_animation = {
+   .animations =
       {
-         .animations =
-            {
-               world::entities_init,
-               std::initializer_list{
-                  world::animation{
-                     .name = "Animation0",
-                     .id = world::animation_id{0},
-                  },
-                  world::animation{
-                     .name = "Animation1",
-                     .id = world::animation_id{1},
-                  },
-                  world::animation{
-                     .name = "Animation2",
-                     .id = world::animation_id{2},
-                  },
-               },
+         world::entities_init,
+         std::initializer_list{
+            world::animation{
+               .name = "Animation0",
+               .id = world::animation_id{0},
             },
+            world::animation{
+               .name = "Animation1",
+               .id = world::animation_id{1},
+            },
+            world::animation{
+               .name = "Animation2",
+               .id = world::animation_id{2},
+            },
+         },
+      },
 
-         .animation_groups =
-            {
-               world::entities_init,
-               std::initializer_list{
-                  world::animation_group{
-                     .name = "Animation0",
-                     .entries =
-                        {
-                           {"Animation0", "object0"},
-                           {"Animation1", "object1"},
-                           {"Animation2", "object2"},
-                        },
-                     .id = world::animation_group_id{0},
+   .animation_groups =
+      {
+         world::entities_init,
+         std::initializer_list{
+            world::animation_group{
+               .name = "Animation0",
+               .entries =
+                  {
+                     {"Animation0", 0},
+                     {"Animation1", 1},
+                     {"Animation2", 2},
                   },
-                  world::animation_group{
-                     .name = "Animation1",
-                     .entries =
-                        {
-                           {"Animation1", "object1"},
-                           {"Animation2", "object2"},
-                        },
-                     .id = world::animation_group_id{1},
-                  },
-                  world::animation_group{
-                     .name = "Animation2",
-                     .entries =
-                        {
-                           {"animation2", "object2"},
-                           {"animation1", "object1"},
-                        },
-                     .id = world::animation_group_id{2},
-                  },
-               },
+               .id = world::animation_group_id{0},
             },
+            world::animation_group{
+               .name = "Animation1",
+               .entries =
+                  {
+                     {"Animation1", 1},
+                     {"Animation2", 2},
+                  },
+               .id = world::animation_group_id{1},
+            },
+            world::animation_group{
+               .name = "Animation2",
+               .entries =
+                  {
+                     {"animation2", 2},
+                     {"animation1", 1},
+                  },
+               .id = world::animation_group_id{2},
+            },
+         },
+      },
 };
 }
 

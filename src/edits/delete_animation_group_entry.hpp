@@ -11,4 +11,8 @@ auto make_delete_animation_group_entry(std::vector<world::animation_group::entry
                                        uint32 index)
    -> std::unique_ptr<edit<world::edit_context>>;
 
+auto make_delete_animation_group_entry(
+   std::vector<world::animation_group::entry_broken>* entries, uint32 index)
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 }

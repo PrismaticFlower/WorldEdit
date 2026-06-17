@@ -5,6 +5,8 @@
 #include "load_effects.hpp"
 #include "load_failure.hpp"
 
+#include "../utility/world_utilities.hpp"
+
 #include "assets/config/io.hpp"
 #include "assets/req/io.hpp"
 #include "assets/terrain/terrain_io.hpp"
@@ -1165,7 +1167,7 @@ void load_animations(const io::path& filepath, output_stream& output, world& wor
                   group.disable_hierarchies = true;
                }
                else if (child_key_node.key == "Animation"sv) {
-                  group.entries.push_back({
+                  group.entries_broken_links.push_back({
                      .animation = child_key_node.values.get<std::string>(0),
                      .object = child_key_node.values.get<std::string>(1),
                   });
@@ -1186,7 +1188,7 @@ void load_animations(const io::path& filepath, output_stream& output, world& wor
 
             for (auto& child_key_node : key_node) {
                if (child_key_node.key == "Obj"sv) {
-                  hierarchy.objects.push_back(
+                  hierarchy.objects_broken_links.push_back(
                      child_key_node.values.get<std::string>(0));
                }
             }
@@ -1504,6 +1506,53 @@ void strip_blocks_layer_reference(world& world) noexcept
    }
 }
 
+void connect_object_refs(world& world)
+{
+
+   for (animation_group& group : world.animation_groups) {
+      group.entries.reserve(group.entries_broken_links.size());
+
+      const std::vector<animation_group::entry_broken> entries_broken_links{
+         std::move(group.entries_broken_links)};
+
+      group.entries_broken_links.clear();
+
+      for (const animation_group::entry_broken& entry : entries_broken_links) {
+         const object* object = find_entity(world.objects, entry.object);
+
+         if (object) {
+            group.entries.push_back({.animation = entry.animation,
+                                     .object_index = static_cast<uint32>(
+                                        (object - world.objects.data()))});
+         }
+         else {
+            group.entries_broken_links.push_back(entry);
+         }
+      }
+   }
+
+   for (animation_hierarchy& hierarchy : world.animation_hierarchies) {
+      hierarchy.objects.reserve(hierarchy.objects.size());
+
+      const std::vector<std::string> objects_broken_links{
+         std::move(hierarchy.objects_broken_links)};
+
+      hierarchy.objects_broken_links.clear();
+
+      for (const std::string& object_name : objects_broken_links) {
+         const object* object = find_entity(world.objects, object_name);
+
+         if (object) {
+            hierarchy.objects.push_back(
+               static_cast<uint32>((object - world.objects.data())));
+         }
+         else {
+            hierarchy.objects_broken_links.push_back(object_name);
+         }
+      }
+   }
+}
+
 }
 
 auto load_world(const io::path& path, const configuration& default_configuration,
@@ -1531,6 +1580,7 @@ auto load_world(const io::path& path, const configuration& default_configuration
       convert_light_regions(world);
       convert_boundaries(world, output);
       ensure_common_game_mode(world);
+      connect_object_refs(world);
 
       if (const auto ter_path = io::compose_path(world_dir, world.name, ".ter"sv);
           io::exists(ter_path)) {

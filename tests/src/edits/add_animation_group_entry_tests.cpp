@@ -28,13 +28,13 @@ TEST_CASE("edits add_animation_group_entry", "[Edits]")
 
    auto edit =
       make_add_animation_group_entry(&world.animation_groups[0].entries,
-                                     {.animation = "DoorOpen", .object = "Door"});
+                                     {.animation = "DoorOpen", .object_index = 0});
 
    edit->apply(edit_context);
 
    REQUIRE(world.animation_groups[0].entries.size() == 1);
    CHECK(world.animation_groups[0].entries[0].animation == "DoorOpen");
-   CHECK(world.animation_groups[0].entries[0].object == "Door");
+   CHECK(world.animation_groups[0].entries[0].object_index == 0);
 
    edit->revert(edit_context);
 

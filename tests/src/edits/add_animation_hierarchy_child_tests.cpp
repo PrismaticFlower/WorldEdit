@@ -27,12 +27,12 @@ TEST_CASE("edits add_animation_hierarchy_child", "[Edits]")
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
    auto edit =
-      make_add_animation_hierarchy_child(&world.animation_hierarchies[0].objects, "Gun0");
+      make_add_animation_hierarchy_child(&world.animation_hierarchies[0].objects, 2);
 
    edit->apply(edit_context);
 
    REQUIRE(world.animation_hierarchies[0].objects.size() == 1);
-   CHECK(world.animation_hierarchies[0].objects[0] == "Gun0");
+   CHECK(world.animation_hierarchies[0].objects[0] == 2);
 
    edit->revert(edit_context);
 

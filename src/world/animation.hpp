@@ -44,6 +44,11 @@ struct animation {
 struct animation_group {
    struct entry {
       std::string animation;
+      uint32 object_index = 0;
+   };
+
+   struct entry_broken {
+      std::string animation;
       std::string object;
    };
 
@@ -54,6 +59,7 @@ struct animation_group {
    bool disable_hierarchies = false;
 
    std::vector<entry> entries;
+   std::vector<entry_broken> entries_broken_links;
 
    id<animation_group> id = {};
 };
@@ -61,7 +67,8 @@ struct animation_group {
 struct animation_hierarchy {
    std::string root_object;
 
-   std::vector<std::string> objects;
+   std::vector<uint32> objects;
+   std::vector<std::string> objects_broken_links;
 
    id<animation_hierarchy> id = {};
 };

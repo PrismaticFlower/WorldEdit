@@ -51,13 +51,12 @@ struct delete_object final : edit<world::edit_context> {
    struct unlinked_animation_group {
       uint32 group_index = 0;
       uint32 entry_index = 0;
-      world::animation_group::entry entry;
+      std::string animation;
    };
 
    struct unlinked_animation_hierarchy {
       uint32 hierarchy_index = 0;
-      uint32 object_index = 0;
-      std::string object;
+      uint32 entry_index = 0;
    };
 
    struct unlinked_animation_hierarchy_root {
@@ -129,18 +128,16 @@ struct delete_object final : edit<world::edit_context> {
          std::vector<world::animation_group::entry>& entries =
             context.world.animation_groups[unlinked.group_index].entries;
 
-         std::swap(entries[unlinked.entry_index], unlinked.entry);
+         std::swap(entries[unlinked.entry_index].animation, unlinked.animation);
 
          entries.erase(entries.begin() + unlinked.entry_index);
       }
 
       for (unlinked_animation_hierarchy& unlinked : _unlinked_animation_hierarchies) {
-         std::vector<std::string>& objects =
+         std::vector<uint32>& objects =
             context.world.animation_hierarchies[unlinked.hierarchy_index].objects;
 
-         std::swap(objects[unlinked.object_index], unlinked.object);
-
-         objects.erase(objects.begin() + unlinked.object_index);
+         objects.erase(objects.begin() + unlinked.entry_index);
       }
 
       for (unlinked_animation_hierarchy_root& unlinked :
@@ -152,6 +149,22 @@ struct delete_object final : edit<world::edit_context> {
             context.world.animation_hierarchies.begin() + unlinked.hierarchy_index);
       }
 
+      for (world::animation_group& group : context.world.animation_groups) {
+         for (world::animation_group::entry& entry : group.entries) {
+            if (entry.object_index > _object_index) {
+               entry.object_index -= 1;
+            }
+         }
+      }
+
+      for (world::animation_hierarchy& hierarchy : context.world.animation_hierarchies) {
+         for (uint32& hierarchy_object_index : hierarchy.objects) {
+            if (hierarchy_object_index > _object_index) {
+               hierarchy_object_index -= 1;
+            }
+         }
+      }
+
       _object_class_library.free(context.world.objects[_object_index].class_handle);
 
       context.world.objects.erase(context.world.objects.begin() + _object_index);
@@ -161,6 +174,22 @@ struct delete_object final : edit<world::edit_context> {
    {
       context.world.objects.insert(context.world.objects.begin() + _object_index,
                                    _object);
+
+      for (world::animation_hierarchy& hierarchy : context.world.animation_hierarchies) {
+         for (uint32& hierarchy_object_index : hierarchy.objects) {
+            if (hierarchy_object_index >= _object_index) {
+               hierarchy_object_index += 1;
+            }
+         }
+      }
+
+      for (world::animation_group& group : context.world.animation_groups) {
+         for (world::animation_group::entry& entry : group.entries) {
+            if (entry.object_index >= _object_index) {
+               entry.object_index += 1;
+            }
+         }
+      }
 
       for (unlinked_object_property& unlinked : _unlinked_object_properties) {
          std::swap(context.world.objects[unlinked.object_index]
@@ -205,18 +234,18 @@ struct delete_object final : edit<world::edit_context> {
             context.world.animation_groups[unlinked.group_index].entries;
 
          entries.insert(entries.begin() + unlinked.entry_index,
-                        std::move(unlinked.entry));
+                        {.animation = std::move(unlinked.animation),
+                         .object_index = _object_index});
       }
 
       for (std::ptrdiff_t i = (std::ssize(_unlinked_animation_hierarchies) - 1);
            i >= 0; --i) {
          unlinked_animation_hierarchy& unlinked = _unlinked_animation_hierarchies[i];
 
-         std::vector<std::string>& objects =
+         std::vector<uint32>& objects =
             context.world.animation_hierarchies[unlinked.hierarchy_index].objects;
 
-         objects.insert(objects.begin() + unlinked.object_index,
-                        std::move(unlinked.object));
+         objects.insert(objects.begin() + unlinked.entry_index, _object_index);
       }
 
       for (std::ptrdiff_t i = (std::ssize(_unlinked_animation_hierarchy_roots) - 1);
@@ -762,13 +791,13 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
 
    for (const auto& group : world.animation_groups) {
       for (const auto& entry : group.entries) {
-         if (iequals(entry.object, object.name)) animation_group_count += 1;
+         if (entry.object_index == object_index) animation_group_count += 1;
       }
    }
 
    for (const auto& hierarchy : world.animation_hierarchies) {
-      for (const auto& other_object : hierarchy.objects) {
-         if (iequals(other_object, object.name)) animation_hierarchy_count += 1;
+      for (const uint32 other_object_index : hierarchy.objects) {
+         if (other_object_index == object_index) animation_hierarchy_count += 1;
       }
 
       if (iequals(hierarchy.root_object, object.name)) {
@@ -854,7 +883,7 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
       uint32 delete_offset = 0;
 
       for (uint32 entry_index = 0; entry_index < group.entries.size(); ++entry_index) {
-         if (iequals(group.entries[entry_index].object, object.name)) {
+         if (group.entries[entry_index].object_index == object_index) {
             animation_group_refs.emplace_back(group_index, entry_index - delete_offset);
 
             delete_offset += 1;
@@ -873,7 +902,7 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
 
       for (uint32 entry_index = 0; entry_index < hierarchy.objects.size();
            ++entry_index) {
-         if (iequals(hierarchy.objects[entry_index], object.name)) {
+         if (hierarchy.objects[entry_index] == object_index) {
             animation_hierarchy_refs.emplace_back(hierarchy_index,
                                                   entry_index - delete_offset);
 

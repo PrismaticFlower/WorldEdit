@@ -7,8 +7,7 @@
 
 namespace we::edits {
 
-auto make_add_animation_hierarchy_child(std::vector<std::string>* children,
-                                        std::string new_child)
+auto make_add_animation_hierarchy_child(std::vector<uint32>* children, uint32 new_child)
    -> std::unique_ptr<edit<world::edit_context>>;
 
 }

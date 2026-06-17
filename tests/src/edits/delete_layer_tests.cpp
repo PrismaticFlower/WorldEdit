@@ -579,7 +579,7 @@ TEST_CASE("edits delete_layer unlink objects", "[Edits]")
 
       .objects = {world::entities_init,
                   std::initializer_list{
-                     object{.name = "Object0", .layer = 0},
+                     object{.name = "Object0", .layer = 3},
                      object{.name = "Object1", .layer = 1},
                      object{.name = "Object2", .layer = 2},
                      object{.name = "Object3",
@@ -611,8 +611,8 @@ TEST_CASE("edits delete_layer unlink objects", "[Edits]")
                   .name = "Group",
                   .entries =
                      {
-                        animation_group::entry{.animation = "Animation", .object = "Object4"},
-                        animation_group::entry{.animation = "Animation", .object = "Object1"},
+                        animation_group::entry{.animation = "Animation", .object_index = 4},
+                        animation_group::entry{.animation = "Animation", .object_index = 1},
                      },
                },
             },
@@ -625,11 +625,7 @@ TEST_CASE("edits delete_layer unlink objects", "[Edits]")
                animation_hierarchy{
                   .root_object = "Object3",
 
-                  .objects =
-                     {
-                        "Object4",
-                        "Object1",
-                     },
+                  .objects = {4, 1},
                },
                animation_hierarchy{
                   .root_object = "Object4",
@@ -645,19 +641,19 @@ TEST_CASE("edits delete_layer unlink objects", "[Edits]")
 
    edit->apply(edit_context);
 
-   CHECK(world.objects[3].instance_properties[0].value == "");
+   CHECK(world.objects[2].instance_properties[0].value == "");
 
    CHECK(world.paths[0].properties.size() == 0);
 
    CHECK(world.hintnodes[2].command_post == "");
 
    REQUIRE(world.animation_groups[0].entries.size() == 1);
-   CHECK(world.animation_groups[0].entries[0].object == "Object1");
+   CHECK(world.animation_groups[0].entries[0].object_index == 0);
 
    REQUIRE(world.animation_hierarchies.size() == 1);
 
    REQUIRE(world.animation_hierarchies[0].objects.size() == 1);
-   CHECK(world.animation_hierarchies[0].objects[0] == "Object1");
+   CHECK(world.animation_hierarchies[0].objects[0] == 0);
 
    edit->revert(edit_context);
 
@@ -670,16 +666,142 @@ TEST_CASE("edits delete_layer unlink objects", "[Edits]")
    CHECK(world.hintnodes[2].command_post == "Object4");
 
    REQUIRE(world.animation_groups[0].entries.size() == 2);
-   CHECK(world.animation_groups[0].entries[0].object == "Object4");
-   CHECK(world.animation_groups[0].entries[1].object == "Object1");
+   CHECK(world.animation_groups[0].entries[0].object_index == 4);
+   CHECK(world.animation_groups[0].entries[1].object_index == 1);
 
    REQUIRE(world.animation_hierarchies.size() == 2);
 
    REQUIRE(world.animation_hierarchies[0].objects.size() == 2);
-   CHECK(world.animation_hierarchies[0].objects[0] == "Object4");
-   CHECK(world.animation_hierarchies[0].objects[1] == "Object1");
+   CHECK(world.animation_hierarchies[0].objects[0] == 4);
+   CHECK(world.animation_hierarchies[0].objects[1] == 1);
 
    CHECK(world.animation_hierarchies[1].root_object == "Object4");
+}
+
+TEST_CASE("edits delete_layer adjust object indices", "[Edits]")
+{
+   world::world
+      world =
+         {
+            .name = "Test"s,
+
+            .requirements = {{.file_type = "world",
+                              .entries = {"Test", "Test_Middle", "Test_Top",
+                                          "Test_Unlinked"}}},
+
+            .layer_descriptions = {{.name = "[Base]"},
+                                   {.name = "Middle"},
+                                   {.name = "Top"},
+                                   {.name = "Unlinked"}},
+            .game_modes =
+               {
+                  {
+                     .name = "conquest",
+                     .layers = {1},
+                     .requirements = {{
+                        .file_type = "world",
+                        .entries = {"Test_Middle"},
+                     }},
+                  },
+               },
+            .common_layers = {0, 2, 3},
+
+            .objects = {world::entities_init,
+                        std::initializer_list{
+                           object{.name = "Object0", .layer = 3},
+                           object{.name = "Object1", .layer = 3},
+                           object{.name = "Object2", .layer = 2},
+                           object{.name = "Object3", .layer = 1},
+                           object{.name = "Object4", .layer = 3},
+                           object{.name = "Object5", .layer = 3},
+                           object{.name = "Object6", .layer = 3},
+                           object{.name = "Object7", .layer = 1},
+                           object{.name = "Object8", .layer = 1},
+                           object{.name = "Object9", .layer = 1},
+                        }},
+
+            .animation_groups =
+               {
+                  {.max_size = 1},
+                  std::initializer_list{
+                     animation_group{
+                        .name = "Group",
+                        .entries =
+                           {
+                              animation_group::entry{.animation = "Animation", .object_index = 0},
+                              animation_group::entry{.animation = "Animation", .object_index = 1},
+                              animation_group::entry{.animation = "Animation", .object_index = 2},
+                              animation_group::entry{.animation = "Animation", .object_index = 3},
+                              animation_group::entry{.animation = "Animation", .object_index = 4},
+                              animation_group::entry{.animation = "Animation", .object_index = 5},
+                              animation_group::entry{.animation = "Animation", .object_index = 6},
+                              animation_group::entry{.animation = "Animation", .object_index = 7},
+                              animation_group::entry{.animation = "Animation", .object_index = 8},
+                              animation_group::entry{.animation = "Animation", .object_index = 9},
+                           },
+                     },
+                  },
+               },
+
+            .animation_hierarchies =
+               {
+                  {.max_size = 1},
+                  std::initializer_list{
+                     animation_hierarchy{
+                        .root_object = "Object3",
+
+                        .objects = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+                     },
+                  },
+               },
+         };
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   auto edit = make_delete_layer(3, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.animation_groups[0].entries.size() == 5);
+   CHECK(world.animation_groups[0].entries[0].object_index == 0);
+   CHECK(world.animation_groups[0].entries[1].object_index == 1);
+   CHECK(world.animation_groups[0].entries[2].object_index == 2);
+   CHECK(world.animation_groups[0].entries[3].object_index == 3);
+   CHECK(world.animation_groups[0].entries[4].object_index == 4);
+
+   REQUIRE(world.animation_hierarchies[0].objects.size() == 5);
+   CHECK(world.animation_hierarchies[0].objects[0] == 0);
+   CHECK(world.animation_hierarchies[0].objects[1] == 1);
+   CHECK(world.animation_hierarchies[0].objects[2] == 2);
+   CHECK(world.animation_hierarchies[0].objects[3] == 3);
+   CHECK(world.animation_hierarchies[0].objects[4] == 4);
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.animation_groups[0].entries.size() == 10);
+   CHECK(world.animation_groups[0].entries[0].object_index == 0);
+   CHECK(world.animation_groups[0].entries[1].object_index == 1);
+   CHECK(world.animation_groups[0].entries[2].object_index == 2);
+   CHECK(world.animation_groups[0].entries[3].object_index == 3);
+   CHECK(world.animation_groups[0].entries[4].object_index == 4);
+   CHECK(world.animation_groups[0].entries[5].object_index == 5);
+   CHECK(world.animation_groups[0].entries[6].object_index == 6);
+   CHECK(world.animation_groups[0].entries[7].object_index == 7);
+   CHECK(world.animation_groups[0].entries[8].object_index == 8);
+   CHECK(world.animation_groups[0].entries[9].object_index == 9);
+
+   REQUIRE(world.animation_hierarchies[0].objects.size() == 10);
+   CHECK(world.animation_hierarchies[0].objects[0] == 0);
+   CHECK(world.animation_hierarchies[0].objects[1] == 1);
+   CHECK(world.animation_hierarchies[0].objects[2] == 2);
+   CHECK(world.animation_hierarchies[0].objects[3] == 3);
+   CHECK(world.animation_hierarchies[0].objects[4] == 4);
+   CHECK(world.animation_hierarchies[0].objects[5] == 5);
+   CHECK(world.animation_hierarchies[0].objects[6] == 6);
+   CHECK(world.animation_hierarchies[0].objects[7] == 7);
+   CHECK(world.animation_hierarchies[0].objects[8] == 8);
+   CHECK(world.animation_hierarchies[0].objects[9] == 9);
 }
 
 TEST_CASE("edits delete_layer unlink paths", "[Edits]")

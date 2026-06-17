@@ -4,8 +4,9 @@ namespace we::edits {
 
 namespace {
 
+template<typename T>
 struct add_animation_hierarchy_child final : edit<world::edit_context> {
-   add_animation_hierarchy_child(std::vector<std::string>* children, std::string new_child)
+   add_animation_hierarchy_child(std::vector<uint32>* children, uint32 new_child)
       : children{children}, new_child{std::move(new_child)}
    {
    }
@@ -34,18 +35,17 @@ struct add_animation_hierarchy_child final : edit<world::edit_context> {
    void coalesce([[maybe_unused]] edit& other) noexcept override {}
 
 private:
-   std::vector<std::string>* children;
-   std::string new_child;
+   std::vector<uint32>* children;
+   uint32 new_child;
 };
 
 }
 
-auto make_add_animation_hierarchy_child(std::vector<std::string>* children,
-                                        std::string new_child)
+auto make_add_animation_hierarchy_child(std::vector<uint32>* children, uint32 new_child)
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<add_animation_hierarchy_child>(children,
-                                                          std::move(new_child));
+   return std::make_unique<add_animation_hierarchy_child<uint32>>(children,
+                                                                  std::move(new_child));
 }
 
 }

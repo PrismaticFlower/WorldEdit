@@ -1041,7 +1041,6 @@ private:
             bool animation_loops = false;
 
             struct child {
-               std::string name;
                float4x4 transform;
                world::object_id id;
             };

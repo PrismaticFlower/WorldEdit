@@ -25,10 +25,17 @@ namespace we {
 
 namespace {
 
-bool is_unique_entry(const world::animation_group& group,
+bool is_unique_entry(const world::animation_group& group, const world::world& world,
                      std::string_view animation, std::string_view object) noexcept
 {
-   for (auto& entry : group.entries) {
+   for (const world::animation_group::entry& entry : group.entries) {
+      if (string::iequals(entry.animation, animation) and
+          string::iequals(world.objects[entry.object_index].name, object)) {
+         return false;
+      }
+   }
+
+   for (const world::animation_group::entry_broken& entry : group.entries_broken_links) {
       if (string::iequals(entry.animation, animation) and
           string::iequals(entry.object, object)) {
          return false;
@@ -210,24 +217,24 @@ void world_edit::ui_show_animation_group_editor() noexcept
          if (ImGui::BeginChild("##entries")) {
             ImGui::SeparatorText("Entries");
 
-            if (ImGui::BeginChild("##scrolling",
+            if (ImGui::BeginTable("##scrolling", 3,
+                                  ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Borders,
                                   {0.0f, ImGui::GetContentRegionAvail().y -
                                             84.0f * _display_scale})) {
-               for (int32 i = 0; i < std::ssize(selected_group->entries); ++i) {
-                  if (i != 0) ImGui::Separator();
+               ImGui::TableSetupColumn("Animation");
+               ImGui::TableSetupColumn("Object");
+               ImGui::TableSetupColumn("Delete");
+               ImGui::TableHeadersRow();
 
+               for (int32 i = 0; i < std::ssize(selected_group->entries); ++i) {
                   ImGui::PushID(i);
+
+                  ImGui::TableNextRow();
+                  ImGui::TableNextColumn();
 
                   world::animation_group::entry& entry = selected_group->entries[i];
 
-                  const float close_width = ImGui::CalcTextSize("X").x +
-                                            (ImGui::GetStyle().FramePadding.x * 2.0f);
-                  const float input_width =
-                     (ImGui::CalcItemWidth() -
-                      (ImGui::GetStyle().ItemInnerSpacing.x * 2.0f) - close_width) *
-                     0.5f;
-
-                  ImGui::SetNextItemWidth(input_width);
+                  ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
                   if (absl::InlinedVector<char, 256> buffer{entry.animation.begin(),
                                                             entry.animation.end()};
@@ -273,31 +280,75 @@ void world_edit::ui_show_animation_group_editor() noexcept
                      }
                   }
 
-                  ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+                  ImGui::TableNextColumn();
 
-                  ImGui::SetNextItemWidth(input_width);
+                  ImGui::TextUnformatted(
+                     _world.objects[entry.object_index].name.c_str());
 
-                  if (absl::InlinedVector<char, 256> buffer{entry.object.begin(),
-                                                            entry.object.end()};
-                      ImGui::InputTextAutoComplete("##object", &buffer, [&]() noexcept {
-                         std::array<std::string_view, 6> entries;
+                  if (ImGui::IsItemHovered() and
+                      ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
+                     _interaction_targets.selection.add(
+                        _world.objects[entry.object_index].id);
+
+                     ImGui::SetWindowFocus("Selection");
+                  }
+
+                  ImGui::TableNextColumn();
+
+                  if (ImGui::Button("X")) {
+                     _edit_stack_world.apply(edits::make_delete_animation_group_entry(
+                                                &selected_group->entries, i),
+                                             _edit_context);
+                  }
+
+                  ImGui::PopID();
+               }
+
+               if (not selected_group->entries_broken_links.empty()) {
+                  ImGui::TableNextRow();
+                  ImGui::TableNextColumn();
+                  ImGui::Text("Broken Links Entries");
+                  ImGui::TableNextColumn();
+                  ImGui::TableNextColumn();
+               }
+
+               for (int32 i = 0;
+                    i < std::ssize(selected_group->entries_broken_links); ++i) {
+                  ImGui::PushID(
+                     static_cast<int32>(i + std::ssize(selected_group->entries)));
+
+                  ImGui::TableNextRow();
+                  ImGui::TableNextColumn();
+
+                  world::animation_group::entry_broken& entry =
+                     selected_group->entries_broken_links[i];
+
+                  ImGui::TableNextColumn();
+
+                  ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+                  if (absl::InlinedVector<char, 256> buffer{entry.animation.begin(),
+                                                            entry.animation.end()};
+                      ImGui::InputTextAutoComplete("##animation", &buffer, [&]() noexcept {
+                         std::array<std::string_view, 6> entries_broken_links;
                          std::size_t matching_count = 0;
 
-                         for (const world::object& object : _world.objects) {
-                            if (matching_count == entries.size()) break;
+                         for (const world::animation& animation : _world.animations) {
+                            if (matching_count == entries_broken_links.size())
+                               break;
 
-                            if (string::icontains(object.name, entry.object)) {
-                               entries[matching_count] = object.name;
+                            if (string::icontains(animation.name, entry.animation)) {
+                               entries_broken_links[matching_count] = animation.name;
 
                                ++matching_count;
                             }
                          }
 
-                         return entries;
+                         return entries_broken_links;
                       })) {
                      _edit_stack_world.apply(edits::make_set_vector_value(
-                                                &selected_group->entries, i,
-                                                &world::animation_group::entry::object,
+                                                &selected_group->entries_broken_links,
+                                                i, &world::animation_group::entry_broken::animation,
                                                 {buffer.data(), buffer.size()}),
                                              _edit_context);
                   }
@@ -306,36 +357,53 @@ void world_edit::ui_show_animation_group_editor() noexcept
                      _edit_stack_world.close_last();
                   }
 
-                  if (ImGui::IsItemHovered() and
-                      ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
-                     const world::object* object =
-                        world::find_entity(_world.objects,
-                                           selected_group->entries[i].object);
+                  ImGui::TableNextColumn();
 
-                     if (object) {
-                        _interaction_targets.selection.add(object->id);
+                  ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
-                        ImGui::SetWindowFocus("Selection");
-                     }
-                  }
+                  if (absl::InlinedVector<char, 256> buffer{entry.object.begin(),
+                                                            entry.object.end()};
+                      ImGui::InputTextAutoComplete("##object", &buffer, [&]() noexcept {
+                         std::array<std::string_view, 6> entries_broken_links;
+                         std::size_t matching_count = 0;
 
-                  ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+                         for (const world::object& object : _world.objects) {
+                            if (matching_count == entries_broken_links.size())
+                               break;
 
-                  if (ImGui::Button("X", {close_width, 0.0f})) {
-                     _edit_stack_world.apply(edits::make_delete_animation_group_entry(
-                                                &selected_group->entries, i),
+                            if (string::icontains(object.name, entry.object)) {
+                               entries_broken_links[matching_count] = object.name;
+
+                               ++matching_count;
+                            }
+                         }
+
+                         return entries_broken_links;
+                      })) {
+                     _edit_stack_world.apply(edits::make_set_vector_value(
+                                                &selected_group->entries_broken_links,
+                                                i, &world::animation_group::entry_broken::object,
+                                                {buffer.data(), buffer.size()}),
                                              _edit_context);
                   }
 
-                  ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
 
-                  ImGui::Text("Animation-Object");
+                  ImGui::TableNextColumn();
+
+                  if (ImGui::Button("X")) {
+                     _edit_stack_world.apply(edits::make_delete_animation_group_entry(
+                                                &selected_group->entries_broken_links, i),
+                                             _edit_context);
+                  }
 
                   ImGui::PopID();
                }
-            }
 
-            ImGui::EndChild();
+               ImGui::EndTable();
+            }
 
             if (ImGui::BeginChild("##add_new_entry")) {
                ImGui::SeparatorText("Add New Entry");
@@ -404,20 +472,30 @@ void world_edit::ui_show_animation_group_editor() noexcept
                ImGui::BeginDisabled(
                   _animation_group_editor_config.new_entry_animation_name.empty() or
                   _animation_group_editor_config.new_entry_object_name.empty() or
-                  not is_unique_entry(*selected_group,
+                  not is_unique_entry(*selected_group, _world,
                                       _animation_group_editor_config.new_entry_animation_name,
                                       _animation_group_editor_config.new_entry_object_name));
 
                if (ImGui::Button("Add Entry", {item_wdith, 0.0f})) {
-                  _edit_stack_world.apply(
-                     edits::make_add_animation_group_entry(
-                        &selected_group->entries,
-                        {.animation = _animation_group_editor_config.new_entry_animation_name,
-                         .object = _animation_group_editor_config.new_entry_object_name}),
-                     _edit_context);
+                  const world::object* object =
+                     world::find_entity(_world.objects,
+                                        _animation_group_editor_config.new_entry_object_name);
 
-                  _animation_group_editor_config.new_entry_animation_name.clear();
-                  _animation_group_editor_config.new_entry_object_name.clear();
+                  if (object) {
+                     _edit_stack_world
+                        .apply(edits::make_add_animation_group_entry(
+                                  &selected_group->entries,
+                                  {.animation = _animation_group_editor_config.new_entry_animation_name,
+                                   .object_index = static_cast<uint32>(
+                                      object - _world.objects.data())}),
+                               _edit_context);
+
+                     _animation_group_editor_config.new_entry_animation_name.clear();
+                     _animation_group_editor_config.new_entry_object_name.clear();
+                  }
+                  else {
+                     ImGui::OpenPopup("Missing Object");
+                  }
                }
 
                ImGui::EndDisabled();
@@ -428,6 +506,14 @@ void world_edit::ui_show_animation_group_editor() noexcept
                   _world_draw_mask.objects = true;
                   _world_hit_mask.objects = true;
                   _animation_group_editor_context.pick_object = {.active = true};
+               }
+
+               if (ImGui::BeginPopup("Missing Object")) {
+                  ImGui::Text("Object %s does not exist.",
+                              _animation_group_editor_config
+                                 .new_entry_object_name.c_str());
+
+                  ImGui::EndPopup();
                }
             }
 
@@ -470,7 +556,7 @@ void world_edit::ui_show_animation_group_editor() noexcept
                   selected_group->entries[i];
 
                if (cache_entry.animation_name != entry.animation or
-                   cache_entry.object_name != entry.object) {
+                   cache_entry.object != _world.objects[entry.object_index].id) {
                   playback_cache_dirty = true;
                }
 
@@ -481,7 +567,7 @@ void world_edit::ui_show_animation_group_editor() noexcept
                                         cache_entry.animation_hierarchy);
 
                   if (hierarchy) {
-                     if (not string::iequals(cache_entry.object_name,
+                     if (not string::iequals(_world.objects[entry.object_index].name,
                                              hierarchy->root_object)) {
                         playback_cache_dirty = true;
                      }
@@ -493,8 +579,8 @@ void world_edit::ui_show_animation_group_editor() noexcept
                      if (hierarchy->objects.size() == cache_entry.children.size()) {
                         for (uint32 child_index = 0;
                              child_index < hierarchy->objects.size(); ++child_index) {
-                           if (hierarchy->objects[child_index] !=
-                               cache_entry.children[child_index].name) {
+                           if (_world.objects[hierarchy->objects[child_index]].id !=
+                               cache_entry.children[child_index].id) {
                               playback_cache_dirty = true;
                            }
                         }
@@ -508,26 +594,22 @@ void world_edit::ui_show_animation_group_editor() noexcept
             playback_cache.clear();
             playback_cache.resize(selected_group->entries.size());
 
-            for (const world::object& object : _world.objects) {
-               for (uint32 i = 0; i < selected_group->entries.size(); ++i) {
-                  const world::animation_group::entry& entry =
-                     selected_group->entries[i];
+            for (uint32 i = 0; i < selected_group->entries.size(); ++i) {
+               const world::animation_group::entry& entry =
+                  selected_group->entries[i];
 
-                  if (string::iequals(object.name, entry.object)) {
-                     playback_cache[i].object_name = entry.object;
-                     playback_cache[i].object = object.id;
-                     playback_cache[i].base_position = object.position;
-                     playback_cache[i].base_rotation = object.rotation;
+               const world::object& object = _world.objects[entry.object_index];
 
-                     const quaternion inverse_rotation = conjugate(object.rotation);
+               playback_cache[i].object_name = object.name;
+               playback_cache[i].object = object.id;
+               playback_cache[i].base_position = object.position;
+               playback_cache[i].base_rotation = object.rotation;
 
-                     playback_cache[i].inverse_base_rotation = inverse_rotation;
-                     playback_cache[i].inverse_base_position =
-                        inverse_rotation * -object.position;
+               const quaternion inverse_rotation = conjugate(object.rotation);
 
-                     break;
-                  }
-               }
+               playback_cache[i].inverse_base_rotation = inverse_rotation;
+               playback_cache[i].inverse_base_position =
+                  inverse_rotation * -object.position;
             }
 
             for (const world::animation& animation : _world.animations) {
@@ -550,21 +632,16 @@ void world_edit::ui_show_animation_group_editor() noexcept
                   if (string::iequals(hierarchy.root_object, entry.object_name)) {
                      entry.children.reserve(hierarchy.objects.size());
 
-                     for (const auto& child_name : hierarchy.objects) {
-                        for (const world::object& object : _world.objects) {
-                           if (not string::iequals(child_name, object.name)) {
-                              continue;
-                           }
+                     for (const uint32 object_index : hierarchy.objects) {
+                        const world::object& object = _world.objects[object_index];
 
-                           float4x4 transform =
-                              to_matrix(object.rotation * entry.inverse_base_rotation);
-                           transform[3] = {entry.inverse_base_rotation * object.position +
-                                              entry.inverse_base_position,
-                                           1.0f};
+                        float4x4 transform =
+                           to_matrix(object.rotation * entry.inverse_base_rotation);
+                        transform[3] = {entry.inverse_base_rotation * object.position +
+                                           entry.inverse_base_position,
+                                        1.0f};
 
-                           entry.children.emplace_back(child_name, transform,
-                                                       object.id);
-                        }
+                        entry.children.emplace_back(transform, object.id);
                      }
 
                      entry.animation_hierarchy = hierarchy.id;
@@ -624,8 +701,7 @@ void world_edit::ui_show_animation_group_editor() noexcept
                _tool_visualizers.add_ghost_object(transform, entry.object);
 
                if (not selected_group->disable_hierarchies) {
-                  for (const auto& [child_name, child_transform, child_id] :
-                       entry.children) {
+                  for (const auto& [child_transform, child_id] : entry.children) {
                      _tool_visualizers.add_ghost_object(transform * child_transform,
                                                         child_id);
                   }
@@ -668,18 +744,15 @@ void world_edit::ui_show_animation_group_editor() noexcept
 
    if (_animation_group_editor_context.pick_object.finish) {
       if (hovered_object) {
-         const world::object& object = _world.objects[hovered_object->index];
-
-         _animation_group_editor_config.new_entry_object_name = object.name;
-
          if (selected_group and
              not _animation_group_editor_config.new_entry_animation_name.empty()) {
-            _edit_stack_world.apply(
-               edits::make_add_animation_group_entry(
-                  &selected_group->entries,
-                  {.animation = _animation_group_editor_config.new_entry_animation_name,
-                   .object = _animation_group_editor_config.new_entry_object_name}),
-               _edit_context);
+
+            _edit_stack_world.apply(edits::make_add_animation_group_entry(
+                                       &selected_group->entries,
+                                       {.animation =
+                                           _animation_group_editor_config.new_entry_animation_name,
+                                        .object_index = hovered_object->index}),
+                                    _edit_context);
 
             _animation_group_editor_config.new_entry_animation_name.clear();
             _animation_group_editor_config.new_entry_object_name.clear();

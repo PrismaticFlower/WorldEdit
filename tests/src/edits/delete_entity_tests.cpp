@@ -860,6 +860,16 @@ TEST_CASE("edits delete_entity animation ref object", "[Edits]")
 
                   .id = world::object_id{0},
                },
+               world::object{
+                  .name = "other_object"s,
+
+                  .id = world::object_id{1},
+               },
+               world::object{
+                  .name = "other_other_object"s,
+
+                  .id = world::object_id{2},
+               },
             },
          },
       .animation_groups =
@@ -870,10 +880,9 @@ TEST_CASE("edits delete_entity animation ref object", "[Edits]")
                   .entries =
                      {
 
-                        world::animation_group::entry{"anim0", "other_object"},
-                        world::animation_group::entry{"anim1", "test_object"},
-                        world::animation_group::entry{"anim2",
-                                                      "other_other_object"},
+                        world::animation_group::entry{"anim0", 1},
+                        world::animation_group::entry{"anim1", 0},
+                        world::animation_group::entry{"anim2", 2},
 
                      },
                },
@@ -884,7 +893,7 @@ TEST_CASE("edits delete_entity animation ref object", "[Edits]")
             pinned_vector_init{world::max_animation_hierarchies, 256},
             std::initializer_list{
                world::animation_hierarchy{
-                  .objects = {"other_object", "test_object", "other_other_object"},
+                  .objects = {1, 0, 2},
                },
                world::animation_hierarchy{
                   .root_object = "test_object",
@@ -903,32 +912,32 @@ TEST_CASE("edits delete_entity animation ref object", "[Edits]")
 
    REQUIRE(world.animation_groups[0].entries.size() == 2);
    CHECK(world.animation_groups[0].entries[0].animation == "anim0");
-   CHECK(world.animation_groups[0].entries[0].object == "other_object");
+   CHECK(world.animation_groups[0].entries[0].object_index == 0);
    CHECK(world.animation_groups[0].entries[1].animation == "anim2");
-   CHECK(world.animation_groups[0].entries[1].object == "other_other_object");
+   CHECK(world.animation_groups[0].entries[1].object_index == 1);
 
    REQUIRE(world.animation_hierarchies.size() == 1);
 
    REQUIRE(world.animation_hierarchies[0].objects.size() == 2);
-   CHECK(world.animation_hierarchies[0].objects[0] == "other_object");
-   CHECK(world.animation_hierarchies[0].objects[1] == "other_other_object");
+   CHECK(world.animation_hierarchies[0].objects[0] == 0);
+   CHECK(world.animation_hierarchies[0].objects[1] == 1);
 
    edit->revert(edit_context);
 
    REQUIRE(world.animation_groups[0].entries.size() == 3);
    CHECK(world.animation_groups[0].entries[0].animation == "anim0");
-   CHECK(world.animation_groups[0].entries[0].object == "other_object");
+   CHECK(world.animation_groups[0].entries[0].object_index == 1);
    CHECK(world.animation_groups[0].entries[1].animation == "anim1");
-   CHECK(world.animation_groups[0].entries[1].object == "test_object");
+   CHECK(world.animation_groups[0].entries[1].object_index == 0);
    CHECK(world.animation_groups[0].entries[2].animation == "anim2");
-   CHECK(world.animation_groups[0].entries[2].object == "other_other_object");
+   CHECK(world.animation_groups[0].entries[2].object_index == 2);
 
    REQUIRE(world.animation_hierarchies.size() == 2);
 
    REQUIRE(world.animation_hierarchies[0].objects.size() == 3);
-   CHECK(world.animation_hierarchies[0].objects[0] == "other_object");
-   CHECK(world.animation_hierarchies[0].objects[1] == "test_object");
-   CHECK(world.animation_hierarchies[0].objects[2] == "other_other_object");
+   CHECK(world.animation_hierarchies[0].objects[0] == 1);
+   CHECK(world.animation_hierarchies[0].objects[1] == 0);
+   CHECK(world.animation_hierarchies[0].objects[2] == 2);
 
    CHECK(world.animation_hierarchies[1].root_object == "test_object");
 }

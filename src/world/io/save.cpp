@@ -766,7 +766,14 @@ void save_animations(const io::path& path, const world& world)
          file.write_ln("\tDisableHierarchies();");
       }
 
-      for (auto& entry : group.entries) {
+      for (const animation_group::entry& entry : group.entries) {
+         if (world.objects[entry.object_index].name.empty()) continue;
+
+         file.write_ln("\tAnimation(\"{}\", \"{}\");", entry.animation,
+                       world.objects[entry.object_index].name);
+      }
+
+      for (const animation_group::entry_broken& entry : group.entries_broken_links) {
          file.write_ln("\tAnimation(\"{}\", \"{}\");", entry.animation, entry.object);
       }
 
@@ -777,7 +784,13 @@ void save_animations(const io::path& path, const world& world)
       file.write_ln("Hierarchy(\"{}\")", hierarchy.root_object);
       file.write_ln("{");
 
-      for (auto& object : hierarchy.objects) {
+      for (const uint32 object_index : hierarchy.objects) {
+         if (world.objects[object_index].name.empty()) continue;
+
+         file.write_ln("\tObj(\"{}\");", world.objects[object_index].name);
+      }
+
+      for (const std::string& object : hierarchy.objects_broken_links) {
          file.write_ln("\tObj(\"{}\");", object);
       }
 

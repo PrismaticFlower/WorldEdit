@@ -706,6 +706,7 @@
     <ClInclude Include="src\munge\builtin\utility\bf_crc32.hpp" />
     <ClInclude Include="src\munge\builtin\executor.hpp" />
     <ClInclude Include="src\allocators\temp_buffer_allocator.hpp" />
+    <ClInclude Include="src\edits\delete_vector_entry.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

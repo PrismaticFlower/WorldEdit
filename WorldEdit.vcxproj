@@ -820,6 +820,7 @@
     <ClInclude Include="src\edits\delete_sector_object.hpp" />
     <ClInclude Include="src\edits\delete_sector_point.hpp" />
     <ClInclude Include="src\edits\delete_sun_flare.hpp" />
+    <ClInclude Include="src\edits\delete_vector_entry.hpp" />
     <ClInclude Include="src\edits\delete_world_req_list.hpp" />
     <ClInclude Include="src\edits\edit.hpp" />
     <ClInclude Include="src\edits\game_mode_link_layer.hpp" />

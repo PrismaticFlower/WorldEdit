@@ -1,0 +1,46 @@
+Version(3);
+SaveType(0);
+
+Camera("camera")
+{
+	Rotation(-0.488, -0.467, -0.533, 0.509);
+	Position(50.513, 99.795, -4.648);
+	FieldOfView(55.400);
+	NearPlane(1.000);
+	FarPlane(1100.000);
+	ZoomFactor(1.000);
+	Bookmark(0.000, 0.000, 0.000,  1.000, 0.000, 0.000, 0.000);
+	Bookmark(0.000, 0.000, 0.000,  1.000, 0.000, 0.000, 0.000);
+	Bookmark(0.000, 0.000, 0.000,  1.000, 0.000, 0.000, 0.000);
+	Bookmark(0.000, 0.000, 0.000,  1.000, 0.000, 0.000, 0.000);
+	Bookmark(0.000, 0.000, 0.000,  1.000, 0.000, 0.000, 0.000);
+	Bookmark(0.000, 0.000, 0.000,  1.000, 0.000, 0.000, 0.000);
+	Bookmark(0.000, 0.000, 0.000,  1.000, 0.000, 0.000, 0.000);
+	Bookmark(0.000, 0.000, 0.000,  1.000, 0.000, 0.000, 0.000);
+	Bookmark(0.000, 0.000, 0.000,  1.000, 0.000, 0.000, 0.000);
+	Bookmark(0.000, 0.000, 0.000,  1.000, 0.000, 0.000, 0.000);
+}
+LightName("test.LGT");
+TerrainName("test.ter");
+SkyName("test.sky");
+ScriptName("DummyScript.dll");
+ControllerManager("StandardCtrlMgr");
+
+WorldExtents()
+{
+	Min(0.000000, 0.000000, 0.000000);
+	Max(0.000000, 0.000000, 0.000000);
+}
+
+NextSequence(-1057495020);
+
+Object("com_item_healthrecharge", "com_item_healthrecharge", -1057495021)
+{
+	ChildRotation(1.000, 0.000, 0.000, 0.000);
+	ChildPosition(-32.000, 0.008, -32.000);
+	SeqNo(-1057495021);
+	Team(0);
+	NetworkId(-1);
+	EffectRegion("");
+	Radius("5.0");
+}

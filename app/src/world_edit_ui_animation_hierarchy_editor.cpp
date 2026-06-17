@@ -20,9 +20,14 @@ namespace we {
 
 namespace {
 
-bool has_child(const world::animation_hierarchy& hierarchy, std::string_view name) noexcept
+bool has_child(const world::animation_hierarchy& hierarchy,
+               const world::world& world, std::string_view name) noexcept
 {
-   for (const std::string& child : hierarchy.objects) {
+   for (const uint32 child_index : hierarchy.objects) {
+      if (string::iequals(world.objects[child_index].name, name)) return true;
+   }
+
+   for (const std::string& child : hierarchy.objects_broken_links) {
       if (string::iequals(child, name)) return true;
    }
 
@@ -181,6 +186,53 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                                {0.0f, ImGui::GetContentRegionAvail().y -
                                          104.0f * _display_scale})) {
             for (int32 i = 0; i < std::ssize(selected_hierarchy->objects); ++i) {
+               const uint32 object_index = selected_hierarchy->objects[i];
+
+               ImGui::PushID(i);
+
+               const float close_width = ImGui::CalcTextSize("X").x +
+                                         (ImGui::GetStyle().FramePadding.x * 2.0f);
+               const float input_width = ImGui::CalcItemWidth() -
+                                         ImGui::GetStyle().ItemInnerSpacing.x -
+                                         close_width;
+
+               ImGui::SetNextItemWidth(input_width);
+
+               ImGui::TextUnformatted(_world.objects[object_index].name.c_str());
+
+               if (ImGui::IsItemDeactivatedAfterEdit()) {
+                  _edit_stack_world.close_last();
+               }
+
+               if (ImGui::IsItemHovered()) {
+                  _interaction_targets.hovered_entity =
+                     _world.objects[object_index].id;
+
+                  if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
+                     _interaction_targets.selection.add(
+                        _world.objects[object_index].id);
+
+                     ImGui::SetWindowFocus("Selection");
+                  }
+               }
+
+               ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+               if (ImGui::Button("X", {close_width, 0.0f})) {
+                  _edit_stack_world.apply(edits::make_delete_animation_hierarchy_child(
+                                             &selected_hierarchy->objects, i),
+                                          _edit_context);
+               }
+
+               ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+               ImGui::Text("Object");
+
+               ImGui::PopID();
+            }
+
+            for (int32 i = 0;
+                 i < std::ssize(selected_hierarchy->objects_broken_links); ++i) {
                ImGui::PushID(i);
 
                const float close_width = ImGui::CalcTextSize("X").x +
@@ -192,55 +244,24 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                ImGui::SetNextItemWidth(input_width);
 
                if (absl::InlinedVector<char, 256>
-                      buffer{selected_hierarchy->objects[i].begin(),
-                             selected_hierarchy->objects[i].end()};
-                   ImGui::InputTextAutoComplete("##object", &buffer, [&]() noexcept {
-                      std::array<std::string_view, 6> entries;
-                      std::size_t matching_count = 0;
-
-                      for (const world::object& object : _world.objects) {
-                         if (matching_count == entries.size()) break;
-
-                         if (string::icontains(object.name,
-                                               selected_hierarchy->objects[i])) {
-                            entries[matching_count] = object.name;
-
-                            ++matching_count;
-                         }
-                      }
-
-                      return entries;
-                   })) {
-                  _edit_stack_world.apply(
-                     edits::make_set_vector_value(&selected_hierarchy->objects, i,
-                                                  {buffer.data(), buffer.size()}),
-                     _edit_context);
+                      buffer{selected_hierarchy->objects_broken_links[i].begin(),
+                             selected_hierarchy->objects_broken_links[i].end()};
+                   ImGui::InputText("(Missing Object)", &buffer)) {
+                  _edit_stack_world.apply(edits::make_set_vector_value(
+                                             &selected_hierarchy->objects_broken_links,
+                                             i, {buffer.data(), buffer.size()}),
+                                          _edit_context);
                }
 
                if (ImGui::IsItemDeactivatedAfterEdit()) {
                   _edit_stack_world.close_last();
                }
 
-               if (ImGui::IsItemHovered()) {
-                  const world::object* object =
-                     world::find_entity(_world.objects,
-                                        selected_hierarchy->objects[i]);
-
-                  if (object) _interaction_targets.hovered_entity = object->id;
-
-                  if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft) and
-                      object) {
-                     _interaction_targets.selection.add(object->id);
-
-                     ImGui::SetWindowFocus("Selection");
-                  }
-               }
-
                ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 
                if (ImGui::Button("X", {close_width, 0.0f})) {
                   _edit_stack_world.apply(edits::make_delete_animation_hierarchy_child(
-                                             &selected_hierarchy->objects, i),
+                                             &selected_hierarchy->objects_broken_links, i),
                                           _edit_context);
                }
 
@@ -285,19 +306,29 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                _animation_hierarchy_editor_config.new_child_object_name.empty() or
                string::iequals(selected_hierarchy->root_object,
                                _animation_hierarchy_editor_config.new_child_object_name) or
-               has_child(*selected_hierarchy,
+               has_child(*selected_hierarchy, _world,
                          _animation_hierarchy_editor_config.new_child_object_name));
 
             const float button_width =
                (ImGui::CalcItemWidth() - ImGui::GetStyle().ItemInnerSpacing.x) * 0.5f;
 
             if (ImGui::Button("Add Entry", {button_width, 0.0f})) {
-               _edit_stack_world.apply(edits::make_add_animation_hierarchy_child(
-                                          &selected_hierarchy->objects,
-                                          _animation_hierarchy_editor_config.new_child_object_name),
-                                       _edit_context);
+               const world::object* object =
+                  world::find_entity(_world.objects,
+                                     _animation_hierarchy_editor_config.new_child_object_name);
 
-               _animation_hierarchy_editor_config.new_child_object_name.clear();
+               if (object) {
+                  _edit_stack_world.apply(edits::make_add_animation_hierarchy_child(
+                                             &selected_hierarchy->objects,
+                                             static_cast<uint32>(
+                                                _world.objects.data() - object)),
+                                          _edit_context);
+
+                  _animation_hierarchy_editor_config.new_child_object_name.clear();
+               }
+               else {
+                  ImGui::OpenPopup("Missing Object");
+               }
             }
 
             ImGui::EndDisabled();
@@ -310,6 +341,14 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                _animation_hierarchy_editor_context.pick_object =
                   {.target = animation_hierarchy_editor_context::pick_object::target::child,
                    .active = true};
+            }
+
+            if (ImGui::BeginPopup("Missing Object")) {
+               ImGui::Text("Object %s does not exist.",
+                           _animation_hierarchy_editor_config
+                              .new_child_object_name.c_str());
+
+               ImGui::EndPopup();
             }
          }
 
@@ -381,9 +420,11 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
 
             if (selected_hierarchy and
                 not string::iequals(selected_hierarchy->root_object, object.name) and
-                not has_child(*selected_hierarchy, object.name)) {
+                not has_child(*selected_hierarchy, _world, object.name)) {
+
                _edit_stack_world.apply(edits::make_add_animation_hierarchy_child(
-                                          &selected_hierarchy->objects, object.name),
+                                          &selected_hierarchy->objects,
+                                          hovered_object->index),
                                        _edit_context);
             }
 
