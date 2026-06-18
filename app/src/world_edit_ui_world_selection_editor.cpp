@@ -1418,8 +1418,20 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   if (ImGui::BeginCombo("Command Post", hintnode->command_post
                                                            .name_lookup(_world)
                                                            .c_str())) {
+                     if (ImGui::Selectable("<clear>")) {
+                        _edit_stack_world
+                           .apply(edits::make_set_value(&hintnode->command_post,
+                                                        world::object_optional_link{}),
+
+                                  _edit_context, {.closed = true});
+                     }
+
+                     ImGui::Separator();
+
                      for (uint32 object_index = 0;
                           object_index < _world.objects.size(); ++object_index) {
+                        ImGui::PushID(object_index);
+
                         const world::object& object = _world.objects[object_index];
 
                         if (object.name.empty()) continue;
@@ -1434,11 +1446,29 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                  .apply(edits::make_set_value(&hintnode->command_post,
                                                               world::object_optional_link{
                                                                  object_index}),
-                                        _edit_context);
+                                        _edit_context, {.closed = true});
+                           }
+
+                           if (ImGui::IsItemHovered()) {
+                              _interaction_targets.hovered_entity = object.id;
                            }
                         }
+
+                        ImGui::PopID();
                      }
+
                      ImGui::EndCombo();
+                  }
+
+                  if (hintnode->command_post.has_index() and ImGui::IsItemHovered()) {
+                     _interaction_targets.hovered_entity =
+                        _world.objects[hintnode->command_post.index()].id;
+
+                     if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
+                        _interaction_targets.selection.clear();
+                        _interaction_targets.selection.add(
+                           _world.objects[hintnode->command_post.index()].id);
+                     }
                   }
                }
 
@@ -6558,15 +6588,43 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       }
 
       if (are_flags_set(flags, multi_select_flags::has_hintnode_command_post)) {
+         const world::object_optional_link command_post =
+            properties.hintnode.command_post.value_or(world::object_optional_link{});
+         const bool is_different = properties.hintnode.command_post.is_different();
+
          if (ImGui::BeginCombo("Command Post",
-                               properties.hintnode.command_post.is_different()
+                               is_different
                                   ? "<different>"
-                                  : properties.hintnode.command_post
-                                       .value_or(world::object_optional_link{})
-                                       .name_lookup(_world)
-                                       .c_str())) {
+                                  : command_post.name_lookup(_world).c_str())) {
+            if (ImGui::Selectable("<clear>")) {
+               edits::bundle_vector edit_bundle;
+               edit_bundle.reserve(properties.hintnode.type.count());
+
+               for (const world::selected_entity& selected :
+                    _interaction_targets.selection) {
+                  if (selected.is<world::hintnode_id>()) {
+                     world::hintnode* hintnode =
+                        world::find_entity(_world.hintnodes,
+                                           selected.get<world::hintnode_id>());
+
+                     if (not hintnode) continue;
+
+                     edit_bundle.push_back(
+                        edits::make_set_value(&hintnode->command_post,
+                                              world::object_optional_link{}));
+                  }
+               }
+
+               _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
+                                       _edit_context, {.closed = true});
+            }
+
+            ImGui::Separator();
+
             for (uint32 object_index = 0; object_index < _world.objects.size();
                  ++object_index) {
+               ImGui::PushID(object_index);
+
                const world::object& object = _world.objects[object_index];
 
                if (object.name.empty()) continue;
@@ -6576,7 +6634,10 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
                if (string::iequals(definition.header.class_label,
                                    "commandpost")) {
-                  if (ImGui::Selectable(object.name.c_str())) {
+                  const bool object_is_selected =
+                     not is_different and command_post == object_index;
+
+                  if (ImGui::Selectable(object.name.c_str(), object_is_selected)) {
                      edits::bundle_vector edit_bundle;
                      edit_bundle.reserve(properties.hintnode.type.count());
 
@@ -6599,9 +6660,28 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                      _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
                                              _edit_context, {.closed = true});
                   }
+
+                  if (ImGui::IsItemHovered()) {
+                     _interaction_targets.hovered_entity = object.id;
+                  }
                }
+
+               ImGui::PopID();
             }
+
             ImGui::EndCombo();
+         }
+
+         if (not properties.hintnode.command_post.is_different() and
+             command_post.has_index() and ImGui::IsItemHovered()) {
+            _interaction_targets.hovered_entity =
+               _world.objects[command_post.index()].id;
+
+            if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
+               _interaction_targets.selection.clear();
+               _interaction_targets.selection.add(
+                  _world.objects[command_post.index()].id);
+            }
          }
       }
 

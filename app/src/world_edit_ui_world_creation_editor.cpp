@@ -3097,8 +3097,19 @@ void world_edit::ui_show_world_creation_editor() noexcept
       if (hintnode_traits.has_command_post) {
          if (ImGui::BeginCombo("Command Post",
                                hintnode.command_post.name_lookup(_world).c_str())) {
+            if (ImGui::Selectable("<clear>")) {
+               _edit_stack_world.apply(edits::make_set_value(&hintnode.command_post,
+                                                             world::object_optional_link{}),
+
+                                       _edit_context, {.closed = true});
+            }
+
+            ImGui::Separator();
+
             for (uint32 object_index = 0; object_index < _world.objects.size();
                  ++object_index) {
+               ImGui::PushID(object_index);
+
                const world::object& object = _world.objects[object_index];
 
                if (object.name.empty()) continue;
@@ -3112,10 +3123,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
                      _edit_stack_world.apply(edits::make_set_value(&hintnode.command_post,
                                                                    world::object_optional_link{
                                                                       object_index}),
-                                             _edit_context);
+                                             _edit_context, {.closed = true});
+                  }
+
+                  if (ImGui::IsItemHovered()) {
+                     _interaction_targets.hovered_entity = object.id;
                   }
                }
+
+               ImGui::PopID();
             }
+
             ImGui::EndCombo();
          }
       }
