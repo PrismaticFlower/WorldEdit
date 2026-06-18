@@ -162,6 +162,12 @@ private:
                                 const gizmo_draw_lists& draw_lists,
                                 const settings::graphics& settings);
 
+   void draw_sector_objects(const frustum& view_frustum, const world::world& world,
+                            const world::interaction_targets& interaction_targets,
+                            const world::object_class_library& world_classes,
+                            const settings::graphics& settings,
+                            gpu::graphics_command_list& command_list);
+
    void draw_terrain_cut_visualizers(const frustum& view_frustum,
                                      const settings::graphics& settings,
                                      gpu::graphics_command_list& command_list);
@@ -574,6 +580,11 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                            gizmo_draw_lists, settings);
 
    draw_ai_overlay(back_buffer_rtv, settings, command_list);
+
+   if (active_entity_types.sectors and settings.highlight_sector_objects) {
+      draw_sector_objects(view_frustum, world, interaction_targets,
+                          world_classes, settings, command_list);
+   }
 
    draw_interaction_targets(view_frustum, world, interaction_targets, world_classes,
                             tool_visualizers, settings, command_list);
@@ -2665,6 +2676,123 @@ void renderer_impl::draw_world_meta_objects(
    }
 }
 
+void renderer_impl::draw_sector_objects(
+   const frustum& view_frustum, const world::world& world,
+   const world::interaction_targets& interaction_targets,
+   const world::object_class_library& world_classes,
+   const settings::graphics& settings, gpu::graphics_command_list& command_list)
+{
+   const bool has_sectors =
+      not world.sectors.empty() or
+      interaction_targets.creation_entity.is<world::sector>() or
+      (interaction_targets.creation_entity.is<world::entity_group>() and
+       not interaction_targets.creation_entity.get<world::entity_group>()
+              .sectors.empty());
+
+   if (not has_sectors) return;
+
+   gpu_virtual_address wireframe_constants = [&] {
+      auto allocation =
+         _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
+
+      wireframe_constant_buffer constants{.color = settings.sector_object_hightlight_color};
+
+      std::memcpy(allocation.cpu_address, &constants,
+                  sizeof(wireframe_constant_buffer));
+
+      return allocation.gpu_address;
+   }();
+
+   bool doublesided_pipeline = false;
+
+   command_list.set_graphics_root_signature(_root_signatures.mesh_wireframe.get());
+   command_list.set_graphics_cbv(rs::mesh_wireframe::wireframe_cbv, wireframe_constants);
+   command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
+                                 _camera_constant_buffer_view);
+
+   command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
+
+   command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+
+   const auto draw_model = [&](const model& model, const quaternion& rotation,
+                               const float3& positionWS) {
+      if (not intersects(view_frustum, rotation * model.bbox + positionWS)) {
+         return;
+      }
+
+      gpu_virtual_address object_constants = [&] {
+         auto allocation =
+            _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
+
+         world_mesh_constants constants{};
+
+         constants.world_from_object = to_matrix(rotation);
+         constants.world_from_object[3] = float4{positionWS, 1.0f};
+
+         std::memcpy(allocation.cpu_address, &constants, sizeof(world_mesh_constants));
+
+         return allocation.gpu_address;
+      }();
+
+      command_list.set_graphics_cbv(rs::mesh_wireframe::object_cbv, object_constants);
+
+      command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, model.gpu_buffer.position_vertex_buffer_view);
+
+      for (auto& part : model.parts) {
+         if (std::exchange(doublesided_pipeline,
+                           are_flags_set(part.material.flags,
+                                         material_pipeline_flags::doublesided)) !=
+             doublesided_pipeline) {
+            command_list.set_pipeline_state(
+               doublesided_pipeline ? _pipelines.mesh_wireframe_doublesided.get()
+                                    : _pipelines.mesh_wireframe.get());
+         }
+
+         command_list.draw_indexed_instanced(part.index_count, 1, part.start_index,
+                                             part.start_vertex, 0);
+      }
+   };
+
+   for (const world::sector& sector : world.sectors) {
+      if (sector.hidden) return;
+
+      for (const uint32 object_index : sector.objects) {
+         const world::object& object = world.objects[object_index];
+
+         draw_model(_model_manager[world_classes[object.class_handle].model_name],
+                    object.rotation, object.position);
+      }
+   }
+
+   if (interaction_targets.creation_entity.is<world::sector>()) {
+      for (const uint32 object_index :
+           interaction_targets.creation_entity.get<world::sector>().objects) {
+         const world::object& object = world.objects[object_index];
+
+         draw_model(_model_manager[world_classes[object.class_handle].model_name],
+                    object.rotation, object.position);
+      }
+   }
+   else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+      const world::entity_group& group =
+         interaction_targets.creation_entity.get<world::entity_group>();
+
+      for (const world::sector& sector : group.sectors) {
+         for (const uint32 object_index : sector.objects) {
+            const world::object& object = world.objects[object_index];
+
+            const quaternion object_rotation = group.rotation * object.rotation;
+            const float3 object_positionWS =
+               group.rotation * object.position + group.position;
+
+            draw_model(_model_manager[world_classes[object.class_handle].model_name],
+                       object_rotation, object_positionWS);
+         }
+      }
+   }
+}
+
 void renderer_impl::draw_terrain_cut_visualizers(const frustum& view_frustum,
                                                  const settings::graphics& settings,
                                                  gpu::graphics_command_list& command_list)
@@ -2943,73 +3071,72 @@ void renderer_impl::draw_interaction_targets(
       _meta_draw_batcher.add_octahedron_wireframe(transform, color);
    };
 
+   const auto draw_object = [&](const world::object& object, const float3 color) {
+      model& model = _model_manager[world_classes[object.class_handle].model_name];
+
+      if (not intersects(view_frustum, object.rotation * model.bbox + object.position)) {
+         return;
+      }
+
+      gpu_virtual_address wireframe_constants = [&] {
+         auto allocation =
+            _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
+
+         wireframe_constant_buffer constants{.color = color};
+
+         std::memcpy(allocation.cpu_address, &constants,
+                     sizeof(wireframe_constant_buffer));
+
+         return allocation.gpu_address;
+      }();
+
+      gpu_virtual_address object_constants = [&] {
+         auto allocation =
+            _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
+
+         world_mesh_constants constants{};
+
+         constants.world_from_object = to_matrix(object.rotation);
+         constants.world_from_object[3] = float4{object.position, 1.0f};
+
+         std::memcpy(allocation.cpu_address, &constants, sizeof(world_mesh_constants));
+
+         return allocation.gpu_address;
+      }();
+
+      command_list.set_graphics_root_signature(_root_signatures.mesh_wireframe.get());
+      command_list.set_graphics_cbv(rs::mesh_wireframe::object_cbv, object_constants);
+      command_list.set_graphics_cbv(rs::mesh_wireframe::wireframe_cbv,
+                                    wireframe_constants);
+      command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
+                                    _camera_constant_buffer_view);
+
+      command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
+
+      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+
+      command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, model.gpu_buffer.position_vertex_buffer_view);
+
+      bool doublesided = false;
+
+      for (auto& part : model.parts) {
+         if (std::exchange(doublesided,
+                           are_flags_set(part.material.flags,
+                                         material_pipeline_flags::doublesided)) !=
+             doublesided) {
+            command_list.set_pipeline_state(
+               doublesided ? _pipelines.mesh_wireframe_doublesided.get()
+                           : _pipelines.mesh_wireframe.get());
+         }
+
+         command_list.draw_indexed_instanced(part.index_count, 1, part.start_index,
+                                             part.start_vertex, 0);
+      }
+   };
+
    const auto draw_entity = overload{
-      [&](const world::object& object, const float3 color) {
-         model& model = _model_manager[world_classes[object.class_handle].model_name];
-
-         if (not intersects(view_frustum,
-                            object.rotation * model.bbox + object.position)) {
-            return;
-         }
-
-         gpu_virtual_address wireframe_constants = [&] {
-            auto allocation =
-               _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
-
-            wireframe_constant_buffer constants{.color = color};
-
-            std::memcpy(allocation.cpu_address, &constants,
-                        sizeof(wireframe_constant_buffer));
-
-            return allocation.gpu_address;
-         }();
-
-         gpu_virtual_address object_constants = [&] {
-            auto allocation =
-               _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
-
-            world_mesh_constants constants{};
-
-            constants.world_from_object = to_matrix(object.rotation);
-            constants.world_from_object[3] = float4{object.position, 1.0f};
-
-            std::memcpy(allocation.cpu_address, &constants,
-                        sizeof(world_mesh_constants));
-
-            return allocation.gpu_address;
-         }();
-
-         command_list.set_graphics_root_signature(
-            _root_signatures.mesh_wireframe.get());
-         command_list.set_graphics_cbv(rs::mesh_wireframe::object_cbv, object_constants);
-         command_list.set_graphics_cbv(rs::mesh_wireframe::wireframe_cbv,
-                                       wireframe_constants);
-         command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
-                                       _camera_constant_buffer_view);
-
-         command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
-
-         command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
-
-         command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
-         command_list.ia_set_vertex_buffers(0, model.gpu_buffer.position_vertex_buffer_view);
-
-         bool doublesided = false;
-
-         for (auto& part : model.parts) {
-            if (std::exchange(doublesided,
-                              are_flags_set(part.material.flags,
-                                            material_pipeline_flags::doublesided)) !=
-                doublesided) {
-               command_list.set_pipeline_state(
-                  doublesided ? _pipelines.mesh_wireframe_doublesided.get()
-                              : _pipelines.mesh_wireframe.get());
-            }
-
-            command_list.draw_indexed_instanced(part.index_count, 1, part.start_index,
-                                                part.start_vertex, 0);
-         }
-      },
+      draw_object,
       [&](const world::light& light, const float3 color) {
          if (light.light_type == world::light_type::directional) {
             const float3 light_directionWS =
@@ -3222,6 +3349,12 @@ void renderer_impl::draw_interaction_targets(
             _meta_draw_batcher.add_line_solid(quad[1], quad[2], packed_color);
             _meta_draw_batcher.add_line_solid(quad[2], quad[3], packed_color);
             _meta_draw_batcher.add_line_solid(quad[3], quad[0], packed_color);
+         }
+
+         if (settings.highlight_sector_objects) {
+            for (const uint32 object_index : sector.objects) {
+               draw_object(world.objects[object_index], color * 0.5f);
+            }
          }
       },
       [&](const world::portal& portal, const float3 color) {

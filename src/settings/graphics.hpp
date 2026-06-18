@@ -33,6 +33,8 @@ struct graphics {
 
    float4 sector_color = {0.6f, 0.3f, 1.0f, 0.3f};
 
+   float3 sector_object_hightlight_color = {0.6f, 0.3f, 1.0f};
+
    float4 portal_color = {0.3f, 0.9f, 0.0f, 0.3f};
 
    float4 hintnode_color = {1.0f, 0.6f, 0.0f, 0.45f};
@@ -112,6 +114,8 @@ struct graphics {
    bool show_light_bounds = false;
 
    bool show_hint_node_radii = false;
+
+   bool highlight_sector_objects = false;
 
    bool colorize_foliage_brush = true;
 

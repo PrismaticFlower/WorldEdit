@@ -267,6 +267,9 @@ void show_imgui_editor(settings& settings, bool& open,
 
             ImGui::ColorEdit4("Sector", &graphics.sector_color.x);
 
+            ImGui::ColorEdit3("Sector Object Highlight",
+                              &graphics.sector_object_hightlight_color.x);
+
             ImGui::ColorEdit4("Portal", &graphics.portal_color.x);
 
             ImGui::ColorEdit4("Hintnode", &graphics.hintnode_color.x);
@@ -415,6 +418,9 @@ void show_imgui_editor(settings& settings, bool& open,
                "Show the bounds for point and spot lights in the world.");
 
             ImGui::Checkbox("Show Hint Node Radii", &graphics.show_hint_node_radii);
+
+            ImGui::Checkbox("Highlight Sector Objects",
+                            &graphics.highlight_sector_objects);
 
             ImGui::Checkbox("Visualize Terrain Cutters",
                             &graphics.visualize_terrain_cutters);
