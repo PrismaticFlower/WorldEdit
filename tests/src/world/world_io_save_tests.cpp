@@ -2408,9 +2408,10 @@ TEST_CASE("world saving sector object links", "[World][IO]")
 
    };
 
-   save_world("temp/world/test.wld", world, {});
+   save_world("temp/world_sector_object_links/test.wld", world, {});
 
-   const auto written_pvs = io::read_file_to_string("temp/world/test.pvs");
+   const auto written_pvs =
+      io::read_file_to_string("temp/world_sector_object_links/test.pvs");
 
    CHECK(written_pvs == expected_pvs);
 }
