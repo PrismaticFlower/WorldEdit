@@ -660,7 +660,6 @@
     <ClCompile Include="src\world\io\save_blocks_meshes.cpp" />
     <ClCompile Include="src\world\io\save_effects.cpp" />
     <ClCompile Include="src\world\io\save_entity_group.cpp" />
-    <ClCompile Include="src\world\object_optional_link.cpp" />
     <ClCompile Include="src\world\utility\animation.cpp" />
     <ClCompile Include="src\world\utility\double_click_select.cpp" />
     <ClCompile Include="src\world\utility\drag_select.cpp" />
@@ -1063,7 +1062,7 @@
     <ClInclude Include="src\world\object_class.hpp" />
     <ClInclude Include="src\world\object_class_library.hpp" />
     <ClInclude Include="src\world\object_instance_property.hpp" />
-    <ClInclude Include="src\world\object_optional_link.hpp" />
+    <ClInclude Include="src\world\entity_optional_link.hpp" />
     <ClInclude Include="src\world\path.hpp" />
     <ClInclude Include="src\world\planning.hpp" />
     <ClInclude Include="src\world\portal.hpp" />

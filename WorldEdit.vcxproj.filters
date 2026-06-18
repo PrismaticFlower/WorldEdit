@@ -323,7 +323,6 @@
     <ClCompile Include="src\munge\builtin\executor.cpp" />
     <ClCompile Include="src\allocators\temp_buffer_allocator.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_patch_depthVS.cpp" />
-    <ClCompile Include="src\world\object_optional_link.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -708,7 +707,7 @@
     <ClInclude Include="src\munge\builtin\executor.hpp" />
     <ClInclude Include="src\allocators\temp_buffer_allocator.hpp" />
     <ClInclude Include="src\edits\delete_vector_entry.hpp" />
-    <ClInclude Include="src\world\object_optional_link.hpp" />
+    <ClInclude Include="src\world\entity_optional_link.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

@@ -2,8 +2,8 @@
 
 #include "types.hpp"
 
+#include "entity_optional_link.hpp"
 #include "id.hpp"
-#include "object_optional_link.hpp"
 
 #include "utility/enum_bitflags.hpp"
 
