@@ -31,10 +31,10 @@ Object("com_inv_col_8", "com_inv_col_8")
 
 )";
 
-   world::entity_group group = {
+   entity_group group = {
       .objects =
          {
-            world::object{
+            object{
                .name = "com_item_healthrecharge",
                .rotation = {0.000f, -0.000f, 1.000f, -0.000f},
                .position = float3{-32.000f, 0.008f, 32.000f},
@@ -42,11 +42,11 @@ Object("com_inv_col_8", "com_inv_col_8")
                .class_name = lowercase_string{"com_item_healthrecharge"sv},
                .instance_properties =
                   {
-                     world::instance_property{.key = "EffectRegion", .value = ""},
-                     world::instance_property{.key = "Radius", .value = "5.0"},
+                     instance_property{.key = "EffectRegion", .value = ""},
+                     instance_property{.key = "Radius", .value = "5.0"},
                   },
             },
-            world::object{
+            object{
                .name = "com_inv_col_8",
                .rotation = {0.000f, -0.000f, 1.000f, -0.000f},
                .position = float3{68.000f, 0.000f, -4.000f},
@@ -55,7 +55,7 @@ Object("com_inv_col_8", "com_inv_col_8")
          },
    };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -135,82 +135,81 @@ Light("Light 4")
 
 )";
 
-   world::entity_group group =
-      {
-         .lights =
-            {
-               world::light{
-                  .name = "Light 2",
-                  .rotation = quaternion{0.000000f, 0.054843f, 0.998519f, -0.000000f},
-                  .position = float3{-128.463806f, 0.855094f, 22.575970f},
-                  .color = float3{0.501961f, 0.376471f, 0.376471f},
-                  .static_ = true,
-                  .shadow_caster = false,
-                  .specular_caster = true,
-                  .light_type = light_type::point,
-                  .range = 5.0f,
-               },
-
-               world::light{
-                  .name = "sun",
-                  .rotation = quaternion{-0.039542f, 0.008615f, 0.922373f, -0.384204f},
-                  .position = float3{-159.264923f, 19.331013f, 66.727310f},
-                  .color = float3{1.000000f, 0.882353f, 0.752941f},
-                  .static_ = true,
-                  .shadow_caster = true,
-                  .specular_caster = true,
-                  .light_type = light_type::directional,
-                  .directional_texture_tiling = float2{1.0f, 1.0f},
-                  .directional_texture_offset = float2{0.0f, 0.0f},
-               },
-
-               world::light{
-                  .name = "Light 3",
-                  .rotation = quaternion{0.000000f, -0.000000f, 1.000000f, -0.000000f},
-                  .position = float3{-149.102463f, 0.469788f, -22.194153f},
-                  .color = float3{1.000000, 1.000000, 1.000000},
-                  .static_ = true,
-                  .shadow_caster = true,
-                  .specular_caster = false,
-                  .light_type = light_type::spot,
-                  .bidirectional = true,
-                  .range = 5.0f,
-                  .inner_cone_angle = 0.785398f,
-                  .outer_cone_angle = 0.872665f,
-               },
-
-               world::light{
-                  .name = "Light 1",
-                  .rotation = quaternion{0.380202f, -0.000000f, 0.924904f, -0.000000f},
-                  .position = float3{-129.618546f, 5.019108f, 27.300539f},
-                  .color = float3{0.498039f, 0.498039f, 0.627451f},
-                  .static_ = true,
-                  .shadow_caster = false,
-                  .specular_caster = true,
-                  .light_type = light_type::point,
-                  .range = 16.0f,
-               },
-
-               world::light{
-                  .name = "Light 4",
-                  .rotation = quaternion{0.435918f, 0.610941f, 0.581487f, -0.314004f},
-                  .position = float3{-216.604019f, 2.231649f, 18.720726f},
-                  .color = float3{1.000000f, 0.501961f, 0.501961f},
-                  .static_ = true,
-                  .shadow_caster = false,
-                  .specular_caster = false,
-                  .light_type = light_type::directional_region_sphere,
-                  .ps2_blend_mode = ps2_blend_mode::blend,
-                  .directional_texture_tiling = float2{1.0f, 1.0f},
-                  .directional_texture_offset = float2{0.0f, 0.0f},
-                  .region_name = "lightregion1",
-                  .region_size = float3{4.591324f, 0.100000f, 1.277475f},
-                  .region_rotation = quaternion{0.000f, -0.000f, 1.000f, -0.000f},
-               },
+   entity_group group = {
+      .lights =
+         {
+            light{
+               .name = "Light 2",
+               .rotation = quaternion{0.000000f, 0.054843f, 0.998519f, -0.000000f},
+               .position = float3{-128.463806f, 0.855094f, 22.575970f},
+               .color = float3{0.501961f, 0.376471f, 0.376471f},
+               .static_ = true,
+               .shadow_caster = false,
+               .specular_caster = true,
+               .light_type = light_type::point,
+               .range = 5.0f,
             },
-      };
 
-   world::save_entity_group(path, group);
+            light{
+               .name = "sun",
+               .rotation = quaternion{-0.039542f, 0.008615f, 0.922373f, -0.384204f},
+               .position = float3{-159.264923f, 19.331013f, 66.727310f},
+               .color = float3{1.000000f, 0.882353f, 0.752941f},
+               .static_ = true,
+               .shadow_caster = true,
+               .specular_caster = true,
+               .light_type = light_type::directional,
+               .directional_texture_tiling = float2{1.0f, 1.0f},
+               .directional_texture_offset = float2{0.0f, 0.0f},
+            },
+
+            light{
+               .name = "Light 3",
+               .rotation = quaternion{0.000000f, -0.000000f, 1.000000f, -0.000000f},
+               .position = float3{-149.102463f, 0.469788f, -22.194153f},
+               .color = float3{1.000000, 1.000000, 1.000000},
+               .static_ = true,
+               .shadow_caster = true,
+               .specular_caster = false,
+               .light_type = light_type::spot,
+               .bidirectional = true,
+               .range = 5.0f,
+               .inner_cone_angle = 0.785398f,
+               .outer_cone_angle = 0.872665f,
+            },
+
+            light{
+               .name = "Light 1",
+               .rotation = quaternion{0.380202f, -0.000000f, 0.924904f, -0.000000f},
+               .position = float3{-129.618546f, 5.019108f, 27.300539f},
+               .color = float3{0.498039f, 0.498039f, 0.627451f},
+               .static_ = true,
+               .shadow_caster = false,
+               .specular_caster = true,
+               .light_type = light_type::point,
+               .range = 16.0f,
+            },
+
+            light{
+               .name = "Light 4",
+               .rotation = quaternion{0.435918f, 0.610941f, 0.581487f, -0.314004f},
+               .position = float3{-216.604019f, 2.231649f, 18.720726f},
+               .color = float3{1.000000f, 0.501961f, 0.501961f},
+               .static_ = true,
+               .shadow_caster = false,
+               .specular_caster = false,
+               .light_type = light_type::directional_region_sphere,
+               .ps2_blend_mode = ps2_blend_mode::blend,
+               .directional_texture_tiling = float2{1.0f, 1.0f},
+               .directional_texture_offset = float2{0.0f, 0.0f},
+               .region_name = "lightregion1",
+               .region_size = float3{4.591324f, 0.100000f, 1.277475f},
+               .region_rotation = quaternion{0.000f, -0.000f, 1.000f, -0.000f},
+            },
+         },
+   };
+
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -293,61 +292,59 @@ Path("type_EntityPath Path 1")
 
 )";
 
-   world::entity_group
-      group =
+   entity_group group = {
+      .paths =
          {
-            .paths =
-               {
-                  world::path{
-                     .name = "Path 0",
-                     .type = path_type::none,
-                     .spline_type = path_spline_type::catmull_rom,
-                     .properties =
-                        {
-                           world::path::property{.key = "PropKey", .value = "PropValue"},
-                           world::path::property{.key = "PropEmpty", .value = ""},
-                        },
-                     .nodes =
-                        {
-                           world::path::node{
-                              .rotation = quaternion{0.0f, -0.0f, 1.0f, -0.0f},
-                              .position = float3{-16.041691f, 0.000000f, 31.988783f},
-                              .properties =
-                                 {
-                                    world::path::property{.key = "PropKey", .value = "PropValue"},
-                                    world::path::property{.key = "PropEmpty", .value = ""},
-                                 },
-                           },
-
-                           world::path::node{
-                              .rotation = quaternion{0.0f, -0.0f, 1.0f, -0.0f},
-                              .position = float3{-31.982189f, 0.000000f, 48.033310f},
-                           },
-
-                           world::path::node{
-                              .rotation = quaternion{0.0f, -0.0f, 1.0f, -0.0f},
-                              .position = float3{-48.012756f, 0.000000f, 31.962399f},
-                           },
-                        },
+            {
+               .name = "Path 0",
+               .type = path_type::none,
+               .spline_type = path_spline_type::catmull_rom,
+               .properties =
+                  {
+                     path::property{.key = "PropKey", .value = "PropValue"},
+                     path::property{.key = "PropEmpty", .value = ""},
                   },
-
-                  world::path{
-                     .name = "Path 1",
-                     .type = path_type::entity_follow,
-                     .spline_type = path_spline_type::none,
-
-                     .nodes =
-                        {
-                           world::path::node{
-                              .rotation = quaternion{0.0f, -0.0f, 1.0f, -0.0f},
-                              .position = float3{-16.041691f, 0.000000f, 31.988783f},
+               .nodes =
+                  {
+                     path::node{
+                        .rotation = quaternion{0.0f, -0.0f, 1.0f, -0.0f},
+                        .position = float3{-16.041691f, 0.000000f, 31.988783f},
+                        .properties =
+                           {
+                              path::property{.key = "PropKey", .value = "PropValue"},
+                              path::property{.key = "PropEmpty", .value = ""},
                            },
-                        },
-                  },
-               },
-         };
+                     },
 
-   world::save_entity_group(path, group);
+                     path::node{
+                        .rotation = quaternion{0.0f, -0.0f, 1.0f, -0.0f},
+                        .position = float3{-31.982189f, 0.000000f, 48.033310f},
+                     },
+
+                     path::node{
+                        .rotation = quaternion{0.0f, -0.0f, 1.0f, -0.0f},
+                        .position = float3{-48.012756f, 0.000000f, 31.962399f},
+                     },
+                  },
+            },
+
+            {
+               .name = "Path 1",
+               .type = path_type::entity_follow,
+               .spline_type = path_spline_type::none,
+
+               .nodes =
+                  {
+                     path::node{
+                        .rotation = quaternion{0.0f, -0.0f, 1.0f, -0.0f},
+                        .position = float3{-16.041691f, 0.000000f, 31.988783f},
+                     },
+                  },
+            },
+         },
+   };
+
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -370,10 +367,10 @@ TEST_CASE("world save entity group (regions)", "[World][IO]")
 
 )";
 
-   world::entity_group group = {
+   entity_group group = {
       .regions =
          {
-            world::region{
+            region{
                .name = "Region0",
                .rotation = quaternion{0.000f, -0.000f, 1.000f, -0.000f},
                .position = float3{-32.000000f, 16.000000f, 32.000000f},
@@ -384,7 +381,7 @@ TEST_CASE("world save entity group (regions)", "[World][IO]")
          },
    };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -459,19 +456,19 @@ Sector("Sector-1")
 
 )";
 
-   world::entity_group group = {
+   entity_group group = {
       .objects =
          {
-            world::object{.name = "tat3_bldg_keeper"},
-            world::object{.name = "lod_test120"},
-            world::object{.name = "lod_test2010"},
-            world::object{.name = "lod_test12"},
-            world::object{.name = "lod_test201"},
+            object{.name = "tat3_bldg_keeper"},
+            object{.name = "lod_test120"},
+            object{.name = "lod_test2010"},
+            object{.name = "lod_test12"},
+            object{.name = "lod_test201"},
          },
 
       .sectors =
          {
-            world::sector{
+            sector{
                .name = "sector",
                .base = 0.0f,
                .height = 10.0f,
@@ -485,7 +482,7 @@ Sector("Sector-1")
                .objects = {0},
             },
 
-            world::sector{
+            sector{
                .name = "Sector-1",
                .base = 0.0f,
                .height = 10.0f,
@@ -501,7 +498,7 @@ Sector("Sector-1")
          },
    };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -541,10 +538,10 @@ Sector("Sector-1")
 
 )";
 
-   world::entity_group group = {
+   entity_group group = {
       .sectors =
          {
-            world::sector{
+            sector{
                .name = "sector",
                .base = 0.0f,
                .height = 10.0f,
@@ -558,7 +555,7 @@ Sector("Sector-1")
                .objects_broken_links = {"tat3_bldg_keeper"},
             },
 
-            world::sector{
+            sector{
                .name = "Sector-1",
                .base = 0.0f,
                .height = 10.0f,
@@ -575,7 +572,7 @@ Sector("Sector-1")
          },
    };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -600,10 +597,10 @@ TEST_CASE("world save entity group (portals)", "[World][IO]")
 
 )";
 
-   world::entity_group group = {
+   entity_group group = {
       .portals =
          {
-            world::portal{
+            portal{
                .name = "Portal",
                .rotation = quaternion{0.000f, -0.000f, 1.000f, -0.000f},
                .position = float3{-193.661575f, 2.097009f, 31.728502f},
@@ -615,7 +612,7 @@ TEST_CASE("world save entity group (portals)", "[World][IO]")
          },
    };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -626,6 +623,89 @@ TEST_CASE("world save entity group (hintnodes)", "[World][IO]")
 {
    (void)io::create_directory("temp/entity_groups");
    const io::path path = "temp/entity_groups/test_hintnodes.eng";
+
+   const std::string_view expected_eng =
+      R"(Object("cp0", "")
+{
+	ChildRotation(0.000000, -0.000000, 1.000000, -0.000000);
+	ChildPosition(0.000000, 0.000000, -0.000000);
+	Team(0);
+}
+
+Object("cp1", "")
+{
+	ChildRotation(0.000000, -0.000000, 1.000000, -0.000000);
+	ChildPosition(0.000000, 0.000000, -0.000000);
+	Team(0);
+}
+
+Hint("HintNode0", "5")
+{
+	Position(-70.045296, 1.000582, -19.298828);
+	Rotation(0.303753, 0.399004, -0.569245, -0.651529);
+	Radius(7.692307);
+	Mode(1);
+	CommandPost("cp0");
+}
+
+Hint("HintNode1", "5")
+{
+	Position(-136.048569, 0.500000, -25.761259);
+	Rotation(0.090763, 0.000000, -0.995872, 0.000000);
+	PrimaryStance(7);
+	Mode(3);
+	CommandPost("cp1");
+}
+
+)";
+
+   entity_group group = {
+      .objects =
+         {
+            object{.name = "cp0"},
+            object{.name = "cp1"},
+         },
+
+      .hintnodes =
+         {
+            hintnode{
+               .name = "HintNode0",
+               .rotation = quaternion{-0.569245f, 0.651529f, 0.303753f, -0.399004f},
+               .position = float3{-70.045296f, 1.000582f, 19.298828f},
+               .type = hintnode_type::mine,
+               .mode = hintnode_mode::attack,
+               .radius = 7.692307f,
+               .primary_stance = stance_flags::none,
+               .secondary_stance = stance_flags::none,
+               .command_post = 0,
+            },
+
+            hintnode{
+               .name = "HintNode1",
+               .rotation = quaternion{-0.995872f, -0.000000f, 0.090763f, -0.000000f},
+               .position = float3{-136.048569f, 0.500000f, 25.761259f},
+               .type = hintnode_type::mine,
+               .mode = hintnode_mode::both,
+               .radius = 0.0f,
+               .primary_stance =
+                  (stance_flags::stand | stance_flags::crouch | stance_flags::prone),
+               .secondary_stance = stance_flags::none,
+               .command_post = 1,
+            },
+         },
+   };
+
+   save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
+TEST_CASE("world save entity group (hintnodes, broken links)", "[World][IO]")
+{
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_hintnodes_broken_links.eng";
 
    const std::string_view expected_eng =
       R"(Hint("HintNode0", "5")
@@ -648,10 +728,10 @@ Hint("HintNode1", "5")
 
 )";
 
-   world::entity_group group = {
+   entity_group group = {
       .hintnodes =
          {
-            world::hintnode{
+            hintnode{
                .name = "HintNode0",
                .rotation = quaternion{-0.569245f, 0.651529f, 0.303753f, -0.399004f},
                .position = float3{-70.045296f, 1.000582f, 19.298828f},
@@ -660,10 +740,10 @@ Hint("HintNode1", "5")
                .radius = 7.692307f,
                .primary_stance = stance_flags::none,
                .secondary_stance = stance_flags::none,
-               .command_post = "cp1",
+               .command_post = object_optional_link{"cp1"},
             },
 
-            world::hintnode{
+            hintnode{
                .name = "HintNode1",
                .rotation = quaternion{-0.995872f, -0.000000f, 0.090763f, -0.000000f},
                .position = float3{-136.048569f, 0.500000f, 25.761259f},
@@ -673,12 +753,12 @@ Hint("HintNode1", "5")
                .primary_stance =
                   (stance_flags::stand | stance_flags::crouch | stance_flags::prone),
                .secondary_stance = stance_flags::none,
-               .command_post = "cp2",
+               .command_post = object_optional_link{"cp2"},
             },
          },
    };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -702,10 +782,10 @@ TEST_CASE("world save entity group (barriers)", "[World][IO]")
 
 )";
 
-   world::entity_group group = {
+   entity_group group = {
       .barriers =
          {
-            world::barrier{
+            barrier{
                .name = "Barrier0",
                .position = float3{86.2013626f, 2.0f, 18.6642666f},
                .size = float2{7.20497799f, 17.0095882f},
@@ -715,7 +795,7 @@ TEST_CASE("world save entity group (barriers)", "[World][IO]")
          },
    };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -774,20 +854,20 @@ Connection("Connection1")
 
 )";
 
-   world::entity_group group = {
+   entity_group group = {
       .planning_hubs =
          {
-            world::planning_hub{
+            planning_hub{
                .name = "Hub0",
                .position = float3{-63.822487f, 0.0f, -9.202278f},
                .radius = 8.0f,
             },
 
-            world::planning_hub{
+            planning_hub{
                .name = "Hub1",
                .position = float3{-121.883095f, 1.0f, -30.046543f},
                .radius = 7.586431f,
-               .weights = {world::planning_branch_weights{
+               .weights = {planning_branch_weights{
                   .hub_index = 3,
                   .connection_index = 0,
                   .soldier = 20.0f,
@@ -799,13 +879,13 @@ Connection("Connection1")
                }},
             },
 
-            world::planning_hub{
+            planning_hub{
                .name = "Hub2",
                .position = float3{-54.011314f, 2.0f, -194.037018f},
                .radius = 13.120973f,
             },
 
-            world::planning_hub{
+            planning_hub{
                .name = "Hub3",
                .position = float3{-163.852570f, 3.0f, -169.116760f},
                .radius = 12.046540f,
@@ -814,7 +894,7 @@ Connection("Connection1")
 
       .planning_connections =
          {
-            world::planning_connection{
+            planning_connection{
                .name = "Connection0",
                .start_hub_index = 0,
                .end_hub_index = 1,
@@ -823,7 +903,7 @@ Connection("Connection1")
                          ai_path_flags::huge | ai_path_flags::flyer),
             },
 
-            world::planning_connection{
+            planning_connection{
                .name = "Connection1",
                .start_hub_index = 3,
                .end_hub_index = 2,
@@ -832,7 +912,7 @@ Connection("Connection1")
          },
    };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -863,29 +943,29 @@ TEST_CASE("world save entity group (boundaries)", "[World][IO]")
 
 )";
 
-   world::entity_group group = {
+   entity_group group = {
       .boundaries =
          {
-            world::boundary{.name = "boundary",
-                            .points =
-                               {
-                                  {383.557434f, 1.0f, 4.797791f},
-                                  {332.111023f, 1.0f, -187.202209f},
-                                  {191.557434f, 1.0f, -327.755798f},
-                                  {-0.442566f, 1.0f, -379.202209f},
-                                  {-192.442566f, 1.0f, -327.755798f},
-                                  {-332.996155f, 1.0f, -187.202209f},
-                                  {-384.442566f, 1.0f, 4.797791f},
-                                  {-332.996155f, 1.0f, 196.797791f},
-                                  {-192.442566f, 1.0f, 337.351379f},
-                                  {-0.442566f, 1.0f, 388.797791f},
-                                  {191.557434f, 1.0f, 337.351379f},
-                                  {332.111023f, 1.0f, 196.797791f},
-                               }},
+            boundary{.name = "boundary",
+                     .points =
+                        {
+                           {383.557434f, 1.0f, 4.797791f},
+                           {332.111023f, 1.0f, -187.202209f},
+                           {191.557434f, 1.0f, -327.755798f},
+                           {-0.442566f, 1.0f, -379.202209f},
+                           {-192.442566f, 1.0f, -327.755798f},
+                           {-332.996155f, 1.0f, -187.202209f},
+                           {-384.442566f, 1.0f, 4.797791f},
+                           {-332.996155f, 1.0f, 196.797791f},
+                           {-192.442566f, 1.0f, 337.351379f},
+                           {-0.442566f, 1.0f, 388.797791f},
+                           {191.557434f, 1.0f, 337.351379f},
+                           {332.111023f, 1.0f, 196.797791f},
+                        }},
          },
    };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -906,10 +986,10 @@ TEST_CASE("world save entity group (measurements)", "[World][IO]")
 
 )";
 
-   world::entity_group group = {
+   entity_group group = {
       .measurements =
          {
-            world::measurement{
+            measurement{
                .start = float3{1.0f, 0.0f, -0.0f},
                .end = float3{2.0f, 0.0f, -1.0f},
                .name = "Measurement0",
@@ -917,7 +997,7 @@ TEST_CASE("world save entity group (measurements)", "[World][IO]")
          },
    };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -969,14 +1049,14 @@ TEST_CASE("world save entity group (blocks, boxes)", "[World][IO]")
 
 )";
 
-   world::entity_group
+   entity_group
       group =
          {
             .blocks =
                {
                   .boxes =
                      {
-                        world::block_description_box{
+                        block_description_box{
                            .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                            .position = {8.5f, 4.5f, 2.0f},
                            .size = {4.0f, 4.0f, 4.0f},
@@ -1018,7 +1098,7 @@ TEST_CASE("world save entity group (blocks, boxes)", "[World][IO]")
                                  std::array<uint16, 2>{0, 0},
                               },
                         },
-                        world::block_description_box{
+                        block_description_box{
                            .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                            .position = {10.0f, 16.0f, 12.0f},
                            .size = {8.0f, 4.0f, 8.0f},
@@ -1060,7 +1140,7 @@ TEST_CASE("world save entity group (blocks, boxes)", "[World][IO]")
                                  std::array<uint16, 2>{0, 0},
                               },
                         },
-                        world::block_description_box{
+                        block_description_box{
                            .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                            .position = {6.0f, 6.0f, 6.0f},
                            .size = {5.0f, 5.0f, 5.0f},
@@ -1107,7 +1187,7 @@ TEST_CASE("world save entity group (blocks, boxes)", "[World][IO]")
                },
          };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -1159,14 +1239,14 @@ TEST_CASE("world save entity group (blocks, ramps)", "[World][IO]")
 
 )";
 
-   world::entity_group
+   entity_group
       group =
          {
             .blocks =
                {
                   .ramps =
                      {
-                        world::block_description_ramp{
+                        block_description_ramp{
                            .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                            .position = {8.5f, 4.5f, 2.0f},
                            .size = {4.0f, 4.0f, 4.0f},
@@ -1204,7 +1284,7 @@ TEST_CASE("world save entity group (blocks, ramps)", "[World][IO]")
                                  std::array<uint16, 2>{256, 256},
                               },
                         },
-                        world::block_description_ramp{
+                        block_description_ramp{
                            .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                            .position = {10.0f, 16.0f, 12.0f},
                            .size = {8.0f, 4.0f, 8.0f},
@@ -1242,7 +1322,7 @@ TEST_CASE("world save entity group (blocks, ramps)", "[World][IO]")
                                  std::array<uint16, 2>{0, 0},
                               },
                         },
-                        world::block_description_ramp{
+                        block_description_ramp{
                            .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                            .position = {6.0f, 6.0f, 6.0f},
                            .size = {5.0f, 5.0f, 5.0f},
@@ -1285,7 +1365,7 @@ TEST_CASE("world save entity group (blocks, ramps)", "[World][IO]")
                },
          };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -1343,100 +1423,98 @@ TEST_CASE("world save entity group (blocks, quads)", "[World][IO]")
 
 )";
 
-   world::entity_group
-      group =
+   entity_group group = {
+      .blocks =
          {
-            .blocks =
+            .quads =
                {
-                  .quads =
-                     {
-                        world::block_description_quad{
-                           .vertices =
-                              {
-                                 float3{0.0f, 0.0f, 0.0f},
-                                 float3{1.0f, 0.0f, 0.0f},
-                                 float3{1.0f, 0.0f, 1.0f},
-                                 float3{0.0f, 0.0f, 1.0f},
-                              },
-                           .quad_split = world::block_quad_split::regular,
-                           .surface_materials = {0},
-                           .surface_texture_mode =
-                              {
-                                 block_texture_mode::world_space_auto,
-                              },
-                           .surface_texture_rotation =
-                              {
-                                 block_texture_rotation::d180,
-                              },
-                           .surface_texture_scale =
-                              {
-                                 std::array<int8, 2>{-1, -2},
-                              },
-                           .surface_texture_offset =
-                              {
-                                 std::array<uint16, 2>{256, 256},
-                              },
+                  block_description_quad{
+                     .vertices =
+                        {
+                           float3{0.0f, 0.0f, 0.0f},
+                           float3{1.0f, 0.0f, 0.0f},
+                           float3{1.0f, 0.0f, 1.0f},
+                           float3{0.0f, 0.0f, 1.0f},
                         },
-                        world::block_description_quad{
-                           .vertices =
-                              {
-                                 float3{0.0f, 0.0f, 0.0f},
-                                 float3{1.5f, 0.0f, 0.0f},
-                                 float3{1.0f, 0.0f, 1.0f},
-                                 float3{0.0f, 0.0f, 1.5f},
-                              },
-                           .quad_split = world::block_quad_split::alternate,
-                           .surface_materials = {2},
-                           .surface_texture_mode =
-                              {
-                                 block_texture_mode::world_space_zy,
-                              },
-                           .surface_texture_rotation =
-                              {
-                                 block_texture_rotation::d90,
-                              },
-                           .surface_texture_scale =
-                              {
-                                 std::array<int8, 2>{0, 0},
-                              },
-                           .surface_texture_offset =
-                              {
-                                 std::array<uint16, 2>{1024, 0},
-                              },
+                     .quad_split = block_quad_split::regular,
+                     .surface_materials = {0},
+                     .surface_texture_mode =
+                        {
+                           block_texture_mode::world_space_auto,
                         },
-                        world::block_description_quad{
-                           .vertices =
-                              {
-                                 float3{0.0f, 0.0f, 0.0f},
-                                 float3{8.0f, 0.0f, 0.0f},
-                                 float3{8.0f, 0.0f, 8.0f},
-                                 float3{0.0f, 0.0f, 8.0f},
-                              },
-                           .quad_split = world::block_quad_split::regular,
-                           .surface_materials = {0},
-                           .surface_texture_mode =
-                              {
-                                 block_texture_mode::world_space_xz,
-                              },
-                           .surface_texture_rotation =
-                              {
-                                 block_texture_rotation::d0,
-                              },
-                           .surface_texture_scale =
-                              {
-                                 std::array<int8, 2>{0, 0},
-                              },
-                           .surface_texture_offset =
-                              {
-                                 std::array<uint16, 2>{0, 0},
-                              },
+                     .surface_texture_rotation =
+                        {
+                           block_texture_rotation::d180,
                         },
-                     },
-
+                     .surface_texture_scale =
+                        {
+                           std::array<int8, 2>{-1, -2},
+                        },
+                     .surface_texture_offset =
+                        {
+                           std::array<uint16, 2>{256, 256},
+                        },
+                  },
+                  block_description_quad{
+                     .vertices =
+                        {
+                           float3{0.0f, 0.0f, 0.0f},
+                           float3{1.5f, 0.0f, 0.0f},
+                           float3{1.0f, 0.0f, 1.0f},
+                           float3{0.0f, 0.0f, 1.5f},
+                        },
+                     .quad_split = block_quad_split::alternate,
+                     .surface_materials = {2},
+                     .surface_texture_mode =
+                        {
+                           block_texture_mode::world_space_zy,
+                        },
+                     .surface_texture_rotation =
+                        {
+                           block_texture_rotation::d90,
+                        },
+                     .surface_texture_scale =
+                        {
+                           std::array<int8, 2>{0, 0},
+                        },
+                     .surface_texture_offset =
+                        {
+                           std::array<uint16, 2>{1024, 0},
+                        },
+                  },
+                  block_description_quad{
+                     .vertices =
+                        {
+                           float3{0.0f, 0.0f, 0.0f},
+                           float3{8.0f, 0.0f, 0.0f},
+                           float3{8.0f, 0.0f, 8.0f},
+                           float3{0.0f, 0.0f, 8.0f},
+                        },
+                     .quad_split = block_quad_split::regular,
+                     .surface_materials = {0},
+                     .surface_texture_mode =
+                        {
+                           block_texture_mode::world_space_xz,
+                        },
+                     .surface_texture_rotation =
+                        {
+                           block_texture_rotation::d0,
+                        },
+                     .surface_texture_scale =
+                        {
+                           std::array<int8, 2>{0, 0},
+                        },
+                     .surface_texture_offset =
+                        {
+                           std::array<uint16, 2>{0, 0},
+                        },
+                  },
                },
-         };
 
-   world::save_entity_group(path, group);
+         },
+   };
+
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -1495,7 +1573,7 @@ TEST_CASE("world save entity group (blocks, cylinders)", "[World][IO]")
 
 )";
 
-   world::entity_group
+   entity_group
       group =
          {
             .blocks =
@@ -1504,11 +1582,11 @@ TEST_CASE("world save entity group (blocks, cylinders)", "[World][IO]")
                      {
                         .description =
                            {
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                                  .position = {8.5f, 4.5f, 2.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_cylinder{
+                                    block_custom_mesh_description_cylinder{
                                        .size = {4.0f, 4.0f, 4.0f},
                                        .segments = 10,
                                        .flat_shading = false,
@@ -1540,11 +1618,11 @@ TEST_CASE("world save entity group (blocks, cylinders)", "[World][IO]")
                                        std::array<uint16, 2>{256, 256},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                                  .position = {10.0f, 16.0f, 12.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_cylinder{
+                                    block_custom_mesh_description_cylinder{
                                        .size = {8.0f, 4.0f, 8.0f},
                                        .segments = 20,
                                        .flat_shading = true,
@@ -1576,11 +1654,11 @@ TEST_CASE("world save entity group (blocks, cylinders)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                                  .position = {6.0f, 6.0f, 6.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_cylinder{
+                                    block_custom_mesh_description_cylinder{
                                        .size = {5.0f, 5.0f, 5.0f},
                                        .segments = 30,
                                        .flat_shading = false,
@@ -1625,7 +1703,7 @@ TEST_CASE("world save entity group (blocks, cylinders)", "[World][IO]")
                },
          };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -1683,7 +1761,7 @@ TEST_CASE("world save entity group (blocks, stairways)", "[World][IO]")
 
 )";
 
-   world::entity_group
+   entity_group
       group =
          {
             .blocks =
@@ -1692,11 +1770,11 @@ TEST_CASE("world save entity group (blocks, stairways)", "[World][IO]")
                      {
                         .description =
                            {
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                                  .position = {8.5f, 4.5f, 2.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_stairway{
+                                    block_custom_mesh_description_stairway{
                                        .size = {4.0f, 4.0f, 4.0f},
                                        .step_height = 0.1f,
                                        .first_step_offset = 0.0f,
@@ -1739,11 +1817,11 @@ TEST_CASE("world save entity group (blocks, stairways)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                                  .position = {10.0f, 16.0f, 12.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_stairway{
+                                    block_custom_mesh_description_stairway{
                                        .size = {8.0f, 4.0f, 8.0f},
                                        .step_height = 0.25f,
                                        .first_step_offset = 0.125f,
@@ -1786,11 +1864,11 @@ TEST_CASE("world save entity group (blocks, stairways)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                                  .position = {6.0f, 6.0f, 6.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_stairway{
+                                    block_custom_mesh_description_stairway{
                                        .size = {5.0f, 5.0f, 5.0f},
                                        .step_height = 1.0f,
                                        .first_step_offset = 0.0f,
@@ -1847,7 +1925,7 @@ TEST_CASE("world save entity group (blocks, stairways)", "[World][IO]")
 
          };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -1906,7 +1984,7 @@ TEST_CASE("world save entity group (blocks, stairways floating)", "[World][IO]")
 
 )";
 
-   world::entity_group
+   entity_group
       group =
          {
             .blocks =
@@ -1915,11 +1993,11 @@ TEST_CASE("world save entity group (blocks, stairways floating)", "[World][IO]")
                      {
                         .description =
                            {
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                                  .position = {8.5f, 4.5f, 2.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_stairway_floating{
+                                    block_custom_mesh_description_stairway_floating{
                                        .size = {4.0f, 4.0f, 4.0f},
                                        .step_height = 0.1f,
                                        .first_step_offset = 0.0f,
@@ -1962,11 +2040,11 @@ TEST_CASE("world save entity group (blocks, stairways floating)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                                  .position = {10.0f, 16.0f, 12.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_stairway_floating{
+                                    block_custom_mesh_description_stairway_floating{
                                        .size = {8.0f, 4.0f, 8.0f},
                                        .step_height = 0.25f,
                                        .first_step_offset = 0.125f,
@@ -2009,11 +2087,11 @@ TEST_CASE("world save entity group (blocks, stairways floating)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                                  .position = {6.0f, 6.0f, 6.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_stairway_floating{
+                                    block_custom_mesh_description_stairway_floating{
                                        .size = {5.0f, 5.0f, 5.0f},
                                        .step_height = 1.0f,
                                        .first_step_offset = 0.0f,
@@ -2070,7 +2148,7 @@ TEST_CASE("world save entity group (blocks, stairways floating)", "[World][IO]")
 
          };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -2126,7 +2204,7 @@ TEST_CASE("world save entity group (blocks, cones)", "[World][IO]")
 
 )";
 
-   world::entity_group
+   entity_group
       group =
          {
             .blocks =
@@ -2135,11 +2213,11 @@ TEST_CASE("world save entity group (blocks, cones)", "[World][IO]")
                      {
                         .description =
                            {
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                                  .position = {8.5f, 4.5f, 2.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_cone{
+                                    block_custom_mesh_description_cone{
                                        .size = {4.0f, 4.0f, 4.0f},
                                        .segments = 10,
                                        .flat_shading = false,
@@ -2166,11 +2244,11 @@ TEST_CASE("world save entity group (blocks, cones)", "[World][IO]")
                                        std::array<uint16, 2>{256, 256},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                                  .position = {10.0f, 16.0f, 12.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_cone{
+                                    block_custom_mesh_description_cone{
                                        .size = {8.0f, 4.0f, 8.0f},
                                        .segments = 20,
                                        .flat_shading = true,
@@ -2197,11 +2275,11 @@ TEST_CASE("world save entity group (blocks, cones)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                                  .position = {6.0f, 6.0f, 6.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_cone{
+                                    block_custom_mesh_description_cone{
                                        .size = {5.0f, 5.0f, 5.0f},
                                        .segments = 30,
                                        .flat_shading = false,
@@ -2240,7 +2318,7 @@ TEST_CASE("world save entity group (blocks, cones)", "[World][IO]")
                },
          };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -2292,14 +2370,14 @@ TEST_CASE("world save entity group (blocks, hemispheres)", "[World][IO]")
 
 )";
 
-   world::entity_group
+   entity_group
       group =
          {
             .blocks =
                {
                   .hemispheres =
                      {
-                        world::block_description_hemisphere{
+                        block_description_hemisphere{
                            .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                            .position = {8.5f, 4.5f, 2.0f},
                            .size = {4.0f, 4.0f, 4.0f},
@@ -2325,7 +2403,7 @@ TEST_CASE("world save entity group (blocks, hemispheres)", "[World][IO]")
                                  std::array<uint16, 2>{256, 256},
                               },
                         },
-                        world::block_description_hemisphere{
+                        block_description_hemisphere{
                            .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                            .position = {10.0f, 16.0f, 12.0f},
                            .size = {8.0f, 4.0f, 8.0f},
@@ -2351,7 +2429,7 @@ TEST_CASE("world save entity group (blocks, hemispheres)", "[World][IO]")
                                  std::array<uint16, 2>{0, 0},
                               },
                         },
-                        world::block_description_hemisphere{
+                        block_description_hemisphere{
                            .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                            .position = {6.0f, 6.0f, 6.0f},
                            .size = {5.0f, 5.0f, 5.0f},
@@ -2382,7 +2460,7 @@ TEST_CASE("world save entity group (blocks, hemispheres)", "[World][IO]")
                },
          };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -2434,14 +2512,14 @@ TEST_CASE("world save entity group (blocks, pyramids)", "[World][IO]")
 
 )";
 
-   world::entity_group
+   entity_group
       group =
          {
             .blocks =
                {
                   .pyramids =
                      {
-                        world::block_description_pyramid{
+                        block_description_pyramid{
                            .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                            .position = {8.5f, 4.5f, 2.0f},
                            .size = {4.0f, 4.0f, 4.0f},
@@ -2479,7 +2557,7 @@ TEST_CASE("world save entity group (blocks, pyramids)", "[World][IO]")
                                  std::array<uint16, 2>{256, 256},
                               },
                         },
-                        world::block_description_pyramid{
+                        block_description_pyramid{
                            .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                            .position = {10.0f, 16.0f, 12.0f},
                            .size = {8.0f, 4.0f, 8.0f},
@@ -2517,7 +2595,7 @@ TEST_CASE("world save entity group (blocks, pyramids)", "[World][IO]")
                                  std::array<uint16, 2>{0, 0},
                               },
                         },
-                        world::block_description_pyramid{
+                        block_description_pyramid{
                            .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                            .position = {6.0f, 6.0f, 6.0f},
                            .size = {5.0f, 5.0f, 5.0f},
@@ -2560,7 +2638,7 @@ TEST_CASE("world save entity group (blocks, pyramids)", "[World][IO]")
                },
          };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -2625,7 +2703,7 @@ TEST_CASE("world save entity group (blocks, rings)", "[World][IO]")
 
 )";
 
-   world::entity_group
+   entity_group
       group =
          {
             .blocks =
@@ -2634,11 +2712,11 @@ TEST_CASE("world save entity group (blocks, rings)", "[World][IO]")
                      {
                         .description =
                            {
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                                  .position = {8.5f, 4.5f, 2.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_ring{
+                                    block_custom_mesh_description_ring{
                                        .inner_radius = 4.0f,
                                        .outer_radius = 2.0f,
                                        .height = 4.0f,
@@ -2683,11 +2761,11 @@ TEST_CASE("world save entity group (blocks, rings)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                                  .position = {10.0f, 16.0f, 12.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_ring{
+                                    block_custom_mesh_description_ring{
                                        .inner_radius = 8.0f,
                                        .outer_radius = 4.0f,
                                        .height = 6.0f,
@@ -2733,11 +2811,11 @@ TEST_CASE("world save entity group (blocks, rings)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                                  .position = {6.0f, 6.0f, 6.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_ring{
+                                    block_custom_mesh_description_ring{
                                        .inner_radius = 1.0f,
                                        .outer_radius = 2.0f,
                                        .height = 3.0f,
@@ -2796,7 +2874,7 @@ TEST_CASE("world save entity group (blocks, rings)", "[World][IO]")
 
          };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -2860,7 +2938,7 @@ TEST_CASE("world save entity group (blocks, beveled boxes)", "[World][IO]")
 
 )";
 
-   world::entity_group
+   entity_group
       group =
          {
             .blocks =
@@ -2869,11 +2947,11 @@ TEST_CASE("world save entity group (blocks, beveled boxes)", "[World][IO]")
                      {
                         .description =
                            {
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                                  .position = {8.5f, 4.5f, 2.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_beveled_box{
+                                    block_custom_mesh_description_beveled_box{
                                        .size = {4.0f, 2.0f, 2.0f},
                                        .amount = 0.125f,
                                        .bevel_top = true,
@@ -2918,11 +2996,11 @@ TEST_CASE("world save entity group (blocks, beveled boxes)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                                  .position = {10.0f, 16.0f, 12.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_beveled_box{
+                                    block_custom_mesh_description_beveled_box{
                                        .size = {2.0f, 2.0f, 2.0f},
                                        .amount = 0.25f,
                                        .bevel_top = true,
@@ -2967,11 +3045,11 @@ TEST_CASE("world save entity group (blocks, beveled boxes)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                                  .position = {6.0f, 6.0f, 6.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_beveled_box{
+                                    block_custom_mesh_description_beveled_box{
                                        .size = {3.0f, 3.0f, 3.0f},
                                        .amount = 0.5f,
                                        .bevel_top = false,
@@ -3030,7 +3108,7 @@ TEST_CASE("world save entity group (blocks, beveled boxes)", "[World][IO]")
 
          };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -3103,7 +3181,7 @@ TEST_CASE("world save entity group (blocks, curves)", "[World][IO]")
 
 )";
 
-   world::entity_group
+   entity_group
       group =
          {
             .blocks =
@@ -3112,11 +3190,11 @@ TEST_CASE("world save entity group (blocks, curves)", "[World][IO]")
                      {
                         .description =
                            {
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                                  .position = {8.5f, 4.5f, 2.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_curve{
+                                    block_custom_mesh_description_curve{
                                        .width = 4.0f,
                                        .height = 4.0f,
                                        .segments = 12,
@@ -3164,11 +3242,11 @@ TEST_CASE("world save entity group (blocks, curves)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                                  .position = {10.0f, 16.0f, 12.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_curve{
+                                    block_custom_mesh_description_curve{
                                        .width = 8.0f,
                                        .height = 8.0f,
                                        .segments = 24,
@@ -3216,11 +3294,11 @@ TEST_CASE("world save entity group (blocks, curves)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                                  .position = {6.0f, 6.0f, 6.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_curve{
+                                    block_custom_mesh_description_curve{
                                        .width = 16.0f,
                                        .height = 16.0f,
                                        .segments = 48,
@@ -3282,7 +3360,7 @@ TEST_CASE("world save entity group (blocks, curves)", "[World][IO]")
 
          };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -3349,7 +3427,7 @@ TEST_CASE("world save entity group (blocks, arches)", "[World][IO]")
 
 )";
 
-   world::entity_group
+   entity_group
       group =
          {
             .blocks =
@@ -3358,11 +3436,11 @@ TEST_CASE("world save entity group (blocks, arches)", "[World][IO]")
                      {
                         .description =
                            {
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                                  .position = {8.5f, 4.5f, 2.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_arch{
+                                    block_custom_mesh_description_arch{
                                        .size = {4.0f, 4.0f, 4.0f},
                                        .crown_length = 0.125f,
                                        .crown_height = 0.25f,
@@ -3392,11 +3470,11 @@ TEST_CASE("world save entity group (blocks, arches)", "[World][IO]")
                                        std::array<uint16, 2>{256, 256},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                                  .position = {10.0f, 16.0f, 12.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_arch{
+                                    block_custom_mesh_description_arch{
                                        .size = {8.0f, 8.0f, 8.0f},
                                        .crown_length = 0.25f,
                                        .crown_height = 0.5f,
@@ -3426,11 +3504,11 @@ TEST_CASE("world save entity group (blocks, arches)", "[World][IO]")
                                        std::array<uint16, 2>{0, 0},
                                     },
                               },
-                              world::block_description_custom{
+                              block_description_custom{
                                  .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                                  .position = {6.0f, 6.0f, 6.0f},
                                  .mesh_description =
-                                    world::block_custom_mesh_description_arch{
+                                    block_custom_mesh_description_arch{
                                        .size = {16.0f, 16.0f, 16.0f},
                                        .crown_length = 0.5f,
                                        .crown_height = 1.0f,
@@ -3472,7 +3550,7 @@ TEST_CASE("world save entity group (blocks, arches)", "[World][IO]")
                },
          };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -3509,22 +3587,22 @@ TEST_CASE("world save entity group (blocks, terrain_cut_boxes)", "[World][IO]")
 
 )";
 
-   world::entity_group group = {
+   entity_group group = {
       .blocks =
          {
             .terrain_cut_boxes =
                {
-                  world::block_description_terrain_cut_box{
+                  block_description_terrain_cut_box{
                      .rotation = {0.0f, 1.0f, 0.0f, 0.0f},
                      .position = {8.5f, 4.5f, 2.0f},
                      .size = {4.0f, 4.0f, 4.0f},
                   },
-                  world::block_description_terrain_cut_box{
+                  block_description_terrain_cut_box{
                      .rotation = {0.707106f, 0.0f, 0.707106f, 0.0f},
                      .position = {10.0f, 16.0f, 12.0f},
                      .size = {8.0f, 4.0f, 8.0f},
                   },
-                  world::block_description_terrain_cut_box{
+                  block_description_terrain_cut_box{
                      .rotation = {0.0f, 0.0f, 0.0f, 1.0f},
                      .position = {6.0f, 6.0f, 6.0f},
                      .size = {5.0f, 5.0f, 5.0f},
@@ -3534,7 +3612,7 @@ TEST_CASE("world save entity group (blocks, terrain_cut_boxes)", "[World][IO]")
          },
    };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 
@@ -3579,12 +3657,12 @@ TEST_CASE("world save entity group (blocks, materials)", "[World][IO]")
 
 )";
 
-   world::entity_group group = {
+   entity_group group = {
       .blocks =
          {
             .materials =
                {
-                  world::block_material{
+                  block_material{
                      .name = "rocks",
 
                      .diffuse_map = "rocks_diffuse",
@@ -3599,7 +3677,7 @@ TEST_CASE("world save entity group (blocks, materials)", "[World][IO]")
                      .specular_color = {0.5f, 0.5f, 0.5f},
                   },
 
-                  world::block_material{
+                  block_material{
                      .name = "snow",
 
                      .diffuse_map = "snow_diffuse",
@@ -3620,7 +3698,7 @@ TEST_CASE("world save entity group (blocks, materials)", "[World][IO]")
          },
    };
 
-   world::save_entity_group(path, group);
+   save_entity_group(path, group);
 
    const auto written_eng = io::read_file_to_string(path);
 

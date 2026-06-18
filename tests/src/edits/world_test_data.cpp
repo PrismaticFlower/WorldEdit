@@ -178,7 +178,7 @@ const we::world::world
                    .primary_stance = stance_flags::crouch,
                    .secondary_stance = stance_flags::none,
 
-                   .command_post = "test_object"s,
+                   .command_post = 0,
                 },
              },
           },

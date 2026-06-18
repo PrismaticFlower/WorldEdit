@@ -218,6 +218,26 @@ void fix_object_links(entity_group& group, std::span<const object> world_objects
          }
       }
    }
+
+   for (hintnode& hintnode : group.hintnodes) {
+      if (not hintnode.command_post.has_index()) continue;
+
+      const std::string_view object_name =
+         world_objects[hintnode.command_post.index()].name;
+      const std::vector<object>::iterator object =
+         std::find_if(group.objects.begin(), group.objects.end(),
+                      [&](const auto& object) {
+                         return string::iequals(object_name, object.name);
+                      });
+
+      if (object != group.objects.end()) {
+         hintnode.command_post =
+            static_cast<uint32>((object - group.objects.begin()));
+      }
+      else {
+         hintnode.command_post = object_optional_link{std::string{object_name}};
+      }
+   }
 }
 
 }

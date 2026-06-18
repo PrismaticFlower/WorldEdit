@@ -65,7 +65,7 @@ struct delete_object final : edit<world::edit_context> {
 
    struct unlinked_hintnode {
       uint32 hintnode_index = 0;
-      std::string value;
+      world::object_optional_link value;
    };
 
    delete_object(world::object object, uint32 object_index,
@@ -167,6 +167,13 @@ struct delete_object final : edit<world::edit_context> {
          }
       }
 
+      for (world::hintnode& hintnode : context.world.hintnodes) {
+         if (hintnode.command_post.has_index() and
+             hintnode.command_post.index() > _object_index) {
+            hintnode.command_post = hintnode.command_post.index() - 1;
+         }
+      }
+
       for (world::animation_group& group : context.world.animation_groups) {
          for (world::animation_group::entry& entry : group.entries) {
             if (entry.object_index > _object_index) {
@@ -216,6 +223,13 @@ struct delete_object final : edit<world::edit_context> {
             if (entry.object_index >= _object_index) {
                entry.object_index += 1;
             }
+         }
+      }
+
+      for (world::hintnode& hintnode : context.world.hintnodes) {
+         if (hintnode.command_post.has_index() and
+             hintnode.command_post.index() >= _object_index) {
+            hintnode.command_post = hintnode.command_post.index() + 1;
          }
       }
 
@@ -805,7 +819,7 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
    }
 
    for (const auto& hintnode : world.hintnodes) {
-      if (iequals(hintnode.command_post, object.name)) hintnode_count += 1;
+      if (hintnode.command_post == object_index) hintnode_count += 1;
    }
 
    for (const auto& group : world.animation_groups) {
@@ -889,7 +903,7 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
         ++hintnode_index) {
       const world::hintnode& hintnode = world.hintnodes[hintnode_index];
 
-      if (iequals(hintnode.command_post, object.name)) {
+      if (hintnode.command_post == object_index) {
          hintnode_refs.emplace_back(hintnode_index);
       }
    }

@@ -534,8 +534,12 @@ void save_hintnodes(const io::path& path, const int layer_index, const world& wo
 
       file.write_ln("\tMode({});", static_cast<int>(hint.mode));
 
-      if (not hint.command_post.empty()) {
-         file.write_ln("\tCommandPost(\"{}\");", hint.command_post);
+      if (hint.command_post.has_index()) {
+         file.write_ln("\tCommandPost(\"{}\");",
+                       world.objects[hint.command_post.index()].name);
+      }
+      else if (not hint.command_post.name().empty()) {
+         file.write_ln("\tCommandPost(\"{}\");", hint.command_post.name());
       }
 
       file.write_ln("}");

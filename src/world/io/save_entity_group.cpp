@@ -355,8 +355,12 @@ void save_entity_group_impl(File& file, const entity_group& group)
 
       file.write_ln("\tMode({});", static_cast<int>(hint.mode));
 
-      if (not hint.command_post.empty()) {
-         file.write_ln("\tCommandPost(\"{}\");", hint.command_post);
+      if (hint.command_post.has_index()) {
+         file.write_ln("\tCommandPost(\"{}\");",
+                       group.objects[hint.command_post.index()].name);
+      }
+      else if (not hint.command_post.name().empty()) {
+         file.write_ln("\tCommandPost(\"{}\");", hint.command_post.name());
       }
 
       file.write_ln("}\n");
@@ -377,7 +381,7 @@ void save_entity_group_impl(File& file, const entity_group& group)
    }
 
    for (uint32 i = 0; i < group.planning_hubs.size(); ++i) {
-      const world::planning_hub& hub = group.planning_hubs[i];
+      const planning_hub& hub = group.planning_hubs[i];
 
       file.write_ln("Hub(\"{}\")", hub.name);
       file.write_ln("{");
@@ -686,7 +690,7 @@ void save_entity_group_impl(File& file, const entity_group& group)
             file.write_ln("      FirstStepOffset({});", stairway.first_step_offset);
          } break;
          case block_custom_mesh_type::ring: {
-            const world::block_custom_mesh_description_ring& ring =
+            const block_custom_mesh_description_ring& ring =
                block.mesh_description.ring;
 
             file.write_ln("      InnerRadius({});", ring.inner_radius);
@@ -697,7 +701,7 @@ void save_entity_group_impl(File& file, const entity_group& group)
             file.write_ln("      TextureLoops({});", ring.texture_loops);
          } break;
          case block_custom_mesh_type::beveled_box: {
-            const world::block_custom_mesh_description_beveled_box& box =
+            const block_custom_mesh_description_beveled_box& box =
                block.mesh_description.beveled_box;
 
             file.write_ln("      Size({}, {}, {});", box.size.x, box.size.y,
@@ -708,7 +712,7 @@ void save_entity_group_impl(File& file, const entity_group& group)
             file.write_ln("      BevelBottom({:d});", box.bevel_bottom);
          } break;
          case block_custom_mesh_type::curve: {
-            const world::block_custom_mesh_description_curve& curve =
+            const block_custom_mesh_description_curve& curve =
                block.mesh_description.curve;
 
             file.write_ln("      Width({});", curve.width);
@@ -726,7 +730,7 @@ void save_entity_group_impl(File& file, const entity_group& group)
                           curve.p3.z);
          } break;
          case block_custom_mesh_type::cylinder: {
-            const world::block_custom_mesh_description_cylinder& cylinder =
+            const block_custom_mesh_description_cylinder& cylinder =
                block.mesh_description.cylinder;
 
             file.write_ln("      Size({}, {}, {});", cylinder.size.x,
@@ -736,7 +740,7 @@ void save_entity_group_impl(File& file, const entity_group& group)
             file.write_ln("      TextureLoops({});", cylinder.texture_loops);
          } break;
          case block_custom_mesh_type::cone: {
-            const world::block_custom_mesh_description_cone& cone =
+            const block_custom_mesh_description_cone& cone =
                block.mesh_description.cone;
 
             file.write_ln("      Size({}, {}, {});", cone.size.x, cone.size.y,
@@ -745,7 +749,7 @@ void save_entity_group_impl(File& file, const entity_group& group)
             if (cone.flat_shading) file.write_ln("      FlatShading();");
          } break;
          case block_custom_mesh_type::arch: {
-            const world::block_custom_mesh_description_arch& arch =
+            const block_custom_mesh_description_arch& arch =
                block.mesh_description.arch;
 
             file.write_ln("      Size({}, {}, {});", arch.size.x, arch.size.y,

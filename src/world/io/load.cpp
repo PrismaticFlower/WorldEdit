@@ -1068,7 +1068,8 @@ void load_hintnodes(const io::path& filepath, const std::string_view layer_name,
                hint.mode = static_cast<hintnode_mode>(prop.values.get<int>(0));
             }
             else if (prop.key == "CommandPost"sv) {
-               hint.command_post = prop.values.get<std::string>(0);
+               hint.command_post =
+                  object_optional_link{prop.values.get<std::string>(0)};
             }
          }
 
@@ -1528,6 +1529,20 @@ void connect_object_refs(world& world)
          else {
             sector.objects_broken_links.push_back(std::move(object_name));
          }
+      }
+   }
+
+   for (hintnode& hintnode : world.hintnodes) {
+      assert(hintnode.command_post.has_name());
+
+      if (hintnode.command_post.name().empty()) continue;
+
+      const object* object =
+         find_entity(world.objects, hintnode.command_post.name());
+
+      if (object) {
+         hintnode.command_post =
+            static_cast<uint32>((object - world.objects.data()));
       }
    }
 

@@ -473,7 +473,8 @@ auto read_hintnode(const assets::config::node& node) -> hintnode
             static_cast<hintnode_mode>(hintnode_prop.values.get<int>(0));
       }
       else if (string::iequals(hintnode_prop.key, "CommandPost"sv)) {
-         hintnode.command_post = hintnode_prop.values.get<std::string>(0);
+         hintnode.command_post =
+            object_optional_link{hintnode_prop.values.get<std::string>(0)};
       }
    }
 
@@ -1868,6 +1869,22 @@ void link_object_refs(entity_group& group)
          else {
             sector.objects_broken_links.push_back(std::move(object_name));
          }
+      }
+   }
+
+   for (hintnode& hintnode : group.hintnodes) {
+      assert(hintnode.command_post.has_name());
+
+      if (hintnode.command_post.name().empty()) continue;
+
+      const std::vector<object>::iterator object =
+         std::find_if(group.objects.begin(), group.objects.end(), [&](const auto& object) {
+            return string::iequals(hintnode.command_post.name(), object.name);
+         });
+
+      if (object != group.objects.end()) {
+         hintnode.command_post =
+            static_cast<uint32>((object - group.objects.begin()));
       }
    }
 }

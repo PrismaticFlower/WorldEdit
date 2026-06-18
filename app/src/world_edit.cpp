@@ -2340,10 +2340,18 @@ void world_edit::place_entity_group(const world::entity_group& group,
 
       const world::hintnode_id new_hintnode_id = _world.next_id.hintnodes.aquire();
 
-      if (not new_hintnode.command_post.empty()) {
+      if (new_hintnode.command_post.has_index()) {
          new_hintnode.command_post =
-            world::get_placed_entity_name(new_hintnode.command_post, _world.objects,
-                                          group, object_base_index);
+            new_hintnode.command_post.index() + object_base_index;
+      }
+      else {
+         const world::object* object =
+            world::find_entity(_world.objects, new_hintnode.command_post.name());
+
+         if (object) {
+            new_hintnode.command_post =
+               static_cast<uint32>(object - _world.objects.data());
+         }
       }
 
       new_hintnode.layer = group.layer;

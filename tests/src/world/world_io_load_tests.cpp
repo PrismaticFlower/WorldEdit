@@ -397,7 +397,8 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.hintnodes[0].mode == hintnode_mode::attack);
          CHECK(world.hintnodes[0].primary_stance == stance_flags::none);
          CHECK(world.hintnodes[0].secondary_stance == stance_flags::none);
-         CHECK(world.hintnodes[0].command_post == "cp1"sv);
+         CHECK(world.hintnodes[0].command_post.has_name());
+         CHECK(world.hintnodes[0].command_post.name() == "cp1"sv);
          CHECK(is_unique_id(0, world.hintnodes));
       }
 
@@ -415,7 +416,8 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.hintnodes[1].primary_stance ==
                (stance_flags::stand | stance_flags::crouch | stance_flags::prone));
          CHECK(world.hintnodes[1].secondary_stance == stance_flags::none);
-         CHECK(world.hintnodes[1].command_post == "cp2"sv);
+         CHECK(world.hintnodes[1].command_post.has_name());
+         CHECK(world.hintnodes[1].command_post.name() == "cp2"sv);
          CHECK(is_unique_id(1, world.hintnodes));
       }
    }
@@ -875,6 +877,28 @@ TEST_CASE("world loading sector object links", "[World][IO]")
       CHECK(world.sectors[1].objects[1] == 2);
       CHECK(world.sectors[1].objects[2] == 3);
       CHECK(world.sectors[1].objects[3] == 4);
+   }
+}
+
+TEST_CASE("world loading hintnode links", "[World][IO]")
+{
+   null_output_stream out;
+   const auto world = load_world("data/world_hint_node_links/test.wld"sv, {}, out);
+
+   // object checks
+   {
+      REQUIRE(world.objects.size() == 2);
+
+      CHECK(world.objects[0].name == "cp0"sv);
+      CHECK(world.objects[1].name == "cp1"sv);
+   }
+
+   // hintnodes checks
+   {
+      REQUIRE(world.hintnodes.size() == 2);
+
+      CHECK(world.hintnodes[0].command_post == 0);
+      CHECK(world.hintnodes[1].command_post == 1);
    }
 }
 

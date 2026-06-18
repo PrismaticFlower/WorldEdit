@@ -58,6 +58,18 @@ auto object_optional_link::name_lookup(const world& world) const noexcept
    }
 }
 
+bool operator==(const object_optional_link& left, const object_optional_link& right) noexcept
+{
+   if (left.has_index() != right.has_index()) return false;
+
+   if (left.has_index()) {
+      return left.index() == right.index();
+   }
+   else {
+      return left.name() == right.name();
+   }
+}
+
 bool operator==(const object_optional_link& link, const uint32 index) noexcept
 {
    if (not link.has_index()) return false;

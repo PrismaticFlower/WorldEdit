@@ -503,7 +503,7 @@ struct multi_select_properties {
 
    struct hintnode {
       value<hintnode_type> type;
-      value<std::string> command_post;
+      value<object_optional_link> command_post;
       value_stance_flags primary_stance;
       value_stance_flags secondary_stance;
       value<hintnode_mode> mode;

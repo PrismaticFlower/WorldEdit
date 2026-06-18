@@ -48,6 +48,9 @@ private:
    std::string _name;
 };
 
+bool operator==(const object_optional_link& left,
+                const object_optional_link& right) noexcept;
+
 /// @brief Compare an object_optional_link against an index.
 /// @param link The link to compare.
 /// @param index The index to compare.

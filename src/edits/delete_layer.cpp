@@ -21,7 +21,7 @@ struct object_link_record {
 };
 
 struct root_object_link_record {
-   uint32 hierarchy_index = 0;
+   uint32 referer_index = 0;
    uint32 object_index = 0;
 };
 
@@ -62,7 +62,7 @@ struct unlinked_animation_hierarchy_root {
 
 struct unlinked_hintnode {
    uint32 hintnode_index = 0;
-   std::string value;
+   world::object_optional_link value;
 };
 
 struct unlinked_properties {
@@ -238,7 +238,7 @@ auto make_unlink_properties(int layer_index, const world::world& world) -> unlin
 
             if (hintnode.layer == layer_index) continue;
 
-            if (iequals(hintnode.command_post, object.name)) {
+            if (hintnode.command_post == object_index) {
                unlinked_properties.hintnodes.emplace_back(hintnode_index);
             }
          }
@@ -367,6 +367,7 @@ auto make_object_link_adjustments(int layer_index,
 void apply_object_link_adjustments(
    world::world& world, std::span<const uint32> link_adjustments,
    std::vector<object_link_record>& sector_adjustments,
+   std::vector<root_object_link_record>& hintnode_adjustments,
    std::vector<object_link_record>& animation_group_adjustments,
    std::vector<root_object_link_record>& animation_hierarchy_root_adjustments,
    std::vector<object_link_record>& animation_hierarchy_adjustments)
@@ -374,6 +375,7 @@ void apply_object_link_adjustments(
    if (link_adjustments.empty()) return;
 
    sector_adjustments.clear();
+   hintnode_adjustments.clear();
    animation_group_adjustments.clear();
    animation_hierarchy_root_adjustments.clear();
    animation_hierarchy_adjustments.clear();
@@ -396,6 +398,29 @@ void apply_object_link_adjustments(
          });
 
          object_index -= static_cast<uint32>(it - link_adjustments.begin());
+      }
+   }
+
+   for (uint32 hintnode_index = 0; hintnode_index < world.hintnodes.size();
+        ++hintnode_index) {
+      world::hintnode& hintnode = world.hintnodes[hintnode_index];
+
+      if (hintnode.command_post.has_index()) {
+         const uint32 command_post_index = hintnode.command_post.index();
+
+         auto it = std::lower_bound(link_adjustments.begin(),
+                                    link_adjustments.end(), command_post_index);
+
+         if (it != link_adjustments.begin()) {
+            hintnode_adjustments.push_back(root_object_link_record{
+               .referer_index = hintnode_index,
+               .object_index = command_post_index,
+            });
+
+            hintnode.command_post =
+               command_post_index -
+               static_cast<uint32>(it - link_adjustments.begin());
+         }
       }
    }
 
@@ -434,7 +459,7 @@ void apply_object_link_adjustments(
 
          if (it != link_adjustments.begin()) {
             animation_hierarchy_root_adjustments.push_back({
-               .hierarchy_index = hierarchy_index,
+               .referer_index = hierarchy_index,
                .object_index = root_object_index,
             });
 
@@ -465,6 +490,7 @@ void apply_object_link_adjustments(
 
 void revert_object_link_adjustments(
    world::world& world, std::vector<object_link_record>& sector_adjustments,
+   std::vector<root_object_link_record>& hintnode_adjustments,
    std::vector<object_link_record>& animation_group_adjustments,
    std::vector<root_object_link_record>& animation_hierarchy_root_adjustments,
    std::vector<object_link_record>& animation_hierarchy_adjustments)
@@ -474,13 +500,17 @@ void revert_object_link_adjustments(
          record.object_index;
    }
 
+   for (root_object_link_record& record : hintnode_adjustments) {
+      world.hintnodes[record.referer_index].command_post = record.object_index;
+   }
+
    for (object_link_record& record : animation_group_adjustments) {
       world.animation_groups[record.referer_index].entries[record.entry_index].object_index =
          record.object_index;
    }
 
    for (root_object_link_record& record : animation_hierarchy_root_adjustments) {
-      world.animation_hierarchies[record.hierarchy_index].root_object =
+      world.animation_hierarchies[record.referer_index].root_object =
          record.object_index;
    }
 
@@ -490,6 +520,7 @@ void revert_object_link_adjustments(
    }
 
    sector_adjustments.clear();
+   hintnode_adjustments.clear();
    animation_group_adjustments.clear();
    animation_hierarchy_root_adjustments.clear();
    animation_hierarchy_adjustments.clear();
@@ -1222,6 +1253,7 @@ struct delete_layer final : edit<world::edit_context> {
 
       apply_object_link_adjustments(world, _data.object_link_adjustments,
                                     _sector_object_link_adjustments,
+                                    _hintnode_object_link_adjustments,
                                     _animation_group_object_link_adjustments,
                                     _animation_hierarchy_root_adjustments,
                                     _animation_hierarchy_object_link_adjustments);
@@ -1308,6 +1340,7 @@ struct delete_layer final : edit<world::edit_context> {
                            _data.remap_blocks_terrain_cut_boxes);
 
       revert_object_link_adjustments(world, _sector_object_link_adjustments,
+                                     _hintnode_object_link_adjustments,
                                      _animation_group_object_link_adjustments,
                                      _animation_hierarchy_root_adjustments,
                                      _animation_hierarchy_object_link_adjustments);
@@ -1326,6 +1359,7 @@ private:
    delete_layer_data _data;
 
    std::vector<object_link_record> _sector_object_link_adjustments;
+   std::vector<root_object_link_record> _hintnode_object_link_adjustments;
    std::vector<object_link_record> _animation_group_object_link_adjustments;
    std::vector<root_object_link_record> _animation_hierarchy_root_adjustments;
    std::vector<object_link_record> _animation_hierarchy_object_link_adjustments;

@@ -1,7 +1,10 @@
 #pragma once
 
-#include "id.hpp"
 #include "types.hpp"
+
+#include "id.hpp"
+#include "object_optional_link.hpp"
+
 #include "utility/enum_bitflags.hpp"
 
 #include <string>
@@ -63,7 +66,7 @@ struct hintnode {
    stance_flags primary_stance = stance_flags::none;
    stance_flags secondary_stance = stance_flags::none;
 
-   std::string command_post;
+   object_optional_link command_post;
 
    id<hintnode> id{};
 

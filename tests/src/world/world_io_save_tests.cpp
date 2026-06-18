@@ -1351,7 +1351,7 @@ TEST_CASE("world saving", "[World][IO]")
                         .type = hintnode_type::mine,
                         .mode = hintnode_mode::none,
                         .radius = 7.692307f,
-                        .command_post = "cp2"},
+                        .command_post = object_optional_link{"cp2"}},
             },
          },
 
@@ -2414,5 +2414,58 @@ TEST_CASE("world saving sector object links", "[World][IO]")
       io::read_file_to_string("temp/world_sector_object_links/test.pvs");
 
    CHECK(written_pvs == expected_pvs);
+}
+
+TEST_CASE("world saving hintnode object links", "[World][IO]")
+{
+   (void)io::create_directory("temp/world_hintnode_object_links");
+
+   const world world{
+      .name = "test",
+
+      .layer_descriptions = {{.name = "[Base]"}},
+
+      .common_layers = {0},
+
+      .objects =
+         {
+            entities_init,
+            std::initializer_list{
+               object{
+                  .name = "cp2",
+
+                  .rotation = {0.659295f, 0.2138f, 0.691417f, -0.203867f},
+                  .position = {-136.0f, 0.0f, 24.0f},
+
+                  .team = 0,
+
+                  .class_name = lowercase_string{"bldg_real_object"sv},
+               },
+            },
+         },
+
+      .hintnodes =
+         {
+            entities_init,
+            std::initializer_list{
+               hintnode{
+                  .name = "HintNode0",
+                  .rotation = {-0.569245f, 0.651529f, 0.303753f, -0.399004f},
+                  .position = {-70.045296f, 1.000582f, 19.298828f},
+                  .type = hintnode_type::mine,
+                  .mode = hintnode_mode::none,
+                  .radius = 7.692307f,
+                  .command_post = 0,
+               },
+            },
+         },
+   };
+
+   save_world("temp/world_hintnode_object_links/test.wld", world, {});
+
+   const auto written_hnt =
+      io::read_file_to_string("temp/world_hintnode_object_links/test.hnt");
+
+   CHECK(written_hnt == expected_hnt);
 }
 }

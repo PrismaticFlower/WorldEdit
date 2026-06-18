@@ -26,7 +26,7 @@ TEST_CASE("edits delete_entity object", "[Edits]")
 
    REQUIRE(world.paths[0].properties.size() == 1);
 
-   REQUIRE(world.hintnodes[0].command_post == "");
+   CHECK(not world.hintnodes[0].command_post.has_index());
 
    edit->revert(edit_context);
 
@@ -45,7 +45,7 @@ TEST_CASE("edits delete_entity object", "[Edits]")
    REQUIRE(world.paths[0].properties[1].key == "EnableObject");
    REQUIRE(world.paths[0].properties[1].value == "test_object");
 
-   REQUIRE(world.hintnodes[0].command_post == "test_object");
+   CHECK(world.hintnodes[0].command_post == 0);
 }
 
 TEST_CASE("edits delete_entity light", "[Edits]")
@@ -1022,6 +1022,95 @@ TEST_CASE("edits delete_entity sector ref object", "[Edits]")
    CHECK(world.sectors[0].objects[1] == 1);
    CHECK(world.sectors[0].objects[2] == 3);
    CHECK(world.sectors[0].objects[3] == 5);
+}
+
+TEST_CASE("edits delete_entity hintnode ref object", "[Edits]")
+{
+   world::world world = {
+      .name = "Test"s,
+
+      .layer_descriptions = {{.name = "[Base]"s}},
+      .common_layers = {0},
+
+      .objects =
+         {
+            world::entities_init,
+            std::initializer_list{
+               world::object{
+                  .name = "Object0"s,
+
+                  .id = world::object_id{0},
+               },
+               world::object{
+                  .name = "Object1"s,
+
+                  .id = world::object_id{1},
+               },
+               world::object{
+                  .name = "Object2"s,
+
+                  .id = world::object_id{2},
+               },
+               world::object{
+                  .name = "Object3"s,
+
+                  .id = world::object_id{3},
+               },
+               world::object{
+                  .name = "Object4"s,
+
+                  .id = world::object_id{4},
+               },
+               world::object{
+                  .name = "Object5"s,
+
+                  .id = world::object_id{5},
+               },
+            },
+         },
+      .hintnodes =
+         {
+            world::entities_init,
+            std::initializer_list{
+               world::hintnode{
+                  .name = "Hintnode0",
+                  .command_post = 0,
+               },
+               world::hintnode{
+                  .name = "Hintnode1",
+                  .command_post = 1,
+               },
+               world::hintnode{
+                  .name = "Hintnode2",
+                  .command_post = 3,
+               },
+               world::hintnode{
+                  .name = "Hintnode3",
+                  .command_post = 5,
+               },
+            },
+         },
+   };
+
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   auto edit = make_delete_entity(world.objects[0].id, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   CHECK(not world.hintnodes[0].command_post.has_index());
+   CHECK(world.hintnodes[1].command_post == 0);
+   CHECK(world.hintnodes[2].command_post == 2);
+   CHECK(world.hintnodes[3].command_post == 4);
+
+   edit->revert(edit_context);
+
+   CHECK(world.hintnodes[0].command_post == 0);
+   CHECK(world.hintnodes[1].command_post == 1);
+   CHECK(world.hintnodes[2].command_post == 3);
+   CHECK(world.hintnodes[3].command_post == 5);
 }
 
 TEST_CASE("edits delete_entity object class handle liftime", "[Edits]")

@@ -1375,9 +1375,13 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   world::get_hintnode_traits(hintnode->type);
 
                if (hintnode_traits.has_command_post) {
-                  if (ImGui::BeginCombo("Command Post",
-                                        hintnode->command_post.c_str())) {
-                     for (const auto& object : _world.objects) {
+                  if (ImGui::BeginCombo("Command Post", hintnode->command_post
+                                                           .name_lookup(_world)
+                                                           .c_str())) {
+                     for (uint32 object_index = 0;
+                          object_index < _world.objects.size(); ++object_index) {
+                        const world::object& object = _world.objects[object_index];
+
                         if (object.name.empty()) continue;
 
                         const assets::odf::definition& definition =
@@ -1388,7 +1392,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                            if (ImGui::Selectable(object.name.c_str())) {
                               _edit_stack_world
                                  .apply(edits::make_set_value(&hintnode->command_post,
-                                                              object.name),
+                                                              world::object_optional_link{
+                                                                 object_index}),
                                         _edit_context);
                            }
                         }
@@ -6475,12 +6480,17 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       }
 
       if (are_flags_set(flags, multi_select_flags::has_hintnode_command_post)) {
-         if (ImGui::BeginCombo(
-                "Command Post",
-                properties.hintnode.command_post.is_different()
-                   ? "<different>"
-                   : properties.hintnode.command_post.value_or("").c_str())) {
-            for (const world::object& object : _world.objects) {
+         if (ImGui::BeginCombo("Command Post",
+                               properties.hintnode.command_post.is_different()
+                                  ? "<different>"
+                                  : properties.hintnode.command_post
+                                       .value_or(world::object_optional_link{})
+                                       .name_lookup(_world)
+                                       .c_str())) {
+            for (uint32 object_index = 0; object_index < _world.objects.size();
+                 ++object_index) {
+               const world::object& object = _world.objects[object_index];
+
                if (object.name.empty()) continue;
 
                const assets::odf::definition& definition =
@@ -6503,7 +6513,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
                            edit_bundle.push_back(
                               edits::make_set_value(&hintnode->command_post,
-                                                    object.name));
+                                                    world::object_optional_link{
+                                                       object_index}));
                         }
                      }
 
