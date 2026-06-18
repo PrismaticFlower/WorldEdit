@@ -45,7 +45,7 @@ struct animation {
 // AnimationGroup("{name}", {play_when_level_begins}, {stops_when_object_is_controlled})
 struct animation_group {
    struct entry {
-      std::string animation;
+      uint32 animation_index = 0;
       uint32 object_index = 0;
    };
 

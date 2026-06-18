@@ -618,7 +618,7 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(group.disable_hierarchies);
 
       REQUIRE(group.entries.size() == 1);
-      CHECK(group.entries[0].animation == "Anim"sv);
+      CHECK(group.entries[0].animation_index == 0);
       CHECK(group.entries[0].object_index == 2);
 
       CHECK(is_unique_id(0, world.animation_groups));
@@ -716,6 +716,30 @@ TEST_CASE("world loading no terrain", "[World][IO]")
       CHECK(world.objects[0].instance_properties[1].key == "Radius"sv);
       CHECK(world.objects[0].instance_properties[1].value == "5.0"sv);
    }
+}
+
+TEST_CASE("world loading broken animation links", "[World][IO]")
+{
+   null_output_stream out;
+   const auto world =
+      load_world("data/world_broken_animation_links/test.wld"sv, {}, out);
+
+   CHECK(world.name == "test"sv);
+
+   REQUIRE(world.animation_groups.size() == 1);
+
+   const animation_group& group = world.animation_groups[0];
+
+   CHECK(group.name == "group"sv);
+   CHECK(group.play_when_level_begins);
+   CHECK(not group.stops_when_object_is_controlled);
+   CHECK(group.disable_hierarchies);
+
+   REQUIRE(group.entries_broken_links.size() == 1);
+   CHECK(group.entries_broken_links[0].animation == "Anim"sv);
+   CHECK(group.entries_broken_links[0].object == "Box");
+
+   CHECK(is_unique_id(0, world.animation_groups));
 }
 
 TEST_CASE("world loading broken animation object links", "[World][IO]")

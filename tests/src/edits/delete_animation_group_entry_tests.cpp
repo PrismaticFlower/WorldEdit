@@ -17,9 +17,9 @@ const we::world::world test_world_delete_animation_group_entry = {
             .name = "Animation",
             .entries =
                {
-                  {"Animation0", 0},
-                  {"Animation1", 1},
-                  {"Animation2", 2},
+                  {2, 0},
+                  {1, 1},
+                  {0, 2},
                },
          },
       },
@@ -54,19 +54,19 @@ TEST_CASE("edits delete_animation_group_entry", "[Edits]")
    edit->apply(edit_context);
 
    REQUIRE(world.animation_groups[0].entries.size() == 2);
-   CHECK(world.animation_groups[0].entries[0].animation == "Animation0");
+   CHECK(world.animation_groups[0].entries[0].animation_index == 2);
    CHECK(world.animation_groups[0].entries[0].object_index == 0);
-   CHECK(world.animation_groups[0].entries[1].animation == "Animation2");
+   CHECK(world.animation_groups[0].entries[1].animation_index == 0);
    CHECK(world.animation_groups[0].entries[1].object_index == 2);
 
    edit->revert(edit_context);
 
    REQUIRE(world.animation_groups[0].entries.size() == 3);
-   CHECK(world.animation_groups[0].entries[0].animation == "Animation0");
+   CHECK(world.animation_groups[0].entries[0].animation_index == 2);
    CHECK(world.animation_groups[0].entries[0].object_index == 0);
-   CHECK(world.animation_groups[0].entries[1].animation == "Animation1");
+   CHECK(world.animation_groups[0].entries[1].animation_index == 1);
    CHECK(world.animation_groups[0].entries[1].object_index == 1);
-   CHECK(world.animation_groups[0].entries[2].animation == "Animation2");
+   CHECK(world.animation_groups[0].entries[2].animation_index == 0);
    CHECK(world.animation_groups[0].entries[2].object_index == 2);
 }
 

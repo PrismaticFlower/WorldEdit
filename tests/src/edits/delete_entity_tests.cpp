@@ -874,11 +874,9 @@ TEST_CASE("edits delete_entity animation ref object", "[Edits]")
                world::animation_group{
                   .entries =
                      {
-
-                        world::animation_group::entry{"anim0", 1},
-                        world::animation_group::entry{"anim1", 0},
-                        world::animation_group::entry{"anim2", 2},
-
+                        world::animation_group::entry{0, 1},
+                        world::animation_group::entry{1, 0},
+                        world::animation_group::entry{2, 2},
                      },
                },
             },
@@ -907,9 +905,9 @@ TEST_CASE("edits delete_entity animation ref object", "[Edits]")
    edit->apply(edit_context);
 
    REQUIRE(world.animation_groups[0].entries.size() == 2);
-   CHECK(world.animation_groups[0].entries[0].animation == "anim0");
+   CHECK(world.animation_groups[0].entries[0].animation_index == 0);
    CHECK(world.animation_groups[0].entries[0].object_index == 0);
-   CHECK(world.animation_groups[0].entries[1].animation == "anim2");
+   CHECK(world.animation_groups[0].entries[1].animation_index == 2);
    CHECK(world.animation_groups[0].entries[1].object_index == 1);
 
    REQUIRE(world.animation_hierarchies.size() == 1);
@@ -923,11 +921,11 @@ TEST_CASE("edits delete_entity animation ref object", "[Edits]")
    edit->revert(edit_context);
 
    REQUIRE(world.animation_groups[0].entries.size() == 3);
-   CHECK(world.animation_groups[0].entries[0].animation == "anim0");
+   CHECK(world.animation_groups[0].entries[0].animation_index == 0);
    CHECK(world.animation_groups[0].entries[0].object_index == 1);
-   CHECK(world.animation_groups[0].entries[1].animation == "anim1");
+   CHECK(world.animation_groups[0].entries[1].animation_index == 1);
    CHECK(world.animation_groups[0].entries[1].object_index == 0);
-   CHECK(world.animation_groups[0].entries[2].animation == "anim2");
+   CHECK(world.animation_groups[0].entries[2].animation_index == 2);
    CHECK(world.animation_groups[0].entries[2].object_index == 2);
 
    REQUIRE(world.animation_hierarchies.size() == 2);

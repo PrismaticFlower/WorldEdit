@@ -1578,12 +1578,14 @@ void connect_object_refs(world& world)
       group.entries_broken_links.clear();
 
       for (animation_group::entry_broken& entry : entries_broken_links) {
+         const animation* animation = find_entity(world.animations, entry.animation);
          const object* object = find_entity(world.objects, entry.object);
 
-         if (object) {
-            group.entries.push_back({.animation = entry.animation,
-                                     .object_index = static_cast<uint32>(
-                                        (object - world.objects.data()))});
+         if (animation and object) {
+            group.entries.push_back(
+               {.animation_index =
+                   static_cast<uint32>((animation - world.animations.data())),
+                .object_index = static_cast<uint32>((object - world.objects.data()))});
          }
          else {
             group.entries_broken_links.push_back(std::move(entry));

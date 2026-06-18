@@ -1,0 +1,5 @@
+AnimationGroup("group", 1, 0)
+{
+	DisableHierarchies();
+	Animation("Anim", "Box");
+}

@@ -800,7 +800,8 @@ void save_animations(const io::path& path, const world& world)
       for (const animation_group::entry& entry : group.entries) {
          if (world.objects[entry.object_index].name.empty()) continue;
 
-         file.write_ln("\tAnimation(\"{}\", \"{}\");", entry.animation,
+         file.write_ln("\tAnimation(\"{}\", \"{}\");",
+                       world.animations[entry.animation_index].name,
                        world.objects[entry.object_index].name);
       }
 

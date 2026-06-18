@@ -37,9 +37,9 @@ const we::world::world test_world_delete_animation = {
                .name = "Animation0",
                .entries =
                   {
-                     {"Animation0", 0},
-                     {"Animation1", 1},
-                     {"Animation2", 2},
+                     {0, 0},
+                     {1, 1},
+                     {2, 2},
                   },
                .id = world::animation_group_id{0},
             },
@@ -47,8 +47,8 @@ const we::world::world test_world_delete_animation = {
                .name = "Animation1",
                .entries =
                   {
-                     {"Animation1", 1},
-                     {"Animation2", 2},
+                     {1, 1},
+                     {2, 2},
                   },
                .id = world::animation_group_id{1},
             },
@@ -56,8 +56,8 @@ const we::world::world test_world_delete_animation = {
                .name = "Animation2",
                .entries =
                   {
-                     {"animation2", 2},
-                     {"animation1", 1},
+                     {2, 2},
+                     {1, 1},
                   },
                .id = world::animation_group_id{2},
             },
@@ -81,14 +81,14 @@ TEST_CASE("edits delete_animation", "[Edits]")
    CHECK(world.animations[1].name == "Animation2");
 
    REQUIRE(world.animation_groups[0].entries.size() == 2);
-   CHECK(world.animation_groups[0].entries[0].animation == "Animation0");
-   CHECK(world.animation_groups[0].entries[1].animation == "Animation2");
+   CHECK(world.animation_groups[0].entries[0].animation_index == 0);
+   CHECK(world.animation_groups[0].entries[1].animation_index == 1);
 
    REQUIRE(world.animation_groups[1].entries.size() == 1);
-   CHECK(world.animation_groups[1].entries[0].animation == "Animation2");
+   CHECK(world.animation_groups[1].entries[0].animation_index == 1);
 
    REQUIRE(world.animation_groups[2].entries.size() == 1);
-   CHECK(world.animation_groups[2].entries[0].animation == "animation2");
+   CHECK(world.animation_groups[2].entries[0].animation_index == 1);
 
    edit->revert(edit_context);
 
@@ -98,16 +98,16 @@ TEST_CASE("edits delete_animation", "[Edits]")
    CHECK(world.animations[2].name == "Animation2");
 
    REQUIRE(world.animation_groups[0].entries.size() == 3);
-   CHECK(world.animation_groups[0].entries[0].animation == "Animation0");
-   CHECK(world.animation_groups[0].entries[1].animation == "Animation1");
-   CHECK(world.animation_groups[0].entries[2].animation == "Animation2");
+   CHECK(world.animation_groups[0].entries[0].animation_index == 0);
+   CHECK(world.animation_groups[0].entries[1].animation_index == 1);
+   CHECK(world.animation_groups[0].entries[2].animation_index == 2);
 
    REQUIRE(world.animation_groups[1].entries.size() == 2);
-   CHECK(world.animation_groups[1].entries[0].animation == "Animation1");
-   CHECK(world.animation_groups[1].entries[1].animation == "Animation2");
+   CHECK(world.animation_groups[1].entries[0].animation_index == 1);
+   CHECK(world.animation_groups[1].entries[1].animation_index == 2);
 
    REQUIRE(world.animation_groups[2].entries.size() == 2);
-   CHECK(world.animation_groups[2].entries[0].animation == "animation2");
-   CHECK(world.animation_groups[2].entries[1].animation == "animation1");
+   CHECK(world.animation_groups[2].entries[0].animation_index == 2);
+   CHECK(world.animation_groups[2].entries[1].animation_index == 1);
 }
 }

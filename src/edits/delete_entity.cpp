@@ -50,7 +50,7 @@ struct delete_object final : edit<world::edit_context> {
    struct unlinked_animation_group {
       uint32 group_index = 0;
       uint32 entry_index = 0;
-      std::string animation;
+      uint32 animation_index = 0;
    };
 
    struct unlinked_animation_hierarchy {
@@ -132,7 +132,7 @@ struct delete_object final : edit<world::edit_context> {
          std::vector<world::animation_group::entry>& entries =
             context.world.animation_groups[unlinked.group_index].entries;
 
-         std::swap(entries[unlinked.entry_index].animation, unlinked.animation);
+         unlinked.animation_index = entries[unlinked.entry_index].animation_index;
 
          entries.erase(entries.begin() + unlinked.entry_index);
       }
@@ -273,7 +273,7 @@ struct delete_object final : edit<world::edit_context> {
             context.world.animation_groups[unlinked.group_index].entries;
 
          entries.insert(entries.begin() + unlinked.entry_index,
-                        {.animation = std::move(unlinked.animation),
+                        {.animation_index = unlinked.animation_index,
                          .object_index = _object_index});
       }
 

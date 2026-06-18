@@ -2180,9 +2180,129 @@ SaveSkyReference(0);
    CHECK(written_configuration == expected_configuration);
 }
 
-TEST_CASE("world saving animation object links", "[World][IO]")
+TEST_CASE("world saving animation links", "[World][IO]")
 {
    (void)io::create_directory("temp/world_anim_link");
+
+   const world world{
+      .name = "test",
+
+      .layer_descriptions = {{.name = "[Base]"}},
+
+      .game_modes = {},
+      .common_layers = {0},
+
+      .objects = {entities_init,
+                  std::initializer_list{
+                     object{.name = "Object0"},
+                  }},
+
+      .animations =
+         {
+            pinned_vector_init{max_animations, max_animations},
+            std::initializer_list{
+               animation{
+                  .name = "Anim",
+                  .runtime = 10.0f,
+                  .loop = false,
+                  .local_translation = true,
+
+                  .position_keys =
+                     {
+                        position_key{
+                           .time = 0.0f,
+                           .position = float3{10.0f, 0.0f, 0.0f},
+                           .transition = animation_transition::pop,
+                           .tangent = float3{-0.0f, 0.0f, 0.0f},
+                           .tangent_next = float3{-0.0f, 0.0f, 0.0f},
+                        },
+                        position_key{
+                           .time = 5.0f,
+                           .position = float3{50.0f, 30.0f, 78.0f},
+                           .transition = animation_transition::linear,
+                           .tangent = float3{-0.0f, 0.0f, 0.0f},
+                           .tangent_next = float3{-0.0f, 0.0f, 0.0f},
+                        },
+                        position_key{
+                           .time = 10.0f,
+                           .position = float3{60.0f, 30.0f, 78.0f},
+                           .transition = animation_transition::spline,
+                           .tangent = float3{-10.0f, 0.0f, 0.0f},
+                           .tangent_next = float3{-0.0f, 0.0f, 10.0f},
+                        },
+                     },
+
+                  .rotation_keys =
+                     {
+                        rotation_key{
+                           .time = 0.0f,
+                           .rotation = float3{0.00f, -0.00f, -0.00f},
+                           .transition = animation_transition::linear,
+                           .tangent = float3{0.00f, -0.00f, -0.00f},
+                           .tangent_next = float3{0.00f, -0.00f, -0.00f},
+                        },
+                        rotation_key{
+                           .time = 5.0f,
+                           .rotation = float3{0.00f, -45.00f, -0.00f},
+                           .transition = animation_transition::spline,
+                           .tangent = float3{35.00f, -0.00f, -0.00f},
+                           .tangent_next = float3{0.00f, -0.00f, -35.00f},
+                        },
+                        rotation_key{
+                           .time = 7.5f,
+                           .rotation = float3{0.00, -90.00, -0.00},
+                           .transition = animation_transition::pop,
+                           .tangent = float3{0.00f, -0.00f, -0.00f},
+                           .tangent_next = float3{0.00f, -0.00f, -0.00f},
+                        },
+
+                     },
+               },
+            },
+         },
+
+      .animation_groups = {pinned_vector_init{max_animation_groups, max_animation_groups},
+                           std::initializer_list{
+                              animation_group{
+                                 .name = "group",
+                                 .play_when_level_begins = true,
+                                 .stops_when_object_is_controlled = false,
+                                 .entries =
+                                    {
+                                       animation_group::entry{0, 0},
+                                    },
+                              },
+                           }},
+   };
+
+   save_world("temp/world_anim_link/test.wld", world, {});
+
+   constexpr auto expected_anm_link = R"(Animation("Anim", 10.00, 0, 1)
+{
+	AddPositionKey(0.00, 10.00, 0.00, 0.00, 0, -0.00, 0.00, 0.00, -0.00, 0.00, 0.00);
+	AddPositionKey(5.00, 50.00, 30.00, 78.00, 1, -0.00, 0.00, 0.00, -0.00, 0.00, 0.00);
+	AddPositionKey(10.00, 60.00, 30.00, 78.00, 2, -10.00, 0.00, 0.00, -0.00, 0.00, 10.00);
+	AddRotationKey(0.00, 0.00, -0.00, -0.00, 1, 0.00, -0.00, -0.00, 0.00, -0.00, -0.00);
+	AddRotationKey(5.00, 0.00, -45.00, -0.00, 2, 35.00, -0.00, -0.00, 0.00, -0.00, -35.00);
+	AddRotationKey(7.50, 0.00, -90.00, -0.00, 0, 0.00, -0.00, -0.00, 0.00, -0.00, -0.00);
+}
+
+AnimationGroup("group", 1, 0)
+{
+	Animation("Anim", "Object0");
+}
+
+)"sv;
+
+   const auto written_anm =
+      io::read_file_to_string("temp/world_anim_link/test.anm");
+
+   CHECK(written_anm == expected_anm_link);
+}
+
+TEST_CASE("world saving animation object links", "[World][IO]")
+{
+   (void)io::create_directory("temp/world_anim_objects_link");
 
    const world world{
       .name = "test",
@@ -2273,9 +2393,9 @@ TEST_CASE("world saving animation object links", "[World][IO]")
                                  .stops_when_object_is_controlled = false,
                                  .entries =
                                     {
-                                       animation_group::entry{"Anim", 0},
-                                       animation_group::entry{"Anim", 2},
-                                       animation_group::entry{"Anim", 4},
+                                       animation_group::entry{0, 0},
+                                       animation_group::entry{0, 2},
+                                       animation_group::entry{0, 4},
                                     },
                                  .entries_broken_links =
                                     {
@@ -2296,7 +2416,7 @@ TEST_CASE("world saving animation object links", "[World][IO]")
                                 }},
    };
 
-   save_world("temp/world_anim_link/test.wld", world, {});
+   save_world("temp/world_anim_objects_link/test.wld", world, {});
 
    constexpr auto expected_anm_link = R"(Animation("Anim", 10.00, 0, 1)
 {
@@ -2324,7 +2444,7 @@ Hierarchy("Object0")
 )"sv;
 
    const auto written_anm =
-      io::read_file_to_string("temp/world_anim_link/test.anm");
+      io::read_file_to_string("temp/world_anim_objects_link/test.anm");
 
    CHECK(written_anm == expected_anm_link);
 }

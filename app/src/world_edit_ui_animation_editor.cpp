@@ -2357,7 +2357,8 @@ void world_edit::ui_show_animation_editor() noexcept
                      {.name = world::create_unique_name(_world.animation_groups,
                                                         _world.animations.back().name),
                       .entries = {world::animation_group::entry{
-                         .animation = _world.animations.back().name,
+                         .animation_index =
+                            static_cast<uint32>(_world.animations.size() - 1),
                          .object_index =
                             static_cast<uint32>(object - _world.objects.data())}},
                       .id = id}),
@@ -2394,7 +2395,8 @@ void world_edit::ui_show_animation_editor() noexcept
             if (object) {
                _edit_stack_world.apply(edits::make_add_animation_group_entry(
                                           &group->entries,
-                                          {.animation = _world.animations.back().name,
+                                          {.animation_index = static_cast<uint32>(
+                                              _world.animations.size() - 1),
                                            .object_index = static_cast<uint32>(
                                               object - _world.objects.data())}),
                                        _edit_context);
