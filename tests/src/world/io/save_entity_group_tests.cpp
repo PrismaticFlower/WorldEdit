@@ -511,7 +511,7 @@ Sector("Sector-1")
 TEST_CASE("world save entity group (sectors, broken links)", "[World][IO]")
 {
    (void)io::create_directory("temp/entity_groups");
-   const io::path path = "temp/entity_groups/test_sectors.eng";
+   const io::path path = "temp/entity_groups/test_sectors_broken_links.eng";
 
    const std::string_view expected_eng =
       R"(Sector("sector")
