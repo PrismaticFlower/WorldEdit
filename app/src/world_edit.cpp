@@ -2344,7 +2344,7 @@ void world_edit::place_entity_group(const world::entity_group& group,
          new_hintnode.command_post =
             new_hintnode.command_post.index() + object_base_index;
       }
-      else {
+      else if (not new_hintnode.command_post.name().empty()) {
          const world::object* object =
             world::find_entity(_world.objects, new_hintnode.command_post.name());
 
