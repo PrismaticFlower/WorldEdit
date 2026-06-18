@@ -585,6 +585,95 @@ TEST_CASE("world save entity group (portals)", "[World][IO]")
    const io::path path = "temp/entity_groups/test_portals.eng";
 
    const std::string_view expected_eng =
+      R"(Sector("sector")
+{
+	Base(0.000000);
+	Height(10.000000);
+	Point(-157.581009, 4.900336);
+	Point(-227.199097, 7.364827);
+	Point(-228.642029, -40.347687);
+	Point(-159.451279, -40.488800);
+}
+
+Sector("Sector-1")
+{
+	Base(0.000000);
+	Height(10.000000);
+	Point(-196.648041, -125.908623);
+	Point(-195.826218, -49.666763);
+	Point(-271.034851, -48.864563);
+	Point(-274.260132, -128.690567);
+}
+
+Portal("Portal")
+{
+	Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+	Position(-193.661575, 2.097009, -31.728502);
+	Width(2.920000);
+	Height(4.120000);
+	Sector1("sector");
+	Sector2("Sector-1");
+}
+
+)";
+
+   entity_group group = {
+      .sectors =
+         {
+            sector{
+               .name = "sector",
+               .base = 0.0f,
+               .height = 10.0f,
+               .points =
+                  {
+                     float2{-157.581009f, -4.900336f},
+                     float2{-227.199097f, -7.364827f},
+                     float2{-228.642029f, 40.347687f},
+                     float2{-159.451279f, 40.488800f},
+                  },
+            },
+
+            sector{
+               .name = "Sector-1",
+               .base = 0.0f,
+               .height = 10.0f,
+               .points =
+                  {
+                     float2{-196.648041f, 125.908623f},
+                     float2{-195.826218f, 49.666763f},
+                     float2{-271.034851f, 48.864563f},
+                     float2{-274.260132f, 128.690567f},
+                  },
+            },
+         },
+
+      .portals =
+         {
+            portal{
+               .name = "Portal",
+               .rotation = quaternion{0.000f, -0.000f, 1.000f, -0.000f},
+               .position = float3{-193.661575f, 2.097009f, 31.728502f},
+               .width = 2.92f,
+               .height = 4.12f,
+               .sector1 = 0,
+               .sector2 = 1,
+            },
+         },
+   };
+
+   save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
+TEST_CASE("world save entity group (portals, broken links)", "[World][IO]")
+{
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_portals_broken_links.eng";
+
+   const std::string_view expected_eng =
       R"(Portal("Portal")
 {
 	Rotation(1.000000, 0.000000, 0.000000, 0.000000);
@@ -606,8 +695,8 @@ TEST_CASE("world save entity group (portals)", "[World][IO]")
                .position = float3{-193.661575f, 2.097009f, 31.728502f},
                .width = 2.92f,
                .height = 4.12f,
-               .sector1 = "sector",
-               .sector2 = "Sector-1",
+               .sector1 = sector_optional_link{"sector"},
+               .sector2 = sector_optional_link{"Sector-1"},
             },
          },
    };

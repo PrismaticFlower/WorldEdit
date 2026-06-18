@@ -556,8 +556,18 @@ struct delete_sector final : edit<world::edit_context> {
       for (const auto& unlinked : _unlinked_portals) {
          world::portal& portal = context.world.portals[unlinked.portal_index];
 
-         if (unlinked.sector1) portal.sector1 = "";
-         if (unlinked.sector2) portal.sector2 = "";
+         if (unlinked.sector1) portal.sector1 = {};
+         if (unlinked.sector2) portal.sector2 = {};
+      }
+
+      for (world::portal& portal : context.world.portals) {
+         if (portal.sector1.has_index() and portal.sector1.index() > _sector_index) {
+            portal.sector1 = portal.sector1.index() - 1;
+         }
+
+         if (portal.sector2.has_index() and portal.sector2.index() > _sector_index) {
+            portal.sector2 = portal.sector2.index() - 1;
+         }
       }
    }
 
@@ -566,11 +576,21 @@ struct delete_sector final : edit<world::edit_context> {
       context.world.sectors.insert(context.world.sectors.begin() + _sector_index,
                                    _sector);
 
+      for (world::portal& portal : context.world.portals) {
+         if (portal.sector1.has_index() and portal.sector1.index() >= _sector_index) {
+            portal.sector1 = portal.sector1.index() + 1;
+         }
+
+         if (portal.sector2.has_index() and portal.sector2.index() >= _sector_index) {
+            portal.sector2 = portal.sector2.index() + 1;
+         }
+      }
+
       for (const auto& unlinked : _unlinked_portals) {
          world::portal& portal = context.world.portals[unlinked.portal_index];
 
-         if (unlinked.sector1) portal.sector1 = _sector.name;
-         if (unlinked.sector2) portal.sector2 = _sector.name;
+         if (unlinked.sector1) portal.sector1 = _sector_index;
+         if (unlinked.sector2) portal.sector2 = _sector_index;
       }
    }
 
@@ -1071,7 +1091,7 @@ auto make_delete_entity(world::sector_id sector_id, const world::world& world)
    uint32 unlinked_portal_count = 0;
 
    for (const auto& portal : world.portals) {
-      if (iequals(portal.sector1, sector.name) or iequals(portal.sector2, sector.name)) {
+      if (portal.sector1 == sector_index or portal.sector2 == sector_index) {
          unlinked_portal_count += 1;
       }
    }
@@ -1083,10 +1103,9 @@ auto make_delete_entity(world::sector_id sector_id, const world::world& world)
    for (uint32 portal_index = 0; portal_index < world.portals.size(); ++portal_index) {
       const world::portal& portal = world.portals[portal_index];
 
-      if (iequals(portal.sector1, sector.name) or iequals(portal.sector2, sector.name)) {
-         unlinked_portals.emplace_back(portal_index,
-                                       iequals(portal.sector1, sector.name),
-                                       iequals(portal.sector2, sector.name));
+      if (portal.sector1 == sector_index or portal.sector2 == sector_index) {
+         unlinked_portals.emplace_back(portal_index, portal.sector1 == sector_index,
+                                       portal.sector2 == sector_index);
       }
    }
 

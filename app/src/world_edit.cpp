@@ -869,12 +869,13 @@ void world_edit::update_hovered_entity() noexcept
 
                ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * description_scale);
 
-               ImGui::Text("Sector 1: %s", portal.sector1.empty()
-                                              ? "<none>"
-                                              : portal.sector1.c_str());
-               ImGui::Text("Sector 2: %s", portal.sector2.empty()
-                                              ? "<none>"
-                                              : portal.sector2.c_str());
+               const std::string& sector1_name = portal.sector1.name_lookup(_world);
+               const std::string& sector2_name = portal.sector2.name_lookup(_world);
+
+               ImGui::Text("Sector 1: %s",
+                           sector1_name.empty() ? "<none>" : sector1_name.c_str());
+               ImGui::Text("Sector 2: %s",
+                           sector2_name.empty() ? "<none>" : sector2_name.c_str());
 
                ImGui::PopFont();
 
@@ -2311,16 +2312,28 @@ void world_edit::place_entity_group(const world::entity_group& group,
 
       const world::portal_id new_portal_id = _world.next_id.portals.aquire();
 
-      if (not new_portal.sector1.empty()) {
-         new_portal.sector1 =
-            world::get_placed_entity_name(new_portal.sector1, _world.sectors,
-                                          group, sector_base_index);
+      if (new_portal.sector1.has_index()) {
+         new_portal.sector1 = new_portal.sector1.index() + sector_base_index;
+      }
+      else if (not new_portal.sector1.name().empty()) {
+         const world::sector* sector =
+            world::find_entity(_world.sectors, new_portal.sector1.name());
+
+         if (sector) {
+            new_portal.sector1 = static_cast<uint32>(sector - _world.sectors.data());
+         }
       }
 
-      if (not new_portal.sector2.empty()) {
-         new_portal.sector2 =
-            world::get_placed_entity_name(new_portal.sector2, _world.sectors,
-                                          group, sector_base_index);
+      if (new_portal.sector2.has_index()) {
+         new_portal.sector2 = new_portal.sector2.index() + sector_base_index;
+      }
+      else if (not new_portal.sector2.name().empty()) {
+         const world::sector* sector =
+            world::find_entity(_world.sectors, new_portal.sector2.name());
+
+         if (sector) {
+            new_portal.sector2 = static_cast<uint32>(sector - _world.sectors.data());
+         }
       }
 
       new_portal.rotation = group.rotation * new_portal.rotation;

@@ -497,8 +497,8 @@ struct multi_select_properties {
    } sector;
 
    struct portal {
-      value<std::string_view> sector1;
-      value<std::string_view> sector2;
+      value<sector_optional_link> sector1;
+      value<sector_optional_link> sector2;
    } portal;
 
    struct hintnode {

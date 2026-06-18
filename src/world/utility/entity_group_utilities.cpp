@@ -196,14 +196,14 @@ void fill_entity_group_block_materials(entity_group& group, const blocks& blocks
    }
 }
 
-void fix_object_links(entity_group& group, std::span<const object> world_objects)
+void fix_entity_links(entity_group& group, const world& world)
 {
    for (sector& sector : group.sectors) {
       sector.objects_broken_links.reserve(sector.objects_broken_links.size() +
                                           sector.objects.size());
 
       for (uint32& index : sector.objects) {
-         const std::string_view object_name = world_objects[index].name;
+         const std::string_view object_name = world.objects[index].name;
          const std::vector<object>::iterator object =
             std::find_if(group.objects.begin(), group.objects.end(),
                          [&](const auto& object) {
@@ -219,11 +219,47 @@ void fix_object_links(entity_group& group, std::span<const object> world_objects
       }
    }
 
+   for (portal& portal : group.portals) {
+      if (portal.sector1.has_index()) {
+         const std::string_view sector_name =
+            world.sectors[portal.sector1.index()].name;
+         const std::vector<sector>::iterator sector =
+            std::find_if(group.sectors.begin(), group.sectors.end(),
+                         [&](const auto& sector) {
+                            return string::iequals(sector_name, sector.name);
+                         });
+
+         if (sector != group.sectors.end()) {
+            portal.sector1 = static_cast<uint32>((sector - group.sectors.begin()));
+         }
+         else {
+            portal.sector1 = sector_optional_link{std::string{sector_name}};
+         }
+      }
+
+      if (portal.sector2.has_index()) {
+         const std::string_view sector_name =
+            world.sectors[portal.sector2.index()].name;
+         const std::vector<sector>::iterator sector =
+            std::find_if(group.sectors.begin(), group.sectors.end(),
+                         [&](const auto& sector) {
+                            return string::iequals(sector_name, sector.name);
+                         });
+
+         if (sector != group.sectors.end()) {
+            portal.sector2 = static_cast<uint32>((sector - group.sectors.begin()));
+         }
+         else {
+            portal.sector2 = sector_optional_link{std::string{sector_name}};
+         }
+      }
+   }
+
    for (hintnode& hintnode : group.hintnodes) {
       if (not hintnode.command_post.has_index()) continue;
 
       const std::string_view object_name =
-         world_objects[hintnode.command_post.index()].name;
+         world.objects[hintnode.command_post.index()].name;
       const std::vector<object>::iterator object =
          std::find_if(group.objects.begin(), group.objects.end(),
                       [&](const auto& object) {
@@ -963,7 +999,7 @@ auto make_entity_group_from_selection(const world& world,
       }
    }
 
-   fix_object_links(group, world.objects);
+   fix_entity_links(group, world);
    fill_entity_group_block_materials(group, world.blocks);
 
    if (layer_tracker.has_layer) group.layer = layer_tracker.layer;
@@ -1086,7 +1122,7 @@ auto make_entity_group_from_layer(const world& world, const int32 layer) noexcep
       }
    }
 
-   fix_object_links(group, world.objects);
+   fix_entity_links(group, world);
    fill_entity_group_block_materials(group, world.blocks);
 
    return group;

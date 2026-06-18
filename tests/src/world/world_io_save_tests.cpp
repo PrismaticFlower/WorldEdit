@@ -1336,8 +1336,8 @@ TEST_CASE("world saving", "[World][IO]")
                       .position = {-193.661575f, 2.097009f, 31.728502f},
                       .width = 2.92f,
                       .height = 4.12f,
-                      .sector1 = "sector-1",
-                      .sector2 = "sector-2"},
+                      .sector1 = 0,
+                      .sector2 = 1},
             },
          },
 
@@ -2401,8 +2401,8 @@ TEST_CASE("world saving sector object links", "[World][IO]")
                       .position = {-193.661575f, 2.097009f, 31.728502f},
                       .width = 2.92f,
                       .height = 4.12f,
-                      .sector1 = "sector-1",
-                      .sector2 = "sector-2"},
+                      .sector1 = 0,
+                      .sector2 = 1},
             },
          },
 
@@ -2412,6 +2412,76 @@ TEST_CASE("world saving sector object links", "[World][IO]")
 
    const auto written_pvs =
       io::read_file_to_string("temp/world_sector_object_links/test.pvs");
+
+   CHECK(written_pvs == expected_pvs);
+}
+
+TEST_CASE("world saving portal sector broken links", "[World][IO]")
+{
+   (void)io::create_directory("temp/world_portal_sector_broken_links");
+
+   const world world{
+      .name = "test",
+
+      .layer_descriptions = {{.name = "[Base]"}, {.name = "conquest"}},
+
+      .common_layers = {0},
+
+      .objects = {entities_init,
+                  std::initializer_list{
+                     object{.name = "object",
+
+                            .rotation = {0.659295f, 0.2138f, 0.691417f, -0.203867f},
+                            .position = {-136.0f, 0.0f, 24.0f},
+
+                            .team = 0,
+
+                            .class_name = lowercase_string{"bldg_real_object"sv},
+                            .instance_properties = {{.key = "SomeProperty", .value = "An Amazing Value"}}},
+                  }},
+
+      .sectors = {entities_init,
+                  std::initializer_list{
+                     sector{.name = "sector-1",
+                            .base = 0.0f,
+                            .height = 10.0f,
+                            .points = {{-157.581009f, -4.900336f},
+                                       {-227.199097f, -7.364827f},
+                                       {-228.642029f, 40.347687f},
+                                       {-159.451279f, 40.488800f}},
+                            .objects_broken_links = {"really_complex_object"}},
+
+                     sector{.name = "sector-2",
+                            .base = 0.0f,
+                            .height = 10.0f,
+                            .points = {{-196.648041f, 125.908623f},
+                                       {-195.826218f, 49.666763f},
+                                       {-271.034851f, 48.864563f},
+                                       {-274.260132f, 128.690567f}},
+                            .objects_broken_links = {"also_complex_object"}},
+                  }},
+
+      .portals =
+         {
+            entities_init,
+            std::initializer_list{
+               portal{
+                  .name = "Portal",
+                  .rotation = {0.027578f, -0.836273f, 0.546265f, -0.038489f},
+                  .position = {-193.661575f, 2.097009f, 31.728502f},
+                  .width = 2.92f,
+                  .height = 4.12f,
+                  .sector1 = sector_optional_link{"sector-1"},
+                  .sector2 = sector_optional_link{"sector-2"},
+               },
+            },
+         },
+   };
+
+   save_world("temp/world_portal_sector_broken_links/test.wld", world, {});
+
+   const auto written_pvs =
+      io::read_file_to_string("temp/world_portal_sector_broken_links/test.pvs");
 
    CHECK(written_pvs == expected_pvs);
 }

@@ -36,13 +36,15 @@ void world_edit::ui_show_world_selection_pick_sector() noexcept
                                     _interaction_targets.hovered_entity.get<world::sector_id>())
                : nullptr;
 
-         _edit_stack_world
-            .apply(edits::make_set_value(_selection_pick_sector_context.index ==
-                                               selection_pick_sector_index::_1
-                                            ? &portal->sector1
-                                            : &portal->sector2,
-                                         sector ? sector->name : ""),
-                   _edit_context, {.closed = true});
+         _edit_stack_world.apply(
+            edits::make_set_value(_selection_pick_sector_context.index ==
+                                        selection_pick_sector_index::_1
+                                     ? &portal->sector1
+                                     : &portal->sector2,
+                                  sector ? world::sector_optional_link{static_cast<uint32>(
+                                              sector - _world.sectors.data())}
+                                         : world::sector_optional_link{}),
+            _edit_context, {.closed = true});
 
          open = false;
       }

@@ -685,11 +685,13 @@ void load_portals_sectors(const io::path& filepath, output_stream& output, world
             portal.id = world_out.next_id.portals.aquire();
 
             if (auto sector = key_node.find("Sector1"sv); sector != key_node.cend()) {
-               portal.sector1 = sector->values.get<std::string>(0);
+               portal.sector1 =
+                  sector_optional_link{sector->values.get<std::string>(0)};
             }
 
             if (auto sector = key_node.find("Sector2"sv); sector != key_node.cend()) {
-               portal.sector2 = sector->values.get<std::string>(0);
+               portal.sector2 =
+                  sector_optional_link{sector->values.get<std::string>(0)};
             }
 
             if (verbose_output) {
@@ -1528,6 +1530,27 @@ void connect_object_refs(world& world)
          }
          else {
             sector.objects_broken_links.push_back(std::move(object_name));
+         }
+      }
+   }
+
+   for (portal& portal : world.portals) {
+      assert(portal.sector1.has_name());
+      assert(portal.sector2.has_name());
+
+      if (not portal.sector1.name().empty()) {
+         const sector* sector = find_entity(world.sectors, portal.sector1.name());
+
+         if (sector) {
+            portal.sector1 = static_cast<uint32>((sector - world.sectors.data()));
+         }
+      }
+
+      if (not portal.sector2.name().empty()) {
+         const sector* sector = find_entity(world.sectors, portal.sector2.name());
+
+         if (sector) {
+            portal.sector2 = static_cast<uint32>((sector - world.sectors.data()));
          }
       }
    }

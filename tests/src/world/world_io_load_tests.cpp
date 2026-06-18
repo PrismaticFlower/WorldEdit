@@ -374,8 +374,8 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(approx_equals(world.portals[0].rotation, {0.000f, 0.000f, 1.000f, 0.000f}));
       CHECK(world.portals[0].width == 2.92f);
       CHECK(world.portals[0].height == 4.12f);
-      CHECK(world.portals[0].sector1 == "sector"sv);
-      CHECK(world.portals[0].sector2 == "Sector-1"sv);
+      CHECK(world.portals[0].sector1 == 0);
+      CHECK(world.portals[0].sector2 == 1);
 
       CHECK(is_unique_id(0, world.portals));
    }
@@ -902,4 +902,17 @@ TEST_CASE("world loading hintnode links", "[World][IO]")
    }
 }
 
+TEST_CASE("world loading portal sector broken links", "[World][IO]")
+{
+   null_output_stream out;
+   const auto world =
+      load_world("data/world_portal_sector_links/test.wld"sv, {}, out);
+
+   REQUIRE(world.portals.size() == 1);
+
+   REQUIRE(world.portals[0].sector1.has_name());
+   CHECK(world.portals[0].sector1.name() == "Sector0");
+   REQUIRE(world.portals[0].sector2.has_name());
+   CHECK(world.portals[0].sector2.name() == "Sector1");
+}
 }

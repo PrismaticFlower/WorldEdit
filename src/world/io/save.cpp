@@ -597,8 +597,21 @@ void save_portals_sectors(const io::path& path, const world& world)
       file.write_ln("\tWidth({:f});", portal.width);
       file.write_ln("\tHeight({:f});", portal.height);
 
-      file.write_ln("\tSector1(\"{}\");", portal.sector1);
-      file.write_ln("\tSector2(\"{}\");", portal.sector2);
+      if (portal.sector1.has_index()) {
+         file.write_ln("\tSector1(\"{}\");",
+                       world.sectors[portal.sector1.index()].name);
+      }
+      else {
+         file.write_ln("\tSector1(\"{}\");", portal.sector1.name());
+      }
+
+      if (portal.sector2.has_index()) {
+         file.write_ln("\tSector2(\"{}\");",
+                       world.sectors[portal.sector2.index()].name);
+      }
+      else {
+         file.write_ln("\tSector2(\"{}\");", portal.sector2.name());
+      }
 
       file.write_ln("}");
    }

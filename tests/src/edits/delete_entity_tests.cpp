@@ -170,14 +170,14 @@ TEST_CASE("edits delete_entity sector", "[Edits]")
 
    REQUIRE(world.sectors.empty());
 
-   REQUIRE(world.portals[0].sector1 == "");
+   CHECK(not world.portals[0].sector1.has_index());
 
    edit->revert(edit_context);
 
    REQUIRE(world.sectors.size() == 1);
    REQUIRE(world.sectors[0] == test_world.sectors[0]);
 
-   REQUIRE(world.portals[0].sector1 == "test_sector");
+   CHECK(world.portals[0].sector1 == 0);
 }
 
 TEST_CASE("edits delete_entity portal", "[Edits]")
@@ -1111,6 +1111,117 @@ TEST_CASE("edits delete_entity hintnode ref object", "[Edits]")
    CHECK(world.hintnodes[1].command_post == 1);
    CHECK(world.hintnodes[2].command_post == 3);
    CHECK(world.hintnodes[3].command_post == 5);
+}
+
+TEST_CASE("edits delete_entity portal ref sector", "[Edits]")
+{
+   world::world world =
+      {
+         .name = "Test"s,
+
+         .layer_descriptions = {{.name = "[Base]"s}},
+         .common_layers = {0},
+
+         .sectors =
+            {
+               world::entities_init,
+               std::initializer_list{
+                  world::sector{
+                     .name = "Sector0",
+                     .base = 0.0f,
+                     .height = 1.0f,
+                     .points = {{-1.0f, -1.0f}, {-1.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, -1.0f}},
+                     .id = world::sector_id{0},
+                  },
+                  world::sector{
+                     .name = "Sector1",
+                     .base = 0.0f,
+                     .height = 1.0f,
+                     .points = {{-1.0f, -1.0f}, {-1.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, -1.0f}},
+                     .id = world::sector_id{1},
+                  },
+                  world::sector{
+                     .name = "Sector2",
+                     .base = 0.0f,
+                     .height = 1.0f,
+                     .points = {{-1.0f, -1.0f}, {-1.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, -1.0f}},
+                     .id = world::sector_id{2},
+                  },
+                  world::sector{
+                     .name = "Sector3",
+                     .base = 0.0f,
+                     .height = 1.0f,
+                     .points = {{-1.0f, -1.0f}, {-1.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, -1.0f}},
+                     .id = world::sector_id{3},
+                  },
+                  world::sector{
+                     .name = "Sector4",
+                     .base = 0.0f,
+                     .height = 1.0f,
+                     .points = {{-1.0f, -1.0f}, {-1.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, -1.0f}},
+                     .id = world::sector_id{4},
+                  },
+                  world::sector{
+                     .name = "Sector5",
+                     .base = 0.0f,
+                     .height = 1.0f,
+                     .points = {{-1.0f, -1.0f}, {-1.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, -1.0f}},
+                     .id = world::sector_id{5},
+                  },
+               },
+            },
+
+         .portals =
+            {
+               world::entities_init,
+               std::initializer_list{
+
+                  world::portal{
+                     .name = "Portal0",
+                     .sector1 = 0,
+                     .sector2 = 1,
+                  },
+                  world::portal{
+                     .name = "Portal1",
+                     .sector1 = 2,
+                     .sector2 = 3,
+                  },
+                  world::portal{
+                     .name = "Portal2",
+                     .sector1 = 4,
+                     .sector2 = 5,
+                  },
+               },
+            },
+      };
+
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   auto edit = make_delete_entity(world.sectors[1].id, world);
+
+   edit->apply(edit_context);
+
+   CHECK(world.portals[0].sector1 == 0);
+   CHECK(not world.portals[0].sector2.has_index());
+
+   CHECK(world.portals[1].sector1 == 1);
+   CHECK(world.portals[1].sector2 == 2);
+
+   CHECK(world.portals[2].sector1 == 3);
+   CHECK(world.portals[2].sector2 == 4);
+
+   edit->revert(edit_context);
+
+   CHECK(world.portals[0].sector1 == 0);
+   CHECK(world.portals[0].sector2 == 1);
+
+   CHECK(world.portals[1].sector1 == 2);
+   CHECK(world.portals[1].sector2 == 3);
+
+   CHECK(world.portals[2].sector1 == 4);
+   CHECK(world.portals[2].sector2 == 5);
 }
 
 TEST_CASE("edits delete_entity object class handle liftime", "[Edits]")

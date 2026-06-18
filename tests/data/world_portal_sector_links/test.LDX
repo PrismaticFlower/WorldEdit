@@ -1,0 +1,13 @@
+Version(1);
+NextID(1);
+
+Layer("[Base]", 0, 8)
+{
+	Description("");
+}
+
+GameMode("Common")
+{
+	Layer(0);
+}
+

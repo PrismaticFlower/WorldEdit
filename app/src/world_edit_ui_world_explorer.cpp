@@ -914,20 +914,20 @@ void world_edit::ui_show_world_explorer() noexcept
                      });
                }
                else if (sort_specs.ColumnIndex == sector1_column) {
-                  fill_sort_map(
-                     _world_explorer_sort_map, sort_specs.SortDirection,
-                     [&](const uint32 left, const uint32 right) {
-                        return string::iless_than(_world.portals[left].sector1,
-                                                  _world.portals[right].sector1);
-                     });
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return string::iless_than(
+                                      _world.portals[left].sector1.name_lookup(_world),
+                                      _world.portals[right].sector1.name_lookup(_world));
+                                });
                }
                else if (sort_specs.ColumnIndex == sector2_column) {
-                  fill_sort_map(
-                     _world_explorer_sort_map, sort_specs.SortDirection,
-                     [&](const uint32 left, const uint32 right) {
-                        return string::iless_than(_world.portals[left].sector2,
-                                                  _world.portals[right].sector2);
-                     });
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return string::iless_than(
+                                      _world.portals[left].sector2.name_lookup(_world),
+                                      _world.portals[right].sector2.name_lookup(_world));
+                                });
                }
                else if (sort_specs.ColumnIndex == hidden_column) {
                   fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
@@ -963,9 +963,9 @@ void world_edit::ui_show_world_explorer() noexcept
                                     ImGuiSelectableFlags_SpanAllColumns);
                const bool hover = ImGui::IsItemHovered();
                ImGui::TableNextColumn();
-               ImGui::Text(portal.sector1.c_str());
+               ImGui::Text(portal.sector1.name_lookup(_world).c_str());
                ImGui::TableNextColumn();
-               ImGui::Text(portal.sector2.c_str());
+               ImGui::Text(portal.sector2.name_lookup(_world).c_str());
                ImGui::TableNextColumn();
                ImGui::Text(portal.hidden ? "X" : "-");
 

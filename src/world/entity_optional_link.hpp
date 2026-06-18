@@ -77,7 +77,7 @@ struct entity_optional_link {
             return world.objects[index()].name;
          }
          else if constexpr (std::is_same_v<T, sector>) {
-            assert(index() < world.sector.size());
+            assert(index() < world.sectors.size());
 
             return world.sectors[index()].name;
          }

@@ -154,8 +154,8 @@ const we::world::world
                    .width = 5.0f,
                    .height = 5.0f,
 
-                   .sector1 = "test_sector"s,
-                   .sector2 = ""s,
+                   .sector1 = 0,
+                   .sector2 = sector_optional_link{},
                 },
              },
           },

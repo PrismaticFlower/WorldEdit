@@ -2680,48 +2680,74 @@ void world_edit::ui_show_world_creation_editor() noexcept
       ImGui::DragFloat("Height", &portal.height, _edit_stack_world,
                        _edit_context, 1.0f, 0.25f, 1e10f);
 
-      ImGui::InputTextAutoComplete("Linked Sector 1", &portal.sector1,
-                                   _edit_stack_world, _edit_context, [&]() noexcept {
-                                      std::array<std::string_view, 6> entries;
-                                      std::size_t matching_count = 0;
+      if (ImGui::BeginCombo("Linked Sector 1",
+                            portal.sector1.name_lookup(_world).c_str())) {
+         if (ImGui::Selectable("<clear>")) {
+            _edit_stack_world.apply(edits::make_set_value(&portal.sector1,
+                                                          world::sector_optional_link{}),
+                                    _edit_context, {.closed = true});
+         }
 
-                                      for (const auto& sector : _world.sectors) {
-                                         if (sector.name.contains(portal.sector1)) {
-                                            if (matching_count == entries.size())
-                                               break;
+         for (uint32 sector_index = 0; sector_index < _world.sectors.size();
+              ++sector_index) {
+            const world::sector& sector = _world.sectors[sector_index];
 
-                                            entries[matching_count] = sector.name;
+            if (ImGui::Selectable(sector.name.c_str(), portal.sector1 == sector_index)) {
+               _edit_stack_world.apply(edits::make_set_value(&portal.sector1,
+                                                             world::sector_optional_link{
+                                                                sector_index}),
+                                       _edit_context, {.closed = true});
+            }
 
-                                            ++matching_count;
-                                         }
-                                      }
+            if (ImGui::IsItemHovered()) {
+               _interaction_targets.hovered_entity = sector.id;
+            }
+         }
 
-                                      return entries;
-                                   });
+         ImGui::EndCombo();
+      }
+
+      if (portal.sector1.has_index() and ImGui::IsItemHovered()) {
+         _interaction_targets.hovered_entity =
+            _world.sectors[portal.sector1.index()].id;
+      }
 
       if (ImGui::Button("Pick Linked Sector 1", {ImGui::CalcItemWidth(), 0.0f})) {
          _entity_creation_context.activate_tool = entity_creation_tool::pick_sector;
          _entity_creation_context.pick_sector_index = 1;
       }
 
-      ImGui::InputTextAutoComplete("Linked Sector 2", &portal.sector2,
-                                   _edit_stack_world, _edit_context, [&]() noexcept {
-                                      std::array<std::string_view, 6> entries;
-                                      std::size_t matching_count = 0;
+      if (ImGui::BeginCombo("Linked Sector 2",
+                            portal.sector2.name_lookup(_world).c_str())) {
+         if (ImGui::Selectable("<clear>")) {
+            _edit_stack_world.apply(edits::make_set_value(&portal.sector2,
+                                                          world::sector_optional_link{}),
+                                    _edit_context, {.closed = true});
+         }
 
-                                      for (const auto& sector : _world.sectors) {
-                                         if (sector.name.contains(portal.sector2)) {
-                                            if (matching_count == entries.size())
-                                               break;
+         for (uint32 sector_index = 0; sector_index < _world.sectors.size();
+              ++sector_index) {
+            const world::sector& sector = _world.sectors[sector_index];
 
-                                            entries[matching_count] = sector.name;
+            if (ImGui::Selectable(sector.name.c_str(), portal.sector2 == sector_index)) {
+               _edit_stack_world.apply(edits::make_set_value(&portal.sector2,
+                                                             world::sector_optional_link{
+                                                                sector_index}),
+                                       _edit_context, {.closed = true});
+            }
 
-                                            ++matching_count;
-                                         }
-                                      }
+            if (ImGui::IsItemHovered()) {
+               _interaction_targets.hovered_entity = sector.id;
+            }
+         }
 
-                                      return entries;
-                                   });
+         ImGui::EndCombo();
+      }
+
+      if (portal.sector2.has_index() and ImGui::IsItemHovered()) {
+         _interaction_targets.hovered_entity =
+            _world.sectors[portal.sector2.index()].id;
+      }
 
       if (ImGui::Button("Pick Linked Sector 2", {ImGui::CalcItemWidth(), 0.0f})) {
          _entity_creation_context.activate_tool = entity_creation_tool::pick_sector;
@@ -2736,14 +2762,18 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (sector) {
             if (_entity_creation_context.pick_sector_index == 1) {
-               _edit_stack_world.apply(edits::make_set_value(&portal.sector1,
-                                                             sector->name),
-                                       _edit_context);
+               _edit_stack_world.apply(
+                  edits::make_set_value(&portal.sector1,
+                                        world::sector_optional_link{static_cast<uint32>(
+                                           sector - _world.sectors.data())}),
+                  _edit_context);
             }
             else if (_entity_creation_context.pick_sector_index == 2) {
-               _edit_stack_world.apply(edits::make_set_value(&portal.sector2,
-                                                             sector->name),
-                                       _edit_context);
+               _edit_stack_world.apply(
+                  edits::make_set_value(&portal.sector2,
+                                        world::sector_optional_link{static_cast<uint32>(
+                                           sector - _world.sectors.data())}),
+                  _edit_context);
             }
          }
       }

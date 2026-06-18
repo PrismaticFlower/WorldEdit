@@ -433,10 +433,12 @@ auto read_portal(const assets::config::node& node) -> portal
          portal.height = portal_prop.values.get<float>(0);
       }
       else if (string::iequals(portal_prop.key, "Sector1"sv)) {
-         portal.sector1 = portal_prop.values.get<std::string>(0);
+         portal.sector1 =
+            sector_optional_link{portal_prop.values.get<std::string>(0)};
       }
       else if (string::iequals(portal_prop.key, "Sector2"sv)) {
-         portal.sector2 = portal_prop.values.get<std::string>(0);
+         portal.sector2 =
+            sector_optional_link{portal_prop.values.get<std::string>(0)};
       }
    }
 
@@ -1868,6 +1870,33 @@ void link_object_refs(entity_group& group)
          }
          else {
             sector.objects_broken_links.push_back(std::move(object_name));
+         }
+      }
+   }
+
+   for (portal& portal : group.portals) {
+      assert(portal.sector1.has_name());
+      assert(portal.sector2.has_name());
+
+      if (not portal.sector1.name().empty()) {
+         const std::vector<sector>::iterator sector =
+            std::find_if(group.sectors.begin(), group.sectors.end(), [&](const auto& sector) {
+               return string::iequals(portal.sector1.name(), sector.name);
+            });
+
+         if (sector != group.sectors.end()) {
+            portal.sector1 = static_cast<uint32>((sector - group.sectors.begin()));
+         }
+      }
+
+      if (not portal.sector2.name().empty()) {
+         const std::vector<sector>::iterator sector =
+            std::find_if(group.sectors.begin(), group.sectors.end(), [&](const auto& sector) {
+               return string::iequals(portal.sector2.name(), sector.name);
+            });
+
+         if (sector != group.sectors.end()) {
+            portal.sector2 = static_cast<uint32>((sector - group.sectors.begin()));
          }
       }
    }

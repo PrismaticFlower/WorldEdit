@@ -1276,24 +1276,44 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::DragFloat("Height", &portal->height, _edit_stack_world,
                                 _edit_context, 1.0f, 0.25f, 1e10f);
 
-               ImGui::InputTextAutoComplete(
-                  "Linked Sector 1", &portal->sector1, _edit_stack_world,
-                  _edit_context, [&]() noexcept {
-                     std::array<std::string_view, 6> entries;
-                     std::size_t matching_count = 0;
+               if (ImGui::BeginCombo("Linked Sector 1",
+                                     portal->sector1.name_lookup(_world).c_str())) {
+                  if (ImGui::Selectable("<clear>")) {
+                     _edit_stack_world.apply(edits::make_set_value(&portal->sector1,
+                                                                   world::sector_optional_link{}),
+                                             _edit_context, {.closed = true});
+                  }
 
-                     for (const auto& sector : _world.sectors) {
-                        if (sector.name.contains(portal->sector1)) {
-                           if (matching_count == entries.size()) break;
+                  for (uint32 sector_index = 0;
+                       sector_index < _world.sectors.size(); ++sector_index) {
+                     const world::sector& sector = _world.sectors[sector_index];
 
-                           entries[matching_count] = sector.name;
-
-                           ++matching_count;
-                        }
+                     if (ImGui::Selectable(sector.name.c_str(),
+                                           portal->sector1 == sector_index)) {
+                        _edit_stack_world.apply(edits::make_set_value(&portal->sector1,
+                                                                      world::sector_optional_link{
+                                                                         sector_index}),
+                                                _edit_context, {.closed = true});
                      }
 
-                     return entries;
-                  });
+                     if (ImGui::IsItemHovered()) {
+                        _interaction_targets.hovered_entity = sector.id;
+                     }
+                  }
+
+                  ImGui::EndCombo();
+               }
+
+               if (portal->sector1.has_index() and ImGui::IsItemHovered()) {
+                  _interaction_targets.hovered_entity =
+                     _world.sectors[portal->sector1.index()].id;
+
+                  if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
+                     _interaction_targets.selection.clear();
+                     _interaction_targets.selection.add(
+                        _world.sectors[portal->sector1.index()].id);
+                  }
+               }
 
                if (ImGui::Button("Pick Linked Sector 1",
                                  {ImGui::CalcItemWidth(), 0.0f})) {
@@ -1302,24 +1322,44 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                                     .id = portal->id};
                }
 
-               ImGui::InputTextAutoComplete(
-                  "Linked Sector 2", &portal->sector2, _edit_stack_world,
-                  _edit_context, [&]() noexcept {
-                     std::array<std::string_view, 6> entries;
-                     std::size_t matching_count = 0;
+               if (ImGui::BeginCombo("Linked Sector 2",
+                                     portal->sector2.name_lookup(_world).c_str())) {
+                  if (ImGui::Selectable("<clear>")) {
+                     _edit_stack_world.apply(edits::make_set_value(&portal->sector2,
+                                                                   world::sector_optional_link{}),
+                                             _edit_context, {.closed = true});
+                  }
 
-                     for (const auto& sector : _world.sectors) {
-                        if (sector.name.contains(portal->sector2)) {
-                           if (matching_count == entries.size()) break;
+                  for (uint32 sector_index = 0;
+                       sector_index < _world.sectors.size(); ++sector_index) {
+                     const world::sector& sector = _world.sectors[sector_index];
 
-                           entries[matching_count] = sector.name;
-
-                           ++matching_count;
-                        }
+                     if (ImGui::Selectable(sector.name.c_str(),
+                                           portal->sector2 == sector_index)) {
+                        _edit_stack_world.apply(edits::make_set_value(&portal->sector2,
+                                                                      world::sector_optional_link{
+                                                                         sector_index}),
+                                                _edit_context, {.closed = true});
                      }
 
-                     return entries;
-                  });
+                     if (ImGui::IsItemHovered()) {
+                        _interaction_targets.hovered_entity = sector.id;
+                     }
+                  }
+
+                  ImGui::EndCombo();
+               }
+
+               if (portal->sector2.has_index() and ImGui::IsItemHovered()) {
+                  _interaction_targets.hovered_entity =
+                     _world.sectors[portal->sector2.index()].id;
+
+                  if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
+                     _interaction_targets.selection.clear();
+                     _interaction_targets.selection.add(
+                        _world.sectors[portal->sector2.index()].id);
+                  }
+               }
 
                if (ImGui::Button("Pick Linked Sector 2",
                                  {ImGui::CalcItemWidth(), 0.0f})) {
@@ -6312,122 +6352,160 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       // Sector 1
       {
          const bool is_different = properties.portal.sector1.is_different();
-         const std::string_view sector1 = properties.portal.sector1.value_or("");
+         const world::sector_optional_link sector1 =
+            properties.portal.sector1.value_or(world::sector_optional_link{});
 
-         absl::InlinedVector<char, 256> sector1_buffer;
+         if (ImGui::BeginCombo("Linked Sector 1",
+                               is_different ? "<different>"
+                                            : sector1.name_lookup(_world).c_str())) {
+            if (ImGui::Selectable("<clear>")) {
+               edits::bundle_vector edit_bundle;
+               edit_bundle.reserve(properties.portal.sector1.count());
 
-         if (not is_different) {
-            sector1_buffer = {sector1.begin(), sector1.end()};
-         }
+               for (const world::selected_entity& selected :
+                    _interaction_targets.selection) {
+                  if (selected.is<world::portal_id>()) {
+                     world::portal* portal =
+                        world::find_entity(_world.portals,
+                                           selected.get<world::portal_id>());
 
-         ImGui::PushStyleColor(ImGuiCol_TextDisabled,
-                               ImGui::GetStyleColorVec4(ImGuiCol_Text));
+                     if (not portal) continue;
 
-         if (ImGui::InputTextWithHintAutoComplete(
-                "Linked Sector 1", is_different ? "<different>" : "",
-                &sector1_buffer, [&]() noexcept {
-                   std::array<std::string_view, 6> entries;
-                   std::size_t matching_count = 0;
+                     edit_bundle.push_back(
+                        edits::make_set_value(&portal->sector1,
+                                              world::sector_optional_link{}));
+                  }
+               }
 
-                   for (const auto& sector : _world.sectors) {
-                      if (sector.name.contains(sector1)) {
-                         if (matching_count == entries.size()) break;
+               _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
+                                       _edit_context, {.closed = true});
+            }
 
-                         entries[matching_count] = sector.name;
+            for (uint32 sector_index = 0; sector_index < _world.sectors.size();
+                 ++sector_index) {
+               const world::sector& sector = _world.sectors[sector_index];
 
-                         ++matching_count;
-                      }
-                   }
+               if (ImGui::Selectable(sector.name.c_str(),
+                                     not is_different and sector1 == sector_index)) {
+                  edits::bundle_vector edit_bundle;
+                  edit_bundle.reserve(properties.portal.sector1.count());
 
-                   return entries;
-                })) {
-            edits::bundle_vector edit_bundle;
-            edit_bundle.reserve(properties.portal.sector1.count());
+                  for (const world::selected_entity& selected :
+                       _interaction_targets.selection) {
+                     if (selected.is<world::portal_id>()) {
+                        world::portal* portal =
+                           world::find_entity(_world.portals,
+                                              selected.get<world::portal_id>());
 
-            for (const world::selected_entity& selected : _interaction_targets.selection) {
-               if (selected.is<world::portal_id>()) {
-                  world::portal* portal =
-                     world::find_entity(_world.portals,
-                                        selected.get<world::portal_id>());
+                        if (not portal) continue;
 
-                  if (not portal) continue;
+                        edit_bundle.push_back(
+                           edits::make_set_value(&portal->sector1,
+                                                 world::sector_optional_link{sector_index}));
+                     }
+                  }
 
-                  edit_bundle.push_back(
-                     edits::make_set_value(&portal->sector1,
-                                           std::string{sector1_buffer.begin(),
-                                                       sector1_buffer.end()}));
+                  _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
+                                          _edit_context, {.closed = true});
+               }
+
+               if (ImGui::IsItemHovered()) {
+                  _interaction_targets.hovered_entity = sector.id;
                }
             }
 
-            _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
-                                    _edit_context);
+            ImGui::EndCombo();
          }
 
-         ImGui::PopStyleColor();
+         if (not is_different and sector1.has_index() and ImGui::IsItemHovered()) {
+            _interaction_targets.hovered_entity =
+               _world.sectors[sector1.index()].id;
 
-         if (ImGui::IsItemDeactivatedAfterEdit()) {
-            _edit_stack_world.close_last();
+            if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
+               _interaction_targets.selection.clear();
+               _interaction_targets.selection.add(
+                  _world.sectors[sector1.index()].id);
+            }
          }
       }
 
       // Sector 2
       {
          const bool is_different = properties.portal.sector2.is_different();
-         const std::string_view sector2 = properties.portal.sector2.value_or("");
+         const world::sector_optional_link sector2 =
+            properties.portal.sector2.value_or(world::sector_optional_link{});
 
-         absl::InlinedVector<char, 256> sector2_buffer;
+         if (ImGui::BeginCombo("Linked Sector 2",
+                               is_different ? "<different>"
+                                            : sector2.name_lookup(_world).c_str())) {
+            if (ImGui::Selectable("<clear>")) {
+               edits::bundle_vector edit_bundle;
+               edit_bundle.reserve(properties.portal.sector2.count());
 
-         if (not is_different) {
-            sector2_buffer = {sector2.begin(), sector2.end()};
-         }
+               for (const world::selected_entity& selected :
+                    _interaction_targets.selection) {
+                  if (selected.is<world::portal_id>()) {
+                     world::portal* portal =
+                        world::find_entity(_world.portals,
+                                           selected.get<world::portal_id>());
 
-         ImGui::PushStyleColor(ImGuiCol_TextDisabled,
-                               ImGui::GetStyleColorVec4(ImGuiCol_Text));
+                     if (not portal) continue;
 
-         if (ImGui::InputTextWithHintAutoComplete(
-                "Linked Sector 2", is_different ? "<different>" : "",
-                &sector2_buffer, [&]() noexcept {
-                   std::array<std::string_view, 6> entries;
-                   std::size_t matching_count = 0;
+                     edit_bundle.push_back(
+                        edits::make_set_value(&portal->sector2,
+                                              world::sector_optional_link{}));
+                  }
+               }
 
-                   for (const auto& sector : _world.sectors) {
-                      if (sector.name.contains(sector2)) {
-                         if (matching_count == entries.size()) break;
+               _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
+                                       _edit_context, {.closed = true});
+            }
 
-                         entries[matching_count] = sector.name;
+            for (uint32 sector_index = 0; sector_index < _world.sectors.size();
+                 ++sector_index) {
+               const world::sector& sector = _world.sectors[sector_index];
 
-                         ++matching_count;
-                      }
-                   }
+               if (ImGui::Selectable(sector.name.c_str(),
+                                     not is_different and sector2 == sector_index)) {
+                  edits::bundle_vector edit_bundle;
+                  edit_bundle.reserve(properties.portal.sector2.count());
 
-                   return entries;
-                })) {
-            edits::bundle_vector edit_bundle;
-            edit_bundle.reserve(properties.portal.sector2.count());
+                  for (const world::selected_entity& selected :
+                       _interaction_targets.selection) {
+                     if (selected.is<world::portal_id>()) {
+                        world::portal* portal =
+                           world::find_entity(_world.portals,
+                                              selected.get<world::portal_id>());
 
-            for (const world::selected_entity& selected : _interaction_targets.selection) {
-               if (selected.is<world::portal_id>()) {
-                  world::portal* portal =
-                     world::find_entity(_world.portals,
-                                        selected.get<world::portal_id>());
+                        if (not portal) continue;
 
-                  if (not portal) continue;
+                        edit_bundle.push_back(
+                           edits::make_set_value(&portal->sector2,
+                                                 world::sector_optional_link{sector_index}));
+                     }
+                  }
 
-                  edit_bundle.push_back(
-                     edits::make_set_value(&portal->sector2,
-                                           std::string{sector2_buffer.begin(),
-                                                       sector2_buffer.end()}));
+                  _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
+                                          _edit_context, {.closed = true});
+               }
+
+               if (ImGui::IsItemHovered()) {
+                  _interaction_targets.hovered_entity = sector.id;
                }
             }
 
-            _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
-                                    _edit_context);
+            ImGui::EndCombo();
          }
 
-         ImGui::PopStyleColor();
+         if (not is_different and sector2.has_index() and ImGui::IsItemHovered()) {
+            _interaction_targets.hovered_entity =
+               _world.sectors[sector2.index()].id;
 
-         if (ImGui::IsItemDeactivatedAfterEdit()) {
-            _edit_stack_world.close_last();
+            if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
+               _interaction_targets.selection.clear();
+               _interaction_targets.selection.add(
+                  _world.sectors[sector2.index()].id);
+            }
          }
       }
    }

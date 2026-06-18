@@ -1,0 +1,9 @@
+Portal("Portal")
+{
+	Rotation(1.000000, -0.000000, -0.000000, -0.000000);
+	Position(-193.661575, 2.097009, -31.728502);
+	Width(2.920000);
+	Height(4.120000);
+	Sector1("sector");
+	Sector2("Sector-1");
+}
