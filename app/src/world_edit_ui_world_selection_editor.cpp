@@ -1284,6 +1284,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                              _edit_context, {.closed = true});
                   }
 
+                  ImGui::Separator();
+
                   for (uint32 sector_index = 0;
                        sector_index < _world.sectors.size(); ++sector_index) {
                      const world::sector& sector = _world.sectors[sector_index];
@@ -1329,6 +1331,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                                                    world::sector_optional_link{}),
                                              _edit_context, {.closed = true});
                   }
+
+                  ImGui::Separator();
 
                   for (uint32 sector_index = 0;
                        sector_index < _world.sectors.size(); ++sector_index) {
@@ -6411,6 +6415,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                                        _edit_context, {.closed = true});
             }
 
+            ImGui::Separator();
+
             for (uint32 sector_index = 0; sector_index < _world.sectors.size();
                  ++sector_index) {
                const world::sector& sector = _world.sectors[sector_index];
@@ -6490,6 +6496,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
                                        _edit_context, {.closed = true});
             }
+
+            ImGui::Separator();
 
             for (uint32 sector_index = 0; sector_index < _world.sectors.size();
                  ++sector_index) {
