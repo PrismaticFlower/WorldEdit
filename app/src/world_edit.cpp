@@ -1297,7 +1297,7 @@ void world_edit::ui_draw_select_box() noexcept
       ImGui::GetBackgroundDrawList()->AddRect(std::bit_cast<ImVec2>(rect_min),
                                               std::bit_cast<ImVec2>(rect_max),
                                               IM_COL32(color.x, color.y, color.z, 0xff),
-                                              0.0f, ImDrawFlags_None,
+                                              0.0f, 
                                               1.0f * _display_scale);
    }
 }

@@ -13,6 +13,11 @@ namespace {
 
 constinit std::byte backend_renderer_user_data_cookie{};
 
+void draw_callback_reset_render_state([[maybe_unused]] const ImDrawList* parent_list,
+                                      [[maybe_unused]] const ImDrawCmd* cmd)
+{
+}
+
 }
 
 imgui_renderer::imgui_renderer(gpu::device& device) : _device{device}
@@ -22,10 +27,14 @@ imgui_renderer::imgui_renderer(gpu::device& device) : _device{device}
    IM_ASSERT(io.BackendRendererUserData == nullptr &&
              "Already initialized a renderer backend!");
 
-   io.BackendRendererUserData = &backend_renderer_user_data_cookie;
+   io.BackendRendererUserData = this;
    io.BackendRendererName = "imgui_impl_rhi";
    io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
    io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
+
+   ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+
+   platform_io.DrawCallback_ResetRenderState = draw_callback_reset_render_state;
 
    resize_mesh_buffers(10000, 5000);
 }
@@ -49,6 +58,8 @@ void imgui_renderer::render_draw_data(ImDrawData* draw_data,
                                       dynamic_buffer_allocator& dynamic_buffer_allocator,
                                       gpu::graphics_command_list& command_list)
 {
+   IM_ASSERT(ImGui::GetIO().BackendRendererUserData == this);
+
    update_textures(draw_data, dynamic_buffer_allocator, command_list);
    upload_mesh_data(draw_data);
    setup_draw_state(draw_data, root_signature_library, pipeline_library, command_list);
@@ -60,7 +71,7 @@ void imgui_renderer::render_draw_data(ImDrawData* draw_data,
    for (const ImDrawList* cmd_list : draw_data->CmdLists) {
       for (const ImDrawCmd& cmd : cmd_list->CmdBuffer) {
          if (cmd.UserCallback != nullptr) {
-            if (cmd.UserCallback == ImDrawCallback_ResetRenderState) {
+            if (cmd.UserCallback == draw_callback_reset_render_state) {
                current_texture_index = UINT32_MAX;
 
                setup_draw_state(draw_data, root_signature_library,
