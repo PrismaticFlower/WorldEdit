@@ -26,6 +26,13 @@ bool is_whitespace_char(char c) noexcept
    }
 }
 
+bool is_digit_char(char c) noexcept
+{
+   static_assert('0' == 48 and '9' == 57);
+
+   return c >= '0' and c <= '9';
+}
+
 }
 
 auto count_lines(const std::string_view str) noexcept -> std::size_t
@@ -122,7 +129,7 @@ auto trim_trailing_whitespace(std::string_view str) noexcept -> std::string_view
 auto trim_trailing_digits(std::string_view str) noexcept -> std::string_view
 {
    return str.substr(0, std::distance(str.begin(),
-                                      std::find_if_not(str.rbegin(), str.rend(), std::isdigit)
+                                      std::find_if_not(str.rbegin(), str.rend(), is_digit_char)
                                          .base()));
 }
 

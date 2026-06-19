@@ -666,6 +666,7 @@
     <ClCompile Include="src\world\utility\entity_group_utilities.cpp" />
     <ClCompile Include="src\world\utility\intersects_frustum.cpp" />
     <ClCompile Include="src\world\utility\is_similar.cpp" />
+    <ClCompile Include="src\world\utility\multi_select_support.cpp" />
     <ClCompile Include="src\world\utility\terrain_light_map_baker.cpp" />
     <ClCompile Include="src\world\utility\load_terrain_brush.cpp" />
     <ClCompile Include="src\world\utility\load_terrain_map.cpp" />

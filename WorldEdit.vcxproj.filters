@@ -323,6 +323,7 @@
     <ClCompile Include="src\munge\builtin\executor.cpp" />
     <ClCompile Include="src\allocators\temp_buffer_allocator.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_patch_depthVS.cpp" />
+    <ClCompile Include="src\world\utility\multi_select_support.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />

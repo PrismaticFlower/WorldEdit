@@ -2210,8 +2210,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
 void world_edit::ui_show_world_selection_multi_editor() noexcept
 {
    using world::multi_select_flags;
+   using world::multi_select_name_flags;
 
    world::multi_select_flags flags = multi_select_flags::all;
+   world::multi_select_name_flags name_flags = multi_select_name_flags::none;
    world::multi_select_properties properties;
 
    for (const world::selected_entity& selected : _interaction_targets.selection) {
@@ -2222,9 +2224,11 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          if (not object) continue;
 
          multi_select_flags object_flags =
-            multi_select_flags::has_layer | multi_select_flags::has_rotation |
+            multi_select_flags::has_name | multi_select_flags::has_layer |
+            multi_select_flags::has_rotation |
             multi_select_flags::has_position | multi_select_flags::has_object;
 
+         properties.name.integrate(object->name);
          properties.layer.integrate(object->layer);
          properties.rotation.integrate(object->rotation);
          properties.position.integrate(object->position);
@@ -2234,6 +2238,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          properties.object.instance_properties.integrate(object->instance_properties);
 
          flags &= object_flags;
+         name_flags |= multi_select_name_flags::object;
       }
       else if (selected.is<world::light_id>()) {
          const world::light* light =
@@ -2242,9 +2247,11 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          if (not light) continue;
 
          multi_select_flags light_flags =
-            multi_select_flags::has_layer | multi_select_flags::has_rotation |
+            multi_select_flags::has_name | multi_select_flags::has_layer |
+            multi_select_flags::has_rotation |
             multi_select_flags::has_position | multi_select_flags::has_light;
 
+         properties.name.integrate(light->name);
          properties.layer.integrate(light->layer);
          properties.rotation.integrate(light->rotation);
          properties.position.integrate(light->position);
@@ -2330,6 +2337,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          }
 
          flags &= light_flags;
+         name_flags |= multi_select_name_flags::light;
       }
       else if (selected.is<world::path_id_node_mask>()) {
          const auto& [id, node_mask] = selected.get<world::path_id_node_mask>();
@@ -2339,9 +2347,11 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          if (not path) continue;
 
          multi_select_flags path_flags =
-            multi_select_flags::has_layer | multi_select_flags::has_rotation |
+            multi_select_flags::has_name | multi_select_flags::has_layer |
+            multi_select_flags::has_rotation |
             multi_select_flags::has_position | multi_select_flags::has_path;
 
+         properties.name.integrate(path->name);
          properties.layer.integrate(path->layer);
 
          properties.path.type.integrate(path->type);
@@ -2367,6 +2377,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          }
 
          flags &= path_flags;
+         name_flags |= multi_select_name_flags::path;
       }
       else if (selected.is<world::region_id>()) {
          const world::region* region =
@@ -2378,6 +2389,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
             multi_select_flags::has_layer | multi_select_flags::has_rotation |
             multi_select_flags::has_position | multi_select_flags::has_region;
 
+         properties.name.integrate(region->name);
          properties.layer.integrate(region->layer);
          properties.rotation.integrate(region->rotation);
          properties.position.integrate(region->position);
@@ -2535,6 +2547,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          }
 
          flags &= region_flags;
+         name_flags |= multi_select_name_flags::region;
       }
       else if (selected.is<world::sector_id>()) {
          const world::sector* sector =
@@ -2542,14 +2555,17 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
          if (not sector) continue;
 
-         multi_select_flags sector_flags =
-            multi_select_flags::has_height | multi_select_flags::has_sector;
+         multi_select_flags sector_flags = multi_select_flags::has_name |
+                                           multi_select_flags::has_height |
+                                           multi_select_flags::has_sector;
 
+         properties.name.integrate(sector->name);
          properties.height.integrate(sector->height);
 
          properties.sector.base.integrate(sector->base);
 
          flags &= sector_flags;
+         name_flags |= multi_select_name_flags::sector;
       }
       else if (selected.is<world::portal_id>()) {
          const world::portal* portal =
@@ -2558,10 +2574,11 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          if (not portal) continue;
 
          multi_select_flags portal_flags =
-            multi_select_flags::has_rotation |
+            multi_select_flags::has_name | multi_select_flags::has_rotation |
             multi_select_flags::has_position | multi_select_flags::has_width |
             multi_select_flags::has_height | multi_select_flags::has_portal;
 
+         properties.name.integrate(portal->name);
          properties.rotation.integrate(portal->rotation);
          properties.position.integrate(portal->position);
          properties.width.integrate(portal->width);
@@ -2571,6 +2588,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          properties.portal.sector2.integrate(portal->sector2);
 
          flags &= portal_flags;
+         name_flags |= multi_select_name_flags::portal;
       }
       else if (selected.is<world::hintnode_id>()) {
          const world::hintnode* hintnode =
@@ -2579,9 +2597,11 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          if (not hintnode) continue;
 
          multi_select_flags hintnode_flags =
-            multi_select_flags::has_layer | multi_select_flags::has_rotation |
+            multi_select_flags::has_name | multi_select_flags::has_layer |
+            multi_select_flags::has_rotation |
             multi_select_flags::has_position | multi_select_flags::has_hintnode;
 
+         properties.name.integrate(hintnode->name);
          properties.layer.integrate(hintnode->layer);
          properties.rotation.integrate(hintnode->rotation);
          properties.position.integrate(hintnode->position);
@@ -2622,6 +2642,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          }
 
          flags &= hintnode_flags;
+         name_flags |= multi_select_name_flags::hintnode;
       }
       else if (selected.is<world::barrier_id>()) {
          const world::barrier* barrier =
@@ -2629,10 +2650,11 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
          if (not barrier) continue;
 
-         multi_select_flags barrier_flags = multi_select_flags::has_position |
-                                            multi_select_flags::has_ai_flags |
-                                            multi_select_flags::has_barrier;
+         multi_select_flags barrier_flags =
+            multi_select_flags::has_name | multi_select_flags::has_position |
+            multi_select_flags::has_ai_flags | multi_select_flags::has_barrier;
 
+         properties.name.integrate(barrier->name);
          properties.position.integrate(barrier->position);
          properties.ai_flags.integrate(barrier->flags);
 
@@ -2640,6 +2662,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          properties.barrier.size.integrate(barrier->size);
 
          flags &= barrier_flags;
+         name_flags |= multi_select_name_flags::barrier;
       }
       else if (selected.is<world::planning_hub_id>()) {
          const world::planning_hub* hub =
@@ -2647,13 +2670,16 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
          if (not hub) continue;
 
-         multi_select_flags hub_flags =
-            multi_select_flags::has_position | multi_select_flags::has_radius;
+         multi_select_flags hub_flags = multi_select_flags::has_name |
+                                        multi_select_flags::has_position |
+                                        multi_select_flags::has_radius;
 
+         properties.name.integrate(hub->name);
          properties.position.integrate(hub->position);
          properties.radius.integrate(hub->radius);
 
          flags &= hub_flags;
+         name_flags |= multi_select_name_flags::planning_hub;
       }
       else if (selected.is<world::planning_connection_id>()) {
          const world::planning_connection* connection =
@@ -2663,9 +2689,10 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          if (not connection) continue;
 
          multi_select_flags connection_flags =
-            multi_select_flags::has_ai_flags |
+            multi_select_flags::has_name | multi_select_flags::has_ai_flags |
             multi_select_flags::has_planning_connection;
 
+         properties.name.integrate(connection->name);
          properties.ai_flags.integrate(connection->flags);
          properties.planning_connection.jump.integrate(connection->jump);
          properties.planning_connection.jet_jump.integrate(connection->jet_jump);
@@ -2674,6 +2701,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          properties.planning_connection.dynamic_group.integrate(connection->dynamic_group);
 
          flags &= connection_flags;
+         name_flags |= multi_select_name_flags::planning_connection;
       }
       else if (selected.is<world::boundary_id>()) {
          const world::boundary* boundary =
@@ -2681,9 +2709,11 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
          if (not boundary) continue;
 
-         multi_select_flags boundary_flags = multi_select_flags::has_boundary;
+         multi_select_flags boundary_flags =
+            multi_select_flags::has_name | multi_select_flags::has_boundary;
 
          flags &= boundary_flags;
+         name_flags |= multi_select_name_flags::boundary;
       }
       else if (selected.is<world::measurement_id>()) {
          const world::measurement* measurement =
@@ -2691,9 +2721,13 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
          if (not measurement) continue;
 
-         multi_select_flags measurement_flags = multi_select_flags::has_measurement;
+         multi_select_flags measurement_flags =
+            multi_select_flags::has_name | multi_select_flags::has_measurement;
+
+         properties.name.integrate(measurement->name);
 
          flags &= measurement_flags;
+         name_flags |= multi_select_name_flags::measurement;
       }
       else if (selected.is<world::block_id>()) {
          const world::block_id block_id = selected.get<we::world::block_id>();
@@ -2895,6 +2929,200 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          }
 
          flags &= block_flags;
+      }
+   }
+
+   if (are_flags_set(flags, multi_select_flags::has_name)) {
+      const bool is_different = properties.name.is_different();
+
+      const std::string_view value = properties.name.value_or("");
+      const char* hint = is_different ? "<different>" : "";
+
+      absl::InlinedVector<char, 256> value_buffer{value.begin(), value.end()};
+
+      if (ImGui::InputTextWithHint("Name Prefix", hint, &value_buffer)) {
+         edits::bundle_vector edit_bundle;
+         edit_bundle.reserve(properties.layer.count());
+
+         std::string_view name_prefix{value_buffer};
+
+         if (name_prefix.empty() and name_flags == multi_select_name_flags::object) {
+            for (const world::selected_entity& selected : _interaction_targets.selection) {
+               if (selected.is<world::object_id>()) {
+                  world::object* object =
+                     world::find_entity(_world.objects,
+                                        selected.get<world::object_id>());
+
+                  if (not object) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&object->name, std::string{}));
+               }
+            }
+         }
+         else {
+            if (name_prefix.empty()) name_prefix = "Entity";
+
+            world::multi_select_rename_suffixes suffixes =
+               world::get_rename_suffixes(name_flags, name_prefix, _world);
+
+            for (const world::selected_entity& selected : _interaction_targets.selection) {
+               if (selected.is<world::object_id>()) {
+                  world::object* object =
+                     world::find_entity(_world.objects,
+                                        selected.get<world::object_id>());
+
+                  if (not object) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&object->name,
+                                           fmt::format("{}{}", name_prefix,
+                                                       suffixes.object_start++)));
+               }
+               else if (selected.is<world::light_id>()) {
+                  world::light* light =
+                     world::find_entity(_world.lights,
+                                        selected.get<world::light_id>());
+
+                  if (not light) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&light->name,
+                                           fmt::format("{}{}", name_prefix,
+                                                       suffixes.light_start++)));
+               }
+               else if (selected.is<world::path_id_node_mask>()) {
+                  world::path* path =
+                     world::find_entity(_world.paths,
+                                        selected.get<world::path_id_node_mask>().id);
+
+                  if (not path) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&path->name,
+                                           fmt::format("{}{}", name_prefix,
+                                                       suffixes.path_start++)));
+               }
+               else if (selected.is<world::region_id>()) {
+                  world::region* region =
+                     world::find_entity(_world.regions,
+                                        selected.get<world::region_id>());
+
+                  if (not region) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&region->name,
+                                           fmt::format("{}{}", name_prefix,
+                                                       suffixes.region_start++)));
+               }
+               else if (selected.is<world::sector_id>()) {
+                  world::sector* sector =
+                     world::find_entity(_world.sectors,
+                                        selected.get<world::sector_id>());
+
+                  if (not sector) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&sector->name,
+                                           fmt::format("{}{}", name_prefix,
+                                                       suffixes.sector_start++)));
+               }
+               else if (selected.is<world::portal_id>()) {
+                  world::portal* portal =
+                     world::find_entity(_world.portals,
+                                        selected.get<world::portal_id>());
+
+                  if (not portal) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&portal->name,
+                                           fmt::format("{}{}", name_prefix,
+                                                       suffixes.portal_start++)));
+               }
+               else if (selected.is<world::hintnode_id>()) {
+                  world::hintnode* hintnode =
+                     world::find_entity(_world.hintnodes,
+                                        selected.get<world::hintnode_id>());
+
+                  if (not hintnode) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&hintnode->name,
+                                           fmt::format("{}{}", name_prefix,
+                                                       suffixes.hintnode_start++)));
+               }
+               else if (selected.is<world::barrier_id>()) {
+                  world::barrier* barrier =
+                     world::find_entity(_world.barriers,
+                                        selected.get<world::barrier_id>());
+
+                  if (not barrier) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&barrier->name,
+                                           fmt::format("{}{}", name_prefix,
+                                                       suffixes.barrier_start++)));
+               }
+               else if (selected.is<world::planning_hub_id>()) {
+                  world::planning_hub* planning_hub =
+                     world::find_entity(_world.planning_hubs,
+                                        selected.get<world::planning_hub_id>());
+
+                  if (not planning_hub) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&planning_hub->name,
+                                           fmt::format("{}{}", name_prefix,
+                                                       suffixes.planning_hub_start++)));
+               }
+               else if (selected.is<world::planning_connection_id>()) {
+                  world::planning_connection* planning_connection =
+                     world::find_entity(_world.planning_connections,
+                                        selected.get<world::planning_connection_id>());
+
+                  if (not planning_connection) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&planning_connection->name,
+                                           fmt::format("{}{}", name_prefix,
+                                                       suffixes.planning_connection_start++)));
+               }
+               else if (selected.is<world::boundary_id>()) {
+                  world::boundary* boundary =
+                     world::find_entity(_world.boundaries,
+                                        selected.get<world::boundary_id>());
+
+                  if (not boundary) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&boundary->name,
+                                           fmt::format("{}{}", name_prefix,
+                                                       suffixes.boundary_start++)));
+               }
+               else if (selected.is<world::measurement_id>()) {
+                  world::measurement* measurement =
+                     world::find_entity(_world.measurements,
+                                        selected.get<world::measurement_id>());
+
+                  if (not measurement) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&measurement->name,
+                                           fmt::format("{}{}", name_prefix,
+                                                       suffixes.measurement_start++)));
+               }
+            }
+         }
+
+         _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
+                                 _edit_context);
+      }
+
+      ImGui::SetItemTooltip(
+         "Name of selected entities without trailing digits.");
+
+      if (ImGui::IsItemDeactivatedAfterEdit()) {
+         _edit_stack_world.close_last();
       }
    }
 

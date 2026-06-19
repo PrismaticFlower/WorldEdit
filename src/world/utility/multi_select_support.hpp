@@ -8,6 +8,8 @@
 #include "../world.hpp"
 
 #include "utility/enum_bitflags.hpp"
+#include "utility/string_icompare.hpp"
+#include "utility/string_ops.hpp"
 
 #include <optional>
 
@@ -15,57 +17,58 @@ namespace we::world {
 
 enum class multi_select_flags : uint64 {
    // clang-format off
-   has_layer                          = 1ull << 0,
-   has_rotation                       = 1ull << 1,
-   has_position                       = 1ull << 2,
-   has_box_size                       = 1ull << 3,
-   has_width                          = 1ull << 4,
-   has_height                         = 1ull << 5,
-   has_radius                         = 1ull << 6,
-   has_ai_flags                       = 1ull << 7,
-   has_object                         = 1ull << 8,
-   has_light                          = 1ull << 9,
-   has_light_range                    = 1ull << 10,
-   has_light_cone_props               = 1ull << 11,
-   has_light_texture_addressing       = 1ull << 12,
-   has_light_directional_texture      = 1ull << 13,
-   has_light_region                   = 1ull << 14,
-   has_light_ps2_blend_mode           = 1ull << 15,
-   has_path                           = 1ull << 16,
-   has_path_spline_type               = 1ull << 17,
-   has_region                         = 1ull << 18,
-   has_region_sound_stream            = 1ull << 19,
-   has_region_sound_static            = 1ull << 20,
-   has_region_sound_space             = 1ull << 21,
-   has_region_sound_trigger           = 1ull << 22,
-   has_region_foley_fx                = 1ull << 23,
-   has_region_shadow                  = 1ull << 24,
-   has_region_rumble                  = 1ull << 25,
-   has_region_damage                  = 1ull << 26,
-   has_region_ai_vis                  = 1ull << 27,
-   has_region_colorgrading            = 1ull << 28,
-   has_sector                         = 1ull << 29,
-   has_portal                         = 1ull << 30,
-   has_hintnode                       = 1ull << 31,
-   has_hintnode_command_post          = 1ull << 32,
-   has_hintnode_primary_stance        = 1ull << 33,
-   has_hintnode_secondary_stance      = 1ull << 34,
-   has_hintnode_mode                  = 1ull << 35,
-   has_hintnode_radius                = 1ull << 36,
-   has_barrier                        = 1ull << 37,
-   has_planning_hub                   = 1ull << 38,
-   has_planning_hub_branch_weights    = 1ull << 39,
-   has_planning_connection            = 1ull << 40,
-   has_boundary                       = 1ull << 41,
-   has_measurement                    = 1ull << 42,
-   has_block                          = 1ull << 43,
-   has_block_segments                 = 1ull << 44,
-   has_block_flat_shading             = 1ull << 45,
-   has_block_texture_loops            = 1ull << 46,
-   has_block_step_properties          = 1ull << 47,
-   has_block_ring_properties          = 1ull << 48,
-   has_block_beveled_box_properties   = 1ull << 49,
-   has_block_arch_properties          = 1ull << 50,
+   has_name                           = 1ull << 0,
+   has_layer                          = 1ull << 1,
+   has_rotation                       = 1ull << 2,
+   has_position                       = 1ull << 3,
+   has_box_size                       = 1ull << 4,
+   has_width                          = 1ull << 5,
+   has_height                         = 1ull << 6,
+   has_radius                         = 1ull << 7,
+   has_ai_flags                       = 1ull << 8,
+   has_object                         = 1ull << 9,
+   has_light                          = 1ull << 10,
+   has_light_range                    = 1ull << 11,
+   has_light_cone_props               = 1ull << 12,
+   has_light_texture_addressing       = 1ull << 13,
+   has_light_directional_texture      = 1ull << 14,
+   has_light_region                   = 1ull << 15,
+   has_light_ps2_blend_mode           = 1ull << 16,
+   has_path                           = 1ull << 17,
+   has_path_spline_type               = 1ull << 18,
+   has_region                         = 1ull << 19,
+   has_region_sound_stream            = 1ull << 20,
+   has_region_sound_static            = 1ull << 21,
+   has_region_sound_space             = 1ull << 22,
+   has_region_sound_trigger           = 1ull << 23,
+   has_region_foley_fx                = 1ull << 24,
+   has_region_shadow                  = 1ull << 25,
+   has_region_rumble                  = 1ull << 26,
+   has_region_damage                  = 1ull << 27,
+   has_region_ai_vis                  = 1ull << 28,
+   has_region_colorgrading            = 1ull << 29,
+   has_sector                         = 1ull << 30,
+   has_portal                         = 1ull << 31,
+   has_hintnode                       = 1ull << 32,
+   has_hintnode_command_post          = 1ull << 33,
+   has_hintnode_primary_stance        = 1ull << 34,
+   has_hintnode_secondary_stance      = 1ull << 35,
+   has_hintnode_mode                  = 1ull << 36,
+   has_hintnode_radius                = 1ull << 37,
+   has_barrier                        = 1ull << 38,
+   has_planning_hub                   = 1ull << 39,
+   has_planning_hub_branch_weights    = 1ull << 40,
+   has_planning_connection            = 1ull << 41,
+   has_boundary                       = 1ull << 42,
+   has_measurement                    = 1ull << 43,
+   has_block                          = 1ull << 44,
+   has_block_segments                 = 1ull << 45,
+   has_block_flat_shading             = 1ull << 46,
+   has_block_texture_loops            = 1ull << 47,
+   has_block_step_properties          = 1ull << 48,
+   has_block_ring_properties          = 1ull << 49,
+   has_block_beveled_box_properties   = 1ull << 50,
+   has_block_arch_properties          = 1ull << 51,
    // clang-format on
 
    all = ~0ull,
@@ -73,6 +76,30 @@ enum class multi_select_flags : uint64 {
 };
 
 constexpr bool marked_as_enum_bitflag(multi_select_flags)
+{
+   return true;
+}
+
+enum class multi_select_name_flags : uint32 {
+   // clang-format off
+   object              = 1u << 0,
+   light               = 1u << 1,
+   path                = 1u << 2,
+   region              = 1u << 3,
+   sector              = 1u << 4,
+   portal              = 1u << 5,
+   hintnode            = 1u << 6,
+   barrier             = 1u << 7,
+   planning_hub        = 1u << 8,
+   planning_connection = 1u << 9,
+   boundary            = 1u << 10,
+   measurement         = 1u << 11,
+   // clang-format on
+
+   none = 0,
+};
+
+constexpr bool marked_as_enum_bitflag(multi_select_name_flags)
 {
    return true;
 }
@@ -110,6 +137,41 @@ struct multi_select_properties {
    private:
       uint32 _count = 0;
       std::optional<T> _value;
+   };
+
+   struct value_name {
+      void integrate(std::string_view new_name) noexcept
+      {
+         new_name = string::trim_trailing_digits(new_name);
+
+         if (_count > 0 and _name) {
+            if (not string::iequals(*_name, new_name)) _name = std::nullopt;
+         }
+         else {
+            _name = new_name;
+         }
+
+         _count += 1;
+      }
+
+      bool is_different() const noexcept
+      {
+         return not _name.has_value();
+      }
+
+      auto value_or(const std::string_view fallback) const noexcept -> std::string_view
+      {
+         return _name.value_or(fallback);
+      }
+
+      auto count() const noexcept -> uint32
+      {
+         return _count;
+      }
+
+   private:
+      uint32 _count = 0;
+      std::optional<std::string_view> _name;
    };
 
    struct value_split_float2 {
@@ -381,6 +443,7 @@ struct multi_select_properties {
       std::vector<bool> _shared_values;
    };
 
+   value_name name;
    value<int8> layer;
    value<quaternion> rotation;
    value_split_float3 position;
@@ -550,5 +613,24 @@ struct multi_select_properties {
       } arch;
    } block;
 };
+
+struct multi_select_rename_suffixes {
+   uint64 object_start = 0;
+   uint64 light_start = 0;
+   uint64 path_start = 0;
+   uint64 region_start = 0;
+   uint64 sector_start = 0;
+   uint64 portal_start = 0;
+   uint64 hintnode_start = 0;
+   uint64 barrier_start = 0;
+   uint64 planning_hub_start = 0;
+   uint64 planning_connection_start = 0;
+   uint64 boundary_start = 0;
+   uint64 measurement_start = 0;
+};
+
+auto get_rename_suffixes(const multi_select_name_flags flags,
+                         const std::string_view name_prefix, const world& world)
+   -> multi_select_rename_suffixes;
 
 }
