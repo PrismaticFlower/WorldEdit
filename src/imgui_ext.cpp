@@ -6,11 +6,16 @@
 #include <cmath>
 #include <optional>
 
-#include <imgui_internal.h> // ImGuiWindow, GetCurrentWindow, BringWindowToDisplayFront, ImGuiItemFlags_MixedValue
+#include <imgui_internal.h> // ImGuiWindow, GetCurrentWindow, BringWindowToDisplayFront, ImGuiItemFlags_MixedValue, SetNextItemColorMarker
 
 namespace ImGui {
 
 namespace {
+
+constexpr ImU32 x_color_u32 = 0xff'40'40'e5;
+constexpr ImU32 y_color_u32 = 0xff'e5'60'40;
+constexpr ImU32 z_color_u32 = 0xff'30'e5'30;
+constexpr ImU32 w_color_u32 = 0xff'ff'ff'ff;
 
 struct text_callback_autofill_data {
    std::optional<std::array<std::string_view, 6>>& autocomplete_entries;
@@ -53,9 +58,11 @@ bool DragFloat2(const char* label, we::float2* v, float v_speed, float v_min,
    PushItemWidth(item_widths.last);
    PushItemWidth(item_widths.one);
 
+   SetNextItemColorMarker(x_color_u32);
    value_changed |= DragFloat("##X", &v->x, v_speed, v_min, v_max, "X:%.3f", flags);
    SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
    PopItemWidth();
+   SetNextItemColorMarker(y_color_u32);
    value_changed |= DragFloat("##Y", &v->y, v_speed, v_min, v_max, "Y:%.3f", flags);
    PopItemWidth();
 
@@ -86,9 +93,11 @@ bool DragFloat2XZ(const char* label, we::float2* v, float v_speed, float v_min,
    PushItemWidth(item_widths.last);
    PushItemWidth(item_widths.one);
 
+   SetNextItemColorMarker(x_color_u32);
    value_changed |= DragFloat("##X", &v->x, v_speed, v_min, v_max, "X:%.3f", flags);
    SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
    PopItemWidth();
+   SetNextItemColorMarker(z_color_u32);
    value_changed |= DragFloat("##Z", &v->y, v_speed, v_min, v_max, "Z:%.3f", flags);
    PopItemWidth();
 
@@ -120,12 +129,15 @@ bool DragFloat3(const char* label, we::float3* v, float v_speed, float v_min,
    PushItemWidth(item_widths.one);
    PushItemWidth(item_widths.one);
 
+   SetNextItemColorMarker(x_color_u32);
    value_changed |= DragFloat("##X", &v->x, v_speed, v_min, v_max, "X:%.3f", flags);
    SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
    PopItemWidth();
+   SetNextItemColorMarker(y_color_u32);
    value_changed |= DragFloat("##Y", &v->y, v_speed, v_min, v_max, "Y:%.3f", flags);
    SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
    PopItemWidth();
+   SetNextItemColorMarker(z_color_u32);
    value_changed |= DragFloat("##Z", &v->z, v_speed, v_min, v_max, "Z:%.3f", flags);
    PopItemWidth();
 
@@ -158,15 +170,19 @@ bool DragFloat4(const char* label, we::float4* v, float v_speed, float v_min,
    PushItemWidth(item_widths.one);
    PushItemWidth(item_widths.one);
 
+   SetNextItemColorMarker(x_color_u32);
    value_changed |= DragFloat("##X", &v->x, v_speed, v_min, v_max, "X:%.3f", flags);
    SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
    PopItemWidth();
+   SetNextItemColorMarker(y_color_u32);
    value_changed |= DragFloat("##Y", &v->y, v_speed, v_min, v_max, "Y:%.3f", flags);
    SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
    PopItemWidth();
+   SetNextItemColorMarker(z_color_u32);
    value_changed |= DragFloat("##Z", &v->z, v_speed, v_min, v_max, "Z:%.3f", flags);
    SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
    PopItemWidth();
+   SetNextItemColorMarker(w_color_u32);
    value_changed |= DragFloat("##W", &v->w, v_speed, v_min, v_max, "W:%.3f", flags);
    PopItemWidth();
 
@@ -199,18 +215,22 @@ bool DragQuat(const char* label, we::quaternion* v, float v_speed,
    PushItemWidth(item_widths.one);
    PushItemWidth(item_widths.one);
 
+   SetNextItemColorMarker(w_color_u32);
    value_changed |= DragFloat("##W", &v->w, v_speed, 0.0f, 0.0f,
                               format_override ? format_override : "W:%.3f", flags);
    SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
    PopItemWidth();
+   SetNextItemColorMarker(x_color_u32);
    value_changed |= DragFloat("##X", &v->x, v_speed, 0.0f, 0.0f,
                               format_override ? format_override : "X:%.3f", flags);
    SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
    PopItemWidth();
+   SetNextItemColorMarker(y_color_u32);
    value_changed |= DragFloat("##Y", &v->y, v_speed, 0.0f, 0.0f,
                               format_override ? format_override : "Y:%.3f", flags);
    SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
    PopItemWidth();
+   SetNextItemColorMarker(z_color_u32);
    value_changed |= DragFloat("##Z", &v->z, v_speed, 0.0f, 0.0f,
                               format_override ? format_override : "Z:%.3f", flags);
    PopItemWidth();
