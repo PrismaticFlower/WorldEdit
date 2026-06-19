@@ -15,12 +15,10 @@ struct terrain_constants_ {
    float inv_terrain_length;
 
    uint foliage_map_index;
-
    float inv_grid_size;
-   float grid_line_width;
-   
+
    float3 grid_line_color;
-   uint padding0;
+   float grid_line_width;
    
    uint4 diffuse_maps_index[TERRAIN_MAX_TEXTURES / 4];
 

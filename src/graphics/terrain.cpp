@@ -21,16 +21,11 @@ struct alignas(16) terrain_constants {
 
    uint32 terrain_max_index;
    float inv_terrain_length;
-
    uint32 foliage_map;
-
    float inv_grid_size;
-   float grid_line_width;
-
-   std::array<uint32, 3> padding0;
 
    float3 grid_line_color;
-   uint32 padding1;
+   float grid_line_width;
 
    std::array<std::array<uint32, 4>, terrain::texture_count / 4> diffuse_maps;
 
@@ -47,7 +42,7 @@ struct alignas(16) terrain_constants {
    uint32 foliage_color_3_pad;
 };
 
-static_assert(sizeof(terrain_constants) == 704);
+static_assert(sizeof(terrain_constants) == 688);
 
 constexpr auto generate_patch_indices()
 {
@@ -486,8 +481,8 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
       .foliage_map = _foliage_map_srv.get().index,
 
       .inv_grid_size = 1.0f / _terrain_grid_size,
-      .grid_line_width = settings.terrain_grid_line_width * (4.0f / _terrain_grid_size),
       .grid_line_color = settings.terrain_grid_color,
+      .grid_line_width = settings.terrain_grid_line_width * (4.0f / _terrain_grid_size),
 
       .foliage_color_0 = settings.foliage_overlay_layer0_color,
       .foliage_transparency = settings.foliage_overlay_transparency,
