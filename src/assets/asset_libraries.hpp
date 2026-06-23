@@ -2,6 +2,9 @@
 
 #include "asset_stable_string.hpp"
 #include "lowercase_string.hpp"
+
+#include "io/path.hpp"
+
 #include "utility/event_listener.hpp"
 #include "utility/function_ptr.hpp"
 #include "utility/implementation_storage.hpp"
@@ -25,10 +28,6 @@ namespace we::utility {
 class file_watcher;
 }
 
-namespace we::io {
-struct path;
-}
-
 namespace we::assets {
 
 namespace odf {
@@ -46,6 +45,18 @@ struct texture;
 namespace sky {
 struct config;
 }
+
+/// @brief Categories for assets.
+enum class category {
+   /// @brief Asset is from the active world folder.
+   world,
+   /// @brief Asset is from the common world folder.
+   common_world,
+   /// @brief Asset is from the common folder. (ingame.lvl, common.lvl, core.lvl, etc)
+   common,
+   /// @brief Asset is from a side folder.
+   sides,
+};
 
 /// @brief A directory inside the asset tree.
 struct library_tree_branch {
@@ -86,6 +97,11 @@ struct library {
    /// @brief Removes an asset from the library.
    /// @param asset_path The path to the asset.
    void remove(const io::path& asset_path) noexcept;
+
+   /// @brief Check if a path points to a registered asset.
+   /// @param asset_path The asset path.
+   /// @return If the path is registered as an asset or not.
+   bool is_registered(const io::path& asset_path) noexcept;
 
    /// @brief Gets or creates a reference to an asset. The asset need not yet exist on disk.
    /// @param name The name of the asset.
@@ -158,6 +174,11 @@ struct directory {
    /// @param asset_path The path to the asset.
    void remove(const io::path& asset_path) noexcept;
 
+   /// @brief Check if a path points to a registered asset.
+   /// @param asset_path The asset path.
+   /// @return If the path is registered as an asset or not.
+   bool is_registered(const io::path& asset_path) noexcept;
+
    /// @brief Clears the asset directory.
    void clear() noexcept;
 
@@ -204,6 +225,12 @@ private:
 
    void forget_asset(const io::path& path) noexcept;
 
+   void update_asset(const io::path& path) noexcept;
+
+   bool is_registered_asset(const io::path& path) noexcept;
+
+   io::path _source_directory;
+   std::string _current_platform = "PC";
    std::unique_ptr<utility::file_watcher> _file_watcher;
    event_listener<void(const io::path& path)> _file_changed_event;
    event_listener<void(const io::path& path)> _file_removed_event;

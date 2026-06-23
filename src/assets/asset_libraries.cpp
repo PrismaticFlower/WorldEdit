@@ -2,12 +2,18 @@
 #include "asset_libraries.hpp"
 #include "asset_state.hpp"
 #include "asset_traits.hpp"
-#include "async/thread_pool.hpp"
-#include "io/error.hpp"
-#include "io/path.hpp"
+
 #include "msh/flat_model.hpp"
 #include "odf/definition.hpp"
+
 #include "output_stream.hpp"
+
+#include "async/thread_pool.hpp"
+
+#include "io/error.hpp"
+#include "io/path.hpp"
+
+#include "utility/event_listener.hpp"
 #include "utility/file_watcher.hpp"
 #include "utility/stopwatch.hpp"
 #include "utility/string_icompare.hpp"
@@ -37,19 +43,30 @@ const absl::flat_hash_set<std::string_view> ignored_folders =
 
     ".git"sv,   ".svn"sv,    ".vscode"sv,  ".WorldEdit"sv};
 
-bool is_parent_path_ignored(const io::path& asset_path) noexcept
+struct platform_filter {
+   bool allow_pc : 1 = false;
+   bool allow_ps2 : 1 = false;
+   bool allow_xbox : 1 = false;
+};
+
+bool is_platform_directory_skipped(std::string_view directory, platform_filter filter)
 {
-   std::string_view path_view = asset_path.parent_path();
+   if (string::iequals(directory, "PC")) return not filter.allow_pc;
+   if (string::iequals(directory, "PS2")) return not filter.allow_ps2;
+   if (string::iequals(directory, "XBOX")) return not filter.allow_xbox;
 
-   if (path_view.size() < 2) return false;
+   return false;
+}
 
-   if (path_view[1] == ':') path_view.remove_prefix(2);
+bool is_parent_path_skipped(std::string_view path_view, platform_filter filter) noexcept
+{
    if (path_view.starts_with('\\')) path_view.remove_prefix(1);
 
    while (not path_view.empty()) {
       auto [directory, rest] = string::split_first_of_exclusive(path_view, "\\");
 
       if (ignored_folders.contains(directory)) return true;
+      if (is_platform_directory_skipped(directory, filter)) return true;
 
       path_view = rest;
    }
@@ -300,6 +317,23 @@ struct library<T>::impl {
       _change_event.broadcast(name);
    }
 
+   bool is_registered(const io::path& asset_path) noexcept
+   {
+      std::scoped_lock lock{_assets_mutex};
+
+      // TODO: FIXME! Very slow. Don't keep.
+
+      for (auto& [name, asset] : _assets) {
+         std::scoped_lock lock_second{asset->mutex};
+
+         if (string::iequals(asset->path.string_view(), asset_path.string_view())) {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
    auto operator[](const lowercase_string& name) noexcept -> asset_ref<T>
    {
       if (name.empty()) return asset_ref{_null_asset};
@@ -459,8 +493,7 @@ private:
 
    auto make_placeholder_asset_state() -> std::shared_ptr<asset_state<T>>
    {
-      return std::make_shared<asset_state<T>>(
-         std::weak_ptr<T>{}, false, io::path{}, [] {}, 0);
+      return std::make_shared<asset_state<T>>(std::weak_ptr<T>{}, false, io::path{}, [] {}, 0);
    }
 
    void enqueue_create_asset(lowercase_string name, bool preempt_current_load) noexcept
@@ -576,6 +609,12 @@ void library<T>::add(const io::path& asset_path, uint64 last_write_time) noexcep
 }
 
 template<typename T>
+bool library<T>::is_registered(const io::path& asset_path) noexcept
+{
+   return self->is_registered(asset_path);
+}
+
+template<typename T>
 void library<T>::remove(const io::path& asset_path) noexcept
 {
    self->remove(asset_path);
@@ -684,6 +723,21 @@ struct directory::impl {
       }
    }
 
+   bool is_registered(const io::path& asset_path) noexcept
+   {
+      std::scoped_lock lock{_mutex};
+
+      // TODO: FIXME! Very slow. Don't keep.
+
+      for (auto& [name, path] : _assets) {
+         if (string::iequals(path.string_view(), asset_path.string_view())) {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
    void clear() noexcept
    {
       std::scoped_lock lock{_mutex};
@@ -718,7 +772,7 @@ struct directory::impl {
 
 private:
    std::shared_mutex _mutex;
-   absl::flat_hash_map<lowercase_string, io::path> _assets; // guarded by _assets_mutex
+   absl::flat_hash_map<lowercase_string, io::path> _assets; // guarded by _mutex
    std::vector<stable_string> _existing_assets;
    bool _existing_assets_sorted = true;
 };
@@ -733,6 +787,10 @@ void directory::add(const io::path& asset_path) noexcept
 void directory::remove(const io::path& asset_path) noexcept
 {
    return self->remove(asset_path);
+}
+bool directory::is_registered(const io::path& asset_path) noexcept
+{
+   return self->is_registered(asset_path);
 }
 
 void directory::clear() noexcept
@@ -770,29 +828,30 @@ void libraries_manager::source_directory(const io::path& source_directory) noexc
         entry != entry.end(); ++entry) {
       const io::path& path = entry->path;
 
-      if (entry->is_directory and ignored_folders.contains(path.stem())) {
-         entry.skip_directory();
+      if (entry->is_directory) {
+         if (is_platform_directory_skipped(path.stem(), {.allow_pc = true}) or
+             ignored_folders.contains(path.stem())) {
+            entry.skip_directory();
 
-         continue;
+            continue;
+         }
       }
 
-      register_asset(path, entry->last_write_time);
+      const io::path platform_path{fmt::format("{}\\{}\\{}", path.parent_path(),
+                                               _current_platform, path.filename())};
+
+      if (not io::exists(platform_path)) {
+         register_asset(path, entry->last_write_time);
+      }
    }
 
+   _source_directory = source_directory;
    _file_watcher =
       std::make_unique<utility::file_watcher>(source_directory.string_view());
-   _file_changed_event =
-      _file_watcher->listen_file_changed([this](const io::path& path) {
-         if (is_parent_path_ignored(path)) return;
-
-         register_asset(path, io::get_last_write_time(path));
-      });
-   _file_removed_event =
-      _file_watcher->listen_file_removed([this](const io::path& path) {
-         if (is_parent_path_ignored(path)) return;
-
-         forget_asset(path);
-      });
+   _file_changed_event = _file_watcher->listen_file_changed(
+      [this](const io::path& path) { update_asset(path); });
+   _file_removed_event = _file_watcher->listen_file_removed(
+      [this](const io::path& path) { forget_asset(path); });
    _unknown_files_changed = _file_watcher->listen_unknown_files_changed([this]() {
       // TODO: manual scan here.
    });
@@ -808,6 +867,11 @@ void libraries_manager::update_loaded() noexcept
 
 void libraries_manager::clear() noexcept
 {
+   _file_watcher = nullptr;
+   _file_changed_event = {};
+   _file_removed_event = {};
+   _unknown_files_changed = {};
+
    odfs.clear();
    models.clear();
    textures.clear();
@@ -853,6 +917,74 @@ void libraries_manager::forget_asset(const io::path& path) noexcept
             string::iequals(extension, ".obg"sv)) {
       entity_groups.remove(path);
    }
+}
+
+void libraries_manager::update_asset(const io::path& path) noexcept
+{
+   // 1. Updating registered asset with same path
+   // 2. Replacing registered asset with a new platform path.
+   // 3. Attempting to replace registered asset with a platform path with an updated common path. (Reject)
+   // 4. New Asset
+
+   if (is_registered_asset(path)) {
+      register_asset(path, io::get_last_write_time(path));
+
+      return;
+   }
+
+   if (string::iends_with(path.parent_path(), _current_platform)) {
+      std::string_view parent_path_view = path.parent_path();
+
+      parent_path_view.remove_suffix(_current_platform.size() + 1); // + 1 for seperator
+
+      const io::path common_path{
+         fmt::format("{}\\{}", parent_path_view, path.filename())};
+
+      if (is_registered_asset(common_path)) {
+         forget_asset(common_path);
+         register_asset(path, io::get_last_write_time(path));
+
+         return;
+      }
+   }
+
+   const io::path platform_path{fmt::format("{}\\{}\\{}", path.parent_path(),
+                                            _current_platform, path.filename())};
+
+   if (io::exists(platform_path)) return;
+
+   if (path.string_view().size() < _source_directory.string_view().size()) {
+      return;
+   }
+
+   std::string_view asset_relative_path = {path.c_str(),
+                                           _source_directory.string_view().size()};
+
+   if (is_parent_path_skipped(asset_relative_path, {.allow_pc = true})) return;
+
+   register_asset(path, io::get_last_write_time(path));
+}
+
+bool libraries_manager::is_registered_asset(const io::path& path) noexcept
+{
+   if (const auto extension = path.extension(); string::iequals(extension, ".odf"sv)) {
+      return odfs.is_registered(path);
+   }
+   else if (string::iequals(extension, ".msh"sv)) {
+      return models.is_registered(path);
+   }
+   else if (string::iequals(extension, ".tga"sv)) {
+      return textures.is_registered(path);
+   }
+   else if (string::iequals(extension, ".sky"sv)) {
+      return skies.is_registered(path);
+   }
+   else if (string::iequals(extension, ".eng"sv) or
+            string::iequals(extension, ".obg"sv)) {
+      return entity_groups.is_registered(path);
+   }
+
+   return false;
 }
 
 }
