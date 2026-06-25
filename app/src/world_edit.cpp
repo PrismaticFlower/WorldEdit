@@ -1297,8 +1297,7 @@ void world_edit::ui_draw_select_box() noexcept
       ImGui::GetBackgroundDrawList()->AddRect(std::bit_cast<ImVec2>(rect_min),
                                               std::bit_cast<ImVec2>(rect_max),
                                               IM_COL32(color.x, color.y, color.z, 0xff),
-                                              0.0f, 
-                                              1.0f * _display_scale);
+                                              0.0f, 1.0f * _display_scale);
    }
 }
 
@@ -4184,7 +4183,6 @@ void world_edit::open_project(const io::path& path) noexcept
    }
 
    _project_dir = path;
-   _asset_libraries.source_directory(_project_dir);
    _project_world_paths.clear();
 
    const io::path world_edit_project_files_path =
@@ -4243,6 +4241,9 @@ void world_edit::load_world(const io::path& path) noexcept
    if (not io::exists(path)) return;
 
    close_world();
+
+   _asset_libraries.set_source_directory(
+      _project_dir, io::path{io::path{path.parent_path()}.parent_path()}.stem());
 
    try {
       _world =

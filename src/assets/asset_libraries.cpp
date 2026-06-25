@@ -38,16 +38,77 @@ constexpr std::chrono::milliseconds asset_retry_load_delay = 50ms;
 
 namespace {
 
-const absl::flat_hash_set<std::string_view> ignored_folders =
-   {"_BUILD"sv, "_LVL_PC"sv, "_LVL_PS2"sv, "_LVL_PSP"sv,  "_LVL_XBOX"sv,
-
-    ".git"sv,   ".svn"sv,    ".vscode"sv,  ".WorldEdit"sv};
-
 struct platform_filter {
    bool allow_pc : 1 = false;
    bool allow_ps2 : 1 = false;
    bool allow_xbox : 1 = false;
 };
+
+const absl::flat_hash_set<std::string_view> ignored_folders =
+   {"_BUILD"sv, "_LVL_PC"sv, "_LVL_PS2"sv, "_LVL_PSP"sv,  "_LVL_XBOX"sv,
+
+    ".git"sv,   ".svn"sv,    ".vscode"sv,  ".WorldEdit"sv};
+
+const std::array common_world_category_priority_high_table = {
+   category::world,
+};
+
+const std::array common_category_priority_high_table = {
+   category::world,
+   category::common_world,
+};
+
+const std::array sides_category_priority_high_table = {
+   category::world,
+   category::common_world,
+   category::common,
+};
+
+const std::array project_category_priority_high_table = {
+   category::world,
+   category::common_world,
+   category::common,
+   category::project,
+};
+
+const container::enum_array<std::span<const category>, category> category_priority_high_tables =
+   container::make_enum_array<std::span<const category>, category>({
+      {category::world, std::span<const category>{}},
+      {category::common_world, common_world_category_priority_high_table},
+      {category::common, common_category_priority_high_table},
+      {category::sides, sides_category_priority_high_table},
+      {category::project, project_category_priority_high_table},
+   });
+
+const std::array world_category_priority_low_table = {
+   category::common_world,
+   category::common,
+   category::sides,
+   category::project,
+};
+const std::array common_world_category_priority_low_table = {
+   category::common,
+   category::sides,
+   category::project,
+};
+
+const std::array common_category_priority_low_table = {
+   category::project,
+   category::sides,
+};
+
+const std::array sides_category_priority_low_table = {
+   category::project,
+};
+
+const container::enum_array<std::span<const category>, category> category_priority_low_tables =
+   container::make_enum_array<std::span<const category>, category>({
+      {category::world, world_category_priority_low_table},
+      {category::common_world, common_world_category_priority_low_table},
+      {category::common, common_category_priority_low_table},
+      {category::sides, sides_category_priority_low_table},
+      {category::project, std::span<const category>{}},
+   });
 
 bool is_platform_directory_skipped(std::string_view directory, platform_filter filter)
 {
@@ -232,9 +293,48 @@ struct library<T>::impl {
    {
    }
 
-   void add(const io::path& asset_path, uint64 last_write_time) noexcept
+   void add(const io::path& asset_path, uint64 last_write_time,
+            const category category) noexcept
    {
       const lowercase_string name{asset_path.stem()};
+
+      {
+         std::scoped_lock lock{_assets_mutex};
+
+         asset_category_state& asset_category_state =
+            _asset_category_sets[category][name];
+
+         asset_category_state.path = asset_path;
+
+         if (not asset_category_state.in_use) {
+            for (const assets::category priority_category :
+                 category_priority_high_tables[category]) {
+
+               const auto priority_asset_category_state_it =
+                  _asset_category_sets[priority_category].find(name);
+
+               if (priority_asset_category_state_it !=
+                      _asset_category_sets[priority_category].end() and
+                   priority_asset_category_state_it->second.in_use) {
+                  return;
+               }
+            }
+
+            asset_category_state.in_use = true;
+
+            for (const assets::category priority_category :
+                 category_priority_low_tables[category]) {
+               const auto priority_asset_category_state_it =
+                  _asset_category_sets[priority_category].find(name);
+
+               if (priority_asset_category_state_it !=
+                      _asset_category_sets[priority_category].end() and
+                   priority_asset_category_state_it->second.in_use) {
+                  priority_asset_category_state_it->second.in_use = false;
+               }
+            }
+         }
+      }
 
       auto new_state = make_asset_state(name, asset_path, last_write_time);
 
@@ -283,8 +383,10 @@ struct library<T>::impl {
       _change_event.broadcast(name);
    }
 
-   void remove(const io::path& asset_path) noexcept
+   void remove(const io::path& asset_path, const category category) noexcept
    {
+      if (not is_registered(asset_path, category)) return;
+
       const lowercase_string name{asset_path.stem()};
 
       const std::shared_ptr<asset_state<T>> asset_state = [&] {
@@ -295,43 +397,76 @@ struct library<T>::impl {
          return it != _assets.end() ? it->second : nullptr;
       }();
 
-      if (not asset_state) return;
-
-      // Remove Asset
-      {
+      if (asset_state) {
          std::scoped_lock lock{_assets_mutex, _load_tasks_mutex, _existing_assets_mutex,
                                _assets_tree_mutex, asset_state->mutex};
 
-         if (asset_state->path != asset_path) return;
+         if (asset_state->path == asset_path) {
+            asset_state->exists = false;
+            asset_state->load_failure = false;
+            asset_state->path = {};
+            asset_state->start_load = [this] {};
+            asset_state->last_write_time.store(0, std::memory_order_relaxed);
 
-         _assets.erase(name);
+            _load_tasks.erase(name);
 
-         _load_tasks.erase(name);
+            std::erase_if(_existing_assets, [&](const stable_string& asset) {
+               return asset == name;
+            });
 
-         std::erase_if(_existing_assets,
-                       [&](const stable_string& asset) { return asset == name; });
+            _assets_tree.remove(asset_path);
+         }
+      }
 
-         _assets_tree.remove(asset_path);
+      {
+         std::unique_lock lock{_assets_mutex};
+
+         const auto asset_category_state_it =
+            _asset_category_sets[category].find(name);
+
+         if (asset_category_state_it != _asset_category_sets[category].end()) {
+            if (asset_category_state_it->second.path == asset_path) {
+
+               const bool in_use = asset_category_state_it->second.in_use;
+
+               _asset_category_sets[category].erase(asset_category_state_it);
+
+               if (in_use) {
+                  for (const assets::category priority_category :
+                       category_priority_low_tables[category]) {
+                     const auto lower_asset_category_state_it =
+                        _asset_category_sets[priority_category].find(name);
+
+                     if (lower_asset_category_state_it !=
+                         _asset_category_sets[priority_category].end()) {
+                        const io::path new_path =
+                           lower_asset_category_state_it->second.path;
+
+                        lock.unlock();
+
+                        return add(new_path, io::get_last_write_time(new_path),
+                                   priority_category);
+                     }
+                  }
+               }
+            }
+         }
       }
 
       _change_event.broadcast(name);
    }
 
-   bool is_registered(const io::path& asset_path) noexcept
+   bool is_registered(const io::path& asset_path, const category category) noexcept
    {
       std::scoped_lock lock{_assets_mutex};
 
-      // TODO: FIXME! Very slow. Don't keep.
+      const lowercase_string name{asset_path.stem()};
 
-      for (auto& [name, asset] : _assets) {
-         std::scoped_lock lock_second{asset->mutex};
+      const auto it = _asset_category_sets[category].find(name);
 
-         if (string::iequals(asset->path.string_view(), asset_path.string_view())) {
-            return true;
-         }
-      }
+      if (it == _asset_category_sets[category].end()) return false;
 
-      return false;
+      return it->second.path == asset_path;
    }
 
    auto operator[](const lowercase_string& name) noexcept -> asset_ref<T>
@@ -429,6 +564,7 @@ struct library<T>::impl {
 
       _load_tasks.clear();
       _assets.clear();
+      _asset_category_sets = {};
       _existing_assets.clear();
       _existing_assets_sorted = true;
    }
@@ -572,10 +708,17 @@ private:
          });
    }
 
+   struct asset_category_state {
+      bool in_use = false;
+      io::path path;
+   };
+
    we::output_stream& _output_stream;
 
    std::shared_mutex _assets_mutex;
    absl::flat_hash_map<lowercase_string, std::shared_ptr<asset_state<T>>> _assets; // guarded by _assets_mutex
+   container::enum_array<absl::flat_hash_map<lowercase_string, asset_category_state>, category>
+      _asset_category_sets; // guarded by _assets_mutex
 
    std::shared_mutex _load_tasks_mutex;
    absl::flat_hash_map<lowercase_string, async::task<asset_data<T>>> _load_tasks; // guarded by _load_tasks_mutex
@@ -603,21 +746,22 @@ library<T>::library(output_stream& stream, std::shared_ptr<async::thread_pool> t
 }
 
 template<typename T>
-void library<T>::add(const io::path& asset_path, uint64 last_write_time) noexcept
+void library<T>::add(const io::path& asset_path, uint64 last_write_time,
+                     const category category) noexcept
 {
-   self->add(asset_path, last_write_time);
+   self->add(asset_path, last_write_time, category);
 }
 
 template<typename T>
-bool library<T>::is_registered(const io::path& asset_path) noexcept
+void library<T>::remove(const io::path& asset_path, const category category) noexcept
 {
-   return self->is_registered(asset_path);
+   self->remove(asset_path, category);
 }
 
 template<typename T>
-void library<T>::remove(const io::path& asset_path) noexcept
+bool library<T>::is_registered(const io::path& asset_path, const category category) noexcept
 {
-   self->remove(asset_path);
+   return self->is_registered(asset_path, category);
 }
 
 template<typename T>
@@ -727,15 +871,13 @@ struct directory::impl {
    {
       std::scoped_lock lock{_mutex};
 
-      // TODO: FIXME! Very slow. Don't keep.
+      lowercase_string name{asset_path.stem()};
 
-      for (auto& [name, path] : _assets) {
-         if (string::iequals(path.string_view(), asset_path.string_view())) {
-            return true;
-         }
-      }
+      const auto it = _assets.find(name);
 
-      return false;
+      if (it == _assets.end()) return false;
+
+      return string::iequals(it->second.string_view(), asset_path.string_view());
    }
 
    void clear() noexcept
@@ -814,17 +956,31 @@ libraries_manager::libraries_manager(output_stream& stream,
    : odfs{stream, thread_pool},
      models{stream, thread_pool},
      textures{stream, thread_pool},
-     skies{stream, thread_pool}
+     skies{stream, thread_pool},
+     _thread_pool{thread_pool}
 {
 }
 
 libraries_manager::~libraries_manager() = default;
 
-void libraries_manager::source_directory(const io::path& source_directory) noexcept
+void libraries_manager::set_source_directory(const io::path& source_directory,
+                                             const std::string_view world_name) noexcept
 {
    clear();
 
-   for (auto entry = io::directory_iterator{source_directory};
+   _source_directory = source_directory;
+
+   if (not io::exists(_source_directory)) return;
+
+   _category_relative_paths = container::make_enum_array<std::string, category>({
+      {category::world, fmt::format("\\Worlds\\{}\\", world_name)},
+      {category::common_world, "\\Worlds\\Common\\"},
+      {category::common, "\\Common\\"},
+      {category::sides, "\\Sides\\"},
+      {category::project, ""},
+   });
+
+   for (auto entry = io::directory_iterator{_source_directory};
         entry != entry.end(); ++entry) {
       const io::path& path = entry->path;
 
@@ -832,9 +988,9 @@ void libraries_manager::source_directory(const io::path& source_directory) noexc
          if (is_platform_directory_skipped(path.stem(), {.allow_pc = true}) or
              ignored_folders.contains(path.stem())) {
             entry.skip_directory();
-
-            continue;
          }
+
+         continue;
       }
 
       const io::path platform_path{fmt::format("{}\\{}\\{}", path.parent_path(),
@@ -845,7 +1001,6 @@ void libraries_manager::source_directory(const io::path& source_directory) noexc
       }
    }
 
-   _source_directory = source_directory;
    _file_watcher =
       std::make_unique<utility::file_watcher>(source_directory.string_view());
    _file_changed_event = _file_watcher->listen_file_changed(
@@ -867,10 +1022,7 @@ void libraries_manager::update_loaded() noexcept
 
 void libraries_manager::clear() noexcept
 {
-   _file_watcher = nullptr;
-   _file_changed_event = {};
-   _file_removed_event = {};
-   _unknown_files_changed = {};
+   _category_relative_paths = {};
 
    odfs.clear();
    models.clear();
@@ -881,17 +1033,19 @@ void libraries_manager::clear() noexcept
 
 void libraries_manager::register_asset(const io::path& path, uint64 last_write_time) noexcept
 {
+   const category category = categorize(path);
+
    if (const auto extension = path.extension(); string::iequals(extension, ".odf"sv)) {
-      odfs.add(path, last_write_time);
+      odfs.add(path, last_write_time, category);
    }
    else if (string::iequals(extension, ".msh"sv)) {
-      models.add(path, last_write_time);
+      models.add(path, last_write_time, category);
    }
    else if (string::iequals(extension, ".tga"sv)) {
-      textures.add(path, last_write_time);
+      textures.add(path, last_write_time, category);
    }
    else if (string::iequals(extension, ".sky"sv)) {
-      skies.add(path, last_write_time);
+      skies.add(path, last_write_time, category);
    }
    else if (string::iequals(extension, ".eng"sv) or
             string::iequals(extension, ".obg"sv)) {
@@ -901,17 +1055,19 @@ void libraries_manager::register_asset(const io::path& path, uint64 last_write_t
 
 void libraries_manager::forget_asset(const io::path& path) noexcept
 {
+   const category category = categorize(path);
+
    if (const auto extension = path.extension(); string::iequals(extension, ".odf"sv)) {
-      odfs.remove(path);
+      odfs.remove(path, category);
    }
    else if (string::iequals(extension, ".msh"sv)) {
-      models.remove(path);
+      models.remove(path, category);
    }
    else if (string::iequals(extension, ".tga"sv)) {
-      textures.remove(path);
+      textures.remove(path, category);
    }
    else if (string::iequals(extension, ".sky"sv)) {
-      skies.remove(path);
+      skies.remove(path, category);
    }
    else if (string::iequals(extension, ".eng"sv) or
             string::iequals(extension, ".obg"sv)) {
@@ -957,8 +1113,8 @@ void libraries_manager::update_asset(const io::path& path) noexcept
       return;
    }
 
-   std::string_view asset_relative_path = {path.c_str(),
-                                           _source_directory.string_view().size()};
+   std::string_view asset_relative_path = path.string_view();
+   asset_relative_path.remove_prefix(_source_directory.string_view().size());
 
    if (is_parent_path_skipped(asset_relative_path, {.allow_pc = true})) return;
 
@@ -967,17 +1123,19 @@ void libraries_manager::update_asset(const io::path& path) noexcept
 
 bool libraries_manager::is_registered_asset(const io::path& path) noexcept
 {
+   const category category = categorize(path);
+
    if (const auto extension = path.extension(); string::iequals(extension, ".odf"sv)) {
-      return odfs.is_registered(path);
+      return odfs.is_registered(path, category);
    }
    else if (string::iequals(extension, ".msh"sv)) {
-      return models.is_registered(path);
+      return models.is_registered(path, category);
    }
    else if (string::iequals(extension, ".tga"sv)) {
-      return textures.is_registered(path);
+      return textures.is_registered(path, category);
    }
    else if (string::iequals(extension, ".sky"sv)) {
-      return skies.is_registered(path);
+      return skies.is_registered(path, category);
    }
    else if (string::iequals(extension, ".eng"sv) or
             string::iequals(extension, ".obg"sv)) {
@@ -985,6 +1143,25 @@ bool libraries_manager::is_registered_asset(const io::path& path) noexcept
    }
 
    return false;
+}
+
+auto libraries_manager::categorize(const io::path& path) const noexcept -> category
+{
+   if (not string::istarts_with(path.string_view(), _source_directory.string_view())) {
+      return category::project;
+   }
+
+   std::string_view asset_relative_path = path.string_view();
+   asset_relative_path.remove_prefix(_source_directory.string_view().size());
+
+   for (const category category : {category::world, category::common_world,
+                                   category::common, category::sides}) {
+      if (string::istarts_with(asset_relative_path, _category_relative_paths[category])) {
+         return category;
+      }
+   }
+
+   return category::project;
 }
 
 }

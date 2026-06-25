@@ -3,6 +3,8 @@
 #include "asset_stable_string.hpp"
 #include "lowercase_string.hpp"
 
+#include "container/enum_array.hpp"
+
 #include "io/path.hpp"
 
 #include "utility/event_listener.hpp"
@@ -56,6 +58,10 @@ enum class category {
    common,
    /// @brief Asset is from a side folder.
    sides,
+   /// @brief Asset is from the project folder. Including any of the above categories.
+   project,
+
+   COUNT
 };
 
 /// @brief A directory inside the asset tree.
@@ -92,16 +98,20 @@ struct library {
 
    /// @brief Adds an asset to the library.
    /// @param asset_path The path to the asset.
-   void add(const io::path& asset_path, uint64 last_write_time) noexcept;
+   /// @param category The category the asset belongs to.
+   void add(const io::path& asset_path, uint64 last_write_time,
+            const category category) noexcept;
 
    /// @brief Removes an asset from the library.
+   /// @param category The category the asset belongs to.
    /// @param asset_path The path to the asset.
-   void remove(const io::path& asset_path) noexcept;
+   void remove(const io::path& asset_path, const category category) noexcept;
 
    /// @brief Check if a path points to a registered asset.
    /// @param asset_path The asset path.
    /// @return If the path is registered as an asset or not.
-   bool is_registered(const io::path& asset_path) noexcept;
+   /// @param category The category the asset belongs to.
+   bool is_registered(const io::path& asset_path, const category category) noexcept;
 
    /// @brief Gets or creates a reference to an asset. The asset need not yet exist on disk.
    /// @param name The name of the asset.
@@ -159,7 +169,7 @@ struct library {
 private:
    struct impl;
 
-   implementation_storage<impl, 296> self;
+   implementation_storage<impl, 448> self;
 };
 
 /// @brief Tracks assets like library but does no loading or lifetime management.
@@ -206,7 +216,8 @@ struct libraries_manager {
 
    /// @brief Sets the source directory for assets.
    /// @param path The directory to search through for assets.
-   void source_directory(const io::path& path) noexcept;
+   void set_source_directory(const io::path& path,
+                             const std::string_view world_name) noexcept;
 
    /// @brief Handles broadcasting notifications of any loaded or updated assets.
    void update_loaded() noexcept;
@@ -229,8 +240,13 @@ private:
 
    bool is_registered_asset(const io::path& path) noexcept;
 
+   auto categorize(const io::path& path) const noexcept -> category;
+
+   std::shared_ptr<async::thread_pool> _thread_pool;
    io::path _source_directory;
    std::string _current_platform = "PC";
+   container::enum_array<std::string, category> _category_relative_paths;
+
    std::unique_ptr<utility::file_watcher> _file_watcher;
    event_listener<void(const io::path& path)> _file_changed_event;
    event_listener<void(const io::path& path)> _file_removed_event;
