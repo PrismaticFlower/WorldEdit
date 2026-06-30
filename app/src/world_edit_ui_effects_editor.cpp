@@ -327,79 +327,95 @@ void world_edit::ui_show_effects_editor() noexcept
       ImGui::InputText("Sound Sub-Crack", &lightning.sound_sub_crack,
                        _edit_stack_world, _edit_context);
 
-      ImGui::SeparatorText("Lightning Bolt");
+      ImGui::EndDisabled();
 
+      ImGui::TreePop();
+   }
+
+   if (ImGui::TreeNodeEx("Lightning Bolt", ImGuiTreeNodeFlags_Framed)) {
       world::lightning_bolt& bolt = _world.effects.lightning_bolt;
 
-      ImGui::PushID("Bolt");
+      if (bolt.has_lightning_bolt) {
+         ImGui::CustomWidget("Texture", &bolt.texture, _edit_stack_world, _edit_context,
+                             [&](const char* label, std::string* texture) noexcept {
+                                IM_ASSERT(texture);
+                                IM_ASSERT(_edit_context.is_memory_valid(texture));
 
-      ImGui::CustomWidget("Texture", &bolt.texture, _edit_stack_world, _edit_context,
-                          [&](const char* label, std::string* texture) noexcept {
-                             IM_ASSERT(texture);
-                             IM_ASSERT(_edit_context.is_memory_valid(texture));
+                                return ui_texture_pick_widget(label, texture);
+                             });
 
-                             return ui_texture_pick_widget(label, texture);
-                          });
+         ImGui::DragFloat("Width", &bolt.width, _edit_stack_world, _edit_context);
 
-      ImGui::DragFloat("Width", &bolt.width, _edit_stack_world, _edit_context);
+         ImGui::DragFloat("Fade Time", &bolt.fade_time, _edit_stack_world,
+                          _edit_context, 0.1f, 0.0f, 1e10f);
 
-      ImGui::DragFloat("Fade Time", &bolt.fade_time, _edit_stack_world,
-                       _edit_context, 0.1f, 0.0f, 1e10f);
+         ImGui::DragFloat("Break Distance", &bolt.break_distance,
+                          _edit_stack_world, _edit_context);
 
-      ImGui::DragFloat("Break Distance", &bolt.break_distance,
-                       _edit_stack_world, _edit_context);
+         ImGui::DragFloat("Texture Size", &bolt.texture_size, _edit_stack_world,
+                          _edit_context);
 
-      ImGui::DragFloat("Texture Size", &bolt.texture_size, _edit_stack_world,
-                       _edit_context);
+         ImGui::DragFloat("Spread Factor", &bolt.spread_factor,
+                          _edit_stack_world, _edit_context);
 
-      ImGui::DragFloat("Spread Factor", &bolt.spread_factor, _edit_stack_world,
-                       _edit_context);
+         ImGui::Separator();
 
-      ImGui::Separator();
+         ImGui::DragFloat("Max Branches", &bolt.max_branches, _edit_stack_world,
+                          _edit_context, 1.0f, 0.0f, 1e10f);
 
-      ImGui::DragFloat("Max Branches", &bolt.max_branches, _edit_stack_world,
-                       _edit_context, 1.0f, 0.0f, 1e10f);
+         ImGui::DragFloat("Branch Factor", &bolt.branch_factor,
+                          _edit_stack_world, _edit_context, 0.1f);
 
-      ImGui::DragFloat("Branch Factor", &bolt.branch_factor, _edit_stack_world,
-                       _edit_context, 0.1f);
+         ImGui::DragInt("Branch Spread Factor", &bolt.branch_spread_factor,
+                        _edit_stack_world, _edit_context);
 
-      ImGui::DragInt("Branch Spread Factor", &bolt.branch_spread_factor,
-                     _edit_stack_world, _edit_context);
+         ImGui::DragFloat("Branch Length", &bolt.branch_length,
+                          _edit_stack_world, _edit_context, 1.0f, 0.0f, 1e10f);
 
-      ImGui::DragFloat("Branch Length", &bolt.branch_length, _edit_stack_world,
-                       _edit_context, 1.0f, 0.0f, 1e10f);
+         ImGui::Separator();
 
-      ImGui::Separator();
+         ImGui::DragFloat("Interpolation Speed", &bolt.interpolation_speed,
+                          _edit_stack_world, _edit_context, 0.05f);
 
-      ImGui::DragFloat("Interpolation Speed", &bolt.interpolation_speed,
-                       _edit_stack_world, _edit_context, 0.05f);
+         ImGui::Separator();
 
-      ImGui::Separator();
+         ImGui::DragInt("Children Count", &bolt.num_children, _edit_stack_world,
+                        _edit_context, 0.05f);
 
-      ImGui::DragInt("Children Count", &bolt.num_children, _edit_stack_world,
-                     _edit_context, 0.05f);
+         ImGui::DragFloat("Child Break Distance", &bolt.child_break_distance,
+                          _edit_stack_world, _edit_context);
 
-      ImGui::DragFloat("Child Break Distance", &bolt.child_break_distance,
-                       _edit_stack_world, _edit_context);
+         ImGui::DragFloat("Child Texture Size", &bolt.child_texture_size,
+                          _edit_stack_world, _edit_context);
 
-      ImGui::DragFloat("Child Texture Size", &bolt.child_texture_size,
-                       _edit_stack_world, _edit_context);
+         ImGui::DragFloat("Child Width", &bolt.child_width, _edit_stack_world,
+                          _edit_context);
 
-      ImGui::DragFloat("Child Width", &bolt.child_width, _edit_stack_world,
-                       _edit_context);
+         ImGui::DragFloat("Child Spread Factor", &bolt.child_spread_factor,
+                          _edit_stack_world, _edit_context);
 
-      ImGui::DragFloat("Child Spread Factor", &bolt.child_spread_factor,
-                       _edit_stack_world, _edit_context);
+         ImGui::Separator();
 
-      ImGui::Separator();
+         ImGui::ColorEdit4("Color", &bolt.color, _edit_stack_world, _edit_context);
 
-      ImGui::ColorEdit4("Color", &bolt.color, _edit_stack_world, _edit_context);
+         ImGui::ColorEdit4("Child Color", &bolt.color, _edit_stack_world, _edit_context);
 
-      ImGui::ColorEdit4("Child Color", &bolt.color, _edit_stack_world, _edit_context);
+         ImGui::SetNextItemWidth(ImGui::CalcItemWidth());
 
-      ImGui::PopID();
+         if (ImGui::Button("Remove Lightning Bolt")) {
+            _edit_stack_world.apply(edits::make_set_value(&bolt, {}),
+                                    _edit_context, {.closed = true});
+         }
+      }
+      else {
+         ImGui::SetNextItemWidth(ImGui::CalcItemWidth());
 
-      ImGui::EndDisabled();
+         if (ImGui::Button("Add Lightning Bolt")) {
+            _edit_stack_world.apply(edits::make_set_value(&bolt, {.has_lightning_bolt =
+                                                                     true}),
+                                    _edit_context, {.closed = true});
+         }
+      }
 
       ImGui::TreePop();
    }

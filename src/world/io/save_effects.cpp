@@ -586,8 +586,7 @@ void save_precipitation(io::output_file& out, const precipitation& precipitation
    out.write_ln("}\n");
 }
 
-void save_lightning(io::output_file& out, const lightning& lightning,
-                    const lightning_bolt& bolt)
+void save_lightning(io::output_file& out, const lightning& lightning)
 {
    out.write_ln("Effect(\"Lightning\")");
    out.write_ln("{");
@@ -623,9 +622,10 @@ void save_lightning(io::output_file& out, const lightning& lightning,
    else {
       lightning_enabled = lightning.enable.pc;
    }
+}
 
-   if (not lightning_enabled and bolt == lightning_bolt{}) return;
-
+void save_lightning_bolt(io::output_file& out, const lightning_bolt& bolt)
+{
    out.write_ln("LightningBolt(\"skybolt\")");
    out.write_ln("{");
 
@@ -655,8 +655,6 @@ void save_lightning(io::output_file& out, const lightning& lightning,
    save_properties(out, bolt_properties);
 
    out.write_ln("}\n");
-
-   (void)bolt;
 }
 
 void save_water(io::output_file& out, const water& water)
@@ -954,7 +952,10 @@ void save_effects(const io::path& path, const effects& effects)
    save_fog_cloud(out, effects.fog_cloud);
    if (effects.wind != wind{}) save_wind(out, effects.wind);
    save_precipitation(out, effects.precipitation);
-   save_lightning(out, effects.lightning, effects.lightning_bolt);
+   save_lightning(out, effects.lightning);
+   if (effects.lightning_bolt.has_lightning_bolt) {
+      save_lightning_bolt(out, effects.lightning_bolt);
+   }
    save_water(out, effects.water);
    save_godray(out, effects.godray);
    save_heat_shimmer(out, effects.heat_shimmer);

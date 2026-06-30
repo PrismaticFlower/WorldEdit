@@ -166,6 +166,8 @@ struct lightning {
 };
 
 struct lightning_bolt {
+   bool has_lightning_bolt = false;
+
    platform_var<std::string> texture = {"lightning", "lightning", "lightning"};
 
    platform_var<float> width = {30.0f, 30.0f, 30.0f};

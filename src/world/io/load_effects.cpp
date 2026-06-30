@@ -679,7 +679,7 @@ auto read_lightning(assets::config::node& node) -> lightning
 auto read_lightning_bolt(assets::config::node& node) -> lightning_bolt
 {
 
-   lightning_bolt bolt;
+   lightning_bolt bolt = {.has_lightning_bolt = true};
 
    const property properties[] = {
       // clang-format off

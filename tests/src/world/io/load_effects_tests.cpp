@@ -368,6 +368,8 @@ LightningBolt("skybolt")
 
    lightning_bolt loaded = load_effects(world_fx, output).lightning_bolt;
 
+   CHECK(loaded.has_lightning_bolt);
+
    CHECK(not loaded.texture.per_platform);
    CHECK(loaded.texture.pc == "lightning2");
 
@@ -424,6 +426,17 @@ LightningBolt("skybolt")
 
    CHECK(not loaded.child_color.per_platform);
    CHECK(loaded.child_color.pc == float4{200.0f, 200.0f, 255.0f, 150.0f} / 255.0f);
+}
+
+TEST_CASE("world load effects no lightning bolt", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"()"sv;
+
+   lightning_bolt loaded = load_effects(world_fx, output).lightning_bolt;
+
+   CHECK(not loaded.has_lightning_bolt);
 }
 
 TEST_CASE("world load effects water", "[World][IO]")
