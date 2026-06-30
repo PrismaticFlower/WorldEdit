@@ -4240,8 +4240,10 @@ void world_edit::load_world(const io::path& path) noexcept
 
    close_world();
 
-   _asset_libraries.set_source_directory(
-      _project_dir, io::path{io::path{path.parent_path()}.parent_path()}.stem());
+   async::task<void> set_source_directory_task = _thread_pool->exec([&] {
+      _asset_libraries.set_source_directory(
+         _project_dir, io::path{io::path{path.parent_path()}.parent_path()}.stem());
+   });
 
    try {
       _world =
@@ -4269,6 +4271,8 @@ void world_edit::load_world(const io::path& path) noexcept
 
       _renderer->async_load_thumbnail_disk_cache(
          io::compose_path(_project_dir, ".WorldEdit/thumbnails.bin").c_str());
+
+      set_source_directory_task.wait();
    }
    catch (std::exception& e) {
       _stream->write(fmt::format("Failed to load world '{}'!\n   Reason: \n{}",
