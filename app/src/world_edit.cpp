@@ -4177,11 +4177,6 @@ void world_edit::open_project(const io::path& path) noexcept
       }
    }
 
-   if (not _project_dir.empty()) {
-      _renderer->async_save_thumbnail_disk_cache(
-         io::compose_path(_project_dir, ".WorldEdit/thumbnails.bin").c_str());
-   }
-
    _project_dir = path;
    _project_world_paths.clear();
 
@@ -4199,8 +4194,6 @@ void world_edit::open_project(const io::path& path) noexcept
       }
    }
 
-   _renderer->async_load_thumbnail_disk_cache(
-      io::compose_path(_project_dir, ".WorldEdit/thumbnails.bin").c_str());
    _munge_manager.open_project(path);
 
    enumerate_project_worlds();
@@ -4240,6 +4233,11 @@ void world_edit::load_world(const io::path& path) noexcept
 {
    if (not io::exists(path)) return;
 
+   if (not _world_path.empty()) {
+      _renderer->async_save_thumbnail_disk_cache(
+         io::compose_path(_project_dir, ".WorldEdit/thumbnails.bin").c_str());
+   }
+
    close_world();
 
    _asset_libraries.set_source_directory(
@@ -4268,6 +4266,9 @@ void world_edit::load_world(const io::path& path) noexcept
       SetWindowTextA(_window,
                      fmt::format("WorldEdit - {}", _world_path.filename()).c_str());
       _window_unsaved_star = false;
+
+      _renderer->async_load_thumbnail_disk_cache(
+         io::compose_path(_project_dir, ".WorldEdit/thumbnails.bin").c_str());
    }
    catch (std::exception& e) {
       _stream->write(fmt::format("Failed to load world '{}'!\n   Reason: \n{}",

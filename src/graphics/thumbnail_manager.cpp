@@ -35,7 +35,7 @@ namespace we::graphics {
 
 namespace {
 
-constexpr uint32 cache_save_version = 2;
+constexpr uint32 cache_save_version = 3;
 constexpr uint32 max_texture_length = 16384;
 constexpr uint32 atlas_thumbnails = 256;
 constexpr uint32 cpu_cache_reservation = 2048;
@@ -91,26 +91,31 @@ auto make_camera_info(const model& model) -> camera_info
 }
 
 struct objects_invalidation_save_entry {
-   struct name_time {
+   struct path_time {
       template<typename T>
-      name_time(lowercase_string init_name, assets::library<T>& assets)
-         : name{std::move(init_name)}
+      path_time(const lowercase_string& name, assets::library<T>& assets)
       {
+         path = assets.query_path(name);
          time = assets.query_last_write_time(name);
       }
 
-      name_time(std::string_view init_name, uint64 time)
-         : name{init_name}, time{time}
-      {
-      }
+      path_time(const io::path& path, uint64 time) : path{path}, time{time} {}
 
       template<typename T>
       bool invalidated(assets::library<T>& assets) const noexcept
       {
-         return time != assets.query_last_write_time(name);
+         const lowercase_string name{path.stem()};
+
+         return not(path == assets.query_path(name) and
+                    time == assets.query_last_write_time(name));
       }
 
-      lowercase_string name;
+      auto name() const noexcept -> std::string_view
+      {
+         return path.stem();
+      }
+
+      io::path path;
       uint64 time = 0;
    };
 
@@ -128,9 +133,9 @@ struct objects_invalidation_save_entry {
       return false;
    }
 
-   name_time odf;
-   name_time model;
-   std::vector<name_time> textures;
+   path_time odf;
+   path_time model;
+   std::vector<path_time> textures;
 };
 
 struct objects_invalidation_tracker {
@@ -224,17 +229,17 @@ struct objects_invalidation_tracker {
       save_data.reserve(_odfs.size());
 
       for (const auto& [name, entry] : _odfs) {
-         using name_time = objects_invalidation_save_entry::name_time;
+         using path_time = objects_invalidation_save_entry::path_time;
 
-         std::vector<name_time> textures;
+         std::vector<path_time> textures;
          textures.reserve(entry.textures.size());
 
          for (const auto& texture : entry.textures) {
             textures.emplace_back(texture, _asset_libraries.textures);
          }
 
-         save_data.emplace_back(name_time{name, _asset_libraries.odfs},
-                                name_time{entry.model, _asset_libraries.models},
+         save_data.emplace_back(path_time{name, _asset_libraries.odfs},
+                                path_time{entry.model, _asset_libraries.models},
                                 std::move(textures));
       }
 
@@ -250,11 +255,13 @@ struct objects_invalidation_tracker {
       }
 
       for (const objects_invalidation_save_entry& entry : save_data) {
+         const lowercase_string name{entry.odf.name()};
+
          if (entry.invalidated(_asset_libraries)) {
             std::scoped_lock lock{_mutex, _invalidated_background_mutex};
 
-            if (not _odfs.contains(entry.odf.name)) {
-               _invalidated_background.push_back(entry.odf.name);
+            if (not _odfs.contains(name)) {
+               _invalidated_background.push_back(name);
             }
 
             continue;
@@ -262,29 +269,30 @@ struct objects_invalidation_tracker {
 
          std::scoped_lock lock{_mutex};
 
-         if (_odfs.contains(entry.odf.name)) continue;
+         if (_odfs.contains(name)) continue;
 
          std::vector<lowercase_string> odf_entry_textures;
          odf_entry_textures.reserve(entry.textures.size());
 
          for (auto& texture : entry.textures) {
-            odf_entry_textures.emplace_back(texture.name);
+            odf_entry_textures.emplace_back(lowercase_string{texture.name()});
          }
 
-         _odfs.emplace(entry.odf.name,
-                       odf_entry{.model = entry.model.name,
-                                 .textures = std::move(odf_entry_textures)});
+         const lowercase_string model_name{entry.model.name()};
 
-         child_entry& model_entry = _models[entry.model.name];
+         _odfs.emplace(name, odf_entry{.model = model_name,
+                                       .textures = std::move(odf_entry_textures)});
+
+         child_entry& model_entry = _models[model_name];
 
          model_entry.ref_count += 1;
-         model_entry.odfs.emplace_back(entry.odf.name);
+         model_entry.odfs.emplace_back(name);
 
          for (auto& texture : entry.textures) {
-            child_entry& texture_entry = _textures[texture.name];
+            child_entry& texture_entry = _textures[lowercase_string{texture.name()}];
 
             texture_entry.ref_count += 1;
-            texture_entry.odfs.emplace_back(entry.odf.name);
+            texture_entry.odfs.emplace_back(name);
          }
       }
    }
@@ -407,7 +415,7 @@ private:
    event_listener<void(const lowercase_string&)> _texture_change_listener;
 };
 
-using textures_invalidation_save_entry = objects_invalidation_save_entry::name_time;
+using textures_invalidation_save_entry = objects_invalidation_save_entry::path_time;
 
 struct textures_invalidation_tracker {
    explicit textures_invalidation_tracker(assets::libraries_manager& asset_libraries)
@@ -458,11 +466,13 @@ struct textures_invalidation_tracker {
       }
 
       for (const textures_invalidation_save_entry& entry : save_data) {
+         const lowercase_string name{entry.name()};
+
          if (entry.invalidated(_asset_libraries.textures)) {
             std::scoped_lock lock{_mutex, _invalidated_background_mutex};
 
-            if (not _textures.contains(entry.name)) {
-               _invalidated_background.push_back(entry.name);
+            if (not _textures.contains(name)) {
+               _invalidated_background.push_back(name);
             }
 
             continue;
@@ -470,7 +480,7 @@ struct textures_invalidation_tracker {
 
          std::scoped_lock lock{_mutex};
 
-         _textures.emplace(entry.name);
+         _textures.emplace(name);
       }
    }
 
@@ -582,18 +592,18 @@ void save_disk_cache(const io::path& path, const disk_cache& cache) noexcept
 
          for (const objects_invalidation_save_entry& entry :
               cache.objects_invalidation_save_data) {
-            write_object(entry.odf.name.size());
-            write_string(entry.odf.name);
+            write_object(entry.odf.path.string_view().size());
+            write_string(entry.odf.path.string_view());
             write_object(entry.odf.time);
-            write_object(entry.model.name.size());
-            write_string(entry.model.name);
+            write_object(entry.model.path.string_view().size());
+            write_string(entry.model.path.string_view());
             write_object(entry.model.time);
 
             write_object(entry.textures.size());
 
             for (const auto& texture : entry.textures) {
-               write_object(texture.name.size());
-               write_string(texture.name);
+               write_object(texture.path.string_view().size());
+               write_string(texture.path.string_view());
                write_object(texture.time);
             }
          }
@@ -611,8 +621,8 @@ void save_disk_cache(const io::path& path, const disk_cache& cache) noexcept
 
          for (const textures_invalidation_save_entry& entry :
               cache.textures_invalidation_save_data) {
-            write_object(entry.name.size());
-            write_string(entry.name);
+            write_object(entry.path.string_view().size());
+            write_string(entry.path.string_view());
             write_object(entry.time);
          }
 
@@ -692,9 +702,9 @@ auto load_disk_cache(const io::path& path) noexcept -> disk_cache
 
          const std::size_t texture_count = cache.read<std::size_t>();
 
-         using name_time = objects_invalidation_save_entry::name_time;
+         using path_time = objects_invalidation_save_entry::path_time;
 
-         std::vector<name_time> textures;
+         std::vector<path_time> textures;
          textures.reserve(texture_count);
 
          for (std::size_t texture_index = 0; texture_index < texture_count;
@@ -706,12 +716,12 @@ auto load_disk_cache(const io::path& path) noexcept -> disk_cache
                                            texture_bytes.size()};
             const uint64 texture_last_write_time = cache.read<uint64>();
 
-            textures.emplace_back(texture, texture_last_write_time);
+            textures.emplace_back(io::path{texture}, texture_last_write_time);
          }
 
          loaded.objects_invalidation_save_data
-            .emplace_back(name_time{odf, odf_last_write_time},
-                          name_time{model, model_last_write_time},
+            .emplace_back(path_time{io::path{odf}, odf_last_write_time},
+                          path_time{io::path{model}, model_last_write_time},
                           std::move(textures));
       }
 
@@ -744,13 +754,14 @@ auto load_disk_cache(const io::path& path) noexcept -> disk_cache
 
       for (std::size_t entry_index = 0;
            entry_index < cached_texture_invalidation_entries; ++entry_index) {
-         const std::span<const std::byte> name_bytes =
+         const std::span<const std::byte> texture_path_bytes =
             cache.read_bytes(cache.read<std::size_t>());
-         const std::string_view name{reinterpret_cast<const char*>(name_bytes.data()),
-                                     name_bytes.size()};
+         const std::string_view texture_path{reinterpret_cast<const char*>(
+                                                texture_path_bytes.data()),
+                                             texture_path_bytes.size()};
          const uint64 last_write_time = cache.read<uint64>();
 
-         loaded.textures_invalidation_save_data.emplace_back(std::string{name},
+         loaded.textures_invalidation_save_data.emplace_back(io::path{texture_path},
                                                              last_write_time);
       }
 
@@ -1394,6 +1405,7 @@ struct thumbnail_manager::impl {
       }
 
       _objects_invalidation_tracker.clear();
+      _textures_invalidation_tracker.clear();
    }
 
 private:
