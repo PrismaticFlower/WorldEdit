@@ -13,8 +13,8 @@ namespace ImGui {
 namespace {
 
 constexpr ImU32 x_color_u32 = 0xff'40'40'e5;
-constexpr ImU32 y_color_u32 = 0xff'e5'60'40;
-constexpr ImU32 z_color_u32 = 0xff'30'e5'30;
+constexpr ImU32 y_color_u32 = 0xff'30'e5'30;
+constexpr ImU32 z_color_u32 = 0xff'e5'60'40;
 constexpr ImU32 w_color_u32 = 0xff'ff'ff'ff;
 
 struct text_callback_autofill_data {

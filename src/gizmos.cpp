@@ -178,20 +178,20 @@ struct gizmo_ring_size_state {
 };
 
 constexpr float3 x_color = {0.7835378f, 0.051269457f, 0.051269457f};
-constexpr float3 y_color = {0.051269457f, 0.116970666f, 0.7835378f};
-constexpr float3 z_color = {0.029556835f, 0.7835378f, 0.029556835f};
+constexpr float3 y_color = {0.029556835f, 0.7835378f, 0.029556835f};
+constexpr float3 z_color = {0.051269457f, 0.116970666f, 0.7835378f};
 
 constexpr float3 x_color_hover = {1.0f, 0.2158605f, 0.2158605f};
-constexpr float3 y_color_hover = {0.2158605f, 0.3515326f, 1.0f};
-constexpr float3 z_color_hover = {0.27889428f, 1.0f, 0.27889428f};
+constexpr float3 y_color_hover = {0.27889428f, 1.0f, 0.27889428f};
+constexpr float3 z_color_hover = {0.2158605f, 0.3515326f, 1.0f};
 
 constexpr uint32 x_color_u32 = 0xff'e5'40'40;
-constexpr uint32 y_color_u32 = 0xff'40'60'e5;
-constexpr uint32 z_color_u32 = 0xff'30'e5'30;
+constexpr uint32 y_color_u32 = 0xff'30'e5'30;
+constexpr uint32 z_color_u32 = 0xff'40'60'e5;
 
 constexpr uint32 x_color_hover_u32 = 0xff'ff'80'80;
-constexpr uint32 y_color_hover_u32 = 0xff'80'a0'ff;
-constexpr uint32 z_color_hover_u32 = 0xff'90'ff'90;
+constexpr uint32 y_color_hover_u32 = 0xff'90'ff'90;
+constexpr uint32 z_color_hover_u32 = 0xff'80'a0'ff;
 
 constexpr float xyz_hover_alpha = 0.25f;
 

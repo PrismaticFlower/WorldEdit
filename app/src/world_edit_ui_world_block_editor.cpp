@@ -42,8 +42,8 @@ constexpr std::array<const char*, 13> alignment_names =
     "8.0",    "16.0",  "32.0", "64.0", "128.0", "256.0"};
 
 constexpr uint32 cursor_plane_axis_color_x = 0x7f'e5'40'40;
-constexpr uint32 cursor_plane_axis_color_y = 0x7f'40'60'e5;
-constexpr uint32 cursor_plane_axis_color_z = 0x7f'30'e5'30;
+constexpr uint32 cursor_plane_axis_color_y = 0x7f'30'e5'30;
+constexpr uint32 cursor_plane_axis_color_z = 0x7f'40'60'e5;
 
 auto texture_mode_name(world::block_texture_mode mode) noexcept -> const char*
 {
