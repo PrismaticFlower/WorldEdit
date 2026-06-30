@@ -1232,17 +1232,6 @@ void world_edit::initialize_hotkeys() noexcept
    });
 
    _hotkeys.add_set({
-      .name = "Camera Active Controls",
-      .description = "Controls for increasing camera movement speed. Active while Rotate Camera is being used."s,
-      .activated = [this] { return _rotate_camera; },
-      .default_hotkeys =
-         {
-            {"Increase Move Speed", "camera.double_move_speed", {.key = key::mouse_wheel_forward}},
-            {"Decrease Move Speed", "camera.halve_move_speed", {.key = key::mouse_wheel_back}},
-         },
-   });
-
-   _hotkeys.add_set({
       .name = "Terrain Editing",
       .description = "Active while the terrain editor is open."s,
       .activated =
@@ -1549,6 +1538,17 @@ void world_edit::initialize_hotkeys() noexcept
          },
 
       .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Camera Active Controls",
+      .description = "Controls for increasing camera movement speed. Active while Rotate Camera is being used."s,
+      .activated = [this] { return _rotate_camera; },
+      .default_hotkeys =
+         {
+            {"Increase Move Speed", "camera.double_move_speed", {.key = key::mouse_wheel_forward}},
+            {"Decrease Move Speed", "camera.halve_move_speed", {.key = key::mouse_wheel_back}},
+         },
    });
 }
 
