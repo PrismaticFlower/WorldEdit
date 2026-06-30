@@ -25,6 +25,7 @@
 #include <shared_mutex>
 #include <string_view>
 
+#include <absl/container/btree_set.h>
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 
@@ -980,6 +981,14 @@ void libraries_manager::set_source_directory(const io::path& source_directory,
       {category::project, ""},
    });
 
+   struct asset_entry {
+      io::path path;
+      uint64 last_write_time = 0;
+   };
+
+   std::vector<asset_entry> path_list;
+   path_list.reserve(4096);
+
    for (auto entry = io::directory_iterator{_source_directory};
         entry != entry.end(); ++entry) {
       const io::path& path = entry->path;
@@ -993,11 +1002,23 @@ void libraries_manager::set_source_directory(const io::path& source_directory,
          continue;
       }
 
-      const io::path platform_path{fmt::format("{}\\{}\\{}", path.parent_path(),
-                                               _current_platform, path.filename())};
+      path_list.emplace_back(path, entry->last_write_time);
+   }
 
-      if (not io::exists(platform_path)) {
-         register_asset(path, entry->last_write_time);
+   using path_comparator =
+      decltype([](const std::string_view l, const std::string_view r) {
+         return string::iless_than(l, r);
+      });
+
+   absl::btree_set<std::string_view, path_comparator> path_set;
+
+   for (const asset_entry& entry : path_list) {
+      const io::path platform_path{
+         fmt::format("{}\\{}\\{}", entry.path.parent_path(), _current_platform,
+                     entry.path.filename())};
+
+      if (not path_set.contains(platform_path.string_view())) {
+         register_asset(entry.path, entry.last_write_time);
       }
    }
 
