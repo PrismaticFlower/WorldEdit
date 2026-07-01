@@ -49,6 +49,41 @@ void read_dome_model(const node& node, const platform_flags platform, dome_model
    }
 }
 
+void read_sky_info(const node& node, const platform_flags platform, config& sky)
+{
+   for (const auto& child : node) {
+      if (platform.pc and string::iequals(child.key, "PC")) {
+         read_sky_info(child, platform, sky);
+      }
+      else if (platform.ps2 and string::iequals(child.key, "PS2")) {
+         read_sky_info(child, platform, sky);
+      }
+      else if (platform.psp and string::iequals(child.key, "PSP")) {
+         read_sky_info(child, platform, sky);
+      }
+      else if (platform.xbox and string::iequals(child.key, "XBOX")) {
+         read_sky_info(child, platform, sky);
+      }
+      else if (string::iequals(child.key, "FogColor")) {
+         sky.fog_color = {child.values.get<uint8>(0), child.values.get<uint8>(1),
+                          child.values.get<uint8>(2)};
+      }
+      else if (string::iequals(child.key, "ReflectionFogColor")) {
+         sky.reflection_fog_color = {child.values.get<uint8>(0),
+                                     child.values.get<uint8>(1),
+                                     child.values.get<uint8>(2)};
+      }
+      else if (string::iequals(child.key, "FogRange")) {
+         sky.fog_range_min = child.values.get<float>(0);
+         sky.fog_range_max = child.values.get<float>(1);
+      }
+      else if (string::iequals(child.key, "WorldFogRange")) {
+         sky.world_fog_range_min = child.values.get<float>(0);
+         sky.world_fog_range_max = child.values.get<float>(1);
+      }
+   }
+}
+
 void read_dome_info(const node& node, const platform_flags platform, config& sky)
 {
    for (const auto& child : node) {
@@ -88,6 +123,9 @@ void read_root(const node& node, const platform_flags platform, config& sky)
       }
       else if (platform.xbox and string::iequals(child.key, "XBOX")) {
          read_root(child, platform, sky);
+      }
+      else if (string::iequals(child.key, "SkyInfo")) {
+         read_sky_info(child, platform, sky);
       }
       else if (string::iequals(child.key, "DomeInfo")) {
          read_dome_info(child, platform, sky);

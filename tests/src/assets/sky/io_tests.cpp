@@ -35,6 +35,14 @@ const std::string_view sky_test = R"(DomeInfo()
 		}
    }
 })";
+
+const std::string_view sky_fog_test = R"(SkyInfo()
+{
+	FogColor(255, 128, 128);
+   ReflectionFogColor(0, 255, 0);
+   FogRange(10.0, 100.0);
+   WorldFogRange(-10.0, 10.0);
+})";
 }
 
 TEST_CASE(".sky reading", "[Assets][REQ]")
@@ -85,6 +93,18 @@ TEST_CASE(".sky platform drop reading", "[Assets][REQ]")
    CHECK(config.dome_models[1].offset == 0.0f);
    CHECK(config.dome_models[1].rotation.speed == 0.002f);
    CHECK(config.dome_models[1].rotation.direction == float3{0.0f, 1.0f, 0.0f});
+}
+
+TEST_CASE(".sky fog", "[Assets][REQ]")
+{
+   config config = read(sky_fog_test, "PC");
+
+   CHECK(config.fog_color == std::array<uint8, 3>{255, 128, 128});
+   CHECK(config.reflection_fog_color == std::array<uint8, 3>{0, 255, 0});
+   CHECK(config.fog_range_min == 10.0f);
+   CHECK(config.fog_range_max == 100.0f);
+   CHECK(config.world_fog_range_min == -10.0f);
+   CHECK(config.world_fog_range_max == 10.0f);
 }
 
 }
