@@ -56,6 +56,7 @@
     <ClCompile Include="src\world_edit_ui_effects_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_world_config_editor.cpp" />
     <ClCompile Include="src\run_munge.cpp" />
+    <ClCompile Include="src\world_edit_ui_load_errors.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />

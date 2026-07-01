@@ -238,6 +238,10 @@ void world_edit::update()
    _asset_libraries.update_loaded();
    _object_classes.update();
 
+   if (_asset_libraries.gather_errors(_world_asset_errors)) {
+      if (not _load_errors_open) _new_load_error_open = true;
+   }
+
    // Render!
    update_camera(delta_time);
 
@@ -4366,6 +4370,8 @@ void world_edit::close_world() noexcept
 
    _edit_stack_world.clear();
    _edit_stack_world.clear_modified_flag();
+
+   _world_asset_errors.clear();
 
    SetWindowTextA(_window, "WorldEdit");
    _window_unsaved_star = false;

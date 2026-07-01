@@ -48,6 +48,13 @@ namespace sky {
 struct config;
 }
 
+/// @brief An error from loading an asset.
+struct error {
+   lowercase_string name;
+   io::path path;
+   std::string message;
+};
+
 /// @brief Categories for assets.
 enum class category {
    /// @brief Asset is from the active world folder.
@@ -166,10 +173,14 @@ struct library {
    /// @return The last write time of the asset. Can be 0 if the asset does not exist.
    auto query_last_write_time(const lowercase_string& name) noexcept -> uint64;
 
+   /// @brief Get the errors from loading assets since the last time errors was called.
+   /// @return The errors.
+   auto errors() -> std::vector<error>;
+
 private:
    struct impl;
 
-   implementation_storage<impl, 448> self;
+   implementation_storage<impl, 488> self;
 };
 
 /// @brief Tracks assets like library but does no loading or lifetime management.
@@ -221,6 +232,11 @@ struct libraries_manager {
 
    /// @brief Handles broadcasting notifications of any loaded or updated assets.
    void update_loaded() noexcept;
+
+   /// @brief Gather errors from each library.
+   /// @param out Vector to append the errors into.
+   /// @return True if new errors were appended, false otherwise.
+   bool gather_errors(std::vector<error>& out) noexcept;
 
    library<odf::definition> odfs;
    library<msh::flat_model> models;

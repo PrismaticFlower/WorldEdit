@@ -431,6 +431,10 @@ private:
 
    void ui_show_effects_editor() noexcept;
 
+   void ui_show_load_errors() noexcept;
+
+   void ui_show_new_load_error() noexcept;
+
    void ui_draw_select_box() noexcept;
 
    auto ui_object_class_pick_widget_untracked(const lowercase_string& class_name,
@@ -601,6 +605,8 @@ private:
                                      .creation_entity =
                                         _interaction_targets.creation_entity};
 
+   std::vector<assets::error> _world_asset_errors;
+
    bool _renderer_prefer_high_performance_gpu = false;
    bool _renderer_use_debug_layer = false;
    bool _renderer_use_legacy_barriers = false;
@@ -641,6 +647,8 @@ private:
    bool _world_config_editor_open = false;
    bool _world_explorer_open = false;
    bool _world_stats_open = false;
+   bool _load_errors_open = false;
+   bool _new_load_error_open = false;
    bool _object_class_browser_open = false;
    bool _camera_controls_open = false;
    bool _settings_editor_open = false;

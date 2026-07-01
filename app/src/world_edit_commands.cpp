@@ -748,6 +748,8 @@ void world_edit::initialize_commands() noexcept
    _commands.add("munge_manager.close"s, [this] { _munge_manager_open = false; });
    _commands.add("effects_editor.close"s,
                  [this] { _effects_editor_open = false; });
+
+   _commands.add("load_errors.close"s, [this] { _load_errors_open = false; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -1539,6 +1541,16 @@ void world_edit::initialize_hotkeys() noexcept
 
       .hidden = true,
    });
+
+   _hotkeys.add_set({.name = "Load Errors",
+                     .description = "Active while the load errors viewer is open."s,
+                     .activated = [this] { return _load_errors_open; },
+                     .default_hotkeys =
+                        {
+                           {"Close", "load_errors.close", {.key = key::escape}},
+                        },
+
+                     .hidden = true});
 
    _hotkeys.add_set({
       .name = "Camera Active Controls",

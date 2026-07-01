@@ -619,6 +619,19 @@ struct library<T>::impl {
       return state.last_write_time.load(std::memory_order_relaxed);
    }
 
+   auto errors() -> std::vector<error>
+   {
+      std::vector<error> current_errors;
+
+      {
+         std::scoped_lock lock{_errors_mutex};
+
+         current_errors.swap(_errors);
+      }
+
+      return current_errors;
+   }
+
 private:
    auto make_asset_state(const lowercase_string& name, const io::path& asset_path,
                          uint64 last_write_time) -> std::shared_ptr<asset_state<T>>
@@ -702,6 +715,13 @@ private:
                                     asset_path.string_view(),
                                     string::indent(2, e.what()));
 
+               {
+                  std::scoped_lock lock{_errors_mutex};
+
+                  _errors.push_back(
+                     {.name = name, .path = asset_path, .message = e.what()});
+               }
+
                _load_failed_event.broadcast(name, asset);
 
                return nullptr;
@@ -730,6 +750,9 @@ private:
 
    std::shared_mutex _assets_tree_mutex;
    library_tree _assets_tree;
+
+   std::shared_mutex _errors_mutex;
+   std::vector<error> _errors;
 
    std::shared_ptr<async::thread_pool> _thread_pool;
 
@@ -830,6 +853,12 @@ template<typename T>
 auto library<T>::query_last_write_time(const lowercase_string& name) noexcept -> uint64
 {
    return self->query_last_write_time(name);
+}
+
+template<typename T>
+auto library<T>::errors() -> std::vector<error>
+{
+   return self->errors();
 }
 
 template struct library<odf::definition>;
@@ -1039,6 +1068,18 @@ void libraries_manager::update_loaded() noexcept
    models.update_loaded();
    textures.update_loaded();
    skies.update_loaded();
+}
+
+bool libraries_manager::gather_errors(std::vector<error>& out) noexcept
+{
+   const std::size_t start_size = out.size();
+
+   out.append_range(odfs.errors());
+   out.append_range(models.errors());
+   out.append_range(textures.errors());
+   out.append_range(skies.errors());
+
+   return start_size != out.size();
 }
 
 void libraries_manager::clear() noexcept
