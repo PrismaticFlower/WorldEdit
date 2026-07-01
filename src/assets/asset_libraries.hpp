@@ -177,6 +177,9 @@ struct library {
    /// @return The errors.
    auto errors() -> std::vector<error>;
 
+   /// @brief Show internal asset debugger child window.
+   void show_imgui_child() noexcept;
+
 private:
    struct impl;
 
@@ -213,6 +216,9 @@ struct directory {
    /// @return The file path to the asset. Can be empty if the asset does not exist.
    auto query_path(const lowercase_string& name) noexcept -> io::path;
 
+   /// @brief Show internal asset debugger child window.
+   void show_imgui_child() noexcept;
+
 private:
    struct impl;
 
@@ -237,6 +243,9 @@ struct libraries_manager {
    /// @param out Vector to append the errors into.
    /// @return True if new errors were appended, false otherwise.
    bool gather_errors(std::vector<error>& out) noexcept;
+
+   /// @brief Show internal asset debugger window.
+   void show_imgui(bool* open = nullptr) noexcept;
 
    library<odf::definition> odfs;
    library<msh::flat_model> models;

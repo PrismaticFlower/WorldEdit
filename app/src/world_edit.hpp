@@ -639,6 +639,7 @@ private:
 
    bool _hotkeys_view_show = false;
    bool _imgui_demo_open = false;
+   bool _asset_libraries_debugger_open = false;
    bool _hotkeys_editor_open = false;
    bool _world_global_lights_editor_open = false;
    bool _world_layers_editor_open = false;

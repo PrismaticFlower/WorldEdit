@@ -13,6 +13,8 @@
 #include "io/error.hpp"
 #include "io/path.hpp"
 
+#include "os/show_in_explorer.hpp"
+
 #include "utility/event_listener.hpp"
 #include "utility/file_watcher.hpp"
 #include "utility/stopwatch.hpp"
@@ -28,6 +30,9 @@
 #include <absl/container/btree_set.h>
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
+
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 using namespace std::literals;
 
@@ -134,6 +139,49 @@ bool is_parent_path_skipped(std::string_view path_view, platform_filter filter) 
    }
 
    return false;
+}
+
+void show_imgui_tree(const library_tree_branch& branch)
+{
+   if (ImGui::TreeNode(branch.name.c_str())) {
+
+      if (ImGui::TreeNode("Directories")) {
+         for (const library_tree_branch& child : branch.directories) {
+            show_imgui_tree(child);
+         }
+
+         ImGui::TreePop();
+      }
+
+      if (ImGui::TreeNode("Assets")) {
+         for (const lowercase_string& asset : branch.assets) {
+            ImGui::TextUnformatted(asset.c_str(), asset.c_str() + asset.size());
+         }
+
+         ImGui::TreePop();
+      }
+
+      ImGui::TreePop();
+   }
+}
+
+void show_imgui_tree(const library_tree& tree)
+{
+   if (ImGui::TreeNode("Directories")) {
+      for (const library_tree_branch& branch : tree.directories) {
+         show_imgui_tree(branch);
+      }
+
+      ImGui::TreePop();
+   }
+
+   if (ImGui::TreeNode("Assets")) {
+      for (const lowercase_string& asset : tree.assets) {
+         ImGui::TextUnformatted(asset.c_str(), asset.c_str() + asset.size());
+      }
+
+      ImGui::TreePop();
+   }
 }
 
 }
@@ -632,6 +680,291 @@ struct library<T>::impl {
       return current_errors;
    }
 
+   void show_imgui_child() noexcept
+   {
+      std::scoped_lock lock{_assets_mutex, _load_tasks_mutex, _existing_assets_mutex,
+                            _assets_tree_mutex, _errors_mutex};
+
+      ImGui::PushFont(nullptr, ImGui::GetFontSize() * 2.0f);
+      ImGui::Text("This window is expensive to keep opened!");
+      ImGui::PopFont();
+
+      static std::string filter;
+
+      if (ImGui::BeginChild("Library")) {
+         if (ImGui::BeginTabBar("Library")) {
+            if (ImGui::BeginTabItem("Assets")) {
+               ImGui::InputText("Filter", &filter);
+
+               if (ImGui::BeginTable("Assets", 7,
+                                     ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
+                                        ImGuiTableFlags_Borders |
+                                        ImGuiTableFlags_SizingStretchProp)) {
+
+                  ImGui::TableSetupColumn("Name");
+                  ImGui::TableSetupColumn("Data");
+                  ImGui::TableSetupColumn("Exists");
+                  ImGui::TableSetupColumn("Load Failure");
+                  ImGui::TableSetupColumn("Path");
+                  ImGui::TableSetupColumn("Ref Count");
+                  ImGui::TableSetupColumn("Last Write Time");
+                  ImGui::TableHeadersRow();
+
+                  int id = 0;
+
+                  for (const auto& [name, state] : _assets) {
+                     if (not string::icontains(name, filter)) continue;
+
+                     std::scoped_lock state_lock{state->mutex};
+
+                     ImGui::PushID(id++);
+
+                     ImGui::TableNextRow();
+
+                     ImGui::TableNextColumn();
+                     ImGui::TextUnformatted(name.c_str(), name.c_str() + name.size());
+
+                     if (ImGui::BeginItemTooltip()) {
+                        ImGui::TextUnformatted(name.c_str(),
+                                               name.c_str() + name.size());
+
+                        ImGui::EndTooltip();
+                     }
+
+                     ImGui::TableNextColumn();
+                     ImGui::Text(state->data.expired() ? "-" : "X");
+
+                     ImGui::TableNextColumn();
+                     ImGui::Text(state->exists ? "X" : "-");
+
+                     ImGui::TableNextColumn();
+                     ImGui::Text(state->load_failure.load(std::memory_order_relaxed)
+                                    ? "X"
+                                    : "-");
+
+                     ImGui::TableNextColumn();
+                     if (ImGui::TextLink(state->path.c_str())) {
+                        os::try_show_in_explorer(state->path);
+                     }
+
+                     if (ImGui::IsItemHovered()) {
+                        ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+                     }
+
+                     if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
+                        ImGui::TextUnformatted(state->path.c_str(),
+                                               state->path.c_str() +
+                                                  state->path.string_view().size());
+
+                        ImGui::EndTooltip();
+                     }
+
+                     ImGui::TableNextColumn();
+                     ImGui::Text("%zu", state->ref_count.load(std::memory_order_relaxed));
+
+                     ImGui::TableNextColumn();
+                     ImGui::Text("%zu", state->last_write_time.load(
+                                           std::memory_order_relaxed));
+
+                     ImGui::PopID();
+                  }
+
+                  ImGui::EndTable();
+               }
+
+               ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Asset Category Sets")) {
+               ImGui::InputText("Filter", &filter);
+
+               const container::enum_array<const char*, category> category_names =
+                  container::make_enum_array<const char*, category>({
+                     {category::world, "World"},
+                     {category::common_world, "Common World"},
+                     {category::common, "Common"},
+                     {category::sides, "Sides"},
+                     {category::project, "Project"},
+                  });
+
+               for (const category category :
+                    {category::world, category::common_world, category::common,
+                     category::sides, category::project}) {
+                  if (ImGui::TreeNode(category_names[category])) {
+                     if (ImGui::BeginTable("Assets", 3,
+                                           ImGuiTableFlags_Resizable |
+                                              ImGuiTableFlags_Reorderable |
+                                              ImGuiTableFlags_Borders |
+                                              ImGuiTableFlags_SizingStretchProp)) {
+
+                        ImGui::TableSetupColumn("Name");
+                        ImGui::TableSetupColumn("In Use");
+                        ImGui::TableSetupColumn("Path");
+                        ImGui::TableHeadersRow();
+
+                        int id = 0;
+
+                        for (const auto& [name, state] :
+                             _asset_category_sets[category]) {
+                           if (not string::icontains(name, filter)) continue;
+
+                           ImGui::PushID(id++);
+
+                           ImGui::TableNextRow();
+
+                           ImGui::TableNextColumn();
+                           ImGui::TextUnformatted(name.c_str(),
+                                                  name.c_str() + name.size());
+
+                           if (ImGui::BeginItemTooltip()) {
+                              ImGui::TextUnformatted(name.c_str(),
+                                                     name.c_str() + name.size());
+
+                              ImGui::EndTooltip();
+                           }
+
+                           ImGui::TableNextColumn();
+                           ImGui::Text(state.in_use ? "X" : "-");
+
+                           ImGui::TableNextColumn();
+                           if (ImGui::TextLink(state.path.c_str())) {
+                              os::try_show_in_explorer(state.path);
+                           }
+
+                           if (ImGui::IsItemHovered()) {
+                              ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+                           }
+
+                           if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
+                              ImGui::TextUnformatted(state.path.c_str(),
+                                                     state.path.c_str() +
+                                                        state.path.string_view().size());
+
+                              ImGui::EndTooltip();
+                           }
+
+                           ImGui::PopID();
+                        }
+
+                        ImGui::EndTable();
+                     }
+
+                     ImGui::TreePop();
+                  }
+               }
+
+               ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Loading Assets")) {
+               for (const auto& [name, state] : _load_tasks) {
+                  ImGui::TextUnformatted(name.c_str(), name.c_str() + name.size());
+               }
+
+               ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Existing Assets")) {
+               bool existing_assets_sorted =
+                  _existing_assets_sorted.load(std::memory_order_relaxed);
+
+               if (ImGui::Checkbox("Existing Assets Sorted", &existing_assets_sorted)) {
+                  _existing_assets_sorted.store(existing_assets_sorted,
+                                                std::memory_order_relaxed);
+               }
+
+               ImGui::Separator();
+
+               for (const std::string_view name : _existing_assets) {
+                  ImGui::TextUnformatted(name.data(), name.data() + name.size());
+               }
+
+               ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Assets Tree")) {
+               show_imgui_tree(_assets_tree);
+
+               ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Pending Errors")) {
+               if (ImGui::BeginTable("Messages", 3,
+                                     ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
+                                        ImGuiTableFlags_Borders |
+                                        ImGuiTableFlags_SizingStretchProp)) {
+
+                  ImGui::TableSetupColumn("Asset", ImGuiTableColumnFlags_None, 0.125f);
+                  ImGui::TableSetupColumn("File", ImGuiTableColumnFlags_None, 0.375f);
+                  ImGui::TableSetupColumn("Message", ImGuiTableColumnFlags_None, 0.5f);
+                  ImGui::TableHeadersRow();
+
+                  int id = 0;
+
+                  for (const assets::error& error : _errors) {
+                     ImGui::PushID(id++);
+
+                     ImGui::TableNextRow();
+
+                     ImGui::TableNextColumn();
+                     ImGui::TextUnformatted(error.name.c_str(),
+                                            error.name.c_str() + error.name.size());
+
+                     if (ImGui::BeginItemTooltip()) {
+                        ImGui::TextUnformatted(error.name.c_str(),
+                                               error.name.c_str() + error.name.size());
+
+                        ImGui::EndTooltip();
+                     }
+
+                     ImGui::TableNextColumn();
+                     if (ImGui::TextLink(error.path.c_str())) {
+                        os::try_show_in_explorer(error.path);
+                     }
+
+                     if (ImGui::IsItemHovered()) {
+                        ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+                     }
+
+                     if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
+                        ImGui::TextUnformatted(error.path.c_str(),
+                                               error.path.c_str() +
+                                                  error.path.string_view().size());
+
+                        ImGui::EndTooltip();
+                     }
+
+                     ImGui::TableNextColumn();
+                     ImGui::PushTextWrapPos();
+                     ImGui::TextUnformatted(error.message.c_str(),
+                                            error.message.c_str() +
+                                               error.message.size());
+                     ImGui::PopTextWrapPos();
+
+                     if (ImGui::BeginPopupContextItem("##message_context")) {
+                        if (ImGui::MenuItem("Copy")) {
+                           ImGui::SetClipboardText(error.message.c_str());
+                        }
+
+                        ImGui::EndPopup();
+                     }
+
+                     ImGui::PopID();
+                  }
+
+                  ImGui::EndTable();
+               }
+
+               ImGui::EndTabItem();
+            }
+
+            ImGui::EndTabBar();
+         }
+      }
+
+      ImGui::EndChild();
+   }
+
 private:
    auto make_asset_state(const lowercase_string& name, const io::path& asset_path,
                          uint64 last_write_time) -> std::shared_ptr<asset_state<T>>
@@ -861,6 +1194,12 @@ auto library<T>::errors() -> std::vector<error>
    return self->errors();
 }
 
+template<typename T>
+void library<T>::show_imgui_child() noexcept
+{
+   return self->show_imgui_child();
+}
+
 template struct library<odf::definition>;
 template struct library<msh::flat_model>;
 template struct library<texture::texture>;
@@ -942,6 +1281,82 @@ struct directory::impl {
       return {};
    }
 
+   void show_imgui_child() noexcept
+   {
+      std::scoped_lock lock{_mutex};
+
+      ImGui::PushFont(nullptr, ImGui::GetFontSize() * 2.0f);
+      ImGui::Text("This window is expensive to keep opened!");
+      ImGui::PopFont();
+
+      if (ImGui::BeginChild("Directory")) {
+         if (ImGui::TreeNode("Assets")) {
+            if (ImGui::BeginTable("Assets", 2,
+                                  ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
+                                     ImGuiTableFlags_Borders |
+                                     ImGuiTableFlags_SizingStretchProp)) {
+
+               ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_None, 0.25f);
+               ImGui::TableSetupColumn("Path", ImGuiTableColumnFlags_None, 0.75f);
+               ImGui::TableHeadersRow();
+
+               int id = 0;
+
+               for (const auto& [name, path] : _assets) {
+                  ImGui::PushID(id++);
+
+                  ImGui::TableNextRow();
+
+                  ImGui::TableNextColumn();
+                  ImGui::TextUnformatted(name.c_str(), name.c_str() + name.size());
+
+                  if (ImGui::BeginItemTooltip()) {
+                     ImGui::TextUnformatted(name.c_str(), name.c_str() + name.size());
+
+                     ImGui::EndTooltip();
+                  }
+
+                  ImGui::TableNextColumn();
+                  if (ImGui::TextLink(path.c_str())) {
+                     os::try_show_in_explorer(path);
+                  }
+
+                  if (ImGui::IsItemHovered()) {
+                     ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+                  }
+
+                  if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
+                     ImGui::TextUnformatted(path.c_str(),
+                                            path.c_str() + path.string_view().size());
+
+                     ImGui::EndTooltip();
+                  }
+
+                  ImGui::PopID();
+               }
+
+               ImGui::EndTable();
+            }
+
+            ImGui::TreePop();
+         }
+
+         if (ImGui::TreeNode("Existing Assets")) {
+            ImGui::Checkbox("Existing Assets Sorted", &_existing_assets_sorted);
+
+            ImGui::Separator();
+
+            for (const std::string_view name : _existing_assets) {
+               ImGui::TextUnformatted(name.data(), name.data() + name.size());
+            }
+
+            ImGui::TreePop();
+         }
+      }
+
+      ImGui::EndChild();
+   }
+
 private:
    std::shared_mutex _mutex;
    absl::flat_hash_map<lowercase_string, io::path> _assets; // guarded by _mutex
@@ -979,6 +1394,11 @@ void directory::view_existing(
 auto directory::query_path(const lowercase_string& name) noexcept -> io::path
 {
    return self->query_path(name);
+}
+
+void directory::show_imgui_child() noexcept
+{
+   return self->show_imgui_child();
 }
 
 libraries_manager::libraries_manager(output_stream& stream,
@@ -1091,6 +1511,67 @@ void libraries_manager::clear() noexcept
    textures.clear();
    skies.clear();
    entity_groups.clear();
+}
+
+void libraries_manager::show_imgui(bool* open) noexcept
+{
+   if (ImGui::Begin("Asset Libraries Debugger", open)) {
+      if (ImGui::BeginTabBar("Library Tabs")) {
+         if (ImGui::BeginTabItem("Manager")) {
+            ImGui::LabelText("Source Directory", "%s", _source_directory.c_str());
+            ImGui::LabelText("Current Platform", "%s", _current_platform.c_str());
+
+            ImGui::SeparatorText("Category Relative Paths");
+
+            ImGui::LabelText("World", "%s",
+                             _category_relative_paths[category::world].c_str());
+            ImGui::LabelText("Common World", "%s",
+                             _category_relative_paths[category::common_world].c_str());
+            ImGui::LabelText("Common", "%s",
+                             _category_relative_paths[category::common].c_str());
+            ImGui::LabelText("Sides", "%s",
+                             _category_relative_paths[category::sides].c_str());
+            ImGui::LabelText("Project", "%s",
+                             _category_relative_paths[category::project].c_str());
+
+            ImGui::EndTabItem();
+         }
+
+         if (ImGui::BeginTabItem("ODFs")) {
+            odfs.show_imgui_child();
+
+            ImGui::EndTabItem();
+         }
+
+         if (ImGui::BeginTabItem("Models")) {
+            models.show_imgui_child();
+
+            ImGui::EndTabItem();
+         }
+
+         if (ImGui::BeginTabItem("Textures")) {
+            textures.show_imgui_child();
+
+            ImGui::EndTabItem();
+         }
+
+         if (ImGui::BeginTabItem("Skies")) {
+            skies.show_imgui_child();
+
+            ImGui::EndTabItem();
+         }
+
+         if (ImGui::BeginTabItem("Entity Groups")) {
+            entity_groups.show_imgui_child();
+
+            ImGui::EndTabItem();
+         }
+
+         ImGui::EndTabBar();
+      }
+   }
+
+   ImGui::End();
 }
 
 void libraries_manager::register_asset(const io::path& path, uint64 last_write_time) noexcept

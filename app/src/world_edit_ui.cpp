@@ -9,6 +9,9 @@ namespace we {
 void world_edit::update_ui() noexcept
 {
    if (_imgui_demo_open) ImGui::ShowDemoWindow(&_imgui_demo_open);
+   if (_asset_libraries_debugger_open) {
+      _asset_libraries.show_imgui(&_asset_libraries_debugger_open);
+   }
    if (_hotkeys_editor_open) {
       _hotkeys.show_imgui(_hotkeys_editor_open, _display_scale);
    }

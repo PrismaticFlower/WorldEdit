@@ -534,6 +534,9 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          ImGui::SetItemTooltip("Some GPU work is not measured.");
 
+         ImGui::MenuItem("Asset Libraries Debugger", nullptr,
+                         &_asset_libraries_debugger_open);
+
          ImGui::MenuItem("Show ImGui Demo", nullptr, &_imgui_demo_open);
 
          ImGui::EndMenu();
