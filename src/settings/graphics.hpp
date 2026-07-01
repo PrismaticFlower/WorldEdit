@@ -19,6 +19,8 @@ struct graphics {
 
    float3 region_outline_color = {0.25f, 0.4f, 1.0f};
 
+   float3 region_distnace_divisor_outline_color = {0.5f, 0.05f, 1.0f};
+
    float3 barrier_outline_color = {1.0f, 0.05f, 0.05f};
 
    float4 barrier_overlay_color = {1.0f, 0.0f, 0.0f, 0.25f};
@@ -114,6 +116,8 @@ struct graphics {
    bool show_light_bounds = false;
 
    bool show_hint_node_radii = false;
+
+   bool show_region_distance_divisors = true;
 
    bool highlight_sector_objects = false;
 

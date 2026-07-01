@@ -249,6 +249,13 @@ void show_imgui_editor(settings& settings, bool& open,
 
             ImGui::ColorEdit3("Region Outline", &graphics.region_outline_color.x);
 
+            ImGui::ColorEdit3("Region Min Distance Divisor Outline",
+                              &graphics.region_distnace_divisor_outline_color.x);
+
+            ImGui::SetItemTooltip(
+               "Color for visualizer for Sound Stream and Sound Static Min "
+               "Distance Divisor property.");
+
             ImGui::ColorEdit3("Barrier Outline", &graphics.barrier_outline_color.x);
 
             ImGui::ColorEdit4("Barrier Overlay", &graphics.barrier_overlay_color.x);
@@ -411,6 +418,13 @@ void show_imgui_editor(settings& settings, bool& open,
                "potentially more jagged visualizer.");
 
             ImGui::SeparatorText("Optional Visualizers");
+
+            ImGui::Checkbox("Show Region Min Distance Divisors",
+                            &graphics.show_region_distance_divisors);
+
+            ImGui::SetItemTooltip(
+               "Show visualizers for Sound Stream and Sound Static Min "
+               "Distance Divisor property.");
 
             ImGui::Checkbox("Show Light Bounds", &graphics.show_light_bounds);
 

@@ -42,6 +42,7 @@
 #include "world/blocks/utility/bounding_box.hpp"
 #include "world/blocks/utility/find.hpp"
 #include "world/object_class_library.hpp"
+#include "world/utility/region_properties.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
 
@@ -1644,9 +1645,10 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    // Adds a region to _meta_draw_batcher. Shared between light volume drawing and region drawing.
-   const auto add_region = [&](const quaternion rotation, const float3 position,
-                               const float3 size, const world::region_shape shape,
-                               const float3 color) {
+   const auto add_region_shape = [&](const quaternion& rotation,
+                                     const float3& position, const float3& size,
+                                     const world::region_shape shape,
+                                     const float3& color) {
       const auto make_region_transform = [&](const float3 scale) {
          float4x4 transform =
             to_matrix(rotation) * float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
@@ -1716,20 +1718,45 @@ void renderer_impl::draw_world_meta_objects(
    };
 
    if (active_entity_types.regions) {
-      const float3 region_outline_color = settings.region_outline_color;
+      const float3& region_outline_color = settings.region_outline_color;
+      const float3& region_distnace_divisor_outline_color =
+         settings.region_distnace_divisor_outline_color;
+
+      const auto add_region = [&](const quaternion& rotation, const float3& position,
+                                  const float3& size, const world::region& region) {
+         if (region.shape == world::region_shape::sphere and
+             settings.show_region_distance_divisors) {
+            if (const world::region_type type =
+                   world::get_region_type(region.description);
+                type == world::region_type::soundstream) {
+               const float scale =
+                  1.0f / world::unpack_region_sound_stream(region.description).min_distance_divisor;
+
+               add_region_shape(rotation, position, scale * size, region.shape,
+                                region_distnace_divisor_outline_color);
+            }
+            else if (type == world::region_type::soundstatic) {
+               const float scale =
+                  1.0f / world::unpack_region_sound_static(region.description).min_distance_divisor;
+
+               add_region_shape(rotation, position, scale * size, region.shape,
+                                region_distnace_divisor_outline_color);
+            }
+         }
+
+         add_region_shape(rotation, position, size, region.shape, region_outline_color);
+      };
 
       for (auto& region : world.regions) {
          if (not active_layers[region.layer] or region.hidden) continue;
 
-         add_region(region.rotation, region.position, region.size, region.shape,
-                    region_outline_color);
+         add_region(region.rotation, region.position, region.size, region);
       }
 
       if (interaction_targets.creation_entity.is<world::region>()) {
          auto& region = interaction_targets.creation_entity.get<world::region>();
 
-         add_region(region.rotation, region.position, region.size, region.shape,
-                    region_outline_color);
+         add_region(region.rotation, region.position, region.size, region);
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
          const world::entity_group& group =
@@ -1738,7 +1765,7 @@ void renderer_impl::draw_world_meta_objects(
          for (const world::region& region : group.regions) {
             add_region(group.rotation * region.rotation,
                        group.rotation * region.position + group.position,
-                       region.size, region.shape, region_outline_color);
+                       region.size, region);
          }
       }
    }
@@ -1936,16 +1963,19 @@ void renderer_impl::draw_world_meta_objects(
          case world::light_type::directional_region_cylinder: {
             switch (light.light_type) {
             case world::light_type::directional_region_box: {
-               add_region(light_region_rotation, light_positionWS,
-                          light.region_size, world::region_shape::box, light.color);
+               add_region_shape(light_region_rotation, light_positionWS,
+                                light.region_size, world::region_shape::box,
+                                light.color);
             } break;
             case world::light_type::directional_region_sphere: {
-               add_region(light_region_rotation, light_positionWS, light.region_size,
-                          world::region_shape::sphere, light.color);
+               add_region_shape(light_region_rotation, light_positionWS,
+                                light.region_size, world::region_shape::sphere,
+                                light.color);
             } break;
             case world::light_type::directional_region_cylinder: {
-               add_region(light_region_rotation, light_positionWS, light.region_size,
-                          world::region_shape::cylinder, light.color);
+               add_region_shape(light_region_rotation, light_positionWS,
+                                light.region_size,
+                                world::region_shape::cylinder, light.color);
             } break;
             }
 
@@ -3314,6 +3344,29 @@ void renderer_impl::draw_interaction_targets(
          } break;
          case world::region_shape::sphere: {
             const float sphere_radius = length(region.size);
+
+            if (settings.show_region_distance_divisors) {
+               if (const world::region_type type =
+                      world::get_region_type(region.description);
+                   type == world::region_type::soundstream) {
+                  const float scale =
+                     1.0f /
+                     world::unpack_region_sound_stream(region.description).min_distance_divisor;
+
+                  _meta_draw_batcher.add_sphere_outline_solid(region.position,
+                                                              sphere_radius * scale,
+                                                              {color, 1.0f});
+               }
+               else if (type == world::region_type::soundstatic) {
+                  const float scale =
+                     1.0f /
+                     world::unpack_region_sound_static(region.description).min_distance_divisor;
+
+                  _meta_draw_batcher.add_sphere_outline_solid(region.position,
+                                                              sphere_radius * scale,
+                                                              {color, 1.0f});
+               }
+            }
 
             _meta_draw_batcher.add_sphere_outline_solid(region.position, sphere_radius,
                                                         {color, 1.0f});

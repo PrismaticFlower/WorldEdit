@@ -89,6 +89,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(path_node_cr_spline_max_tessellation);
             setting_entry(path_node_orientation_color);
             setting_entry(region_outline_color);
+            setting_entry(region_distnace_divisor_outline_color);
             setting_entry(barrier_outline_color);
             setting_entry(barrier_overlay_color);
             setting_entry(planning_hub_outline_color);
@@ -132,6 +133,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(overlay_grid_color);
             setting_entry(overlay_grid_line_width);
             setting_entry(overlay_grid_major_grid_spacing);
+            setting_entry(show_region_distance_divisors);
             setting_entry(show_light_bounds);
             setting_entry(show_hint_node_radii);
             setting_entry(highlight_sector_objects);
@@ -217,6 +219,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(path_node_cr_spline_max_tessellation));
       write(file, name_value(path_node_orientation_color));
       write(file, name_value(region_outline_color));
+      write(file, name_value(region_distnace_divisor_outline_color));
       write(file, name_value(barrier_outline_color));
       write(file, name_value(barrier_overlay_color));
       write(file, name_value(planning_hub_outline_color));
@@ -260,6 +263,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(overlay_grid_color));
       write(file, name_value(overlay_grid_line_width));
       write(file, name_value(overlay_grid_major_grid_spacing));
+      write(file, name_value(show_region_distance_divisors));
       write(file, name_value(show_light_bounds));
       write(file, name_value(show_hint_node_radii));
       write(file, name_value(highlight_sector_objects));
