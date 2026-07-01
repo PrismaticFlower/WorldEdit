@@ -1,5 +1,6 @@
 #include "bindings.hlsli"
 #include "frame_constants.hlsli"
+#include "fog.hlsli"
 #include "quaternion.hlsli"
 
 #define MAX_SURFACES 6
@@ -63,6 +64,7 @@ struct output_vertex {
    float3 positionWS : POSITIONWS;
    float3 normalWS : NORMALWS;
    float2 texcoords : TEXCOORD;
+   float fog : FOG;
    nointerpolation uint material_index : MATERIAL;
    float4 positionPS : SV_Position;
 };
@@ -165,6 +167,7 @@ output_vertex main(input_vertex input)
    output.positionWS = positionWS;
    output.normalWS = normalWS;
    output.texcoords = texcoords;
+   output.fog = calculate_fog(positionWS, positionPS);
    output.material_index = surface.material_index;
    output.positionPS = positionPS;
 
@@ -268,6 +271,7 @@ output_vertex main_quad(uint invocation_id : SV_VertexID)
    output.positionWS = positionWS;
    output.normalWS = normalWS;
    output.texcoords = texcoords;
+   output.fog = calculate_fog(positionWS, positionPS);
    output.material_index = surface.material_index;
    output.positionPS = positionPS;
 
@@ -377,6 +381,7 @@ output_vertex main_custom_mesh(input_vertex input)
    output.positionWS = positionWS;
    output.normalWS = normalWS;
    output.texcoords = texcoords;
+   output.fog = calculate_fog(positionWS, positionPS);
    output.material_index = surface.material_index;
    output.positionPS = positionPS;
 

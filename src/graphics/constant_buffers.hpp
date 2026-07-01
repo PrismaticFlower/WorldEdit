@@ -4,7 +4,7 @@
 
 namespace we::graphics {
 
-struct alignas(256) frame_constant_buffer {
+struct alignas(16) frame_constant_buffer {
    float4x4 world_from_view;
    float4x4 projection_from_world;
    float4x4 projection_from_view;
@@ -12,13 +12,19 @@ struct alignas(256) frame_constant_buffer {
    float3 view_positionWS;
    float texture_scroll_duration;
 
+   float2 fog_mul_add;
+   float2 world_fog_mul_add;
+
+   float3 fog_color;
+   uint32 pad0;
+
    float2 viewport_size;
    float2 viewport_topleft;
 
    float line_width;
 };
 
-static_assert(sizeof(frame_constant_buffer) == 256);
+static_assert(sizeof(frame_constant_buffer) == 272);
 
 struct alignas(256) wireframe_constant_buffer {
    float3 color;

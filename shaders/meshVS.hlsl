@@ -1,5 +1,6 @@
 #include "bindings.hlsli"
 #include "frame_constants.hlsli"
+#include "fog.hlsli"
 #include "srgb.hlsli"
 
 struct object_constants {
@@ -23,6 +24,7 @@ struct output_vertex {
    float3 tangentWS : TANGENT;
    float3 bitangentWS : BITANGENT;
    float2 texcoords : TEXCOORD;
+   float  fog : FOG;
    float4 color : COLOR;
 
    float4 positionPS : SV_Position;
@@ -33,14 +35,16 @@ output_vertex main(input_vertex input)
    output_vertex output;
 
    const float3 positionWS = mul(cb_object_constants.world_from_object, float4(input.positionOS, 1.0)).xyz;
+   const float4 positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));;
 
    output.positionWS = positionWS;
    output.normalWS = mul((float3x3)cb_object_constants.world_from_object, input.normalOS);
    output.tangentWS = mul((float3x3)cb_object_constants.world_from_object, input.tangentOS);
    output.bitangentWS = mul((float3x3)cb_object_constants.world_from_object, input.bitangentOS);
    output.texcoords = input.texcoords;
+   output.fog = calculate_fog(positionWS, positionPS);
    output.color = srgb_to_linear(input.color);
-   output.positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
+   output.positionPS = positionPS;
 
    return output;
 }

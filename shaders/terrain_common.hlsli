@@ -36,6 +36,7 @@ struct terrain_constants_ {
 struct vertex {
    float3 positionWS : POSITIONWS;
    float3 normalWS : NORMALWS;
+   float  fog : FOG;
    float4 weights[TERRAIN_MAX_TEXTURES / 4] : TEXTUREWEIGHTS;
    float3 static_light : LIGHT;
 

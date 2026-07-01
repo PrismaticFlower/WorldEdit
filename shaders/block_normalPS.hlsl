@@ -1,5 +1,6 @@
 
 #include "frame_constants.hlsli"
+#include "fog.hlsli"
 #include "lights_common.hlsli"
 #include "block_material.hlsli"
 
@@ -7,6 +8,7 @@ struct input_vertex {
    float3 positionWS : POSITIONWS;
    float3 normalWS : NORMALWS;
    float2 texcoords : TEXCOORD;
+   float fog : FOG;
    nointerpolation uint material_index : MATERIAL;
 
    float4 positionSS : SV_Position;
@@ -109,5 +111,5 @@ float4 main(input_vertex input) : SV_TARGET
                   specular_visibility;
    }
 
-   return float4(lighting, 1.0);
+   return apply_fog(float4(lighting, 1.0), input.fog);
 }

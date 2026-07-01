@@ -1,5 +1,6 @@
 
 #include "frame_constants.hlsli"
+#include "fog.hlsli"
 #include "lights_common.hlsli"
 #include "terrain_common.hlsli"
 
@@ -19,5 +20,5 @@ float4 main(vertex input) : SV_Target0
 
    const float3 lighting = calculate_lighting(lighting_inputs) + input.static_light;
 
-   return float4(lighting, 1.0f);
+   return apply_fog(float4(lighting, 1.0f), input.fog);
 }

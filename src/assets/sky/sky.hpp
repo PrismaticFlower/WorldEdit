@@ -24,11 +24,11 @@ struct config {
    std::array<uint8, 3> fog_color;
    std::array<uint8, 3> reflection_fog_color;
 
-   float fog_range_min = 0.0f;
-   float fog_range_max = 0.0f;
+   float fog_range_start = 0.0f;
+   float fog_range_end = 0.0f;
 
-   float world_fog_range_min = 0.0f;
-   float world_fog_range_max = 0.0f;
+   float world_fog_range_start = 0.0f;
+   float world_fog_range_end = 0.0f;
 
    std::string terrain_normal_map;
    float terrain_normal_map_tiling = 1.0f;

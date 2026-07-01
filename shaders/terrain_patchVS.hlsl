@@ -1,4 +1,5 @@
 #include "frame_constants.hlsli"
+#include "fog.hlsli"
 #include "terrain_common.hlsli"
 
 struct input_vertex {
@@ -13,14 +14,16 @@ vertex main(input_vertex input)
    const float3 world_form_compress_mul = float3(terrain_constants.grid_size, terrain_constants.height_scale, terrain_constants.grid_size);
    const float3 world_form_compress_add = float3(0, 0, terrain_constants.grid_size);
    const float3 positionWS = world_form_compress_mul * input.positionCS + world_form_compress_add;
+   const float4 positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));;
 
    vertex output;
    
    output.positionWS = positionWS;
    output.normalWS = input.normalWS;
+   output.fog = calculate_fog(positionWS, positionPS);
    output.weights = input.weights;
    output.static_light = input.static_light;
-   output.positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
+   output.positionPS = positionPS;
 
    return output;
 }

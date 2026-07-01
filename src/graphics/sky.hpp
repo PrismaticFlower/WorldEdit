@@ -22,6 +22,12 @@ struct sky {
              root_signature_library& root_signatures, pipeline_library& pipelines,
              dynamic_buffer_allocator& dynamic_buffer_allocator);
 
+   auto fog_mul_add() const noexcept -> const float2&;
+
+   auto world_fog_mul_add() const noexcept -> const float2&;
+
+   auto fog_color() const noexcept -> const float3&;
+
 private:
    void sky_loaded(const lowercase_string& name, asset_ref<assets::sky::config> asset,
                    asset_data<assets::sky::config> data) noexcept;
@@ -41,13 +47,22 @@ private:
       assets::asset_ref<assets::msh::flat_model> asset;
    };
 
+   struct sky_state {
+      float2 fog_mul_add = {0.0f, 1.0f};
+      float2 world_fog_mul_add = {0.0f, 1.0f};
+
+      float3 fog_color = {};
+
+      std::vector<dome_model> dome_models;
+   };
+
    std::string _world_name;
 
-   std::shared_mutex _dome_models_mutex;
-   std::vector<dome_model> _dome_models;
+   sky_state _sky_state;
 
-   std::shared_mutex _sky_asset_mutex;
+   std::shared_mutex _load_mutex;
    assets::asset_ref<assets::sky::config> _sky_asset;
+   assets::asset_data<assets::sky::config> _sky_data;
 
    event_listener<void(const lowercase_string&, asset_ref<assets::sky::config>,
                        asset_data<assets::sky::config>)>

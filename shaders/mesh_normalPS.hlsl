@@ -1,5 +1,6 @@
 
 #include "frame_constants.hlsli"
+#include "fog.hlsli"
 #include "lights_common.hlsli"
 #include "material_normal.hlsli"
 #include "resource_heaps.hlsli"
@@ -11,6 +12,7 @@ struct input_vertex {
    float3 tangentWS : TANGENT;
    float3 bitangentWS : BITANGENT;
    float2 texcoords : TEXCOORD;
+   float  fog : FOG;
    float4 color : COLOR;
 
    float4 positionSS : SV_Position;
@@ -70,7 +72,7 @@ float4 main(input_vertex input) : SV_TARGET
 
    if (material.flags & flags::transparent) diffuse_color.rgb *= diffuse_color.a;
 
-   if (material.flags & flags::unlit) return diffuse_color;
+   if (material.flags & flags::unlit) return apply_fog(diffuse_color, input.fog);
 
    float specular_visibility = 1.0;
 
@@ -110,5 +112,5 @@ float4 main(input_vertex input) : SV_TARGET
    
    if (material.flags & flags::additive) alpha = 0.0;
 
-   return float4(lighting, alpha);
+   return apply_fog(float4(lighting, alpha), input.fog);
 }

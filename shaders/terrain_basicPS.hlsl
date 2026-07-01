@@ -1,10 +1,11 @@
 
 #include "terrain_common.hlsli"
+#include "fog.hlsli"
 
 float4 main(vertex input) : SV_Target0
 {   
    const float3 light_normalWS = normalize(float3(-159.264923, 300.331013, -66.727310));
    const float3 light = saturate(dot(input.normalWS, light_normalWS));
 
-   return float4((light * 0.4 + (1.0 - light) * 0.033).xxx, 1.0f);
+   return apply_fog(float4((light * 0.4 + (1.0 - light) * 0.033).xxx, 1.0f), input.fog);
 }

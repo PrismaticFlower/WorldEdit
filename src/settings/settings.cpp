@@ -229,6 +229,10 @@ void show_imgui_editor(settings& settings, bool& open,
          if (ImGui::BeginTabItem("Graphics")) {
             graphics& graphics = settings.graphics;
 
+            ImGui::SeparatorText("Rendering");
+
+            ImGui::Checkbox("Render Fog", &settings.graphics.render_fog);
+
             ImGui::SeparatorText("Interaction Colours");
 
             ImGui::ColorEdit3("Hover", &graphics.hover_color.x);

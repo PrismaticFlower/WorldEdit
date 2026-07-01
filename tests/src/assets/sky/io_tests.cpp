@@ -101,10 +101,10 @@ TEST_CASE(".sky fog", "[Assets][REQ]")
 
    CHECK(config.fog_color == std::array<uint8, 3>{255, 128, 128});
    CHECK(config.reflection_fog_color == std::array<uint8, 3>{0, 255, 0});
-   CHECK(config.fog_range_min == 10.0f);
-   CHECK(config.fog_range_max == 100.0f);
-   CHECK(config.world_fog_range_min == -10.0f);
-   CHECK(config.world_fog_range_max == 10.0f);
+   CHECK(config.fog_range_start == 10.0f);
+   CHECK(config.fog_range_end == 100.0f);
+   CHECK(config.world_fog_range_start == -10.0f);
+   CHECK(config.world_fog_range_end == 10.0f);
 }
 
 }

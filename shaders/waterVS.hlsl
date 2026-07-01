@@ -1,9 +1,11 @@
 #include "frame_constants.hlsli"
+#include "fog.hlsli"
 #include "water_constants.hlsli"
 
 struct output_vertex
 {
    float2 texcoords : TEXCOORDS;
+   float  fog : FOG;
    float4 positionPS : SV_Position;
 };
 
@@ -48,10 +50,13 @@ output_vertex main(uint vertex_index : SV_VertexID)
          break;
    }
    
+   const float4 positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));;
+
    output_vertex output;
 
    output.texcoords = positionWS.xz / cb_water.tiling + (cb_water.velocity * cb_frame.texture_scroll_duration);
-   output.positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
+   output.fog = calculate_fog(positionWS, positionPS);
+   output.positionPS = positionPS;
 
    return output;
 }

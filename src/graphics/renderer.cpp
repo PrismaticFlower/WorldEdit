@@ -50,6 +50,15 @@
 
 namespace we::graphics {
 
+namespace {
+
+struct update_frame_constant_buffer_flags {
+   bool scroll_textures = true;
+   bool render_fog = false;
+};
+
+}
+
 struct renderer_impl final : renderer {
    renderer_impl(const renderer_init& init);
 
@@ -135,7 +144,7 @@ struct renderer_impl final : renderer {
 
 private:
    void update_frame_constant_buffer(const camera& camera, const gpu::viewport viewport,
-                                     const bool scroll_textures,
+                                     const update_frame_constant_buffer_flags& flags,
                                      const float delta_time, const float line_width,
                                      gpu::copy_command_list& command_list);
 
@@ -440,8 +449,11 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                 &interaction_targets.creation_entity);
       }
 
-      update_frame_constant_buffer(camera, viewport, true, frame_options.delta_time,
-                                   settings.line_width, _pre_render_command_list);
+      update_frame_constant_buffer(camera, viewport,
+                                   {.scroll_textures = true,
+                                    .render_fog = settings.render_fog},
+                                   frame_options.delta_time, settings.line_width,
+                                   _pre_render_command_list);
       clear_depth_minmax(_pre_render_command_list);
 
       const float4 scene_depth_min_max =
@@ -1002,8 +1014,9 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       {
          pre_render_command_list.reset();
 
-         update_frame_constant_buffer(camera, viewport, false, 0.0f, 1.0f,
-                                      pre_render_command_list);
+         update_frame_constant_buffer(camera, viewport,
+                                      {.scroll_textures = false, .render_fog = true},
+                                      0.0f, 1.0f, pre_render_command_list);
 
          _light_clusters.prepare_lights(camera, view_frustum, world, nullptr, nullptr,
                                         {shadow_min_depth, shadow_max_depth}, _blocks,
@@ -1231,12 +1244,10 @@ void renderer_impl::window_resized(uint16 width, uint16 height)
    _light_clusters.update_render_resolution(width, height);
 }
 
-void renderer_impl::update_frame_constant_buffer(const camera& camera,
-                                                 const gpu::viewport viewport,
-                                                 const bool scroll_textures,
-                                                 const float delta_time,
-                                                 const float line_width,
-                                                 gpu::copy_command_list& command_list)
+void renderer_impl::update_frame_constant_buffer(
+   const camera& camera, const gpu::viewport viewport,
+   const update_frame_constant_buffer_flags& flags, const float delta_time,
+   const float line_width, gpu::copy_command_list& command_list)
 {
    _texture_scroll_time = std::fmod(_texture_scroll_time + delta_time, 255.0f);
 
@@ -1246,7 +1257,13 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
       .projection_from_view = camera.projection_from_view(),
 
       .view_positionWS = camera.position(),
-      .texture_scroll_duration = scroll_textures ? _texture_scroll_time : 0.0f,
+      .texture_scroll_duration = flags.scroll_textures ? _texture_scroll_time : 0.0f,
+
+      .fog_mul_add = flags.render_fog ? _sky.fog_mul_add() : float2{0.0f, 1.0f},
+      .world_fog_mul_add =
+         flags.render_fog ? _sky.world_fog_mul_add() : float2{0.0f, 1.0f},
+
+      .fog_color = flags.render_fog ? _sky.fog_color() : float3{0.0f, 0.0f, 0.0f},
 
       .viewport_size = {viewport.width, viewport.height},
       .viewport_topleft = {viewport.top_left_x, viewport.top_left_y},

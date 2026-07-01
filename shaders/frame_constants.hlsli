@@ -10,6 +10,11 @@ struct frame_constant_buffer {
    float3 view_positionWS;
    float texture_scroll_duration;
 
+   float2 fog_mul_add;
+   float2 world_fog_mul_add;
+   
+   float3 fog_color;
+
    float2 viewport_size;
    float2 viewport_topleft;
 

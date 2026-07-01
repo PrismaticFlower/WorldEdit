@@ -74,12 +74,12 @@ void read_sky_info(const node& node, const platform_flags platform, config& sky)
                                      child.values.get<uint8>(2)};
       }
       else if (string::iequals(child.key, "FogRange")) {
-         sky.fog_range_min = child.values.get<float>(0);
-         sky.fog_range_max = child.values.get<float>(1);
+         sky.fog_range_start = child.values.get<float>(0);
+         sky.fog_range_end = child.values.get<float>(1);
       }
       else if (string::iequals(child.key, "WorldFogRange")) {
-         sky.world_fog_range_min = child.values.get<float>(0);
-         sky.world_fog_range_max = child.values.get<float>(1);
+         sky.world_fog_range_start = child.values.get<float>(0);
+         sky.world_fog_range_end = child.values.get<float>(1);
       }
    }
 }

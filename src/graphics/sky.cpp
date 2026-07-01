@@ -1,8 +1,11 @@
 
 #include "sky.hpp"
-#include "assets/sky/sky.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
+
+#include "assets/sky/sky.hpp"
+
+#include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 
 namespace we::graphics {
@@ -30,28 +33,70 @@ sky::sky(gpu::device& device, model_manager& model_manager,
 
 void sky::update(const std::string_view world_name) noexcept
 {
-   if (_world_name == world_name) return;
+   if (_world_name != world_name) {
+      _world_name = world_name;
+      _sky_state = {};
 
-   _world_name = world_name;
+      asset_data<assets::sky::config> config;
 
-   if (_world_name.empty()) {
-      std::scoped_lock lock{_sky_asset_mutex, _dome_models_mutex};
-
-      _sky_asset = asset_ref<assets::sky::config>{};
-      _dome_models.clear();
-
-      return;
+      if (std::scoped_lock lock{_load_mutex}; _world_name.empty()) {
+         _sky_asset = asset_ref<assets::sky::config>{};
+      }
+      else {
+         _sky_asset = _assets.skies[lowercase_string{_world_name}];
+         _sky_data = _sky_asset.get_if();
+      }
    }
 
    {
-      std::scoped_lock lock{_sky_asset_mutex};
+      std::scoped_lock lock{_load_mutex};
 
-      _sky_asset = _assets.skies[lowercase_string{_world_name}];
+      if (_sky_data) {
+         _sky_state = {};
+
+         _sky_state.dome_models.reserve(_sky_data->dome_models.size());
+
+         for (auto& dome_model : _sky_data->dome_models) {
+            const lowercase_string geometry{dome_model.geometry};
+
+            _sky_state.dome_models.push_back(
+               {.geometry = geometry,
+
+                .movement_scale = dome_model.movement_scale,
+                .offset = dome_model.offset,
+                .rotation_speed = dome_model.rotation.speed,
+                .rotation_direction = dome_model.rotation.direction,
+
+                .asset = _assets.models[geometry]});
+         }
+
+         _sky_state.fog_color = utility::decompress_srgb(
+            float3{_sky_data->fog_color[0] / 255.0f, _sky_data->fog_color[1] / 255.0f,
+                   _sky_data->fog_color[2] / 255.0f});
+
+         const float fog_range_start = _sky_data->fog_range_start;
+         const float fog_range_end = _sky_data->fog_range_end;
+
+         if (fog_range_start < fog_range_end) {
+            const float fog_mul = 1.0f / (fog_range_end - fog_range_start);
+            const float fog_add = fog_range_end * fog_mul;
+
+            _sky_state.fog_mul_add = {-fog_mul, fog_add};
+         }
+
+         const float world_fog_range_start = _sky_data->world_fog_range_start;
+         const float world_fog_range_end = _sky_data->world_fog_range_end;
+
+         if (world_fog_range_start > world_fog_range_end) {
+            const float fog_mul = 1.0f / (world_fog_range_end - world_fog_range_start);
+            const float fog_add = world_fog_range_end * fog_mul;
+
+            _sky_state.world_fog_mul_add = {-fog_mul, fog_add};
+         }
+
+         _sky_data = nullptr;
+      }
    }
-
-   asset_data<assets::sky::config> config = _sky_asset.get_if();
-
-   if (config) sky_loaded(lowercase_string{_world_name}, _sky_asset, config);
 }
 
 void sky::draw(gpu_virtual_address frame_constant_buffer_view,
@@ -59,16 +104,14 @@ void sky::draw(gpu_virtual_address frame_constant_buffer_view,
                root_signature_library& root_signatures, pipeline_library& pipelines,
                dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
-   std::shared_lock lock{_dome_models_mutex};
-
-   if (_dome_models.empty()) return;
+   if (_sky_state.dome_models.empty()) return;
 
    command_list.set_graphics_root_signature(root_signatures.sky_mesh.get());
    command_list.set_graphics_cbv(rs::sky_mesh::frame_cbv, frame_constant_buffer_view);
 
    command_list.set_pipeline_state(pipelines.sky_mesh.get());
 
-   for (auto& dome_model : _dome_models) {
+   for (auto& dome_model : _sky_state.dome_models) {
       auto& model = _model_manager[dome_model.geometry];
 
       if (_model_manager.is_placeholder(model)) continue;
@@ -101,30 +144,30 @@ void sky::draw(gpu_virtual_address frame_constant_buffer_view,
    }
 }
 
+auto sky::fog_mul_add() const noexcept -> const float2&
+{
+   return _sky_state.fog_mul_add;
+}
+
+auto sky::world_fog_mul_add() const noexcept -> const float2&
+{
+   return _sky_state.world_fog_mul_add;
+}
+
+auto sky::fog_color() const noexcept -> const float3&
+{
+   return _sky_state.fog_color;
+}
+
 void sky::sky_loaded([[maybe_unused]] const lowercase_string& name,
                      asset_ref<assets::sky::config> asset,
                      asset_data<assets::sky::config> data) noexcept
 {
-   std::scoped_lock lock{_sky_asset_mutex, _dome_models_mutex};
+   std::scoped_lock lock{_load_mutex};
 
    if (asset != _sky_asset) return;
 
-   _dome_models.clear();
-
-   _dome_models.reserve(data->dome_models.size());
-
-   for (auto& dome_model : data->dome_models) {
-      const lowercase_string geometry{dome_model.geometry};
-
-      _dome_models.push_back({.geometry = geometry,
-
-                              .movement_scale = dome_model.movement_scale,
-                              .offset = dome_model.offset,
-                              .rotation_speed = dome_model.rotation.speed,
-                              .rotation_direction = dome_model.rotation.direction,
-
-                              .asset = _assets.models[geometry]});
-   }
+   _sky_data = data;
 }
 
 }
