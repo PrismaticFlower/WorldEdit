@@ -426,6 +426,12 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
          _diffuse_maps[i] =
             texture_manager.at_or(_diffuse_maps_names[i], world_texture_dimension::_2d,
                                   texture_manager.null_diffuse_map());
+
+         if (not _diffuse_maps_names[i].empty() and
+             _diffuse_maps[i] == texture_manager.null_diffuse_map()) {
+            _diffuse_map_load_tokens[i] =
+               texture_manager.acquire_load_token(_diffuse_maps_names[i]);
+         }
       }
    }
 
@@ -718,6 +724,7 @@ void terrain::process_updated_texture(const updated_textures& updated)
 {
    for (std::size_t i = 0; i < texture_count; ++i) {
       if (auto new_texture = updated.check(_diffuse_maps_names[i]); new_texture) {
+         _diffuse_map_load_tokens[i] = nullptr;
          _diffuse_maps[i] = std::move(new_texture);
       }
    }

@@ -125,6 +125,7 @@ private:
 
    std::array<lowercase_string, texture_count> _diffuse_maps_names;
    std::array<std::shared_ptr<const world_texture>, texture_count> _diffuse_maps;
+   std::array<std::shared_ptr<const world_texture_load_token>, texture_count> _diffuse_map_load_tokens;
 
    uint32 _foliage_map_upload_row_pitch = 0;
 
