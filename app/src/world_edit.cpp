@@ -3048,7 +3048,7 @@ void world_edit::delete_selected() noexcept
 
             _edit_stack_world.apply(edits::make_delete_entity(path->id,
                                                               static_cast<uint32>(i),
-                                                              _world),
+                                                              _world, _object_classes),
                                     _edit_context, {.transparent = transparent_edit});
          }
       }

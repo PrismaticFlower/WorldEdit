@@ -71,8 +71,10 @@ TEST_CASE("edits delete_entity path", "[Edits]")
    world::world world = test_world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
 
-   auto delete_node_0 = make_delete_entity(world.paths[0].id, 0, world);
+   auto delete_node_0 =
+      make_delete_entity(world.paths[0].id, 0, world, object_class_library);
 
    delete_node_0->apply(edit_context);
 
@@ -82,7 +84,8 @@ TEST_CASE("edits delete_entity path", "[Edits]")
 
    REQUIRE(world.objects[0].instance_properties.size() == 9);
 
-   auto delete_node_1 = make_delete_entity(world.paths[0].id, 1, world);
+   auto delete_node_1 =
+      make_delete_entity(world.paths[0].id, 1, world, object_class_library);
 
    delete_node_1->apply(edit_context);
 
@@ -1244,6 +1247,155 @@ TEST_CASE("edits delete_entity object class handle liftime", "[Edits]")
    CHECK(object_class_library.debug_ref_count(class_name) == 1);
 }
 
+TEST_CASE("edits delete_entity path tree line ref", "[Edits]")
+{
+   world::world world = {
+      .name = "Test"s,
+
+      .paths =
+         {
+            world::entities_init,
+            std::initializer_list{
+               world::path{
+                  .name = "path0"s,
+                  .layer = 0,
+                  .id = world::path_id{0},
+               },
+               world::path{
+                  .name = "path1"s,
+                  .layer = 0,
+                  .id = world::path_id{1},
+               },
+               world::path{
+                  .name = "path2"s,
+                  .layer = 0,
+                  .id = world::path_id{2},
+               },
+            },
+         },
+
+      .foliage_props =
+         {
+            .tree_lines =
+               {
+                  pinned_vector_init{.max_size = world::max_tree_lines},
+                  std::initializer_list{
+                     world::tree_line{
+                        .path_index = 0,
+                     },
+                     world::tree_line{
+                        .path_index = 1,
+                     },
+                     world::tree_line{
+                        .path_index = 0,
+                     },
+                     world::tree_line{
+                        .path_index = 2,
+                     },
+                     world::tree_line{
+                        .path_index = 0,
+                     },
+                  },
+               },
+         },
+
+   };
+
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   auto edit = make_delete_entity(world.paths[0].id, 0, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.foliage_props.tree_lines.size() == 2);
+   CHECK(world.foliage_props.tree_lines[0].path_index == 1);
+   CHECK(world.foliage_props.tree_lines[1].path_index == 2);
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.foliage_props.tree_lines.size() == 5);
+   CHECK(world.foliage_props.tree_lines[0].path_index == 0);
+   CHECK(world.foliage_props.tree_lines[1].path_index == 1);
+   CHECK(world.foliage_props.tree_lines[2].path_index == 0);
+   CHECK(world.foliage_props.tree_lines[3].path_index == 2);
+   CHECK(world.foliage_props.tree_lines[4].path_index == 0);
+}
+
+TEST_CASE("edits delete_entity path tree line class handle liftime", "[Edits]")
+{
+   world::object_class_library object_class_library{null_asset_libraries()};
+   world::world
+      world =
+         {
+            .name = "Test"s,
+
+            .paths =
+               {
+                  world::entities_init,
+                  std::initializer_list{
+                     world::path{
+                        .name = "path0"s,
+                        .layer = 0,
+                        .id = world::path_id{0},
+                     },
+                  },
+               },
+
+            .foliage_props =
+               {
+                  .tree_lines =
+                     {
+                        pinned_vector_init{.max_size = world::max_tree_lines},
+                        std::initializer_list{
+                           world::tree_line{
+                              .border_odfs =
+                                 {
+                                    world::tree_line_odf{
+                                       .name = "tree1",
+                                       .handle = object_class_library.acquire(
+                                          lowercase_string{"tree1"sv}),
+                                    },
+                                    world::tree_line_odf{
+                                       .name = "tree2",
+                                       .handle = object_class_library.acquire(lowercase_string{"tree2"sv}),
+                                    },
+                                    world::tree_line_odf{
+                                       .name = "tree1",
+                                       .handle = object_class_library.acquire(lowercase_string{"tree1"sv}),
+                                    },
+                                    world::tree_line_odf{
+                                       .name = "tree3",
+                                       .handle = object_class_library.acquire(lowercase_string{"tree3"sv}),
+                                    },
+                                 },
+                              .path_index = 0,
+                           },
+                        },
+                     },
+               },
+
+         };
+
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_delete_entity(world.paths[0].id, 0, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   CHECK(object_class_library.debug_ref_count(lowercase_string{"tree1"sv}) == 0);
+   CHECK(object_class_library.debug_ref_count(lowercase_string{"tree2"sv}) == 0);
+   CHECK(object_class_library.debug_ref_count(lowercase_string{"tree3"sv}) == 0);
+
+   edit->revert(edit_context);
+
+   CHECK(object_class_library.debug_ref_count(lowercase_string{"tree1"sv}) == 2);
+   CHECK(object_class_library.debug_ref_count(lowercase_string{"tree2"sv}) == 1);
+   CHECK(object_class_library.debug_ref_count(lowercase_string{"tree3"sv}) == 1);
+}
+
 TEST_CASE("edits delete_entity light gloabl ref", "[Edits]")
 {
    world::world world = {
@@ -1285,5 +1437,4 @@ TEST_CASE("edits delete_entity light gloabl ref", "[Edits]")
    CHECK(world.global_lights.global_light_1 == "sun");
    CHECK(world.global_lights.global_light_2 == "Sun");
 }
-
 }

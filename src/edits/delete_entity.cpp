@@ -442,11 +442,20 @@ private:
 };
 
 struct delete_path final : edit<world::edit_context> {
+   struct unlinked_tree_line {
+      uint32 tree_line_index = 0;
+      world::tree_line tree_line;
+   };
+
    delete_path(world::path path, uint32 path_index,
-               std::vector<unlinked_object_property> unlinked_object_properties)
+               std::vector<unlinked_object_property> unlinked_object_properties,
+               std::vector<unlinked_tree_line> unlinked_tree_lines,
+               world::object_class_library& object_class_library)
       : _path{std::move(path)},
         _path_index{path_index},
-        _unlinked_object_properties{std::move(unlinked_object_properties)}
+        _unlinked_object_properties{std::move(unlinked_object_properties)},
+        _unlinked_tree_lines{std::move(unlinked_tree_lines)},
+        _object_class_library{object_class_library}
    {
    }
 
@@ -460,6 +469,20 @@ struct delete_path final : edit<world::edit_context> {
                       .value,
                    unlinked.value);
       }
+
+      for (std::ptrdiff_t i = std::ssize(_unlinked_tree_lines) - 1; i >= 0; --i) {
+         unlinked_tree_line& unlinked = _unlinked_tree_lines[i];
+
+         std::swap(context.world.foliage_props.tree_lines[unlinked.tree_line_index],
+                   unlinked.tree_line);
+
+         context.world.foliage_props.tree_lines.erase(
+            context.world.foliage_props.tree_lines.begin() + unlinked.tree_line_index);
+
+         for (const world::tree_line_odf& odf : unlinked.tree_line.border_odfs) {
+            _object_class_library.free(odf.handle);
+         }
+      }
    }
 
    void revert(world::edit_context& context) noexcept override
@@ -471,6 +494,17 @@ struct delete_path final : edit<world::edit_context> {
                       .instance_properties[unlinked.property_index]
                       .value,
                    unlinked.value);
+      }
+
+      for (unlinked_tree_line& unlinked : _unlinked_tree_lines) {
+         context.world.foliage_props.tree_lines
+            .insert(context.world.foliage_props.tree_lines.begin() + unlinked.tree_line_index,
+                    std::move(unlinked.tree_line));
+
+         for (world::tree_line_odf& odf :
+              context.world.foliage_props.tree_lines[unlinked.tree_line_index].border_odfs) {
+            odf.handle = _object_class_library.acquire(lowercase_string{odf.name});
+         }
       }
    }
 
@@ -485,6 +519,8 @@ private:
    const world::path _path;
    const uint32 _path_index;
    std::vector<unlinked_object_property> _unlinked_object_properties;
+   std::vector<unlinked_tree_line> _unlinked_tree_lines;
+   world::object_class_library& _object_class_library;
 };
 
 struct delete_region final : edit<world::edit_context> {
@@ -990,7 +1026,8 @@ auto make_delete_entity(world::light_id light_id, const world::world& world)
          : nullptr);
 }
 
-auto make_delete_entity(world::path_id path_id, uint32 node, const world::world& world)
+auto make_delete_entity(world::path_id path_id, uint32 node, const world::world& world,
+                        world::object_class_library& object_class_library)
    -> std::unique_ptr<edit<world::edit_context>>
 {
    const uint32 path_index = get_entity_index(world.paths, path_id);
@@ -1001,6 +1038,7 @@ auto make_delete_entity(world::path_id path_id, uint32 node, const world::world&
    }
 
    uint32 unlinked_object_property_count = 0;
+   uint32 unlinked_tree_line_count = 0;
 
    for (const auto& object : world.objects) {
       for (const auto& [key, value] : object.instance_properties) {
@@ -1013,8 +1051,14 @@ auto make_delete_entity(world::path_id path_id, uint32 node, const world::world&
       }
    }
 
-   std::vector<unlinked_object_property> unlinked_object_properties;
+   for (const world::tree_line& tree_line : world.foliage_props.tree_lines) {
+      if (tree_line.path_index == path_index) unlinked_tree_line_count += 1;
+   }
 
+   std::vector<unlinked_object_property> unlinked_object_properties;
+   std::vector<delete_path::unlinked_tree_line> unlinked_tree_lines;
+
+   unlinked_tree_lines.reserve(unlinked_tree_line_count);
    unlinked_object_properties.reserve(unlinked_object_property_count);
 
    for (uint32 object_index = 0; object_index < world.objects.size(); ++object_index) {
@@ -1033,8 +1077,17 @@ auto make_delete_entity(world::path_id path_id, uint32 node, const world::world&
       }
    }
 
+   for (uint32 tree_line_index = 0;
+        tree_line_index < world.foliage_props.tree_lines.size(); ++tree_line_index) {
+      if (world.foliage_props.tree_lines[tree_line_index].path_index == path_index) {
+         unlinked_tree_lines.push_back({.tree_line_index = tree_line_index});
+      }
+   }
+
    return std::make_unique<delete_path>(path, path_index,
-                                        std::move(unlinked_object_properties));
+                                        std::move(unlinked_object_properties),
+                                        std::move(unlinked_tree_lines),
+                                        object_class_library);
 }
 
 auto make_delete_entity(world::region_id region_id, const world::world& world)

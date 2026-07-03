@@ -21,7 +21,8 @@ auto make_delete_entity(world::light_id light_id, const world::world& world)
    -> std::unique_ptr<edit<world::edit_context>>;
 
 auto make_delete_entity(world::path_id path_id, const uint32 node,
-                        const world::world& world)
+                        const world::world& world,
+                        world::object_class_library& object_class_library)
    -> std::unique_ptr<edit<world::edit_context>>;
 
 auto make_delete_entity(world::region_id region_id, const world::world& world)
