@@ -718,6 +718,110 @@ TEST_CASE("world loading no terrain", "[World][IO]")
    }
 }
 
+TEST_CASE("world loading foliage props", "[World][IO]")
+{
+   null_output_stream out;
+   const world world = load_world("data/world_foliage_props/test.wld"sv, {}, out);
+   const props& props = world.foliage_props;
+
+   // foliage layer checks
+   {
+      CHECK(props.layers[0].spread_factor == 0.1f);
+
+      REQUIRE(props.layers[0].meshes.size() == 3);
+
+      CHECK(props.layers[0].meshes[0].grass_patch.name == "grass");
+      CHECK(props.layers[0].meshes[0].grass_patch.max_distance == 50.0f);
+      CHECK(props.layers[0].meshes[0].file.name == "editor_grasspatch");
+      CHECK(props.layers[0].meshes[0].file.max_distance == 40.0f);
+      CHECK(props.layers[0].meshes[0].leaf_patch.name == "");
+      CHECK(props.layers[0].meshes[0].leaf_patch.max_distance == 1000.0f);
+      CHECK(props.layers[0].meshes[0].fade_distance == 50.0f);
+      CHECK(props.layers[0].meshes[0].scale == 1.25f);
+      CHECK(props.layers[0].meshes[0].sound.name == "woosh");
+      CHECK(props.layers[0].meshes[0].sound.unknown0 == 4.0f);
+      CHECK(props.layers[0].meshes[0].sound.unknown1 == 8.0f);
+      CHECK(props.layers[0].meshes[0].collision_sound == "boosh");
+      CHECK(props.layers[0].meshes[0].ai_visibility_factor_min == 0.1f);
+      CHECK(props.layers[0].meshes[0].ai_visibility_factor_max == 0.5f);
+      CHECK(props.layers[0].meshes[0].color_variation == 0.125f);
+      CHECK(props.layers[0].meshes[0].use_collision);
+      CHECK(props.layers[0].meshes[0].lighting);
+      CHECK(props.layers[0].meshes[0].max_distance == 20.0f);
+      CHECK(props.layers[0].meshes[0].stiffness == 0.5f);
+      CHECK(props.layers[0].meshes[0].frequency == 100.0f);
+
+      CHECK(props.layers[0].meshes[1].grass_patch.name == "");
+      CHECK(props.layers[0].meshes[1].grass_patch.max_distance == 1000.0f);
+      CHECK(props.layers[0].meshes[1].file.name == "editor_leafpatch");
+      CHECK(props.layers[0].meshes[1].file.max_distance == 40.0f);
+      CHECK(props.layers[0].meshes[1].leaf_patch.name == "leaves");
+      CHECK(props.layers[0].meshes[1].leaf_patch.max_distance == 50.0f);
+      CHECK(props.layers[0].meshes[1].fade_distance == 0.0f);
+      CHECK(props.layers[0].meshes[1].scale == 1.0f);
+      CHECK(props.layers[0].meshes[1].sound.name == "");
+      CHECK(props.layers[0].meshes[1].sound.unknown0 == 0.0f);
+      CHECK(props.layers[0].meshes[1].sound.unknown1 == FLT_MAX);
+      CHECK(props.layers[0].meshes[1].collision_sound == "");
+      CHECK(props.layers[0].meshes[1].ai_visibility_factor_min == 1.0f);
+      CHECK(props.layers[0].meshes[1].ai_visibility_factor_max == 1.0f);
+      CHECK(props.layers[0].meshes[1].color_variation == 0.0f);
+      CHECK(props.layers[0].meshes[1].use_collision == false);
+      CHECK(props.layers[0].meshes[1].lighting == false);
+      CHECK(props.layers[0].meshes[1].max_distance == 1000.0f);
+      CHECK(props.layers[0].meshes[1].stiffness == 0.0f);
+      CHECK(props.layers[0].meshes[1].frequency == 1.0f);
+
+      CHECK(props.layers[0].meshes[2].grass_patch.name == "");
+      CHECK(props.layers[0].meshes[2].grass_patch.max_distance == 1000.0f);
+      CHECK(props.layers[0].meshes[2].file.name == "tree");
+      CHECK(props.layers[0].meshes[2].file.max_distance == 40.0f);
+      CHECK(props.layers[0].meshes[2].leaf_patch.name == "");
+      CHECK(props.layers[0].meshes[2].leaf_patch.max_distance == 1000.0f);
+      CHECK(props.layers[0].meshes[2].fade_distance == 0.0f);
+      CHECK(props.layers[0].meshes[2].scale == 1.0f);
+      CHECK(props.layers[0].meshes[2].sound.name == "");
+      CHECK(props.layers[0].meshes[2].sound.unknown0 == 0.0f);
+      CHECK(props.layers[0].meshes[2].sound.unknown1 == FLT_MAX);
+      CHECK(props.layers[0].meshes[2].collision_sound == "");
+      CHECK(props.layers[0].meshes[2].ai_visibility_factor_min == 1.0f);
+      CHECK(props.layers[0].meshes[2].ai_visibility_factor_max == 1.0f);
+      CHECK(props.layers[0].meshes[2].color_variation == 0.0f);
+      CHECK(props.layers[0].meshes[2].use_collision == false);
+      CHECK(props.layers[0].meshes[2].lighting == false);
+      CHECK(props.layers[0].meshes[2].max_distance == 1000.0f);
+      CHECK(props.layers[0].meshes[2].stiffness == 0.0f);
+      CHECK(props.layers[0].meshes[2].frequency == 1.0f);
+   }
+
+   // tree line checks
+   {
+      REQUIRE(props.tree_lines.size() == 2);
+
+      CHECK(props.tree_lines[0].distance == 16.0f);
+      CHECK(props.tree_lines[0].flip == false);
+
+      REQUIRE(props.tree_lines[0].border_odfs.size() == 3);
+      CHECK(props.tree_lines[0].border_odfs[0].name == "tree0");
+      CHECK(props.tree_lines[0].border_odfs[1].name == "tree1");
+      CHECK(props.tree_lines[0].border_odfs[2].name == "tree2");
+
+      CHECK(props.tree_lines[0].path_index == 0);
+      CHECK(is_unique_id(0, props.tree_lines));
+
+      CHECK(props.tree_lines[1].distance == 8.0f);
+      CHECK(props.tree_lines[1].flip);
+
+      REQUIRE(props.tree_lines[1].border_odfs.size() == 3);
+      CHECK(props.tree_lines[1].border_odfs[0].name == "tree3");
+      CHECK(props.tree_lines[1].border_odfs[1].name == "tree4");
+      CHECK(props.tree_lines[1].border_odfs[2].name == "tree5");
+
+      CHECK(props.tree_lines[1].path_index == 1);
+      CHECK(is_unique_id(1, props.tree_lines));
+   }
+}
+
 TEST_CASE("world loading broken animation links", "[World][IO]")
 {
    null_output_stream out;
@@ -939,4 +1043,5 @@ TEST_CASE("world loading portal sector broken links", "[World][IO]")
    REQUIRE(world.portals[0].sector2.has_name());
    CHECK(world.portals[0].sector2.name() == "Sector1");
 }
+
 }

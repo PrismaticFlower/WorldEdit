@@ -17,6 +17,7 @@
 #include "path.hpp"
 #include "planning.hpp"
 #include "portal.hpp"
+#include "props.hpp"
 #include "region.hpp"
 #include "requirement_list.hpp"
 #include "sector.hpp"
@@ -74,6 +75,8 @@ struct world {
 
    effects effects;
 
+   props foliage_props;
+
    /// @brief Vector of layers to garbage collect the files of at save time.
    std::vector<std::string> deleted_layers;
 
@@ -96,6 +99,7 @@ struct world {
       id_generator<animation> animations;
       id_generator<animation_group> animation_groups;
       id_generator<animation_hierarchy> animation_hierarchies;
+      id_generator<tree_line> tree_lines;
    } next_id;
 };
 

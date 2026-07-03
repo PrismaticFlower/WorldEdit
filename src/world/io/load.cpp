@@ -31,6 +31,8 @@ using namespace std::literals;
 
 namespace we::world {
 
+using string::iequals;
+
 namespace {
 
 // This can provide more clues as to when something went wrong with loading but also makes it 50x to 100x slower.
@@ -1374,6 +1376,166 @@ void load_requirements_files(const io::path& world_dir, world& world_out,
    }
 }
 
+void load_foliage_props(const io::path& filepath, world& world_out, output_stream& output)
+{
+   using namespace assets;
+
+   utility::stopwatch load_timer;
+
+   try {
+      for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
+         if (iequals(key_node.key, "Layer"sv)) {
+            const uint32 layer_index = key_node.values.get<uint32>(0);
+
+            if (layer_index >= world_out.foliage_props.layers.size()) {
+               output.write(
+                  "Warning! Foliage prop layer has out of range index. (Index: "
+                  "{} Max: {}) The layer will be skipped."
+                  "world when saved.\n",
+                  layer_index, world_out.foliage_props.layers.size() - 1);
+
+               continue;
+            }
+
+            foliage_layer& layer = world_out.foliage_props.layers[layer_index];
+
+            for (auto& child : key_node) {
+               if (iequals(child.key, "SpreadFactor"sv)) {
+                  layer.spread_factor = child.values.get<float>(0);
+               }
+               else if (iequals(child.key, "Mesh"sv)) {
+                  foliage_mesh& mesh = layer.meshes.emplace_back();
+
+                  for (auto& prop : child) {
+                     if (iequals(prop.key, "File"sv)) {
+                        const std::string_view file_name =
+                           prop.values.get<std::string_view>(0);
+
+                        mesh.file = {
+                           std::string{file_name.substr(0, file_name.find_last_of('.'))},
+                           prop.values.get<float>(1),
+                        };
+                     }
+                     else if (iequals(prop.key, "GrassPatch"sv)) {
+                        const std::string_view file_name =
+                           prop.values.get<std::string_view>(0);
+
+                        mesh.grass_patch = {
+                           std::string{file_name.substr(0, file_name.find_last_of('.'))},
+                           prop.values.get<float>(1),
+                        };
+                     }
+                     else if (iequals(prop.key, "LeafPatch"sv)) {
+                        const std::string_view file_name =
+                           prop.values.get<std::string_view>(0);
+
+                        mesh.leaf_patch = {
+                           std::string{file_name.substr(0, file_name.find_last_of('.'))},
+                           prop.values.get<float>(1),
+                        };
+                     }
+                     else if (iequals(prop.key, "FadeDist"sv)) {
+                        mesh.fade_distance = prop.values.get<float>(0);
+                     }
+                     else if (iequals(prop.key, "Scale"sv)) {
+                        mesh.scale = prop.values.get<float>(0);
+                     }
+                     else if (iequals(prop.key, "Sound"sv)) {
+                        mesh.sound = {prop.values.get<std::string>(0),
+                                      prop.values.get<float>(1),
+                                      prop.values.get<float>(2)};
+                     }
+                     else if (iequals(prop.key, "CollisionSound"sv)) {
+                        mesh.collision_sound = prop.values.get<std::string>(0);
+                     }
+                     else if (iequals(prop.key, "AIVisibilityFactor"sv)) {
+                        mesh.ai_visibility_factor_min = prop.values.get<float>(0);
+                        mesh.ai_visibility_factor_max = prop.values.get<float>(1);
+                     }
+                     else if (iequals(prop.key, "ColorVariation"sv)) {
+                        mesh.color_variation = prop.values.get<float>(0);
+                     }
+                     else if (iequals(prop.key, "UseCollision"sv)) {
+                        mesh.use_collision = true;
+                     }
+                     else if (iequals(prop.key, "Lighting"sv)) {
+                        mesh.lighting = prop.values.get<int>(0) != 0;
+                     }
+                     else if (iequals(prop.key, "MaxDist"sv)) {
+                        mesh.max_distance = prop.values.get<float>(0);
+                     }
+                     else if (iequals(prop.key, "Frequency"sv)) {
+                        mesh.frequency = prop.values.get<float>(0);
+                     }
+                     else if (iequals(prop.key, "Stiffness"sv)) {
+                        mesh.stiffness = prop.values.get<float>(0);
+                     }
+                  }
+               }
+            }
+         }
+         else if (key_node.key == "TreeLine"sv) {
+            for (auto& child : key_node) {
+               if (child.key != "Path") continue;
+
+               std::string path_name = child.values.get<std::string>(0);
+               uint32 path_index = UINT32_MAX;
+
+               if (const path* path = find_entity(world_out.paths, path_name); path) {
+                  path_index = static_cast<uint32>((path - world_out.paths.data()));
+               }
+               else {
+                  output.write("Warning! Tree line references missing path "
+                               "('{}'). It will be dropped.\n",
+                               path_name);
+
+                  continue;
+               }
+
+               check_space("tree lines", world_out.foliage_props.tree_lines);
+
+               tree_line& tree_line =
+                  world_out.foliage_props.tree_lines.emplace_back();
+
+               tree_line.path_index = path_index;
+               tree_line.id = world_out.next_id.tree_lines.aquire();
+
+               for (auto& prop : child) {
+                  if (iequals(prop.key, "Distance"sv)) {
+                     tree_line.distance = prop.values.get<float>(0);
+                  }
+                  else if (iequals(prop.key, "BorderOdf"sv)) {
+                     const std::string_view file_name =
+                        prop.values.get<std::string_view>(0);
+
+                     if (tree_line.border_odfs.size() < max_tree_line_border_odfs) {
+                        tree_line.border_odfs.push_back({std::string{
+                           file_name.substr(0, file_name.find_last_of('.'))}});
+                     }
+                     else {
+                        output.write("Warning! Tree line has too many border "
+                                     "ODFs. Dropping'{}'\n",
+                                     file_name);
+                     }
+                  }
+                  else if (iequals(prop.key, "Flip"sv)) {
+                     tree_line.flip = prop.values.get<int>(0) != 0;
+                  }
+               }
+            }
+         }
+      }
+   }
+   catch (std::exception& e) {
+      throw load_failure{fmt::format("Failed to load foliage props file.\n   "
+                                     "File: {}\n   Message: \n{}\n",
+                                     filepath.string_view(),
+                                     string::indent(2, e.what()))};
+   }
+
+   output.write("Loaded foliage props (time taken {:f}ms)\n", load_timer.elapsed_ms());
+}
+
 auto load_configuration(const io::path& filepath, output_stream& output) -> configuration
 {
    using namespace assets;
@@ -1704,6 +1866,11 @@ auto load_world(const io::path& path, const configuration& default_configuration
       if (const auto blk_path = io::compose_path(world_dir, world.name, ".blk"sv);
           io::exists(blk_path)) {
          world.blocks = load_blocks(blk_path, layer_remap, output);
+      }
+
+      if (const auto prp_path = io::compose_path(world_dir, world.name, ".prp"sv);
+          io::exists(prp_path)) {
+         load_foliage_props(prp_path, world, output);
       }
 
       if (const auto configuration_path =

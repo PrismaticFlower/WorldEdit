@@ -860,6 +860,125 @@ void save_animations(const io::path& path, const world& world)
    }
 }
 
+void save_foliage_props(const io::path& path, const world& world)
+{
+   io::output_file file{path};
+
+   const foliage_mesh default_mesh;
+
+   for (std::size_t layer_index = 0;
+        layer_index < world.foliage_props.layers.size(); ++layer_index) {
+      const foliage_layer& layer = world.foliage_props.layers[layer_index];
+
+      if (layer.meshes.empty()) continue;
+
+      file.write_ln("Layer({})", layer_index);
+      file.write_ln("{");
+
+      if (layer.spread_factor != foliage_layer{}.spread_factor) {
+         file.write_ln("\tSpreadFactor({});", layer.spread_factor);
+      }
+
+      for (const foliage_mesh& mesh : layer.meshes) {
+         file.write_ln("\tMesh()", layer_index);
+         file.write_ln("\t{");
+
+         if (not mesh.file.name.empty()) {
+            file.write_ln("\t\tFile(\"{}.msh\", {});", mesh.file.name,
+                          mesh.file.max_distance);
+         }
+
+         if (not mesh.grass_patch.name.empty()) {
+            file.write_ln("\t\tGrassPatch(\"{}.odf\", {});",
+                          mesh.grass_patch.name, mesh.grass_patch.max_distance);
+         }
+
+         if (not mesh.leaf_patch.name.empty()) {
+            file.write_ln("\t\tLeafPatch(\"{}.odf\", {});",
+                          mesh.leaf_patch.name, mesh.leaf_patch.max_distance);
+         }
+
+         if (mesh.fade_distance != default_mesh.fade_distance) {
+            file.write_ln("\t\tFadeDist({});", mesh.fade_distance);
+         }
+
+         if (mesh.scale != default_mesh.scale) {
+            file.write_ln("\t\tScale({});", mesh.scale);
+         }
+
+         if (not mesh.sound.name.empty()) {
+            file.write_ln("\t\tSound(\"{}\", {}, {});", mesh.sound.name,
+                          mesh.sound.unknown0, mesh.sound.unknown1);
+         }
+
+         if (not mesh.collision_sound.empty()) {
+            file.write_ln("\t\tCollisionSound(\"{}\");", mesh.collision_sound);
+         }
+
+         if (mesh.ai_visibility_factor_min != default_mesh.ai_visibility_factor_min or
+             mesh.ai_visibility_factor_max != default_mesh.ai_visibility_factor_max) {
+            file.write_ln("\t\tAIVisibilityFactor({}, {});",
+                          mesh.ai_visibility_factor_min,
+                          mesh.ai_visibility_factor_max);
+         }
+
+         if (mesh.color_variation != default_mesh.color_variation) {
+            file.write_ln("\t\tColorVariation({});", mesh.color_variation);
+         }
+
+         if (mesh.use_collision) {
+            file.write_ln("\t\tUseCollision();");
+         }
+
+         if (mesh.lighting) {
+            file.write_ln("\t\tLighting(1);");
+         }
+
+         if (mesh.max_distance != default_mesh.max_distance) {
+            file.write_ln("\t\tMaxDist({});", mesh.max_distance);
+         }
+
+         if (mesh.frequency != default_mesh.frequency) {
+            file.write_ln("\t\tFrequency({});", mesh.frequency);
+         }
+
+         if (mesh.stiffness != default_mesh.stiffness) {
+            file.write_ln("\t\tStiffness({});", mesh.stiffness);
+         }
+
+         file.write_ln("\t}");
+      }
+
+      file.write_ln("}\n");
+   }
+
+   if (not world.foliage_props.tree_lines.empty()) {
+      file.write_ln("TreeLine()");
+      file.write_ln("{");
+
+      for (const tree_line& tree_line : world.foliage_props.tree_lines) {
+         file.write_ln("\tPath(\"{}\")", world.paths[tree_line.path_index].name);
+         file.write_ln("\t{");
+
+         if (tree_line.distance != 0.0f) {
+            file.write_ln("\t\tDistance({});", tree_line.distance);
+         }
+
+         for (const tree_line_odf& odf : tree_line.border_odfs) {
+            file.write_ln("\t\tBorderOdf(\"{}.odf\");", odf.name);
+         }
+
+         if (tree_line.flip) {
+            file.write_ln("\t\tFlip(1);");
+         }
+
+         file.write_ln("\t}");
+      }
+
+      file.write_ln("}");
+   }
+}
+
 /// @brief Saves a world layer.
 /// @param world_dir The directory to save the layer into.
 /// @param layer_name The name of the layer ie `test` or `test_conquest`.
@@ -1074,6 +1193,8 @@ void save_world(const io::path& path, const world& world,
    save_measurements(io::compose_path(world_dir, world_name, ".msr"sv), world);
 
    save_animations(io::compose_path(world_dir, world_name, ".anm"sv), world);
+
+   save_foliage_props(io::compose_path(world_dir, world_name, ".prp"sv), world);
 
    for (std::size_t i = 1; i < world.layer_descriptions.size(); ++i) {
       auto& layer = world.layer_descriptions[i];

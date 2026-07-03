@@ -2180,6 +2180,163 @@ SaveSkyReference(0);
    CHECK(written_configuration == expected_configuration);
 }
 
+TEST_CASE("world saving prp", "[World][IO]")
+{
+   (void)io::create_directory("temp/world_prp");
+
+   const world world{
+      .name = "test",
+
+      .requirements = {},
+
+      .layer_descriptions = {{.name = "[Base]"}},
+
+      .game_modes = {},
+      .common_layers = {0},
+
+      .paths = {entities_init,
+                std::initializer_list{
+                   path{.name = "treeline",
+                        .nodes = {path::node{
+                                     .rotation = {0.0f, -0.0f, 1.0f, -0.0f},
+                                     .position = {-2.006914f, -0.002500f, -56.238541f},
+                                  },
+
+                                  path::node{
+                                     .rotation = {0.710354f, -0.0f, 0.703845f, -0.0f},
+                                     .position = {-0.484701f, -0.002500f, -54.641960f},
+                                  }}
+
+                   },
+
+                   path{.name = "treeline1",
+                        .nodes = {path::node{
+                                     .rotation = {0.0f, -0.0f, 1.0f, -0.0f},
+                                     .position = {-2.006914f, -0.002500f, -56.238541f},
+                                  },
+
+                                  path::node{
+                                     .rotation = {0.710354f, -0.0f, 0.703845f, -0.0f},
+                                     .position = {-0.484701f, -0.002500f, -54.641960f},
+                                  }}},
+                }},
+
+      .foliage_props =
+         {
+            .layers =
+               {
+                  foliage_layer{
+
+                     .spread_factor = 0.1f,
+                     .meshes =
+                        {
+                           pinned_vector_init{.max_size = max_foliage_layer_meshes},
+                           std::initializer_list{
+                              foliage_mesh{
+                                 .file = {"editor_grasspatch", 40.0f},
+                                 .grass_patch = {"grass", 50.0f},
+                                 .fade_distance = 50.0f,
+                                 .scale = 1.25f,
+                                 .sound = {"woosh", 4.0f, 8.0f},
+                                 .collision_sound = "boosh",
+                                 .ai_visibility_factor_min = 0.1f,
+                                 .ai_visibility_factor_max = 0.5f,
+                                 .color_variation = 0.125f,
+                                 .use_collision = true,
+                                 .lighting = true,
+                                 .frequency = 100.0f,
+                                 .stiffness = 0.5f,
+                                 .max_distance = 20.0f,
+                              },
+                              foliage_mesh{
+                                 .file = {"editor_leafpatch", 40.0f},
+                                 .leaf_patch = {"leaves", 50.0f},
+                              },
+                              foliage_mesh{
+                                 .file = {"tree", 40.0f},
+                              },
+                           },
+                        },
+                  },
+               },
+
+            .tree_lines =
+               {
+                  pinned_vector_init{.max_size = max_tree_lines},
+                  std::initializer_list{
+                     tree_line{
+                        .distance = 16.0f,
+                        .border_odfs = {{"tree0"}, {"tree1"}, {"tree2"}},
+                        .path_index = 0,
+                     },
+                     tree_line{
+                        .distance = 8.0f,
+                        .border_odfs = {{"tree3"}, {"tree4"}, {"tree5"}},
+                        .flip = true,
+                        .path_index = 1,
+                     },
+                  },
+               },
+         },
+   };
+
+   save_world("temp/world_prp/test.wld", world, {});
+
+   const auto expected_prp = R"(Layer(0)
+{
+	SpreadFactor(0.1);
+	Mesh()
+	{
+		File("editor_grasspatch.msh", 40);
+		GrassPatch("grass.odf", 50);
+		FadeDist(50);
+		Scale(1.25);
+		Sound("woosh", 4, 8);
+		CollisionSound("boosh");
+		AIVisibilityFactor(0.1, 0.5);
+		ColorVariation(0.125);
+		UseCollision();
+		Lighting(1);
+		MaxDist(20);
+		Frequency(100);
+		Stiffness(0.5);
+	}
+	Mesh()
+	{
+		File("editor_leafpatch.msh", 40);
+		LeafPatch("leaves.odf", 50);
+	}
+	Mesh()
+	{
+		File("tree.msh", 40);
+	}
+}
+
+TreeLine()
+{
+	Path("treeline")
+	{
+		Distance(16);
+		BorderOdf("tree0.odf");
+		BorderOdf("tree1.odf");
+		BorderOdf("tree2.odf");
+	}
+	Path("treeline1")
+	{
+		Distance(8);
+		BorderOdf("tree3.odf");
+		BorderOdf("tree4.odf");
+		BorderOdf("tree5.odf");
+		Flip(1);
+	}
+}
+)"sv;
+
+   const auto written_prp = io::read_file_to_string("temp/world_prp/test.prp");
+
+   CHECK(written_prp == expected_prp);
+}
+
 TEST_CASE("world saving animation links", "[World][IO]")
 {
    (void)io::create_directory("temp/world_anim_link");

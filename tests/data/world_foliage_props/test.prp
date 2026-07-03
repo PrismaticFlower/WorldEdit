@@ -1,0 +1,48 @@
+Layer(0)
+{
+   SpreadFactor(0.1);
+   Mesh()
+   {
+      File("editor_grasspatch.msh", 40);
+      GrassPatch("grass.odf", 50);
+      FadeDist(50);
+      Scale(1.25);
+      Sound("woosh", 4, 8);
+      CollisionSound("boosh");
+      AIVisibilityFactor(0.1, 0.5);
+      ColorVariation(0.125);
+      UseCollision();
+      Lighting(1);
+      MaxDist(20);
+      Frequency(100);
+      Stiffness(0.5);
+   }
+   Mesh()
+   {
+      File("editor_leafpatch.msh", 40);
+      LeafPatch("leaves.odf", 50);
+   }
+   Mesh()
+   {
+      File("tree.msh", 40);
+   }
+}
+
+TreeLine()
+{
+   Path("treeline")
+   {
+      Distance(16);
+      BorderOdf("tree0.odf");
+      BorderOdf("tree1.odf");
+      BorderOdf("tree2.odf");
+   }
+   Path("treeline1")
+   {
+      Distance(8);
+      BorderOdf("tree3.odf");
+      BorderOdf("tree4.odf");
+      BorderOdf("tree5.odf");
+      Flip(1);
+   }
+}
