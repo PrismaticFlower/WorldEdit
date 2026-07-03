@@ -21,6 +21,8 @@ using world::object;
 using world::path;
 using world::region;
 using world::sector;
+using world::tree_line;
+using world::tree_line_odf;
 
 const we::world::world layer_delete_test_world = {
    .name = "Test"s,
@@ -162,6 +164,59 @@ TEST_CASE("edits delete_layer", "[Edits]")
    CHECK(world.deleted_layers == layer_delete_test_world.deleted_layers);
 }
 
+TEST_CASE("edits delete_layer tree line", "[Edits]")
+{
+   world::object_class_library object_class_library{null_asset_libraries()};
+   world::world world = {
+      .name = "Test"s,
+
+      .requirements = {{.file_type = "world",
+                        .entries = {"Test", "Test_Middle", "Test_Top"}}},
+
+      .layer_descriptions = {{.name = "[Base]"}, {.name = "Middle"}, {.name = "Top"}},
+      .game_modes =
+         {
+            {
+               .name = "conquest",
+               .layers = {1},
+               .requirements = {{
+                  .file_type = "world",
+                  .entries = {"Test_Middle"},
+               }},
+            },
+         },
+      .common_layers = {0, 1, 2},
+
+      .paths = {world::entities_init,
+                std::initializer_list{
+                   path{.name = "Path0", .layer = 0},
+                }},
+
+      .tree_lines =
+         {
+            pinned_vector_init{.max_size = world::max_tree_lines},
+            std::initializer_list{
+               tree_line{
+                  .path_index = 0,
+               },
+            },
+         },
+   };
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_delete_layer(0, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   CHECK(world.tree_lines.size() == 0);
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.tree_lines.size() == 1);
+   CHECK(world.tree_lines[0].path_index == 0);
+}
+
 TEST_CASE("edits delete_layer object class handle liftime", "[Edits]")
 {
    world::world world = layer_delete_test_world;
@@ -200,6 +255,81 @@ TEST_CASE("edits delete_layer object class handle liftime", "[Edits]")
    CHECK(object_class_library.debug_ref_count(object_class_names[2]) == 1);
    CHECK(object_class_library.debug_ref_count(object_class_names[3]) == 1);
    CHECK(object_class_library.debug_ref_count(object_class_names[4]) == 1);
+}
+
+TEST_CASE("edits delete_layer tree line class handle liftime", "[Edits]")
+{
+   world::object_class_library object_class_library{null_asset_libraries()};
+   world::world world = {
+      .name = "Test"s,
+
+      .requirements = {{.file_type = "world",
+                        .entries = {"Test", "Test_Middle", "Test_Top"}}},
+
+      .layer_descriptions = {{.name = "[Base]"}, {.name = "Middle"}, {.name = "Top"}},
+      .game_modes =
+         {
+            {
+               .name = "conquest",
+               .layers = {1},
+               .requirements = {{
+                  .file_type = "world",
+                  .entries = {"Test_Middle"},
+               }},
+            },
+         },
+      .common_layers = {0, 1, 2},
+
+      .paths = {world::entities_init,
+                std::initializer_list{
+                   path{.name = "Path0", .layer = 0},
+                }},
+
+      .tree_lines =
+         {
+            pinned_vector_init{.max_size = world::max_tree_lines},
+            std::initializer_list{
+               tree_line{
+                  .border_odfs =
+                     {
+                        tree_line_odf{
+                           .name = "tree1",
+                           .handle = object_class_library.acquire(lowercase_string{"tree1"sv}),
+                        },
+                        tree_line_odf{
+                           .name = "tree2",
+                           .handle = object_class_library.acquire(lowercase_string{"tree2"sv}),
+                        },
+                        tree_line_odf{
+                           .name = "tree1",
+                           .handle = object_class_library.acquire(lowercase_string{"tree1"sv}),
+                        },
+                        tree_line_odf{
+                           .name = "tree3",
+                           .handle = object_class_library.acquire(lowercase_string{"tree3"sv}),
+                        },
+                     },
+                  .path_index = 0,
+               },
+            },
+         },
+   };
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_delete_layer(0, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   CHECK(object_class_library.debug_ref_count(lowercase_string{"tree1"sv}) == 0);
+   CHECK(object_class_library.debug_ref_count(lowercase_string{"tree2"sv}) == 0);
+   CHECK(object_class_library.debug_ref_count(lowercase_string{"tree3"sv}) == 0);
+
+   edit->revert(edit_context);
+
+   CHECK(object_class_library.debug_ref_count(lowercase_string{"tree1"sv}) == 2);
+   CHECK(object_class_library.debug_ref_count(lowercase_string{"tree2"sv}) == 1);
+   CHECK(object_class_library.debug_ref_count(lowercase_string{"tree3"sv}) == 1);
 }
 
 TEST_CASE("edits delete_layer blocks", "[Edits]")
@@ -894,6 +1024,92 @@ TEST_CASE("edits delete_layer adjust object indices", "[Edits]")
    CHECK(world.animation_hierarchies[0].objects[7] == 7);
    CHECK(world.animation_hierarchies[0].objects[8] == 8);
    CHECK(world.animation_hierarchies[0].objects[9] == 9);
+}
+
+TEST_CASE("edits delete_layer adjust path indices", "[Edits]")
+{
+   world::world world = {
+      .name = "Test"s,
+
+      .requirements = {{.file_type = "world",
+                        .entries = {"Test", "Test_Middle", "Test_Top", "Test_Unlinked"}}},
+
+      .layer_descriptions = {{.name = "[Base]"},
+                             {.name = "Middle"},
+                             {.name = "Top"},
+                             {.name = "Unlinked"}},
+      .game_modes =
+         {
+            {
+               .name = "conquest",
+               .layers = {1},
+               .requirements = {{
+                  .file_type = "world",
+                  .entries = {"Test_Middle"},
+               }},
+            },
+         },
+      .common_layers = {0, 2, 3},
+
+      .paths = {world::entities_init,
+                std::initializer_list{
+                   path{.name = "Path0", .layer = 3},
+                   path{.name = "Path1", .layer = 3},
+                   path{.name = "Path2", .layer = 2},
+                   path{.name = "Path3", .layer = 1},
+                   path{.name = "Path4", .layer = 3},
+                   path{.name = "Path5", .layer = 3},
+                   path{.name = "Path6", .layer = 3},
+                   path{.name = "Path7", .layer = 1},
+                   path{.name = "Path8", .layer = 1},
+                   path{.name = "Path9", .layer = 1},
+                }},
+
+      .tree_lines =
+         {
+            {.max_size = 10},
+            std::initializer_list{
+               tree_line{.path_index = 0},
+               tree_line{.path_index = 1},
+               tree_line{.path_index = 2},
+               tree_line{.path_index = 3},
+               tree_line{.path_index = 4},
+               tree_line{.path_index = 5},
+               tree_line{.path_index = 6},
+               tree_line{.path_index = 7},
+               tree_line{.path_index = 8},
+               tree_line{.path_index = 9},
+            },
+         },
+   };
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   auto edit = make_delete_layer(3, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.tree_lines.size() == 5);
+   CHECK(world.tree_lines[0].path_index == 0);
+   CHECK(world.tree_lines[1].path_index == 1);
+   CHECK(world.tree_lines[2].path_index == 2);
+   CHECK(world.tree_lines[3].path_index == 3);
+   CHECK(world.tree_lines[4].path_index == 4);
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.tree_lines.size() == 10);
+   CHECK(world.tree_lines[0].path_index == 0);
+   CHECK(world.tree_lines[1].path_index == 1);
+   CHECK(world.tree_lines[2].path_index == 2);
+   CHECK(world.tree_lines[3].path_index == 3);
+   CHECK(world.tree_lines[4].path_index == 4);
+   CHECK(world.tree_lines[5].path_index == 5);
+   CHECK(world.tree_lines[6].path_index == 6);
+   CHECK(world.tree_lines[7].path_index == 7);
+   CHECK(world.tree_lines[8].path_index == 8);
+   CHECK(world.tree_lines[9].path_index == 9);
 }
 
 TEST_CASE("edits delete_layer unlink paths", "[Edits]")

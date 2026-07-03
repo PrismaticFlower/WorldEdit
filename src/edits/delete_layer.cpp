@@ -31,6 +31,11 @@ struct unlinked_object_property {
    std::string value;
 };
 
+struct path_link_record {
+   uint32 referer_index = 0;
+   uint32 path_index = 0;
+};
+
 struct unlinked_path_property {
    uint32 path_index = 0;
    uint32 property_index = 0;
@@ -137,6 +142,7 @@ struct delete_layer_data {
    unlinked_properties unlinked_properties;
 
    std::vector<uint32> object_link_adjustments;
+   std::vector<uint32> path_link_adjustments;
 
    std::vector<remap_entry<world::object>> remap_objects;
    std::vector<remap_entry<world::light>> remap_lights;
@@ -159,6 +165,7 @@ struct delete_layer_data {
    std::vector<delete_entry<world::path>> delete_paths;
    std::vector<delete_entry<world::region>> delete_regions;
    std::vector<delete_entry<world::hintnode>> delete_hintnodes;
+   std::vector<delete_entry<world::tree_line>> delete_tree_lines;
    std::vector<delete_entry_req> delete_requirements;
    std::vector<delete_entry_game_mode> delete_game_mode_entries;
    std::vector<delete_entry_req_game_mode> delete_game_mode_requirements;
@@ -342,8 +349,8 @@ auto make_unlink_properties(int layer_index, const world::world& world) -> unlin
    return unlinked_properties;
 }
 
-auto make_object_link_adjustments(int layer_index,
-                                  const pinned_vector<world::object>& entities)
+template<typename T>
+auto make_entity_link_adjustments(int layer_index, const pinned_vector<T>& entities)
    -> std::vector<uint32>
 {
    std::size_t count = 0;
@@ -524,6 +531,42 @@ void revert_object_link_adjustments(
    animation_group_adjustments.clear();
    animation_hierarchy_root_adjustments.clear();
    animation_hierarchy_adjustments.clear();
+}
+
+void apply_path_link_adjustments(world::world& world,
+                                 std::span<const uint32> link_adjustments,
+                                 std::vector<path_link_record>& tree_line_adjustments)
+{
+   if (link_adjustments.empty()) return;
+
+   tree_line_adjustments.clear();
+
+   for (uint32 tree_line_index = 0; tree_line_index < world.tree_lines.size();
+        ++tree_line_index) {
+      world::tree_line& tree_line = world.tree_lines[tree_line_index];
+
+      auto it = std::lower_bound(link_adjustments.begin(),
+                                 link_adjustments.end(), tree_line.path_index);
+
+      if (it != link_adjustments.begin()) {
+         tree_line_adjustments.push_back({
+            .referer_index = tree_line_index,
+            .path_index = tree_line.path_index,
+         });
+
+         tree_line.path_index -= static_cast<uint32>(it - link_adjustments.begin());
+      }
+   }
+}
+
+void revert_path_link_adjustments(world::world& world,
+                                  std::vector<path_link_record>& tree_line_adjustments)
+{
+   for (path_link_record& record : tree_line_adjustments) {
+      world.tree_lines[record.referer_index].path_index = record.path_index;
+   }
+
+   tree_line_adjustments.clear();
 }
 
 template<typename T>
@@ -837,6 +880,31 @@ auto make_delete_entries(int layer_index, const pinned_vector<T>& entities)
    return entries;
 }
 
+auto make_delete_entries(int layer_index,
+                         const pinned_vector<world::tree_line>& tree_lines,
+                         const pinned_vector<world::path>& paths)
+   -> std::vector<delete_entry<world::tree_line>>
+{
+   std::size_t count = 0;
+
+   for (const world::tree_line& tree_line : tree_lines) {
+      if (paths[tree_line.path_index].layer == layer_index) count += 1;
+   }
+
+   std::vector<delete_entry<world::tree_line>> entries;
+   entries.reserve(count);
+
+   for (uint32 i = 0; i < tree_lines.size(); ++i) {
+      const world::tree_line& tree_line = tree_lines[i];
+
+      if (paths[tree_line.path_index].layer == layer_index) {
+         entries.emplace_back(i, tree_lines[i]);
+      }
+   }
+
+   return entries;
+}
+
 auto make_requirements_delete_entries(const std::string_view layer_file_name,
                                       const std::span<const world::requirement_list> requirements)
    -> std::vector<delete_entry_req>
@@ -1030,6 +1098,34 @@ void revert_delete_entries(pinned_vector<world::object>& entities,
 
       entities[index].class_handle =
          object_class_library.acquire(entities[index].class_name);
+   }
+}
+
+void apply_delete_entries(pinned_vector<world::tree_line>& entities,
+                          std::span<const delete_entry<world::tree_line>> entries,
+                          world::object_class_library& object_class_library)
+{
+   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
+      const auto& [index, entity] = entries[i];
+
+      for (const world::tree_line_odf& odf : entities[index].border_odfs) {
+         object_class_library.free(odf.handle);
+      }
+
+      entities.erase(entities.begin() + index);
+   }
+}
+
+void revert_delete_entries(pinned_vector<world::tree_line>& entities,
+                           std::span<const delete_entry<world::tree_line>> entries,
+                           world::object_class_library& object_class_library)
+{
+   for (const auto& [index, entity] : entries) {
+      entities.insert(entities.begin() + index, entity);
+
+      for (world::tree_line_odf& odf : entities[index].border_odfs) {
+         odf.handle = object_class_library.acquire(lowercase_string{odf.name});
+      }
    }
 }
 
@@ -1258,6 +1354,9 @@ struct delete_layer final : edit<world::edit_context> {
                                     _animation_hierarchy_root_adjustments,
                                     _animation_hierarchy_object_link_adjustments);
 
+      apply_path_link_adjustments(world, _data.path_link_adjustments,
+                                  _tree_line_path_link_adjustments);
+
       apply_remap_entries(world.objects, _data.remap_objects);
       apply_remap_entries(world.lights, _data.remap_lights);
       apply_remap_entries(world.paths, _data.remap_paths);
@@ -1280,6 +1379,8 @@ struct delete_layer final : edit<world::edit_context> {
       apply_delete_entries(world.paths, _data.delete_paths);
       apply_delete_entries(world.regions, _data.delete_regions);
       apply_delete_entries(world.hintnodes, _data.delete_hintnodes);
+      apply_delete_entries(world.tree_lines, _data.delete_tree_lines,
+                           _object_class_library);
       apply_delete_entries(world.requirements, _data.delete_requirements);
       apply_delete_entries(world.game_modes, _data.delete_game_mode_entries);
       apply_delete_entries(world.game_modes, _data.delete_game_mode_requirements);
@@ -1307,6 +1408,8 @@ struct delete_layer final : edit<world::edit_context> {
       revert_delete_entries(world.paths, _data.delete_paths);
       revert_delete_entries(world.regions, _data.delete_regions);
       revert_delete_entries(world.hintnodes, _data.delete_hintnodes);
+      revert_delete_entries(world.tree_lines, _data.delete_tree_lines,
+                            _object_class_library);
       revert_delete_entries(world.requirements, _data.delete_requirements);
       revert_delete_entries(world.game_modes, _data.delete_game_mode_entries,
                             _data.index);
@@ -1339,6 +1442,8 @@ struct delete_layer final : edit<world::edit_context> {
       revert_remap_entries(world.blocks.pyramids.layer,
                            _data.remap_blocks_terrain_cut_boxes);
 
+      revert_path_link_adjustments(world, _tree_line_path_link_adjustments);
+
       revert_object_link_adjustments(world, _sector_object_link_adjustments,
                                      _hintnode_object_link_adjustments,
                                      _animation_group_object_link_adjustments,
@@ -1364,6 +1469,8 @@ private:
    std::vector<root_object_link_record> _animation_hierarchy_root_adjustments;
    std::vector<object_link_record> _animation_hierarchy_object_link_adjustments;
 
+   std::vector<path_link_record> _tree_line_path_link_adjustments;
+
    world::object_class_library& _object_class_library;
 };
 }
@@ -1383,7 +1490,9 @@ auto make_delete_layer(int layer_index, const world::world& world,
          .unlinked_properties = make_unlink_properties(layer_index, world),
 
          .object_link_adjustments =
-            make_object_link_adjustments(layer_index, world.objects),
+            make_entity_link_adjustments(layer_index, world.objects),
+         .path_link_adjustments =
+            make_entity_link_adjustments(layer_index, world.paths),
 
          .remap_objects = make_remap_entries(layer_index, world.objects),
          .remap_lights = make_remap_entries(layer_index, world.lights),
@@ -1414,6 +1523,8 @@ auto make_delete_layer(int layer_index, const world::world& world,
          .delete_paths = make_delete_entries(layer_index, world.paths),
          .delete_regions = make_delete_entries(layer_index, world.regions),
          .delete_hintnodes = make_delete_entries(layer_index, world.hintnodes),
+         .delete_tree_lines =
+            make_delete_entries(layer_index, world.tree_lines, world.paths),
          .delete_requirements =
             make_requirements_delete_entries(file_name, world.requirements),
          .delete_game_mode_entries =
