@@ -866,9 +866,9 @@ void save_foliage_props(const io::path& path, const world& world)
 
    const foliage_mesh default_mesh;
 
-   for (std::size_t layer_index = 0;
-        layer_index < world.foliage_props.layers.size(); ++layer_index) {
-      const foliage_layer& layer = world.foliage_props.layers[layer_index];
+   for (std::size_t layer_index = 0; layer_index < world.foliage_layers.size();
+        ++layer_index) {
+      const foliage_layer& layer = world.foliage_layers[layer_index];
 
       if (layer.meshes.empty()) continue;
 
@@ -952,11 +952,11 @@ void save_foliage_props(const io::path& path, const world& world)
       file.write_ln("}\n");
    }
 
-   if (not world.foliage_props.tree_lines.empty()) {
+   if (not world.tree_lines.empty()) {
       file.write_ln("TreeLine()");
       file.write_ln("{");
 
-      for (const tree_line& tree_line : world.foliage_props.tree_lines) {
+      for (const tree_line& tree_line : world.tree_lines) {
          file.write_ln("\tPath(\"{}\")", world.paths[tree_line.path_index].name);
          file.write_ln("\t{");
 

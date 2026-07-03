@@ -2221,62 +2221,59 @@ TEST_CASE("world saving prp", "[World][IO]")
                                   }}},
                 }},
 
-      .foliage_props =
+      .foliage_layers =
          {
-            .layers =
-               {
-                  foliage_layer{
+            foliage_layer{
 
-                     .spread_factor = 0.1f,
-                     .meshes =
-                        {
-                           pinned_vector_init{.max_size = max_foliage_layer_meshes},
-                           std::initializer_list{
-                              foliage_mesh{
-                                 .file = {"editor_grasspatch", 40.0f},
-                                 .grass_patch = {"grass", 50.0f},
-                                 .fade_distance = 50.0f,
-                                 .scale = 1.25f,
-                                 .sound = {"woosh", 4.0f, 8.0f},
-                                 .collision_sound = "boosh",
-                                 .ai_visibility_factor_min = 0.1f,
-                                 .ai_visibility_factor_max = 0.5f,
-                                 .color_variation = 0.125f,
-                                 .use_collision = true,
-                                 .lighting = true,
-                                 .frequency = 100.0f,
-                                 .stiffness = 0.5f,
-                                 .max_distance = 20.0f,
-                              },
-                              foliage_mesh{
-                                 .file = {"editor_leafpatch", 40.0f},
-                                 .leaf_patch = {"leaves", 50.0f},
-                              },
-                              foliage_mesh{
-                                 .file = {"tree", 40.0f},
-                              },
-                           },
+               .spread_factor = 0.1f,
+               .meshes =
+                  {
+                     pinned_vector_init{.max_size = max_foliage_layer_meshes},
+                     std::initializer_list{
+                        foliage_mesh{
+                           .file = {"editor_grasspatch", 40.0f},
+                           .grass_patch = {"grass", 50.0f},
+                           .fade_distance = 50.0f,
+                           .scale = 1.25f,
+                           .sound = {"woosh", 4.0f, 8.0f},
+                           .collision_sound = "boosh",
+                           .ai_visibility_factor_min = 0.1f,
+                           .ai_visibility_factor_max = 0.5f,
+                           .color_variation = 0.125f,
+                           .use_collision = true,
+                           .lighting = true,
+                           .frequency = 100.0f,
+                           .stiffness = 0.5f,
+                           .max_distance = 20.0f,
                         },
+                        foliage_mesh{
+                           .file = {"editor_leafpatch", 40.0f},
+                           .leaf_patch = {"leaves", 50.0f},
+                        },
+                        foliage_mesh{
+                           .file = {"tree", 40.0f},
+                        },
+                     },
                   },
-               },
+            },
+         },
 
-            .tree_lines =
-               {
-                  pinned_vector_init{.max_size = max_tree_lines},
-                  std::initializer_list{
-                     tree_line{
-                        .distance = 16.0f,
-                        .border_odfs = {{"tree0"}, {"tree1"}, {"tree2"}},
-                        .path_index = 0,
-                     },
-                     tree_line{
-                        .distance = 8.0f,
-                        .border_odfs = {{"tree3"}, {"tree4"}, {"tree5"}},
-                        .flip = true,
-                        .path_index = 1,
-                     },
-                  },
+      .tree_lines =
+         {
+            pinned_vector_init{.max_size = max_tree_lines},
+            std::initializer_list{
+               tree_line{
+                  .distance = 16.0f,
+                  .border_odfs = {{"tree0"}, {"tree1"}, {"tree2"}},
+                  .path_index = 0,
                },
+               tree_line{
+                  .distance = 8.0f,
+                  .border_odfs = {{"tree3"}, {"tree4"}, {"tree5"}},
+                  .flip = true,
+                  .path_index = 1,
+               },
+            },
          },
    };
 

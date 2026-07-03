@@ -74,12 +74,6 @@ struct tree_line {
    id<tree_line> id;
 };
 
-struct props {
-   std::array<foliage_layer, 4> layers;
-   pinned_vector<tree_line> tree_lines =
-      pinned_vector_init{.max_size = max_tree_lines, .initial_capacity = 32};
-};
-
 using tree_line_id = id<tree_line>;
 
 }

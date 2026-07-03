@@ -75,7 +75,9 @@ struct world {
 
    effects effects;
 
-   props foliage_props;
+   std::array<foliage_layer, 4> foliage_layers;
+   pinned_vector<tree_line> tree_lines =
+      pinned_vector_init{.max_size = max_tree_lines, .initial_capacity = 32};
 
    /// @brief Vector of layers to garbage collect the files of at save time.
    std::vector<std::string> deleted_layers;

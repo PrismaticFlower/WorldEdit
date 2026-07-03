@@ -1387,17 +1387,17 @@ void load_foliage_props(const io::path& filepath, world& world_out, output_strea
          if (iequals(key_node.key, "Layer"sv)) {
             const uint32 layer_index = key_node.values.get<uint32>(0);
 
-            if (layer_index >= world_out.foliage_props.layers.size()) {
+            if (layer_index >= world_out.foliage_layers.size()) {
                output.write(
                   "Warning! Foliage prop layer has out of range index. (Index: "
                   "{} Max: {}) The layer will be skipped."
                   "world when saved.\n",
-                  layer_index, world_out.foliage_props.layers.size() - 1);
+                  layer_index, world_out.foliage_layers.size() - 1);
 
                continue;
             }
 
-            foliage_layer& layer = world_out.foliage_props.layers[layer_index];
+            foliage_layer& layer = world_out.foliage_layers[layer_index];
 
             for (auto& child : key_node) {
                if (iequals(child.key, "SpreadFactor"sv)) {
@@ -1492,10 +1492,9 @@ void load_foliage_props(const io::path& filepath, world& world_out, output_strea
                   continue;
                }
 
-               check_space("tree lines", world_out.foliage_props.tree_lines);
+               check_space("tree lines", world_out.tree_lines);
 
-               tree_line& tree_line =
-                  world_out.foliage_props.tree_lines.emplace_back();
+               tree_line& tree_line = world_out.tree_lines.emplace_back();
 
                tree_line.path_index = path_index;
                tree_line.id = world_out.next_id.tree_lines.aquire();

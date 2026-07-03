@@ -1274,31 +1274,27 @@ TEST_CASE("edits delete_entity path tree line ref", "[Edits]")
             },
          },
 
-      .foliage_props =
+      .tree_lines =
          {
-            .tree_lines =
-               {
-                  pinned_vector_init{.max_size = world::max_tree_lines},
-                  std::initializer_list{
-                     world::tree_line{
-                        .path_index = 0,
-                     },
-                     world::tree_line{
-                        .path_index = 1,
-                     },
-                     world::tree_line{
-                        .path_index = 0,
-                     },
-                     world::tree_line{
-                        .path_index = 2,
-                     },
-                     world::tree_line{
-                        .path_index = 0,
-                     },
-                  },
+            pinned_vector_init{.max_size = world::max_tree_lines},
+            std::initializer_list{
+               world::tree_line{
+                  .path_index = 0,
                },
+               world::tree_line{
+                  .path_index = 1,
+               },
+               world::tree_line{
+                  .path_index = 0,
+               },
+               world::tree_line{
+                  .path_index = 2,
+               },
+               world::tree_line{
+                  .path_index = 0,
+               },
+            },
          },
-
    };
 
    world::interaction_targets interaction_targets;
@@ -1309,18 +1305,18 @@ TEST_CASE("edits delete_entity path tree line ref", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(world.foliage_props.tree_lines.size() == 2);
-   CHECK(world.foliage_props.tree_lines[0].path_index == 1);
-   CHECK(world.foliage_props.tree_lines[1].path_index == 2);
+   REQUIRE(world.tree_lines.size() == 2);
+   CHECK(world.tree_lines[0].path_index == 1);
+   CHECK(world.tree_lines[1].path_index == 2);
 
    edit->revert(edit_context);
 
-   REQUIRE(world.foliage_props.tree_lines.size() == 5);
-   CHECK(world.foliage_props.tree_lines[0].path_index == 0);
-   CHECK(world.foliage_props.tree_lines[1].path_index == 1);
-   CHECK(world.foliage_props.tree_lines[2].path_index == 0);
-   CHECK(world.foliage_props.tree_lines[3].path_index == 2);
-   CHECK(world.foliage_props.tree_lines[4].path_index == 0);
+   REQUIRE(world.tree_lines.size() == 5);
+   CHECK(world.tree_lines[0].path_index == 0);
+   CHECK(world.tree_lines[1].path_index == 1);
+   CHECK(world.tree_lines[2].path_index == 0);
+   CHECK(world.tree_lines[3].path_index == 2);
+   CHECK(world.tree_lines[4].path_index == 0);
 }
 
 TEST_CASE("edits delete_entity path tree line class handle liftime", "[Edits]")
@@ -1343,39 +1339,34 @@ TEST_CASE("edits delete_entity path tree line class handle liftime", "[Edits]")
                   },
                },
 
-            .foliage_props =
+            .tree_lines =
                {
-                  .tree_lines =
-                     {
-                        pinned_vector_init{.max_size = world::max_tree_lines},
-                        std::initializer_list{
-                           world::tree_line{
-                              .border_odfs =
-                                 {
-                                    world::tree_line_odf{
-                                       .name = "tree1",
-                                       .handle = object_class_library.acquire(
-                                          lowercase_string{"tree1"sv}),
-                                    },
-                                    world::tree_line_odf{
-                                       .name = "tree2",
-                                       .handle = object_class_library.acquire(lowercase_string{"tree2"sv}),
-                                    },
-                                    world::tree_line_odf{
-                                       .name = "tree1",
-                                       .handle = object_class_library.acquire(lowercase_string{"tree1"sv}),
-                                    },
-                                    world::tree_line_odf{
-                                       .name = "tree3",
-                                       .handle = object_class_library.acquire(lowercase_string{"tree3"sv}),
-                                    },
-                                 },
-                              .path_index = 0,
+                  pinned_vector_init{.max_size = world::max_tree_lines},
+                  std::initializer_list{
+                     world::tree_line{
+                        .border_odfs =
+                           {
+                              world::tree_line_odf{
+                                 .name = "tree1",
+                                 .handle = object_class_library.acquire(lowercase_string{"tree1"sv}),
+                              },
+                              world::tree_line_odf{
+                                 .name = "tree2",
+                                 .handle = object_class_library.acquire(lowercase_string{"tree2"sv}),
+                              },
+                              world::tree_line_odf{
+                                 .name = "tree1",
+                                 .handle = object_class_library.acquire(lowercase_string{"tree1"sv}),
+                              },
+                              world::tree_line_odf{
+                                 .name = "tree3",
+                                 .handle = object_class_library.acquire(lowercase_string{"tree3"sv}),
+                              },
                            },
-                        },
+                        .path_index = 0,
                      },
+                  },
                },
-
          };
 
    world::interaction_targets interaction_targets;
