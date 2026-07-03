@@ -52,6 +52,25 @@ auto get_name(const world::animation_transition transition) -> const char*
    }
 }
 
+auto get_preview_group(const uint32 animation_index,
+                       const world::animation_group_id current_group_id,
+                       const world::world& world) -> const world::animation_group*
+{
+   if (const world::animation_group* group =
+          world::find_entity(world.animation_groups, current_group_id);
+       group) {
+      return group;
+   }
+
+   for (const world::animation_group& group : world.animation_groups) {
+      for (const world::animation_group::entry& entry : group.entries) {
+         if (entry.animation_index == animation_index) return &group;
+      }
+   }
+
+   return nullptr;
+}
+
 template<typename T>
 auto get_previous_key_time(const std::vector<T>& keys, const int32 index) noexcept
    -> float
@@ -698,6 +717,119 @@ void world_edit::ui_show_animation_editor() noexcept
                _animation_editor_context.selected.playback_state =
                   animation_playback_state::stopped;
                _animation_editor_context.selected.playback_time = 0.0f;
+            }
+
+            const uint32 selected_animation_index =
+               static_cast<uint32>(selected_animation - _world.animations.data());
+            const world::animation_group* preview_group =
+               get_preview_group(selected_animation_index,
+                                 _animation_editor_context.selected.preview_group_id,
+                                 _world);
+
+            if (preview_group) {
+               _animation_editor_context.selected.preview_group_id =
+                  preview_group->id;
+
+               if (ImGui::BeginCombo("Preview Group", preview_group->name.c_str())) {
+                  for (const world::animation_group& group : _world.animation_groups) {
+                     for (const world::animation_group::entry& entry : group.entries) {
+                        if (entry.animation_index == selected_animation_index) {
+                           if (ImGui::Selectable(group.name.c_str(),
+                                                 _animation_editor_context
+                                                       .selected.preview_group_id ==
+                                                    group.id)) {
+                              _animation_editor_context.selected.preview_group_id =
+                                 group.id;
+                              preview_group = &group;
+                           }
+
+                           break;
+                        }
+                     }
+                  }
+
+                  ImGui::EndCombo();
+               }
+
+               if (not preview_group->entries.empty()) {
+                  if (_animation_editor_context.selected.preview_group_entry_index >=
+                      preview_group->entries.size()) {
+                     for (uint32 entry_index = 0;
+                          entry_index < preview_group->entries.size(); ++entry_index) {
+                        const world::animation_group::entry& entry =
+                           preview_group->entries[entry_index];
+
+                        if (entry.animation_index == selected_animation_index) {
+                           _animation_editor_context.selected.preview_group_entry_index =
+                              entry_index;
+
+                           break;
+                        }
+                     }
+
+                     // Fallback for when the group doesn't match the animation. We shouldn't get here but just in case.
+                     if (_animation_editor_context.selected.preview_group_entry_index >=
+                         preview_group->entries.size()) {
+                        _animation_editor_context.selected.preview_group_entry_index = 0;
+                     }
+                  }
+
+                  if (ImGui::BeginCombo("Preview Object",
+                                        _world
+                                           .objects[preview_group
+                                                       ->entries[_animation_editor_context
+                                                                    .selected.preview_group_entry_index]
+                                                       .object_index]
+                                           .name.c_str())) {
+                     for (uint32 entry_index = 0;
+                          entry_index < preview_group->entries.size(); ++entry_index) {
+                        const world::animation_group::entry& entry =
+                           preview_group->entries[entry_index];
+
+                        if (entry.animation_index == selected_animation_index) {
+                           if (ImGui::Selectable(
+                                  _world.objects[entry.object_index].name.c_str(),
+                                  _animation_editor_context.selected.preview_group_entry_index ==
+                                     entry_index)) {
+                              _animation_editor_context.selected.preview_group_entry_index =
+                                 entry_index;
+                           }
+                        }
+                     }
+
+                     ImGui::EndCombo();
+                  }
+               }
+               else {
+                  ImGui::BeginDisabled(not preview_group);
+
+                  if (ImGui::BeginCombo("Preview Object", "<no group>")) {
+                     ImGui::EndCombo();
+                  }
+
+                  ImGui::EndDisabled();
+
+                  ImGui::SetTooltip(
+                     "The selected preview group has no entries in it.");
+               }
+            }
+            else {
+               ImGui::BeginDisabled(not preview_group);
+               ImGui::BeginGroup();
+
+               if (ImGui::BeginCombo("Preview Group", "<no group>")) {
+                  ImGui::EndCombo();
+               }
+
+               if (ImGui::BeginCombo("Preview Object", "<no group>")) {
+                  ImGui::EndCombo();
+               }
+
+               ImGui::EndGroup();
+               ImGui::EndDisabled();
+
+               ImGui::SetTooltip(
+                  "No animation group has the selected animation in it.");
             }
          }
 
@@ -1685,16 +1817,20 @@ void world_edit::ui_show_animation_editor() noexcept
       float3 base_position = {0.0f, 0.0f, 0.0f};
       world::object_id animated_object_id = world::max_id;
 
-      for (const world::animation_group& group : _world.animation_groups) {
-         if (not group.entries.empty()) {
+      if (const world::animation_group* preview_group =
+             world::find_entity(_world.animation_groups,
+                                _animation_editor_context.selected.preview_group_id);
+          preview_group) {
+         const uint32 preview_entry_index =
+            _animation_editor_context.selected.preview_group_entry_index;
+
+         if (preview_entry_index < preview_group->entries.size()) {
             const world::object& object =
-               _world.objects[group.entries[0].object_index];
+               _world.objects[preview_group->entries[preview_entry_index].object_index];
 
             base_rotation = normalize(object.rotation);
             base_position = object.position;
             animated_object_id = object.id;
-
-            break;
          }
       }
 

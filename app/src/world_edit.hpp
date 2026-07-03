@@ -983,6 +983,8 @@ private:
    struct animation_editor_context {
       struct selected {
          world::animation_id id = world::max_id;
+         world::animation_group_id preview_group_id = world::max_id;
+         uint32 preview_group_entry_index = 0;
 
          int32 key = 0;
          animation_key_type key_type = animation_key_type::position;
