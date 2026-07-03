@@ -483,11 +483,19 @@ struct delete_path final : edit<world::edit_context> {
             _object_class_library.free(odf.handle);
          }
       }
+
+      for (world::tree_line& tree_line : context.world.tree_lines) {
+         if (tree_line.path_index > _path_index) tree_line.path_index -= 1;
+      }
    }
 
    void revert(world::edit_context& context) noexcept override
    {
       context.world.paths.insert(context.world.paths.begin() + _path_index, _path);
+
+      for (world::tree_line& tree_line : context.world.tree_lines) {
+         if (tree_line.path_index >= _path_index) tree_line.path_index += 1;
+      }
 
       for (unlinked_object_property& unlinked : _unlinked_object_properties) {
          std::swap(context.world.objects[unlinked.object_index]

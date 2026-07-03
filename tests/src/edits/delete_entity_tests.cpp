@@ -1306,8 +1306,8 @@ TEST_CASE("edits delete_entity path tree line ref", "[Edits]")
    edit->apply(edit_context);
 
    REQUIRE(world.tree_lines.size() == 2);
-   CHECK(world.tree_lines[0].path_index == 1);
-   CHECK(world.tree_lines[1].path_index == 2);
+   CHECK(world.tree_lines[0].path_index == 0);
+   CHECK(world.tree_lines[1].path_index == 1);
 
    edit->revert(edit_context);
 
