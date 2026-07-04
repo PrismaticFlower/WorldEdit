@@ -671,11 +671,13 @@ void world_edit::ui_show_animation_group_editor() noexcept
 
             if (object) {
                _tool_visualizers.add_ghost_object(transform, entry.object);
+               _tool_visualizers.add_filtered_object(entry.object);
 
                if (not selected_group->disable_hierarchies) {
                   for (const auto& [child_transform, child_id] : entry.children) {
                      _tool_visualizers.add_ghost_object(transform * child_transform,
                                                         child_id);
+                     _tool_visualizers.add_filtered_object(child_id);
                   }
                }
             }

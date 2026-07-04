@@ -2262,6 +2262,7 @@ void world_edit::ui_show_animation_editor() noexcept
                _animation_solver.evaluate(*selected_animation,
                                           _animation_editor_context.selected.playback_time),
                animated_object_id);
+            _tool_visualizers.add_filtered_object(animated_object_id);
          }
          else {
             _tool_visualizers.add_arrow_wireframe(

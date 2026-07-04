@@ -213,6 +213,7 @@ private:
                               const world::active_layers active_layers,
                               const world::object_class_library& world_classes,
                               const world::creation_entity* const creation_entity,
+                              std::span<const world::object_id> object_filter,
                               std::span<const world::tool_visualizers_ghost> ghost_objects);
 
    void build_world_mesh_render_list(const frustum& view_frustum);
@@ -437,6 +438,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
       if (active_entity_types.objects) {
          build_world_mesh_list(_pre_render_command_list, world, active_layers,
                                world_classes, &interaction_targets.creation_entity,
+                               tool_visualizers.filtered_objects(),
                                tool_visualizers.ghost_objects());
       }
       else {
@@ -787,7 +789,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       pre_render_command_list.reset();
 
       build_world_mesh_list(pre_render_command_list, world, active_layers,
-                            world_classes, nullptr, {});
+                            world_classes, nullptr, {}, {});
 
       pre_render_command_list.close();
 
@@ -4230,6 +4232,7 @@ void renderer_impl::build_world_mesh_list(
    const world::active_layers active_layers,
    const world::object_class_library& world_classes,
    const world::creation_entity* const creation_entity,
+   std::span<const world::object_id> object_filter,
    std::span<const world::tool_visualizers_ghost> ghost_objects)
 {
    _world_mesh_list.clear();
@@ -4258,6 +4261,13 @@ void renderer_impl::build_world_mesh_list(
          auto& model = _model_manager[world_classes[object.class_handle].model_name];
 
          if (not active_layers[object.layer] or object.hidden) continue;
+
+         if (not object_filter.empty()) [[unlikely]] {
+            if (std::find(object_filter.begin(), object_filter.end(), object.id) !=
+                object_filter.end()) [[unlikely]] {
+               continue;
+            }
+         }
 
          const math::bounding_box object_bbox =
             object.rotation * model.bbox + object.position;

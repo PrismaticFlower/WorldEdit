@@ -90,6 +90,8 @@ struct tool_visualizers {
 
    void add_ghost_object(float4x4 transform, id<object> object_id);
 
+   void add_filtered_object(id<object> object_id);
+
    void add_highlight(id<planning_hub> hub_id, float3 color);
 
    void add_highlight(id<planning_connection> connection_id, float3 color);
@@ -129,6 +131,8 @@ struct tool_visualizers {
 
    auto ghost_objects() const noexcept -> std::span<const tool_visualizers_ghost>;
 
+   auto filtered_objects() const noexcept -> std::span<const id<object>>;
+
    auto hub_highlights() const noexcept
       -> std::span<const tool_visualizers_hub_highlight>;
 
@@ -162,6 +166,7 @@ private:
    std::vector<tool_visualizers_shape> _octahedrons_wireframe;
    std::vector<tool_visualizers_shape> _arrows_wireframe;
    std::vector<tool_visualizers_ghost> _ghost_objects;
+   std::vector<id<object>> _filtered_objects;
    std::vector<tool_visualizers_hub_highlight> _hub_highlights;
    std::vector<tool_visualizers_connection_highlight> _connection_highlights;
    std::vector<tool_visualizers_block_highlight> _block_highlights;

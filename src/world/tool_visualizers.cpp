@@ -10,6 +10,7 @@ tool_visualizers::tool_visualizers() noexcept
    _octahedrons_wireframe.reserve(64);
    _arrows_wireframe.reserve(64);
    _ghost_objects.reserve(64);
+   _filtered_objects.reserve(64);
    _hub_highlights.reserve(8);
    _connection_highlights.reserve(8);
    _block_highlights.reserve(1);
@@ -61,6 +62,11 @@ void tool_visualizers::add_arrow_wireframe(float4x4 transform, float4 color)
 void tool_visualizers::add_ghost_object(float4x4 transform, id<object> object_id)
 {
    _ghost_objects.emplace_back(object_id, transform);
+}
+
+void tool_visualizers::add_filtered_object(id<object> object_id)
+{
+   _filtered_objects.push_back(object_id);
 }
 
 void tool_visualizers::add_highlight(id<planning_hub> hub_id, float3 color)
@@ -126,6 +132,7 @@ void tool_visualizers::clear() noexcept
    _octahedrons_wireframe.clear();
    _arrows_wireframe.clear();
    _ghost_objects.clear();
+   _filtered_objects.clear();
    _hub_highlights.clear();
    _connection_highlights.clear();
    _block_highlights.clear();
@@ -171,6 +178,11 @@ auto tool_visualizers::ghost_objects() const noexcept
    -> std::span<const tool_visualizers_ghost>
 {
    return _ghost_objects;
+}
+
+auto tool_visualizers::filtered_objects() const noexcept -> std::span<const id<object>>
+{
+   return _filtered_objects;
 }
 
 auto tool_visualizers::hub_highlights() const noexcept
