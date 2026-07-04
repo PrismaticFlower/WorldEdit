@@ -132,38 +132,37 @@ auto extend_terrain(const world::terrain& old_terrain, const int32 new_length,
          });
    }
 
-   async::task water_map_extend = thread_pool.exec([&old_water_map = old_terrain.water_map,
-                                                    old_length = old_length / 4,
-                                                    new_length = new_length / 4,
-                                                    fill_from_edges] {
-      const int32 offset = (new_length - old_length) / 2;
+   async::task water_map_extend = thread_pool.exec(
+      [&old_water_map = old_terrain.water_map, old_length = old_length / 4,
+       new_length = new_length / 4, fill_from_edges] {
+         const int32 offset = (new_length - old_length) / 2;
 
-      container::dynamic_array_2d<bool> new_water_map{new_length, new_length};
+         container::dynamic_array_2d<bool> new_water_map{new_length, new_length};
 
-      if (fill_from_edges) {
-         for (int32 y = 0; y < new_length; ++y) {
-            for (int32 x = 0; x < new_length; ++x) {
-               new_water_map[{x, y}] =
-                  old_water_map[{std::clamp(x - offset, 0, old_length - 1),
-                                 std::clamp(y - offset, 0, old_length - 1)}];
+         if (fill_from_edges) {
+            for (int32 y = 0; y < new_length; ++y) {
+               for (int32 x = 0; x < new_length; ++x) {
+                  new_water_map[{x, y}] =
+                     old_water_map[{std::clamp(x - offset, 0, old_length - 1),
+                                    std::clamp(y - offset, 0, old_length - 1)}];
+               }
             }
          }
-      }
-      else {
-         for (int32 y = 0; y < old_length; ++y) {
-            for (int32 x = 0; x < old_length; ++x) {
-               new_water_map[{x + offset, y + offset}] = old_water_map[{x, y}];
+         else {
+            for (int32 y = 0; y < old_length; ++y) {
+               for (int32 x = 0; x < old_length; ++x) {
+                  new_water_map[{x + offset, y + offset}] = old_water_map[{x, y}];
+               }
             }
          }
-      }
 
-      return new_water_map;
-   });
+         return new_water_map;
+      });
 
    async::task foliage_map_extend = thread_pool.exec(
       [&old_foliage_map = old_terrain.foliage_map, old_length = old_length / 2,
        new_length = new_length / 2, fill_from_edges] {
-         const int32 offset = (old_length - new_length) / 2;
+         const int32 offset = (new_length - old_length) / 2;
 
          container::dynamic_array_2d<world::foliage_patch> new_foliage_map{new_length,
                                                                            new_length};
