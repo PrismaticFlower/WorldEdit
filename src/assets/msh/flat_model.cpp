@@ -10,6 +10,7 @@
 #include "utility/string_ops.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <span>
 #include <stdexcept>
@@ -205,6 +206,7 @@ flat_model::flat_model(const scene& scene)
    patch_materials_with_options(meshes, scene.options);
    apply_ambient_lighting(scene.options);
    regenerate_bounding_boxes();
+   build_ground_points();
 
    bvh = flat_model_bvh{meshes};
    terrain_cut_bvh = flat_model_terrain_cut_bvh{terrain_cuts};
@@ -494,6 +496,22 @@ void flat_model::apply_ambient_lighting(const scene_options& options) noexcept
          bgra |= static_cast<uint32>(color.z * 255.0f + 0.5f);
          bgra |= static_cast<uint32>(color.y * 255.0f + 0.5f) << 8u;
          bgra |= static_cast<uint32>(color.x * 255.0f + 0.5f) << 16u;
+      }
+   }
+}
+
+void flat_model::build_ground_points() noexcept
+{
+   const double ground_point_snapping = 1000.0;
+   const double ground = std::round(bounding_box.min.y * ground_point_snapping) /
+                         ground_point_snapping;
+
+   for (const mesh& mesh : meshes) {
+      for (const float3& position : mesh.positions) {
+         const double position_y =
+            std::round(position.y * ground_point_snapping) / ground_point_snapping;
+
+         if (position_y == ground) ground_points.push_back(position);
       }
    }
 }

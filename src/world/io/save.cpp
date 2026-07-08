@@ -1139,6 +1139,26 @@ void save_configuration(const io::path& path, const world& world)
                  world.configuration.save_lights_references);
    file.write_ln("");
    file.write_ln("SaveSkyReference({:d});", world.configuration.save_sky_reference);
+
+   if (not world.configuration.untracked_paint_object_pool_history.empty()) {
+      file.write_ln("");
+      file.write_ln("PaintObjectPoolHistory()");
+      file.write_ln("{");
+
+      for (const std::vector<lowercase_string>& pool :
+           world.configuration.untracked_paint_object_pool_history) {
+         file.write_ln("\tPool()");
+         file.write_ln("\t{");
+
+         for (const lowercase_string& object_class : pool) {
+            file.write_ln("\t\tObjectClass(\"{}\");", object_class);
+         }
+
+         file.write_ln("\t}");
+      }
+
+      file.write_ln("}");
+   }
 }
 
 void garbage_collect_files(const io::path& world_dir,

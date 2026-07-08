@@ -324,6 +324,9 @@
     <ClCompile Include="src\allocators\temp_buffer_allocator.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_patch_depthVS.cpp" />
     <ClCompile Include="src\world\utility\multi_select_support.cpp" />
+    <ClCompile Include="src\world\utility\terrain_sample.cpp" />
+    <ClCompile Include="src\world\utility\temporary_object_classes.cpp" />
+    <ClCompile Include="src\utility\random.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -710,6 +713,9 @@
     <ClInclude Include="src\edits\delete_vector_entry.hpp" />
     <ClInclude Include="src\world\entity_optional_link.hpp" />
     <ClInclude Include="src\world\props.hpp" />
+    <ClInclude Include="src\world\utility\terrain_sample.hpp" />
+    <ClInclude Include="src\world\utility\temporary_object_classes.hpp" />
+    <ClInclude Include="src\utility\random.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

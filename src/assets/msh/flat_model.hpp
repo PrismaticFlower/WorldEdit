@@ -89,6 +89,8 @@ struct flat_model {
    flat_model_bvh bvh;
    flat_model_terrain_cut_bvh terrain_cut_bvh;
 
+   std::vector<float3> ground_points;
+
    void regenerate_bounding_boxes() noexcept;
 
 private:
@@ -111,6 +113,8 @@ private:
    void generate_tangents_for_meshes();
 
    void apply_ambient_lighting(const scene_options& options) noexcept;
+
+   void build_ground_points() noexcept;
 };
 
 }

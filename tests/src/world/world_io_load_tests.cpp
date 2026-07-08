@@ -693,6 +693,28 @@ TEST_CASE("world loading default configuration", "[World][IO]")
    CHECK(world.configuration.save_blocks_into_layer);
 }
 
+TEST_CASE("world loading configuration paint object pool history",
+          "[World][IO]")
+{
+   null_output_stream out;
+   const auto world =
+      load_world("data/world_configuration_paint_object_pool_history/test.wld"sv,
+                 {}, out);
+
+   REQUIRE(world.configuration.untracked_paint_object_pool_history.size() == 2);
+
+   REQUIRE(world.configuration.untracked_paint_object_pool_history[0].size() == 4);
+   CHECK(world.configuration.untracked_paint_object_pool_history[0][0] == "a");
+   CHECK(world.configuration.untracked_paint_object_pool_history[0][1] == "b");
+   CHECK(world.configuration.untracked_paint_object_pool_history[0][2] == "c");
+   CHECK(world.configuration.untracked_paint_object_pool_history[0][3] == "d");
+
+   REQUIRE(world.configuration.untracked_paint_object_pool_history[1].size() == 3);
+   CHECK(world.configuration.untracked_paint_object_pool_history[1][0] == "e");
+   CHECK(world.configuration.untracked_paint_object_pool_history[1][1] == "f");
+   CHECK(world.configuration.untracked_paint_object_pool_history[1][2] == "g");
+}
+
 TEST_CASE("world loading no terrain", "[World][IO]")
 {
    null_output_stream out;

@@ -2180,6 +2180,77 @@ SaveSkyReference(0);
    CHECK(written_configuration == expected_configuration);
 }
 
+TEST_CASE("world saving configuration paint object pool history", "[World][IO]")
+{
+   (void)io::create_directory(
+      "temp/world_test_configuration_paint_object_pool_history");
+
+   world world{
+      .name = "test",
+      .configuration =
+         {
+            .save_bf1_format = false,
+            .save_effects = true,
+            .save_blocks_into_layer = true,
+            .save_lights_references = false,
+            .save_sky_reference = false,
+            .untracked_paint_object_pool_history =
+               {
+                  {
+                     lowercase_string{"a"sv},
+                     lowercase_string{"b"sv},
+                     lowercase_string{"c"sv},
+                     lowercase_string{"d"sv},
+                  },
+                  {
+                     lowercase_string{"e"sv},
+                     lowercase_string{"f"sv},
+                     lowercase_string{"g"sv},
+                  },
+               },
+         },
+
+      .layer_descriptions = {{.name = "[Base]"}},
+   };
+   save_world(
+      "temp/world_test_configuration_paint_object_pool_history/test.wld", world, {});
+
+   constexpr auto expected_configuration = R"(// World configuration for WorldEdit
+
+SaveBF1Format(0);
+
+SaveEffects(1);
+
+SaveBlocksIntoLayer(1);
+
+SaveLightsReferences(0);
+
+SaveSkyReference(0);
+
+PaintObjectPoolHistory()
+{
+	Pool()
+	{
+		ObjectClass("a");
+		ObjectClass("b");
+		ObjectClass("c");
+		ObjectClass("d");
+	}
+	Pool()
+	{
+		ObjectClass("e");
+		ObjectClass("f");
+		ObjectClass("g");
+	}
+}
+)"sv;
+
+   const auto written_configuration = io::read_file_to_string(
+      "temp/world_test_configuration_paint_object_pool_history/test.WorldEdit");
+
+   CHECK(written_configuration == expected_configuration);
+}
+
 TEST_CASE("world saving prp", "[World][IO]")
 {
    (void)io::create_directory("temp/world_prp");

@@ -1,0 +1,16 @@
+PaintObjectPoolHistory()
+{
+	Pool()
+	{
+		ObjectClass("a");
+		ObjectClass("b");
+		ObjectClass("c");
+		ObjectClass("d");
+	}
+	Pool()
+	{
+		ObjectClass("e");
+		ObjectClass("f");
+		ObjectClass("g");
+	}
+}

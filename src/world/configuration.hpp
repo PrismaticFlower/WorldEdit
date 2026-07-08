@@ -1,5 +1,9 @@
 #pragma once
 
+#include "lowercase_string.hpp"
+
+#include <vector>
+
 namespace we::world {
 
 struct configuration {
@@ -25,6 +29,9 @@ struct configuration {
 
    /// @brief Save SkyName in the .wld file.
    bool save_sky_reference = true;
+
+   /// @brief History of object pools used with Paint Objects on Terrain.
+   std::vector<std::vector<lowercase_string>> untracked_paint_object_pool_history;
 };
 
 }

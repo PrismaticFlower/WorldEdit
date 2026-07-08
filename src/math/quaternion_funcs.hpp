@@ -146,4 +146,24 @@ inline auto look_at_quat(const float3& to, const float3& from) -> quaternion
    return normalize(quat);
 }
 
+inline auto rotation_between(const float3& from, const float3& to) -> quaternion
+{
+   // Half-Way Quaternion Solution - Learned from Joseph Thomson's post here https://stackoverflow.com/questions/1171849/finding-quaternion-representing-the-rotation-from-one-vector-to-another
+
+   if (cross(from, to) == float3{}) return quaternion{};
+
+   const float k_cos_theta = dot(from, to);
+   const float k = sqrt(dot(from, from) * dot(to, to));
+
+   if (k_cos_theta / k == -1.0f) {
+      const float3 ortho_vector = normalize(orthogonal(from));
+
+      return quaternion{0.0f, ortho_vector.x, ortho_vector.y, ortho_vector.z};
+   }
+
+   const float3 xyz = cross(from, to);
+
+   return normalize(quaternion(k_cos_theta + k, xyz.x, xyz.y, xyz.z));
+}
+
 }

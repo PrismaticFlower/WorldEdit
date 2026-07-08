@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bc7enc_rdo", "bc7enc_rdo.vc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "icbc", "icbc.vcxproj", "{3AA9DA6C-D15D-43B2-99CE-A4837FF7002F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pcg-c-basic", "pcg-c-basic.vcxproj", "{C69E431C-5D43-4E13-8EE8-2B7AF8FB35DB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -139,6 +141,18 @@ Global
 		{3AA9DA6C-D15D-43B2-99CE-A4837FF7002F}.Release|ARM64.Build.0 = Release|ARM64
 		{3AA9DA6C-D15D-43B2-99CE-A4837FF7002F}.Release|x64.ActiveCfg = Release|x64
 		{3AA9DA6C-D15D-43B2-99CE-A4837FF7002F}.Release|x64.Build.0 = Release|x64
+		{C69E431C-5D43-4E13-8EE8-2B7AF8FB35DB}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{C69E431C-5D43-4E13-8EE8-2B7AF8FB35DB}.Debug|ARM64.Build.0 = Debug|ARM64
+		{C69E431C-5D43-4E13-8EE8-2B7AF8FB35DB}.Debug|x64.ActiveCfg = Debug|x64
+		{C69E431C-5D43-4E13-8EE8-2B7AF8FB35DB}.Debug|x64.Build.0 = Debug|x64
+		{C69E431C-5D43-4E13-8EE8-2B7AF8FB35DB}.Develop|ARM64.ActiveCfg = Develop|ARM64
+		{C69E431C-5D43-4E13-8EE8-2B7AF8FB35DB}.Develop|ARM64.Build.0 = Develop|ARM64
+		{C69E431C-5D43-4E13-8EE8-2B7AF8FB35DB}.Develop|x64.ActiveCfg = Develop|x64
+		{C69E431C-5D43-4E13-8EE8-2B7AF8FB35DB}.Develop|x64.Build.0 = Develop|x64
+		{C69E431C-5D43-4E13-8EE8-2B7AF8FB35DB}.Release|ARM64.ActiveCfg = Release|ARM64
+		{C69E431C-5D43-4E13-8EE8-2B7AF8FB35DB}.Release|ARM64.Build.0 = Release|ARM64
+		{C69E431C-5D43-4E13-8EE8-2B7AF8FB35DB}.Release|x64.ActiveCfg = Release|x64
+		{C69E431C-5D43-4E13-8EE8-2B7AF8FB35DB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

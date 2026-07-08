@@ -1560,6 +1560,25 @@ auto load_configuration(const io::path& filepath, output_stream& output) -> conf
          else if (key_node.key == "SaveSkyReference"sv) {
             configuration.save_sky_reference = key_node.values.get<int>(0) != 0;
          }
+         else if (key_node.key == "PaintObjectPoolHistory"sv) {
+            for (auto& pool_key_node : key_node) {
+               if (pool_key_node.key == "Pool"sv) {
+                  std::vector<lowercase_string> pool;
+
+                  for (auto& object_class_key_node : pool_key_node) {
+                     if (object_class_key_node.key == "ObjectClass"sv) {
+                        pool.emplace_back(
+                           object_class_key_node.values.get<std::string_view>(0));
+                     }
+                  }
+
+                  if (not pool.empty()) {
+                     configuration.untracked_paint_object_pool_history.push_back(
+                        std::move(pool));
+                  }
+               }
+            }
+         }
       }
    }
    catch (std::exception& e) {

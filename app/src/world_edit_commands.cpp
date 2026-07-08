@@ -737,6 +737,15 @@ void world_edit::initialize_commands() noexcept
    _commands.add("blocks.show_quick_tools"s,
                  [this] { ImGui::OpenPopup("Block Quick Tools"); });
 
+   _commands.add("object_paint.mouse_held"s, _object_paint_context.mouse_held);
+   _commands.add("object_paint.increase_radius"s,
+                 [this] { _object_paint_config.radius += 1.0f; });
+   _commands.add("object_paint.decrease_radius"s, [this] {
+      _object_paint_config.radius = std::max(_object_paint_config.radius - 1.0f, 1.0f);
+   });
+   _commands.add("object_paint.close"s,
+                 [this] { _world_object_paint_open = false; });
+
    _commands.add("export_selection.confirm"s, [this] {
       export_selection_with_picker();
       _export_selection_open = false;
@@ -1508,6 +1517,19 @@ void world_edit::initialize_hotkeys() noexcept
                         },
 
                      .hidden = true});
+
+   _hotkeys.add_set({
+      .name = "Terrain Object Painting",
+      .description = "Active while Paint Objects on Terrain tool is open."s,
+      .activated = [this] { return _world_object_paint_open; },
+      .default_hotkeys =
+         {
+            {"Paint", "object_paint.mouse_held", {.key = key::mouse1}, {.toggle = true}},
+            {"Increase Radius", "object_paint.increase_radius", {.key = key::mouse_wheel_forward}},
+            {"Decrease Radius", "object_paint.decrease_radius", {.key = key::mouse_wheel_back}},
+            {"Close", "object_paint.close", {.key = key::escape}},
+         },
+   });
 
    _hotkeys.add_set(
       {.name = "Export Selection",

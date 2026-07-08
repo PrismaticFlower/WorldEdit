@@ -162,7 +162,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\icbc;$(SolutionDir)third_party\bc7enc_rdo;$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\pcg-c-basic;$(SolutionDir)third_party\icbc;$(SolutionDir)third_party\bc7enc_rdo;$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -201,7 +201,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\icbc;$(SolutionDir)third_party\bc7enc_rdo;$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\pcg-c-basic;$(SolutionDir)third_party\icbc;$(SolutionDir)third_party\bc7enc_rdo;$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -241,7 +241,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\icbc;$(SolutionDir)third_party\bc7enc_rdo;$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\pcg-c-basic;$(SolutionDir)third_party\icbc;$(SolutionDir)third_party\bc7enc_rdo;$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -284,7 +284,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\icbc;$(SolutionDir)third_party\bc7enc_rdo;$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\pcg-c-basic;$(SolutionDir)third_party\icbc;$(SolutionDir)third_party\bc7enc_rdo;$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -326,7 +326,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\icbc;$(SolutionDir)third_party\bc7enc_rdo;$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\pcg-c-basic;$(SolutionDir)third_party\icbc;$(SolutionDir)third_party\bc7enc_rdo;$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -371,7 +371,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\icbc;$(SolutionDir)third_party\bc7enc_rdo;$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\pcg-c-basic;$(SolutionDir)third_party\icbc;$(SolutionDir)third_party\bc7enc_rdo;$(SolutionDir)third_party\abseil-cpp;$(SolutionDir)third_party\wil\include;$(SolutionDir)third_party\DirectXTex\DirectXTex;$(SolutionDir)third_party\fmt\include;$(SolutionDir)third_party\mimalloc\include;$(SolutionDir)third_party\OffsetAllocator;$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;src\;resource\;$(SolutionDir)third_party\meshoptimizer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -623,6 +623,7 @@
     <ClCompile Include="src\settings\preferences.cpp" />
     <ClCompile Include="src\settings\settings.cpp" />
     <ClCompile Include="src\ucfb\writer.cpp" />
+    <ClCompile Include="src\utility\random.cpp" />
     <ClCompile Include="src\utility\string_template.cpp" />
     <ClCompile Include="src\utility\srgb_conversion.cpp" />
     <ClCompile Include="src\utility\stopwatch.cpp" />
@@ -667,6 +668,7 @@
     <ClCompile Include="src\world\utility\intersects_frustum.cpp" />
     <ClCompile Include="src\world\utility\is_similar.cpp" />
     <ClCompile Include="src\world\utility\multi_select_support.cpp" />
+    <ClCompile Include="src\world\utility\temporary_object_classes.cpp" />
     <ClCompile Include="src\world\utility\terrain_light_map_baker.cpp" />
     <ClCompile Include="src\world\utility\load_terrain_brush.cpp" />
     <ClCompile Include="src\world\utility\load_terrain_map.cpp" />
@@ -690,6 +692,7 @@
     <ClCompile Include="src\world\utility\selection_centre.cpp" />
     <ClCompile Include="src\world\utility\snapping.cpp" />
     <ClCompile Include="src\world\utility\terrain_cut.cpp" />
+    <ClCompile Include="src\world\utility\terrain_sample.cpp" />
     <ClCompile Include="src\world\utility\to_ui_string.cpp" />
     <ClCompile Include="src\world\utility\world_utilities.cpp" />
     <ClCompile Include="third_party\stb_image_resize2\stb_image_resize2.c" />
@@ -996,6 +999,7 @@
     <ClCompile Include="src\utility\file_watcher.cpp" />
     <ClInclude Include="src\utility\event.hpp" />
     <ClInclude Include="src\utility\event_listener.hpp" />
+    <ClInclude Include="src\utility\random.hpp" />
     <ClInclude Include="src\utility\string_template.hpp" />
     <ClInclude Include="src\utility\file_pickers.hpp" />
     <ClInclude Include="src\utility\file_watcher.hpp">
@@ -1084,6 +1088,7 @@
     <ClInclude Include="src\world\utility\is_similar.hpp" />
     <ClInclude Include="src\world\utility\multi_select_support.hpp" />
     <ClInclude Include="src\world\utility\select_common.hpp" />
+    <ClInclude Include="src\world\utility\temporary_object_classes.hpp" />
     <ClInclude Include="src\world\utility\terrain_light_map_baker.hpp" />
     <ClInclude Include="src\world\utility\grounding.hpp" />
     <ClInclude Include="src\world\utility\load_terrain_brush.hpp" />
@@ -1102,6 +1107,7 @@
     <ClInclude Include="src\world\utility\selection_centre.hpp" />
     <ClInclude Include="src\world\utility\snapping.hpp" />
     <ClInclude Include="src\world\utility\terrain_cut.hpp" />
+    <ClInclude Include="src\world\utility\terrain_sample.hpp" />
     <ClInclude Include="src\world\utility\to_ui_string.hpp" />
     <ClInclude Include="src\world\utility\world_utilities.hpp" />
     <ClInclude Include="src\world\world.hpp" />

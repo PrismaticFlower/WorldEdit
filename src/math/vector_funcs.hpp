@@ -715,6 +715,30 @@ constexpr auto cross(const float3& a, const float3& b) noexcept -> float3
            a.x * b.y - b.x * a.y};
 }
 
+inline auto orthogonal(const float3& v) -> float3
+{
+   const float3 v_abs = abs(v);
+
+   float3 other;
+
+   if (v_abs.x < v_abs.y) {
+      if (v_abs.x < v_abs.z) {
+         return cross(v, {1.0f, 0.0f, 0.0f});
+      }
+      else {
+         return cross(v, {0.0f, 0.0f, 1.0f});
+      }
+   }
+   else {
+      if (v_abs.y < v_abs.z) {
+         return cross(v, {0.0f, 1.0f, 0.0f});
+      }
+      else {
+         return cross(v, {0.0f, 0.0f, 1.0f});
+      }
+   }
+}
+
 inline auto cos(const float2& v) noexcept -> float2
 {
    return {std::cos(v.x), std::cos(v.y)};

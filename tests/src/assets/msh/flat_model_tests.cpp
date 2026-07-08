@@ -870,6 +870,57 @@ TEST_CASE(".msh flat model creation with ambient lighting", "[Assets][MSH]")
    }
 }
 
+TEST_CASE(".msh flat model creation ground points", "[Assets][MSH]")
+{
+   const scene input_scene{
+      .materials = {{
+         .name = "snow"s,
+         .specular_color = {0.75f, 0.75f, 0.75f, 1.0f},
+         .flags = material_flags::specular,
+         .rendertype = rendertype::normalmap,
+         .textures = {"snow"s, "snow_normalmap"s},
+      }},
+
+      .nodes =
+         {
+            {.name = "root"s,
+             .transform =
+                {
+                   .translation = {0.0f, 0.0f, 0.0f},
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                },
+             .type = node_type::null},
+
+            {.name = "geometry"s,
+             .parent = "root"s,
+             .transform =
+                {
+                   .translation = {0.0f, 0.0f, 0.0f},
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                },
+             .type = node_type::static_mesh,
+             .segments = {{
+                .material_index = 0,
+                .positions = {{0.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
+                .normals = std::vector<float3>{{0.0f, 1.0f, 0.0f},
+                                               {0.0f, 1.0f, 1.0f},
+                                               {0.0f, 1.0f, 0.0f}},
+                .colors = std::vector<uint32>{0xff'ff'ff'ffu, 0xff'ff'ff'ffu, 0xff'ff'ff'ffu},
+                .texcoords = std::vector<float2>{{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
+                .triangles = {{0, 1, 2}},
+             }}},
+         },
+
+      .options = {.vertex_lighting = true,
+                  .ambient_lighting = float3{-0.25f, -0.5f, -1.0f}},
+   };
+
+   flat_model model{input_scene};
+
+   REQUIRE(model.ground_points.size() == 1);
+   CHECK(model.ground_points[0] == float3{0.0f, -1.0f, 0.0f});
+}
+
 TEST_CASE(".msh flat excessive vertices test", "[Assets][MSH]")
 {
    scene input_scene{

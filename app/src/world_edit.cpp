@@ -242,6 +242,8 @@ void world_edit::update()
       if (not _load_errors_open) _new_load_error_open = true;
    }
 
+   _temporary_object_classes.update(_object_classes);
+
    // Render!
    update_camera(delta_time);
 
@@ -433,6 +435,8 @@ void world_edit::update_hovered_entity() noexcept
        _animation_hierarchy_editor_open) {
       return;
    }
+
+   if (_world_object_paint_open) return;
 
    world::active_entity_types raycast_mask = _world_hit_mask;
 
@@ -4353,6 +4357,7 @@ void world_edit::close_world() noexcept
    ask_to_save_world();
 
    _object_classes.clear();
+   _temporary_object_classes.clear();
    _world = {};
    _interaction_targets = {};
    _last_clicked_entity = {};
@@ -4743,6 +4748,8 @@ auto world_edit::get_mouse_cursor() const noexcept -> mouse_cursor
          return mouse_cursor::cross;
       }
    }
+
+   if (_world_object_paint_open) return mouse_cursor::paintbrush;
 
    return mouse_cursor::arrow;
 }

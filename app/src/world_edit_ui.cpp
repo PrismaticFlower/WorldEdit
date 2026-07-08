@@ -118,6 +118,10 @@ void world_edit::update_ui() noexcept
       ui_show_world_selection_resize_entity();
    }
 
+   if (_world_object_paint_open) {
+      ui_show_world_object_painter();
+   }
+
    if (_terrain_edit_tool == terrain_edit_tool::editor) {
       ui_show_terrain_editor();
    }

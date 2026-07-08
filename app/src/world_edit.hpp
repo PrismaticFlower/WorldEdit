@@ -25,6 +25,7 @@
 #include "settings/settings.hpp"
 
 #include "utility/command_line.hpp"
+#include "utility/random.hpp"
 #include "utility/stopwatch.hpp"
 
 #include "world/blocks/custom_mesh_bvh_library.hpp"
@@ -32,6 +33,7 @@
 #include "world/object_class_library.hpp"
 #include "world/tool_visualizers.hpp"
 #include "world/utility/animation.hpp"
+#include "world/utility/temporary_object_classes.hpp"
 #include "world/utility/terrain_light_map_baker.hpp"
 #include "world/world.hpp"
 
@@ -383,6 +385,8 @@ private:
 
    void ui_show_world_selection_resize_entity() noexcept;
 
+   void ui_show_world_object_painter() noexcept;
+
    void ui_show_terrain_editor() noexcept;
 
    void ui_show_terrain_import_height_map() noexcept;
@@ -438,7 +442,8 @@ private:
    void ui_draw_select_box() noexcept;
 
    auto ui_object_class_pick_widget_untracked(const lowercase_string& class_name,
-                                              const char* preview_override = nullptr) noexcept
+                                              const char* preview_override = nullptr,
+                                              const char* id_override = nullptr) noexcept
       -> std::optional<lowercase_string>;
 
    bool ui_object_class_pick_widget(world::object* object) noexcept;
@@ -606,6 +611,7 @@ private:
                                         _interaction_targets.creation_entity};
 
    std::vector<assets::error> _world_asset_errors;
+   world::temporary_object_classes _temporary_object_classes;
 
    bool _renderer_prefer_high_performance_gpu = false;
    bool _renderer_use_debug_layer = false;
@@ -648,6 +654,7 @@ private:
    bool _world_config_editor_open = false;
    bool _world_explorer_open = false;
    bool _world_stats_open = false;
+   bool _world_object_paint_open = false;
    bool _load_errors_open = false;
    bool _new_load_error_open = false;
    bool _object_class_browser_open = false;
@@ -799,6 +806,24 @@ private:
 
       uint32 cycle_object_class_index = 0;
    } _entity_creation_config;
+
+   struct object_paint_config {
+      float radius = 16.0f;
+      float frequency = 16.0f;
+      bool quasirandom = false;
+      bool align_to_terrain = true;
+      bool randomize_rotation = true;
+      int8 layer = 0;
+      std::vector<lowercase_string> object_pool;
+   } _object_paint_config;
+
+   struct object_paint_context {
+      bool mouse_held = false;
+      bool painting = false;
+      int32 painted_objects = 0;
+      utility::stopwatch started;
+      random_generator random;
+   } _object_paint_context;
 
    struct selection_edit_context {
       bool using_add_object_to_sector = false;

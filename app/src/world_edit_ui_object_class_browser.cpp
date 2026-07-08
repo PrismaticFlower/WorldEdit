@@ -381,13 +381,13 @@ void world_edit::ui_show_object_class_browser() noexcept
    ImGui::End();
 }
 
-auto world_edit::ui_object_class_pick_widget_untracked(const lowercase_string& class_name,
-                                                       const char* preview_override) noexcept
-   -> std::optional<lowercase_string>
+auto world_edit::ui_object_class_pick_widget_untracked(
+   const lowercase_string& class_name, const char* preview_override,
+   const char* label_override) noexcept -> std::optional<lowercase_string>
 {
    std::optional<lowercase_string> picked;
 
-   if (ImGui::BeginCombo("Class Name",
+   if (ImGui::BeginCombo(label_override ? label_override : "Class Name",
                          preview_override ? preview_override : class_name.c_str(),
                          ImGuiComboFlags_HeightLargest | ImGuiComboFlags_NoArrowButton)) {
       if (ImGui::IsWindowAppearing()) {
