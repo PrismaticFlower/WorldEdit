@@ -3419,7 +3419,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (object) {
             math::bounding_box bbox =
-               _object_classes[object->class_handle].model->bounding_box;
+               _object_classes[object->class_handle].model->collision_bounding_box;
 
             const float padding = _entity_creation_config.from_bbox_padding;
             const float3 box_centre = (bbox.max + bbox.min) / 2.0f;
