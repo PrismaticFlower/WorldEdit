@@ -609,7 +609,7 @@
     <ClCompile Include="src\munge\builtin\texture_munge\texture_ops.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge\texture_transmuted.cpp" />
     <ClCompile Include="src\munge\builtin\texture_munge\write_texture.cpp" />
-    <ClCompile Include="src\munge\builtin\utility\bf_crc32.cpp" />
+    <ClCompile Include="src\assets\msh\bf_crc32.cpp" />
     <ClCompile Include="src\munge\builtin\utility\bf_fnv_1a_hash.cpp" />
     <ClCompile Include="src\munge\builtin\executor.cpp" />
     <ClCompile Include="src\munge\feedback.cpp" />
@@ -943,7 +943,7 @@
     <ClInclude Include="src\munge\builtin\texture_munge\options.hpp" />
     <ClInclude Include="src\munge\builtin\texture_munge\texture.hpp" />
     <ClInclude Include="src\munge\builtin\texture_munge\write_texture.hpp" />
-    <ClInclude Include="src\munge\builtin\utility\bf_crc32.hpp" />
+    <ClInclude Include="src\assets\msh\bf_crc32.hpp" />
     <ClInclude Include="src\munge\builtin\utility\bf_fnv_1a_hash.hpp" />
     <ClInclude Include="src\munge\feedback.hpp" />
     <ClInclude Include="src\munge\manager.hpp" />

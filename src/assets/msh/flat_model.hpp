@@ -61,7 +61,7 @@ struct flat_model_collision {
    };
 
    struct primitive {
-      transform transform;
+      float4x4 local_from_primitive;
 
       collision_primitive_shape shape = collision_primitive_shape::sphere;
       float radius = 0.0f;
@@ -75,7 +75,7 @@ struct flat_model_collision {
 };
 
 struct flat_model {
-   explicit flat_model(const scene& scene);
+   explicit flat_model(scene scene);
 
    math::bounding_box bounding_box;
    math::bounding_box terrain_cuts_bounding_box;
@@ -95,17 +95,16 @@ struct flat_model {
 
 private:
    void flatten_segments_to_meshes(const std::vector<geometry_segment>& segments,
-                                   const float4x4& node_to_object,
+                                   const float4x4& node_from_vertex,
                                    const std::vector<material>& scene_materials,
                                    const scene_options& options);
 
    void flatten_segments_to_terrain_cut(const std::vector<geometry_segment>& segments,
-                                        const float4x4& node_to_object,
-                                        const std::string_view node_name,
-                                        const scene_options& options);
+                                        const float4x4& local_from_vertex,
+                                        const std::string_view node_name);
 
-   void flatten_node_to_collision(const node& node, const float4x4& node_to_object,
-                                  const scene_options& options);
+   void flatten_node_to_collision(const node& node, const float4x4& node_from_vertex,
+                                  const float4x4& local_from_vertex);
 
    auto select_mesh_for_segment(const geometry_segment& segment, const material& material,
                                 const scene_options& options) -> mesh&;

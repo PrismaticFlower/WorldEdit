@@ -357,19 +357,14 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
          CHECK(primitive.length ==
                Approx(input_scene.nodes[3].collision_primitive->length));
 
-         const auto rotation = input_scene.nodes[0].transform.rotation *
-                               input_scene.nodes[1].transform.rotation *
-                               input_scene.nodes[2].transform.rotation *
-                               input_scene.nodes[3].transform.rotation;
-
-         const auto position = input_scene.nodes[0].transform.rotation *
-                                  (input_scene.nodes[1].transform.rotation *
-                                      input_scene.nodes[3].transform.translation +
-                                   input_scene.nodes[1].transform.translation) +
-                               input_scene.nodes[0].transform.translation;
-
-         CHECK(approx_equals(primitive.transform.rotation, rotation));
-         CHECK(approx_equals(primitive.transform.translation, position));
+         CHECK(primitive.local_from_primitive[0] ==
+               float4{0.966315746f, 0.130459771f, -0.221841991f, 0.0f});
+         CHECK(primitive.local_from_primitive[1] ==
+               float4{-0.221841961f, 0.859202027f, -0.461040080f, 0.0f});
+         CHECK(primitive.local_from_primitive[2] ==
+               float4{0.130459785f, 0.494724244f, 0.859202027f, 0.0f});
+         CHECK(primitive.local_from_primitive[3] ==
+               float4{0.636213303f, 3.70336628f, 0.317030847f, 1.0f});
       }
 
       // mesh
@@ -601,12 +596,6 @@ TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
    {
       REQUIRE(model.meshes.size() == 1);
 
-      const auto translate_position_from_root = [&](float3 position) {
-         return position + input_scene.nodes[2].transform.translation * 2.5f +
-                input_scene.nodes[1].transform.translation * 2.5f +
-                input_scene.nodes[0].transform.translation * 2.5f;
-      };
-
       const auto& mesh = model.meshes[0];
       const auto& segment = input_scene.nodes[2].segments[0];
 
@@ -616,12 +605,9 @@ TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
       REQUIRE(mesh.texcoords.size() == segment.texcoords->size());
       REQUIRE(mesh.triangles.size() == 1);
 
-      CHECK(approx_equals(mesh.positions[0],
-                          translate_position_from_root(segment.positions[0]) * 2.5f));
-      CHECK(approx_equals(mesh.positions[1],
-                          translate_position_from_root(segment.positions[1]) * 2.5f));
-      CHECK(approx_equals(mesh.positions[2],
-                          translate_position_from_root(segment.positions[2]) * 2.5f));
+      CHECK(mesh.positions[0] == float3{0.0f, 7.5f, 2.5f});
+      CHECK(mesh.positions[1] == float3{0.0f, 7.5f, 5.0f});
+      CHECK(mesh.positions[2] == float3{0.0f, 10.0f, 5.0f});
 
       CHECK(mesh.triangles[0][0] == segment.triangles[0][0]);
       CHECK(mesh.triangles[0][1] == segment.triangles[0][1]);
@@ -633,9 +619,9 @@ TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
       REQUIRE(model.terrain_cuts.size() == 1);
 
       REQUIRE(model.terrain_cuts[0].positions.size() == 3);
-      CHECK(model.terrain_cuts[0].positions[0] == float3{0.0f, 0.0f, 0.0f} * 2.5f);
-      CHECK(model.terrain_cuts[0].positions[1] == float3{0.0f, 0.0f, 1.0f} * 2.5f);
-      CHECK(model.terrain_cuts[0].positions[2] == float3{0.0f, 1.0f, 1.0f} * 2.5f);
+      CHECK(model.terrain_cuts[0].positions[0] == float3{0.0f, 0.0f, 0.0f});
+      CHECK(model.terrain_cuts[0].positions[1] == float3{0.0f, 0.0f, 2.5f});
+      CHECK(model.terrain_cuts[0].positions[2] == float3{0.0f, 2.5f, 2.5f});
 
       REQUIRE(model.terrain_cuts[0].triangles.size() == 2);
       CHECK(model.terrain_cuts[0].triangles[0] == std::array<uint16, 3>{0, 1, 2});
@@ -658,22 +644,14 @@ TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
          auto& primitive =
             std::get<flat_model_collision::primitive>(model.collision[0].geometry);
 
-         CHECK(primitive.radius ==
-               Approx(input_scene.nodes[3].collision_primitive->radius));
-         CHECK(primitive.height ==
-               Approx(input_scene.nodes[3].collision_primitive->height));
-         CHECK(primitive.length ==
-               Approx(input_scene.nodes[3].collision_primitive->length));
+         CHECK(primitive.radius == 2.5f);
+         CHECK(primitive.height == 1.25f);
+         CHECK(primitive.length == 6.25f);
 
-         const auto rotation = input_scene.nodes[0].transform.rotation *
-                               input_scene.nodes[1].transform.rotation *
-                               input_scene.nodes[3].transform.rotation;
-         const auto position = input_scene.nodes[3].transform.translation * 2.5f +
-                               input_scene.nodes[1].transform.translation * 2.5f +
-                               input_scene.nodes[0].transform.translation * 2.5f;
-
-         CHECK(approx_equals(primitive.transform.rotation, rotation));
-         CHECK(approx_equals(primitive.transform.translation, position));
+         CHECK(primitive.local_from_primitive[0] == float4{1.0f, 0.0f, 0.0f, 0.0f});
+         CHECK(primitive.local_from_primitive[1] == float4{0.0f, 1.0f, 0.0f, 0.0f});
+         CHECK(primitive.local_from_primitive[2] == float4{0.0f, 0.0f, 1.0f, 0.0f});
+         CHECK(primitive.local_from_primitive[3] == float4{2.5f, 7.5f, 0.0f, 1.0f});
       }
 
       // mesh
@@ -686,20 +664,9 @@ TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
 
          CHECK(mesh.triangles == input_scene.nodes[4].segments[0].triangles);
 
-         const auto transform_position_from_root = [&](float3 position) {
-            return position + input_scene.nodes[4].transform.translation * 2.5f +
-                   input_scene.nodes[1].transform.translation * 2.5f +
-                   input_scene.nodes[0].transform.translation * 2.5f;
-         };
-
-         auto& segment = input_scene.nodes[4].segments[0];
-
-         CHECK(approx_equals(mesh.positions[0],
-                             transform_position_from_root(segment.positions[0]) * 2.5f));
-         CHECK(approx_equals(mesh.positions[1],
-                             transform_position_from_root(segment.positions[1]) * 2.5f));
-         CHECK(approx_equals(mesh.positions[2],
-                             transform_position_from_root(segment.positions[2]) * 2.5f));
+         CHECK(mesh.positions[0] == float3{0.0f, 7.5f, 1.25f});
+         CHECK(mesh.positions[1] == float3{0.0f, 7.5f, 3.75f});
+         CHECK(mesh.positions[2] == float3{0.0f, 10.0f, 3.75f});
       }
    }
 }

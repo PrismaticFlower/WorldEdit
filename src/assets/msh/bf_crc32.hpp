@@ -4,7 +4,7 @@
 
 #include <string_view>
 
-namespace we::munge {
+namespace we::assets::msh {
 
 /// @brief Calculates the CRC used as hash in .msh and animation files.
 /// @param str The str to calculate the CRC for.

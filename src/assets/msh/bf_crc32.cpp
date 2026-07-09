@@ -2,7 +2,7 @@
 
 #include <array>
 
-namespace we::munge {
+namespace we::assets::msh {
 
 namespace {
 

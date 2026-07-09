@@ -6,8 +6,7 @@
 #include "optimize_segments.hpp"
 #include "split_segments.hpp"
 
-#include "../utility/bf_crc32.hpp"
-
+#include "assets/msh/bf_crc32.hpp"
 #include "assets/msh/error.hpp"
 #include "assets/msh/scene_io.hpp"
 
@@ -342,7 +341,7 @@ auto build_skeleton(const msh::scene& scene, const build_context& context) -> sk
 
          if (keep_node[i]) continue;
 
-         const uint32 node_name_hash = bf_crc32(node.name);
+         const uint32 node_name_hash = msh::bf_crc32(node.name);
 
          for (const uint32 bone_hash : scene.blend_bone_list) {
             if (node_name_hash == bone_hash) {
