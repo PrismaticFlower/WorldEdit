@@ -6,10 +6,12 @@
 #include "math/sampling.hpp"
 #include "math/vector_funcs.hpp"
 
+#include "world/utility/barrier_construction.hpp"
 #include "world/utility/object_properties.hpp"
 #include "world/utility/raycast_terrain.hpp"
 #include "world/utility/terrain_cut.hpp"
 #include "world/utility/terrain_sample.hpp"
+#include "world/utility/world_utilities.hpp"
 
 #include <numbers>
 
@@ -94,6 +96,10 @@ void world_edit::ui_show_world_object_painter() noexcept
             "Useful if you want to evenly (but \"randomly\") filly an area and "
             "aren't moving the brush much.");
 
+         ImGui::EndTable();
+      }
+
+      if (ImGui::BeginTable("Settings", 3)) {
          ImGui::TableNextRow();
 
          ImGui::TableNextColumn();
@@ -109,6 +115,14 @@ void world_edit::ui_show_world_object_painter() noexcept
 
          ImGui::SetItemTooltip(
             "Randomize painted objects' rotation around the Y axis.");
+
+         ImGui::TableNextColumn();
+
+         ImGui::Checkbox("Auto Barriers", &_object_paint_config.auto_barrier);
+
+         ImGui::SetItemTooltip(
+            "Add barriers for painted objects using their collision bounding "
+            "boxes. Objects with no collision will not receive a barrier.");
 
          ImGui::EndTable();
       }
@@ -440,8 +454,6 @@ void world_edit::ui_show_world_object_painter() noexcept
             world::sample_terrain_normal(_world.terrain, positionWS);
          quaternion rotation = rotation_between({0.0f, 1.0f, 0.0f}, terrain_normalWS);
 
-         ;
-
          if (_object_paint_config.randomize_rotation) {
             const float y_rotation =
                _object_paint_context.random.generate_unorm_float() * 2.0f - 1.0f;
@@ -470,6 +482,36 @@ void world_edit::ui_show_world_object_painter() noexcept
          _edit_stack_world.apply(edits::make_insert_entity(std::move(object),
                                                            _object_classes),
                                  _edit_context, {.transparent = index != 0});
+
+         if (_object_paint_config.auto_barrier) {
+            const world::object_class& object_class =
+               _object_classes[_world.objects.back().class_handle];
+
+            if (object_class.model->collision_bounding_box.min != float3{} or
+                object_class.model->collision_bounding_box.max != float3{}) {
+               if (_world.barriers.size() == _world.barriers.max_size()) {
+                  MessageBoxA(_window,
+                              fmt::format("Max Barriers ({}) Reached",
+                                          _world.barriers.max_size())
+                                 .c_str(),
+                              "Limit Reached", MB_OK);
+                  break;
+               }
+
+               const world::barrier_metrics metrics =
+                  world::barrier_from_object(_world.objects.back(), _object_classes);
+
+               _edit_stack_world
+                  .apply(edits::make_insert_entity(world::barrier{
+                            .name = world::create_unique_name(_world.barriers, "Barrier"),
+                            .position = metrics.position,
+                            .size = metrics.size,
+                            .rotation_angle = metrics.rotation_angle,
+                            .id = _world.next_id.barriers.aquire(),
+                         }),
+                         _edit_context, {.transparent = true});
+            }
+         }
       }
 
       if (_object_paint_context.painted_objects == 0 and objects_to_paint > 0) {

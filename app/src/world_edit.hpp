@@ -813,6 +813,7 @@ private:
       bool quasirandom = false;
       bool align_to_terrain = true;
       bool randomize_rotation = true;
+      bool auto_barrier = true;
       int8 layer = 0;
       std::vector<lowercase_string> object_pool;
    } _object_paint_config;
