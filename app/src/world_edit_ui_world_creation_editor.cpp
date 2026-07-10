@@ -3916,9 +3916,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          for (int i = 0; i < point_count; ++i) {
             const float3 pointLS = {
-               cosf(i / point_count_flt * pi2) * new_size.x,
+               sinf(i / point_count_flt * pi2) * new_size.x,
                0.0f,
-               sinf(i / point_count_flt * pi2) * new_size.y,
+               cosf(i / point_count_flt * pi2) * new_size.y,
             };
 
             points.push_back(pointLS + new_positionWS);
