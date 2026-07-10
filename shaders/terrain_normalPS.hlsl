@@ -36,6 +36,14 @@ float4 main(vertex input) : SV_Target0
       }
    }
 
+   if (terrain_constants.has_detail_map) {
+      Texture2D detail_map = Texture2DHeap[terrain_constants.detail_map_index];
+
+      diffuse_color *= 2.0 * detail_map.Sample(sampler_anisotropic_wrap, positionWS.xz * 0.912).rgb;
+      diffuse_color *= 2.0 * detail_map.Sample(sampler_anisotropic_wrap, positionWS.xz * 1.72).rgb;
+      diffuse_color *= 2.0 * detail_map.Sample(sampler_anisotropic_wrap, positionWS.xz * 3.2).rgb;
+   }
+
    calculate_light_inputs lighting_inputs;
 
    lighting_inputs.positionWS = positionWS;

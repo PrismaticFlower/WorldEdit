@@ -23,9 +23,13 @@ struct terrain_constants_ {
    uint4 diffuse_maps_index[TERRAIN_MAX_TEXTURES / 4];
 
    float3 texture_transform_x[TERRAIN_MAX_TEXTURES];
-   float3 texture_transform_y[TERRAIN_MAX_TEXTURES];   
-   
-   
+   float3 texture_transform_y[TERRAIN_MAX_TEXTURES];
+   uint pad0;
+
+   bool has_detail_map;
+   uint detail_map_index;
+   uint2 pad1;
+
    float3 foliage_color_0;
    float foliage_transparency;
    float3 foliage_color_1;

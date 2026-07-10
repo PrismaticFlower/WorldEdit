@@ -32,6 +32,10 @@ struct alignas(16) terrain_constants {
    std::array<float4, terrain::texture_count> texture_transform_x;
    std::array<float4, terrain::texture_count> texture_transform_y;
 
+   bool has_detail_map;
+   uint32 detail_map_index;
+   std::array<uint32, 2> pad;
+
    float3 foliage_color_0;
    float foliage_transparency;
    float3 foliage_color_1;
@@ -42,7 +46,7 @@ struct alignas(16) terrain_constants {
    uint32 foliage_color_3_pad;
 };
 
-static_assert(sizeof(terrain_constants) == 688);
+static_assert(sizeof(terrain_constants) == 704);
 
 constexpr auto generate_patch_indices()
 {
@@ -435,6 +439,18 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
       }
    }
 
+   if (not string::iequals(_detail_map_name, terrain.detail_texture_name)) {
+      _detail_map_name = lowercase_string{terrain.detail_texture_name};
+      _detail_map =
+         texture_manager.at_or(_detail_map_name, world_texture_dimension::_2d,
+                               texture_manager.null_detail_map());
+
+      if (not _detail_map_name.empty() and
+          _detail_map == texture_manager.null_detail_map()) {
+         _detail_map_load_token = texture_manager.acquire_load_token(_detail_map_name);
+      }
+   }
+
    for (const world::dirty_rect& dirty : terrain.foliage_map_dirty) {
       std::byte* const upload_ptr = _foliage_map_upload_ptr[_device.frame_index()];
       const uint32 row_pitch = _foliage_map_upload_row_pitch;
@@ -558,6 +574,15 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
          transform_y = {0.0f, -scale, 0.0f, 0.0f};
          break;
       }
+   }
+
+   if (not _detail_map_name.empty()) {
+      constants.has_detail_map = true;
+      constants.detail_map_index = _detail_map->srv.index;
+   }
+   else {
+      constants.has_detail_map = false;
+      constants.detail_map_index = texture_manager.null_detail_map()->srv.index;
    }
 
    auto constants_allocation = dynamic_buffer_allocator.allocate_and_copy(constants);
@@ -727,6 +752,11 @@ void terrain::process_updated_texture(const updated_textures& updated)
          _diffuse_map_load_tokens[i] = nullptr;
          _diffuse_maps[i] = std::move(new_texture);
       }
+   }
+
+   if (auto new_texture = updated.check(_detail_map_name); new_texture) {
+      _detail_map_load_token = nullptr;
+      _detail_map = std::move(new_texture);
    }
 }
 

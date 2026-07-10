@@ -127,6 +127,10 @@ private:
    std::array<std::shared_ptr<const world_texture>, texture_count> _diffuse_maps;
    std::array<std::shared_ptr<const world_texture_load_token>, texture_count> _diffuse_map_load_tokens;
 
+   lowercase_string _detail_map_name;
+   std::shared_ptr<const world_texture> _detail_map;
+   std::shared_ptr<const world_texture_load_token> _detail_map_load_token;
+
    uint32 _foliage_map_upload_row_pitch = 0;
 
    gpu::unique_resource_handle _upload_buffer;
