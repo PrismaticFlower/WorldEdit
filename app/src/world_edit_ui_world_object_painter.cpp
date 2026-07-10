@@ -452,7 +452,10 @@ void world_edit::ui_show_world_object_painter() noexcept
 
          const float3 terrain_normalWS =
             world::sample_terrain_normal(_world.terrain, positionWS);
-         quaternion rotation = rotation_between({0.0f, 1.0f, 0.0f}, terrain_normalWS);
+         quaternion rotation =
+            _object_paint_config.align_to_terrain
+               ? rotation_between({0.0f, 1.0f, 0.0f}, terrain_normalWS)
+               : quaternion{};
 
          if (_object_paint_config.randomize_rotation) {
             const float y_rotation =
