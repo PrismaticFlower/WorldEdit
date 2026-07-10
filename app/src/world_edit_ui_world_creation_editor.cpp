@@ -16,6 +16,7 @@
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 
+#include "world/utility/barrier_construction.hpp"
 #include "world/utility/entity_group_utilities.hpp"
 #include "world/utility/hintnode_traits.hpp"
 #include "world/utility/path_properties.hpp"
@@ -3418,30 +3419,18 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                _interaction_targets.hovered_entity.get<world::object_id>());
 
          if (object) {
-            math::bounding_box bbox =
-               _object_classes[object->class_handle].model->collision_bounding_box;
+            const world::barrier_metrics metrics =
+               world::barrier_from_object(*object, _object_classes);
 
             const float padding = _entity_creation_config.from_bbox_padding;
-            const float3 box_centre = (bbox.max + bbox.min) / 2.0f;
-            const float3 box_size = (bbox.max - bbox.min) / 2.0f + padding;
 
-            const float3 position = object->rotation * box_centre + object->position;
-
-            std::array<float3, 8> corners = math::to_corners(bbox);
-
-            for (auto& corner : corners) {
-               corner = object->rotation * corner + object->position;
-            }
-
-            const float rotation_angle =
-               std::atan2(corners[1].x - corners[2].x, corners[1].z - corners[2].z);
-
-            _edit_stack_world
-               .apply(edits::make_set_multi_value(&barrier.rotation_angle,
-                                                  rotation_angle, &barrier.position,
-                                                  position, &barrier.size,
-                                                  float2{box_size.x, box_size.z}),
-                      _edit_context);
+            _edit_stack_world.apply(edits::make_set_multi_value(&barrier.rotation_angle,
+                                                                metrics.rotation_angle,
+                                                                &barrier.position,
+                                                                metrics.position,
+                                                                &barrier.size,
+                                                                metrics.size + padding),
+                                    _edit_context);
          }
       }
 

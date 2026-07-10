@@ -31,11 +31,6 @@ inline auto max(const float a, const float b) noexcept -> float
    return a > b ? a : b;
 }
 
-inline float cross2d(float2 a, float2 b)
-{
-   return a.x * b.y - a.y * b.x;
-}
-
 inline float dot2(float3 v)
 {
    return dot(v, v);
@@ -105,9 +100,9 @@ inline float3 quadIntersect(float3 ro, float3 rd, float3 v0, float3 v1,
    // select projection plane
    float3 mor = abs(nor);
 
-   float float3::*id_nor = nullptr;
-   float float3::*idu = nullptr;
-   float float3::*idv = nullptr;
+   float float3::* id_nor = nullptr;
+   float float3::* idu = nullptr;
+   float float3::* idv = nullptr;
 
    if (mor.x > mor.y && mor.x > mor.z) {
       id_nor = &float3::x;

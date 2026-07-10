@@ -715,6 +715,11 @@ constexpr auto cross(const float3& a, const float3& b) noexcept -> float3
            a.x * b.y - b.x * a.y};
 }
 
+constexpr auto cross2d(const float2& a, const float2& b) -> float
+{
+   return a.x * b.y - b.x * a.y;
+}
+
 inline auto orthogonal(const float3& v) -> float3
 {
    const float3 v_abs = abs(v);
