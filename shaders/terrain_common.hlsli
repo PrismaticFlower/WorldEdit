@@ -28,7 +28,11 @@ struct terrain_constants_ {
 
    bool has_detail_map;
    uint detail_map_index;
-   uint2 pad1;
+   bool has_normal_map;
+   uint normal_map_index;
+
+   float normal_map_scale;
+   uint3 pad1;
 
    float3 foliage_color_0;
    float foliage_transparency;

@@ -31,7 +31,7 @@ struct config {
    float world_fog_range_end = 0.0f;
 
    std::string terrain_normal_map;
-   float terrain_normal_map_tiling = 1.0f;
+   float terrain_normal_map_scale = 1.0f;
    std::vector<dome_model> dome_models;
 };
 

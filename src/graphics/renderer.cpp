@@ -469,7 +469,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
       _blocks.update(world.blocks, creation_entity_group, _pre_render_command_list,
                      _dynamic_buffer_allocator, _texture_manager);
       _terrain.update(world.terrain, _pre_render_command_list,
-                      _dynamic_buffer_allocator, _texture_manager, settings);
+                      _dynamic_buffer_allocator, _texture_manager, _sky, settings);
       _water.update(world, _pre_render_command_list, _dynamic_buffer_allocator,
                     _texture_manager);
       _light_clusters.prepare_lights(

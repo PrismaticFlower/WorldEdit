@@ -28,6 +28,10 @@ struct sky {
 
    auto fog_color() const noexcept -> const float3&;
 
+   auto terrain_normal_map() const noexcept -> std::string_view;
+
+   auto terrain_normal_map_scale() const noexcept -> float;
+
 private:
    void sky_loaded(const lowercase_string& name, asset_ref<assets::sky::config> asset,
                    asset_data<assets::sky::config> data) noexcept;
@@ -52,6 +56,9 @@ private:
       float2 world_fog_mul_add = {0.0f, 1.0f};
 
       float3 fog_color = {};
+
+      std::string terrain_normal_map;
+      float terrain_normal_map_scale = 1.0f;
 
       std::vector<dome_model> dome_models;
    };

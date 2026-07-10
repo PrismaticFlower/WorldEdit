@@ -101,7 +101,7 @@ void read_dome_info(const node& node, const platform_flags platform, config& sky
       }
       else if (string::iequals(child.key, "TerrainBumpTexture")) {
          sky.terrain_normal_map = child.values.get<std::string>(0);
-         sky.terrain_normal_map_tiling = child.values.get<float>(1);
+         sky.terrain_normal_map_scale = child.values.get<float>(1);
       }
       else if (string::iequals(child.key, "DomeModel")) {
          read_dome_model(child, platform, sky.dome_models.emplace_back());

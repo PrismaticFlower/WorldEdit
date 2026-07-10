@@ -94,6 +94,9 @@ void sky::update(const std::string_view world_name) noexcept
             _sky_state.world_fog_mul_add = {-fog_mul, fog_add};
          }
 
+         _sky_state.terrain_normal_map = _sky_data->terrain_normal_map;
+         _sky_state.terrain_normal_map_scale = _sky_data->terrain_normal_map_scale;
+
          _sky_data = nullptr;
       }
    }
@@ -157,6 +160,16 @@ auto sky::world_fog_mul_add() const noexcept -> const float2&
 auto sky::fog_color() const noexcept -> const float3&
 {
    return _sky_state.fog_color;
+}
+
+auto sky::terrain_normal_map() const noexcept -> std::string_view
+{
+   return _sky_state.terrain_normal_map;
+}
+
+auto sky::terrain_normal_map_scale() const noexcept -> float
+{
+   return _sky_state.terrain_normal_map_scale;
 }
 
 void sky::sky_loaded([[maybe_unused]] const lowercase_string& name,

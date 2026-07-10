@@ -1,14 +1,18 @@
 #pragma once
 
-#include "container/slim_bitset.hpp"
 #include "dynamic_buffer_allocator.hpp"
-#include "gpu/resource.hpp"
-#include "gpu/rhi.hpp"
 #include "math/frustum.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
+#include "sky.hpp"
 #include "texture_manager.hpp"
 #include "types.hpp"
+
+#include "gpu/resource.hpp"
+#include "gpu/rhi.hpp"
+
+#include "container/slim_bitset.hpp"
+
 #include "world/world.hpp"
 
 #include <span>
@@ -60,7 +64,8 @@ public:
 
    void update(const world::terrain& terrain, gpu::copy_command_list& command_list,
                dynamic_buffer_allocator& dynamic_buffer_allocator,
-               texture_manager& texture_manager, const settings::graphics& settings);
+               texture_manager& texture_manager, const sky& sky,
+               const settings::graphics& settings);
 
    void predraw_cull(const frustum& view_frustum,
                      dynamic_buffer_allocator& dynamic_buffer_allocator);
@@ -130,6 +135,10 @@ private:
    lowercase_string _detail_map_name;
    std::shared_ptr<const world_texture> _detail_map;
    std::shared_ptr<const world_texture_load_token> _detail_map_load_token;
+
+   lowercase_string _normal_map_name;
+   std::shared_ptr<const world_texture> _normal_map;
+   std::shared_ptr<const world_texture_load_token> _normal_map_load_token;
 
    uint32 _foliage_map_upload_row_pitch = 0;
 

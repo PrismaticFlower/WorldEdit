@@ -50,7 +50,7 @@ TEST_CASE(".sky reading", "[Assets][REQ]")
    auto config = read(sky_test, "PC");
 
    CHECK(config.terrain_normal_map == "terrain_normal_map");
-   CHECK(config.terrain_normal_map_tiling == 4.0f);
+   CHECK(config.terrain_normal_map_scale == 4.0f);
 
    REQUIRE(config.dome_models.size() == 3);
 
@@ -78,7 +78,7 @@ TEST_CASE(".sky platform drop reading", "[Assets][REQ]")
    auto config = read(sky_test, "PS2");
 
    CHECK(config.terrain_normal_map == "terrain_normal_map");
-   CHECK(config.terrain_normal_map_tiling == 4.0f);
+   CHECK(config.terrain_normal_map_scale == 4.0f);
 
    REQUIRE(config.dome_models.size() == 2);
 

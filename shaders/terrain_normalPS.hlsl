@@ -10,6 +10,7 @@
 float4 main(vertex input) : SV_Target0
 {
    const float3 positionWS = input.positionWS;
+   float3 normalWS = normalize(input.normalWS);
 
    float3 diffuse_color = 0.0;
 
@@ -44,10 +45,23 @@ float4 main(vertex input) : SV_Target0
       diffuse_color *= 2.0 * detail_map.Sample(sampler_anisotropic_wrap, positionWS.xz * 3.2).rgb;
    }
 
+   if (terrain_constants.has_normal_map) {
+      float3 tangentWS = float3(1.0 - normalWS.x * normalWS.x, -normalWS.x * normalWS.y, -normalWS.x * normalWS.z);
+      tangentWS /= sqrt(tangentWS.x);
+
+      float3 bitangentWS = float3(-normalWS.z * normalWS.x, -normalWS.z * normalWS.y, 1.0 - normalWS.z * normalWS.z);
+      bitangentWS /= sqrt(bitangentWS.z);
+
+      Texture2D normal_map = Texture2DHeap[terrain_constants.normal_map_index];
+
+      const float3 normalTS = normal_map.Sample(sampler_anisotropic_wrap, positionWS.xz * terrain_constants.normal_map_scale * 2.0).rgb * 2.0 - 1.0;
+      normalWS = normalize(mul(normalTS, float3x3(tangentWS, bitangentWS, normalWS)));
+   }
+
    calculate_light_inputs lighting_inputs;
 
    lighting_inputs.positionWS = positionWS;
-   lighting_inputs.normalWS = input.normalWS;
+   lighting_inputs.normalWS = normalWS;
    lighting_inputs.viewWS = normalize(cb_frame.view_positionWS - positionWS);
    lighting_inputs.diffuse_color = diffuse_color;
    lighting_inputs.specular_color = 0.0;

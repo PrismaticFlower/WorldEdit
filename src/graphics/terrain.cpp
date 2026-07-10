@@ -32,9 +32,13 @@ struct alignas(16) terrain_constants {
    std::array<float4, terrain::texture_count> texture_transform_x;
    std::array<float4, terrain::texture_count> texture_transform_y;
 
-   bool has_detail_map;
+   uint32 has_detail_map;
    uint32 detail_map_index;
-   std::array<uint32, 2> pad;
+   uint32 has_normal_map;
+   uint32 normal_map_index;
+
+   float normal_map_scale;
+   std::array<uint32, 3> pad;
 
    float3 foliage_color_0;
    float foliage_transparency;
@@ -46,7 +50,7 @@ struct alignas(16) terrain_constants {
    uint32 foliage_color_3_pad;
 };
 
-static_assert(sizeof(terrain_constants) == 704);
+static_assert(sizeof(terrain_constants) == 720);
 
 constexpr auto generate_patch_indices()
 {
@@ -145,7 +149,8 @@ terrain::terrain(gpu::device& device, copy_command_list_pool& copy_command_list_
 
 void terrain::update(const world::terrain& terrain, gpu::copy_command_list& command_list,
                      dynamic_buffer_allocator& dynamic_buffer_allocator,
-                     texture_manager& texture_manager, const settings::graphics& settings)
+                     texture_manager& texture_manager, const sky& sky,
+                     const settings::graphics& settings)
 {
    if (const uint32 length = static_cast<uint32>(terrain.length);
        _terrain_length != length) {
@@ -451,6 +456,18 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
       }
    }
 
+   if (not string::iequals(_normal_map_name, sky.terrain_normal_map())) {
+      _normal_map_name = lowercase_string{sky.terrain_normal_map()};
+      _normal_map =
+         texture_manager.at_or(_normal_map_name, world_texture_dimension::_2d,
+                               texture_manager.null_normal_map());
+
+      if (not _normal_map_name.empty() and
+          _normal_map == texture_manager.null_normal_map()) {
+         _normal_map_load_token = texture_manager.acquire_load_token(_normal_map_name);
+      }
+   }
+
    for (const world::dirty_rect& dirty : terrain.foliage_map_dirty) {
       std::byte* const upload_ptr = _foliage_map_upload_ptr[_device.frame_index()];
       const uint32 row_pitch = _foliage_map_upload_row_pitch;
@@ -505,6 +522,9 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
       .inv_grid_size = 1.0f / _terrain_grid_size,
       .grid_line_color = settings.terrain_grid_color,
       .grid_line_width = settings.terrain_grid_line_width * (4.0f / _terrain_grid_size),
+
+      .normal_map_scale =
+         1.72f / _terrain_grid_size, // The scale in .sky files doesn't seem to do anything?
 
       .foliage_color_0 = settings.foliage_overlay_layer0_color,
       .foliage_transparency = settings.foliage_overlay_transparency,
@@ -583,6 +603,15 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
    else {
       constants.has_detail_map = false;
       constants.detail_map_index = texture_manager.null_detail_map()->srv.index;
+   }
+
+   if (not _normal_map_name.empty()) {
+      constants.has_normal_map = true;
+      constants.normal_map_index = _normal_map->srv.index;
+   }
+   else {
+      constants.has_normal_map = false;
+      constants.normal_map_index = texture_manager.null_normal_map()->srv.index;
    }
 
    auto constants_allocation = dynamic_buffer_allocator.allocate_and_copy(constants);
@@ -757,6 +786,11 @@ void terrain::process_updated_texture(const updated_textures& updated)
    if (auto new_texture = updated.check(_detail_map_name); new_texture) {
       _detail_map_load_token = nullptr;
       _detail_map = std::move(new_texture);
+   }
+
+   if (auto new_texture = updated.check(_normal_map_name); new_texture) {
+      _normal_map_load_token = nullptr;
+      _normal_map = std::move(new_texture);
    }
 }
 
