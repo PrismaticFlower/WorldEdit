@@ -290,8 +290,6 @@ void world_edit::ui_show_animation_group_editor() noexcept
                   world::animation_group::entry_broken& entry =
                      selected_group->entries_broken_links[i];
 
-                  ImGui::TableNextColumn();
-
                   ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
                   if (absl::InlinedVector<char, 256> buffer{entry.animation.begin(),
