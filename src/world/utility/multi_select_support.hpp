@@ -144,8 +144,10 @@ struct multi_select_properties {
       {
          new_name = string::trim_trailing_digits(new_name);
 
-         if (_count > 0 and _name) {
-            if (not string::iequals(*_name, new_name)) _name = std::nullopt;
+         if (_count > 0) {
+            if (_name) {
+               if (not string::iequals(*_name, new_name)) _name = std::nullopt;
+            }
          }
          else {
             _name = new_name;

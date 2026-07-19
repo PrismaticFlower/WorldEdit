@@ -2941,6 +2941,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       absl::InlinedVector<char, 256> value_buffer{value.begin(), value.end()};
 
       ImGui::PushItemFlag(ImGuiItemFlags_LiveEditOnInputText, false);
+      ImGui::PushStyleColor(ImGuiCol_TextDisabled,
+                            ImGui::GetStyleColorVec4(ImGuiCol_Text));
 
       if (ImGui::InputTextWithHint("Name Prefix", hint, &value_buffer)) {
          edits::bundle_vector edit_bundle;
@@ -3120,6 +3122,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                                  _edit_context);
       }
 
+      ImGui::PopStyleColor();
       ImGui::PopItemFlag();
 
       ImGui::SetItemTooltip(
