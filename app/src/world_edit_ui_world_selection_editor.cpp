@@ -2940,6 +2940,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
       absl::InlinedVector<char, 256> value_buffer{value.begin(), value.end()};
 
+      ImGui::PushItemFlag(ImGuiItemFlags_LiveEditOnInputText, false);
+
       if (ImGui::InputTextWithHint("Name Prefix", hint, &value_buffer)) {
          edits::bundle_vector edit_bundle;
          edit_bundle.reserve(properties.layer.count());
@@ -3117,6 +3119,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
                                  _edit_context);
       }
+
+      ImGui::PopItemFlag();
 
       ImGui::SetItemTooltip(
          "Name of selected entities without trailing digits.");
