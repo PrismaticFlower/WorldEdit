@@ -195,7 +195,7 @@ auto create_material_pipelines(gpu::device& device, const std::string_view name_
                           .input_layout = mesh_input_layout,
 
                           .render_target_count = 1,
-                          .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                          .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
                           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                           .debug_name = pipeline_name}),
@@ -337,7 +337,7 @@ auto create_thumbnail_mesh_pipelines(gpu::device& device,
               .input_layout = mesh_input_layout,
 
               .render_target_count = 1,
-              .rtv_formats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+              .rtv_formats = {DXGI_FORMAT_R8G8B8A8_UNORM},
               .dsv_format = DXGI_FORMAT_D16_UNORM,
 
               .debug_name = pipeline_name}),
@@ -371,7 +371,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                      .input_layout = mesh_input_layout,
 
                      .render_target_count = 1,
-                     .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                     .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
                      .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                      .debug_name = "mesh_basic"sv}),
@@ -389,7 +389,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                               .input_layout = mesh_input_layout,
 
                               .render_target_count = 1,
-                              .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                              .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
                               .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                               .debug_name = "mesh_basic_lighting"sv}),
@@ -483,7 +483,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                         .input_layout = terrain_input_layout,
 
                         .render_target_count = 1,
-                        .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                        .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
                         .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                         .debug_name = "terrain_basic"sv}),
@@ -500,7 +500,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                            .input_layout = terrain_input_layout,
 
                            .render_target_count = 1,
-                           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
                            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                            .debug_name = "terrain_lighting"sv}),
@@ -517,7 +517,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                          .input_layout = terrain_input_layout,
 
                          .render_target_count = 1,
-                         .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                         .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
                          .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                          .debug_name = "terrain_normal"sv}),
@@ -570,7 +570,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                 .depth_stencil_state = depth_stencil_readonly_greater_equal,
 
                 .render_target_count = 1,
-                .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
                 .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                 .debug_name = "water"sv}),
@@ -588,7 +588,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                    .input_layout = mesh_input_layout,
 
                    .render_target_count = 1,
-                   .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                   .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
                    .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                    .debug_name = "sky_mesh"sv}),
@@ -619,7 +619,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                       .input_layout = block_input_layout,
 
                       .render_target_count = 1,
-                      .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                      .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
                       .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                       .debug_name = "block_basic"sv}),
@@ -636,7 +636,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                                .input_layout = block_input_layout,
 
                                .render_target_count = 1,
-                               .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                               .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
                                .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                                .debug_name = "block_basic_lighting"sv}),
@@ -653,7 +653,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                        .input_layout = block_input_layout,
 
                        .render_target_count = 1,
-                       .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                       .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
                        .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                        .debug_name = "block_normal"sv}),
@@ -782,7 +782,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .input_layout = block_input_layout,
 
            .render_target_count = 1,
-           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "block_custom_mesh_basic"sv}),
@@ -800,7 +800,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .input_layout = block_input_layout,
 
            .render_target_count = 1,
-           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "block_custom_mesh_basic_lighting"sv}),
@@ -818,7 +818,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .input_layout = block_input_layout,
 
            .render_target_count = 1,
-           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
            .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "block_custom_mesh_normal"sv}),

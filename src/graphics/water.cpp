@@ -80,7 +80,7 @@ void water::update(const world::world& world, gpu::copy_command_list& command_li
                                 _water_grid_scale / world.effects.water.tile.pc,
                              .velocity = world.effects.water.velocity.pc,
                              .height = world.terrain.water_settings.height,
-                             .color_map_index = _color_map->srv_srgb.index,
+                             .color_map_index = _color_map->srv.index,
                              .color = world.effects.water.refraction_color.pc};
 
    auto constants_allocation = dynamic_buffer_allocator.allocate_and_copy(constants);

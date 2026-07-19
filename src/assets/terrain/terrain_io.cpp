@@ -1,8 +1,9 @@
 #include "terrain_io.hpp"
+
 #include "io/output_file.hpp"
+
 #include "utility/binary_reader.hpp"
 #include "utility/enum_bitflags.hpp"
-#include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 
@@ -250,7 +251,7 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
    terrain.water_settings.v_repeat = water_settings[1].v_repeat;
    terrain.water_settings.u_velocity = water_settings[1].u_velocity;
    terrain.water_settings.v_velocity = water_settings[1].v_velocity;
-   terrain.water_settings.color = utility::unpack_srgb_bgra(water_settings[1].colour);
+   terrain.water_settings.color = water_settings[1].colour;
    terrain.water_settings.texture = make_texture_name(water_settings[1].texture);
 
    // decals
@@ -481,8 +482,9 @@ void save_terrain(const io::path& path, const terrain& terrain,
       .v_velocity = terrain.water_settings.v_velocity,
       .u_repeat = terrain.water_settings.u_repeat,
       .v_repeat = terrain.water_settings.v_repeat,
-      .colour = utility::pack_srgb_bgra(terrain.water_settings.color),
-      .texture = make_terrain_texture_string(terrain.water_settings.texture)};
+      .colour = terrain.water_settings.color,
+      .texture = make_terrain_texture_string(terrain.water_settings.texture),
+   };
 
    file.write_object(terrain_water_settings{}); // write null unused water settings
    file.write_object(water_settings);           // write actual water settings

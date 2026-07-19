@@ -265,11 +265,11 @@ void material::init_constant_buffer(const assets::msh::material& material,
    normal_material_constants constants{
       .flags = make_shader_flags(flags, material, texture_names.normal_map.empty(),
                                  static_lighting),
-      .diffuse_map = textures.diffuse_map->srv_srgb.index,
+      .diffuse_map = textures.diffuse_map->srv.index,
       .normal_map = textures.normal_map->srv.index,
       .detail_map = textures.detail_map->srv.index,
       .specular_color = specular_color,
-      .env_map = textures.env_map->srv_srgb.index,
+      .env_map = textures.env_map->srv.index,
       .scrolling_amount = scrolling_amount,
       .detail_scale = detail_scale,
       .env_color = material_specular_color};
@@ -292,7 +292,7 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
       command_list.write_buffer_immediate(constant_buffer_view +
                                              offsetof(normal_material_constants,
                                                       diffuse_map),
-                                          textures.diffuse_map->srv_srgb.index);
+                                          textures.diffuse_map->srv.index);
    }
 
    if (auto new_texture = updated.check(texture_names.normal_map);
@@ -322,7 +322,7 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
 
       command_list.write_buffer_immediate(constant_buffer_view +
                                              offsetof(normal_material_constants, env_map),
-                                          textures.env_map->srv_srgb.index);
+                                          textures.env_map->srv.index);
    }
 }
 
@@ -349,7 +349,7 @@ void material::process_updated_textures_copy(gpu::device& device,
       texture_load_tokens.diffuse_map = nullptr;
 
       copy_srv_index(offsetof(normal_material_constants, diffuse_map),
-                     textures.diffuse_map->srv_srgb.index);
+                     textures.diffuse_map->srv.index);
    }
 
    if (auto new_texture = updated.check(texture_names.normal_map);
@@ -376,7 +376,7 @@ void material::process_updated_textures_copy(gpu::device& device,
       texture_load_tokens.env_map = nullptr;
 
       copy_srv_index(offsetof(normal_material_constants, env_map),
-                     textures.env_map->srv_srgb.index);
+                     textures.env_map->srv.index);
    }
 }
 

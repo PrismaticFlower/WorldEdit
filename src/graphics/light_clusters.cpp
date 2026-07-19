@@ -9,7 +9,6 @@
 #include "math/vector_funcs.hpp"
 
 #include "utility/enum_bitflags.hpp"
-#include "utility/srgb_conversion.hpp"
 
 #include <cmath>
 
@@ -387,10 +386,9 @@ void light_clusters::prepare_lights(
                                    .light_region_list_index =
                                       _lights_region_list_srv.get(),
                                    .shadow_map_index = _shadow_map_srv.get(),
-                                   .sky_ambient_color = utility::decompress_srgb(
-                                      world.global_lights.ambient_sky_color),
-                                   .ground_ambient_color = utility::decompress_srgb(
-                                      world.global_lights.ambient_ground_color),
+                                   .sky_ambient_color = world.global_lights.ambient_sky_color,
+                                   .ground_ambient_color =
+                                      world.global_lights.ambient_ground_color,
                                    .shadow_resolution = {shadow_res, shadow_res},
                                    .inv_shadow_resolution = {1.0f / shadow_res,
                                                              1.0f / shadow_res}};

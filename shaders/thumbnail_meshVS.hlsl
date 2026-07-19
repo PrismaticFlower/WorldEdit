@@ -1,5 +1,4 @@
 #include "bindings.hlsli"
-#include "srgb.hlsli"
 
 struct camera_constants {
    float4x4 projection_from_world;
@@ -36,7 +35,7 @@ output_vertex main(input_vertex input)
    output.tangentOS = input.tangentOS;
    output.bitangentOS = input.bitangentOS;
    output.texcoords = input.texcoords;
-   output.color = srgb_to_linear(input.color);
+   output.color = input.color;
    output.positionPS = mul(cb_camera.projection_from_world, float4(input.positionOS, 1.0));
 
    return output;

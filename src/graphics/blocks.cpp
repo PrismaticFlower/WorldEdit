@@ -509,11 +509,11 @@ blocks::blocks(gpu::device& device, copy_command_list_pool& copy_command_list_po
 
       const block_material default_material{
          .flags = block_material_flags::none,
-         .diffuse_map_index = texture_manager.null_diffuse_map()->srv_srgb.index,
+         .diffuse_map_index = texture_manager.null_diffuse_map()->srv.index,
          .normal_map_index = texture_manager.null_normal_map()->srv.index,
          .detail_map_index = texture_manager.null_detail_map()->srv.index,
          .specular_color = {0.0f, 0.0f, 0.0f},
-         .env_map_index = texture_manager.null_cube_map()->srv_srgb.index,
+         .env_map_index = texture_manager.null_cube_map()->srv.index,
          .detail_scale = {1.0f, 1.0f},
          .env_color = {0.0f, 0.0f, 0.0f},
       };
@@ -1241,12 +1241,12 @@ void blocks::update(const world::blocks& blocks, const world::entity_group* enti
 
          const block_material constants{
             .flags = material_flags(material),
-            .diffuse_map_index = material.diffuse_map.texture->srv_srgb.index,
+            .diffuse_map_index = material.diffuse_map.texture->srv.index,
             .normal_map_index = material.normal_map.texture->srv.index,
             .detail_map_index = material.detail_map.texture->srv.index,
             .specular_color = material.specular_lighting ? material.specular_color
                                                          : float3{0.0f, 0.0f, 0.0f},
-            .env_map_index = material.env_map.texture->srv_srgb.index,
+            .env_map_index = material.env_map.texture->srv.index,
             .detail_scale = {std::max(material.detail_tiling[0], uint8{1}) * 1.0f,
                              std::max(material.detail_tiling[1], uint8{1}) * 1.0f},
             .env_color = not material.env_map.name.empty() ? material.specular_color
@@ -1901,9 +1901,9 @@ void blocks::process_updated_textures(gpu::copy_command_list& command_list,
          material.diffuse_map.texture = std::move(new_texture);
          material.diffuse_map.load_token = nullptr;
 
-         command_list.write_buffer_immediate(
-            material_gpu + offsetof(block_material, diffuse_map_index),
-            material.diffuse_map.texture->srv_srgb.index);
+         command_list.write_buffer_immediate(material_gpu + offsetof(block_material,
+                                                                     diffuse_map_index),
+                                             material.diffuse_map.texture->srv.index);
       }
 
       if (auto new_texture = updated.check(material.normal_map.name);
@@ -1933,7 +1933,7 @@ void blocks::process_updated_textures(gpu::copy_command_list& command_list,
 
          command_list.write_buffer_immediate(material_gpu + offsetof(block_material,
                                                                      env_map_index),
-                                             material.env_map.texture->srv_srgb.index);
+                                             material.env_map.texture->srv.index);
       }
    }
 
@@ -1986,12 +1986,12 @@ void blocks::process_updated_textures_copy(dynamic_buffer_allocator& allocator,
       if (update) {
          auto upload_allocation = allocator.allocate_and_copy(block_material{
             .flags = material_flags(material),
-            .diffuse_map_index = material.diffuse_map.texture->srv_srgb.index,
+            .diffuse_map_index = material.diffuse_map.texture->srv.index,
             .normal_map_index = material.normal_map.texture->srv.index,
             .detail_map_index = material.detail_map.texture->srv.index,
             .specular_color = material.specular_lighting ? material.specular_color
                                                          : float3{0.0f, 0.0f, 0.0f},
-            .env_map_index = material.env_map.texture->srv_srgb.index,
+            .env_map_index = material.env_map.texture->srv.index,
             .detail_scale = {std::max(material.detail_tiling[0], uint8{1}) * 1.0f,
                              std::max(material.detail_tiling[1], uint8{1}) * 1.0f},
             .env_color = not material.env_map.name.empty() ? material.specular_color
@@ -2549,12 +2549,12 @@ void blocks::dynamic_blocks::update(const world::entity_group& entity_group,
 
          const block_material constants{
             .flags = material_flags(material),
-            .diffuse_map_index = material.diffuse_map.texture->srv_srgb.index,
+            .diffuse_map_index = material.diffuse_map.texture->srv.index,
             .normal_map_index = material.normal_map.texture->srv.index,
             .detail_map_index = material.detail_map.texture->srv.index,
             .specular_color = material.specular_lighting ? material.specular_color
                                                          : float3{0.0f, 0.0f, 0.0f},
-            .env_map_index = material.env_map.texture->srv_srgb.index,
+            .env_map_index = material.env_map.texture->srv.index,
             .detail_scale = {std::max(material.detail_tiling[0], uint8{1}) * 1.0f,
                              std::max(material.detail_tiling[1], uint8{1}) * 1.0f},
             .env_color = not material.env_map.name.empty() ? material.specular_color

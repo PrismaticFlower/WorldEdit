@@ -428,6 +428,7 @@ struct swap_chain_state {
 
    std::vector<com_ptr<ID3D12Resource2>> buffers;
    std::vector<rtv_handle> buffer_rtvs;
+   std::vector<rtv_handle> buffer_srgb_rtvs;
 
    uint32 width = 0;
    uint32 height = 0;
@@ -1630,6 +1631,7 @@ auto device::create_swap_chain(const swap_chain_desc& desc) -> swap_chain
 
    swap_chain.state->buffers.resize(desc.buffer_count);
    swap_chain.state->buffer_rtvs.resize(desc.buffer_count);
+   swap_chain.state->buffer_srgb_rtvs.resize(desc.buffer_count);
 
    for (uint32 i = 0; i < desc.buffer_count; ++i) {
       terminate_if_fail(dxgi_swap_chain->GetBuffer(
@@ -1638,7 +1640,12 @@ auto device::create_swap_chain(const swap_chain_desc& desc) -> swap_chain
       swap_chain.state->buffer_rtvs[i] =
          create_render_target_view(pack_resource_handle(
                                       swap_chain.state->buffers[i].get()),
-                                   {.format = desc.format_rtv,
+                                   {.format = desc.format,
+                                    .dimension = rtv_dimension::texture2d});
+      swap_chain.state->buffer_srgb_rtvs[i] =
+         create_render_target_view(pack_resource_handle(
+                                      swap_chain.state->buffers[i].get()),
+                                   {.format = desc.format_srgb_rtv,
                                     .dimension = rtv_dimension::texture2d});
    }
 
@@ -1907,6 +1914,11 @@ swap_chain::~swap_chain()
       state->rtv_descriptor_heap->allocator.release(
          state->rtv_descriptor_heap->to_index(unpack_rtv_handle(view)));
    }
+
+   for (auto& view : state->buffer_srgb_rtvs) {
+      state->rtv_descriptor_heap->allocator.release(
+         state->rtv_descriptor_heap->to_index(unpack_rtv_handle(view)));
+   }
 }
 
 swap_chain::swap_chain(swap_chain&& other) noexcept = default;
@@ -1949,9 +1961,15 @@ void swap_chain::resize(uint32 new_width, uint32 new_height)
 
       state->rtv_descriptor_heap->allocator.release(state->rtv_descriptor_heap->to_index(
          unpack_rtv_handle(state->buffer_rtvs[i])));
+      state->rtv_descriptor_heap->allocator.release(state->rtv_descriptor_heap->to_index(
+         unpack_rtv_handle(state->buffer_srgb_rtvs[i])));
+
       state->buffer_rtvs[i] = state->device->create_render_target_view(
          pack_resource_handle(state->buffers[i].get()),
-         {.format = desc.format_rtv, .dimension = rtv_dimension::texture2d});
+         {.format = desc.format, .dimension = rtv_dimension::texture2d});
+      state->buffer_srgb_rtvs[i] = state->device->create_render_target_view(
+         pack_resource_handle(state->buffers[i].get()),
+         {.format = desc.format_srgb_rtv, .dimension = rtv_dimension::texture2d});
    }
 }
 
@@ -1960,7 +1978,8 @@ auto swap_chain::current_back_buffer() -> current_backbuffer
    const uint32 index = state->swap_chain->GetCurrentBackBufferIndex();
 
    return {.resource = pack_resource_handle(state->buffers[index].get()),
-           .rtv = state->buffer_rtvs[index]};
+           .rtv = state->buffer_rtvs[index],
+           .srgb_rtv = state->buffer_srgb_rtvs[index]};
 }
 
 auto swap_chain::width() -> uint32

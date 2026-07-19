@@ -5,7 +5,6 @@
 
 #include "assets/sky/sky.hpp"
 
-#include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 
 namespace we::graphics {
@@ -70,9 +69,9 @@ void sky::update(const std::string_view world_name) noexcept
                 .asset = _assets.models[geometry]});
          }
 
-         _sky_state.fog_color = utility::decompress_srgb(
-            float3{_sky_data->fog_color[0] / 255.0f, _sky_data->fog_color[1] / 255.0f,
-                   _sky_data->fog_color[2] / 255.0f});
+         _sky_state.fog_color = float3{_sky_data->fog_color[0] / 255.0f,
+                                       _sky_data->fog_color[1] / 255.0f,
+                                       _sky_data->fog_color[2] / 255.0f};
 
          const float fog_range_start = _sky_data->fog_range_start;
          const float fog_range_end = _sky_data->fog_range_end;

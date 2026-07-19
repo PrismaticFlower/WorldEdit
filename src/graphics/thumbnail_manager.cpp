@@ -1842,17 +1842,17 @@ private:
       _render_texture = {_device.create_texture(
                             {.dimension = gpu::texture_dimension::t_2d,
                              .flags = {.allow_render_target = true},
-                             .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+                             .format = DXGI_FORMAT_R8G8B8A8_UNORM,
                              .width = _thumbnail_length * aa_factor,
                              .height = _thumbnail_length * aa_factor,
-                             .optimized_clear_value = {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+                             .optimized_clear_value = {.format = DXGI_FORMAT_R8G8B8A8_UNORM,
                                                        .color = {0.0f, 0.0f, 0.0f, 0.0f}},
                              .debug_name = "Thumbnails Render Target"},
                             gpu::barrier_layout::render_target,
                             gpu::legacy_resource_state::render_target),
                          _device};
       _render_rtv = {_device.create_render_target_view(_render_texture.get(),
-                                                       {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+                                                       {.format = DXGI_FORMAT_R8G8B8A8_UNORM,
                                                         .dimension =
                                                            gpu::rtv_dimension::texture2d}),
                      _device};

@@ -42,7 +42,7 @@ struct water_settings {
    float v_velocity = 0.0f;
    float u_repeat = 0.0f;
    float v_repeat = 0.0f;
-   float4 color = {1.0f, 1.0f, 1.0f, 1.0f};
+   uint32 color = 0xff'ff'ff'ffu;
    std::string texture;
 
    bool operator==(const water_settings&) const noexcept = default;

@@ -1,7 +1,6 @@
 #include "bindings.hlsli"
 #include "frame_constants.hlsli"
 #include "sky_mesh_constants.hlsli"
-#include "srgb.hlsli"
 
 struct input_vertex {
    float3 positionOS : POSITION;
@@ -31,7 +30,7 @@ output_vertex main(input_vertex input)
    positionWS.y += ((1.0 - cb_mesh_constants.movement_scale) * cb_mesh_constants.offset);
 
    output.texcoords = input.texcoords;
-   output.color = srgb_to_linear(input.color);
+   output.color = input.color;
    output.positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
    output.positionPS.z = 0.0;
 

@@ -761,8 +761,8 @@ struct swap_chain_desc {
    /// @brief The format to use for the swap chain buffers.
    DXGI_FORMAT format = DXGI_FORMAT_B8G8R8A8_UNORM;
 
-   /// @brief The format to use for the swap chain RTVs.
-   DXGI_FORMAT format_rtv = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+   /// @brief The format to use for the swap chain sRGB RTVs.
+   DXGI_FORMAT format_srgb_rtv = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 
    /// @brief Number of buffers in the swap chain.
    uint32 buffer_count = 2;
@@ -1207,6 +1207,7 @@ private:
 struct current_backbuffer {
    resource_handle resource;
    rtv_handle rtv;
+   rtv_handle srgb_rtv;
 };
 
 struct swap_chain {
@@ -1250,7 +1251,7 @@ struct swap_chain {
 private:
    friend device;
 
-   implementation_storage<swap_chain_state, 144> state;
+   implementation_storage<swap_chain_state, 176> state;
 };
 
 /// Device Structures ///

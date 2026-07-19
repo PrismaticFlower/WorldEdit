@@ -1,7 +1,6 @@
 #include "bindings.hlsli"
 #include "frame_constants.hlsli"
 #include "fog.hlsli"
-#include "srgb.hlsli"
 
 struct object_constants {
    float4x4 world_from_object;
@@ -43,7 +42,7 @@ output_vertex main(input_vertex input)
    output.bitangentWS = mul((float3x3)cb_object_constants.world_from_object, input.bitangentOS);
    output.texcoords = input.texcoords;
    output.fog = calculate_fog(positionWS, positionPS);
-   output.color = srgb_to_linear(input.color);
+   output.color = input.color;
    output.positionPS = positionPS;
 
    return output;

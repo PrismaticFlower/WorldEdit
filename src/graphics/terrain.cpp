@@ -535,7 +535,7 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
 
    for (uint32 y = 0; y < texture_count / 4; ++y) {
       for (uint32 x = 0; x < texture_count / 4; ++x) {
-         constants.diffuse_maps[y][x] = _diffuse_maps[y * 4 + x]->srv_srgb.index;
+         constants.diffuse_maps[y][x] = _diffuse_maps[y * 4 + x]->srv.index;
       }
    }
 

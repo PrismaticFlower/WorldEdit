@@ -420,7 +420,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                 .height = static_cast<float>(_swap_chain.height())};
    blocks::view blocks_view;
 
-   auto [back_buffer, back_buffer_rtv] = _swap_chain.current_back_buffer();
+   const gpu::current_backbuffer current_backbuffer =
+      _swap_chain.current_back_buffer();
    _dynamic_buffer_allocator.reset(_device.frame_index());
 
    _model_manager.update_models();
@@ -516,7 +517,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                               .access_after = gpu::barrier_access::render_target,
                               .layout_before = gpu::barrier_layout::present,
                               .layout_after = gpu::barrier_layout::render_target,
-                              .resource = back_buffer});
+                              .resource = current_backbuffer.resource});
 
       command_list.deferred_barrier(
          gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
@@ -529,7 +530,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    }
    else {
       command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
-         .resource = back_buffer,
+         .resource = current_backbuffer.resource,
          .state_before = gpu::legacy_resource_state::present,
          .state_after = gpu::legacy_resource_state::render_target});
 
@@ -540,7 +541,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    }
    command_list.flush_barriers();
 
-   command_list.clear_render_target_view(back_buffer_rtv,
+   command_list.clear_render_target_view(current_backbuffer.rtv,
                                          float4{0.0f, 0.0f, 0.0f, 1.0f});
    command_list.clear_depth_stencil_view(_depth_stencil_view.get(),
                                          {.clear_depth = true, .clear_stencil = true},
@@ -549,10 +550,14 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    command_list.rs_set_viewports(viewport);
    command_list.rs_set_scissor_rects(
       {.right = _swap_chain.width(), .bottom = _swap_chain.height()});
-   command_list.om_set_render_targets(back_buffer_rtv, _depth_stencil_view.get());
+   command_list.om_set_render_targets(current_backbuffer.rtv,
+                                      _depth_stencil_view.get());
 
    // Render World
    draw_world(view_frustum, active_entity_types, blocks_view, command_list);
+
+   command_list.om_set_render_targets(current_backbuffer.srgb_rtv,
+                                      _depth_stencil_view.get());
 
    // Render World Meta Objects
    _meta_draw_batcher.clear();
@@ -594,7 +599,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                            active_entity_types, active_layers, tool_visualizers,
                            gizmo_draw_lists, settings);
 
-   draw_ai_overlay(back_buffer_rtv, settings, command_list);
+   draw_ai_overlay(current_backbuffer.srgb_rtv, settings, command_list);
 
    if (active_entity_types.sectors and settings.highlight_sector_objects) {
       draw_sector_objects(view_frustum, world, interaction_targets,
@@ -610,7 +615,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                            _root_signatures, _pipelines, _geometric_shapes,
                            _dynamic_buffer_allocator);
 
-   command_list.om_set_render_targets(back_buffer_rtv);
+   command_list.om_set_render_targets(current_backbuffer.srgb_rtv);
 
    draw_gizmos(camera, gizmo_draw_lists, command_list);
 
@@ -631,11 +636,11 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                               .access_after = gpu::barrier_access::no_access,
                               .layout_before = gpu::barrier_layout::render_target,
                               .layout_after = gpu::barrier_layout::present,
-                              .resource = back_buffer});
+                              .resource = current_backbuffer.resource});
    }
    else {
       command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
-         .resource = back_buffer,
+         .resource = current_backbuffer.resource,
          .state_before = gpu::legacy_resource_state::render_target,
          .state_after = gpu::legacy_resource_state::present});
    }
@@ -680,17 +685,17 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       {_device.create_texture(
           {.dimension = gpu::texture_dimension::t_2d,
            .flags = {.allow_render_target = true},
-           .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+           .format = DXGI_FORMAT_B8G8R8A8_UNORM,
            .width = super_sample_length,
            .height = super_sample_length,
-           .optimized_clear_value = {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+           .optimized_clear_value = {.format = DXGI_FORMAT_B8G8R8A8_UNORM,
                                      .color = float4{0.0f, 0.0f, 0.0f, 1.0f}},
            .debug_name = "Env Map Super Sample Render Target"},
           gpu::barrier_layout::render_target, gpu::legacy_resource_state::render_target),
        _device};
    gpu::unique_rtv_handle env_map_super_sample_rtv =
       {_device.create_render_target_view(env_map_super_sample_render_texture.get(),
-                                         {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+                                         {.format = DXGI_FORMAT_B8G8R8A8_UNORM,
                                           .dimension = gpu::rtv_dimension::texture2d}),
        _device};
    gpu::unique_resource_view env_map_super_sample_srv =
