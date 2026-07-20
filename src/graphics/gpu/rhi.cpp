@@ -927,54 +927,18 @@ auto device::create_graphics_pipeline(const graphics_pipeline_desc& desc) -> pip
                                    desc.blend_state.independent_blend_enabled};
 
    for (std::size_t i = 0; i < 8; ++i) {
-      switch (desc.blend_state.render_target[i]) {
-      case render_target_blend::disabled:
-         blend_state.RenderTarget[i] = {.BlendEnable = false,
-                                        .SrcBlend = D3D12_BLEND_ONE,
-                                        .DestBlend = D3D12_BLEND_ZERO,
-                                        .BlendOp = D3D12_BLEND_OP_ADD,
-                                        .SrcBlendAlpha = D3D12_BLEND_ONE,
-                                        .DestBlendAlpha = D3D12_BLEND_ZERO,
-                                        .BlendOpAlpha = D3D12_BLEND_OP_ADD,
-                                        .RenderTargetWriteMask =
-                                           D3D12_COLOR_WRITE_ENABLE_ALL};
-         break;
-      case render_target_blend::premult_alpha_blend:
-         blend_state.RenderTarget[i] = {.BlendEnable = true,
-                                        .SrcBlend = D3D12_BLEND_ONE,
-                                        .DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
-                                        .BlendOp = D3D12_BLEND_OP_ADD,
-                                        .SrcBlendAlpha = D3D12_BLEND_ONE,
-                                        .DestBlendAlpha = D3D12_BLEND_ZERO,
-                                        .BlendOpAlpha = D3D12_BLEND_OP_ADD,
-                                        .RenderTargetWriteMask =
-                                           D3D12_COLOR_WRITE_ENABLE_ALL};
-         break;
-      case render_target_blend::additive_blend:
-         blend_state.RenderTarget[i] = {.BlendEnable = true,
-                                        .SrcBlend = D3D12_BLEND_ONE,
-                                        .DestBlend = D3D12_BLEND_ONE,
-                                        .BlendOp = D3D12_BLEND_OP_ADD,
-                                        .SrcBlendAlpha = D3D12_BLEND_ONE,
-                                        .DestBlendAlpha = D3D12_BLEND_ZERO,
-                                        .BlendOpAlpha = D3D12_BLEND_OP_ADD,
-                                        .RenderTargetWriteMask =
-                                           D3D12_COLOR_WRITE_ENABLE_ALL};
-         break;
-      case render_target_blend::alpha_belnd:
-         blend_state.RenderTarget[i] = {.BlendEnable = true,
-                                        .SrcBlend = D3D12_BLEND_SRC_ALPHA,
-                                        .DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
-                                        .BlendOp = D3D12_BLEND_OP_ADD,
-                                        .SrcBlendAlpha = D3D12_BLEND_ONE,
-                                        .DestBlendAlpha = D3D12_BLEND_ZERO,
-                                        .BlendOpAlpha = D3D12_BLEND_OP_ADD,
-                                        .RenderTargetWriteMask =
-                                           D3D12_COLOR_WRITE_ENABLE_ALL};
-         break;
-      default:
-         std::unreachable();
-      }
+      const render_target_blend_desc& rt_desc = desc.blend_state.render_target[i];
+
+      blend_state.RenderTarget[i] = {
+         .BlendEnable = rt_desc.enabled,
+         .SrcBlend = static_cast<D3D12_BLEND>(rt_desc.src_blend),
+         .DestBlend = static_cast<D3D12_BLEND>(rt_desc.dest_blend),
+         .BlendOp = static_cast<D3D12_BLEND_OP>(rt_desc.blend_op),
+         .SrcBlendAlpha = static_cast<D3D12_BLEND>(rt_desc.src_blend_alpha),
+         .DestBlendAlpha = static_cast<D3D12_BLEND>(rt_desc.dest_blend_alpha),
+         .BlendOpAlpha = static_cast<D3D12_BLEND_OP>(rt_desc.blend_op_alpha),
+         .RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL,
+      };
    }
 
    absl::InlinedVector<D3D12_INPUT_ELEMENT_DESC, 8> input_layout_elements;

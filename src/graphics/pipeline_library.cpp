@@ -15,19 +15,33 @@ namespace we::graphics {
 namespace {
 
 constexpr gpu::blend_state_desc blend_disabled = {
-   .render_target = {gpu::render_target_blend::disabled},
+   .render_target = {gpu::render_target_blend_desc{
+      .enabled = false,
+   }},
 };
 
 constexpr gpu::blend_state_desc blend_premult_alpha = {
-   .render_target = {gpu::render_target_blend::premult_alpha_blend},
+   .render_target = {gpu::render_target_blend_desc{
+      .enabled = true,
+      .src_blend = gpu::blend::one,
+      .dest_blend = gpu::blend::inv_src_alpha,
+   }},
 };
 
 constexpr gpu::blend_state_desc blend_alpha = {
-   .render_target = {gpu::render_target_blend::alpha_belnd},
+   .render_target = {gpu::render_target_blend_desc{
+      .enabled = true,
+      .src_blend = gpu::blend::src_alpha,
+      .dest_blend = gpu::blend::inv_src_alpha,
+   }},
 };
 
 constexpr gpu::blend_state_desc blend_additive = {
-   .render_target = {gpu::render_target_blend::additive_blend},
+   .render_target = {gpu::render_target_blend_desc{
+      .enabled = true,
+      .src_blend = gpu::blend::one,
+      .dest_blend = gpu::blend::one,
+   }},
 };
 
 constexpr gpu::rasterizer_state_desc rasterizer_cull_none = {

@@ -104,11 +104,34 @@ enum class root_parameter_type {
    paramters_end
 };
 
-enum class render_target_blend {
-   disabled,            // overwrite with src
-   premult_alpha_blend, // src + (dest * (1.0 - src_alpha))
-   additive_blend,      // src + dest
-   alpha_belnd          // (src * src_alpha) + (dest * (1.0 - src_alpha))
+enum class blend {
+   zero = 1,
+   one = 2,
+   src_color = 3,
+   inv_src_color = 4,
+   src_alpha = 5,
+   inv_src_alpha = 6,
+   dest_alpha = 7,
+   inv_dest_alpha = 8,
+   dest_color = 9,
+   inv_dest_color = 10,
+   src_alpha_sat = 11,
+   blend_factor = 14,
+   inv_blend_factor = 15,
+   src1_color = 16,
+   inv_src1_color = 17,
+   src1_alpha = 18,
+   inv_src1_alpha = 19,
+   alpha_factor = 20,
+   inv_alpha_factor = 21,
+};
+
+enum class blend_op {
+   add = 1,
+   subtract = 2,
+   rev_subtract = 3,
+   min = 4,
+   max = 5,
 };
 
 enum class cull_mode {
@@ -468,11 +491,23 @@ struct root_signature_desc {
    std::string_view debug_name;
 };
 
+struct render_target_blend_desc {
+   bool enabled = false;
+
+   blend src_blend = blend::one;
+   blend dest_blend = blend::zero;
+   gpu::blend_op blend_op = blend_op::add;
+
+   blend src_blend_alpha = blend::one;
+   blend dest_blend_alpha = blend::zero;
+   gpu::blend_op blend_op_alpha = blend_op::add;
+};
+
 struct blend_state_desc {
    bool alpha_to_coverage_enabled = false;
    bool independent_blend_enabled = false;
 
-   std::array<render_target_blend, 8> render_target{};
+   std::array<render_target_blend_desc, 8> render_target{};
 };
 
 struct rasterizer_state_desc {
