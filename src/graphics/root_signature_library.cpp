@@ -399,6 +399,21 @@ const gpu::root_signature_desc ai_overlay_apply_desc{
    .debug_name = "ai_overlay_apply_root_signature",
 };
 
+const gpu::root_signature_desc brightness_adjust_desc{
+   .parameters =
+      {
+         gpu::root_parameter{
+            .type = gpu::root_parameter_type::_32bit_constants,
+            .shader_register = 0,
+            .values_count = 1,
+         },
+      },
+
+   .flags = {.allow_input_assembler_input_layout = false},
+
+   .debug_name = "brightness_adjust_root_signature",
+};
+
 const gpu::root_signature_desc gizmo_shape_desc{
    .parameters =
       {
@@ -520,6 +535,8 @@ root_signature_library::root_signature_library(gpu::device& device)
 
    ai_overlay_shape = {device.create_root_signature(ai_overlay_shape_desc), device};
    ai_overlay_apply = {device.create_root_signature(ai_overlay_apply_desc), device};
+
+   brightness_adjust = {device.create_root_signature(brightness_adjust_desc), device};
 
    gizmo_shape = {device.create_root_signature(gizmo_shape_desc), device};
 

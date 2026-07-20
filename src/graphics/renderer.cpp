@@ -191,6 +191,9 @@ private:
                                 const float camera_height,
                                 gpu::graphics_command_list& command_list);
 
+   void draw_brightness_adjustment(float adjustment,
+                                   gpu::graphics_command_list& command_list);
+
    void draw_ai_overlay(gpu::rtv_handle back_buffer_rtv,
                         const settings::graphics& settings,
                         gpu::graphics_command_list& command_list);
@@ -555,6 +558,10 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    // Render World
    draw_world(view_frustum, active_entity_types, blocks_view, command_list);
+
+   if (settings.world_brightness != 0.0f) {
+      draw_brightness_adjustment(settings.world_brightness, command_list);
+   }
 
    command_list.om_set_render_targets(current_backbuffer.srgb_rtv,
                                       _depth_stencil_view.get());
@@ -2968,6 +2975,21 @@ void renderer_impl::draw_mini_grid_overlays(
 
       command_list.draw_instanced(6, 1, 0, 0);
    }
+}
+
+void renderer_impl::draw_brightness_adjustment(float adjustment,
+                                               gpu::graphics_command_list& command_list)
+{
+   command_list.set_graphics_root_signature(_root_signatures.brightness_adjust.get());
+   command_list.set_graphics_32bit_constant(rs::brightness_adjust::adjustment,
+                                            std::bit_cast<uint32>(std::abs(adjustment)),
+                                            0);
+
+   command_list.set_pipeline_state(adjustment < 0.0f
+                                      ? _pipelines.brightness_decrease.get()
+                                      : _pipelines.brightness_increase.get());
+
+   command_list.draw_instanced(3, 1, 0, 0);
 }
 
 void renderer_impl::draw_ai_overlay(gpu::rtv_handle back_buffer_rtv,

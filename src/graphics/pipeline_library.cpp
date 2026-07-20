@@ -909,6 +909,57 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                             .debug_name = "grid_overlay"sv}),
                         device};
 
+   brightness_increase = {device.create_graphics_pipeline(
+                             {.root_signature =
+                                 root_signature_library.brightness_adjust.get(),
+
+                              .vs_bytecode = shader_library["brightness_adjustVS"sv],
+                              .ps_bytecode = shader_library["brightness_adjustPS"sv],
+
+                              .blend_state =
+                                 gpu::blend_state_desc{
+                                    .render_target = {gpu::render_target_blend_desc{
+                                       .enabled = true,
+                                       .src_blend = gpu::blend::dest_color,
+                                       .dest_blend = gpu::blend::one,
+                                       .src_blend_alpha = gpu::blend::zero,
+                                       .dest_blend_alpha = gpu::blend::one,
+                                    }},
+                                 },
+
+                              .render_target_count = 1,
+                              .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
+                              .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+
+                              .debug_name = "brightness_increase"sv}),
+                          device};
+
+   brightness_decrease = {device.create_graphics_pipeline(
+                             {.root_signature =
+                                 root_signature_library.brightness_adjust.get(),
+
+                              .vs_bytecode = shader_library["brightness_adjustVS"sv],
+                              .ps_bytecode = shader_library["brightness_adjustPS"sv],
+
+                              .blend_state =
+                                 gpu::blend_state_desc{
+                                    .render_target = {gpu::render_target_blend_desc{
+                                       .enabled = true,
+                                       .src_blend = gpu::blend::dest_color,
+                                       .dest_blend = gpu::blend::one,
+                                       .blend_op = gpu::blend_op::rev_subtract,
+                                       .src_blend_alpha = gpu::blend::zero,
+                                       .dest_blend_alpha = gpu::blend::one,
+                                    }},
+                                 },
+
+                              .render_target_count = 1,
+                              .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM},
+                              .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+
+                              .debug_name = "brightness_decrease"sv}),
+                          device};
+
    terrain_cut_mesh_mark =
       {device.create_graphics_pipeline(
           {.root_signature = root_signature_library.terrain_cut_mesh.get(),

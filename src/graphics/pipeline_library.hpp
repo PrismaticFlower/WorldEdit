@@ -115,6 +115,9 @@ struct pipeline_library {
    gpu::unique_pipeline_handle grid_overlay;
    gpu::unique_pipeline_handle grid_overlay_fade;
 
+   gpu::unique_pipeline_handle brightness_increase;
+   gpu::unique_pipeline_handle brightness_decrease;
+
    thumbnail_mesh_pipelines thumbnail_mesh;
    gpu::unique_pipeline_handle thumbnail_downsample;
 

@@ -104,5 +104,8 @@ gizmo_rotation_widget_orthographicPS .entrypoint = main_orthographic .file = giz
 tile_lightsVS .entrypoint = mainVS .file = tile_lights.hlsl
 tile_lightsPS .entrypoint = mainPS .file = tile_lights.hlsl
 
+brightness_adjustVS .entrypoint = mainVS .file = brightness_adjust.hlsl
+brightness_adjustPS .entrypoint = mainPS .file = brightness_adjust.hlsl
+
 imguiVS .entrypoint = mainVS .file = imgui.hlsl
 imguiPS .entrypoint = mainPS .file = imgui.hlsl

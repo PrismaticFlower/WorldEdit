@@ -233,6 +233,9 @@ void show_imgui_editor(settings& settings, bool& open,
 
             ImGui::Checkbox("Render Fog", &settings.graphics.render_fog);
 
+            ImGui::SliderFloat("World Brightness", &settings.graphics.world_brightness,
+                               -1.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+
             ImGui::SeparatorText("Interaction Colours");
 
             ImGui::ColorEdit3("Hover", &graphics.hover_color.x);

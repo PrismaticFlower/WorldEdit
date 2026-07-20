@@ -7,6 +7,8 @@ namespace we::settings {
 struct graphics {
    bool render_fog = false;
 
+   float world_brightness = 0.0f;
+
    float3 path_node_color = {0.15f, 1.0f, 0.3f};
 
    float3 path_node_outline_color = {0.1125f, 0.6f, 0.2225f};

@@ -327,6 +327,9 @@
     <ClCompile Include="src\world\utility\terrain_sample.cpp" />
     <ClCompile Include="src\world\utility\temporary_object_classes.cpp" />
     <ClCompile Include="src\utility\random.cpp" />
+    <ClCompile Include="src\world\utility\barrier_construction.cpp" />
+    <ClCompile Include="src\graphics\shaders\brightness_adjustVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\brightness_adjustPS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -716,6 +719,7 @@
     <ClInclude Include="src\world\utility\terrain_sample.hpp" />
     <ClInclude Include="src\world\utility\temporary_object_classes.hpp" />
     <ClInclude Include="src\utility\random.hpp" />
+    <ClInclude Include="src\world\utility\barrier_construction.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

@@ -33,6 +33,8 @@ struct root_signature_library {
    gpu::unique_root_signature_handle ai_overlay_shape;
    gpu::unique_root_signature_handle ai_overlay_apply;
 
+   gpu::unique_root_signature_handle brightness_adjust;
+
    gpu::unique_root_signature_handle gizmo_shape;
 
    gpu::unique_root_signature_handle tile_lights_clear;
@@ -146,6 +148,10 @@ constexpr uint32 frame_cbv = 1;
 
 namespace ai_overlay_apply {
 constexpr uint32 color = 0;
+}
+
+namespace brightness_adjust {
+constexpr uint32 adjustment = 0;
 }
 
 namespace gizmo_shape {

@@ -82,6 +82,8 @@ auto gizmo_rotation_widgetPS() noexcept -> shader_def;
 auto gizmo_rotation_widget_orthographicPS() noexcept -> shader_def;
 auto tile_lightsVS() noexcept -> shader_def;
 auto tile_lightsPS() noexcept -> shader_def;
+auto brightness_adjustVS() noexcept -> shader_def;
+auto brightness_adjustPS() noexcept -> shader_def;
 auto imguiVS() noexcept -> shader_def;
 auto imguiPS() noexcept -> shader_def;
 
@@ -166,6 +168,8 @@ shaders::gizmo_rotation_widgetPS(),
 shaders::gizmo_rotation_widget_orthographicPS(),
 shaders::tile_lightsVS(),
 shaders::tile_lightsPS(),
+shaders::brightness_adjustVS(),
+shaders::brightness_adjustPS(),
 shaders::imguiVS(),
 shaders::imguiPS(),
 };
