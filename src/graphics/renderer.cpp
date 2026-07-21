@@ -513,8 +513,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    _thumbnail_manager.update_gpu(_model_manager, _root_signatures, _pipelines,
                                  _dynamic_buffer_allocator, command_list);
 
-   _light_clusters.tile_lights(_root_signatures, _pipelines, command_list,
-                               _dynamic_buffer_allocator, _profiler);
+   _light_clusters.tile_lights(_root_signatures, _pipelines, command_list, _profiler);
    _light_clusters.draw_shadow_maps(_world_mesh_list, _blocks, _root_signatures,
                                     _pipelines, command_list,
                                     _dynamic_buffer_allocator, _profiler);
@@ -1058,8 +1057,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       _thumbnail_manager.update_gpu(_model_manager, _root_signatures, _pipelines,
                                     _dynamic_buffer_allocator, command_list);
 
-      _light_clusters.tile_lights(_root_signatures, _pipelines, command_list,
-                                  _dynamic_buffer_allocator, _profiler);
+      _light_clusters.tile_lights(_root_signatures, _pipelines, command_list, _profiler);
       _light_clusters.draw_shadow_maps(_world_mesh_list, _blocks,
                                        _root_signatures, _pipelines, command_list,
                                        _dynamic_buffer_allocator, _profiler);

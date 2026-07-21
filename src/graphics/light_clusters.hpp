@@ -44,9 +44,7 @@ public:
                        dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void tile_lights(root_signature_library& root_signatures, pipeline_library& pipelines,
-                    gpu::graphics_command_list& command_list,
-                    dynamic_buffer_allocator& dynamic_buffer_allocator,
-                    profiler& profiler);
+                    gpu::graphics_command_list& command_list, profiler& profiler);
 
    void draw_shadow_maps(const world_mesh_list& meshes, const blocks& blocks,
                          root_signature_library& root_signatures,
@@ -104,7 +102,6 @@ private:
    float _render_width = 0.0f;
    float _render_height = 0.0f;
 
-   std::array<uint32, 8> _tiles_start_value;
    uint32 _light_count = 0;
    uint32 _light_proxy_count = 0;
    gpu_virtual_address _sphere_light_proxies_srv = 0;

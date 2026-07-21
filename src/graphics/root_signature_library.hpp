@@ -160,7 +160,7 @@ constexpr uint32 frame_cbv = 1;
 }
 
 namespace tile_lights_clear {
-constexpr uint32 input_cbv = 0;
+constexpr uint32 tile_counts = 0;
 constexpr uint32 light_tiles_uav = 1;
 }
 

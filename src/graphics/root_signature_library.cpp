@@ -434,8 +434,11 @@ const gpu::root_signature_desc tile_lights_clear_desc{
    .parameters =
       {
          // input cbv
-         gpu::root_parameter{.type = gpu::root_parameter_type::constant_buffer_view,
-                             .shader_register = 0},
+         gpu::root_parameter{
+            .type = gpu::root_parameter_type::_32bit_constants,
+            .shader_register = 0,
+            .values_count = 2,
+         },
 
          // tiles uav
          gpu::root_parameter{.type = gpu::root_parameter_type::unordered_access_view,

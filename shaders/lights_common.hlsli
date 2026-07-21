@@ -9,21 +9,15 @@
 #define LIGHT_REGISTER_SPACE space3
 
 namespace light_type {
-const static uint directional = 0;
-const static uint point_ = 1;
-const static uint spot = 2;
-};
-
-namespace directional_region_type {
-const static uint none = 0;
-const static uint box = 1;
-const static uint sphere = 2;
-const static uint cylinder = 3;
+const static uint directional_box = 0;
+const static uint directional_sphere = 1;
+const static uint directional_cylinder = 2;
+const static uint point_ = 3;
+const static uint spot = 4;
 };
 
 enum light_flags : uint {
-   light_flag_is_shadow_caster = 0b1,
-   light_flag_is_dynamic = 0b10,
+   light_flag_is_dynamic = 0b1,
 };
 
 struct light_description {
@@ -34,7 +28,6 @@ struct light_description {
    float3 color;
    float spot_outer_param;
    float spot_inner_param;
-   uint region_type;
    uint directional_region_index;
    light_flags flags;
 };
@@ -48,6 +41,17 @@ struct light_constant_buffer {
    uint padding1;
    float3 ground_ambient_color;
    uint padding2;
+
+   float3 global_light1_directionWS;
+   bool   global_light1_is_dynamic;
+   float3 global_light1_color;
+   uint   global_light1_has_shadows;
+
+   float3 global_light2_directionWS;
+   bool   global_light2_is_dynamic;
+   float3 global_light2_color;
+   uint   padding3;
+
    float4x4 shadow_cascade_transforms[4];
    float2 shadow_map_resolution;
    float2 inv_shadow_map_resolution;
@@ -58,9 +62,8 @@ struct light_constant_buffer {
 struct light_region_description {
    float4x4 world_to_region;
    float3 position;
-   uint type;
    float3 size;
-   uint padding;
+   uint2 padding;
 };
 
 struct calculate_light_inputs {
@@ -76,6 +79,7 @@ struct calculate_light_inputs {
 struct light_info {
    float3 light_directionWS;
    float falloff;
+   float3 color;
 };
 
 const static float region_fade_distance_sq = 0.1 * 0.1;
@@ -189,60 +193,47 @@ light_info get_light_info(light_description light, calculate_light_inputs input)
 
    info.light_directionWS = 0.0;
    info.falloff = 0.0;
+   info.color = light.color;
 
    switch (light.type) {
-   case light_type::directional: {
-      float region_fade_or_shadow = 1.0;
+   case light_type::directional_box: {
+      light_region_description region_desc = light_region_list.Load(light.directional_region_index);
 
-      if (light.region_type == directional_region_type::none) {
-         if (light.flags & light_flag_is_shadow_caster) {
-            region_fade_or_shadow = sample_cascaded_shadow_map(positionWS, normalWS);
-         }
-      }
-      else {
-         light_region_description region_desc = light_region_list.Load(light.directional_region_index);
-
-         const float3 positionRS = mul(float4(positionWS, 1.0), region_desc.world_to_region).xyz;
-
-         switch (light.region_type) {
-         case directional_region_type::none: {
-            region_fade_or_shadow = 1.0;
-            break;
-         }
-         case directional_region_type::box: {
-            const float3 region_to_position = max(abs(positionRS) - region_desc.size, 0.0);
-            const float region_distance_sq = dot(region_to_position, region_to_position);
-
-            region_fade_or_shadow = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
-
-            break;
-         }
-         case directional_region_type::sphere: {
-            const float region_distance = max(length(positionRS) - region_desc.size.x, 0.0);
-            const float region_distance_sq = region_distance * region_distance;
-
-            region_fade_or_shadow = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
-
-            break;
-         }
-         case directional_region_type::cylinder: {
-            const float radius = region_desc.size.x;
-            const float height = region_desc.size.y;
-
-            const float cap_distance = max(abs(positionRS.y) - height, 0.0);
-            const float edge_distance = max(length(float2(positionRS.x, positionRS.z)) - radius, 0.0);
-            const float region_distance = max(cap_distance, edge_distance);
-            const float region_distance_sq = region_distance * region_distance;
-
-            region_fade_or_shadow = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
-
-            break;
-         }
-         }
-      }
+      const float3 positionRS = mul(float4(positionWS, 1.0), region_desc.world_to_region).xyz;
+      const float3 region_to_position = max(abs(positionRS) - region_desc.size, 0.0);
+      const float region_distance_sq = dot(region_to_position, region_to_position);
 
       info.light_directionWS = light.directionWS;
-      info.falloff = region_fade_or_shadow;
+      info.falloff = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
+
+      break;
+   }
+   case light_type::directional_sphere: {
+      light_region_description region_desc = light_region_list.Load(light.directional_region_index);
+      
+      const float3 positionRS = mul(float4(positionWS, 1.0), region_desc.world_to_region).xyz;
+      const float region_distance = max(length(positionRS) - region_desc.size.x, 0.0);
+      const float region_distance_sq = region_distance * region_distance;
+
+      info.light_directionWS = light.directionWS;
+      info.falloff = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
+
+      break;
+   }
+   case light_type::directional_cylinder: {
+      light_region_description region_desc = light_region_list.Load(light.directional_region_index);
+      
+      const float3 positionRS = mul(float4(positionWS, 1.0), region_desc.world_to_region).xyz;
+      const float radius = region_desc.size.x;
+      const float height = region_desc.size.y;
+
+      const float cap_distance = max(abs(positionRS.y) - height, 0.0);
+      const float edge_distance = max(length(float2(positionRS.x, positionRS.z)) - radius, 0.0);
+      const float region_distance = max(cap_distance, edge_distance);
+      const float region_distance_sq = region_distance * region_distance;
+
+      info.light_directionWS = light.directionWS;
+      info.falloff = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
 
       break;
    }
@@ -278,7 +269,7 @@ light_info get_light_info(light_description light, calculate_light_inputs input)
    return info;
 }
 
-float3 calculate_light(calculate_light_inputs input, light_description light, light_info light_info)
+float3 calculate_light(calculate_light_inputs input, light_info light_info)
 {
    const float3 diffuse = saturate(dot(input.normalWS, light_info.light_directionWS)) * input.diffuse_color;
 
@@ -286,7 +277,7 @@ float3 calculate_light(calculate_light_inputs input, light_description light, li
    const float NdotH = saturate(dot(input.normalWS, half_vectorWS));
    const float3 specular = pow(NdotH, 64.0) * input.specular_color;
 
-   return (diffuse + specular) * light.color * light_info.falloff;
+   return (diffuse + specular) * light_info.color * light_info.falloff;
 }
 
 float3 calculate_lighting(calculate_light_inputs input)
@@ -316,9 +307,40 @@ float3 calculate_lighting(calculate_light_inputs input)
          light_info light_info = get_light_info(light, input);
 
          if (input.receive_static_light || (light.flags & light_flag_is_dynamic)) {
-            total_light += calculate_light(input, light, light_info);
+            total_light += calculate_light(input, light_info);
          }
       }
+   }
+   
+   
+   if (input.receive_static_light || light_constants.global_light1_is_dynamic) {
+      float shadow = 1.0;
+
+      if (light_constants.global_light1_has_shadows) {
+         shadow = sample_cascaded_shadow_map(input.positionWS, input.normalWS);
+      }
+
+      const float NdotL = saturate(dot(input.normalWS, light_constants.global_light1_directionWS));
+
+      const float3 diffuse = NdotL * input.diffuse_color;
+
+      const float3 half_vectorWS = normalize(light_constants.global_light1_directionWS + input.viewWS);
+      const float  NdotH = saturate(dot(input.normalWS, half_vectorWS));
+      const float3 specular = pow(NdotH, 64.0) * input.specular_color;
+
+      total_light += (diffuse + specular) * light_constants.global_light1_color * shadow;
+   }
+   
+   if (input.receive_static_light || light_constants.global_light2_is_dynamic) {
+      const float NdotL = saturate(dot(input.normalWS, light_constants.global_light2_directionWS));
+
+      const float3 diffuse = NdotL * input.diffuse_color;
+
+      const float3 half_vectorWS = normalize(light_constants.global_light2_directionWS + input.viewWS);
+      const float  NdotH = saturate(dot(input.normalWS, half_vectorWS));
+      const float3 specular = pow(NdotH, 64.0) * input.specular_color;
+
+      total_light += (diffuse + specular) * light_constants.global_light2_color;
    }
 
    return total_light;

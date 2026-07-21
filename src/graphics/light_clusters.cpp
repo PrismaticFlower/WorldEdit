@@ -8,7 +8,7 @@
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
-#include "utility/enum_bitflags.hpp"
+#include "utility/string_icompare.hpp"
 
 #include <cmath>
 
@@ -25,28 +25,13 @@ constexpr auto max_lights = 256;
 constexpr auto tile_light_word_bits = 32;
 constexpr auto tile_light_words = max_lights / tile_light_word_bits;
 
-enum class light_type : uint32 { directional, point, spot };
-enum class directional_region_type : uint32 { none, box, sphere, cylinder };
-
-enum class light_flags : uint32 {
-   none = 0b0,
-   is_shadow_caster = 0b1,
-   is_dynamic = 0b10,
+enum class light_type : uint32 {
+   directional_box,
+   directional_sphere,
+   directional_cylinder,
+   point,
+   spot
 };
-
-constexpr bool marked_as_enum_bitflag(light_flags) noexcept
-{
-   return true;
-}
-
-struct alignas(16) light_tile_clear_inputs {
-   std::array<uint32, 2> tile_counts;
-   std::array<uint32, 2> padding0{};
-
-   std::array<uint32, 8> clear_value;
-};
-
-static_assert(sizeof(light_tile_clear_inputs) == 48);
 
 struct alignas(16) tiling_inputs {
    std::array<uint32, 2> tile_counts;
@@ -65,9 +50,8 @@ struct alignas(16) light_description {
    float3 color;
    float spot_outer_param;
    float spot_inner_param;
-   directional_region_type region_type;
    uint32 directional_region_index;
-   light_flags flags;
+   uint32 is_dynamic;
 };
 
 static_assert(sizeof(light_description) == 64);
@@ -84,6 +68,16 @@ struct alignas(16) light_constants {
    float3 ground_ambient_color;
    uint32 padding2;
 
+   float3 global_light1_directionWS;
+   uint32 global_light1_is_dynamic;
+   float3 global_light1_color;
+   uint32 global_light1_has_shadows;
+
+   float3 global_light2_directionWS;
+   uint32 global_light2_is_dynamic;
+   float3 global_light2_color;
+   uint32 padding6;
+
    std::array<float4x4, 4> shadow_transforms;
 
    float2 shadow_resolution;
@@ -92,14 +86,13 @@ struct alignas(16) light_constants {
    std::array<light_description, max_lights> lights;
 };
 
-static_assert(sizeof(light_constants) == 16704);
+static_assert(sizeof(light_constants) == 16768);
 
 struct light_region_description {
    float4x4 inverse_transform;
    float3 position;
-   directional_region_type type;
    float3 size;
-   uint32 padding;
+   std::array<uint32, 2> padding;
 };
 
 static_assert(sizeof(light_region_description) == 96);
@@ -373,9 +366,6 @@ void light_clusters::prepare_lights(
    gpu::copy_command_list& command_list,
    dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
-   static_assert((sizeof(_tiles_start_value) / sizeof(uint32)) == tile_light_words);
-
-   _tiles_start_value = {};
    _light_count = 0;
    _light_proxy_count = 0;
    _has_sun_shadows = false;
@@ -404,32 +394,31 @@ void light_clusters::prepare_lights(
 
       const uint32 light_index = _light_count++;
 
-      light_flags flags = light_flags::none;
-
-      if (not light.static_) flags |= light_flags::is_dynamic;
-
       switch (light.light_type) {
       case world::light_type::directional: {
-         const float3 light_direction =
+         _light_count -= 1; // Directional lights don't go in the main light list.
+
+         const float3 light_directionWS =
             normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
 
-         if (light.shadow_caster and not _has_sun_shadows) {
-            _sun_shadow_cascades =
-               make_shadow_cascades(light.rotation, view_camera, scene_depth_min_max);
-            _has_sun_shadows = true;
+         if (string::iequals(light.name, world.global_lights.global_light_1)) {
+            light_constants.global_light1_directionWS = light_directionWS;
+            light_constants.global_light1_has_shadows = light.shadow_caster;
+            light_constants.global_light1_color = light.color;
+            light_constants.global_light1_is_dynamic = not light.static_;
 
-            flags |= light_flags::is_shadow_caster;
+            _has_sun_shadows = light.shadow_caster;
+
+            if (_has_sun_shadows) {
+               _sun_shadow_cascades = make_shadow_cascades(light.rotation, view_camera,
+                                                           scene_depth_min_max);
+            }
          }
-
-         lights[light_index] = {.direction = light_direction,
-                                .type = light_type::directional,
-                                .color = light.color,
-                                .region_type = directional_region_type::none,
-                                .flags = flags};
-
-         // Set the directional light as part of the tile clear pass.
-         _tiles_start_value[light_index / tile_light_word_bits] |=
-            (1u << (light_index % tile_light_word_bits));
+         else if (string::iequals(light.name, world.global_lights.global_light_2)) {
+            light_constants.global_light2_directionWS = light_directionWS;
+            light_constants.global_light2_color = light.color;
+            light_constants.global_light2_is_dynamic = not light.static_;
+         }
       } break;
       case world::light_type::point: {
          if (not intersects(view_frustum, light.position, light.range)) {
@@ -440,7 +429,7 @@ void light_clusters::prepare_lights(
                                 .position = light.position,
                                 .range = light.range,
                                 .color = light.color,
-                                .flags = flags};
+                                .is_dynamic = not light.static_};
 
          sphere_light_proxies[_light_proxy_count++] =
             {.transform =
@@ -474,7 +463,7 @@ void light_clusters::prepare_lights(
                                 .spot_inner_param =
                                    1.0f / (std::cos(light.inner_cone_angle / 2.0f) -
                                            std::cos(light.outer_cone_angle / 2.0f)),
-                                .flags = flags};
+                                .is_dynamic = not light.static_};
 
          sphere_light_proxies[_light_proxy_count++] =
             {.transform =
@@ -500,15 +489,13 @@ void light_clusters::prepare_lights(
             region_lights_descriptions[region_description_index] =
                {.inverse_transform = inverse_region_transform,
                 .position = light.position,
-                .type = directional_region_type::box,
                 .size = light.region_size};
 
             lights[light_index] = {.direction = light_direction,
-                                   .type = light_type::directional,
+                                   .type = light_type::directional_box,
                                    .color = light.color,
-                                   .region_type = directional_region_type::box,
                                    .directional_region_index = region_description_index,
-                                   .flags = flags};
+                                   .is_dynamic = not light.static_};
 
             sphere_light_proxies[_light_proxy_count++] =
                {.transform =
@@ -523,15 +510,13 @@ void light_clusters::prepare_lights(
             region_lights_descriptions[region_description_index] =
                {.inverse_transform = inverse_region_transform,
                 .position = light.position,
-                .type = directional_region_type::sphere,
                 .size = float3{sphere_radius, sphere_radius, sphere_radius}};
 
             lights[light_index] = {.direction = light_direction,
-                                   .type = light_type::directional,
+                                   .type = light_type::directional_sphere,
                                    .color = light.color,
-                                   .region_type = directional_region_type::sphere,
                                    .directional_region_index = region_description_index,
-                                   .flags = flags};
+                                   .is_dynamic = not light.static_};
 
             sphere_light_proxies[_light_proxy_count++] =
                {.transform =
@@ -545,15 +530,13 @@ void light_clusters::prepare_lights(
             region_lights_descriptions[region_description_index] =
                {.inverse_transform = inverse_region_transform,
                 .position = light.position,
-                .type = directional_region_type::cylinder,
                 .size = float3{radius, light.region_size.y, radius}};
 
             lights[light_index] = {.direction = light_direction,
-                                   .type = light_type::directional,
+                                   .type = light_type::directional_cylinder,
                                    .color = light.color,
-                                   .region_type = directional_region_type::cylinder,
                                    .directional_region_index = region_description_index,
-                                   .flags = flags};
+                                   .is_dynamic = not light.static_};
 
             sphere_light_proxies[_light_proxy_count++] =
                {.transform =
@@ -585,33 +568,7 @@ void light_clusters::prepare_lights(
 
          const uint32 light_index = _light_count++;
 
-         light_flags flags = light_flags::none;
-
-         if (not light.static_) flags |= light_flags::is_dynamic;
-
          switch (light.light_type) {
-         case world::light_type::directional: {
-            const float3 light_direction =
-               normalize(group_rotation * light.rotation * float3{0.0f, 0.0f, -1.0f});
-
-            if (light.shadow_caster and not _has_sun_shadows) {
-               _sun_shadow_cascades = make_shadow_cascades(light.rotation, view_camera,
-                                                           scene_depth_min_max);
-               _has_sun_shadows = true;
-
-               flags |= light_flags::is_shadow_caster;
-            }
-
-            lights[light_index] = {.direction = light_direction,
-                                   .type = light_type::directional,
-                                   .color = light.color,
-                                   .region_type = directional_region_type::none,
-                                   .flags = flags};
-
-            // Set the directional light as part of the tile clear pass.
-            _tiles_start_value[light_index / tile_light_word_bits] |=
-               (1u << (light_index % tile_light_word_bits));
-         } break;
          case world::light_type::point: {
             const float3& light_positionWS =
                group_rotation * light.position + group_position;
@@ -624,7 +581,7 @@ void light_clusters::prepare_lights(
                                    .position = light_positionWS,
                                    .range = light.range,
                                    .color = light.color,
-                                   .flags = flags};
+                                   .is_dynamic = not light.static_};
 
             sphere_light_proxies[_light_proxy_count++] =
                {.transform =
@@ -663,7 +620,7 @@ void light_clusters::prepare_lights(
                                       1.0f /
                                       (std::cos(light.inner_cone_angle / 2.0f) -
                                        std::cos(light.outer_cone_angle / 2.0f)),
-                                   .flags = flags};
+                                   .is_dynamic = not light.static_};
 
             sphere_light_proxies[_light_proxy_count++] =
                {.transform = make_sphere_light_proxy_transform(light_positionWS,
@@ -697,15 +654,13 @@ void light_clusters::prepare_lights(
                region_lights_descriptions[region_description_index] =
                   {.inverse_transform = inverse_region_transform,
                    .position = light_positionWS,
-                   .type = directional_region_type::box,
                    .size = light.region_size};
 
                lights[light_index] = {.direction = light_direction,
-                                      .type = light_type::directional,
+                                      .type = light_type::directional_box,
                                       .color = light.color,
-                                      .region_type = directional_region_type::box,
                                       .directional_region_index = region_description_index,
-                                      .flags = flags};
+                                      .is_dynamic = not light.static_};
 
                sphere_light_proxies[_light_proxy_count++] =
                   {.transform =
@@ -720,15 +675,13 @@ void light_clusters::prepare_lights(
                region_lights_descriptions[region_description_index] =
                   {.inverse_transform = inverse_region_transform,
                    .position = light_positionWS,
-                   .type = directional_region_type::sphere,
                    .size = float3{sphere_radius, sphere_radius, sphere_radius}};
 
                lights[light_index] = {.direction = light_direction,
-                                      .type = light_type::directional,
+                                      .type = light_type::directional_sphere,
                                       .color = light.color,
-                                      .region_type = directional_region_type::sphere,
                                       .directional_region_index = region_description_index,
-                                      .flags = flags};
+                                      .is_dynamic = not light.static_};
 
                sphere_light_proxies[_light_proxy_count++] =
                   {.transform = make_sphere_light_proxy_transform(light_positionWS,
@@ -742,15 +695,13 @@ void light_clusters::prepare_lights(
                region_lights_descriptions[region_description_index] =
                   {.inverse_transform = inverse_region_transform,
                    .position = light_positionWS,
-                   .type = directional_region_type::cylinder,
                    .size = float3{radius, light.region_size.y, radius}};
 
                lights[light_index] = {.direction = light_direction,
-                                      .type = light_type::directional,
+                                      .type = light_type::directional_cylinder,
                                       .color = light.color,
-                                      .region_type = directional_region_type::cylinder,
                                       .directional_region_index = region_description_index,
-                                      .flags = flags};
+                                      .is_dynamic = not light.static_};
 
                sphere_light_proxies[_light_proxy_count++] =
                   {.transform =
@@ -833,7 +784,6 @@ void light_clusters::prepare_lights(
 void light_clusters::tile_lights(root_signature_library& root_signatures,
                                  pipeline_library& pipelines,
                                  gpu::graphics_command_list& command_list,
-                                 dynamic_buffer_allocator& dynamic_buffer_allocator,
                                  profiler& profiler)
 {
    profile_section profile{"Lights - Tile Lights", command_list, profiler,
@@ -841,13 +791,12 @@ void light_clusters::tile_lights(root_signature_library& root_signatures,
 
    // clear light tiles
    {
+      const std::array<uint32, 2> tile_counts = {_tiles_width, _tiles_height};
+
       command_list.set_compute_root_signature(root_signatures.tile_lights_clear.get());
-      command_list.set_compute_cbv(rs::tile_lights_clear::input_cbv,
-                                   dynamic_buffer_allocator
-                                      .allocate_and_copy(light_tile_clear_inputs{
-                                         .tile_counts = {_tiles_width, _tiles_height},
-                                         .clear_value = _tiles_start_value})
-                                      .gpu_address);
+      command_list.set_compute_32bit_constants(rs::tile_lights_clear::tile_counts,
+                                               std::as_bytes(std::span{tile_counts}),
+                                               0);
       command_list.set_compute_uav(rs::tile_lights_clear::light_tiles_uav,
                                    _device.get_gpu_virtual_address(_lights_tiles.get()));
 
