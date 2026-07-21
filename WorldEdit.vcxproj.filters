@@ -330,6 +330,7 @@
     <ClCompile Include="src\world\utility\barrier_construction.cpp" />
     <ClCompile Include="src\graphics\shaders\brightness_adjustVS.cpp" />
     <ClCompile Include="src\graphics\shaders\brightness_adjustPS.cpp" />
+    <ClCompile Include="src\world\utility\evaluate_treeline.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -720,6 +721,7 @@
     <ClInclude Include="src\world\utility\temporary_object_classes.hpp" />
     <ClInclude Include="src\utility\random.hpp" />
     <ClInclude Include="src\world\utility\barrier_construction.hpp" />
+    <ClInclude Include="src\world\utility\evaluate_treeline.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

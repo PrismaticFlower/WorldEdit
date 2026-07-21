@@ -231,7 +231,18 @@ void show_imgui_editor(settings& settings, bool& open,
 
             ImGui::SeparatorText("Rendering");
 
-            ImGui::Checkbox("Render Fog", &settings.graphics.render_fog);
+            if (ImGui::BeginTable("Draw Flags", 2, ImGuiTableFlags_SizingStretchSame,
+                                  {ImGui::CalcItemWidth(), 0.0f})) {
+               ImGui::TableNextRow();
+
+               ImGui::TableNextColumn();
+               ImGui::Checkbox("Draw Tree Lines", &settings.graphics.draw_tree_lines);
+
+               ImGui::TableNextColumn();
+               ImGui::Checkbox("Render Fog", &settings.graphics.render_fog);
+
+               ImGui::EndTable();
+            }
 
             ImGui::SliderFloat("World Brightness", &settings.graphics.world_brightness,
                                -1.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);

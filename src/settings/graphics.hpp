@@ -5,6 +5,8 @@
 namespace we::settings {
 
 struct graphics {
+   bool draw_tree_lines = true;
+
    bool render_fog = false;
 
    float world_brightness = 0.0f;

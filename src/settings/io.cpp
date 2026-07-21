@@ -82,6 +82,7 @@ auto load(const std::string_view path) -> settings
       continue;                                                                \
    }
          for (auto& prop : node) {
+            setting_entry(draw_tree_lines);
             setting_entry(render_fog);
             setting_entry(world_brightness);
             setting_entry(path_node_color);
@@ -214,6 +215,7 @@ void save(const std::string_view path, const settings& settings) noexcept
 
 #define name_value(prop) #prop, settings.graphics.prop
 
+      write(file, name_value(draw_tree_lines));
       write(file, name_value(render_fog));
       write(file, name_value(world_brightness));
       write(file, name_value(path_node_color));

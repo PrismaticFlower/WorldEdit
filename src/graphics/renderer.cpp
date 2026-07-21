@@ -42,6 +42,7 @@
 #include "world/blocks/utility/bounding_box.hpp"
 #include "world/blocks/utility/find.hpp"
 #include "world/object_class_library.hpp"
+#include "world/utility/evaluate_treeline.hpp"
 #include "world/utility/region_properties.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
@@ -55,6 +56,10 @@ namespace {
 struct update_frame_constant_buffer_flags {
    bool scroll_textures = true;
    bool render_fog = false;
+};
+
+struct build_world_mesh_list_flags {
+   bool tree_lines = true;
 };
 
 }
@@ -217,7 +222,8 @@ private:
                               const world::object_class_library& world_classes,
                               const world::creation_entity* const creation_entity,
                               std::span<const world::object_id> object_filter,
-                              std::span<const world::tool_visualizers_ghost> ghost_objects);
+                              std::span<const world::tool_visualizers_ghost> ghost_objects,
+                              build_world_mesh_list_flags flags);
 
    void build_world_mesh_render_list(const frustum& view_frustum);
 
@@ -443,7 +449,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
          build_world_mesh_list(_pre_render_command_list, world, active_layers,
                                world_classes, &interaction_targets.creation_entity,
                                tool_visualizers.filtered_objects(),
-                               tool_visualizers.ghost_objects());
+                               tool_visualizers.ghost_objects(),
+                               {.tree_lines = frame_options.draw_tree_lines});
       }
       else {
          _world_mesh_list.clear();
@@ -801,7 +808,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       pre_render_command_list.reset();
 
       build_world_mesh_list(pre_render_command_list, world, active_layers,
-                            world_classes, nullptr, {}, {});
+                            world_classes, nullptr, {}, {}, {.tree_lines = true});
 
       pre_render_command_list.close();
 
@@ -4260,7 +4267,8 @@ void renderer_impl::build_world_mesh_list(
    const world::object_class_library& world_classes,
    const world::creation_entity* const creation_entity,
    std::span<const world::object_id> object_filter,
-   std::span<const world::tool_visualizers_ghost> ghost_objects)
+   std::span<const world::tool_visualizers_ghost> ghost_objects,
+   build_world_mesh_list_flags flags)
 {
    _world_mesh_list.clear();
    _terrain_cut_list.clear();
@@ -4474,6 +4482,64 @@ void renderer_impl::build_world_mesh_list(
                           .start_index = mesh.start_index,
                           .start_vertex = mesh.start_vertex});
          }
+      }
+   }
+
+   if (flags.tree_lines) {
+      for (const world::tree_line& tree_line : world.tree_lines) {
+         world::evaluate_treeline(
+            tree_line, world.paths,
+            [&](const float4x4& world_from_object,
+                const world::object_class_handle class_handle) noexcept {
+               if (constants_data_head == constants_data_end) return;
+
+               auto& model = _model_manager[world_classes[class_handle].model_name];
+
+               const float3 object_position = {world_from_object[3].x,
+                                               world_from_object[3].y,
+                                               world_from_object[3].z};
+
+               const math::bounding_box object_bbox = world_from_object * model.bbox;
+
+               const std::size_t object_constants_offset = constants_data_head;
+               const gpu_virtual_address object_constants_address =
+                  constants_upload_gpu_address + object_constants_offset;
+
+               world_mesh_constants constants;
+
+               constants.world_from_object = world_from_object;
+
+               std::memcpy(constants_upload_data + object_constants_offset,
+                           &constants.world_from_object,
+                           sizeof(world_mesh_constants));
+
+               constants_data_head += sizeof(world_mesh_constants);
+
+               for (auto& mesh : model.parts) {
+                  if (not mesh.material.is_transparent) {
+                     _world_mesh_list.opaque[mesh.material.depth_prepass_flags].push_back(
+                        object_bbox, object_constants_address,
+                        mesh.material.constant_buffer_view,
+                        world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                                   .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                           model.gpu_buffer.attributes_vertex_buffer_view},
+                                   .index_count = mesh.index_count,
+                                   .start_index = mesh.start_index,
+                                   .start_vertex = mesh.start_vertex});
+                  }
+                  else {
+                     _world_mesh_list.transparent.push_back(
+                        object_bbox, object_constants_address, object_position,
+                        mesh.material.flags, mesh.material.constant_buffer_view,
+                        world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                                   .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                           model.gpu_buffer.attributes_vertex_buffer_view},
+                                   .index_count = mesh.index_count,
+                                   .start_index = mesh.start_index,
+                                   .start_vertex = mesh.start_vertex});
+                  }
+               }
+            });
       }
    }
 

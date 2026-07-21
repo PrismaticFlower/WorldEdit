@@ -254,6 +254,9 @@ void world_edit::update()
                             _world_layers_draw_mask, _tool_visualizers,
                             _object_classes, _gizmos.get_draw_lists(),
                             {
+                               .draw_tree_lines =
+                                  _terrain_edit_tool == terrain_edit_tool::foliage_editor or
+                                  _settings.graphics.draw_tree_lines,
                                .draw_terrain_grid = _draw_terrain_grid,
                                .draw_overlay_grid = _draw_overlay_grid,
                                .draw_foliage_map_overlay =
@@ -4267,6 +4270,12 @@ void world_edit::load_world(const io::path& path) noexcept
 
       for (world::object& object : _world.objects) {
          object.class_handle = _object_classes.acquire(object.class_name);
+      }
+
+      for (world::tree_line& tree_line : _world.tree_lines) {
+         for (world::tree_line_odf& odf : tree_line.border_odfs) {
+            odf.handle = _object_classes.acquire(lowercase_string{odf.name});
+         }
       }
 
       _camera.position({0.0f, 0.0f, 0.0f});
