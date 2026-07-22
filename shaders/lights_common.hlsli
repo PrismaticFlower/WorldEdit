@@ -82,6 +82,7 @@ struct light_info {
    float3 color;
 };
 
+const static float specular_exponent = 32.0;
 const static float region_fade_distance_sq = 0.1 * 0.1;
 const static int shadow_cascade_count = 4;
 const static uint light_tile_size = 8;
@@ -275,7 +276,7 @@ float3 calculate_light(calculate_light_inputs input, light_info light_info)
 
    const float3 half_vectorWS = normalize(light_info.light_directionWS + input.viewWS);
    const float NdotH = saturate(dot(input.normalWS, half_vectorWS));
-   const float3 specular = pow(NdotH, 64.0) * input.specular_color;
+   const float3 specular = pow(NdotH, specular_exponent) * input.specular_color;
 
    return (diffuse + specular) * light_info.color * light_info.falloff;
 }
@@ -326,7 +327,7 @@ float3 calculate_lighting(calculate_light_inputs input)
 
       const float3 half_vectorWS = normalize(light_constants.global_light1_directionWS + input.viewWS);
       const float  NdotH = saturate(dot(input.normalWS, half_vectorWS));
-      const float3 specular = pow(NdotH, 64.0) * input.specular_color;
+      const float3 specular = pow(NdotH, specular_exponent) * input.specular_color;
 
       total_light += (diffuse + specular) * light_constants.global_light1_color * shadow;
    }
@@ -338,7 +339,7 @@ float3 calculate_lighting(calculate_light_inputs input)
 
       const float3 half_vectorWS = normalize(light_constants.global_light2_directionWS + input.viewWS);
       const float  NdotH = saturate(dot(input.normalWS, half_vectorWS));
-      const float3 specular = pow(NdotH, 64.0) * input.specular_color;
+      const float3 specular = pow(NdotH, specular_exponent) * input.specular_color;
 
       total_light += (diffuse + specular) * light_constants.global_light2_color;
    }
