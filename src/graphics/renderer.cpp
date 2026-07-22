@@ -3977,6 +3977,83 @@ void renderer_impl::draw_interaction_targets(
    for (const auto& [entity, color] : tool_visualizers.connection_highlights()) {
       draw_target(entity, color);
    }
+
+   for (const auto& [id, color] : tool_visualizers.tree_line_highlights()) {
+      const world::tree_line* tree_line = find_entity(world.tree_lines, id);
+
+      if (not tree_line) continue;
+
+      gpu_virtual_address wireframe_constants = [&] {
+         auto allocation =
+            _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
+
+         wireframe_constant_buffer constants{.color = color};
+
+         std::memcpy(allocation.cpu_address, &constants,
+                     sizeof(wireframe_constant_buffer));
+
+         return allocation.gpu_address;
+      }();
+
+      command_list.set_graphics_root_signature(_root_signatures.mesh_wireframe.get());
+      command_list.set_graphics_cbv(rs::mesh_wireframe::wireframe_cbv,
+                                    wireframe_constants);
+      command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
+                                    _camera_constant_buffer_view);
+
+      command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
+
+      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+
+      world::evaluate_treeline(
+         *tree_line, world.paths,
+         [&](const float4x4& world_from_object,
+             const world::object_class_handle class_handle) noexcept {
+            auto& model = _model_manager[world_classes[class_handle].model_name];
+
+            if (not intersects(view_frustum, world_from_object * model.bbox)) {
+               return;
+            }
+
+            const math::bounding_box object_bbox = world_from_object * model.bbox;
+
+            gpu_virtual_address object_constants = [&] {
+               auto allocation =
+                  _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
+
+               world_mesh_constants constants{};
+
+               constants.world_from_object = world_from_object;
+
+               std::memcpy(allocation.cpu_address, &constants,
+                           sizeof(world_mesh_constants));
+
+               return allocation.gpu_address;
+            }();
+
+            command_list.set_graphics_cbv(rs::mesh_wireframe::object_cbv,
+                                          object_constants);
+
+            command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
+            command_list.ia_set_vertex_buffers(0, model.gpu_buffer.position_vertex_buffer_view);
+
+            bool doublesided = false;
+
+            for (auto& part : model.parts) {
+               if (std::exchange(doublesided,
+                                 are_flags_set(part.material.flags,
+                                               material_pipeline_flags::doublesided)) !=
+                   doublesided) {
+                  command_list.set_pipeline_state(
+                     doublesided ? _pipelines.mesh_wireframe_doublesided.get()
+                                 : _pipelines.mesh_wireframe.get());
+               }
+
+               command_list.draw_indexed_instanced(part.index_count, 1, part.start_index,
+                                                   part.start_vertex, 0);
+            }
+         });
+   }
 }
 
 void renderer_impl::draw_block_highlights(const world::tool_visualizers& tool_visualizers,

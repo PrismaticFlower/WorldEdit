@@ -13,6 +13,7 @@ namespace we::world {
 struct object;
 struct planning_hub;
 struct planning_connection;
+struct tree_line;
 
 struct tool_visualizers_line {
    float3 v0;
@@ -45,6 +46,11 @@ struct tool_visualizers_hub_highlight {
 
 struct tool_visualizers_connection_highlight {
    id<planning_connection> connection_id;
+   float3 color;
+};
+
+struct tool_visualizers_tree_line_highlight {
+   id<tree_line> tree_line_id;
    float3 color;
 };
 
@@ -96,6 +102,8 @@ struct tool_visualizers {
 
    void add_highlight(id<planning_connection> connection_id, float3 color);
 
+   void add_highlight(id<tree_line> tree_line_id, float3 color);
+
    void add_block_highlight(const float4x4& transform,
                             block_custom_mesh_handle mesh, float alpha);
 
@@ -139,6 +147,9 @@ struct tool_visualizers {
    auto connection_highlights() const noexcept
       -> std::span<const tool_visualizers_connection_highlight>;
 
+   auto tree_line_highlights() const noexcept
+      -> std::span<const tool_visualizers_tree_line_highlight>;
+
    auto block_highlights() const noexcept
       -> std::span<const tool_visualizers_block_highlight>;
 
@@ -169,6 +180,7 @@ private:
    std::vector<id<object>> _filtered_objects;
    std::vector<tool_visualizers_hub_highlight> _hub_highlights;
    std::vector<tool_visualizers_connection_highlight> _connection_highlights;
+   std::vector<tool_visualizers_tree_line_highlight> _tree_line_highlights;
    std::vector<tool_visualizers_block_highlight> _block_highlights;
    std::vector<tool_visualizers_block_surface_highlight> _block_surface_highlights;
    std::vector<tool_visualizers_mini_grid> _mini_grids;

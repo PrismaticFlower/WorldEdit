@@ -13,6 +13,7 @@ tool_visualizers::tool_visualizers() noexcept
    _filtered_objects.reserve(64);
    _hub_highlights.reserve(8);
    _connection_highlights.reserve(8);
+   _tree_line_highlights.reserve(1);
    _block_highlights.reserve(1);
    _block_surface_highlights.reserve(1);
    _mini_grids.reserve(8);
@@ -79,6 +80,11 @@ void tool_visualizers::add_highlight(id<planning_connection> connection_id, floa
    _connection_highlights.emplace_back(connection_id, color);
 }
 
+void tool_visualizers::add_highlight(id<tree_line> tree_line_id, float3 color)
+{
+   _tree_line_highlights.emplace_back(tree_line_id, color);
+}
+
 void tool_visualizers::add_block_highlight(const float4x4& transform,
                                            block_custom_mesh_handle mesh, float alpha)
 {
@@ -135,6 +141,7 @@ void tool_visualizers::clear() noexcept
    _filtered_objects.clear();
    _hub_highlights.clear();
    _connection_highlights.clear();
+   _tree_line_highlights.clear();
    _block_highlights.clear();
    _block_surface_highlights.clear();
    _mini_grids.clear();
@@ -195,6 +202,12 @@ auto tool_visualizers::connection_highlights() const noexcept
    -> std::span<const tool_visualizers_connection_highlight>
 {
    return _connection_highlights;
+}
+
+auto tool_visualizers::tree_line_highlights() const noexcept
+   -> std::span<const tool_visualizers_tree_line_highlight>
+{
+   return _tree_line_highlights;
 }
 
 auto tool_visualizers::block_highlights() const noexcept

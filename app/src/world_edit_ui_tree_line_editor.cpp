@@ -48,6 +48,9 @@ void world_edit::ui_show_tree_line_editor() noexcept
                   _interaction_targets.hovered_entity =
                      make_path_id_node_mask(_world.paths[tree_line.path_index].id);
 
+                  _tool_visualizers.add_highlight(tree_line.id,
+                                                  _settings.graphics.hover_color);
+
                   if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
                      _interaction_targets.selection.add(make_path_id_node_mask(
                         _world.paths[tree_line.path_index].id));
@@ -235,6 +238,9 @@ void world_edit::ui_show_tree_line_editor() noexcept
                "WorldEdit. And the order of chosen ODFs is random ingame and "
                "can change from unrelated edits you make.");
          }
+
+         _tool_visualizers.add_highlight(selected_tree_line->id,
+                                         _settings.graphics.selected_color);
       }
 
       ImGui::EndChild();
