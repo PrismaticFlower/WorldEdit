@@ -2395,7 +2395,7 @@ TreeLine()
 		BorderOdf("tree3.odf");
 		BorderOdf("tree4.odf");
 		BorderOdf("tree5.odf");
-		Flip(1);
+		Flip();
 	}
 }
 )"sv;

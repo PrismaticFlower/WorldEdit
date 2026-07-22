@@ -1518,7 +1518,7 @@ void load_foliage_props(const io::path& filepath, world& world_out, output_strea
                      }
                   }
                   else if (iequals(prop.key, "Flip"sv)) {
-                     tree_line.flip = prop.values.get<int>(0) != 0;
+                     tree_line.flip = true;
                   }
                }
             }

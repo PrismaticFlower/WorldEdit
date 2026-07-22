@@ -968,9 +968,7 @@ void save_foliage_props(const io::path& path, const world& world)
             file.write_ln("\t\tBorderOdf(\"{}.odf\");", odf.name);
          }
 
-         if (tree_line.flip) {
-            file.write_ln("\t\tFlip(1);");
-         }
+         if (tree_line.flip) file.write_ln("\t\tFlip();");
 
          file.write_ln("\t}");
       }
