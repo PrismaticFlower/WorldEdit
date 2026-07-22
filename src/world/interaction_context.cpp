@@ -271,6 +271,8 @@ bool edit_context::is_memory_valid(const void* ptr, std::size_t size) const noex
       address_range::container(world.blocks.materials),
 
       address_range::container(world.effects.sun_flares),
+
+      address_range::container(world.tree_lines),
    };
 
    std::uintptr_t memory_begin = reinterpret_cast<std::uintptr_t>(ptr);
@@ -295,6 +297,15 @@ auto make_path_id_node_mask(path_id id, uint32 node_index) noexcept -> path_id_n
    path_id_node_mask node_id_mask{id};
 
    if (node_index < max_path_nodes) node_id_mask.nodes.set(node_index);
+
+   return node_id_mask;
+}
+
+auto make_path_id_node_mask(path_id id) noexcept -> path_id_node_mask
+{
+   path_id_node_mask node_id_mask{id};
+
+   for (uint32 i = 0; i < max_path_nodes; ++i) node_id_mask.nodes.set(i);
 
    return node_id_mask;
 }

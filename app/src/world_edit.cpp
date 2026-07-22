@@ -254,9 +254,8 @@ void world_edit::update()
                             _world_layers_draw_mask, _tool_visualizers,
                             _object_classes, _gizmos.get_draw_lists(),
                             {
-                               .draw_tree_lines =
-                                  _terrain_edit_tool == terrain_edit_tool::foliage_editor or
-                                  _settings.graphics.draw_tree_lines,
+                               .draw_tree_lines = _tree_line_editor_open or
+                                                  _settings.graphics.draw_tree_lines,
                                .draw_terrain_grid = _draw_terrain_grid,
                                .draw_overlay_grid = _draw_overlay_grid,
                                .draw_foliage_map_overlay =

@@ -205,6 +205,14 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          ImGui::Separator();
 
+         ImGui::MenuItem("Tree Line Editor",
+                         get_display_string(
+                            _hotkeys.query_binding("Global",
+                                                   "Show Tree Line Editor")),
+                         &_tree_line_editor_open);
+
+         ImGui::Separator();
+
          ImGui::MenuItem("World Explorer",
                          get_display_string(
                             _hotkeys.query_binding("Global",

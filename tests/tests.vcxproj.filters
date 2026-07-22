@@ -138,6 +138,11 @@
     <ClCompile Include="src\munge\builtin\odf_munge_tests.cpp" />
     <ClCompile Include="src\munge\builtin\utility\bf_fnv_1a_hash_tests.cpp" />
     <ClCompile Include="src\munge\builtin\model_munge_tests.cpp" />
+    <ClCompile Include="src\edits\add_tree_line_tests.cpp" />
+    <ClCompile Include="src\edits\add_tree_line_border_odf_tests.cpp" />
+    <ClCompile Include="src\edits\delete_tree_line_tests.cpp" />
+    <ClCompile Include="src\edits\delete_tree_line_border_odf_tests.cpp" />
+    <ClCompile Include="src\edits\set_tree_line_border_odf_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

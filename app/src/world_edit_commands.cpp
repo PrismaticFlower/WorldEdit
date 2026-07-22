@@ -187,6 +187,7 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("show.bake_terrain_lighting"s,
                  [this] { _terrain_edit_tool = terrain_edit_tool::light_baker; });
+   _commands.add("show.tree_line_editor"s, _tree_line_editor_open);
    _commands.add("show.block_editor"s, [this] {
       _block_editor_open = true;
       _block_editor_context = {};
@@ -759,6 +760,8 @@ void world_edit::initialize_commands() noexcept
                  [this] { _effects_editor_open = false; });
 
    _commands.add("load_errors.close"s, [this] { _load_errors_open = false; });
+
+   _commands.add("tree_lines.close"s, [this] { _tree_line_editor_open = false; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -881,6 +884,9 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show Bake Terrain Lighting",
            "show.bake_terrain_lighting",
            {.key = key::f8, .modifiers = {.ctrl = true}}},
+          {"Show Tree Line Editor",
+           "show.tree_line_editor",
+           {.key = key::f9, .modifiers = {.ctrl = true}}},
 
           {"Show Animation Editor",
            "show.animation_editor",
@@ -1570,6 +1576,16 @@ void world_edit::initialize_hotkeys() noexcept
                      .default_hotkeys =
                         {
                            {"Close", "load_errors.close", {.key = key::escape}},
+                        },
+
+                     .hidden = true});
+
+   _hotkeys.add_set({.name = "Tree Line Editor",
+                     .description = "Active while the tree line editor is open."s,
+                     .activated = [this] { return _tree_line_editor_open; },
+                     .default_hotkeys =
+                        {
+                           {"Close", "tree_lines.close", {.key = key::escape}},
                         },
 
                      .hidden = true});

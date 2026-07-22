@@ -185,6 +185,10 @@ void world_edit::update_ui() noexcept
       ui_show_block_material_editor();
    }
 
+   if (_tree_line_editor_open) {
+      ui_show_tree_line_editor();
+   }
+
    if (_export_selection_open) {
       ui_show_export_selection();
    }

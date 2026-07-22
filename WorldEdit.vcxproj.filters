@@ -331,6 +331,11 @@
     <ClCompile Include="src\graphics\shaders\brightness_adjustVS.cpp" />
     <ClCompile Include="src\graphics\shaders\brightness_adjustPS.cpp" />
     <ClCompile Include="src\world\utility\evaluate_treeline.cpp" />
+    <ClCompile Include="src\edits\add_tree_line.cpp" />
+    <ClCompile Include="src\edits\add_tree_line_border_odf.cpp" />
+    <ClCompile Include="src\edits\delete_tree_line.cpp" />
+    <ClCompile Include="src\edits\delete_tree_line_border_odf.cpp" />
+    <ClCompile Include="src\edits\set_tree_line_border_odf.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -722,6 +727,11 @@
     <ClInclude Include="src\utility\random.hpp" />
     <ClInclude Include="src\world\utility\barrier_construction.hpp" />
     <ClInclude Include="src\world\utility\evaluate_treeline.hpp" />
+    <ClInclude Include="src\edits\add_tree_line.hpp" />
+    <ClInclude Include="src\edits\delete_tree_line.hpp" />
+    <ClInclude Include="src\edits\set_tree_line_border_odf.hpp" />
+    <ClInclude Include="src\edits\delete_tree_line_border_odf.hpp" />
+    <ClInclude Include="src\edits\add_tree_line_border_odf.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

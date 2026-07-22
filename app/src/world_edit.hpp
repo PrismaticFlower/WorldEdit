@@ -427,6 +427,8 @@ private:
 
    void ui_show_block_material_editor() noexcept;
 
+   void ui_show_tree_line_editor() noexcept;
+
    void ui_show_export_selection() noexcept;
 
    void ui_show_munge_manager() noexcept;
@@ -668,6 +670,7 @@ private:
    bool _animation_hierarchy_editor_open = false;
    bool _block_editor_open = false;
    bool _block_material_editor_open = false;
+   bool _tree_line_editor_open = false;
    bool _export_selection_open = false;
    bool _munge_manager_open = false;
    bool _munge_config_editor_open = false;
@@ -1322,6 +1325,12 @@ private:
    struct block_material_editor_context {
       uint32 selected_index = 0;
    } _block_material_editor_context;
+
+   struct tree_line_editor_context {
+      struct selected {
+         world::tree_line_id id = world::max_id;
+      } selected;
+   } _tree_line_editor_context;
 
    struct export_selection_config {
       bool copy_textures = false;

@@ -63,7 +63,7 @@ struct tree_line_odf {
 };
 
 struct tree_line {
-   float distance = 0.0f;
+   float distance = 32.0f;
 
    std::vector<tree_line_odf> border_odfs;
 

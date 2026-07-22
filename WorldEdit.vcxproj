@@ -432,6 +432,8 @@
     <ClCompile Include="src\edits\add_property.cpp" />
     <ClCompile Include="src\edits\add_sector_object.cpp" />
     <ClCompile Include="src\edits\add_sun_flare.cpp" />
+    <ClCompile Include="src\edits\add_tree_line.cpp" />
+    <ClCompile Include="src\edits\add_tree_line_border_odf.cpp" />
     <ClCompile Include="src\edits\add_world_req_entry.cpp" />
     <ClCompile Include="src\edits\add_world_req_list.cpp" />
     <ClCompile Include="src\edits\bundle.cpp" />
@@ -451,6 +453,8 @@
     <ClCompile Include="src\edits\delete_sector_object.cpp" />
     <ClCompile Include="src\edits\delete_sector_point.cpp" />
     <ClCompile Include="src\edits\delete_sun_flare.cpp" />
+    <ClCompile Include="src\edits\delete_tree_line.cpp" />
+    <ClCompile Include="src\edits\delete_tree_line_border_odf.cpp" />
     <ClCompile Include="src\edits\delete_world_req_entry.cpp" />
     <ClCompile Include="src\edits\delete_world_req_list.cpp" />
     <ClCompile Include="src\edits\game_mode_link_layer.cpp" />
@@ -465,6 +469,7 @@
     <ClCompile Include="src\edits\rename_layer.cpp" />
     <ClCompile Include="src\edits\set_block.cpp" />
     <ClCompile Include="src\edits\set_class_name.cpp" />
+    <ClCompile Include="src\edits\set_tree_line_border_odf.cpp" />
     <ClCompile Include="src\edits\set_world_req_entry.cpp" />
     <ClCompile Include="src\edits\set_terrain.cpp" />
     <ClCompile Include="src\edits\set_terrain_area.cpp" />
@@ -810,6 +815,8 @@
     <ClInclude Include="src\edits\add_layer.hpp" />
     <ClInclude Include="src\edits\add_sector_object.hpp" />
     <ClInclude Include="src\edits\add_sun_flare.hpp" />
+    <ClInclude Include="src\edits\add_tree_line.hpp" />
+    <ClInclude Include="src\edits\add_tree_line_border_odf.hpp" />
     <ClInclude Include="src\edits\add_world_req_list.hpp" />
     <ClInclude Include="src\edits\bundle.hpp" />
     <ClInclude Include="src\edits\creation_entity_set.hpp" />
@@ -828,6 +835,8 @@
     <ClInclude Include="src\edits\delete_sector_object.hpp" />
     <ClInclude Include="src\edits\delete_sector_point.hpp" />
     <ClInclude Include="src\edits\delete_sun_flare.hpp" />
+    <ClInclude Include="src\edits\delete_tree_line.hpp" />
+    <ClInclude Include="src\edits\delete_tree_line_border_odf.hpp" />
     <ClInclude Include="src\edits\delete_vector_entry.hpp" />
     <ClInclude Include="src\edits\delete_world_req_list.hpp" />
     <ClInclude Include="src\edits\edit.hpp" />
@@ -844,6 +853,7 @@
     <ClInclude Include="src\edits\rename_layer.hpp" />
     <ClInclude Include="src\edits\set_block.hpp" />
     <ClInclude Include="src\edits\set_class_name.hpp" />
+    <ClInclude Include="src\edits\set_tree_line_border_odf.hpp" />
     <ClInclude Include="src\edits\set_world_req_entry.hpp" />
     <ClInclude Include="src\edits\set_terrain.hpp" />
     <ClInclude Include="src\edits\set_terrain_area.hpp" />

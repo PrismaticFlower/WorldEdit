@@ -490,6 +490,8 @@ struct edit_context {
 
 auto make_path_id_node_mask(path_id id, uint32 node_index) noexcept -> path_id_node_mask;
 
+auto make_path_id_node_mask(path_id id) noexcept -> path_id_node_mask;
+
 bool is_selected(const path_id path, const selection& selection) noexcept;
 
 bool is_selected(const path_id path, const uint32 node_index,
