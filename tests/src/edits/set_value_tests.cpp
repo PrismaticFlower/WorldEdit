@@ -568,8 +568,8 @@ TEST_CASE("edits set_memory_value no coalesce", "[Edits]")
 
    auto edit =
       make_set_memory_value(&world.global_lights.env_map_texture, "starfield"s);
-   auto other_edit =
-      make_set_memory_value(&world.global_lights.global_light_1, "mountains"s);
+   auto other_edit = make_set_memory_value(&world.global_lights.global_light_1,
+                                           world::light_optional_link{"mountains"s});
 
    REQUIRE(not edit->is_coalescable(*other_edit));
 }

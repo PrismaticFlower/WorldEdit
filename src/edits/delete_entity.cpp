@@ -354,12 +354,11 @@ struct delete_light final : edit<world::edit_context> {
    };
 
    delete_light(world::light light, uint32 light_index,
-                std::unique_ptr<unlinked_global_light> unlinked_global_light_1,
-                std::unique_ptr<unlinked_global_light> unlinked_global_light_2)
+                bool unlinked_global_light_1, bool unlinked_global_light_2)
       : _light{std::move(light)},
         _light_index{light_index},
-        _unlinked_global_light_1{std::move(unlinked_global_light_1)},
-        _unlinked_global_light_2{std::move(unlinked_global_light_2)}
+        _unlinked_global_light_1{unlinked_global_light_1},
+        _unlinked_global_light_2{unlinked_global_light_2}
    {
    }
 
@@ -368,11 +367,21 @@ struct delete_light final : edit<world::edit_context> {
       world::world& world = context.world;
 
       if (_unlinked_global_light_1) {
-         std::swap(world.global_lights.global_light_1, _unlinked_global_light_1->name);
+         world.global_lights.global_light_1 = {};
+      }
+      else if (world.global_lights.global_light_1.has_index() and
+               world.global_lights.global_light_1.index() > _light_index) {
+         world.global_lights.global_light_1 =
+            world.global_lights.global_light_1.index() - 1;
       }
 
       if (_unlinked_global_light_2) {
-         std::swap(world.global_lights.global_light_2, _unlinked_global_light_2->name);
+         world.global_lights.global_light_2 = {};
+      }
+      else if (world.global_lights.global_light_2.has_index() and
+               world.global_lights.global_light_2.index() > _light_index) {
+         world.global_lights.global_light_2 =
+            world.global_lights.global_light_2.index() - 1;
       }
 
       world.lights.erase(world.lights.begin() + _light_index);
@@ -385,11 +394,21 @@ struct delete_light final : edit<world::edit_context> {
       world.lights.insert(world.lights.begin() + _light_index, _light);
 
       if (_unlinked_global_light_1) {
-         std::swap(world.global_lights.global_light_1, _unlinked_global_light_1->name);
+         world.global_lights.global_light_1 = _light_index;
+      }
+      else if (world.global_lights.global_light_1.has_index() and
+               world.global_lights.global_light_1.index() >= _light_index) {
+         world.global_lights.global_light_1 =
+            world.global_lights.global_light_1.index() + 1;
       }
 
       if (_unlinked_global_light_2) {
-         std::swap(world.global_lights.global_light_2, _unlinked_global_light_2->name);
+         world.global_lights.global_light_2 = _light_index;
+      }
+      else if (world.global_lights.global_light_2.has_index() and
+               world.global_lights.global_light_2.index() >= _light_index) {
+         world.global_lights.global_light_2 =
+            world.global_lights.global_light_2.index() + 1;
       }
    }
 
@@ -404,8 +423,8 @@ private:
    const world::light _light;
    const uint32 _light_index;
 
-   std::unique_ptr<unlinked_global_light> _unlinked_global_light_1;
-   std::unique_ptr<unlinked_global_light> _unlinked_global_light_2;
+   bool _unlinked_global_light_1 = false;
+   bool _unlinked_global_light_2 = false;
 };
 
 struct delete_path_node final : edit<world::edit_context> {
@@ -1024,14 +1043,10 @@ auto make_delete_entity(world::light_id light_id, const world::world& world)
    const uint32 light_index = get_entity_index(world.lights, light_id);
    const world::light& light = world.lights[light_index];
 
-   return std::make_unique<delete_light>(
-      light, light_index,
-      iequals(light.name, world.global_lights.global_light_1)
-         ? std::make_unique<delete_light::unlinked_global_light>()
-         : nullptr,
-      iequals(light.name, world.global_lights.global_light_2)
-         ? std::make_unique<delete_light::unlinked_global_light>()
-         : nullptr);
+   return std::make_unique<delete_light>(light, light_index,
+                                         world.global_lights.global_light_1 == light_index,
+                                         world.global_lights.global_light_2 ==
+                                            light_index);
 }
 
 auto make_delete_entity(world::path_id path_id, uint32 node, const world::world& world,

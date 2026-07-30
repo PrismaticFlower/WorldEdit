@@ -1267,7 +1267,7 @@ TEST_CASE("edits delete_layer unlink lights", "[Edits]")
          },
       .common_layers = {0, 2, 3},
 
-      .global_lights = {.global_light_1 = "Light1", .global_light_2 = "Light0"},
+      .global_lights = {.global_light_1 = 1, .global_light_2 = 0},
 
       .lights = {world::entities_init,
                  std::initializer_list{
@@ -1284,13 +1284,68 @@ TEST_CASE("edits delete_layer unlink lights", "[Edits]")
 
    edit->apply(edit_context);
 
-   CHECK(world.global_lights.global_light_1 == "");
-   CHECK(world.global_lights.global_light_2 == "");
+   CHECK(not world.global_lights.global_light_1.has_index());
+   CHECK(not world.global_lights.global_light_2.has_index());
 
    edit->revert(edit_context);
 
-   CHECK(world.global_lights.global_light_1 == "Light1");
-   CHECK(world.global_lights.global_light_2 == "Light0");
+   CHECK(world.global_lights.global_light_1 == 1);
+   CHECK(world.global_lights.global_light_2 == 0);
+}
+
+TEST_CASE("edits delete_layer adjust lights", "[Edits]")
+{
+   world::world world = {
+      .name = "Test"s,
+
+      .requirements = {{.file_type = "world",
+                        .entries = {"Test", "Test_Middle", "Test_Top", "Test_Unlinked"}}},
+
+      .layer_descriptions = {{.name = "[Base]"},
+                             {.name = "Middle"},
+                             {.name = "Top"},
+                             {.name = "Unlinked"}},
+      .game_modes =
+         {
+            {
+               .name = "conquest",
+               .layers = {1},
+               .requirements = {{
+                  .file_type = "world",
+                  .entries = {"Test_Middle"},
+               }},
+            },
+         },
+      .common_layers = {0, 2, 3},
+
+      .global_lights = {.global_light_1 = 4, .global_light_2 = 5},
+
+      .lights = {world::entities_init,
+                 std::initializer_list{
+                    light{.name = "Light0", .layer = 3},
+                    light{.name = "Light1", .layer = 3},
+                    light{.name = "Light2", .layer = 3},
+                    light{.name = "Light3", .layer = 3},
+                    light{.name = "Light4", .layer = 0},
+                    light{.name = "Light5", .layer = 0},
+                 }},
+   };
+
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   auto edit = make_delete_layer(3, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   CHECK(world.global_lights.global_light_1 == 0);
+   CHECK(world.global_lights.global_light_2 == 1);
+
+   edit->revert(edit_context);
+
+   CHECK(world.global_lights.global_light_1 == 4);
+   CHECK(world.global_lights.global_light_2 == 5);
 }
 
 }

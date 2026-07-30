@@ -484,8 +484,23 @@ void save_lights(const io::path& path, const int layer_index,
       file.write_ln("GlobalLights()");
       file.write_ln("{");
       file.write_ln("\tEditorGlobalDirIconSize(10);");
-      file.write_ln("\tLight1(\"{}\");", world.global_lights.global_light_1);
-      file.write_ln("\tLight2(\"{}\");", world.global_lights.global_light_2);
+
+      if (world.global_lights.global_light_1.has_index()) {
+         file.write_ln("\tLight1(\"{}\");",
+                       world.lights[world.global_lights.global_light_1.index()].name);
+      }
+      else {
+         file.write_ln("\tLight1(\"{}\");", world.global_lights.global_light_1.name());
+      }
+
+      if (world.global_lights.global_light_2.has_index()) {
+         file.write_ln("\tLight2(\"{}\");",
+                       world.lights[world.global_lights.global_light_2.index()].name);
+      }
+      else {
+         file.write_ln("\tLight2(\"{}\");", world.global_lights.global_light_2.name());
+      }
+
       file.write_ln("\tTop({}, {}, {});",
                     static_cast<int>(ambient_sky_color.x * 255.0f + 0.5f),
                     static_cast<int>(ambient_sky_color.y * 255.0f + 0.5f),

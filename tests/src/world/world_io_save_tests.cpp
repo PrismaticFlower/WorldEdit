@@ -1188,8 +1188,8 @@ TEST_CASE("world saving", "[World][IO]")
                          }}},
       .common_layers = {0},
 
-      .global_lights = {.global_light_1 = "sun",
-                        .global_light_2 = "",
+      .global_lights = {.global_light_1 = light_optional_link{0},
+                        .global_light_2 = light_optional_link{},
                         .ambient_sky_color = {1.0f, 1.0f, 1.0f},
                         .ambient_ground_color = {0.5f, 0.5f, 0.5f}},
 
@@ -2883,4 +2883,40 @@ TEST_CASE("world saving hintnode object links", "[World][IO]")
 
    CHECK(written_hnt == expected_hnt);
 }
+
+TEST_CASE("world saving light broken links", "[World][IO]")
+{
+   (void)io::create_directory("temp/world_light_broken_links");
+
+   const world world{
+      .name = "test",
+
+      .layer_descriptions = {{.name = "[Base]"}, {.name = "conquest"}},
+
+      .common_layers = {0},
+
+      .global_lights = {.global_light_1 = light_optional_link{"sun1"},
+                        .global_light_2 = light_optional_link{"sun2"},
+                        .ambient_sky_color = {1.0f, 1.0f, 1.0f},
+                        .ambient_ground_color = {0.5f, 0.5f, 0.5f}},
+   };
+
+   save_world("temp/world_light_broken_links/test.wld", world, {});
+
+   const auto written_lgt =
+      io::read_file_to_string("temp/world_light_broken_links/test.lgt");
+
+   const std::string_view expected_broken_lgt = R"(GlobalLights()
+{
+	EditorGlobalDirIconSize(10);
+	Light1("sun1");
+	Light2("sun2");
+	Top(255, 255, 255);
+	Bottom(128, 128, 128);
+}
+)";
+
+   CHECK(written_lgt == expected_broken_lgt);
+}
+
 }

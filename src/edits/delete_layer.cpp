@@ -36,6 +36,11 @@ struct path_link_record {
    uint32 path_index = 0;
 };
 
+struct light_link_records {
+   std::optional<uint32> global_light_1;
+   std::optional<uint32> global_light_2;
+};
+
 struct unlinked_path_property {
    uint32 path_index = 0;
    uint32 property_index = 0;
@@ -79,8 +84,8 @@ struct unlinked_properties {
    std::vector<unlinked_animation_hierarchy_root> animation_hierarchy_roots;
    std::vector<unlinked_hintnode> hintnodes;
 
-   std::optional<std::string> global_light_1;
-   std::optional<std::string> global_light_2;
+   std::optional<uint32> global_light_1;
+   std::optional<uint32> global_light_2;
 };
 
 template<typename T>
@@ -143,6 +148,7 @@ struct delete_layer_data {
 
    std::vector<uint32> object_link_adjustments;
    std::vector<uint32> path_link_adjustments;
+   std::vector<uint32> light_link_adjustments;
 
    std::vector<remap_entry<world::object>> remap_objects;
    std::vector<remap_entry<world::light>> remap_lights;
@@ -334,15 +340,17 @@ auto make_unlink_properties(int layer_index, const world::world& world) -> unlin
       }
    }
 
-   for (const world::light& light : world.lights) {
+   for (uint32 light_index = 0; light_index < world.lights.size(); ++light_index) {
+      const world::light& light = world.lights[light_index];
+
       if (light.layer != layer_index) continue;
 
-      if (iequals(light.name, world.global_lights.global_light_1)) {
-         unlinked_properties.global_light_1 = "";
+      if (world.global_lights.global_light_1 == light_index) {
+         unlinked_properties.global_light_1 = light_index;
       }
 
-      if (iequals(light.name, world.global_lights.global_light_2)) {
-         unlinked_properties.global_light_2 = "";
+      if (world.global_lights.global_light_2 == light_index) {
+         unlinked_properties.global_light_2 = light_index;
       }
    }
 
@@ -569,6 +577,54 @@ void revert_path_link_adjustments(world::world& world,
    tree_line_adjustments.clear();
 }
 
+void apply_light_link_adjustments(world::world& world,
+                                  std::span<const uint32> link_adjustments,
+                                  light_link_records& light_adjustments)
+{
+   if (link_adjustments.empty()) return;
+
+   light_adjustments = {};
+
+   if (world.global_lights.global_light_1.has_index()) {
+      if (auto it = std::lower_bound(link_adjustments.begin(), link_adjustments.end(),
+                                     world.global_lights.global_light_1.index());
+          it != link_adjustments.begin()) {
+         light_adjustments.global_light_1 =
+            world.global_lights.global_light_1.index();
+
+         world.global_lights.global_light_1 =
+            world.global_lights.global_light_1.index() -
+            static_cast<uint32>(it - link_adjustments.begin());
+      }
+   }
+
+   if (world.global_lights.global_light_2.has_index()) {
+      if (auto it = std::lower_bound(link_adjustments.begin(), link_adjustments.end(),
+                                     world.global_lights.global_light_2.index());
+          it != link_adjustments.begin()) {
+         light_adjustments.global_light_2 =
+            world.global_lights.global_light_2.index();
+
+         world.global_lights.global_light_2 =
+            world.global_lights.global_light_2.index() -
+            static_cast<uint32>(it - link_adjustments.begin());
+      }
+   }
+}
+
+void revert_light_link_adjustments(world::world& world, light_link_records& light_adjustments)
+{
+   if (light_adjustments.global_light_1) {
+      world.global_lights.global_light_1 = *light_adjustments.global_light_1;
+   }
+
+   if (light_adjustments.global_light_2) {
+      world.global_lights.global_light_2 = *light_adjustments.global_light_2;
+   }
+
+   light_adjustments = {};
+}
+
 template<typename T>
 auto make_remap_entries(int layer_index, const pinned_vector<T>& entities)
    -> std::vector<remap_entry<T>>
@@ -738,11 +794,11 @@ void apply_unlinked_entities(world::world& world, unlinked_properties& unlinked_
    }
 
    if (unlinked_properties.global_light_1) {
-      std::swap(*unlinked_properties.global_light_1, world.global_lights.global_light_1);
+      world.global_lights.global_light_1 = {};
    }
 
    if (unlinked_properties.global_light_2) {
-      std::swap(*unlinked_properties.global_light_2, world.global_lights.global_light_2);
+      world.global_lights.global_light_2 = {};
    }
 }
 
@@ -796,11 +852,11 @@ void revert_unlinked_entities(world::world& world, unlinked_properties& unlinked
    }
 
    if (unlinked_properties.global_light_1) {
-      std::swap(*unlinked_properties.global_light_1, world.global_lights.global_light_1);
+      world.global_lights.global_light_1 = *unlinked_properties.global_light_1;
    }
 
    if (unlinked_properties.global_light_2) {
-      std::swap(*unlinked_properties.global_light_2, world.global_lights.global_light_2);
+      world.global_lights.global_light_2 = *unlinked_properties.global_light_2;
    }
 }
 
@@ -1357,6 +1413,9 @@ struct delete_layer final : edit<world::edit_context> {
       apply_path_link_adjustments(world, _data.path_link_adjustments,
                                   _tree_line_path_link_adjustments);
 
+      apply_light_link_adjustments(world, _data.light_link_adjustments,
+                                   _light_link_adjustments);
+
       apply_remap_entries(world.objects, _data.remap_objects);
       apply_remap_entries(world.lights, _data.remap_lights);
       apply_remap_entries(world.paths, _data.remap_paths);
@@ -1442,6 +1501,8 @@ struct delete_layer final : edit<world::edit_context> {
       revert_remap_entries(world.blocks.pyramids.layer,
                            _data.remap_blocks_terrain_cut_boxes);
 
+      revert_light_link_adjustments(world, _light_link_adjustments);
+
       revert_path_link_adjustments(world, _tree_line_path_link_adjustments);
 
       revert_object_link_adjustments(world, _sector_object_link_adjustments,
@@ -1471,6 +1532,8 @@ private:
 
    std::vector<path_link_record> _tree_line_path_link_adjustments;
 
+   light_link_records _light_link_adjustments;
+
    world::object_class_library& _object_class_library;
 };
 }
@@ -1493,6 +1556,8 @@ auto make_delete_layer(int layer_index, const world::world& world,
             make_entity_link_adjustments(layer_index, world.objects),
          .path_link_adjustments =
             make_entity_link_adjustments(layer_index, world.paths),
+         .light_link_adjustments =
+            make_entity_link_adjustments(layer_index, world.lights),
 
          .remap_objects = make_remap_entries(layer_index, world.objects),
          .remap_lights = make_remap_entries(layer_index, world.lights),

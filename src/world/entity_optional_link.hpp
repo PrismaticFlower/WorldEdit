@@ -2,12 +2,14 @@
 
 #include "types.hpp"
 
+#include <cassert>
 #include <string>
 
 namespace we::world {
 
 struct object;
 struct sector;
+struct light;
 
 /// @brief Used to represent optional links. When it doesn't have a link it stores a name instead. This is used for
 //  things like animation hierarchy root entitys that may be missing from the world but we still want to be able to
@@ -81,6 +83,11 @@ struct entity_optional_link {
 
             return world.sectors[index()].name;
          }
+         else if constexpr (std::is_same_v<T, light>) {
+            assert(index() < world.lights.size());
+
+            return world.lights[index()].name;
+         }
       }
       else {
          return _name;
@@ -119,6 +126,7 @@ inline bool operator==(const entity_optional_link<T>& link, const uint32 index) 
 }
 
 using object_optional_link = entity_optional_link<object>;
+using light_optional_link = entity_optional_link<light>;
 using sector_optional_link = entity_optional_link<sector>;
 
 }

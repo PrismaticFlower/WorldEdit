@@ -385,6 +385,34 @@ void light_clusters::prepare_lights(
    std::array<light_region_description, max_lights> region_lights_descriptions{};
    std::array<light_proxy_instance, max_lights> sphere_light_proxies{};
 
+   if (world.global_lights.global_light_1.has_index()) {
+      const world::light& light =
+         world.lights[world.global_lights.global_light_1.index()];
+
+      light_constants.global_light1_directionWS =
+         normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
+      light_constants.global_light1_has_shadows = light.shadow_caster;
+      light_constants.global_light1_color = light.color;
+      light_constants.global_light1_is_dynamic = not light.static_;
+
+      _has_sun_shadows = light.shadow_caster;
+
+      if (_has_sun_shadows) {
+         _sun_shadow_cascades =
+            make_shadow_cascades(light.rotation, view_camera, scene_depth_min_max);
+      }
+   }
+
+   if (world.global_lights.global_light_2.has_index()) {
+      const world::light& light =
+         world.lights[world.global_lights.global_light_2.index()];
+
+      light_constants.global_light2_directionWS =
+         normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
+      light_constants.global_light2_color = light.color;
+      light_constants.global_light2_is_dynamic = not light.static_;
+   }
+
    std::array<light_description, max_lights>& lights = light_constants.lights;
 
    const auto process_light = [&](const world::light& light) {
@@ -397,28 +425,6 @@ void light_clusters::prepare_lights(
       switch (light.light_type) {
       case world::light_type::directional: {
          _light_count -= 1; // Directional lights don't go in the main light list.
-
-         const float3 light_directionWS =
-            normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
-
-         if (string::iequals(light.name, world.global_lights.global_light_1)) {
-            light_constants.global_light1_directionWS = light_directionWS;
-            light_constants.global_light1_has_shadows = light.shadow_caster;
-            light_constants.global_light1_color = light.color;
-            light_constants.global_light1_is_dynamic = not light.static_;
-
-            _has_sun_shadows = light.shadow_caster;
-
-            if (_has_sun_shadows) {
-               _sun_shadow_cascades = make_shadow_cascades(light.rotation, view_camera,
-                                                           scene_depth_min_max);
-            }
-         }
-         else if (string::iequals(light.name, world.global_lights.global_light_2)) {
-            light_constants.global_light2_directionWS = light_directionWS;
-            light_constants.global_light2_color = light.color;
-            light_constants.global_light2_is_dynamic = not light.static_;
-         }
       } break;
       case world::light_type::point: {
          if (not intersects(view_frustum, light.position, light.range)) {

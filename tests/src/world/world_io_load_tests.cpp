@@ -140,8 +140,8 @@ TEST_CASE("world loading", "[World][IO]")
 
    // light checks
    {
-      CHECK(world.global_lights.global_light_1 == "sun"sv);
-      CHECK(world.global_lights.global_light_2 == ""sv);
+      CHECK(world.global_lights.global_light_1 == 1);
+      CHECK(not world.global_lights.global_light_2.has_index());
       CHECK(approx_equals(world.global_lights.ambient_sky_color,
                           {0.5490196f, 0.3098039f, 0.2470588f}));
       CHECK(approx_equals(world.global_lights.ambient_ground_color,
@@ -1063,6 +1063,21 @@ TEST_CASE("world loading portal sector broken links", "[World][IO]")
    CHECK(world.portals[0].sector1.name() == "Sector0");
    REQUIRE(world.portals[0].sector2.has_name());
    CHECK(world.portals[0].sector2.name() == "Sector1");
+}
+
+TEST_CASE("world loading light broken links", "[World][IO]")
+{
+   null_output_stream out;
+   const auto world = load_world("data/world_light_links/test.wld"sv, {}, out);
+
+   // light checks
+   {
+      CHECK(not world.global_lights.global_light_1.has_index());
+      CHECK(not world.global_lights.global_light_2.has_index());
+
+      CHECK(world.global_lights.global_light_1.name() == "sun1");
+      CHECK(world.global_lights.global_light_2.name() == "sun2");
+   }
 }
 
 }

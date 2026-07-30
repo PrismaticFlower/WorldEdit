@@ -456,10 +456,10 @@ void load_lights(const io::path& path, const std::string_view layer_name,
             }
          }
          else if (key_node.key == "GlobalLights"sv) {
-            world_out.global_lights.global_light_1 =
-               key_node.at("Light1"sv).values.get<std::string>(0);
-            world_out.global_lights.global_light_2 =
-               key_node.at("Light2"sv).values.get<std::string>(0);
+            world_out.global_lights.global_light_1 = light_optional_link{
+               key_node.at("Light1"sv).values.get<std::string>(0)};
+            world_out.global_lights.global_light_2 = light_optional_link{
+               key_node.at("Light2"sv).values.get<std::string>(0)};
             world_out.global_lights.ambient_sky_color =
                float3{key_node.at("Top"sv).values.get<float>(0) / 255.0f,
                       key_node.at("Top"sv).values.get<float>(1) / 255.0f,
@@ -1800,6 +1800,29 @@ void connect_object_refs(world& world)
           object) {
          hierarchy.root_object =
             static_cast<uint32>((object - world.objects.data()));
+      }
+   }
+
+   assert(world.global_lights.global_light_1.has_name());
+   assert(world.global_lights.global_light_2.has_name());
+
+   if (not world.global_lights.global_light_1.name().empty()) {
+      const light* light =
+         find_entity(world.lights, world.global_lights.global_light_1.name());
+
+      if (light) {
+         world.global_lights.global_light_1 =
+            static_cast<uint32>((light - world.lights.data()));
+      }
+   }
+
+   if (not world.global_lights.global_light_2.name().empty()) {
+      const light* light =
+         find_entity(world.lights, world.global_lights.global_light_2.name());
+
+      if (light) {
+         world.global_lights.global_light_2 =
+            static_cast<uint32>((light - world.lights.data()));
       }
    }
 }

@@ -365,24 +365,27 @@ private:
       static_spot_lights.reserve(world.lights.size());
       dynamic_spot_lights.reserve(world.lights.size());
 
+      for (const light_optional_link& link :
+           {world.global_lights.global_light_1, world.global_lights.global_light_2}) {
+         if (not link.has_index()) continue;
+
+         const light& light = world.lights[link.index()];
+
+         directional_lights& out_lights =
+            light.static_ ? static_directional_lights : dynamic_directional_lights;
+
+         if (out_lights.count < 2) {
+            out_lights.lights[out_lights.count] = {.directionWS = normalize(
+                                                      light.rotation *
+                                                      float3{0.0f, 0.0f, -1.0f}),
+                                                   .color = light.color};
+
+            out_lights.count += 1;
+         }
+      }
+
       for (const light& light : world.lights) {
          switch (light.light_type) {
-         case light_type::directional: {
-            directional_lights& out_lights =
-               light.static_ ? static_directional_lights : dynamic_directional_lights;
-
-            if (out_lights.count == 2) continue;
-
-            if (string::iequals(light.name, world.global_lights.global_light_1) or
-                string::iequals(light.name, world.global_lights.global_light_2)) {
-               out_lights.lights[out_lights.count] = {.directionWS = normalize(
-                                                         light.rotation *
-                                                         float3{0.0f, 0.0f, -1.0f}),
-                                                      .color = light.color};
-
-               out_lights.count += 1;
-            }
-         } break;
          case light_type::point: {
             point_light& point_light = light.static_
                                           ? static_point_lights.emplace_back()

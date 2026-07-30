@@ -1387,7 +1387,7 @@ TEST_CASE("edits delete_entity path tree line class handle liftime", "[Edits]")
    CHECK(object_class_library.debug_ref_count(lowercase_string{"tree3"sv}) == 1);
 }
 
-TEST_CASE("edits delete_entity light gloabl ref", "[Edits]")
+TEST_CASE("edits delete_entity light global ref", "[Edits]")
 {
    world::world world = {
       .name = "Test"s,
@@ -1397,8 +1397,7 @@ TEST_CASE("edits delete_entity light gloabl ref", "[Edits]")
 
       .global_lights =
          {
-            .global_light_1 = "sun",
-            .global_light_2 = "Sun",
+            .global_light_1 = 0,
          },
 
       .lights =
@@ -1420,12 +1419,63 @@ TEST_CASE("edits delete_entity light gloabl ref", "[Edits]")
 
    edit->apply(edit_context);
 
-   CHECK(world.global_lights.global_light_1.empty());
-   CHECK(world.global_lights.global_light_2.empty());
+   CHECK(not world.global_lights.global_light_1.has_index());
 
    edit->revert(edit_context);
 
-   CHECK(world.global_lights.global_light_1 == "sun");
-   CHECK(world.global_lights.global_light_2 == "Sun");
+   CHECK(world.global_lights.global_light_1 == 0);
 }
+
+TEST_CASE("edits delete_entity light global ref adjust", "[Edits]")
+{
+   world::world world = {
+      .name = "Test"s,
+
+      .layer_descriptions = {{.name = "[Base]"s}},
+      .common_layers = {0},
+
+      .global_lights =
+         {
+            .global_light_1 = 2,
+            .global_light_2 = 1,
+         },
+
+      .lights =
+         {
+            world::entities_init,
+            std::initializer_list{
+               world::light{
+                  .name = "suna",
+
+                  .id = world::light_id{0},
+               },
+               world::light{
+                  .name = "sunb",
+
+                  .id = world::light_id{1},
+               },
+               world::light{
+                  .name = "sunc",
+
+                  .id = world::light_id{2},
+               },
+            },
+         },
+   };
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_delete_entity(world.lights[0].id, world);
+
+   edit->apply(edit_context);
+
+   CHECK(world.global_lights.global_light_1 == 1);
+   CHECK(world.global_lights.global_light_2 == 0);
+
+   edit->revert(edit_context);
+
+   CHECK(world.global_lights.global_light_1 == 2);
+   CHECK(world.global_lights.global_light_2 == 1);
+}
+
 }
