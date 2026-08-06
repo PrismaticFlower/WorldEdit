@@ -4,6 +4,7 @@
 #include "../blocks/utility/bounding_box.hpp"
 #include "../blocks/utility/find.hpp"
 #include "../object_class.hpp"
+#include "../object_classes/billboard_patch_class.hpp"
 
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
@@ -27,12 +28,23 @@ auto selection_bbox_for_camera(const world& world,
             find_entity(world.objects, selected.get<object_id>());
 
          if (object) {
-            math::bounding_box bbox =
-               object_classes[object->class_handle].model->bounding_box;
+            const object_class& object_class = object_classes[object->class_handle];
 
-            bbox = object->rotation * bbox + object->position;
+            if (object_class.flags.is_billboard_patch) [[unlikely]] {
+               math::bounding_box bbox =
+                  object_classes.get_billboard_patch_class(object->class_handle).bbox();
 
-            selection_bbox = math::combine(bbox, selection_bbox);
+               bbox = y_flip(object->rotation) * bbox + object->position;
+
+               selection_bbox = math::combine(bbox, selection_bbox);
+            }
+            else {
+               math::bounding_box bbox = object_class.model->bounding_box;
+
+               bbox = object->rotation * bbox + object->position;
+
+               selection_bbox = math::combine(bbox, selection_bbox);
+            }
          }
       }
       else if (selected.is<path_id_node_mask>()) {
@@ -300,12 +312,23 @@ auto selection_metrics_for_move(const world& world,
             find_entity(world.objects, selected.get<object_id>());
 
          if (object) {
-            math::bounding_box bbox =
-               object_classes[object->class_handle].model->bounding_box;
+            const object_class& object_class = object_classes[object->class_handle];
 
-            bbox = object->rotation * bbox + object->position;
+            if (object_class.flags.is_billboard_patch) [[unlikely]] {
+               math::bounding_box bbox =
+                  object_classes.get_billboard_patch_class(object->class_handle).bbox();
 
-            selection_bbox = math::combine(selection_bbox, bbox);
+               bbox = y_flip(object->rotation) * bbox + object->position;
+
+               selection_bbox = math::combine(bbox, selection_bbox);
+            }
+            else {
+               math::bounding_box bbox = object_class.model->bounding_box;
+
+               bbox = object->rotation * bbox + object->position;
+
+               selection_bbox = math::combine(bbox, selection_bbox);
+            }
 
             centreWS += object->position;
             point_count += 1.0f;

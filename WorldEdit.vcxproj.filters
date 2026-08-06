@@ -178,7 +178,6 @@
     <ClCompile Include="src\graphics\terrain.cpp" />
     <ClCompile Include="src\output_stream.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
-    <ClCompile Include="src\world\object_class.cpp" />
     <ClCompile Include="src\world\io\load_effects.cpp" />
     <ClCompile Include="src\world\io\save_effects.cpp" />
     <ClCompile Include="src\container\pinned_vector.cpp" />
@@ -336,6 +335,11 @@
     <ClCompile Include="src\edits\delete_tree_line.cpp" />
     <ClCompile Include="src\edits\delete_tree_line_border_odf.cpp" />
     <ClCompile Include="src\edits\set_tree_line_border_odf.cpp" />
+    <ClCompile Include="src\world\object_classes\leaf_patch_class.cpp" />
+    <ClCompile Include="src\graphics\billboard_patches.cpp" />
+    <ClCompile Include="src\graphics\shaders\billboard_patch_normalPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\billboard_patchVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\billboard_patch_depth_cutoutPS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -732,6 +736,9 @@
     <ClInclude Include="src\edits\set_tree_line_border_odf.hpp" />
     <ClInclude Include="src\edits\delete_tree_line_border_odf.hpp" />
     <ClInclude Include="src\edits\add_tree_line_border_odf.hpp" />
+    <ClInclude Include="src\world\object_classes\leaf_patch_class.hpp" />
+    <ClInclude Include="src\graphics\billboard_patches.hpp" />
+    <ClInclude Include="src\world\object_classes\billboard_patch_class.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

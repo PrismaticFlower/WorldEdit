@@ -5,6 +5,7 @@
 #include "../blocks/utility/bounding_box.hpp"
 #include "../blocks/utility/find.hpp"
 #include "../object_class.hpp"
+#include "../object_classes/billboard_patch_class.hpp"
 
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
@@ -287,12 +288,26 @@ auto entity_group_metrics(const entity_group& group,
                                  .max = float3{-FLT_MAX, -FLT_MAX, -FLT_MAX}};
 
    for (const object& object : group.objects) {
-      const math::bounding_box bboxOS =
-         object_classes[object.class_handle].model->bounding_box;
-      const math::bounding_box bboxGS = object.rotation * bboxOS + object.position;
+      const object_class& object_class = object_classes[object.class_handle];
 
-      ground_distance = std::min(ground_distance, bboxOS.min.y);
-      group_bbox = math::combine(group_bbox, bboxGS);
+      if (object_class.flags.is_billboard_patch) [[unlikely]] {
+         const billboard_patch_class& billboard_patch =
+            object_classes.get_billboard_patch_class(object.class_handle);
+
+         const math::bounding_box bboxOS = billboard_patch.bbox();
+         const math::bounding_box bboxGS =
+            y_flip(object.rotation) * bboxOS + object.position;
+
+         ground_distance = std::min(ground_distance, bboxOS.min.y);
+         group_bbox = math::combine(group_bbox, bboxGS);
+      }
+      else {
+         const math::bounding_box bboxOS = object_class.model->bounding_box;
+         const math::bounding_box bboxGS = object.rotation * bboxOS + object.position;
+
+         ground_distance = std::min(ground_distance, bboxOS.min.y);
+         group_bbox = math::combine(group_bbox, bboxGS);
+      }
    }
 
    for (const path& path : group.paths) {

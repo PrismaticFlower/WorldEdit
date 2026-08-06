@@ -1,5 +1,8 @@
 #include "sector_fill.hpp"
+
 #include "../object_class.hpp"
+#include "../object_classes/billboard_patch_class.hpp"
+
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
@@ -112,9 +115,21 @@ auto sector_fill(const sector& sector, const std::span<const object> world_objec
 
       if (object.name.empty()) continue;
 
-      const math::bounding_box model_bbox =
-         object_classes[object.class_handle].model->bounding_box;
-      const math::bounding_box bbox = object.rotation * model_bbox + object.position;
+      math::bounding_box bbox;
+
+      const object_class& object_class = object_classes[object.class_handle];
+
+      if (object_class.flags.is_billboard_patch) [[unlikely]] {
+         const math::bounding_box& patch_bbox =
+            object_classes.get_billboard_patch_class(object.class_handle).bbox();
+
+         bbox = y_flip(object.rotation) * patch_bbox + object.position;
+      }
+      else {
+         const math::bounding_box& model_bbox = object_class.model->bounding_box;
+
+         bbox = object.rotation * model_bbox + object.position;
+      }
 
       if (bbox.min.x > sector_max.x or bbox.max.x < sector_min.x or
           bbox.min.y > sector_max.y or bbox.max.y < sector_min.y or
@@ -151,9 +166,21 @@ bool inside_sector(const sector& sector, const object& object,
    sector_min.y = sector.base;
    sector_max.y = sector.base + sector.height;
 
-   const math::bounding_box model_bbox =
-      object_classes[object.class_handle].model->bounding_box;
-   const math::bounding_box bbox = object.rotation * model_bbox + object.position;
+   math::bounding_box bbox;
+
+   const object_class& object_class = object_classes[object.class_handle];
+
+   if (object_class.flags.is_billboard_patch) [[unlikely]] {
+      const math::bounding_box& patch_bbox =
+         object_classes.get_billboard_patch_class(object.class_handle).bbox();
+
+      bbox = y_flip(object.rotation) * patch_bbox + object.position;
+   }
+   else {
+      const math::bounding_box& model_bbox = object_class.model->bounding_box;
+
+      bbox = object.rotation * model_bbox + object.position;
+   }
 
    if (bbox.min.x > sector_max.x or bbox.max.x < sector_min.x or
        bbox.min.y > sector_max.y or bbox.max.y < sector_min.y or

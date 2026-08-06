@@ -45,6 +45,10 @@ block_basic_lightingPS
 block_normalPS
 block_surface_highlightVS
 
+billboard_patchVS
+billboard_patch_depth_cutoutPS
+billboard_patch_normalPS
+
 thumbnail_meshVS
 thumbnail_meshPS
 thumbnail_mesh_alpha_cutoutPS

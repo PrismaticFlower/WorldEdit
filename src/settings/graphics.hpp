@@ -9,6 +9,8 @@ struct graphics {
 
    bool render_fog = false;
 
+   bool animate_billboard_patches = true;
+
    float world_brightness = 0.0f;
 
    float3 path_node_color = {0.15f, 1.0f, 0.3f};

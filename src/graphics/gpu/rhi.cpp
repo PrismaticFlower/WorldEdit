@@ -950,7 +950,11 @@ auto device::create_graphics_pipeline(const graphics_pipeline_desc& desc) -> pip
                                   .SemanticIndex = element.semantic_index,
                                   .Format = element.format,
                                   .InputSlot = element.input_slot,
-                                  .AlignedByteOffset = element.aligned_byte_offset});
+                                  .AlignedByteOffset = element.aligned_byte_offset,
+                                  .InputSlotClass = static_cast<D3D12_INPUT_CLASSIFICATION>(
+                                     element.input_slot_class),
+                                  .InstanceDataStepRate =
+                                     element.instance_data_step_rate});
    }
 
    D3D12_GRAPHICS_PIPELINE_STATE_DESC d3d12_desc{

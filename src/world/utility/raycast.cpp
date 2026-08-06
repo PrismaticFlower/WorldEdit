@@ -1,7 +1,9 @@
 #include "raycast.hpp"
 
 #include "../object_class.hpp"
+#include "../object_classes/billboard_patch_class.hpp"
 
+#include "math/intersectors.hpp"
 #include "math/iq_intersectors.hpp"
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
@@ -31,33 +33,58 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       if (object.hidden) continue;
       if (filter and not filter(object)) continue;
 
-      quaternion inverse_rotation = conjugate(object.rotation);
-      float3 inverse_position = inverse_rotation * -object.position;
+      const object_class& object_class = object_classes[object.class_handle];
 
-      float3 obj_ray_origin = inverse_rotation * ray_origin + inverse_position;
-      float3 obj_ray_direction = normalize(inverse_rotation * ray_direction);
+      if (object_class.flags.is_billboard_patch) [[unlikely]] {
+         const math::bounding_box& bbox =
+            object_classes.get_billboard_patch_class(object.class_handle).bbox();
 
-      const msh::flat_model& model = *object_classes[object.class_handle].model;
+         quaternion object_from_world = conjugate(y_flip(object.rotation));
+         float3 positionOS = object_from_world * -object.position;
 
-      float3 box_centre = (model.bounding_box.min + model.bounding_box.max) * 0.5f;
-      float3 box_size = (model.bounding_box.max - model.bounding_box.min) * 0.5f;
+         float3 ray_originOS = object_from_world * ray_origin + positionOS;
+         float3 ray_directionOS = normalize(object_from_world * ray_direction);
 
-      const float box_intersection =
-         boxIntersection(obj_ray_origin - box_centre, obj_ray_direction, box_size);
+         if (float hit_distance = 0.0f;
+             intersect_aabb(ray_originOS, 1.0f / ray_directionOS, bbox,
+                            min_distance, hit_distance)) {
+            hit = object.id;
+            hit_index = static_cast<uint32>(object_index);
+            min_distance = hit_distance;
+            surface_normalWS =
+               normalize(y_flip(object.rotation) *
+                         (ray_originOS + ray_directionOS * hit_distance));
+         }
+      }
+      else {
+         quaternion inverse_rotation = conjugate(object.rotation);
+         float3 inverse_position = inverse_rotation * -object.position;
 
-      if (box_intersection < 0.0f) continue;
+         float3 obj_ray_origin = inverse_rotation * ray_origin + inverse_position;
+         float3 obj_ray_direction = normalize(inverse_rotation * ray_direction);
 
-      std::optional<msh::ray_hit> model_hit =
-         model.bvh.query(obj_ray_origin, obj_ray_direction);
+         const msh::flat_model& model = *object_class.model;
 
-      if (not model_hit) continue;
+         float3 box_centre = (model.bounding_box.min + model.bounding_box.max) * 0.5f;
+         float3 box_size = (model.bounding_box.max - model.bounding_box.min) * 0.5f;
 
-      if (model_hit->distance < min_distance) {
-         hit = object.id;
-         hit_index = static_cast<uint32>(object_index);
-         min_distance = model_hit->distance;
-         surface_normalWS =
-            normalize(object.rotation * model_hit->unnormalized_normal);
+         const float box_intersection =
+            boxIntersection(obj_ray_origin - box_centre, obj_ray_direction, box_size);
+
+         if (box_intersection < 0.0f) continue;
+
+         std::optional<msh::ray_hit> model_hit =
+            model.bvh.query(obj_ray_origin, obj_ray_direction);
+
+         if (not model_hit) continue;
+
+         if (model_hit->distance < min_distance) {
+            hit = object.id;
+            hit_index = static_cast<uint32>(object_index);
+            min_distance = model_hit->distance;
+            surface_normalWS =
+               normalize(object.rotation * model_hit->unnormalized_normal);
+         }
       }
    }
 

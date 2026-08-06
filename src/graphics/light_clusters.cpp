@@ -361,7 +361,7 @@ void light_clusters::prepare_lights(
    const world::world& world, const world::light* optional_placement_light,
    const world::entity_group* optional_entity_group,
    const std::array<float, 2> scene_depth_min_max, blocks& blocks,
-   const world::active_layers active_layers,
+   billboard_patches& billboard_patches, const world::active_layers active_layers,
    const world::active_entity_types active_entity_types,
    gpu::copy_command_list& command_list,
    dynamic_buffer_allocator& dynamic_buffer_allocator)
@@ -773,13 +773,27 @@ void light_clusters::prepare_lights(
       _sphere_light_proxies_srv = upload_buffer.gpu_address;
    }
 
-   if (_has_sun_shadows and active_entity_types.blocks) {
-      for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
-         _sun_shadow_blocks_view[cascade_index] =
-            blocks.prepare_view(blocks_draw::shadow, world.blocks, optional_entity_group,
-                                frustum{_sun_shadow_cascades[cascade_index].world_from_projection(),
-                                        1.0f, 0.0f},
-                                active_layers, dynamic_buffer_allocator);
+   if (_has_sun_shadows) {
+      if (active_entity_types.objects) {
+         for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
+            _sun_shadow_billboard_patches_view[cascade_index] =
+               billboard_patches.prepare_view(billboard_patches_draw::shadow,
+                                         frustum{_sun_shadow_cascades[cascade_index]
+                                                    .world_from_projection(),
+                                                 1.0f, 0.0f},
+                                         dynamic_buffer_allocator);
+         }
+      }
+
+      if (active_entity_types.blocks) {
+         for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
+            _sun_shadow_blocks_view[cascade_index] =
+               blocks.prepare_view(blocks_draw::shadow, world.blocks,
+                                   optional_entity_group,
+                                   frustum{_sun_shadow_cascades[cascade_index].world_from_projection(),
+                                           1.0f, 0.0f},
+                                   active_layers, dynamic_buffer_allocator);
+         }
       }
    }
    else {
@@ -879,8 +893,8 @@ void light_clusters::tile_lights(root_signature_library& root_signatures,
 
 void light_clusters::draw_shadow_maps(
    const world_mesh_list& meshes, const blocks& blocks,
-   root_signature_library& root_signatures, pipeline_library& pipelines,
-   gpu::graphics_command_list& command_list,
+   const billboard_patches& billboard_patches, root_signature_library& root_signatures,
+   pipeline_library& pipelines, gpu::graphics_command_list& command_list,
    dynamic_buffer_allocator& dynamic_buffer_allocator, profiler& profiler)
 {
    if (not _has_sun_shadows) return;
@@ -987,6 +1001,11 @@ void light_clusters::draw_shadow_maps(
       blocks.draw(blocks_draw::shadow, _sun_shadow_blocks_view[cascade_index],
                   frame_cbv, _lights_constant_buffer_view, command_list,
                   root_signatures, pipelines);
+
+      billboard_patches.draw(billboard_patches_draw::shadow,
+                        _sun_shadow_billboard_patches_view[cascade_index], frame_cbv,
+                        _lights_constant_buffer_view, command_list,
+                        root_signatures, pipelines);
    }
 
    [[likely]] if (_device.supports_enhanced_barriers()) {

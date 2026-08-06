@@ -2,6 +2,7 @@
 
 #include "../object_class.hpp"
 #include "../object_class_library.hpp"
+#include "../object_classes/billboard_patch_class.hpp"
 
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
@@ -11,12 +12,28 @@ namespace we::world {
 bool intersects(const frustum& frustumWS, const object& object,
                 const object_class_library& object_classes) noexcept
 {
-   const quaternion inverse_rotation = conjugate(object.rotation);
-   const float3 inverse_position = inverse_rotation * -object.position;
+   const object_class& object_class = object_classes[object.class_handle];
 
-   const frustum frustumOS = transform(frustumWS, inverse_rotation, inverse_position);
+   if (object_class.flags.is_billboard_patch) [[unlikely]] {
+      const quaternion object_from_world = conjugate(y_flip(object.rotation));
+      const float3 object_from_world_position = object_from_world * -object.position;
 
-   return object_classes[object.class_handle].model->bvh.intersects(frustumOS);
+      const frustum frustumOS =
+         transform(frustumWS, object_from_world, object_from_world_position);
+
+      return intersects(frustumOS, object_classes
+                                      .get_billboard_patch_class(object.class_handle)
+                                      .bbox());
+   }
+   else {
+      const quaternion inverse_rotation = conjugate(object.rotation);
+      const float3 inverse_position = inverse_rotation * -object.position;
+
+      const frustum frustumOS =
+         transform(frustumWS, inverse_rotation, inverse_position);
+
+      return object_classes[object.class_handle].model->bvh.intersects(frustumOS);
+   }
 }
 
 bool intersects(const frustum& frustumWS, const light& light) noexcept

@@ -6,6 +6,7 @@
 #include "dynamic_buffer_allocator.hpp"
 #include "gpu/resource.hpp"
 #include "gpu/rhi.hpp"
+#include "billboard_patches.hpp"
 #include "model_manager.hpp"
 #include "pipeline_library.hpp"
 #include "profiler.hpp"
@@ -38,7 +39,8 @@ public:
                        const world::light* optional_placement_light,
                        const world::entity_group* optional_entity_group,
                        const std::array<float, 2> scene_depth_min_max,
-                       blocks& blocks, const world::active_layers active_layers,
+                       blocks& blocks, billboard_patches& billboard_patches,
+                       const world::active_layers active_layers,
                        const world::active_entity_types active_entity_types,
                        gpu::copy_command_list& command_list,
                        dynamic_buffer_allocator& dynamic_buffer_allocator);
@@ -47,6 +49,7 @@ public:
                     gpu::graphics_command_list& command_list, profiler& profiler);
 
    void draw_shadow_maps(const world_mesh_list& meshes, const blocks& blocks,
+                         const billboard_patches& billboard_patches,
                          root_signature_library& root_signatures,
                          pipeline_library& pipelines,
                          gpu::graphics_command_list& command_list,
@@ -110,6 +113,7 @@ private:
 
    std::array<shadow_ortho_camera, sun_cascade_count> _sun_shadow_cascades;
    std::array<blocks::view, sun_cascade_count> _sun_shadow_blocks_view;
+   std::array<billboard_patches::view, sun_cascade_count> _sun_shadow_billboard_patches_view;
    std::vector<uint16> _shadow_render_list;
 };
 

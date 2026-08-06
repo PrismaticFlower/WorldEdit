@@ -16,6 +16,7 @@
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 
+#include "world/object_classes/billboard_patch_class.hpp"
 #include "world/utility/barrier_construction.hpp"
 #include "world/utility/entity_group_utilities.hpp"
 #include "world/utility/hintnode_traits.hpp"
@@ -372,12 +373,24 @@ void world_edit::ui_show_world_creation_editor() noexcept
             new_position = _cursor_positionWS;
 
             if (_entity_creation_config.placement_ground == placement_ground::bbox) {
+               const world::object_class& object_class =
+                  _object_classes[object.class_handle];
 
-               const math::bounding_box bbox =
-                  object.rotation *
-                  _object_classes[object.class_handle].model->bounding_box;
+               if (object_class.flags.is_billboard_patch) [[unlikely]] {
+                  const world::billboard_patch_class& billboard_patch =
+                     _object_classes.get_billboard_patch_class(object.class_handle);
 
-               new_position.y -= bbox.min.y;
+                  const math::bounding_box bbox =
+                     y_flip(object.rotation) * billboard_patch.bbox();
+
+                  new_position.y -= bbox.min.y;
+               }
+               else {
+                  const math::bounding_box bbox =
+                     object.rotation * object_class.model->bounding_box;
+
+                  new_position.y -= bbox.min.y;
+               }
             }
 
             if (_entity_creation_context.lock_x_axis) {

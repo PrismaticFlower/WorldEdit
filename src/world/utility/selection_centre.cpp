@@ -4,7 +4,9 @@
 #include "../blocks/utility/bounding_box.hpp"
 #include "../blocks/utility/find.hpp"
 #include "../object_class.hpp"
+#include "../object_classes/billboard_patch_class.hpp"
 
+#include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
 namespace we::world {
@@ -164,13 +166,25 @@ auto selection_centre_for_env_map(const world& world,
             find_entity(world.objects, selected.get<object_id>());
 
          if (object) {
-            math::bounding_box bbox =
-               object_classes[object->class_handle].model->bounding_box;
+            const object_class& object_class = object_classes[object->class_handle];
 
-            bbox = object->rotation * bbox + object->position;
+            if (object_class.flags.is_billboard_patch) [[unlikely]] {
+               math::bounding_box bbox =
+                  object_classes.get_billboard_patch_class(object->class_handle).bbox();
 
-            selection_centre += ((bbox.max + bbox.min) / 2.0f);
-            selection_axis_count += {1.0f, 1.0f, 1.0f};
+               bbox = y_flip(object->rotation) * bbox + object->position;
+
+               selection_centre += ((bbox.max + bbox.min) / 2.0f);
+               selection_axis_count += {1.0f, 1.0f, 1.0f};
+            }
+            else {
+               math::bounding_box bbox = object_class.model->bounding_box;
+
+               bbox = object->rotation * bbox + object->position;
+
+               selection_centre += ((bbox.max + bbox.min) / 2.0f);
+               selection_axis_count += {1.0f, 1.0f, 1.0f};
+            }
          }
       }
       else if (selected.is<path_id_node_mask>()) {

@@ -13,6 +13,7 @@ struct libraries_manager;
 namespace we::world {
 
 struct object_class;
+struct billboard_patch_class;
 
 struct object_class_library {
    explicit object_class_library(assets::libraries_manager& asset_libraries) noexcept;
@@ -23,8 +24,8 @@ struct object_class_library {
    auto operator=(const object_class_library&) noexcept
       -> object_class_library& = delete;
 
-   /// @brief Update classes with assets that have been loaded in the background.
-   void update() noexcept;
+   /// @brief Update animations and classes with assets that have been loaded in the background.
+   void update(const float delta_time) noexcept;
 
    /// @brief Clear the library. All handles become invalid after this and there is no need to call `free` for them.
    void clear() noexcept;
@@ -34,6 +35,12 @@ struct object_class_library {
    /// @return A reference to the object_class or a reference to the default object_class.
    auto operator[](const object_class_handle handle) const noexcept
       -> const object_class&;
+
+   /// @brief Gets the billboard_patch_class for a handle, if it is associated with pme.
+   /// @param handle The handle.
+   /// @return A reference to the billboard_patch_class or a reference to the default billboard_patch_class.
+   auto get_billboard_patch_class(const object_class_handle handle) const noexcept
+      -> const billboard_patch_class&;
 
    /// @brief Acquire a class handle for the class name or a handle to the default class if the max class count has been reached.
    /// @param name The name of the class to get a handle for.

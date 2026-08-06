@@ -175,6 +175,11 @@ enum class primitive_topology {
    trianglelist = 4
 };
 
+enum class input_classification {
+   per_vertex = 0,
+   per_instance = 1,
+};
+
 enum class barrier_layout : uint32 {
    undefined = 0xffffffff,
    common = 0,
@@ -547,6 +552,8 @@ struct input_element_desc {
    DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
    uint32 input_slot = 0;
    uint32 aligned_byte_offset = append_aligned_input_element;
+   input_classification input_slot_class = input_classification::per_vertex;
+   uint32 instance_data_step_rate = 0;
 };
 
 struct graphics_pipeline_desc {

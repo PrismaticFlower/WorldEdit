@@ -7,15 +7,15 @@ namespace we::world {
 namespace {
 
 struct random_gen {
-   auto operator()() noexcept -> uint32
+   auto operator()() noexcept -> int32
    {
-      const uint32 v = state * 0x19660d + 0x3c6ef35f;
+      const int32 v = state * 0x19660d + 0x3c6ef35f;
       state = v * 0x19660d + 0x3c6ef35f;
 
       return state & 0xffff0000 | v >> 0x10;
    }
 
-   uint32 state = 0x94153a94;
+   int32 state = 0x94153a94;
 };
 
 }

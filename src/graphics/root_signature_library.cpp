@@ -19,6 +19,7 @@ constexpr uint32 grid_overlay_cb_register = 9;
 constexpr uint32 gizmo_shape_cb_register = 10;
 constexpr uint32 block_materials_cb_register = 11;
 constexpr uint32 block_custom_mesh_cb_register = 12;
+constexpr uint32 billboard_patch_texture_cb_register = 13;
 
 constexpr uint32 meta_draw_instance_data_register = 1;
 constexpr uint32 water_patch_data_register = 2;
@@ -261,6 +262,26 @@ const gpu::root_signature_desc block_surface_highlight_desc{
    .flags = {.allow_input_assembler_input_layout = true},
 
    .debug_name = "block_surface_highlight",
+};
+
+const gpu::root_signature_desc billboard_patch_desc{
+   .parameters =
+      {
+         gpu::root_parameter{
+            .type = gpu::root_parameter_type::_32bit_constants,
+            .shader_register = billboard_patch_texture_cb_register,
+            .values_count = 1,
+            .visibility = gpu::root_shader_visibility::pixel,
+         },
+         frame_constant_buffer,
+         lights_constant_buffer,
+      },
+
+   .samplers = pixel_static_samplers,
+
+   .flags = {.allow_input_assembler_input_layout = true},
+
+   .debug_name = "billboard_patch_root_signature",
 };
 
 const gpu::root_signature_desc grid_overlay_desc{
@@ -529,6 +550,7 @@ root_signature_library::root_signature_library(gpu::device& device)
    block_custom_mesh = {device.create_root_signature(block_custom_mesh_desc), device};
    block_surface_highlight = {device.create_root_signature(block_surface_highlight_desc),
                               device};
+   billboard_patch = {device.create_root_signature(billboard_patch_desc), device};
    grid_overlay = {device.create_root_signature(grid_overlay_desc), device};
    thumbnail_mesh = {device.create_root_signature(thumbnail_mesh_desc), device};
    thumbnail_downsample = {device.create_root_signature(thumbnail_downsample_mesh_desc),

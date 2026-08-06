@@ -1,15 +1,25 @@
 #include "object_class_library.hpp"
-#include "assets/asset_libraries.hpp"
-#include "container/pinned_vector.hpp"
 #include "object.hpp"
 #include "object_class.hpp"
 
+#include "object_classes/leaf_patch_class.hpp"
+
+#include "assets/asset_libraries.hpp"
+#include "assets/msh/default_missing_scene.hpp"
+#include "assets/odf/default_object_class_definition.hpp"
+
+#include "container/pinned_vector.hpp"
+
+#include "utility/string_icompare.hpp"
+
 #include <bit>
 #include <shared_mutex>
+#include <string_view>
 
 #include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
 
-using namespace std::string_literals;
+using namespace std::literals;
 
 namespace we::world {
 
@@ -47,10 +57,7 @@ struct object_class_library::impl {
    explicit impl(assets::libraries_manager& asset_libraries) noexcept
       : _asset_libraries{asset_libraries}
    {
-      _class_pool.push_back(
-         {.handle = unpack_handle(null_handle),
-          .object_class = {_asset_libraries, asset_libraries.odfs[lowercase_string{""s}]},
-          .ref_count = 0});
+      clear();
    }
 
    ~impl() = default;
@@ -58,7 +65,7 @@ struct object_class_library::impl {
    impl(const impl&) noexcept = delete;
    auto operator=(const impl&) noexcept -> impl& = delete;
 
-   void update() noexcept
+   void update(const float delta_time) noexcept
    {
       {
          std::scoped_lock lock{_definition_load_queue_mutex, _model_load_queue_mutex};
@@ -79,13 +86,24 @@ struct object_class_library::impl {
 
          _model_load_queue.clear();
       }
+
+      for (const uint32 class_index : _leaf_patch_class_index) {
+         _billboard_patch_class_pool[class_index]->update(delta_time);
+      }
    }
 
    void clear() noexcept
    {
-      _class_pool.resize(1);
+      _class_pool.clear();
       _class_index.clear();
       _class_free_list.clear();
+
+      _billboard_patch_class_pool.clear();
+      _leaf_patch_class_index.clear();
+
+      _class_pool.push_back({.handle = unpack_handle(null_handle), .ref_count = 0});
+
+      init_object_class(0, _asset_libraries.odfs[lowercase_string{""s}]);
    }
 
    auto operator[](const object_class_handle packed_handle) const noexcept
@@ -102,6 +120,26 @@ struct object_class_library::impl {
       }
 
       return _class_pool[0].object_class;
+   }
+
+   auto get_billboard_patch_class(const object_class_handle packed_handle) const noexcept
+      -> const billboard_patch_class&
+   {
+      const handle_unpacked handle = unpack_handle(packed_handle);
+
+      [[likely]] if (handle.index < _class_pool.size() and
+                     handle.index < _billboard_patch_class_pool.size()) {
+         const entry& entry = _class_pool[handle.index];
+
+         [[likely]] if (entry.handle == handle) {
+            return *_billboard_patch_class_pool[handle.index];
+         }
+      }
+
+      const static leaf_patch_class default_leaf_patch_class{
+         *assets::odf::default_object_class_definition()};
+
+      return default_leaf_patch_class;
    }
 
    [[nodiscard]] auto acquire(const lowercase_string& name) noexcept -> object_class_handle
@@ -128,11 +166,10 @@ struct object_class_library::impl {
 
          handle.generation += 1;
 
-         _class_pool[handle.index] =
-            entry{.handle = handle,
-                  .object_class = {_asset_libraries, _asset_libraries.odfs[name]},
-                  .ref_count = 1};
+         _class_pool[handle.index] = entry{.handle = handle, .ref_count = 1};
          _class_index.emplace(name, uint32{handle.index});
+
+         init_object_class(handle.index, _asset_libraries.odfs[name]);
 
          return pack_handle(handle);
       }
@@ -143,11 +180,10 @@ struct object_class_library::impl {
       const uint32 index = static_cast<uint32>(_class_pool.size());
       const handle_unpacked handle = {.index = index, .generation = 0};
 
-      _class_pool.push_back(
-         {.handle = handle,
-          .object_class = {_asset_libraries, _asset_libraries.odfs[name]},
-          .ref_count = 1});
+      _class_pool.push_back({.handle = handle, .ref_count = 1});
       _class_index.emplace(name, index);
+
+      init_object_class(index, _asset_libraries.odfs[name]);
 
       return pack_handle(handle);
    }
@@ -179,6 +215,9 @@ struct object_class_library::impl {
          for (auto it = _class_index.begin(); it != _class_index.end(); ++it) {
             if (it->second == handle.index) {
                _class_index.erase(it);
+
+               _billboard_patch_class_pool[handle.index] = nullptr;
+               std::erase(_leaf_patch_class_index, handle.index);
 
                break;
             }
@@ -219,8 +258,7 @@ private:
       if (auto it = _class_index.find(loaded.name); it != _class_index.end()) {
          const auto [_, index] = *it;
 
-         _class_pool[index].object_class.update_definition(_asset_libraries,
-                                                           loaded.asset);
+         init_object_class(index, loaded.asset);
       }
    }
 
@@ -234,6 +272,59 @@ private:
       }
    }
 
+   void init_object_class(uint32 class_index,
+                          asset_ref<assets::odf::definition> new_definition_asset)
+   {
+      object_class& cls = _class_pool[class_index].object_class;
+
+      if (class_index < _billboard_patch_class_pool.size()) {
+         _billboard_patch_class_pool[class_index] = nullptr;
+         std::erase(_leaf_patch_class_index, class_index);
+      }
+
+      cls.definition_asset = new_definition_asset;
+      cls.definition = cls.definition_asset.get_if();
+
+      if (not cls.definition) {
+         cls.definition = assets::odf::default_object_class_definition();
+      }
+
+      if (string::iends_with(cls.definition->header.geometry_name, ".msh"sv)) {
+         cls.model_name = lowercase_string{cls.definition->header.geometry_name.substr(
+            0, cls.definition->header.geometry_name.size() - ".msh"sv.size())};
+      }
+      else {
+         cls.model_name = lowercase_string{cls.definition->header.geometry_name};
+      }
+
+      if (not cls.model_name.empty()) {
+         cls.model_asset = _asset_libraries.models[cls.model_name];
+         cls.model = cls.model_asset.get_if();
+      }
+
+      if (not cls.model) cls.model = assets::msh::default_missing_scene();
+
+      cls.flags = {.hidden_ingame = true};
+
+      for (const auto& prop : cls.definition->properties) {
+         if (string::iequals(prop.key, "GeometryName")) {
+            cls.flags.hidden_ingame = false;
+         }
+      }
+
+      if (string::iequals(cls.definition->header.class_label, "leafpatch")) {
+         cls.flags.is_billboard_patch = true;
+
+         if (_billboard_patch_class_pool.size() <= class_index) {
+            _billboard_patch_class_pool.resize(class_index + 1);
+         }
+
+         _billboard_patch_class_pool[class_index] =
+            std::make_unique<leaf_patch_class>(*cls.definition);
+         _leaf_patch_class_index.push_back(class_index);
+      }
+   }
+
    struct entry {
       handle_unpacked handle;
       object_class object_class;
@@ -244,6 +335,10 @@ private:
       pinned_vector_init{.max_size = max_object_classes, .initial_capacity = 1024};
    absl::flat_hash_map<lowercase_string, uint32> _class_index;
    std::vector<handle_unpacked> _class_free_list;
+
+   pinned_vector<std::unique_ptr<leaf_patch_class>> _billboard_patch_class_pool =
+      pinned_vector_init{.max_size = max_object_classes, .initial_capacity = 1024};
+   std::vector<uint32> _leaf_patch_class_index;
 
    std::shared_mutex _definition_load_queue_mutex;
    std::vector<loaded_definition> _definition_load_queue;
@@ -283,9 +378,9 @@ object_class_library::object_class_library(assets::libraries_manager& asset_libr
 
 object_class_library::~object_class_library() = default;
 
-void object_class_library::update() noexcept
+void object_class_library::update(const float delta_time) noexcept
 {
-   _impl->update();
+   _impl->update(delta_time);
 }
 
 void object_class_library::clear() noexcept
@@ -297,6 +392,12 @@ auto object_class_library::operator[](const object_class_handle handle) const no
    -> const object_class&
 {
    return _impl.get()[handle];
+}
+
+auto object_class_library::get_billboard_patch_class(const object_class_handle handle) const noexcept
+   -> const billboard_patch_class&
+{
+   return _impl->get_billboard_patch_class(handle);
 }
 
 auto object_class_library::acquire(const lowercase_string& name) noexcept -> object_class_handle

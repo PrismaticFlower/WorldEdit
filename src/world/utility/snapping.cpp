@@ -1,5 +1,7 @@
 #include "snapping.hpp"
+
 #include "../object_class.hpp"
+#include "../object_classes/billboard_patch_class.hpp"
 
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
@@ -87,13 +89,18 @@ auto get_snapped_position(const snapping_entity& snapping,
       if (not active_layers[object.layer]) continue;
       if (object.hidden) continue;
 
-      const assets::msh::flat_model& model =
-         *object_classes[object.class_handle].model;
+      const object_class& object_class = object_classes[object.class_handle];
 
-      const math::bounding_box& bboxOS = model.bounding_box;
+      const math::bounding_box& bboxOS =
+         not object_class.flags.is_billboard_patch
+            ? object_class.model->bounding_box
+            : object_classes.get_billboard_patch_class(object.class_handle).bbox();
+      const quaternion object_rotation = not object_class.flags.is_billboard_patch
+                                            ? object.rotation
+                                            : y_flip(object.rotation);
 
       const float3 positionOS =
-         conjugate(object.rotation) * (snapping.positionWS - object.position);
+         conjugate(object_rotation) * (snapping.positionWS - object.position);
       const float3 box_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
       const float3 box_size = (bboxOS.max - bboxOS.min) * 0.5f;
 
@@ -107,8 +114,7 @@ auto get_snapped_position(const snapping_entity& snapping,
       if (box_distance > cull_distance) continue;
 
       const std::array<float3, 8> closest_object_cornersWS =
-         get_snapping_corners(object.rotation, object.position,
-                              object_classes[object.class_handle].model->bounding_box);
+         get_snapping_corners(object_rotation, object.position, bboxOS);
 
       if (flags.snap_to_corners) {
          for (const float3& cornerWS : closest_object_cornersWS) {
@@ -248,13 +254,25 @@ auto get_snapped_position(const object& snapping_object, const float3 snapping_p
                           tool_visualizers& visualizers,
                           const snapping_visualizer_colors& colors) noexcept -> float3
 {
-   return get_snapped_position(snapping_entity{.rotation = snapping_object.rotation,
-                                               .positionWS = snapping_positionWS,
-                                               .bboxOS =
-                                                  object_classes[snapping_object.class_handle]
-                                                     .model->bounding_box},
-                               world_objects, snap_radius, flags, active_layers,
-                               object_classes, visualizers, colors);
+   const object_class& object_class = object_classes[snapping_object.class_handle];
+
+   if (object_class.flags.is_billboard_patch) [[unlikely]] {
+      return get_snapped_position(
+         snapping_entity{.rotation = y_flip(snapping_object.rotation),
+                         .positionWS = snapping_positionWS,
+                         .bboxOS = object_classes
+                                      .get_billboard_patch_class(snapping_object.class_handle)
+                                      .bbox()},
+         world_objects, snap_radius, flags, active_layers, object_classes,
+         visualizers, colors);
+   }
+   else {
+      return get_snapped_position(snapping_entity{.rotation = snapping_object.rotation,
+                                                  .positionWS = snapping_positionWS,
+                                                  .bboxOS = object_class.model->bounding_box},
+                                  world_objects, snap_radius, flags, active_layers,
+                                  object_classes, visualizers, colors);
+   }
 }
 
 auto get_snapped_position_filtered(
@@ -285,13 +303,18 @@ auto get_snapped_position_filtered(
       if (object.hidden) continue;
       if (is_selected(object.id, selection)) continue;
 
-      const assets::msh::flat_model& model =
-         *object_classes[object.class_handle].model;
+      const object_class& object_class = object_classes[object.class_handle];
 
-      const math::bounding_box& bboxOS = model.bounding_box;
+      const math::bounding_box& bboxOS =
+         not object_class.flags.is_billboard_patch
+            ? object_class.model->bounding_box
+            : object_classes.get_billboard_patch_class(object.class_handle).bbox();
+      const quaternion object_rotation = not object_class.flags.is_billboard_patch
+                                            ? object.rotation
+                                            : y_flip(object.rotation);
 
       const float3 positionOS =
-         conjugate(object.rotation) * (snapping.positionWS - object.position);
+         conjugate(object_rotation) * (snapping.positionWS - object.position);
       const float3 box_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
       const float3 box_size = (bboxOS.max - bboxOS.min) * 0.5f;
 
@@ -305,7 +328,7 @@ auto get_snapped_position_filtered(
       if (box_distance > cull_distance) continue;
 
       const std::array<float3, 8> closest_object_cornersWS =
-         get_snapping_corners(object.rotation, object.position,
+         get_snapping_corners(object_rotation, object.position,
                               object_classes[object.class_handle].model->bounding_box);
 
       if (flags.snap_to_corners) {

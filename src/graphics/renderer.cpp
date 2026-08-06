@@ -1,7 +1,7 @@
-
 #include "renderer.hpp"
 #include "ai_overlay_batches.hpp"
 #include "async/thread_pool.hpp"
+#include "billboard_patches.hpp"
 #include "blocks.hpp"
 #include "camera.hpp"
 #include "constant_buffers.hpp"
@@ -19,7 +19,6 @@
 #include "pipeline_library.hpp"
 #include "profiler.hpp"
 #include "root_signature_library.hpp"
-#include "settings/graphics.hpp"
 #include "shader_library.hpp"
 #include "shader_list.hpp"
 #include "sky.hpp"
@@ -38,10 +37,13 @@
 #include "utility/overload.hpp"
 #include "utility/srgb_conversion.hpp"
 
+#include "settings/graphics.hpp"
+
 #include "world/blocks/custom_mesh.hpp"
 #include "world/blocks/utility/bounding_box.hpp"
 #include "world/blocks/utility/find.hpp"
 #include "world/object_class_library.hpp"
+#include "world/object_classes/billboard_patch_class.hpp"
 #include "world/utility/evaluate_treeline.hpp"
 #include "world/utility/region_properties.hpp"
 #include "world/utility/world_utilities.hpp"
@@ -156,6 +158,7 @@ private:
    void draw_world(const frustum& view_frustum,
                    const world::active_entity_types active_entity_types,
                    const blocks::view& blocks_view,
+                   const billboard_patches::view& billboard_patches_view,
                    gpu::graphics_command_list& command_list);
 
    void setup_pre_draw_world_render_list_depth_prepass(gpu::graphics_command_list& command_list);
@@ -310,6 +313,7 @@ private:
    sky _sky;
    blocks _blocks{_device, _copy_command_list_pool, _dynamic_buffer_allocator,
                   _texture_manager, _root_signatures};
+   billboard_patches _billboard_patches{_device, _texture_manager};
 
    constexpr static std::size_t max_drawn_objects = 2048;
    constexpr static std::size_t objects_constants_buffer_size =
@@ -428,14 +432,19 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    const gpu::viewport viewport{.width = static_cast<float>(_swap_chain.width()),
                                 .height = static_cast<float>(_swap_chain.height())};
    blocks::view blocks_view;
+   billboard_patches::view billboard_patches_view;
 
    const gpu::current_backbuffer current_backbuffer =
       _swap_chain.current_back_buffer();
    _dynamic_buffer_allocator.reset(_device.frame_index());
 
+   _meta_draw_batcher.clear();
+
    _model_manager.update_models();
    _sky.update(world.name);
    _thumbnail_manager.update_cpu_cache();
+   _billboard_patches.update(camera.world_from_view(), world,
+                             settings.animate_billboard_patches);
 
    _profiler.show();
 
@@ -489,13 +498,21 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
             ? &interaction_targets.creation_entity.get<world::light>()
             : nullptr,
          creation_entity_group, {scene_depth_min_max.x, scene_depth_min_max.y},
-         _blocks, active_layers, active_entity_types, _pre_render_command_list,
-         _dynamic_buffer_allocator);
+         _blocks, _billboard_patches, active_layers, active_entity_types,
+         _pre_render_command_list, _dynamic_buffer_allocator);
+      _billboard_patches.update_index_buffer(_pre_render_command_list,
+                                             _dynamic_buffer_allocator);
 
       if (active_entity_types.blocks) {
          blocks_view = _blocks.prepare_view(blocks_draw::main, world.blocks,
                                             creation_entity_group, view_frustum,
                                             active_layers, _dynamic_buffer_allocator);
+      }
+
+      if (active_entity_types.objects) {
+         billboard_patches_view =
+            _billboard_patches.prepare_view(billboard_patches_draw::main,
+                                            view_frustum, _dynamic_buffer_allocator);
       }
 
       _pre_render_command_list.close();
@@ -514,8 +531,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                  _dynamic_buffer_allocator, command_list);
 
    _light_clusters.tile_lights(_root_signatures, _pipelines, command_list, _profiler);
-   _light_clusters.draw_shadow_maps(_world_mesh_list, _blocks, _root_signatures,
-                                    _pipelines, command_list,
+   _light_clusters.draw_shadow_maps(_world_mesh_list, _blocks, _billboard_patches,
+                                    _root_signatures, _pipelines, command_list,
                                     _dynamic_buffer_allocator, _profiler);
 
    [[likely]] if (_device.supports_enhanced_barriers()) {
@@ -563,7 +580,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                       _depth_stencil_view.get());
 
    // Render World
-   draw_world(view_frustum, active_entity_types, blocks_view, command_list);
+   draw_world(view_frustum, active_entity_types, blocks_view,
+              billboard_patches_view, command_list);
 
    if (settings.world_brightness != 0.0f) {
       draw_brightness_adjustment(settings.world_brightness, command_list);
@@ -573,7 +591,6 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                       _depth_stencil_view.get());
 
    // Render World Meta Objects
-   _meta_draw_batcher.clear();
    _ai_overlay_batches.clear();
 
    if (frame_options.draw_foliage_map_overlay) {
@@ -679,6 +696,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
 {
    _device.new_frame();
    _dynamic_buffer_allocator.reset(_device.frame_index());
+   _billboard_patches.update({}, world, false);
 
    const float pi = 3.1415927f;
    const float half_pi = 1.5707964f;
@@ -830,9 +848,16 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       const gpu::viewport viewport{.width = static_cast<float>(super_sample_length),
                                    .height = static_cast<float>(super_sample_length)};
 
+      _billboard_patches.update_view_same_frame(camera.world_from_view(),
+                                                _dynamic_buffer_allocator);
+
       const blocks::view blocks_view =
          _blocks.prepare_view(blocks_draw::depth_prepass, world.blocks, nullptr,
                               view_frustum, active_layers, _dynamic_buffer_allocator);
+
+      const billboard_patches::view billboard_patches_view =
+         _billboard_patches.prepare_view(billboard_patches_draw::depth_prepass,
+                                         view_frustum, _dynamic_buffer_allocator);
 
       build_world_mesh_render_list(view_frustum);
 
@@ -903,6 +928,11 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                                        depth_prepass_pipeline_flags::doublesided]
                                    .get(),
                                 command_list);
+
+         _billboard_patches.draw(billboard_patches_draw::depth_prepass,
+                                 billboard_patches_view, _camera_constant_buffer_view,
+                                 _light_clusters.lights_constant_buffer_view(),
+                                 command_list, _root_signatures, _pipelines);
       }
 
       if (active_entity_types.blocks) {
@@ -1030,6 +1060,10 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
          _blocks.prepare_view(blocks_draw::depth_prepass, world.blocks, nullptr,
                               view_frustum, active_layers, _dynamic_buffer_allocator);
 
+      const billboard_patches::view billboard_patches_view =
+         _billboard_patches.prepare_view(billboard_patches_draw::depth_prepass,
+                                         view_frustum, _dynamic_buffer_allocator);
+
       // Pre-Render Work
       {
          pre_render_command_list.reset();
@@ -1039,7 +1073,8 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                       0.0f, 1.0f, pre_render_command_list);
 
          _light_clusters.prepare_lights(camera, view_frustum, world, nullptr, nullptr,
-                                        {shadow_min_depth, shadow_max_depth}, _blocks,
+                                        {shadow_min_depth, shadow_max_depth},
+                                        _blocks, _billboard_patches,
                                         active_layers, {}, pre_render_command_list,
                                         _dynamic_buffer_allocator);
 
@@ -1058,7 +1093,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                     _dynamic_buffer_allocator, command_list);
 
       _light_clusters.tile_lights(_root_signatures, _pipelines, command_list, _profiler);
-      _light_clusters.draw_shadow_maps(_world_mesh_list, _blocks,
+      _light_clusters.draw_shadow_maps(_world_mesh_list, _blocks, _billboard_patches,
                                        _root_signatures, _pipelines, command_list,
                                        _dynamic_buffer_allocator, _profiler);
 
@@ -1076,7 +1111,8 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       command_list.om_set_render_targets(env_map_super_sample_rtv.get(),
                                          env_map_depth_stencil_view.get());
 
-      draw_world(view_frustum, active_entity_types, blocks_view, command_list);
+      draw_world(view_frustum, active_entity_types, blocks_view,
+                 billboard_patches_view, command_list);
 
       // Downsample to desired size.
 
@@ -1299,6 +1335,7 @@ void renderer_impl::update_frame_constant_buffer(
 void renderer_impl::draw_world(const frustum& view_frustum,
                                const world::active_entity_types active_entity_types,
                                const blocks::view& blocks_view,
+                               const billboard_patches::view& billboard_patches_view,
                                gpu::graphics_command_list& command_list)
 {
    if (active_entity_types.terrain) {
@@ -1342,6 +1379,11 @@ void renderer_impl::draw_world(const frustum& view_frustum,
                                                        depth_prepass_pipeline_flags::doublesided]
                                    .get(),
                                 command_list);
+
+         _billboard_patches.draw(billboard_patches_draw::depth_prepass,
+                                 billboard_patches_view, _camera_constant_buffer_view,
+                                 _light_clusters.lights_constant_buffer_view(),
+                                 command_list, _root_signatures, _pipelines);
       }
 
       setup_pre_draw_world_render_list(command_list);
@@ -1367,6 +1409,11 @@ void renderer_impl::draw_world(const frustum& view_frustum,
             mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided,
             _pipelines.mesh_normal[material_pipeline_flags::doublesided].get(),
             command_list);
+
+         _billboard_patches.draw(billboard_patches_draw::main,
+                                 billboard_patches_view, _camera_constant_buffer_view,
+                                 _light_clusters.lights_constant_buffer_view(),
+                                 command_list, _root_signatures, _pipelines);
       }
    }
 
@@ -2825,9 +2872,35 @@ void renderer_impl::draw_sector_objects(
 
       for (const uint32 object_index : sector.objects) {
          const world::object& object = world.objects[object_index];
+         const world::object_class& object_class = world_classes[object.class_handle];
 
-         draw_model(_model_manager[world_classes[object.class_handle].model_name],
-                    object.rotation, object.position);
+         if (object_class.flags.is_billboard_patch) [[unlikely]] {
+            const world::billboard_patch_class& billboard_patch =
+               world_classes.get_billboard_patch_class(object.class_handle);
+
+            const math::bounding_box& bboxOS = billboard_patch.bbox();
+
+            const float3 bbox_sizeOS = (bboxOS.max - bboxOS.min) * 0.5f;
+            const float3 bbox_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
+
+            const float4x4 scale{{bbox_sizeOS.x, 0.0f, 0.0f, 0.0f},
+                                 {0.0f, bbox_sizeOS.y, 0.0f, 0.0f},
+                                 {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
+                                 {bbox_centreOS, 1.0f}};
+
+            float4x4 rotation_translate = to_matrix(y_flip(object.rotation));
+            rotation_translate[3] = {object.position, 1.0f};
+
+            const float4x4 world_from_object = rotation_translate * scale;
+
+            _meta_draw_batcher.add_box_outline_solid(world_from_object,
+                                                     {settings.sector_object_hightlight_color,
+                                                      1.0f});
+         }
+         else {
+            draw_model(_model_manager[object_class.model_name], object.rotation,
+                       object.position);
+         }
       }
    }
 
@@ -3153,66 +3226,94 @@ void renderer_impl::draw_interaction_targets(
    };
 
    const auto draw_object = [&](const world::object& object, const float3 color) {
-      model& model = _model_manager[world_classes[object.class_handle].model_name];
+      const world::object_class& object_class = world_classes[object.class_handle];
 
-      if (not intersects(view_frustum, object.rotation * model.bbox + object.position)) {
-         return;
+      if (object_class.flags.is_billboard_patch) [[unlikely]] {
+         const world::billboard_patch_class& billboard_patch =
+            world_classes.get_billboard_patch_class(object.class_handle);
+
+         const math::bounding_box& bboxOS = billboard_patch.bbox();
+
+         const float3 bbox_sizeOS = (bboxOS.max - bboxOS.min) * 0.5f;
+         const float3 bbox_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
+
+         const float4x4 scale{{bbox_sizeOS.x, 0.0f, 0.0f, 0.0f},
+                              {0.0f, bbox_sizeOS.y, 0.0f, 0.0f},
+                              {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
+                              {bbox_centreOS, 1.0f}};
+
+         float4x4 rotation_translate = to_matrix(y_flip(object.rotation));
+         rotation_translate[3] = {object.position, 1.0f};
+
+         const float4x4 world_from_object = rotation_translate * scale;
+
+         _meta_draw_batcher.add_box_outline_solid(world_from_object, {color, 1.0f});
       }
+      else {
+         model& model = _model_manager[object_class.model_name];
 
-      gpu_virtual_address wireframe_constants = [&] {
-         auto allocation =
-            _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
-
-         wireframe_constant_buffer constants{.color = color};
-
-         std::memcpy(allocation.cpu_address, &constants,
-                     sizeof(wireframe_constant_buffer));
-
-         return allocation.gpu_address;
-      }();
-
-      gpu_virtual_address object_constants = [&] {
-         auto allocation =
-            _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
-
-         world_mesh_constants constants{};
-
-         constants.world_from_object = to_matrix(object.rotation);
-         constants.world_from_object[3] = float4{object.position, 1.0f};
-
-         std::memcpy(allocation.cpu_address, &constants, sizeof(world_mesh_constants));
-
-         return allocation.gpu_address;
-      }();
-
-      command_list.set_graphics_root_signature(_root_signatures.mesh_wireframe.get());
-      command_list.set_graphics_cbv(rs::mesh_wireframe::object_cbv, object_constants);
-      command_list.set_graphics_cbv(rs::mesh_wireframe::wireframe_cbv,
-                                    wireframe_constants);
-      command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
-                                    _camera_constant_buffer_view);
-
-      command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
-
-      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
-
-      command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
-      command_list.ia_set_vertex_buffers(0, model.gpu_buffer.position_vertex_buffer_view);
-
-      bool doublesided = false;
-
-      for (auto& part : model.parts) {
-         if (std::exchange(doublesided,
-                           are_flags_set(part.material.flags,
-                                         material_pipeline_flags::doublesided)) !=
-             doublesided) {
-            command_list.set_pipeline_state(
-               doublesided ? _pipelines.mesh_wireframe_doublesided.get()
-                           : _pipelines.mesh_wireframe.get());
+         if (not intersects(view_frustum,
+                            object.rotation * model.bbox + object.position)) {
+            return;
          }
 
-         command_list.draw_indexed_instanced(part.index_count, 1, part.start_index,
-                                             part.start_vertex, 0);
+         gpu_virtual_address wireframe_constants = [&] {
+            auto allocation =
+               _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
+
+            wireframe_constant_buffer constants{.color = color};
+
+            std::memcpy(allocation.cpu_address, &constants,
+                        sizeof(wireframe_constant_buffer));
+
+            return allocation.gpu_address;
+         }();
+
+         gpu_virtual_address object_constants = [&] {
+            auto allocation =
+               _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
+
+            world_mesh_constants constants{};
+
+            constants.world_from_object = to_matrix(object.rotation);
+            constants.world_from_object[3] = float4{object.position, 1.0f};
+
+            std::memcpy(allocation.cpu_address, &constants,
+                        sizeof(world_mesh_constants));
+
+            return allocation.gpu_address;
+         }();
+
+         command_list.set_graphics_root_signature(
+            _root_signatures.mesh_wireframe.get());
+         command_list.set_graphics_cbv(rs::mesh_wireframe::object_cbv, object_constants);
+         command_list.set_graphics_cbv(rs::mesh_wireframe::wireframe_cbv,
+                                       wireframe_constants);
+         command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
+                                       _camera_constant_buffer_view);
+
+         command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
+
+         command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+
+         command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
+         command_list.ia_set_vertex_buffers(0, model.gpu_buffer.position_vertex_buffer_view);
+
+         bool doublesided = false;
+
+         for (auto& part : model.parts) {
+            if (std::exchange(doublesided,
+                              are_flags_set(part.material.flags,
+                                            material_pipeline_flags::doublesided)) !=
+                doublesided) {
+               command_list.set_pipeline_state(
+                  doublesided ? _pipelines.mesh_wireframe_doublesided.get()
+                              : _pipelines.mesh_wireframe.get());
+            }
+
+            command_list.draw_indexed_instanced(part.index_count, 1, part.start_index,
+                                                part.start_vertex, 0);
+         }
       }
    };
 
@@ -4009,6 +4110,35 @@ void renderer_impl::draw_interaction_targets(
          *tree_line, world.paths,
          [&](const float4x4& world_from_object,
              const world::object_class_handle class_handle) noexcept {
+            const world::object_class& object_class = world_classes[class_handle];
+
+            if (object_class.flags.is_billboard_patch) [[unlikely]] {
+               const world::billboard_patch_class& billboard_patch =
+                  world_classes.get_billboard_patch_class(class_handle);
+
+               const math::bounding_box& bboxOS = billboard_patch.bbox();
+
+               const float4x4 lp_world_from_object =
+                  world_from_object * to_matrix({0.0f, 0.0f, 1.0f, 0.0f});
+
+               if (not intersects(view_frustum, lp_world_from_object * bboxOS)) {
+                  return;
+               }
+
+               const float3 bbox_sizeOS = (bboxOS.max - bboxOS.min) * 0.5f;
+               const float3 bbox_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
+
+               const float4x4 scale{{bbox_sizeOS.x, 0.0f, 0.0f, 0.0f},
+                                    {0.0f, bbox_sizeOS.y, 0.0f, 0.0f},
+                                    {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
+                                    {bbox_centreOS, 1.0f}};
+
+               _meta_draw_batcher.add_box_outline_solid(lp_world_from_object * scale,
+                                                        {color, 1.0f});
+
+               return;
+            }
+
             auto& model = _model_manager[world_classes[class_handle].model_name];
 
             if (not intersects(view_frustum, world_from_object * model.bbox)) {
@@ -4368,7 +4498,9 @@ void renderer_impl::build_world_mesh_list(
       for (const world::object& object : objects) {
          if (constants_data_head == constants_data_end) break;
 
-         auto& model = _model_manager[world_classes[object.class_handle].model_name];
+         const world::object_class& object_class = world_classes[object.class_handle];
+
+         auto& model = _model_manager[object_class.model_name];
 
          if (not active_layers[object.layer] or object.hidden) continue;
 
@@ -4377,6 +4509,18 @@ void renderer_impl::build_world_mesh_list(
                 object_filter.end()) [[unlikely]] {
                continue;
             }
+         }
+
+         if (object_class.flags.is_billboard_patch) [[unlikely]] {
+            float4x4 world_from_object = to_matrix(y_flip(object.rotation));
+            world_from_object[3] = float4{object.position, 1.0f};
+
+            _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
+                                                      object.class_handle),
+                                                   world_from_object,
+                                                   _dynamic_buffer_allocator);
+
+            continue;
          }
 
          const math::bounding_box object_bbox =
@@ -4442,9 +4586,28 @@ void renderer_impl::build_world_mesh_list(
       for (const world::object& object : group.objects) {
          if (constants_data_head == constants_data_end) break;
 
-         auto& model = _model_manager[world_classes[object.class_handle].model_name];
+         const world::object_class& object_class = world_classes[object.class_handle];
 
          if (not active_layers[object.layer] or object.hidden) continue;
+
+         if (object_class.flags.is_billboard_patch) [[unlikely]] {
+            const quaternion object_rotation =
+               group.rotation * y_flip(object.rotation);
+            const float3 object_positionWS =
+               group.rotation * object.position + group.position;
+
+            float4x4 world_from_object = to_matrix(object_rotation);
+            world_from_object[3] = float4{object_positionWS, 1.0f};
+
+            _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
+                                                      object.class_handle),
+                                                   world_from_object,
+                                                   _dynamic_buffer_allocator);
+
+            continue;
+         }
+
+         auto& model = _model_manager[object_class.model_name];
 
          const quaternion object_rotation = group.rotation * object.rotation;
          const float3 object_positionWS =
@@ -4514,7 +4677,22 @@ void renderer_impl::build_world_mesh_list(
 
       if (not object) continue;
 
-      auto& model = _model_manager[world_classes[object->class_handle].model_name];
+      const world::object_class& object_class = world_classes[object->class_handle];
+
+      if (object_class.flags.is_billboard_patch) [[unlikely]] {
+         float4x4 world_from_object =
+            ghost.transform * to_matrix({0.0f, 0.0f, 1.0f, 0.0f});
+         world_from_object[3] = ghost.transform[3];
+
+         _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
+                                                   object->class_handle),
+                                                world_from_object,
+                                                _dynamic_buffer_allocator);
+
+         continue;
+      }
+
+      auto& model = _model_manager[object_class.model_name];
 
       const float3 object_position = {ghost.transform[3].x, ghost.transform[3].y,
                                       ghost.transform[3].z};
@@ -4568,7 +4746,22 @@ void renderer_impl::build_world_mesh_list(
                 const world::object_class_handle class_handle) noexcept {
                if (constants_data_head == constants_data_end) return;
 
-               auto& model = _model_manager[world_classes[class_handle].model_name];
+               const world::object_class& object_class = world_classes[class_handle];
+
+               if (object_class.flags.is_billboard_patch) [[unlikely]] {
+                  float4x4 lp_world_from_object =
+                     world_from_object * to_matrix({0.0f, 0.0f, 1.0f, 0.0f});
+                  lp_world_from_object[3] = world_from_object[3];
+
+                  _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
+                                                            class_handle),
+                                                         lp_world_from_object,
+                                                         _dynamic_buffer_allocator);
+
+                  return;
+               }
+
+               auto& model = _model_manager[object_class.model_name];
 
                const float3 object_position = {world_from_object[3].x,
                                                world_from_object[3].y,
@@ -4845,6 +5038,7 @@ void renderer_impl::update_textures(gpu::copy_command_list& command_list)
       _terrain.process_updated_texture(updated);
       _water.process_updated_texture(updated);
       _ui_texture_manager.process_updated_textures(updated);
+      _billboard_patches.process_updated_textures(updated);
 
       [[likely]] if (_device.supports_write_buffer_immediate()) {
          _blocks.process_updated_textures(command_list, updated);

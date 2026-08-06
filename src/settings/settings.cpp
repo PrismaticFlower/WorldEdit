@@ -241,6 +241,12 @@ void show_imgui_editor(settings& settings, bool& open,
                ImGui::TableNextColumn();
                ImGui::Checkbox("Render Fog", &settings.graphics.render_fog);
 
+               ImGui::TableNextRow();
+
+               ImGui::TableNextColumn();
+               ImGui::Checkbox("Animate Leaf Patches",
+                               &settings.graphics.animate_billboard_patches);
+
                ImGui::EndTable();
             }
 

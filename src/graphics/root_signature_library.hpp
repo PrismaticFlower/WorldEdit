@@ -20,6 +20,7 @@ struct root_signature_library {
    gpu::unique_root_signature_handle block;
    gpu::unique_root_signature_handle block_custom_mesh;
    gpu::unique_root_signature_handle block_surface_highlight;
+   gpu::unique_root_signature_handle billboard_patch;
 
    gpu::unique_root_signature_handle grid_overlay;
 
@@ -114,6 +115,12 @@ constexpr uint32 materials_cbv = 4;
 namespace block_surface_highlight {
 constexpr uint32 constants_cbv = 0;
 constexpr uint32 frame_cbv = 1;
+}
+
+namespace billboard_patch {
+constexpr uint32 texture = 0;
+constexpr uint32 frame_cbv = 1;
+constexpr uint32 lights_cbv = 2;
 }
 
 namespace grid_overlay {

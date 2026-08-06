@@ -482,6 +482,7 @@
     <ClCompile Include="src\graphics\gpu\detail\format_helpers.cpp" />
     <ClCompile Include="src\graphics\gpu\rhi.cpp" />
     <ClCompile Include="src\graphics\imgui_renderer.cpp" />
+    <ClCompile Include="src\graphics\billboard_patches.cpp" />
     <ClCompile Include="src\graphics\meta_draw_batcher.cpp" />
     <ClCompile Include="src\graphics\model_manager.cpp" />
     <ClCompile Include="src\graphics\cull_objects.cpp" />
@@ -517,6 +518,9 @@
     <ClCompile Include="src\graphics\shaders\grid_overlay_fadePS.cpp" />
     <ClCompile Include="src\graphics\shaders\imguiPS.cpp" />
     <ClCompile Include="src\graphics\shaders\imguiVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\billboard_patchVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\billboard_patch_depth_cutoutPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\billboard_patch_normalPS.cpp" />
     <ClCompile Include="src\graphics\shaders\meshVS.cpp" />
     <ClCompile Include="src\graphics\shaders\mesh_basicPS.cpp" />
     <ClCompile Include="src\graphics\shaders\mesh_basic_lightingPS.cpp" />
@@ -668,6 +672,11 @@
     <ClCompile Include="src\world\io\save_blocks_meshes.cpp" />
     <ClCompile Include="src\world\io\save_effects.cpp" />
     <ClCompile Include="src\world\io\save_entity_group.cpp" />
+    <ClCompile Include="src\world\object_classes\leaf_patch_class.cpp">
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <ClCompile Include="src\world\utility\animation.cpp" />
     <ClCompile Include="src\world\utility\barrier_construction.cpp" />
     <ClCompile Include="src\world\utility\double_click_select.cpp" />
@@ -868,6 +877,7 @@
     <ClInclude Include="src\graphics\constant_buffers.hpp" />
     <ClInclude Include="src\graphics\dynamic_buffer_allocator.hpp" />
     <ClInclude Include="src\graphics\fallback_imgui_texture.hpp" />
+    <ClInclude Include="src\graphics\billboard_patches.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\command_allocator_pool.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\descriptor_allocator.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\descriptor_heap.hpp" />
@@ -1079,6 +1089,8 @@
     <ClInclude Include="src\world\measurement.hpp" />
     <ClInclude Include="src\world\object.hpp" />
     <ClInclude Include="src\world\object_class.hpp" />
+    <ClInclude Include="src\world\object_classes\billboard_patch_class.hpp" />
+    <ClInclude Include="src\world\object_classes\leaf_patch_class.hpp" />
     <ClInclude Include="src\world\object_class_library.hpp" />
     <ClInclude Include="src\world\object_instance_property.hpp" />
     <ClInclude Include="src\world\entity_optional_link.hpp" />
@@ -1152,7 +1164,6 @@
     <ClCompile Include="src\graphics\terrain.cpp" />
     <ClCompile Include="src\output_stream.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
-    <ClCompile Include="src\world\object_class.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders">

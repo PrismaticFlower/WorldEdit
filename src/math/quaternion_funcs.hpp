@@ -31,6 +31,14 @@ constexpr auto conjugate(const quaternion& quat) noexcept -> quaternion
    return {quat.w, -quat.x, -quat.y, -quat.z};
 }
 
+/// @brief Flip a quaternion around the Y axis, as if doing quat * quaternion{0.0f, 0.0f, 1.0f, 0.0f};
+/// @param quat The quat.
+/// @return The flipped quat.
+constexpr auto y_flip(const quaternion& quat) noexcept -> quaternion
+{
+   return {-quat.y, -quat.z, quat.w, quat.x};
+}
+
 inline auto normalize(const quaternion& quat) noexcept -> quaternion
 {
    float4 normalized = normalize(float4{quat.x, quat.y, quat.z, quat.w});

@@ -4,7 +4,9 @@
 
 #include "../blocks/utility/raycast.hpp"
 #include "../object_class.hpp"
+#include "../object_classes/billboard_patch_class.hpp"
 
+#include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
 namespace we::world {
@@ -124,11 +126,25 @@ auto ground_object(const object& object, const world& world,
                    const blocks_custom_mesh_bvh_library& blocks_bvh_library,
                    const active_layers active_layers) noexcept -> std::optional<float3>
 {
-   return ground_bbox(object.position,
-                      object.rotation *
-                            object_classes[object.class_handle].model->bounding_box +
-                         object.position,
-                      world, object_classes, blocks_bvh_library, active_layers);
+   const object_class& object_class = object_classes[object.class_handle];
+
+   if (object_class.flags.is_billboard_patch) [[unlikely]] {
+      const billboard_patch_class& billboard_patch =
+         object_classes.get_billboard_patch_class(object.class_handle);
+
+      return ground_bbox(object.position,
+                         y_flip(object.rotation) * billboard_patch.bbox() +
+                            object.position,
+                         world, object_classes, blocks_bvh_library,
+                         active_layers, object.id);
+   }
+   else {
+      return ground_bbox(object.position,
+                         object.rotation * object_class.model->bounding_box +
+                            object.position,
+                         world, object_classes, blocks_bvh_library,
+                         active_layers, object.id);
+   }
 }
 
 auto ground_light(const light& light, const world& world,

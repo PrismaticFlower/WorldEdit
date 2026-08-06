@@ -236,7 +236,7 @@ void world_edit::update()
 
    // Logic!
    _asset_libraries.update_loaded();
-   _object_classes.update();
+   _object_classes.update(delta_time);
 
    if (_asset_libraries.gather_errors(_world_asset_errors)) {
       if (not _load_errors_open) _new_load_error_open = true;
