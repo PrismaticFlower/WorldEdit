@@ -94,6 +94,8 @@ struct library_tree {
    void add(const io::path& asset_path) noexcept;
 
    void remove(const io::path& asset_path) noexcept;
+
+   void clear() noexcept;
 };
 
 /// @brief Tracks in the project folder and loads assets in the background using the thread pool when needed.

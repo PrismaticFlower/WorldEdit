@@ -335,6 +335,12 @@ void library_tree::remove(const io::path& asset_path) noexcept
    }
 }
 
+void library_tree::clear() noexcept
+{
+   directories.clear();
+   assets.clear();
+}
+
 template<typename T>
 struct library<T>::impl {
    impl(output_stream& stream, std::shared_ptr<async::thread_pool> thread_pool)
@@ -609,12 +615,14 @@ struct library<T>::impl {
 
    void clear() noexcept
    {
-      std::scoped_lock lock{_assets_mutex, _load_tasks_mutex, _existing_assets_mutex};
+      std::scoped_lock lock{_assets_mutex, _load_tasks_mutex,
+                            _existing_assets_mutex, _assets_tree_mutex};
 
       _load_tasks.clear();
       _assets.clear();
       _asset_category_sets = {};
       _existing_assets.clear();
+      _assets_tree.clear();
       _existing_assets_sorted = true;
    }
 
