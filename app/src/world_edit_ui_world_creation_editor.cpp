@@ -83,32 +83,7 @@ auto window_name(const world::creation_entity& creation_entity) noexcept -> cons
 auto surface_rotation(float3 surface_normal,
                       const surface_rotation_axis rotation_axis) noexcept -> quaternion
 {
-   // qx = ax * sin(angle/2)
-   // qy = ay * sin(angle/2)
-   // qz = az * sin(angle/2)
-   // qw = cos(angle/2)
-
-   if (surface_normal.x == surface_normal.x) {
-      float3 v = surface_normal;
-      float3 u = {0.0f, 1.0f, 0.0f};
-
-      float k_cos_theta = dot(u, v);
-      float k = sqrt(dot(u, u) * dot(v, v));
-
-      if (k_cos_theta / k == -1) {
-         // 180 degree rotation around any orthogonal vector
-         // return Quaternion(0, normalized(orthogonal(u)));
-         const float3 ortho_vector = normalize(orthogonal(u));
-
-         return quaternion{0.0f, ortho_vector.x, ortho_vector.y, ortho_vector.z};
-      }
-
-      float3 xyz = cross(u, v);
-
-      return normalize(quaternion(k_cos_theta + k, xyz.x, xyz.y, xyz.z));
-   }
-
-   const float3 basis = [rotation_axis]() {
+   const float3 axis = [rotation_axis]() {
       switch (rotation_axis) {
       case surface_rotation_axis::x:
          return float3{1.0f, 0.0f, 0.0f};
@@ -127,43 +102,7 @@ auto surface_rotation(float3 surface_normal,
       };
    }();
 
-   const float3 direction = normalize(surface_normal);
-
-   const float3 axis = cross(basis, direction);
-   const float cos_angle = dot(basis, direction);
-   const float sin_angle = sqrt(1.0f - cos_angle * cos_angle);
-
-   if (axis == float3{0.0f, 0.0f, 0.0f}) {
-      if (rotation_axis == surface_rotation_axis::y) {
-         return direction.y > 0.0f ? quaternion{1.0f, 0.0f, 0.0f, 0.0f}
-                                   : quaternion{0.0f, 0.0f, 0.0f, 1.0f};
-      }
-      else if (rotation_axis == surface_rotation_axis::neg_y) {
-         return direction.y > 0.0f ? quaternion{0.0f, 0.0f, 0.0f, 1.0f}
-                                   : quaternion{1.0f, 0.0f, 0.0f, 0.0f};
-      }
-      else if (rotation_axis == surface_rotation_axis::x) {
-         return direction.x > 0.0f ? quaternion{1.0f, 0.0f, 0.0f, 0.0f}
-                                   : quaternion{0.0f, 0.0f, 1.0f, 0.0f};
-      }
-      else if (rotation_axis == surface_rotation_axis::neg_x) {
-         return direction.x > 0.0f ? quaternion{0.0f, 0.0f, 1.0f, 0.0f}
-                                   : quaternion{1.0f, 0.0f, 0.0f, 0.0f};
-      }
-      else if (rotation_axis == surface_rotation_axis::z) {
-         return direction.z > 0.0f ? quaternion{1.0f, 0.0f, 0.0f, 0.0f}
-                                   : quaternion{0.0f, 0.0f, 1.0f, 0.0f};
-      }
-      else if (rotation_axis == surface_rotation_axis::neg_z) {
-         return direction.z > 0.0f ? quaternion{0.0f, 0.0f, 1.0f, 0.0f}
-                                   : quaternion{1.0f, 0.0f, 0.0f, 0.0f};
-      }
-   }
-
-   quaternion quat{cos_angle + 1.0f, axis.x * sin_angle, axis.y * sin_angle,
-                   axis.z * sin_angle};
-
-   return normalize(quat);
+   return rotation_between(axis, surface_normal);
 }
 
 auto align_position_to_grid(const float2 position, const float alignment) -> float2
