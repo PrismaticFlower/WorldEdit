@@ -4644,7 +4644,7 @@ void renderer_impl::build_world_mesh_list(
             }
             else {
                _world_mesh_list.transparent.push_back(
-                  object_bbox, object_constants_address, object.position,
+                  object_bbox, object_constants_address, object_positionWS,
                   mesh.material.flags, mesh.material.constant_buffer_view,
                   world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
                              .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
@@ -4726,7 +4726,7 @@ void renderer_impl::build_world_mesh_list(
          }
          else {
             _world_mesh_list.transparent.push_back(
-               object_bbox, object_constants_address, object->position,
+               object_bbox, object_constants_address, object_position,
                mesh.material.flags, mesh.material.constant_buffer_view,
                world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
                           .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
