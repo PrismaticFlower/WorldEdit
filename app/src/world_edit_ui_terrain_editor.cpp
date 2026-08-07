@@ -524,7 +524,7 @@ void world_edit::ui_show_terrain_editor() noexcept
 
             if (config.brush_mode == terrain_brush_mode::raise or
                 config.brush_mode == terrain_brush_mode::lower) {
-               ImGui::DragFloat("Rate", &config.brush_rate, 0.02f, 0.1f, 10.0f);
+               ImGui::DragFloat("Rate", &config.brush_rate, 0.125f, 0.125f, 100.0f);
             }
          }
          else if (_terrain_editor_config.edit_target == terrain_edit_target::texture) {
