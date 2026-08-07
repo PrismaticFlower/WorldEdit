@@ -16,7 +16,7 @@ struct add_tree_line_border_odf final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) noexcept override
+   void apply([[maybe_unused]] world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(_odfs));
 
@@ -25,7 +25,7 @@ struct add_tree_line_border_odf final : edit<world::edit_context> {
          _object_class_library.acquire(lowercase_string{_odfs->back().name});
    }
 
-   void revert(world::edit_context& context) noexcept override
+   void revert([[maybe_unused]] world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(_odfs));
 

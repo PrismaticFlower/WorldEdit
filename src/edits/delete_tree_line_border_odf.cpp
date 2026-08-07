@@ -13,7 +13,7 @@ struct delete_tree_line_border_odf final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) noexcept override
+   void apply([[maybe_unused]] world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(_odfs));
       assert(_index < _odfs->size());
@@ -23,7 +23,7 @@ struct delete_tree_line_border_odf final : edit<world::edit_context> {
       _odfs->erase(_odfs->begin() + _index);
    }
 
-   void revert(world::edit_context& context) noexcept override
+   void revert([[maybe_unused]] world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(_odfs));
       assert(_index <= _odfs->size());
