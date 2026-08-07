@@ -520,4 +520,22 @@ bool CheckboxTristate(const char* label, bool* value, bool indeterminate)
    return edited;
 }
 
+void SetNextItemAxisMarker(ExtAxis axis)
+{
+   switch (axis) {
+   case ExtAxis::X:
+      SetNextItemColorMarker(x_color_u32);
+      return;
+   case ExtAxis::Y:
+      SetNextItemColorMarker(y_color_u32);
+      return;
+   case ExtAxis::Z:
+      SetNextItemColorMarker(z_color_u32);
+      return;
+   case ExtAxis::W:
+      SetNextItemColorMarker(w_color_u32);
+      return;
+   }
+}
+
 }

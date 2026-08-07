@@ -3452,6 +3452,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       ImGui::BeginGroup();
       ImGui::PushID("Position");
       ImGui::SetNextItemWidth(item_width_one);
+      ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::X);
       const bool x_edited =
          ImGui::DragFloat("##X", &position_x, 1.0f, 0.0f, 0.0f,
                           properties.position.x.is_different() ? "<different>"
@@ -3459,6 +3460,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
       ImGui::SameLine(0, item_inner_spacing);
       ImGui::SetNextItemWidth(item_width_one);
+      ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::Y);
       const bool y_edited =
          ImGui::DragFloat("##Y", &position_y, 1.0f, 0.0f, 0.0f,
                           properties.position.y.is_different() ? "<different>"
@@ -3466,6 +3468,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
       ImGui::SameLine(0, item_inner_spacing);
       ImGui::SetNextItemWidth(item_width_last);
+      ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::Z);
       const bool z_edited =
          ImGui::DragFloat("##Z", &position_z, 1.0f, 0.0f, 0.0f,
                           properties.position.z.is_different() ? "<different>"
@@ -3743,6 +3746,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       ImGui::BeginGroup();
       ImGui::PushID("BoxSize");
       ImGui::SetNextItemWidth(item_width_one);
+      ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::X);
       const bool x_edited =
          ImGui::DragFloat("##X", &size_x, 0.125f, 0.0f, 1e10f,
                           properties.box_size.x.is_different() ? "<different>"
@@ -3750,6 +3754,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
       ImGui::SameLine(0, item_inner_spacing);
       ImGui::SetNextItemWidth(item_width_one);
+      ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::Y);
       const bool y_edited =
          ImGui::DragFloat("##Y", &size_y, 0.125f, 0.0f, 1e10f,
                           properties.box_size.y.is_different() ? "<different>"
@@ -3757,6 +3762,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
       ImGui::SameLine(0, item_inner_spacing);
       ImGui::SetNextItemWidth(item_width_last);
+      ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::Z);
       const bool z_edited =
          ImGui::DragFloat("##Z", &size_z, 0.125f, 0.0f, 1e10f,
                           properties.box_size.z.is_different() ? "<different>"
@@ -7226,6 +7232,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          ImGui::BeginGroup();
          ImGui::PushID("SizeXZ");
          ImGui::SetNextItemWidth(item_width_one);
+         ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::X);
          const bool x_edited =
             ImGui::DragFloat("##X", &size_x, 0.0625f, 0.0f, 0.0f,
                              properties.barrier.size.x.is_different()
@@ -7234,6 +7241,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
          ImGui::SameLine(0, item_inner_spacing);
          ImGui::SetNextItemWidth(item_width_last);
+         ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::Z);
          const bool y_edited =
             ImGui::DragFloat("##Y", &size_y, 0.0625f, 0.0f, 0.0f,
                              properties.barrier.size.y.is_different()

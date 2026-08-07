@@ -18,6 +18,8 @@ struct ExtEditFlag {
    unsigned int bit = 0;
 };
 
+enum class ExtAxis { X, Y, Z, W };
+
 bool DragFloat2(const char* label, we::float2* v, float v_speed = 1.0f,
                 float v_min = 0.0f, float v_max = 0.0f, ImGuiSliderFlags flags = 0);
 
@@ -60,5 +62,7 @@ bool InputTextWithHintAutoComplete(
    we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback);
 
 bool CheckboxTristate(const char* label, bool* value, bool indeterminate);
+
+void SetNextItemAxisMarker(ExtAxis axis);
 
 }
