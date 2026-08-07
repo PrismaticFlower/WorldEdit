@@ -57,6 +57,7 @@
 #include "world/utility/sector_fill.hpp"
 #include "world/utility/selection_bbox.hpp"
 #include "world/utility/terrain_cut.hpp"
+#include "world/utility/terrain_sample.hpp"
 #include "world/utility/world_utilities.hpp"
 
 #include <bit>
@@ -649,7 +650,17 @@ void world_edit::update_hovered_entity() noexcept
                }
 
                if (*hit < cursor_distance) {
-                  _cursor_surface_normalWS = std::nullopt;
+                  if (_interaction_targets.creation_entity.holds_entity() and
+                      _entity_creation_config.placement_rotation ==
+                         placement_rotation::surface) {
+                     _cursor_surface_normalWS =
+                        world::sample_terrain_normal(_world.terrain,
+                                                     ray.origin + ray.direction * *hit);
+                  }
+                  else {
+                     _cursor_surface_normalWS = std::nullopt;
+                  }
+
                   cursor_distance = *hit;
                }
             }
