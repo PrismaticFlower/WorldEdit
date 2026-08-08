@@ -286,8 +286,8 @@ void export_selection_to_obj(const io::path& path,
 
    for (int32 z = 0; z < terrain_length_quads; ++z) {
       for (int32 x = 0; x < terrain_length_quads; ++x) {
-         const auto index = [&](int32 x, int32 z) noexcept -> uint16 {
-            return static_cast<uint16>(z * terrain.length + x);
+         const auto index = [&](int32 x, int32 z) noexcept -> uint32 {
+            return static_cast<uint32>(z * terrain.length + x);
          };
 
          if (z & 1) {
