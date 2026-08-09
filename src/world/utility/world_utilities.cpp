@@ -86,7 +86,8 @@ bool is_light_name_and_region_name_unique(const std::span<const light> lights,
 
 template<typename T>
 auto create_unique_name_impl(const std::span<const T> entities,
-                             const std::string_view reference_name) -> std::string
+                             const std::string_view reference_name, id<T> ignored_id)
+   -> std::string
 {
    if (reference_name.empty()) return "";
 
@@ -99,6 +100,8 @@ auto create_unique_name_impl(const std::span<const T> entities,
    uint64 max_index = 0;
 
    for (auto& entity : entities) {
+      if (entity.id == ignored_id) continue;
+
       if (string::istarts_with(entity.name, base_name)) {
          const std::string_view name_index =
             std::string_view{entity.name}.substr(base_name.size());
@@ -127,80 +130,93 @@ auto get_hub_index(const std::span<const planning_hub> hubs, planning_hub_id id)
 }
 
 auto create_unique_name(const std::span<const object> entities,
-                        const std::string_view reference_name) -> std::string
+                        const std::string_view reference_name,
+                        object_id ignored_id) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name);
+   return create_unique_name_impl(entities, reference_name, ignored_id);
 }
 
 auto create_unique_name(const std::span<const light> entities,
-                        const std::string_view reference_name) -> std::string
+                        const std::string_view reference_name,
+                        light_id ignored_id) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name);
+   return create_unique_name_impl(entities, reference_name, ignored_id);
 }
 
 auto create_unique_name(const std::span<const path> entities,
-                        const std::string_view reference_name) -> std::string
+                        const std::string_view reference_name,
+                        path_id ignored_id) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name);
+   return create_unique_name_impl(entities, reference_name, ignored_id);
 }
 
 auto create_unique_name(const std::span<const sector> entities,
-                        const std::string_view reference_name) -> std::string
+                        const std::string_view reference_name,
+                        sector_id ignored_id) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name);
+   return create_unique_name_impl(entities, reference_name, ignored_id);
 }
 
 auto create_unique_name(const std::span<const portal> entities,
-                        const std::string_view reference_name) -> std::string
+                        const std::string_view reference_name,
+                        portal_id ignored_id) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name);
+   return create_unique_name_impl(entities, reference_name, ignored_id);
 }
 
 auto create_unique_name(const std::span<const hintnode> entities,
-                        const std::string_view reference_name) -> std::string
+                        const std::string_view reference_name,
+                        hintnode_id ignored_id) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name);
+   return create_unique_name_impl(entities, reference_name, ignored_id);
 }
 
 auto create_unique_name(const std::span<const barrier> entities,
-                        const std::string_view reference_name) -> std::string
+                        const std::string_view reference_name,
+                        barrier_id ignored_id) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name);
+   return create_unique_name_impl(entities, reference_name, ignored_id);
 }
 
 auto create_unique_name(const std::span<const planning_hub> entities,
-                        const std::string_view reference_name) -> std::string
+                        const std::string_view reference_name,
+                        planning_hub_id ignored_id) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name);
+   return create_unique_name_impl(entities, reference_name, ignored_id);
 }
 
 auto create_unique_name(const std::span<const planning_connection> entities,
-                        const std::string_view reference_name) -> std::string
+                        const std::string_view reference_name,
+                        planning_connection_id ignored_id) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name);
+   return create_unique_name_impl(entities, reference_name, ignored_id);
 }
 
 auto create_unique_name(const std::span<const boundary> entities,
-                        const std::string_view reference_name) -> std::string
+                        const std::string_view reference_name,
+                        boundary_id ignored_id) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name);
+   return create_unique_name_impl(entities, reference_name, ignored_id);
 }
 
 auto create_unique_name(const std::span<const animation> entities,
-                        const std::string_view reference_name) -> std::string
+                        const std::string_view reference_name,
+                        animation_id ignored_id) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name);
+   return create_unique_name_impl(entities, reference_name, ignored_id);
 }
 
 auto create_unique_name(const std::span<const animation_group> entities,
-                        const std::string_view reference_name) -> std::string
+                        const std::string_view reference_name,
+                        animation_group_id ignored_id) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name);
+   return create_unique_name_impl(entities, reference_name, ignored_id);
 }
 
 auto create_unique_name(const std::span<const region> regions,
                         const std::span<const light> lights,
-                        const std::string_view reference_name) -> std::string
+                        const std::string_view reference_name,
+                        region_id ignored_id) -> std::string
 {
    if (reference_name.empty()) return "";
 
@@ -214,6 +230,8 @@ auto create_unique_name(const std::span<const region> regions,
    uint64 max_index = 0;
 
    for (const region& region : regions) {
+      if (region.id == ignored_id) continue;
+
       if (string::istarts_with(region.name, base_name)) {
          const std::string_view name_index =
             std::string_view{region.name}.substr(base_name.size());
@@ -254,7 +272,8 @@ auto create_unique_name(const std::span<const region> regions,
 
 auto create_unique_light_region_name(const std::span<const light> lights,
                                      const std::span<const region> regions,
-                                     const std::string_view reference_name) -> std::string
+                                     const std::string_view reference_name,
+                                     light_id ignored_id) -> std::string
 {
    if (not reference_name.empty() and
        is_light_name_and_region_name_unique(lights, reference_name) and
@@ -267,6 +286,8 @@ auto create_unique_light_region_name(const std::span<const light> lights,
       create_base_name<light>(reference_name, "LightRegion");
 
    for (const light& light : lights) {
+      if (light.id == ignored_id) continue;
+
       if (string::istarts_with(light.name, base_name)) {
          const std::string_view name_index =
             std::string_view{light.name}.substr(base_name.size());

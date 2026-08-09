@@ -70,7 +70,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                 _edit_context, [&](std::string* edited_value) noexcept {
                                    *edited_value =
                                       world::create_unique_name(_world.objects,
-                                                                *edited_value);
+                                                                *edited_value,
+                                                                object->id);
                                 });
 
                if (ui_object_class_pick_widget(object)) {
@@ -200,7 +201,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                 [&](std::string* edited_value) noexcept {
                                    *edited_value =
                                       world::create_unique_name(_world.lights,
-                                                                *edited_value);
+                                                                *edited_value,
+                                                                light->id);
                                 });
                ImGui::LayerPick("Layer", &light->layer, _edit_stack_world, _edit_context);
 
@@ -279,11 +281,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   ImGui::InputText("Region Name", &light->region_name,
                                    _edit_stack_world, _edit_context,
                                    [&](std::string* edited_value) noexcept {
-                                      *edited_value =
-                                         world::create_unique_light_region_name(
-                                            _world.lights, _world.regions,
-                                            edited_value->empty() ? light->name
-                                                                  : *edited_value);
+                                      *edited_value = world::create_unique_light_region_name(
+                                         _world.lights, _world.regions,
+                                         edited_value->empty() ? light->name : *edited_value,
+                                         light->id);
                                    });
                   ImGui::DragQuat("Region Rotation", &light->region_rotation,
                                   _edit_stack_world, _edit_context);
@@ -386,8 +387,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                       world::create_unique_name(_world.paths,
                                                                 edited_value->empty()
                                                                    ? "Path 0"sv
-                                                                   : std::string_view{
-                                                                        *edited_value});
+                                                                   : std::string_view{*edited_value},
+                                                                path->id);
                                 });
                ImGui::LayerPick("Layer", &path->layer, _edit_stack_world, _edit_context);
 
@@ -553,7 +554,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                    *edited_value =
                                       world::create_unique_name(_world.regions,
                                                                 _world.lights,
-                                                                *edited_value);
+                                                                *edited_value,
+                                                                region->id);
                                 });
                ImGui::LayerPick("Layer", &region->layer, _edit_stack_world,
                                 _edit_context);
@@ -1053,7 +1055,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                 _edit_context, [&](std::string* edited_value) noexcept {
                                    *edited_value =
                                       world::create_unique_name(_world.sectors,
-                                                                *edited_value);
+                                                                *edited_value,
+                                                                sector->id);
                                 });
 
                ImGui::DragFloat("Base", &sector->base, _edit_stack_world,
@@ -1268,7 +1271,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                 _edit_context, [&](std::string* edited_value) noexcept {
                                    *edited_value =
                                       world::create_unique_name(_world.portals,
-                                                                *edited_value);
+                                                                *edited_value,
+                                                                portal->id);
                                 });
 
                ImGui::DragFloat("Width", &portal->width, _edit_stack_world,
@@ -1393,7 +1397,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                 _edit_context, [&](std::string* edited_value) noexcept {
                                    *edited_value =
                                       world::create_unique_name(_world.hintnodes,
-                                                                *edited_value);
+                                                                *edited_value,
+                                                                hintnode->id);
                                 });
                ImGui::LayerPick("Layer", &hintnode->layer, _edit_stack_world,
                                 _edit_context);
@@ -1524,7 +1529,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                 _edit_context, [&](std::string* edited_value) noexcept {
                                    *edited_value =
                                       world::create_unique_name(_world.barriers,
-                                                                *edited_value);
+                                                                *edited_value,
+                                                                barrier->id);
                                 });
 
                ImGui::DragBarrierRotation("Rotation", &barrier->rotation_angle,
@@ -1561,7 +1567,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                 [&](std::string* edited_value) noexcept {
                                    *edited_value =
                                       world::create_unique_name(_world.planning_hubs,
-                                                                *edited_value);
+                                                                *edited_value,
+                                                                hub->id);
                                 });
 
                ImGui::DragFloat3("Position", &hub->position, _edit_stack_world,
@@ -1675,7 +1682,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                 _edit_context, [&](std::string* edited_value) noexcept {
                                    *edited_value =
                                       world::create_unique_name(_world.planning_connections,
-                                                                *edited_value);
+                                                                *edited_value,
+                                                                connection->id);
                                 });
 
                ImGui::Text("Start: %s",
@@ -1735,7 +1743,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                 _edit_context, [&](std::string* edited_value) noexcept {
                                    *edited_value =
                                       world::create_unique_name(_world.boundaries,
-                                                                *edited_value);
+                                                                *edited_value,
+                                                                boundary->id);
                                 });
             }
             else {

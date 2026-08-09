@@ -103,49 +103,62 @@ auto get_hub_index(const std::span<const planning_hub> hubs, planning_hub_id id)
    -> uint32;
 
 auto create_unique_name(const std::span<const object> entities,
-                        const std::string_view reference_name) -> std::string;
+                        const std::string_view reference_name,
+                        object_id ignored_id = max_id) -> std::string;
 
 auto create_unique_name(const std::span<const light> entities,
-                        const std::string_view reference_name) -> std::string;
+                        const std::string_view reference_name,
+                        light_id ignored_id = max_id) -> std::string;
 
 auto create_unique_name(const std::span<const path> entities,
-                        const std::string_view reference_name) -> std::string;
+                        const std::string_view reference_name,
+                        path_id ignored_id = max_id) -> std::string;
 
 auto create_unique_name(const std::span<const sector> entities,
-                        const std::string_view reference_name) -> std::string;
+                        const std::string_view reference_name,
+                        sector_id ignored_id = max_id) -> std::string;
 
 auto create_unique_name(const std::span<const portal> entities,
-                        const std::string_view reference_name) -> std::string;
+                        const std::string_view reference_name,
+                        portal_id ignored_id = max_id) -> std::string;
 
 auto create_unique_name(const std::span<const hintnode> entities,
-                        const std::string_view reference_name) -> std::string;
+                        const std::string_view reference_name,
+                        hintnode_id ignored_id = max_id) -> std::string;
 
 auto create_unique_name(const std::span<const barrier> entities,
-                        const std::string_view reference_name) -> std::string;
+                        const std::string_view reference_name,
+                        barrier_id ignored_id = max_id) -> std::string;
 
 auto create_unique_name(const std::span<const planning_hub> entities,
-                        const std::string_view reference_name) -> std::string;
+                        const std::string_view reference_name,
+                        planning_hub_id ignored_id = max_id) -> std::string;
 
 auto create_unique_name(const std::span<const planning_connection> entities,
-                        const std::string_view reference_name) -> std::string;
+                        const std::string_view reference_name,
+                        planning_connection_id ignored_id = max_id) -> std::string;
 
 auto create_unique_name(const std::span<const boundary> entities,
-                        const std::string_view reference_name) -> std::string;
+                        const std::string_view reference_name,
+                        boundary_id ignored_id = max_id) -> std::string;
 
 auto create_unique_name(const std::span<const animation> entities,
-                        const std::string_view reference_name) -> std::string;
+                        const std::string_view reference_name,
+                        animation_id ignored_id = max_id) -> std::string;
 
 auto create_unique_name(const std::span<const animation_group> entities,
-                        const std::string_view reference_name) -> std::string;
+                        const std::string_view reference_name,
+                        animation_group_id ignored_id = max_id) -> std::string;
 
 auto create_unique_name(const std::span<const region> regions,
                         const std::span<const light> lights,
-                        const std::string_view reference_name) -> std::string;
+                        const std::string_view reference_name,
+                        region_id ignored_id = max_id) -> std::string;
 
 auto create_unique_light_region_name(const std::span<const light> lights,
                                      const std::span<const region> regions,
-                                     const std::string_view reference_name)
-   -> std::string;
+                                     const std::string_view reference_name,
+                                     light_id ignored_id = max_id) -> std::string;
 
 /// @brief Check if a light is directional. (It's type is directional or one of the directional_region_* types)
 /// @param light
