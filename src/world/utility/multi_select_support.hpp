@@ -463,7 +463,7 @@ struct multi_select_properties {
    } object;
 
    struct light {
-      value<float3> color;
+      value_split_float3 color;
       value<bool> static_;
       value<bool> shadow_caster;
       value<bool> specular_caster;
@@ -524,8 +524,8 @@ struct multi_select_properties {
          value<float> directional0;
          value<float> directional1;
 
-         value<float3> color_top;
-         value<float3> color_bottom;
+         value_split_float3 color_top;
+         value_split_float3 color_bottom;
 
          value<std::string> env_map;
       } shadow;

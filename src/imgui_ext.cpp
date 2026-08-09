@@ -535,6 +535,15 @@ void SetNextItemAxisMarker(ExtAxis axis)
    case ExtAxis::W:
       SetNextItemColorMarker(w_color_u32);
       return;
+   case ExtAxis::R:
+      SetNextItemColorMarker(IM_COL32(240, 20, 20, 255));
+      return;
+   case ExtAxis::G:
+      SetNextItemColorMarker(IM_COL32(20, 240, 20, 255));
+      return;
+   case ExtAxis::B:
+      SetNextItemColorMarker(IM_COL32(20, 20, 240, 255));
+      return;
    }
 }
 

@@ -4418,7 +4418,9 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
       // Color
       {
-         float3 color = properties.light.color.value_or(float3{0.5f, 0.5f, 0.5f});
+         float3 color = {properties.light.color.x.value_or(0.5f),
+                         properties.light.color.y.value_or(0.5f),
+                         properties.light.color.z.value_or(0.5f)};
 
          const float slider_width =
             ((ImGui::CalcItemWidth() - ImGui::GetFrameHeight() -
@@ -4426,39 +4428,81 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::GetStyle().ItemInnerSpacing.x * 2.0f) /
             3.0f;
 
-         const bool is_different = properties.light.color.is_different();
-         bool edited = false;
-
          ImGui::BeginGroup();
 
          ImGui::SetNextItemWidth(slider_width);
-         edited |= ImGui::DragFloat("##R", &color.x, 1.0f / 255.0f, 0.0f, 1e10f,
-                                    is_different ? "<different>" : "R: %.3f") or
-                   ImGui::IsItemActive();
+         ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::R);
+         bool r_edited = ImGui::DragFloat("##R", &color.x, 1.0f / 255.0f, 0.0f, 1e10f,
+                                          properties.light.color.x.is_different()
+                                             ? "<different>"
+                                             : "R: %.3f") or
+                         ImGui::IsItemActive();
 
          ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
          ImGui::SetNextItemWidth(slider_width);
-         edited |= ImGui::DragFloat("##G", &color.y, 1.0f / 255.0f, 0.0f, 1e10f,
-                                    is_different ? "<different>" : "G: %.3f") or
-                   ImGui::IsItemActive();
+         ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::G);
+         bool g_edited = ImGui::DragFloat("##G", &color.y, 1.0f / 255.0f, 0.0f, 1e10f,
+                                          properties.light.color.y.is_different()
+                                             ? "<different>"
+                                             : "G: %.3f") or
+                         ImGui::IsItemActive();
          ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
          ImGui::SetNextItemWidth(slider_width);
-         edited |= ImGui::DragFloat("##B", &color.z, 1.0f / 255.0f, 0.0f, 1e10f,
-                                    is_different ? "<different>" : "B: %.3f") or
-                   ImGui::IsItemActive();
+         ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::B);
+         bool b_edited = ImGui::DragFloat("##B", &color.z, 1.0f / 255.0f, 0.0f, 1e10f,
+                                          properties.light.color.z.is_different()
+                                             ? "<different>"
+                                             : "B: %.3f") or
+                         ImGui::IsItemActive();
 
          ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-         edited |= ImGui::ColorEdit3("##Picker", &color.x,
-                                     ImGuiColorEditFlags_NoInputs |
-                                        ImGuiColorEditFlags_Float |
-                                        ImGuiColorEditFlags_HDR);
+         const bool rgb_edited = ImGui::ColorEdit3("##Picker", &color.x,
+                                                   ImGuiColorEditFlags_NoInputs |
+                                                      ImGuiColorEditFlags_Float |
+                                                      ImGuiColorEditFlags_HDR);
+
+         r_edited |= rgb_edited;
+         g_edited |= rgb_edited;
+         b_edited |= rgb_edited;
 
          ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
          ImGui::TextUnformatted("Color");
 
          ImGui::EndGroup();
 
-         if (edited) {
+         if (r_edited or g_edited or b_edited) {
+            edits::bundle_vector edit_bundle;
+            edit_bundle.reserve(properties.light.color.count());
+
+            const auto edit_color = [&](const float3& base_color) {
+               return float3{
+                  r_edited ? color.x : base_color.x,
+                  g_edited ? color.y : base_color.y,
+                  b_edited ? color.z : base_color.z,
+               };
+            };
+
+            for (const world::selected_entity& selected : _interaction_targets.selection) {
+               if (selected.is<world::light_id>()) {
+                  world::light* light =
+                     world::find_entity(_world.lights,
+                                        selected.get<world::light_id>());
+
+                  if (not light) continue;
+
+                  edit_bundle.push_back(
+                     edits::make_set_value(&light->color, edit_color(light->color)));
+               }
+            }
+
+            _edit_stack_world.apply(edits::make_bundle(std::move(edit_bundle)),
+                                    _edit_context);
+         }
+
+         if (ImGui::IsItemDeactivatedAfterEdit()) {
+            _edit_stack_world.close_last();
+         }
+         if (rgb_edited) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.light.color.count());
 
@@ -5781,8 +5825,9 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
          // Ambient Light Top
          {
-            float3 color =
-               properties.region.shadow.color_top.value_or(float3{0.5f, 0.5f, 0.5f});
+            float3 color = {properties.region.shadow.color_top.x.value_or(0.5f),
+                            properties.region.shadow.color_top.y.value_or(0.5f),
+                            properties.region.shadow.color_top.z.value_or(0.5f)};
 
             const float slider_width =
                ((ImGui::CalcItemWidth() - ImGui::GetFrameHeight() -
@@ -5790,34 +5835,63 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                 ImGui::GetStyle().ItemInnerSpacing.x * 2.0f) /
                3.0f;
 
-            const bool is_different =
-               properties.region.shadow.color_top.is_different();
-            bool edited = false;
+            bool r_edited = false;
+            bool g_edited = false;
+            bool b_edited = false;
 
             ImGui::PushID("Top");
             ImGui::BeginGroup();
 
             ImGui::SetNextItemWidth(slider_width);
-            edited |= ImGui::DragFloat("##R", &color.x, 1.0f / 255.0f, 0.0f, 1e10f,
-                                       is_different ? "<different>" : "R: %.3f") or
-                      ImGui::IsItemActive();
+            ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::R);
+
+            if (float red = color.x * 255.0f;
+                ImGui::DragFloat("##R", &red, 1.0f, 0.0f, 255.0f,
+                                 properties.region.shadow.color_top.x.is_different()
+                                    ? "<different>"
+                                    : "%.0f") or
+                ImGui::IsItemActive()) {
+               color.x = red / 255.0f;
+               r_edited = true;
+            }
 
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
             ImGui::SetNextItemWidth(slider_width);
-            edited |= ImGui::DragFloat("##G", &color.y, 1.0f / 255.0f, 0.0f, 1e10f,
-                                       is_different ? "<different>" : "G: %.3f") or
-                      ImGui::IsItemActive();
-            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-            ImGui::SetNextItemWidth(slider_width);
-            edited |= ImGui::DragFloat("##B", &color.z, 1.0f / 255.0f, 0.0f, 1e10f,
-                                       is_different ? "<different>" : "B: %.3f") or
-                      ImGui::IsItemActive();
+            ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::G);
+
+            if (float green = color.y * 255.0f;
+                ImGui::DragFloat("##G", &green, 1.0f, 0.0f, 255.0f,
+                                 properties.region.shadow.color_top.y.is_different()
+                                    ? "<different>"
+                                    : "%.0f") or
+                ImGui::IsItemActive()) {
+               color.y = green / 255.0f;
+               g_edited = true;
+            }
 
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-            edited |= ImGui::ColorEdit3("##Picker", &color.x,
-                                        ImGuiColorEditFlags_NoInputs |
-                                           ImGuiColorEditFlags_Float |
-                                           ImGuiColorEditFlags_HDR);
+            ImGui::SetNextItemWidth(slider_width);
+            ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::B);
+
+            if (float blue = color.z * 255.0f;
+                ImGui::DragFloat("##B", &blue, 1.0f, 0.0f, 255.0f,
+                                 properties.region.shadow.color_top.z.is_different()
+                                    ? "<different>"
+                                    : "%.0f") or
+                ImGui::IsItemActive()) {
+               color.z = blue / 255.0f;
+               b_edited = true;
+            }
+
+            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+            const bool rgb_edited = ImGui::ColorEdit3("##Picker", &color.x,
+                                                      ImGuiColorEditFlags_NoInputs |
+                                                         ImGuiColorEditFlags_Float |
+                                                         ImGuiColorEditFlags_HDR);
+
+            r_edited |= rgb_edited;
+            g_edited |= rgb_edited;
+            b_edited |= rgb_edited;
 
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
             ImGui::TextUnformatted("Ambient Light Top");
@@ -5825,9 +5899,17 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
             ImGui::EndGroup();
             ImGui::PopID();
 
-            if (edited) {
+            if (r_edited or g_edited or b_edited) {
                edits::bundle_vector edit_bundle;
                edit_bundle.reserve(properties.region.shadow.color_top.count());
+
+               const auto edit_color = [&](const float3& base_color) {
+                  return float3{
+                     r_edited ? color.x : base_color.x,
+                     g_edited ? color.y : base_color.y,
+                     b_edited ? color.z : base_color.z,
+                  };
+               };
 
                for (const world::selected_entity& selected :
                     _interaction_targets.selection) {
@@ -5841,7 +5923,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                      world::shadow_region_properties shadow =
                         world::unpack_region_shadow(region->description);
 
-                     shadow.color_top = color;
+                     shadow.color_top = edit_color(shadow.color_top.value_or(
+                        _world.global_lights.ambient_sky_color));
 
                      edit_bundle.push_back(
                         edits::make_set_value(&region->description,
@@ -5860,8 +5943,9 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
          // Ambient Light Bottom
          {
-            float3 color = properties.region.shadow.color_bottom.value_or(
-               float3{0.5f, 0.5f, 0.5f});
+            float3 color = {properties.region.shadow.color_bottom.x.value_or(0.5f),
+                            properties.region.shadow.color_bottom.y.value_or(0.5f),
+                            properties.region.shadow.color_bottom.z.value_or(0.5f)};
 
             const float slider_width =
                ((ImGui::CalcItemWidth() - ImGui::GetFrameHeight() -
@@ -5869,34 +5953,63 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                 ImGui::GetStyle().ItemInnerSpacing.x * 2.0f) /
                3.0f;
 
-            const bool is_different =
-               properties.region.shadow.color_bottom.is_different();
-            bool edited = false;
+            bool r_edited = false;
+            bool g_edited = false;
+            bool b_edited = false;
 
             ImGui::PushID("Bottom");
             ImGui::BeginGroup();
 
             ImGui::SetNextItemWidth(slider_width);
-            edited |= ImGui::DragFloat("##R", &color.x, 1.0f / 255.0f, 0.0f, 1e10f,
-                                       is_different ? "<different>" : "R: %.3f") or
-                      ImGui::IsItemActive();
+            ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::R);
+
+            if (float red = color.x * 255.0f;
+                ImGui::DragFloat("##R", &red, 1.0f, 0.0f, 255.0f,
+                                 properties.region.shadow.color_bottom.x.is_different()
+                                    ? "<different>"
+                                    : "%.0f") or
+                ImGui::IsItemActive()) {
+               color.x = red / 255.0f;
+               r_edited = true;
+            }
 
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
             ImGui::SetNextItemWidth(slider_width);
-            edited |= ImGui::DragFloat("##G", &color.y, 1.0f / 255.0f, 0.0f, 1e10f,
-                                       is_different ? "<different>" : "G: %.3f") or
-                      ImGui::IsItemActive();
-            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-            ImGui::SetNextItemWidth(slider_width);
-            edited |= ImGui::DragFloat("##B", &color.z, 1.0f / 255.0f, 0.0f, 1e10f,
-                                       is_different ? "<different>" : "B: %.3f") or
-                      ImGui::IsItemActive();
+            ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::G);
+
+            if (float green = color.y * 255.0f;
+                ImGui::DragFloat("##G", &green, 1.0f, 0.0f, 255.0f,
+                                 properties.region.shadow.color_bottom.y.is_different()
+                                    ? "<different>"
+                                    : "%.0f") or
+                ImGui::IsItemActive()) {
+               color.y = green / 255.0f;
+               g_edited = true;
+            }
 
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-            edited |= ImGui::ColorEdit3("##Picker", &color.x,
-                                        ImGuiColorEditFlags_NoInputs |
-                                           ImGuiColorEditFlags_Float |
-                                           ImGuiColorEditFlags_HDR);
+            ImGui::SetNextItemWidth(slider_width);
+            ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::B);
+
+            if (float blue = color.z * 255.0f;
+                ImGui::DragFloat("##B", &blue, 1.0f, 0.0f, 255.0f,
+                                 properties.region.shadow.color_bottom.z.is_different()
+                                    ? "<different>"
+                                    : "%.0f") or
+                ImGui::IsItemActive()) {
+               color.z = blue / 255.0f;
+               b_edited = true;
+            }
+
+            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+            const bool rgb_edited = ImGui::ColorEdit3("##Picker", &color.x,
+                                                      ImGuiColorEditFlags_NoInputs |
+                                                         ImGuiColorEditFlags_Float |
+                                                         ImGuiColorEditFlags_HDR);
+
+            r_edited |= rgb_edited;
+            g_edited |= rgb_edited;
+            b_edited |= rgb_edited;
 
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
             ImGui::TextUnformatted("Ambient Light Bottom");
@@ -5904,9 +6017,17 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
             ImGui::EndGroup();
             ImGui::PopID();
 
-            if (edited) {
+            if (r_edited or g_edited or b_edited) {
                edits::bundle_vector edit_bundle;
                edit_bundle.reserve(properties.region.shadow.color_bottom.count());
+
+               const auto edit_color = [&](const float3& base_color) {
+                  return float3{
+                     r_edited ? color.x : base_color.x,
+                     g_edited ? color.y : base_color.y,
+                     b_edited ? color.z : base_color.z,
+                  };
+               };
 
                for (const world::selected_entity& selected :
                     _interaction_targets.selection) {
@@ -5920,7 +6041,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                      world::shadow_region_properties shadow =
                         world::unpack_region_shadow(region->description);
 
-                     shadow.color_bottom = color;
+                     shadow.color_bottom = edit_color(shadow.color_bottom.value_or(
+                        _world.global_lights.ambient_ground_color));
 
                      edit_bundle.push_back(
                         edits::make_set_value(&region->description,
