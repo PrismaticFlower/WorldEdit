@@ -3456,7 +3456,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       const bool x_edited =
          ImGui::DragFloat("##X", &position_x, 1.0f, 0.0f, 0.0f,
                           properties.position.x.is_different() ? "<different>"
-                                                               : "X:%.3f");
+                                                               : "X:%.3f") or
+         ImGui::IsItemActive();
 
       ImGui::SameLine(0, item_inner_spacing);
       ImGui::SetNextItemWidth(item_width_one);
@@ -3464,7 +3465,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       const bool y_edited =
          ImGui::DragFloat("##Y", &position_y, 1.0f, 0.0f, 0.0f,
                           properties.position.y.is_different() ? "<different>"
-                                                               : "Y:%.3f");
+                                                               : "Y:%.3f") or
+         ImGui::IsItemActive();
 
       ImGui::SameLine(0, item_inner_spacing);
       ImGui::SetNextItemWidth(item_width_last);
@@ -3472,7 +3474,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       const bool z_edited =
          ImGui::DragFloat("##Z", &position_z, 1.0f, 0.0f, 0.0f,
                           properties.position.z.is_different() ? "<different>"
-                                                               : "Z:%.3f");
+                                                               : "Z:%.3f") or
+         ImGui::IsItemActive();
       ImGui::SameLine(0, item_inner_spacing);
 
       ImGui::PopID();
@@ -3750,7 +3753,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       const bool x_edited =
          ImGui::DragFloat("##X", &size_x, 0.125f, 0.0f, 1e10f,
                           properties.box_size.x.is_different() ? "<different>"
-                                                               : "X:%.3f");
+                                                               : "X:%.3f") or
+         ImGui::IsItemActive();
 
       ImGui::SameLine(0, item_inner_spacing);
       ImGui::SetNextItemWidth(item_width_one);
@@ -3758,7 +3762,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       const bool y_edited =
          ImGui::DragFloat("##Y", &size_y, 0.125f, 0.0f, 1e10f,
                           properties.box_size.y.is_different() ? "<different>"
-                                                               : "Y:%.3f");
+                                                               : "Y:%.3f") or
+         ImGui::IsItemActive();
 
       ImGui::SameLine(0, item_inner_spacing);
       ImGui::SetNextItemWidth(item_width_last);
@@ -3766,7 +3771,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       const bool z_edited =
          ImGui::DragFloat("##Z", &size_z, 0.125f, 0.0f, 1e10f,
                           properties.box_size.z.is_different() ? "<different>"
-                                                               : "Z:%.3f");
+                                                               : "Z:%.3f") or
+         ImGui::IsItemActive();
       ImGui::SameLine(0, item_inner_spacing);
 
       ImGui::PopID();
@@ -3951,7 +3957,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
    if (are_flags_set(flags, multi_select_flags::has_width)) {
       if (float width = properties.width.value_or(1.0f);
           ImGui::DragFloat("Width", &width, 0.125f, 0.0f, 1e10f,
-                           properties.width.is_different() ? "<different>" : "%.3f")) {
+                           properties.width.is_different() ? "<different>" : "%.3f") or
+          ImGui::IsItemActive()) {
          edits::bundle_vector edit_bundle;
          edit_bundle.reserve(properties.width.count());
 
@@ -4031,7 +4038,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
    if (are_flags_set(flags, multi_select_flags::has_height)) {
       if (float height = properties.height.value_or(1.0f);
           ImGui::DragFloat("Height", &height, 0.125f, 0.0f, 1e10f,
-                           properties.height.is_different() ? "<different>" : "%.3f")) {
+                           properties.height.is_different() ? "<different>" : "%.3f") or
+          ImGui::IsItemActive()) {
          edits::bundle_vector edit_bundle;
          edit_bundle.reserve(properties.height.count());
 
@@ -4150,7 +4158,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
    if (are_flags_set(flags, multi_select_flags::has_radius)) {
       if (float radius = properties.radius.value_or(1.0f);
           ImGui::DragFloat("Radius", &radius, 0.125f, 0.0f, 1e10f,
-                           properties.radius.is_different() ? "<different>" : "%.3f")) {
+                           properties.radius.is_different() ? "<different>" : "%.3f") or
+          ImGui::IsItemActive()) {
          edits::bundle_vector edit_bundle;
          edit_bundle.reserve(properties.radius.count());
 
@@ -4265,7 +4274,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       if (int team = properties.object.team.value_or(0);
           ImGui::SliderInt("Team", &team, 0, 15,
                            properties.object.team.is_different() ? "<different>" : "%d",
-                           ImGuiSliderFlags_AlwaysClamp)) {
+                           ImGuiSliderFlags_AlwaysClamp) or
+          ImGui::IsItemActive()) {
          edits::bundle_vector edit_bundle;
          edit_bundle.reserve(properties.object.team.count());
 
@@ -4423,16 +4433,19 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
          ImGui::SetNextItemWidth(slider_width);
          edited |= ImGui::DragFloat("##R", &color.x, 1.0f / 255.0f, 0.0f, 1e10f,
-                                    is_different ? "<different>" : "R: %.3f");
+                                    is_different ? "<different>" : "R: %.3f") or
+                   ImGui::IsItemActive();
 
          ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
          ImGui::SetNextItemWidth(slider_width);
          edited |= ImGui::DragFloat("##G", &color.y, 1.0f / 255.0f, 0.0f, 1e10f,
-                                    is_different ? "<different>" : "G: %.3f");
+                                    is_different ? "<different>" : "G: %.3f") or
+                   ImGui::IsItemActive();
          ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
          ImGui::SetNextItemWidth(slider_width);
          edited |= ImGui::DragFloat("##B", &color.z, 1.0f / 255.0f, 0.0f, 1e10f,
-                                    is_different ? "<different>" : "B: %.3f");
+                                    is_different ? "<different>" : "B: %.3f") or
+                   ImGui::IsItemActive();
 
          ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
          edited |= ImGui::ColorEdit3("##Picker", &color.x,
@@ -4588,7 +4601,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Range", &range, 1.0f, 0.0f, 1e10f,
                               properties.light.range.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
 
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.light.range.count());
@@ -4620,7 +4634,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                               0.0f, std::numbers::pi_v<float>,
                               properties.light.inner_cone_angle.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
 
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.light.inner_cone_angle.count());
@@ -4655,7 +4670,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                               0.0f, std::numbers::pi_v<float>,
                               properties.light.outer_cone_angle.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
 
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.light.outer_cone_angle.count());
@@ -4785,7 +4801,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                                 0.0f, 0.0f,
                                 properties.light.directional_texture_tiling.x.is_different()
                                    ? "<different>"
-                                   : "X:%.3f");
+                                   : "X:%.3f") or
+               ImGui::IsItemActive();
 
             ImGui::SameLine(0, item_inner_spacing);
             ImGui::SetNextItemWidth(item_width_last);
@@ -4794,7 +4811,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                                 0.0f, 0.0f,
                                 properties.light.directional_texture_tiling.y.is_different()
                                    ? "<different>"
-                                   : "Y:%.3f");
+                                   : "Y:%.3f") or
+               ImGui::IsItemActive();
 
             ImGui::PopID();
 
@@ -4864,7 +4882,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                                 0.0f, 0.0f,
                                 properties.light.directional_texture_offset.x.is_different()
                                    ? "<different>"
-                                   : "X:%.3f");
+                                   : "X:%.3f") or
+               ImGui::IsItemActive();
 
             ImGui::SameLine(0, item_inner_spacing);
             ImGui::SetNextItemWidth(item_width_last);
@@ -4873,7 +4892,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                                 0.0f, 0.0f,
                                 properties.light.directional_texture_offset.y.is_different()
                                    ? "<different>"
-                                   : "Y:%.3f");
+                                   : "Y:%.3f") or
+               ImGui::IsItemActive();
 
             ImGui::PopID();
 
@@ -5396,7 +5416,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                 properties.region.sound_stream.min_distance_divisor.is_different()
                    ? "<different>"
                    : "%.3f",
-                ImGuiSliderFlags_AlwaysClamp)) {
+                ImGuiSliderFlags_AlwaysClamp) or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(
                properties.region.sound_stream.min_distance_divisor.count());
@@ -5492,7 +5513,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                 properties.region.sound_static.min_distance_divisor.is_different()
                    ? "<different>"
                    : "%.3f",
-                ImGuiSliderFlags_AlwaysClamp)) {
+                ImGuiSliderFlags_AlwaysClamp) or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(
                properties.region.sound_static.min_distance_divisor.count());
@@ -5687,7 +5709,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                               properties.region.shadow.directional0.is_different()
                                  ? "<different>"
                                  : "%.3f",
-                              ImGuiSliderFlags_AlwaysClamp)) {
+                              ImGuiSliderFlags_AlwaysClamp) or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.shadow.directional0.count());
 
@@ -5724,7 +5747,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                               properties.region.shadow.directional1.is_different()
                                  ? "<different>"
                                  : "%.3f",
-                              ImGuiSliderFlags_AlwaysClamp)) {
+                              ImGuiSliderFlags_AlwaysClamp) or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.shadow.directional1.count());
 
@@ -5775,16 +5799,19 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
             ImGui::SetNextItemWidth(slider_width);
             edited |= ImGui::DragFloat("##R", &color.x, 1.0f / 255.0f, 0.0f, 1e10f,
-                                       is_different ? "<different>" : "R: %.3f");
+                                       is_different ? "<different>" : "R: %.3f") or
+                      ImGui::IsItemActive();
 
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
             ImGui::SetNextItemWidth(slider_width);
             edited |= ImGui::DragFloat("##G", &color.y, 1.0f / 255.0f, 0.0f, 1e10f,
-                                       is_different ? "<different>" : "G: %.3f");
+                                       is_different ? "<different>" : "G: %.3f") or
+                      ImGui::IsItemActive();
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
             ImGui::SetNextItemWidth(slider_width);
             edited |= ImGui::DragFloat("##B", &color.z, 1.0f / 255.0f, 0.0f, 1e10f,
-                                       is_different ? "<different>" : "B: %.3f");
+                                       is_different ? "<different>" : "B: %.3f") or
+                      ImGui::IsItemActive();
 
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
             edited |= ImGui::ColorEdit3("##Picker", &color.x,
@@ -5851,16 +5878,19 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
             ImGui::SetNextItemWidth(slider_width);
             edited |= ImGui::DragFloat("##R", &color.x, 1.0f / 255.0f, 0.0f, 1e10f,
-                                       is_different ? "<different>" : "R: %.3f");
+                                       is_different ? "<different>" : "R: %.3f") or
+                      ImGui::IsItemActive();
 
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
             ImGui::SetNextItemWidth(slider_width);
             edited |= ImGui::DragFloat("##G", &color.y, 1.0f / 255.0f, 0.0f, 1e10f,
-                                       is_different ? "<different>" : "G: %.3f");
+                                       is_different ? "<different>" : "G: %.3f") or
+                      ImGui::IsItemActive();
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
             ImGui::SetNextItemWidth(slider_width);
             edited |= ImGui::DragFloat("##B", &color.z, 1.0f / 255.0f, 0.0f, 1e10f,
-                                       is_different ? "<different>" : "B: %.3f");
+                                       is_different ? "<different>" : "B: %.3f") or
+                      ImGui::IsItemActive();
 
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
             edited |= ImGui::ColorEdit3("##Picker", &color.x,
@@ -6063,7 +6093,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Damage Rate", &damage_rate, 1.0f, 0.0f, 0.0f,
                               properties.region.damage.damage_rate.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.damage.damage_rate.count());
 
@@ -6098,7 +6129,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Person Scale", &person_scale, 0.01f, 0.0f, 0.0f,
                               properties.region.damage.person_scale.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.damage.person_scale.count());
 
@@ -6133,7 +6165,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Animal Scale", &animal_scale, 0.01f, 0.0f, 0.0f,
                               properties.region.damage.animal_scale.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.damage.animal_scale.count());
 
@@ -6168,7 +6201,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Droid Scale", &droid_scale, 0.01f, 0.0f, 0.0f,
                               properties.region.damage.droid_scale.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.damage.droid_scale.count());
 
@@ -6204,7 +6238,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Vehicle Scale", &vehicle_scale, 0.01f, 0.0f, 0.0f,
                               properties.region.damage.vehicle_scale.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.damage.vehicle_scale.count());
 
@@ -6240,7 +6275,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Building Scale", &building_scale, 0.01f, 0.0f, 0.0f,
                               properties.region.damage.building_scale.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.damage.building_scale.count());
 
@@ -6277,7 +6313,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                               0.01f, 0.0f, 0.0f,
                               properties.region.damage.building_dead_scale.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.damage.building_dead_scale.count());
 
@@ -6314,7 +6351,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                               0.01f, 0.0f, 0.0f,
                               properties.region.damage.building_unbuilt_scale.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.damage.building_unbuilt_scale.count());
 
@@ -6351,7 +6389,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Crouch", &crouch, 0.01f, 0.0f, 1e10f,
                               properties.region.ai_vis.crouch.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.ai_vis.crouch.count());
 
@@ -6384,9 +6423,9 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
 
          if (float stand = properties.region.ai_vis.stand.value_or(0.5f);
              ImGui::DragFloat("Stand", &stand, 0.01f, 0.0f, 1e10f,
-                              properties.region.ai_vis.stand.is_different()
-                                 ? "<different>"
-                                 : "%.3f")) {
+                              properties.region.ai_vis.stand.is_different() ? "<different>"
+                                                                            : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.ai_vis.stand.count());
 
@@ -6478,7 +6517,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Fade Length", &fade_length, 1.0f, 0.0f, 0.0f,
                               properties.region.colorgrading.fade_length.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.region.colorgrading.fade_length.count());
 
@@ -6598,8 +6638,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
    if (are_flags_set(flags, multi_select_flags::has_sector)) {
       if (float base = properties.sector.base.value_or(0.0f);
           ImGui::DragFloat("Base", &base, 1.0f, 0.0f, 0.0f,
-                           properties.sector.base.is_different() ? "<different>"
-                                                                 : "%.3f")) {
+                           properties.sector.base.is_different() ? "<different>" : "%.3f") or
+          ImGui::IsItemActive()) {
          edits::bundle_vector edit_bundle;
          edit_bundle.reserve(properties.sector.base.count());
 
@@ -7155,7 +7195,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                               properties.hintnode.radius.is_different()
                                  ? "<different>"
                                  : "%.3f",
-                              ImGuiSliderFlags_AlwaysClamp)) {
+                              ImGuiSliderFlags_AlwaysClamp) or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.hintnode.radius.count());
 
@@ -7187,9 +7228,9 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       if (float rotation_degrees = properties.barrier.rotation_angle.value_or(0.0f) *
                                    180.0f / std::numbers::pi_v<float>;
           ImGui::DragFloat("Rotation", &rotation_degrees, 1.0f, 0.0f, 0.0f,
-                           properties.barrier.rotation_angle.is_different()
-                              ? "<different>"
-                              : "%.3f")) {
+                           properties.barrier.rotation_angle.is_different() ? "<different>"
+                                                                            : "%.3f") or
+          ImGui::IsItemActive()) {
          const float rotation = rotation_degrees / 180.0f * std::numbers::pi_v<float>;
 
          edits::bundle_vector edit_bundle;
@@ -7237,7 +7278,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
             ImGui::DragFloat("##X", &size_x, 0.0625f, 0.0f, 0.0f,
                              properties.barrier.size.x.is_different()
                                 ? "<different>"
-                                : "X:%.3f");
+                                : "X:%.3f") or
+            ImGui::IsItemActive();
 
          ImGui::SameLine(0, item_inner_spacing);
          ImGui::SetNextItemWidth(item_width_last);
@@ -7246,7 +7288,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
             ImGui::DragFloat("##Y", &size_y, 0.0625f, 0.0f, 0.0f,
                              properties.barrier.size.y.is_different()
                                 ? "<different>"
-                                : "Y:%.3f");
+                                : "Y:%.3f") or
+            ImGui::IsItemActive();
 
          ImGui::PopID();
 
@@ -7390,7 +7433,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                                    properties.planning_connection.dynamic_group.is_different()
                                       ? "<different>"
                                       : nullptr,
-                                   ImGuiSliderFlags_AlwaysClamp);
+                                   ImGuiSliderFlags_AlwaysClamp) or
+               ImGui::IsItemActive();
          }
 
          if (edited) {
@@ -7546,7 +7590,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Step Height", &step_height, 0.125f * 0.25f, 0.125f, 1.0f,
                               properties.block.step_height.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.block.step_height.count());
 
@@ -7631,7 +7676,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("First Step Offset", &first_step_offset, 0.125f, 0.0f, 0.0f,
                               properties.block.first_step_offset.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
 
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.block.first_step_offset.count());
@@ -7722,7 +7768,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                                  &min_segments, &max_segments,
                                  properties.block.segments.is_different()
                                     ? "<different>"
-                                    : nullptr)) {
+                                    : nullptr) or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.block.segments.count());
 
@@ -7920,9 +7967,9 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       if (are_flags_set(flags, multi_select_flags::has_block_texture_loops)) {
          if (float texture_loops = properties.block.texture_loops.value_or(1.0f);
              ImGui::DragFloat("Texture Loops", &texture_loops, 1.0f, 0.0f, 0.0f,
-                              properties.block.texture_loops.is_different()
-                                 ? "<different>"
-                                 : "%.3f")) {
+                              properties.block.texture_loops.is_different() ? "<different>"
+                                                                            : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.block.texture_loops.count());
 
@@ -8016,7 +8063,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Inner Radius", &inner_radius, 1.0f, 0.0f, 1e10f,
                               properties.block.ring.inner_radius.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.block.ring.inner_radius.count());
 
@@ -8164,7 +8212,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Bevel Amount", &amount, 0.0625f, 0.0f, 1e10f,
                               properties.block.beveled_box.amount.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.block.beveled_box.amount.count());
 
@@ -8445,7 +8494,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Crown Length", &crown_length, 0.5f, 0.0f, 1e10f,
                               properties.block.arch.crown_length.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.block.arch.crown_length.count());
 
@@ -8518,7 +8568,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Crown Height", &crown_height, 0.125f, 0.0f, 1e10f,
                               properties.block.arch.crown_height.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.block.arch.crown_height.count());
 
@@ -8591,7 +8642,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Curve Height", &curve_height, 0.5f, 0.0f, 1e10f,
                               properties.block.arch.curve_height.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.block.arch.curve_height.count());
 
@@ -8664,7 +8716,8 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
              ImGui::DragFloat("Span Length", &span_length, 0.5f, 0.0f, 1e10f,
                               properties.block.arch.span_length.is_different()
                                  ? "<different>"
-                                 : "%.3f")) {
+                                 : "%.3f") or
+             ImGui::IsItemActive()) {
             edits::bundle_vector edit_bundle;
             edit_bundle.reserve(properties.block.arch.span_length.count());
 
