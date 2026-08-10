@@ -1,0 +1,525 @@
+0.157
+
+0.156
+
+- Improved multi-select colour editors.
+
+- Fixed not being able set entity properties to their sentinel values in the multi-select editor.
+- Fixed renaming entities endlessly increasing their numeric suffix while the edit widget was active.
+- Fixed bug in logic for freeing leaf patch patch classes. 
+
+0.155
+
+- Fix large terrains exporting incorrectly.
+
+
+0.154
+
+- Added tree line editor for creating, removing and modifying tree lines with editing the .prp file. Find it by going View -> Tree Line Editor or by using the default hotkey of Ctrl + F9.
+- Added tree line rendering. Can be turned off (except for env map rendering) using the "Draw Tree Lines" setting. It should match the game's tree line placement very closely. With a key exception that when you have Border ODFs the ODF is picked randomly obivously and that randomness depends on all the other randomness that has happened before the game creates the tree lines. Not exactly viable to replicate from within the editor.
+- Added Leaf Patch support to the editor. ODFs with the `leafpatch` class label will now be shown as they would appear ingame. Selection for these objects is based on the bounding box of the the particles. Support for attached leaf patches is planned for a future release.
+
+- Made it so directional lights will only be used during rendering if they're one of the global lights.
+- Changed specular exponent to 32 to better match the game.
+- Global Light entries update when referenced Lights are renamed.
+- Increased the max value for the Rate control for Terrain Editor Height Raise/Lower to 100. (Note: You can also Ctrl+Click or Double Click the control to put in whatever value you would like.)
+- When placing entities the From Surface Rotation mode now responds to the terrain.
+
+- Fixed interaction between fog and transparent materials.
+- Fixed Flip flag causing .prp files to not load.
+- Fixed asset trees not being cleared when switching worlds. Leading to the same asset showing up multiple times in the Object Class Browser.
+- Fixed Ground Selection tool sometimes not working correctly for some objects.
+- Fixed transparent ghost objects and transparent entity group object previews not being sorted correctly.
+- Fixed multi select Position and Size widgets not having axis colour markers.
+
+
+0.153
+
+- Added World Brightness setting for increasing or decreasing the brightness of the world in WorldEdit's viewport.
+
+- The world will no longer be rendered in a linear color space in order to better match the stock game's renderer.
+
+- Changed multi-select renames to only apply the rename when finishing the edit.
+
+- Fixed Name Prefix not displaying "<different>" when selected entities have different name prefixes.
+- Fixed broken links table in animation group editor.
+- Fixed alpha cutout/hardedged transparency materials with texture scroll not scrolling the cutout.
+
+- Updated Dear ImGui to latest.
+
+0.152
+
+- Fixed created boundaries having the wrong point ordering.
+
+0.151
+
+- Added Auto Barriers option to Paint Terrain Objects. Effectively does From Object Bounds for each painted object that has collision.
+- Added terrain detail map rendering.
+- Added Terrain normal map (`TerrainBumpTexture` in the .sky file) rendering.
+
+- From Object Bounds for barriers now uses the world space convex hull of the collision bounding box. Resulting in more accurate barriers and *much* better handling of rotated objects.
+
+- Improved accuracy of editor (not munge) .msh transform handling in the editor. (Yes I know about the vehicle spawn arrow now pointing upwards. It looks like that ingame. I'll try sort out something special for that clas label in the future.)
+
+- Fixed turning off Align to Terrain in Paint Terrain Objects doing nothing.
+
+0.150
+
+- Added Paint Terrain Objects tool. Find it by going View -> Paint Terrain Objects. Some options for controlling the painting are provided and as a convenience the last 10 object pools are saved in WORLDNAME.WorldEdit alongside the World Configuration.
+
+0.149
+
+- Fixed Extend Terrain tool not extending the foliage map correctly.
+
+0.148
+
+- Added controls to the Animation Editor for selecting the preview group and object. You'll need to scroll down past the play controls to find them.
+- Added .prp file loading and saving. No direct editing yet (but if you delete a path a tree line depends on it'll also go, or if you rename the path the tree line will be updated as well).
+
+- Objects are now hidden automatically when being used in animation preview.
+
+- Fixed animation previews in the Animation Editor often using the incorrect group and incorrect object.
+
+0.147
+
+- Added optional fog rendering. Off by default for the regular viewport, always on for env map rendering. Can be turned on for the regular viewport using the Render Fog setting. Proper sky editing in the editor will come soon, hopefully.
+- Added optional Sound Stream and Sound Static Min Distance Divisor property visualizers. On by default. Turn off using the Show Region Min Distance Divisors setting and adjust it's colour with the Region Min Distance Divisor Outline setting.
+- Added Asset Load Errors viewer and notification for when errors have happened.
+
+- Updated the way assets are searched for. Assets are now selected in the following order World -> Common World -> Common -> Sides -> Other Folders. So if both Common and the loaded world have an asset with the same name the one in the active world's folder will be preferred.
+- Platform folders are now taken into consideration when searching for assets, there is no way to select the platform yet. So if you have `msh/fountain.msh` and `msh/PC/fountain.msh` then WorldEdit will use the latter like the munger would.
+
+- Updated Camera Active Controls hotkey set to have a high priority again.
+
+- Fixed terrain textures sometimes not reloading.
+
+- Lightning Bolt effect can now be added or removed independently of Lightning effect.
+- Changed axes colours to the common R->X, G->Y, B->Z order instead of ZE's R->X, B->Y, G->Z order.
+
+- Added Asset Libraries Debugger under the Developer menu. It's a tool made for me but might prove useful sometimes to others so (for now) I'm not bothering to add an #ifdef to remove it from release builds.
+
+0.146
+
+- Fixed terrain constant buffer layout being subtly broken. Leading to incorrect rendering of some terrain features (like the grid).
+
+0.145
+
+- Added optional visualizer for highlighting objects in sectors. Off by default. Controllable with the Highlight Sector Objects and Sector Object Highlight (for color) settings.
+- Added the ability to rename multiple entities at once in the Selection Editor. It works by letting you edit the common prefix of entities and then giving them a unique numeric suffix, so that unique entity names are preserved. Some entities require names and as a result an attempt to completely erase the name prefix will result in it being replaced with "Entity". However if only objects are selected the names of the objects will be erased instead.
+
+- Sectors, Hintnodes, Animation Groups and Animation Hierarchies now repsond when referenced Objects are renamed.
+- Portals now repsond when referenced Sectors are renamed.
+- Animation Groups now respond when referenced Animations are renamed.
+
+- Improved Entity Group handling of linked entities.
+- Improved Portal Sector selection UI.
+- Improved Hintnode Command Post selection UI.
+
+- Fixed WorldEdit crashing on Qualcomm GPUs. Shoutout to Cal for doing all the testing with this one.
+- Fixed Terrain Crop, Extend, Resize and Import Heightmap tools not marking foliage map as dirty for the GPU.
+- Fixed fully transparent texture being loaded as fully opaque. (Note: This is for WorldEdit's texture loader, not the builtin texture munger's loader which has never had this issue.)
+
+- Optimized terrain shader, making terrain potentially over twice as fast to draw now.
+- Updated Dear ImGui to v1.92.8
+
+0.144
+
+- Added "-lodcostdivisor" .msh.option support to builtin model munge which sets a divisor to divide the LOD triangle counts by in the written model. Making the game view the model as cheaper to draw than it really is. This is a replacement for model-edit's functionality and works in same way.
+- Added Drag-Drop support to animation key times in the Animation Editor. You can drag a key's time over another key and drop it over other keys or any of the various time sliders in the Animation Editor.
+- Added context menu for animation keys containing the following tools: Copy Time, Paste Time, Preview at Key (sets the playback preview time to this key) and Add Position Key at Time/Add Rotation Key at Time.
+- Added the ability to Ctrl, Shift and Alt click on Active Entities and Active Layers checkboxes. Ctrl-Clicking clears all check boxes of the column, Shift-Clicking sets all and Alt-Clicking toggles the selected layer/entity type and sets all other entries in the column to the opposite value of the layer/entity type. Or put another way Alt-Clicking either sets all but the clicked item or clears all but the clicked item.
+- Added Show Hint Node Radii setting. Off by default. Turn on to show the radii of hint nodes.
+- Added Show ODF Path Object Hover Tooltip setting. Off by default Turn on to add an "Asset Path" entry to the object hover tooltip.
+
+- Fixed Move Selection with Cursor mouse wheel rotate adding unnecessary extra undo steps.
+- Fixed Show Light Bounds setting not saving.
+- Fixed being able to add the root object of an animation hierarchy as a child of that animation hierarchy.
+
+
+- The New Key Time widgets in the Animation Editor now show as drag editors when the animation's runtime is 0.
+- Removed the ability to select the Foley FX region type. They're still "supported" by the editor and you could still get one by typing in the prefix manually but given that they don't work (https://discord.com/channels/392035895517249536/698865960844525569/1255087177264529418) and can cause crashing I've removed the footgun them being in the region type might create.
+
+
+0.143
+
+- Added builtin Model Munge. It is faster, has better errors/warnings, outputs (in theory) more optimized models and even has (optional) support for large texture coordinates. See the full docs here: https://github.com/PrismaticFlower/WorldEdit/blob/master/docs/user/Builtin%20Mungers/Model%20Munge.md
+- Added support for platform specific ODF properties. (i.e. "PS2:MaxHealth = 200.0")
+- Added "Use Builtin ModelMunge", "Use Builtin OdfMunge" and "Use Builtin TextureMunge" munge config options. Replaces "Use Builtin Munge Tools".
+- Added "Texture Quality" munge config option. Controls the quality of compressed textures when using WorldEdit's builtin texture munge. You can use it to trade off quality for munge speed or vice versa.
+- Added "Deploy Checkdate" munge config option. On by default. This speeds up deploying an addon when only some .lvl files have changed by comparing the last write date.
+- Added "Deploy Allow Hard Links" munge config option. Off by default. This can drastically speed up deploy times (testing on my SATA SSD showed a 14x improvement, 0.075s when on vs 1.058s when off) when deploying to the same drive and filesystem. It is off by default as it could cause issues with munging sounds and movies if the game is running and using the sound .lvls/movies at the same time. If you're aware of that though and can work around it then I reccomend turning it on in the Munge Config Editor as the speedup is well worth it.
+- Added "Ask for Confirmation Before Clean" setting. Off by default. When turned on WorldEdit will ask for confirmation before beginning a clean.
+- Added detection and workarounds to allow compatibility with vkd3d. I've not tested WorldEdit running on Proton but it now works with vkd3d on Windows which seems like a good first step.
+
+
+- Fixed builtin mungers munging files that had a platform variant, potentially preventing the platform variant file from being munged.
+- Fixed not being able to close World Configuration Editor window.
+- Fixed "Clear" button for ToolsFL\bin Path sometimes not triggering the prompt to find the modtools path.
+- Fixed being able to start a munge without resolving the Browse for Game Install popup.
+- Fixed the localization being merged the wrong way round while munging.
+- Fixed saved platform in munge config not being loaded.
+- Fixed WorldEdit's munge runner being unable to clean files marked as readonly.
+- Fixed MNDX chunk not being written to saved .msh files.
+- Fixed shadow map renderer sometimes culling objects incorrectly.
+- Fixed GPU device removal recovery code not always handling failure correctly.
+
+
+- The builtin texture munge now uses icbc and rgbcx libraries for texture compression. In theory providing higher quality compressed textures at a slight increase in munge times, though it still handilly beats the modtools' TextureMunge in speed. And speed can be gained back by changing the "Texture Quality" setting.
+- Remove display delay from Munge Warnings/Errors file tooltip.
+- Relaxed validation of .msh.options that take multiple parameters. (i.e. "-bump", "-keep", etc)
+- Small optimization to renderer frustum culling.
+
+0.142
+
+- Fixed builtin ODF munger including all tokens of a property in .req references for that property. This likely only affected CustomAnimationBank.
+
+- Loaded .msh files will now have their WGHT and ENVL chunks validated. Almost .msh.option options will be loaded and validated. This is part of work for a builtin model munger but gets released a bit earlier because of the above bugfix. 
+
+0.141
+
+- Fixed builtin ODF munger not add "config" .req references for ComboAnimationBank properties.
+- Fixed builtin ODF munger not removing trailing whitespace .req references.
+
+
+0.140
+
+- Added "World .lvl Output Path" property to the munge config. See documentation here: https://github.com/PrismaticFlower/WorldEdit/blob/master/docs/user/Munging.md#customizing-world-output-directory
+
+- Fixed builtin ODF munger including empty properties in the munged class.
+- Fixed builtin ODF munger not adding .req references for ClassParent
+- Fixed builtin ODF munger adding .req references for numeric properties. Behaviour should hopefully match OdfMunge now.
+- Fixed builtin texture munger not munging textures with out of date .tga.option files but in date .tga files.
+
+0.139
+
+- Added a builtin ODF munger. Find some very short documentation here: https://github.com/PrismaticFlower/WorldEdit/blob/master/docs/user/Builtin%20Mungers/ODF%20Munge.md
+
+- The world will now be saved when starting a munge when the world has unsaved changes.
+- Improved look of munge Warnings/Errors tables.
+
+- Fixed munges started through the main menu bar deploying to "GameData" instead of "GameData\Addon".
+- Fixed broken error handling for open .msh, .blocks and .texture files for writing.
+
+0.138
+
+- Added a builtin texture munger. It's way faster than `pc_TextureMunge`, supports all the documented options, supports DXT5/BC3 textures (which tend to look much nicer than DX3/BC2 textures) and even supports reading greyscale and run-length encoded .tga files. Find some short documentation here: https://github.com/PrismaticFlower/WorldEdit/blob/master/docs/user/Builtin%20Mungers/Texture%20Munge.md
+- Added "sRGB Aware Bake" option to Bake Terrain Lighting settings. When enabled terrain light baking will behave as it did in previous versions of WorldEdit. When off the colours from the terrain light baking will more closely match the results you would get from Zero Editor.
+
+- The munge runner now passes "-continue" to munge tools.
+- The munge runner now passes "noabort" to "-checkid" for SoundFLMunge.
+- Improved the logic for when WorldEdit tries to locate ToolsFL\bin. Which should reduce friction with using the munge runner.
+
+- Fixed munge platform not saving.
+- Fixed a regression from adding multithreading to the munge runner that caused a crash when trying to munge without Tools/FL bin set.
+
+0.137
+
+- Added new simple light visualizers. Made up of an icon (with sizes adjustable using the new Light Icon Size settings) and an optional bounds wireframe (controlled with the new "Show Light Bounds" setting). Regional lights always show their bounds.
+- Added the ability to use WorldEdit's munge runner from the commandline. Useful if you want to integrate it into deployment or publishing scripts. See here for docs: https://github.com/PrismaticFlower/WorldEdit/blob/master/docs/user/Munging.md#commandline
+
+- After picking an object for an Animation Group it will be added to the group if an animation has already been filled in.
+- Entities that aren't objects are no longer highlighted while using animation Pick Object tools.
+- Objects are always highlighted and selectable while using animation Pick Object tools.
+- Objects without a name are no longer highlighted while using animation Pick Object tools.
+- Enabled tree node lines for Object Class Browser directory tree.
+- Optimized memory usage of outline rendering for planning hubs, regions and arrows.
+
+- Fixed env maps being able to be saved without .tga extension.
+- Fixed being able to enter quotes in Game Install Path.
+- Fixed wording of a next to impossible to hit error. (It's one of those the OS can technically fail the call but in practise never will.)
+
+- Updated Dear ImGui font scale handling to use it's own DPI scale setting.
+
+0.136
+
+- Replaced additive region visualizers with wireframe visualizers. The colour can be controlled with the Region Outline setting. Turns out ZE had it right on this one. Though in the future I'd still like to add some kind of overlay to show it's bounds better.
+
+- Using Alt-Click on a gizmo to duplicate the selection will now preserve the selection's layer. Provided the selection is all in one layer.
+
+- Fixed Lights inside Entity Groups that exceeded that max visible count causing lights to not be setup properly.
+- Fixed hidden lights (either in a hidden layer or individually hidden) continuing to cast light on the world.
+- Fixed Entity Groups saving without ".eng" extension when not supplied and fixed being saved as "GROUP.eng.eng" when supplied.
+- Fixed cone lights inside Entity Groups having incorrect visualizers.
+
+
+0.135
+
+- Added persistent World Configuration. Saved next to the world as "{WORLD}.WorldEdit" and stores properties for the world specific to WorldEdit. Edit it by going View -> World Configuration Editor.
+- Added Save Lights References world property. This can be turned off to stop LightName being written to .wld/.lyr files.
+- Added Save Sky Reference world property. This can be turned off to stop SkyName being written to the .wld file.
+- Added Save in BF1 Format world property, mirroring what the global setting "Save World in BF1 Format" to do.
+- Added Save Effects world property, mirroring the opposite of what the global setting "Don't Save World Effects" used to do.
+- Added Blocks Mode world property, mirroring what the global setting "Blocks Mode" to do.
+
+- The settings "Save World in BF1 Format", "Don't Save World Effects" and "Blocks Mode" are now just for setting the defaults in world configurations.
+
+- Allowed editing munge platform in the munge config. While not enough for a good console mod workflow out of the box (you're on your own when it comes to deployment for instance) I've exposed it for completeness.
+- Worlds with missing terrain can now be loaded. Worlds that this happens to will have default terrain. A message will be printed too the output when this happens.
+
+0.134
+
+- Added tools to reorder terrain texture layers. You'll find Raise and Lower buttons in the editor for them and can also Drag-Drop layers in the picker widget.
+- Added Weight Map Power option to Import Texture Weight Map.
+- Added Branch Weights column to World Explorer for AI Planning Hubs.
+
+- Updated Floor Grid line scaling logic. WorldEdit no longer tries to keep line size consistent across grid sizes. This makes it easier to work with small (less than 2) grid sizes out of the box.
+
+- Replaced Don't Save World Game Modes and Save World Boundary in BF1 Format settings with unified Save World in BF1 Format setting.
+
+0.133
+
+- Added support for a builtin blocks munge tool to WorldEdit's munge runner. When blocks are munged using this they now support uncompressed UVs on PC (so UVs outside the [-16, 16) range). 
+- Added new "Blocks Mode" setting to control how blocks are munged. Options are "WorldEdit Munged" and "Saved to Layer" for existing functionality. Default is "Saved to Layer", changing to "WorldEdit Munged" will allow using the above builtin support to get access to uncompressed UVs.
+- Added column to World Explorer for planning connections' dynamic group.
+- Added basic multithreading support to WorldEdit's munge runner. On my PC this reduces the time for a full munge of the game's stock files (excluding sounds) to 48.268s down from 354.927s. Speed ups are not as dramatic for smaller munges but there is always a small one.
+- Added support for custom commands (and directories to clean) WorldEdit's munge runner.
+
+- Munge structured errors/warnings now have tooltips for Tool and File.
+- Deleting layers now unlinks entities as needed.
+- Make Munge Warnings and Errors table columns resizable.
+
+- Fixed not being able to add/remove sun flares.
+- Fixed deleted regions not correctly unlinking from objects.
+
+- Updated Dear ImGui to v1.92.5
+
+- Wrote up some docs for the munge runner, check it out here https://github.com/PrismaticFlower/WorldEdit/blob/master/docs/user/Munging.md
+
+
+0.132
+
+- Added new editor for when multiple entities are selected. Instead of each entity being displayed in a huge list now only the common set of properties for selected entities will be displayed and they can be edited for all selected entities at the same time.
+- Added World Effects Editor for editing the world.fx files entirely from within WorldEdit. Find it by going View -> World Effects Editor or using the default key F11. Tip For Console Modders: You can combine or split properties for each platform by right clicking on them. 
+
+- Water properties from world.fx files now support per-platform settings. Same tip as above for World Effects Editor.
+- Shadow regions without ambient colours set now display the global ambient colours in the property editors.
+- Improved initialization of region description when changing region type.
+- The Texture property on lights now use texture picker widgets.
+- The Environment Map property on shadow regions now use texture picker widgets.
+- The Global Environment Map property now uses a texture picker widget.
+- Changed the default values of wind effect properties and don't write wind effect if unsaved.
+- Removed default Precipitation GroundEffect value.
+
+- Fixed Min Distance Divisor in some sound regions not always being clamped correctly.
+- Fixed not being able to edit Texture Addressing mode for lights.
+- Fixed not being able to edit floating stairway block properties in the selection editor.
+- Fixed not being able to edit edit Building Dead Scale and Building Unbuilt Scale on damage regions.
+- Fixed being able to drag select blocks in layers that had selection disabled.
+- Fixed double-click select not filtering blocks by layer.
+- Fixed Dear ImGui error message on hotkeys screen when hovering Shift, Ctrl or Alt.
+- Fixed hintnode command post picker not skipping unnamed objects.
+- Fixed UI small texture previews sometimes causing textures to repeatedly load.
+
+0.131
+
+- Added support for reading and writing boundaries with custom shapes, such as Endor's. Better tools for editing and authoring boundaries will likely come in the future. The Size and Position editors for boundaries have been removed from the Selection Editor as the properties themselves nolonger exist in WorldEdit. Other selection tools like Move Selection continue to work as before.
+- Added support for holding Alt and clicking to place entities when using manual placement gizmos while creating entities.
+- Added support for double-clicking an entity to select all similar entities on screen. The time for a double click is taken from what you have it set to in Windows and can be disabled outright using the "Disable Double-click Select" setting.
+
+- When adding animation keys you can now manually input times greater than the animation's runtime to extend the runtime. So if you have an animation that takes 10 seconds and add a key with a time of 15 seconds the animation's runtime will be set to 15 seconds. Previously the control always clamped key times to the runtime.
+
+- Rotate Selection now works on Boundaries.
+- Ground Selection now works on Boundaries.
+
+- Fixed some blocks inside Entity Groups having incorrect materials.
+- Fixed being able to click to place entities while rotating the camera.
+
+
+0.130
+
+- Added Node List to selected paths.
+- Added tooltips for hovered entities, displaying basic information like the name, class name, AI flags, etc Can be turned off using the Hide Entity Hover Tooltips setting.
+
+- Fixed Box and Cylinder directional region lights being culled from light tiles incorrectly.
+
+- Settings will now only be saved to disk when changes were made.
+- Optimized GPU Profiler overhead when disabled (which for everyone but me and the curious will be always).
+
+0.129
+
+- When a path node is hovered/selected the path's connections will now be highlighted.
+- Lights inside Entity Groups will now cast light on the world while being placed.
+
+- Fixed cone light having incorrect bounding boxes.
+- Fixed Entity Group database not being reset when switching project/data_MOD folder.
+
+0.128
+
+- Added support for holding Alt and clicking to duplicate entities when using Move Selection, Rotate Selection, Rotate Selection Around Centre.
+- Added Pick Height tool for setting terrain height brushes. Use it by pressing the Pick button next to the height input.
+- Updated to Dear ImGui v1.92.4
+
+0.127
+
+- Added new texture pickers for terrain and water textures. The new ones are the same as the one blocks user and follow the same pattern as the object class picker.
+- Added Terrain Brush Color setting.
+- Added Water Brush Color setting.
+- Added Block Draw Grid Color setting.
+- When painting terrain colors the brush will now be coloured using the colour being painted.
+- When painting terrain foliage the brush will now be coloured using the foliage overlay colour. Can be turned off using the "Colorize Foliage Brush" setting.
+
+- Fixed ToolsFL/bin path not being loaded from saved munge configs.
+- Fixed Entity Creation tool hotkeys not correctly resetting the tools.
+
+
+0.126
+
+- Added Blocks tools. A complete (but simple) system for creating basic geometry (including terrain cutters) in editor. Find them (and their hotkeys) under the new Munge menu on the menu bar.
+- Added a built-in munge runner. For now it only supports BF2 (and no support for extra tools during munges, but that is coming) but it is a complete replacement for the regular munge.bat (including for load.lvls that you can't use in mod maps cause I'm a completionist apparently). Further improvements and speed ups will be coming. Find it (and it's hotkeys) under the new Munge menu on the menu bar.
+- Added Export Selection tool.
+- Optimized Terrain Light Baker start up time.
+- GPU dynamic buffer improvements, exhaustion is now much less likely to happen.
+
+
+Additionally due to improvements to support texture thumbnails cached thumbnails will be lost and need to be recreated. You do not need to do anything but if you're wondering why object class thumbnails aren't showing up as snappily then this is why.
+
+
+0.125
+
+- Added Save World Boundary in BF1 Format to enable working around boundary paths not munging correctly for BF1.
+- Added Imported Precision Steps to Import Terrain Heightmap tool.
+- Fixed the first game mode's .mrq file not being saved.
+- Fixed Entity Group bounding box grounding being broken for groups that had no objects in.
+- Fixed objects showing up as unloaded models in rendered env maps when objects were hidden in Active Entities.
+
+
+0.124
+
+- Added Resize Selected Entity tool. Find it by the usual selection editor tools or by using the default hotkey of "Shift + C".
+- Fixed depth clipping being disabled when rendering. Amongst other issues this could cause alpha cutouts/hardedged meshes to render incorrectly.
+
+0.123
+
+- Improvements to Bake Terrain Lighting. Light samples are now taken across the terrain's triangles, rather than naively around each grid point/vertex. The filtering of samples has been improved as well, taking into account a triangle's area and the distance of a sample to a grid point/vertex.
+- Marked WorldEdit as compatible with hardware Shadow Stacks and build with EH Continuation Metadata enabled.
+
+0.122
+
+- Added directory tree filter to Object Class Browser.
+- Added the ability to lock a selection rectangle's size by pressing Space while drag selecting. Allows you to draw the rectangle to the desired size and then position it to where you want it.
+
+
+- Added error handling for GPU hangs (different from removal). You'll now be asked if you want the editor to attempt to recover. GPU hangs typically indicate an app bug and recovery may not be possible. But in the unlikely event you hit one you can ask WorldEdit to try or just say no and it'll offer you the chance to save your world instead.
+- Added error handling for internal GPU driver errors. The editor is unable to recover from this but you are offered the chance to save your world.
+
+0.121
+
+- Move Selection with Cursor now supports snapping.
+- Added Toggle Cursor Alignment and Toggle Cursor Snapping hotkeys to Move Selection with Cursor.
+- Added Rotate Selection Forward and Rotate Selection Back hotkeys to Move Selection with Cursor.
+
+0.120
+
+- Added control over which bounding box points are snapped to when using Snapping.
+- Added Snapping point visualizers.
+- Entity Groups now support Snapping.
+
+- Added "Toggle Cursor Alignment" hotkey for entity creation. Default binding is "G".
+- Added "Toggle Cursor Snapping" hotkey for entity creation.  Default binding is "Alt + S".
+- Removed Align To property from entity creation and Change Alignment Mode hotkey. Replaced with separate Alignment and Snapping properties.
+
+- Changed default "Finish Path" hotkey to "Ctrl + G".
+
+- Fixed not being able to use grid alignment when placing portals.
+- Fixed "Cycle Object Class" hotkey not updating the object's class correctly.
+
+0.119
+
+- Added Bounds Padding property for From Object Bounds tool for Regions and Barriers. Barriers or regions will have their size padded by Bounds Padding when created using From Object Bounds.
+- Improved the flow of placing/drawing sectors. The sector base is now affected by cursor placement and the sector base and height are now updated (moved and extended) when placing new points. 
+- The Height control in the Creation Editor for Sectors can now be used to edit the height of an existing sector having points added to it.
+- Renamed Create window to New <entity>.
+- Improved the rotation gizmo handling. It no longer wraps from seemingly "random" positive angles to negative angles (and vice versa) and is also just a bit nicer to use.
+
+- Added text to New Path Node and New Sector Point (formerly "Create") to clarify when an existing path/sector is being added to verses when a new path/sector is being made.
+- Added position gizmos when the entity placement mode is Manual.
+
+- Deleting an object now clears the "ControlZone" property of vehicle spawns referencing that object.
+- Deleting an object now removes it from animation groups and hierarchies. A deleted object that was the root object for a hierarchy will delete the hierarchy  as well.
+- Deleting a light being used as a global light now clears the global light property.
+
+- Fixed mouse camera controls not working under Remote Desktop. They still don't work perfectly as Remote Desktop doesn't natively support relative mouse movement but they should be more than usable now.
+- Fixed some issues with the editor's message loop.
+- Fixed not being able drag Size control when creating box regions.
+
+0.118
+
+- Added Copy Camera Shot button to the Camera Controls window. This will copy a ` AddCameraShot(qw, qx, qy, qz, x, y, z);` call to the clipboard for the current camera view that you can paste into your map script.
+
+- Position/Translate gizmos are now drawn with more than just 3 lines.
+- Position/Translate gizmos now support snapping to grid when holding Ctrl.
+- Position/Translate gizmos now have controls for moving along the YZ, XZ, XY and view planes.
+- When using Move Selection with a Local Move Space the entire selection will be moved in the local space of the last selected entity with a rotation.
+- Rotation gizmos are now drawn with thicker rings. They now match their collision.
+- Rotation gizmos now support snapping to increments of 10 degrees when holding Ctrl.
+- Fixed gizmos stealing focus when rotating or panning the camera.
+- Fixed gizmos not being usable or visible with the orthographic camera.
+
+- The time used for scrolling textures now no longer increases when the editor loses focus. This prevents scrolling textures from jumping as the mouse goes over and out of the editor's window.
+- Fixed "world" .req references not being correctly updated when a layer was removed from or added to the "Common" game mode.
+
+0.117
+
+- Changed Hide Selection to Hide/Unhide Selection. Be aware that any custom binding for the Hide Selection hotkey will not be carried over to Hide/Unhide Selection.
+- Entity hidden status is now shown in the World Explorer.
+- Fixed a rare possible deadlock when recovering from GPU device removal. (Depending on where in the frame the recovery happened the Frame Latency Waitable Object would sometimes not be correctly waited on before rendering the frame. Which I've learned can cause deadlocks. GPU device recovery now always happens at the same point in a frame, preventing this from being an isssue.)
+- Fixed .eng files deleted while WorldEdit is running not being forgotten about by WorldEdit.
+
+0.116
+
+- The cursor used when placing entities now only "collides" with objects, terrain, sectors (only when placing portals) and the grid plane. 
+- Added "Don't Extrapolate New Animation Key Values" setting. When enabled new animation keys added after the final key won't have their values extrapolated from the previous keys.
+- Entity rotations of (0.0, 0.0, 0.0, 0.0) will be converted to (1.0, 0.0, 0.0, 0.0) when loading a world/entity group.
+- Fixed being able to input a rotation of (0.0, 0.0, 0.0, 0.0) when editing entities.
+- Fixed barriers with uneven corners (without the same height) being loaded with the incorrect size.
+- Fixed measurements behind the camera still having their text visible in some cases.
+- Animation New Key Time now resets to 0 when changing selected animations.
+
+0.115
+
+- Added Cut/Copy/Paste support entities. Unsurprisingly bound to Ctrl + X/Ctrl + C/Ctrl + V by default. Entities are copied into the clipboard as an entity group string, allowing you to do niche things like paste a selection into a Discord code block for someone else to copy and paste back into their world.
+- New lights now have a name by default.
+- Fixed Render Environment Map crashing.
+- Fixed regions created using From Object Bounds sometimes being off centre from the object.
+- Fixed barriers created using From Object Bounds having incorrect rotation and sometimes being off centre from the object.
+- Fixed an app hang caused by the water renderer code under the certain conditions.
+- Removed clamping from the Overlay Grid Line Width control when inputting a value manually. See Grid Size note from v0.114.
+
+0.114
+
+- Removed clamping from the Grid Size control when inputting a value manually. So dragging is still clamped but double or Ctrl clicking the control will let you put in any value you like.
+
+
+0.113
+
+- Added Entity Groups.
+- Drag Select can now select AI planning connections.
+
+0.112
+
+- WorldEdit now ignores case when creating unique entity names. (I.e it is no longer possible to place an object named both `Rocks1` and `rocks1`)
+- Fixed a (potential future) bug in one of the shaders.
+
+
+Entity Groups
+
+Entity Groups let you place down multiple entities at once. The entities do not need to be of the same type and all entity types are supported.
+
+There are three main tools for creating an Entity Group. They are currently all found under "File".
+
+- Save Selection as Entity Group
+   This saves the currently selection as an Entity Group. The Entity Group will be centred on `0, 0, 0` before saving.
+
+- Save World as Entity Group
+   This saves the entire world as an Entity Group.
+
+- Save Layer as Entity Group
+   This saves a specific layer as an Entity Group.
+
+Saved Entity Groups will have the uncreative extension `.eng`.
+
+An Entity Group can be placed by going into the "Create" menu (either through the main menu bar or using the spacebar shortcut) and using the "From Group" submenu. Known Entity Groups will be listed there and only need to be clicked on to be created.
+
+Entity Groups are found the same way as assets by looking through your mod's Data Folder. Unlike assets once loaded they will not be reloaded automatically in the background (but selecting the same group from the create menu will reload it). Both `.eng` and `.obg` (ZE object groups) will be looked for.
+
+Name uniqueness is enforced for entities placed into a world from an Entity Group but most entities that reference each other will have their references updated to stay linked correctly whenever an entity is forced to rename.
