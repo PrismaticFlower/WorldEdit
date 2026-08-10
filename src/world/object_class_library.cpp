@@ -216,8 +216,10 @@ struct object_class_library::impl {
             if (it->second == handle.index) {
                _class_index.erase(it);
 
-               _billboard_patch_class_pool[handle.index] = nullptr;
-               std::erase(_leaf_patch_class_index, handle.index);
+               if (handle.index < _billboard_patch_class_pool.size()) {
+                  _billboard_patch_class_pool[handle.index] = nullptr;
+                  std::erase(_leaf_patch_class_index, handle.index);
+               }
 
                break;
             }
