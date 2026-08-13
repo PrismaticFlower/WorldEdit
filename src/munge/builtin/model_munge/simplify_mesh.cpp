@@ -1,6 +1,5 @@
 #include "simplify_mesh.hpp"
 
-#include "math/plane_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
 #include <absl/container/flat_hash_map.h>
@@ -17,14 +16,9 @@ constexpr uint32 noindex = UINT32_MAX;
 // Max vertices for collision faces.
 constexpr uint32 max_face_vertices = 255;
 
-// Precision for the W plane in quantized_plane. The W component is stored to a
-// 32-bit int after being multiplied by this.
-constexpr float plane_w_precision = 1000.0f;
-
-// When determining if two consecutive edges are colinear we calculate the area
-// of the triangle they form, if it's less than this (which is about 1μm) they
-// considered colinear and are collapsed.
-constexpr float colinear_max_area = 0.000001f;
+// When determining if two consecutive edges are colinear we calculate the area of the triangle they form,
+// if it's less than this they are considered colinear and are collapsed.
+constexpr float colinear_max_area_sq = 0.000001f;
 
 struct hashable_f3 {
    hashable_f3(const float3& v)
@@ -53,32 +47,29 @@ private:
    uint32 _z = 0;
 };
 
-struct quantized_plane {
-   quantized_plane(float4 plane)
+struct quantized_normal {
+   quantized_normal(float3 normal)
    {
-      plane *= float4{32767.0f, 32767.0f, 32767.0f, plane_w_precision};
-      plane = clamp(plane, float4{-32767.0f, -32767.0f, -32767.0f, plane.w},
-                    float4{32767.0f, 32767.0f, 32767.0f, plane.w});
+      normal = clamp(normal * 32767.0f, float3{-32767.0f, -32767.0f, -32767.0f},
+                     float3{32767.0f, 32767.0f, 32767.0f});
 
-      _x = static_cast<int16>(plane.x >= 0.0f ? plane.x + 0.5f : plane.x - 0.5f);
-      _y = static_cast<int16>(plane.y >= 0.0f ? plane.y + 0.5f : plane.y - 0.5f);
-      _z = static_cast<int16>(plane.z >= 0.0f ? plane.z + 0.5f : plane.z - 0.5f);
-      _w = static_cast<int32>(plane.w);
+      _x = static_cast<int16>(normal.x >= 0.0f ? normal.x + 0.5f : normal.x - 0.5f);
+      _y = static_cast<int16>(normal.y >= 0.0f ? normal.y + 0.5f : normal.y - 0.5f);
+      _z = static_cast<int16>(normal.z >= 0.0f ? normal.z + 0.5f : normal.z - 0.5f);
    }
 
-   bool operator==(const quantized_plane&) const noexcept = default;
+   bool operator==(const quantized_normal&) const noexcept = default;
 
    template<typename H>
-   friend H AbslHashValue(H h, const quantized_plane& plane)
+   friend H AbslHashValue(H h, const quantized_normal& plane)
    {
-      return H::combine(std::move(h), plane._x, plane._y, plane._z, plane._w);
+      return H::combine(std::move(h), plane._x, plane._y, plane._z);
    }
 
 private:
    int16 _x = 0;
    int16 _y = 0;
    int16 _z = 0;
-   int32 _w = 0;
 };
 
 struct half_edge {
@@ -193,12 +184,9 @@ auto classify(const float3& v) -> std::array<int, 3>
 /// @return If the edges are colinear.
 bool are_edges_colinear(const float3& v0, const float3& v1, const float3& v2)
 {
-   constexpr float colinear_max_area_sq =
-      (colinear_max_area * colinear_max_area) * 2.0f;
-
    const float3 e0_x_e1 = cross(v1 - v0, v2 - v0);
 
-   return dot(e0_x_e1, e0_x_e1) <= colinear_max_area_sq;
+   return dot(e0_x_e1, e0_x_e1) <= colinear_max_area_sq * 2.0f;
 }
 
 /// @brief Check if a half edge loop forms a convex polygon. Only works for simple, coplanar polygons.
@@ -286,7 +274,7 @@ auto simplify_collision_mesh(std::span<const float3> vertices,
    std::vector<face_bin> face_bins;
    face_bins.reserve(triangles.size());
 
-   absl::flat_hash_map<quantized_plane, uint32> face_bin_map;
+   absl::flat_hash_map<quantized_normal, uint32> face_bin_map;
    face_bin_map.reserve(triangles.size());
 
    absl::flat_hash_map<std::array<uint16, 2>, uint32> twin_edge_map;
@@ -307,13 +295,14 @@ auto simplify_collision_mesh(std::span<const float3> vertices,
 
       if (normal == float3{}) continue; // Discard degenerate triangles.
 
-      const quantized_plane plane{make_plane_from_point(v0, normalize(normal))};
+      const quantized_normal quantized_normal{normalize(normal)};
 
       const uint32 face_index = static_cast<uint32>(faces.size());
 
       face& face = faces.emplace_back();
 
-      if (auto bin_it = face_bin_map.find(plane); bin_it != face_bin_map.end()) {
+      if (auto bin_it = face_bin_map.find(quantized_normal);
+          bin_it != face_bin_map.end()) {
          const uint32 bin_index = bin_it->second;
          face_bin& bin = face_bins[bin_index];
 
@@ -324,7 +313,7 @@ auto simplify_collision_mesh(std::span<const float3> vertices,
       else {
          const uint32 bin_index = static_cast<uint32>(face_bins.size());
 
-         face_bin_map.emplace(plane, bin_index);
+         face_bin_map.emplace(quantized_normal, bin_index);
          face_bins.push_back(face_bin{face_index, face_index});
       }
 
