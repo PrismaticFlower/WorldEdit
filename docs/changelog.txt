@@ -1,5 +1,6 @@
 0.158
 
+- Fixed GPU hang when turning off the Show flag for Blocks.
 - Fixed being able to set floor grid size to less than or equal to 0.0.
 
 0.157

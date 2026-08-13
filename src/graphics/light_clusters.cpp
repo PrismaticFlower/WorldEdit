@@ -778,11 +778,14 @@ void light_clusters::prepare_lights(
          for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
             _sun_shadow_billboard_patches_view[cascade_index] =
                billboard_patches.prepare_view(billboard_patches_draw::shadow,
-                                         frustum{_sun_shadow_cascades[cascade_index]
-                                                    .world_from_projection(),
-                                                 1.0f, 0.0f},
-                                         dynamic_buffer_allocator);
+                                              frustum{_sun_shadow_cascades[cascade_index]
+                                                         .world_from_projection(),
+                                                      1.0f, 0.0f},
+                                              dynamic_buffer_allocator);
          }
+      }
+      else {
+         _sun_shadow_billboard_patches_view = {};
       }
 
       if (active_entity_types.blocks) {
@@ -795,8 +798,12 @@ void light_clusters::prepare_lights(
                                    active_layers, dynamic_buffer_allocator);
          }
       }
+      else {
+         _sun_shadow_blocks_view = {};
+      }
    }
    else {
+      _sun_shadow_billboard_patches_view = {};
       _sun_shadow_blocks_view = {};
    }
 }
@@ -1003,9 +1010,9 @@ void light_clusters::draw_shadow_maps(
                   root_signatures, pipelines);
 
       billboard_patches.draw(billboard_patches_draw::shadow,
-                        _sun_shadow_billboard_patches_view[cascade_index], frame_cbv,
-                        _lights_constant_buffer_view, command_list,
-                        root_signatures, pipelines);
+                             _sun_shadow_billboard_patches_view[cascade_index],
+                             frame_cbv, _lights_constant_buffer_view,
+                             command_list, root_signatures, pipelines);
    }
 
    [[likely]] if (_device.supports_enhanced_barriers()) {
