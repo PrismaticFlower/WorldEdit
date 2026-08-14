@@ -41,6 +41,7 @@
 #include "world/blocks/utility/grounding.hpp"
 #include "world/blocks/utility/raycast.hpp"
 #include "world/io/export_selection.hpp"
+#include "world/io/export_terrain_map.hpp"
 #include "world/io/load.hpp"
 #include "world/io/load_entity_group.hpp"
 #include "world/io/save.hpp"
@@ -4475,6 +4476,106 @@ void world_edit::export_selection_with_picker() noexcept
       _stream->write(message);
 
       MessageBoxA(_window, message.data(), "Failed to export selection!", MB_OK);
+   }
+}
+
+void world_edit::export_terrain_height_map_with_picker() noexcept
+{
+   static constexpr GUID export_terrain_map_picker_guid =
+      {0xfd8b7df8, 0x7b9b, 0x478c, {0xbf, 0x94, 0x52, 0x79, 0x26, 0x17, 0x68, 0x36}};
+
+   auto path = utility::show_file_save_picker(
+      {.title = L"Export Terrain Height Map"s,
+       .ok_button_label = L"Save"s,
+       .forced_start_folder = _world_path,
+       .filters = {utility::file_picker_filter{.name = L"Portable Network Graphic (PNG)"s,
+                                               .filter = L"*.png"s}},
+       .picker_guid = export_terrain_map_picker_guid,
+       .window = _window,
+       .must_exist = true});
+
+   if (not path) return;
+   if (path->extension().empty()) *path += ".png";
+
+   try {
+      world::export_height_map(*path, _world);
+   }
+   catch (std::exception& e) {
+      auto message =
+         fmt::format("Failed to export height map!\n   Reason: \n{}",
+                     string::indent(2, e.what()));
+
+      _stream->write(message);
+
+      MessageBoxA(_window, message.data(), "Failed to height map!", MB_OK);
+   }
+}
+
+void world_edit::export_terrain_weight_map_with_picker(
+   const container::dynamic_array_2d<uint8>& map) noexcept
+{
+   static constexpr GUID export_terrain_map_picker_guid =
+      {0xfd8b7df8, 0x7b9b, 0x478c, {0xbf, 0x94, 0x52, 0x79, 0x26, 0x17, 0x68, 0x36}};
+
+   auto path = utility::show_file_save_picker(
+      {.title = L"Export Terrain Texture Weight Map"s,
+       .ok_button_label = L"Save"s,
+       .forced_start_folder = _world_path,
+       .filters = {utility::file_picker_filter{.name = L"Portable Network Graphic (PNG)"s,
+                                               .filter = L"*.png"s}},
+       .picker_guid = export_terrain_map_picker_guid,
+       .window = _window,
+       .must_exist = true});
+
+   if (not path) return;
+   if (path->extension().empty()) *path += ".png";
+
+   try {
+      world::export_texture_weight_map(*path, map);
+   }
+   catch (std::exception& e) {
+      auto message =
+         fmt::format("Failed to export texture weight map!\n   Reason: \n{}",
+                     string::indent(2, e.what()));
+
+      _stream->write(message);
+
+      MessageBoxA(_window, message.data(),
+                  "Failed to export texture weight map!", MB_OK);
+   }
+}
+
+void world_edit::export_terrain_color_map_with_picker(
+   const container::dynamic_array_2d<uint32>& map) noexcept
+{
+   static constexpr GUID export_terrain_map_picker_guid =
+      {0xfd8b7df8, 0x7b9b, 0x478c, {0xbf, 0x94, 0x52, 0x79, 0x26, 0x17, 0x68, 0x36}};
+
+   auto path = utility::show_file_save_picker(
+      {.title = L"Export Terrain Color Map"s,
+       .ok_button_label = L"Save"s,
+       .forced_start_folder = _world_path,
+       .filters = {utility::file_picker_filter{.name = L"Portable Network Graphic (PNG)"s,
+                                               .filter = L"*.png"s}},
+       .picker_guid = export_terrain_map_picker_guid,
+       .window = _window,
+       .must_exist = true});
+
+   if (not path) return;
+   if (path->extension().empty()) *path += ".png";
+
+   try {
+      world::export_color_map(*path, map);
+   }
+   catch (std::exception& e) {
+      auto message =
+         fmt::format("Failed to export texture weight map!\n   Reason: \n{}",
+                     string::indent(2, e.what()));
+
+      _stream->write(message);
+
+      MessageBoxA(_window, message.data(),
+                  "Failed to export texture weight map!", MB_OK);
    }
 }
 

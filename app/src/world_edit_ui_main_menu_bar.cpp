@@ -99,6 +99,35 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          if (ImGui::MenuItem("Export Selection")) _export_selection_open = true;
 
+         if (ImGui::BeginMenu("Export Terrain")) {
+            if (ImGui::MenuItem("Export Height Map")) {
+               export_terrain_height_map_with_picker();
+            }
+
+            if (ImGui::BeginMenu("Texture Weight Map")) {
+
+               for (std::size_t i = 0;
+                    i < _world.terrain.texture_weight_maps.size(); ++i) {
+                  if (ImGui::MenuItem(fmt::format("Texture Weight Map {}", i).c_str())) {
+                     export_terrain_weight_map_with_picker(
+                        _world.terrain.texture_weight_maps[i]);
+                  }
+               }
+
+               ImGui::EndMenu();
+            }
+
+            if (ImGui::MenuItem("Export Color Map")) {
+               export_terrain_color_map_with_picker(_world.terrain.color_map);
+            }
+
+            if (ImGui::MenuItem("Export Light Map")) {
+               export_terrain_color_map_with_picker(_world.terrain.light_map);
+            }
+
+            ImGui::EndMenu();
+         }
+
          ImGui::EndMenu();
       }
 

@@ -534,6 +534,14 @@ private:
 
    void export_selection_with_picker() noexcept;
 
+   void export_terrain_height_map_with_picker() noexcept;
+
+   void export_terrain_weight_map_with_picker(
+      const container::dynamic_array_2d<uint8>& map) noexcept;
+
+   void export_terrain_color_map_with_picker(
+      const container::dynamic_array_2d<uint32>& map) noexcept;
+
    void enumerate_project_worlds() noexcept;
 
    void try_start_munge() noexcept;

@@ -342,6 +342,7 @@
     <ClCompile Include="src\graphics\shaders\terrain_patch_gridVS.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_gradient_gridPS.cpp" />
     <ClCompile Include="src\munge\builtin\utility\bf_crc32.cpp" />
+    <ClCompile Include="src\world\io\export_terrain_map.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -741,6 +742,7 @@
     <ClInclude Include="src\graphics\billboard_patches.hpp" />
     <ClInclude Include="src\world\object_classes\billboard_patch_class.hpp" />
     <ClInclude Include="src\munge\builtin\utility\bf_crc32.hpp" />
+    <ClInclude Include="src\world\io\export_terrain_map.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

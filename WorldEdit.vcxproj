@@ -664,6 +664,7 @@
     <ClCompile Include="src\world\blocks\utility\snapping.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
     <ClCompile Include="src\world\io\export_selection.cpp" />
+    <ClCompile Include="src\world\io\export_terrain_map.cpp" />
     <ClCompile Include="src\world\io\layer_remap.cpp" />
     <ClCompile Include="src\world\io\load.cpp" />
     <ClCompile Include="src\world\io\load_blocks.cpp" />
@@ -1076,6 +1077,7 @@
     <ClInclude Include="src\world\id.hpp" />
     <ClInclude Include="src\world\game_mode_description.hpp" />
     <ClInclude Include="src\world\hintnode.hpp" />
+    <ClInclude Include="src\world\io\export_terrain_map.hpp" />
     <ClInclude Include="src\world\io\export_selection.hpp" />
     <ClInclude Include="src\world\io\layer_remap.hpp" />
     <ClInclude Include="src\world\io\load.hpp" />
