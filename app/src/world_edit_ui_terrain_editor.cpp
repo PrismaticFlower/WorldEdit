@@ -748,6 +748,43 @@ void world_edit::ui_show_terrain_editor() noexcept
          }
       }
 
+      if (_terrain_editor_config.edit_target == terrain_edit_target::color and
+          ImGui::CollapsingHeader("Color", ImGuiTreeNodeFlags_DefaultOpen)) {
+         terrain_editor_config::color_config& config = _terrain_editor_config.color;
+
+         const bool fill = ImGui::Button("Fill", {ImGui::CalcItemWidth(), 0.0f});
+
+         ImGui::ColorEdit3("Fill Color", &config.fill_color.x);
+
+         if (fill) {
+            container::dynamic_array_2d<uint32> color_map{_world.terrain.length,
+                                                          _world.terrain.length};
+
+            uint32 color = 0xff'00'00'00u;
+
+            color |= static_cast<uint32>(config.fill_color.x * 255.0f + 0.5f) << 16;
+            color |= static_cast<uint32>(config.fill_color.y * 255.0f + 0.5f) << 8;
+            color |= static_cast<uint32>(config.fill_color.z * 255.0f + 0.5f);
+
+            for (uint32& v : color_map) v = color;
+
+            _edit_stack_world.apply(edits::make_set_terrain_area_color_map(0, 0,
+                                                                           std::move(color_map)),
+                                    _edit_context);
+         }
+
+         if (ImGui::Button("Clear Light Map", {ImGui::CalcItemWidth(), 0.0f})) {
+            container::dynamic_array_2d<uint32> color_map{_world.terrain.length,
+                                                          _world.terrain.length};
+
+            for (uint32& v : color_map) v = 0xff'ff'ff'ffu;
+
+            _edit_stack_world.apply(edits::make_set_terrain_area_light_map(0, 0,
+                                                                           std::move(color_map)),
+                                    _edit_context);
+         }
+      }
+
       if (ImGui::CollapsingHeader("Terrain Settings")) {
          ImGui::BeginDisabled(_world.terrain.version != world::version::swbf2);
 

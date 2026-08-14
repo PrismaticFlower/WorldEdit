@@ -891,6 +891,8 @@ private:
          float3 brush_color = {1.0f, 1.0f, 1.0f};
          float brush_rate = 1.0f;
          float brush_speed = 0.5f;
+
+         float3 fill_color = {1.0f, 1.0f, 1.0f};
       } color;
 
       struct custom_brush {
