@@ -180,6 +180,8 @@ enum class terrain_texture_brush_mode : uint8 { paint, spray, erase, soften };
 
 enum class terrain_color_brush_mode : uint8 { paint, spray, blur };
 
+enum class terrain_color_target : uint8 { color, light };
+
 enum class terrain_brush_falloff : uint8 {
    none,
    cone,
@@ -888,6 +890,7 @@ private:
          terrain_color_brush_mode brush_mode = terrain_color_brush_mode::paint;
          terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
          terrain_brush_rotation brush_rotation = terrain_brush_rotation::r0;
+         terrain_color_target target = terrain_color_target::color;
          float3 brush_color = {1.0f, 1.0f, 1.0f};
          float brush_rate = 1.0f;
          float brush_speed = 0.5f;
