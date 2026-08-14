@@ -36,3 +36,19 @@ float4 main_depth_pass(int3 positionCS : POSITIONCS) : SV_Position
 
    return mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
 }
+
+vertex_grid main_grid(int4 positionCS : POSITIONCS)
+{
+   const float3 world_form_compress_mul = float3(terrain_constants.grid_size, terrain_constants.height_scale, terrain_constants.grid_size);
+   const float3 world_form_compress_add = float3(0, 0, terrain_constants.grid_size);
+   const float3 positionWS = world_form_compress_mul * positionCS.xyz + world_form_compress_add;
+   const float  rise = positionCS.w * terrain_constants.height_scale;
+
+   vertex_grid output;
+
+   output.positionWS = positionWS;
+   output.rise = rise;
+   output.positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));
+
+   return output;
+}

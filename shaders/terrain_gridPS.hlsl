@@ -2,12 +2,8 @@
 #include "frame_constants.hlsli"
 #include "terrain_common.hlsli"
 
-[earlydepthstencil]
-float4 main(vertex input) : SV_Target0
+float4 grid(float2 uv, float3 color)
 {
-   const float2 uv = input.positionWS.xz * terrain_constants.inv_grid_size;
-   const float3 color = terrain_constants.grid_line_color;
-   
    // Implmentation of Ben Golus's pristine grid shader: https://bgolus.medium.com/the-best-darn-grid-shader-yet-727f9278b9d8#1e7c
    // Minus the stuff for lines wider than 0.5 as we don't need it.
 
@@ -30,4 +26,22 @@ float4 main(vertex input) : SV_Target0
    if (alpha <= 1.0 / 512.0) discard;
    
    return float4(color * alpha, alpha);
+}
+
+[earlydepthstencil]
+float4 main(vertex_grid input) : SV_Target0
+{
+   const float2 uv = input.positionWS.xz * terrain_constants.inv_grid_size;
+   const float3 color = terrain_constants.grid_line_color;
+   
+   return grid(uv, color);
+}
+
+[earlydepthstencil]
+float4 main_gradient(vertex_grid input) : SV_Target0
+{
+   const float2 uv = input.positionWS.xz * terrain_constants.inv_grid_size;
+   const float3 color = lerp(0.0, terrain_constants.gradient_grid_line_color, saturate(input.rise * terrain_constants.inv_grid_size));
+   
+   return grid(uv, color);
 }

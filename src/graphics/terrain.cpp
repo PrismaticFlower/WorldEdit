@@ -24,9 +24,6 @@ struct alignas(16) terrain_constants {
    uint32 foliage_map;
    float inv_grid_size;
 
-   float3 grid_line_color;
-   float grid_line_width;
-
    std::array<std::array<uint32, 4>, terrain::texture_count / 4> diffuse_maps;
 
    std::array<float4, terrain::texture_count> texture_transform_x;
@@ -40,6 +37,12 @@ struct alignas(16) terrain_constants {
    float normal_map_scale;
    std::array<uint32, 3> pad;
 
+   float3 grid_line_color;
+   float grid_line_width;
+
+   float3 gradient_grid_line_color;
+   uint32 pad1;
+
    float3 foliage_color_0;
    float foliage_transparency;
    float3 foliage_color_1;
@@ -50,7 +53,7 @@ struct alignas(16) terrain_constants {
    uint32 foliage_color_3_pad;
 };
 
-static_assert(sizeof(terrain_constants) == 720);
+static_assert(sizeof(terrain_constants) == 736);
 
 constexpr auto generate_patch_indices()
 {
@@ -101,6 +104,8 @@ auto select_pipeline(const terrain_draw draw, pipeline_library& pipelines)
       return pipelines.terrain_normal.get();
    case terrain_draw::grid:
       return pipelines.terrain_grid.get();
+   case terrain_draw::gradient_grid:
+      return pipelines.terrain_gradient_grid.get();
    case terrain_draw::foliage_map:
       return pipelines.terrain_foliage_map.get();
    }
@@ -182,6 +187,9 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
       const uint32 start_patch_z = start_z / patch_length_grids;
       const uint32 end_patch_z = (end_z + patch_length_grids - 1u) / patch_length_grids;
 
+      const float normal_height_scale =
+         terrain.height_scale / (terrain.grid_scale * 2.0f);
+
       for (uint32 patch_z = start_patch_z; patch_z < end_patch_z; ++patch_z) {
          for (uint32 patch_x = start_patch_x; patch_x < end_patch_x; ++patch_x) {
             const uint32 patch_index = patch_z * _patches_length + patch_x;
@@ -191,11 +199,18 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
                _dirty_vertex_patches[patch_index] = true;
             }
 
+            if (not _dirty_vertex_attributes_patches[patch_index]) {
+               _vertex_attributes_patches_to_upload.push_back(patch_index);
+               _dirty_vertex_attributes_patches[patch_index] = true;
+            }
+
             int16 min_y = INT16_MAX;
             int16 max_y = INT16_MIN;
 
             std::array<terrain_vertex, patch_vertex_count>& vertices =
                _patch_vertices[patch_index];
+            std::array<terrain_vertex_attributes, patch_vertex_count>& attributes =
+               _patch_vertex_attributes[patch_index];
 
             for (uint32 local_z = 0; local_z < patch_length_points; ++local_z) {
                for (uint32 local_x = 0; local_x < patch_length_points; ++local_x) {
@@ -209,44 +224,6 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
                   min_y = std::min(height, min_y);
                   max_y = std::max(height, max_y);
 
-                  vertices[local_z * patch_length_points + local_x].positionCS =
-                     {static_cast<int16>(
-                         static_cast<int32>(patch_x * patch_length_grids + local_x) -
-                         half_terrain_length),
-                      height,
-                      static_cast<int16>(
-                         static_cast<int32>(patch_z * patch_length_grids + local_z) -
-                         half_terrain_length)};
-               }
-            }
-
-            _patches[patch_index].min_y = min_y;
-            _patches[patch_index].max_y = max_y;
-         }
-      }
-
-      const float normal_height_scale =
-         terrain.height_scale / (terrain.grid_scale * 2.0f);
-
-      for (uint32 patch_z = start_patch_z; patch_z < end_patch_z; ++patch_z) {
-         for (uint32 patch_x = start_patch_x; patch_x < end_patch_x; ++patch_x) {
-            const uint32 patch_index = patch_z * _patches_length + patch_x;
-
-            if (not _dirty_vertex_attributes_patches[patch_index]) {
-               _vertex_attributes_patches_to_upload.push_back(patch_index);
-               _dirty_vertex_attributes_patches[patch_index] = true;
-            }
-
-            std::array<terrain_vertex_attributes, patch_vertex_count>& vertices =
-               _patch_vertex_attributes[patch_index];
-
-            for (uint32 local_z = 0; local_z < patch_length_points; ++local_z) {
-               for (uint32 local_x = 0; local_x < patch_length_points; ++local_x) {
-                  const uint32 x = std::clamp(patch_x * patch_length_grids + local_x,
-                                              0u, terrain.length - 1u);
-                  const uint32 z = std::clamp(patch_z * patch_length_grids + local_z,
-                                              0u, terrain.length - 1u);
-
                   const uint32 x0 = x > 0 ? x - 1 : x;
                   const uint32 x1 = x < _terrain_length - 1 ? x + 1 : x;
                   const uint32 z0 = z > 0 ? z - 1 : z;
@@ -256,6 +233,22 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
                   const int16 height1x = terrain.height_map[{x1, z}];
                   const int16 height0z = terrain.height_map[{x, z0}];
                   const int16 height1z = terrain.height_map[{x, z1}];
+
+                  const int32 height0x_diff = std::abs(height0x - height);
+                  const int32 height1x_diff = std::abs(height1x - height);
+                  const int32 height0z_diff = std::abs(height0z - height);
+                  const int32 height1z_diff = std::abs(height1z - height);
+
+                  vertices[local_z * patch_length_points + local_x].positionCS =
+                     {static_cast<int16>(
+                         static_cast<int32>(patch_x * patch_length_grids + local_x) -
+                         half_terrain_length),
+                      height,
+                      static_cast<int16>(
+                         static_cast<int32>(patch_z * patch_length_grids + local_z) -
+                         half_terrain_length),
+                      static_cast<int16>(std::max({height0x_diff, height1x_diff,
+                                                   height0z_diff, height1z_diff}))};
 
                   const float3 normalWS = normalize(
                      float3{(height0x - height1x) * normal_height_scale, 1.0f,
@@ -284,12 +277,15 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
                      normal_snormWS.z -= 0.5f;
                   }
 
-                  vertices[local_z * patch_length_points + local_x]
+                  attributes[local_z * patch_length_points + local_x]
                      .normalWS = {static_cast<int8>(normal_snormWS.x),
                                   static_cast<int8>(normal_snormWS.y),
                                   static_cast<int8>(normal_snormWS.z)};
                }
             }
+
+            _patches[patch_index].min_y = min_y;
+            _patches[patch_index].max_y = max_y;
          }
       }
    }
@@ -520,11 +516,14 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
       .foliage_map = _foliage_map_srv.get().index,
 
       .inv_grid_size = 1.0f / _terrain_grid_size,
-      .grid_line_color = settings.terrain_grid_color,
-      .grid_line_width = settings.terrain_grid_line_width * (4.0f / _terrain_grid_size),
 
       .normal_map_scale =
          1.72f / _terrain_grid_size, // The scale in .sky files doesn't seem to do anything?
+
+      .grid_line_color = settings.terrain_grid_color,
+      .grid_line_width = settings.terrain_grid_line_width * (4.0f / _terrain_grid_size),
+
+      .gradient_grid_line_color = settings.terrain_gradient_grid_color,
 
       .foliage_color_0 = settings.foliage_overlay_layer0_color,
       .foliage_transparency = settings.foliage_overlay_transparency,

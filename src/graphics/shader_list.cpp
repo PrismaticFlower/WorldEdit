@@ -19,10 +19,12 @@ auto mesh_wireframe_GS_fallbackPS() noexcept -> shader_def;
 auto mesh_wireframe_GS_fallbackGS() noexcept -> shader_def;
 auto terrain_patchVS() noexcept -> shader_def;
 auto terrain_patch_depthVS() noexcept -> shader_def;
+auto terrain_patch_gridVS() noexcept -> shader_def;
 auto terrain_basicPS() noexcept -> shader_def;
 auto terrain_lightingPS() noexcept -> shader_def;
 auto terrain_normalPS() noexcept -> shader_def;
 auto terrain_gridPS() noexcept -> shader_def;
+auto terrain_gradient_gridPS() noexcept -> shader_def;
 auto terrain_foliage_mapPS() noexcept -> shader_def;
 auto terrain_cut_mesh_clearVS() noexcept -> shader_def;
 auto sky_meshVS() noexcept -> shader_def;
@@ -108,10 +110,12 @@ shaders::mesh_wireframe_GS_fallbackPS(),
 shaders::mesh_wireframe_GS_fallbackGS(),
 shaders::terrain_patchVS(),
 shaders::terrain_patch_depthVS(),
+shaders::terrain_patch_gridVS(),
 shaders::terrain_basicPS(),
 shaders::terrain_lightingPS(),
 shaders::terrain_normalPS(),
 shaders::terrain_gridPS(),
+shaders::terrain_gradient_gridPS(),
 shaders::terrain_foliage_mapPS(),
 shaders::terrain_cut_mesh_clearVS(),
 shaders::sky_meshVS(),

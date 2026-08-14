@@ -871,6 +871,7 @@ private:
          float brush_height = 0.0f;
          float brush_speed = 0.5f;
          float brush_rate = 2.5f;
+         bool show_height_gradient = false;
       } height;
 
       struct texture_config {

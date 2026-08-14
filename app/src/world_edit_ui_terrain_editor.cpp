@@ -568,6 +568,12 @@ void world_edit::ui_show_terrain_editor() noexcept
          }
       }
 
+      if (_terrain_editor_config.edit_target == terrain_edit_target::height and
+          ImGui::CollapsingHeader("Height Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+         ImGui::Checkbox("Vizualize Height Gradient",
+                         &_terrain_editor_config.height.show_height_gradient);
+      }
+
       if (_terrain_editor_config.edit_target == terrain_edit_target::texture and
           ImGui::CollapsingHeader("Textures", ImGuiTreeNodeFlags_DefaultOpen)) {
          terrain_editor_config::texture_config& config = _terrain_editor_config.texture;

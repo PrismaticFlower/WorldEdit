@@ -70,6 +70,7 @@ struct renderer_init {
 
 struct draw_frame_options {
    bool draw_tree_lines = false;
+   bool draw_terrain_gradient_grid = false;
    bool draw_terrain_grid = false;
    bool draw_overlay_grid = false;
    bool draw_foliage_map_overlay = false;

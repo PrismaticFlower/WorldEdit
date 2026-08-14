@@ -17,9 +17,6 @@ struct terrain_constants_ {
    uint foliage_map_index;
    float inv_grid_size;
 
-   float3 grid_line_color;
-   float grid_line_width;
-   
    uint4 diffuse_maps_index[TERRAIN_MAX_TEXTURES / 4];
 
    float3 texture_transform_x[TERRAIN_MAX_TEXTURES];
@@ -33,6 +30,12 @@ struct terrain_constants_ {
 
    float normal_map_scale;
    uint3 pad1;
+   
+   float3 grid_line_color;
+   float grid_line_width;
+   
+   float3 gradient_grid_line_color;
+   uint   pad2;
 
    float3 foliage_color_0;
    float foliage_transparency;
@@ -47,6 +50,13 @@ struct vertex {
    float  fog : FOG;
    float4 weights[TERRAIN_MAX_TEXTURES / 4] : TEXTUREWEIGHTS;
    float3 static_light : LIGHT;
+
+   float4 positionPS : SV_Position;
+};
+
+struct vertex_grid {
+   float3 positionWS : POSITIONWS;
+   float  rise : RISE;
 
    float4 positionPS : SV_Position;
 };

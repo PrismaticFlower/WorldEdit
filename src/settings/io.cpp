@@ -111,6 +111,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(selected_color);
             setting_entry(creation_color);
             setting_entry(terrain_grid_color);
+            setting_entry(terrain_gradient_grid_color);
             setting_entry(terrain_grid_line_width);
             setting_entry(terrain_brush_color);
             setting_entry(foliage_overlay_layer0_color);
@@ -245,6 +246,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(selected_color));
       write(file, name_value(creation_color));
       write(file, name_value(terrain_grid_color));
+      write(file, name_value(terrain_gradient_grid_color));
       write(file, name_value(terrain_grid_line_width));
       write(file, name_value(terrain_brush_color));
       write(file, name_value(foliage_overlay_layer0_color));

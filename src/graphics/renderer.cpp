@@ -600,7 +600,13 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                     _root_signatures, _pipelines);
    }
 
-   if (frame_options.draw_terrain_grid) {
+   if (frame_options.draw_terrain_gradient_grid) {
+      _terrain.draw(terrain_draw::gradient_grid, view_frustum,
+                    _terrain_cut_list, _camera_constant_buffer_view,
+                    _light_clusters.lights_constant_buffer_view(), command_list,
+                    _root_signatures, _pipelines);
+   }
+   else if (frame_options.draw_terrain_grid) {
       _terrain.draw(terrain_draw::grid, view_frustum, _terrain_cut_list,
                     _camera_constant_buffer_view,
                     _light_clusters.lights_constant_buffer_view(), command_list,

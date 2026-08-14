@@ -63,6 +63,8 @@ struct graphics {
 
    float3 terrain_grid_color = {0.0f, 0.0f, 0.0f};
 
+   float3 terrain_gradient_grid_color = {1.0f, 0.0f, 0.0f};
+
    float3 terrain_brush_color = {1.0f, 1.0f, 1.0f};
 
    float3 foliage_overlay_layer0_color = {0.0f, 0.8f, 0.0f};

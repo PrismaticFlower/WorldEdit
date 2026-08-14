@@ -23,10 +23,12 @@ mesh_wireframe_GS_fallbackGS
  
 terrain_patchVS
 terrain_patch_depthVS .entrypoint = main_depth_pass .file = terrain_patchVS.hlsl
+terrain_patch_gridVS .entrypoint = main_grid .file = terrain_patchVS.hlsl
 terrain_basicPS
 terrain_lightingPS
 terrain_normalPS
 terrain_gridPS
+terrain_gradient_gridPS .entrypoint = main_gradient .file = terrain_gridPS.hlsl
 terrain_foliage_mapPS
 
 terrain_cut_mesh_clearVS

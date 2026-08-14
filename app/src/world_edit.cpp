@@ -257,6 +257,11 @@ void world_edit::update()
                             {
                                .draw_tree_lines = _tree_line_editor_open or
                                                   _settings.graphics.draw_tree_lines,
+                               .draw_terrain_gradient_grid =
+                                  _terrain_edit_tool == terrain_edit_tool::editor and
+                                  _terrain_editor_config.edit_target ==
+                                     terrain_edit_target::height and
+                                  _terrain_editor_config.height.show_height_gradient,
                                .draw_terrain_grid = _draw_terrain_grid,
                                .draw_overlay_grid = _draw_overlay_grid,
                                .draw_foliage_map_overlay =

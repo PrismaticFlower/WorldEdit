@@ -48,7 +48,13 @@ struct terrain_cut {
    uint32 start_vertex = 0;
 };
 
-enum class terrain_draw { depth_prepass, main, grid, foliage_map };
+enum class terrain_draw {
+   depth_prepass,
+   main,
+   grid,
+   gradient_grid,
+   foliage_map,
+};
 
 class terrain {
 public:
