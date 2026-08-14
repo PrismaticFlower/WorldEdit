@@ -4,7 +4,9 @@
 #include "edits/set_terrain.hpp"
 #include "edits/set_terrain_area.hpp"
 #include "edits/set_value.hpp"
+
 #include "utility/file_pickers.hpp"
+
 #include "world/utility/load_terrain_map.hpp"
 
 #include "imgui.h"
@@ -174,6 +176,7 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
 
             for (uint8& weight : terrain.texture_weight_maps[0]) weight = 0xff;
             for (uint32& color : terrain.color_map) color = 0xff'ff'ff'ffu;
+            for (uint32& color : terrain.light_map) color = 0xff'ff'ff'ffu;
 
             _edit_stack_world.apply(edits::make_set_terrain(std::move(terrain)),
                                     _edit_context);
