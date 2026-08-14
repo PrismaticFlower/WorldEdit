@@ -5,6 +5,8 @@
 - Fixed GPU hang when turning off the Show flag for Blocks.
 - Fixed being able to set floor grid size to less than or equal to 0.0.
 
+- Reverted v0.151 editor transform handling. It seems to be causing more issues than it's worth for now without also supporting animations in the editor.
+
 0.157
 
 - Fixed some collision mesh topologies having colinear edges after simplification by reducing threshold for collapsing colinear vertices when using the builtin model munger. This fixes bes1_bldg_platform_sml.msh having a hole in it's collision mesh https://discord.com/channels/392035895517249536/1528561203876728862/1530641577259700385

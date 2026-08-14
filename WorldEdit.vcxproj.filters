@@ -318,7 +318,6 @@
     <ClCompile Include="src\munge\builtin\model_munge\simplify_mesh.cpp" />
     <ClCompile Include="src\munge\builtin\model_munge\build_shadow_segments.cpp" />
     <ClCompile Include="src\munge\builtin\model_munge\triangulate_polygon.cpp" />
-    <ClCompile Include="src\assets\msh\bf_crc32.cpp" />
     <ClCompile Include="src\munge\builtin\executor.cpp" />
     <ClCompile Include="src\allocators\temp_buffer_allocator.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_patch_depthVS.cpp" />
@@ -342,6 +341,7 @@
     <ClCompile Include="src\graphics\shaders\billboard_patch_depth_cutoutPS.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_patch_gridVS.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_gradient_gridPS.cpp" />
+    <ClCompile Include="src\munge\builtin\utility\bf_crc32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -722,7 +722,6 @@
     <ClInclude Include="src\munge\builtin\model_munge\simplify_mesh.hpp" />
     <ClInclude Include="src\munge\builtin\model_munge\build_shadow_segments.hpp" />
     <ClInclude Include="src\munge\builtin\model_munge\triangulate_polygon.hpp" />
-    <ClInclude Include="src\assets\msh\bf_crc32.hpp" />
     <ClInclude Include="src\munge\builtin\executor.hpp" />
     <ClInclude Include="src\allocators\temp_buffer_allocator.hpp" />
     <ClInclude Include="src\edits\delete_vector_entry.hpp" />
@@ -741,6 +740,7 @@
     <ClInclude Include="src\world\object_classes\leaf_patch_class.hpp" />
     <ClInclude Include="src\graphics\billboard_patches.hpp" />
     <ClInclude Include="src\world\object_classes\billboard_patch_class.hpp" />
+    <ClInclude Include="src\munge\builtin\utility\bf_crc32.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
