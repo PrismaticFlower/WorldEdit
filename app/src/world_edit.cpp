@@ -1797,6 +1797,9 @@ void world_edit::place_creation_entity() noexcept
          new_hub.name = world::create_unique_name(_world.planning_hubs, new_hub.name);
          new_hub.id = _world.next_id.planning_hubs.aquire();
 
+         const world::planning_hub_id last_hub_id =
+            _last_created_entities.last_planning_hub;
+
          _last_created_entities.last_planning_hub = new_hub.id;
 
          if (_world.planning_hubs.size() == _world.planning_hubs.max_size()) {
@@ -1814,6 +1817,32 @@ void world_edit::place_creation_entity() noexcept
                                          world::create_unique_name(_world.planning_hubs,
                                                                    hub.name)),
                    _edit_context, {.transparent = true});
+
+         if (_entity_creation_config.auto_connect_hubs) {
+            const world::planning_hub* last_hub =
+               world::find_entity(_world.planning_hubs, last_hub_id);
+
+            if (last_hub and _world.planning_connections.size() <
+                                _world.planning_connections.max_size()) {
+               const uint32 last_hub_index =
+                  static_cast<uint32>(last_hub - _world.planning_hubs.data());
+
+               _edit_stack_world
+                  .apply(edits::make_insert_entity(world::planning_connection{
+                            .name = world::create_unique_name(_world.planning_connections,
+                                                              "Connection"),
+                            .start_hub_index = last_hub_index,
+                            .end_hub_index =
+                               static_cast<uint32>(_world.planning_hubs.size() - 1),
+                            .flags = _entity_creation_config.auto_connect_flags,
+                            .id = _world.next_id.planning_connections.aquire(),
+                         }),
+                         _edit_context);
+
+               _last_created_entities.last_planning_connection =
+                  _world.planning_connections.back().id;
+            }
+         }
 
          _entity_creation_context.hub_sizing_started = false;
       }

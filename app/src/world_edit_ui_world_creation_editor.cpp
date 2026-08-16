@@ -3620,6 +3620,27 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
+      ImGui::Checkbox("Auto-Connect Placed Hubs",
+                      &_entity_creation_config.auto_connect_hubs);
+
+      if (_entity_creation_config.auto_connect_hubs) {
+         const std::array<ImGui::ExtEditFlag, 6> flag_descs = {
+            {{"Soldier", static_cast<uint32>(world::ai_path_flags::soldier)},
+             {"Hover", static_cast<uint32>(world::ai_path_flags::hover)},
+             {"Small", static_cast<uint32>(world::ai_path_flags::small)},
+             {"Medium", static_cast<uint32>(world::ai_path_flags::medium)},
+             {"Huge", static_cast<uint32>(world::ai_path_flags::huge)},
+             {"Flyer", static_cast<uint32>(world::ai_path_flags::flyer)}}};
+
+         uint32 flags =
+            static_cast<uint32>(_entity_creation_config.auto_connect_flags);
+
+         if (ImGui::EditFlags("Auto-Connect Flags", &flags, flag_descs)) {
+            _entity_creation_config.auto_connect_flags =
+               static_cast<world::ai_path_flags>(flags);
+         }
+      }
+
       traits = {
          .has_placement_rotation = false,
          .has_point_at = false,

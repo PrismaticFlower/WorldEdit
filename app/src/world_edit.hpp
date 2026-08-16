@@ -806,11 +806,14 @@ private:
       bool command_post_auto_place_meta_entities = true;
       bool auto_fill_sector = true;
       bool auto_add_object_to_sectors = true;
+      bool auto_connect_hubs = false;
       bool placement_cursor_align = false;
       bool placement_cursor_snapping = false;
       bool snap_to_corners = true;
       bool snap_to_edge_midpoints = true;
       bool snap_to_face_midpoints = true;
+
+      world::ai_path_flags auto_connect_flags = world::ai_path_flags::all;
 
       float command_post_capture_radius = 8.0f;
       float command_post_control_radius = 16.0f;

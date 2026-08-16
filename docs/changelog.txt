@@ -1,5 +1,8 @@
 0.159
 
+- Added Auto-Connect Placed Hubs option when placing AI planning hubs.
+
+
 - Fixed collapsing the Resize Entity window making the tool permanently unusable.
 
 0.158
