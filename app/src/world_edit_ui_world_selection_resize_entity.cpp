@@ -26,13 +26,14 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
                                         std::numeric_limits<float>::max()});
 
    bool open = _selection_edit_tool == selection_edit_tool::resize_entity;
-   bool resizable_entity = false;
 
    if (ImGui::Begin("Resize Entity", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
       ImGui::TextWrapped(
          "Resize any selected entities. Only lights, regions, "
          "portals, barriers, AI planning hubs, boundaries and blocks"
          "support resizing.");
+
+      bool resizable_entity = false;
 
       for (const world::selected_entity& selected : _interaction_targets.selection) {
          if (selected.is<world::light_id>()) {
@@ -915,9 +916,11 @@ void world_edit::ui_show_world_selection_resize_entity() noexcept
             resizable_entity = true;
          }
       }
+
+      if (not resizable_entity) open = false;
    }
 
-   if (not open or not resizable_entity) {
+   if (not open) {
       _edit_stack_world.close_last();
       _selection_edit_tool = selection_edit_tool::none;
    }

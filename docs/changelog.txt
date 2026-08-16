@@ -1,5 +1,7 @@
 0.159
 
+- Fixed collapsing the Resize Entity window making the tool permanently unusable.
+
 0.158
 
 - Added Vizualize Height Gradient option to the terrain editor. It should solve yje same problem as ZE's height visualizer even though it works in a different way. It's likely hard to miss but you'll find it under the new Height Settings header (names and locations for quick settings is hard). You can customize the colour of the overlaid grid with the "Terrain Gradient Grid Color" setting.
