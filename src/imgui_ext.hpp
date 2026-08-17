@@ -65,4 +65,12 @@ bool CheckboxTristate(const char* label, bool* value, bool indeterminate);
 
 void SetNextItemAxisMarker(ExtAxis axis);
 
+bool ItemCopyPaste(we::float2* v, float v_min = 0.0f, float v_max = 0.0f);
+
+bool ItemCopyPaste(we::float3* v, float v_min = 0.0f, float v_max = 0.0f);
+
+bool ItemCopyPaste(we::float4* v, float v_min = 0.0f, float v_max = 0.0f);
+
+bool ItemCopyPaste(we::quaternion* v);
+
 }

@@ -3462,7 +3462,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       ImGui::PushID("Position");
       ImGui::SetNextItemWidth(item_width_one);
       ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::X);
-      const bool x_edited =
+      bool x_edited =
          ImGui::DragFloat("##X", &position_x, 1.0f, 0.0f, 0.0f,
                           properties.position.x.is_different() ? "<different>"
                                                                : "X:%.3f") or
@@ -3471,7 +3471,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       ImGui::SameLine(0, item_inner_spacing);
       ImGui::SetNextItemWidth(item_width_one);
       ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::Y);
-      const bool y_edited =
+      bool y_edited =
          ImGui::DragFloat("##Y", &position_y, 1.0f, 0.0f, 0.0f,
                           properties.position.y.is_different() ? "<different>"
                                                                : "Y:%.3f") or
@@ -3480,7 +3480,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       ImGui::SameLine(0, item_inner_spacing);
       ImGui::SetNextItemWidth(item_width_last);
       ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::Z);
-      const bool z_edited =
+      bool z_edited =
          ImGui::DragFloat("##Z", &position_z, 1.0f, 0.0f, 0.0f,
                           properties.position.z.is_different() ? "<different>"
                                                                : "Z:%.3f") or
@@ -3492,6 +3492,17 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       ImGui::TextUnformatted("Position");
 
       ImGui::EndGroup();
+
+      if (float3 position = {position_x, position_y, position_z};
+          ImGui::ItemCopyPaste(&position)) {
+         position_x = position.x;
+         position_y = position.y;
+         position_z = position.z;
+
+         x_edited = true;
+         y_edited = true;
+         z_edited = true;
+      }
 
       if (x_edited or y_edited or z_edited) {
          edits::bundle_vector edit_bundle;
@@ -3759,7 +3770,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       ImGui::PushID("BoxSize");
       ImGui::SetNextItemWidth(item_width_one);
       ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::X);
-      const bool x_edited =
+      bool x_edited =
          ImGui::DragFloat("##X", &size_x, 0.125f, 0.0f, 1e10f,
                           properties.box_size.x.is_different() ? "<different>"
                                                                : "X:%.3f") or
@@ -3768,7 +3779,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       ImGui::SameLine(0, item_inner_spacing);
       ImGui::SetNextItemWidth(item_width_one);
       ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::Y);
-      const bool y_edited =
+      bool y_edited =
          ImGui::DragFloat("##Y", &size_y, 0.125f, 0.0f, 1e10f,
                           properties.box_size.y.is_different() ? "<different>"
                                                                : "Y:%.3f") or
@@ -3777,7 +3788,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       ImGui::SameLine(0, item_inner_spacing);
       ImGui::SetNextItemWidth(item_width_last);
       ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::Z);
-      const bool z_edited =
+      bool z_edited =
          ImGui::DragFloat("##Z", &size_z, 0.125f, 0.0f, 1e10f,
                           properties.box_size.z.is_different() ? "<different>"
                                                                : "Z:%.3f") or
@@ -3789,6 +3800,16 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
       ImGui::TextUnformatted("Size");
 
       ImGui::EndGroup();
+
+      if (float3 size = {size_x, size_y, size_z}; ImGui::ItemCopyPaste(&size)) {
+         size_x = size.x;
+         size_y = size.y;
+         size_z = size.z;
+
+         x_edited = true;
+         y_edited = true;
+         z_edited = true;
+      }
 
       if (x_edited or y_edited or z_edited) {
          edits::bundle_vector edit_bundle;
@@ -7405,22 +7426,20 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          ImGui::PushID("SizeXZ");
          ImGui::SetNextItemWidth(item_width_one);
          ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::X);
-         const bool x_edited =
-            ImGui::DragFloat("##X", &size_x, 0.0625f, 0.0f, 0.0f,
-                             properties.barrier.size.x.is_different()
-                                ? "<different>"
-                                : "X:%.3f") or
-            ImGui::IsItemActive();
+         bool x_edited = ImGui::DragFloat("##X", &size_x, 0.0625f, 0.0f, 0.0f,
+                                          properties.barrier.size.x.is_different()
+                                             ? "<different>"
+                                             : "X:%.3f") or
+                         ImGui::IsItemActive();
 
          ImGui::SameLine(0, item_inner_spacing);
          ImGui::SetNextItemWidth(item_width_last);
          ImGui::SetNextItemAxisMarker(ImGui::ExtAxis::Z);
-         const bool y_edited =
-            ImGui::DragFloat("##Y", &size_y, 0.0625f, 0.0f, 0.0f,
-                             properties.barrier.size.y.is_different()
-                                ? "<different>"
-                                : "Y:%.3f") or
-            ImGui::IsItemActive();
+         bool y_edited = ImGui::DragFloat("##Y", &size_y, 0.0625f, 0.0f, 0.0f,
+                                          properties.barrier.size.y.is_different()
+                                             ? "<different>"
+                                             : "Y:%.3f") or
+                         ImGui::IsItemActive();
 
          ImGui::PopID();
 
@@ -7428,6 +7447,14 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
          ImGui::TextUnformatted("Size");
 
          ImGui::EndGroup();
+
+         if (float2 size = {size_x, size_y}; ImGui::ItemCopyPaste(&size)) {
+            size_x = size.x;
+            size_y = size.y;
+
+            x_edited = true;
+            y_edited = true;
+         }
 
          if (x_edited or y_edited) {
             edits::bundle_vector edit_bundle;

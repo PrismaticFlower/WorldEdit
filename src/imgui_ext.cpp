@@ -4,9 +4,14 @@
 #include "utility/string_ops.hpp"
 
 #include <cmath>
+#include <cstdio>
 #include <optional>
 
+#include <fmt/format.h>
+
 #include <imgui_internal.h> // ImGuiWindow, GetCurrentWindow, BringWindowToDisplayFront, ImGuiItemFlags_MixedValue, SetNextItemColorMarker
+
+using namespace we::string;
 
 namespace ImGui {
 
@@ -68,8 +73,7 @@ bool DragFloat2(const char* label, we::float2* v, float v_speed, float v_min,
 
    PopID();
 
-   auto label_text =
-      we::string::split_first_of_exclusive(std::string_view{label}, "##");
+   auto label_text = split_first_of_exclusive(std::string_view{label}, "##");
 
    if (not label_text[0].empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
@@ -77,6 +81,8 @@ bool DragFloat2(const char* label, we::float2* v, float v_speed, float v_min,
    }
 
    EndGroup();
+
+   value_changed |= ItemCopyPaste(v, v_min, v_max);
 
    return value_changed;
 }
@@ -103,8 +109,7 @@ bool DragFloat2XZ(const char* label, we::float2* v, float v_speed, float v_min,
 
    PopID();
 
-   auto label_text =
-      we::string::split_first_of_exclusive(std::string_view{label}, "##");
+   auto label_text = split_first_of_exclusive(std::string_view{label}, "##");
 
    if (not label_text[0].empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
@@ -112,6 +117,8 @@ bool DragFloat2XZ(const char* label, we::float2* v, float v_speed, float v_min,
    }
 
    EndGroup();
+
+   value_changed |= ItemCopyPaste(v, v_min, v_max);
 
    return value_changed;
 }
@@ -143,8 +150,7 @@ bool DragFloat3(const char* label, we::float3* v, float v_speed, float v_min,
 
    PopID();
 
-   auto label_text =
-      we::string::split_first_of_exclusive(std::string_view{label}, "##");
+   auto label_text = split_first_of_exclusive(std::string_view{label}, "##");
 
    if (not label_text[0].empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
@@ -152,6 +158,8 @@ bool DragFloat3(const char* label, we::float3* v, float v_speed, float v_min,
    }
 
    EndGroup();
+
+   value_changed |= ItemCopyPaste(v, v_min, v_max);
 
    return value_changed;
 }
@@ -188,8 +196,7 @@ bool DragFloat4(const char* label, we::float4* v, float v_speed, float v_min,
 
    PopID();
 
-   auto label_text =
-      we::string::split_first_of_exclusive(std::string_view{label}, "##");
+   auto label_text = split_first_of_exclusive(std::string_view{label}, "##");
 
    if (not label_text[0].empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
@@ -197,6 +204,8 @@ bool DragFloat4(const char* label, we::float4* v, float v_speed, float v_min,
    }
 
    EndGroup();
+
+   value_changed |= ItemCopyPaste(v, v_min, v_max);
 
    return value_changed;
 }
@@ -237,8 +246,7 @@ bool DragQuat(const char* label, we::quaternion* v, float v_speed,
 
    PopID();
 
-   auto label_text =
-      we::string::split_first_of_exclusive(std::string_view{label}, "##");
+   auto label_text = split_first_of_exclusive(std::string_view{label}, "##");
 
    if (not label_text[0].empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
@@ -255,6 +263,8 @@ bool DragQuat(const char* label, we::quaternion* v, float v_speed,
          *v = {1.0f, 0.0f, 0.0f, 0.0f};
       }
    }
+
+   value_changed |= ItemCopyPaste(v);
 
    return value_changed;
 }
@@ -357,8 +367,7 @@ bool InputTextWithClose(const char* label, absl::InlinedVector<char, 256>* buffe
 
    *close_button = Button("X", {close_width, 0.0f});
 
-   auto label_text =
-      we::string::split_first_of_exclusive(std::string_view{label}, "##");
+   auto label_text = split_first_of_exclusive(std::string_view{label}, "##");
 
    if (not label_text[0].empty()) {
       SameLine(0.0f, inner_spacing);
@@ -545,6 +554,167 @@ void SetNextItemAxisMarker(ExtAxis axis)
       SetNextItemColorMarker(IM_COL32(20, 20, 240, 255));
       return;
    }
+}
+
+bool ItemCopyPaste(we::float2* v, float v_min, float v_max)
+{
+   IM_ASSERT(v);
+
+   if (not IsItemHovered()) return false;
+
+   bool copy =
+      Shortcut(ImGuiMod_Shift | ImGuiKey_MouseRight, ImGuiInputFlags_RouteGlobal);
+   bool paste =
+      Shortcut(ImGuiMod_Shift | ImGuiKey_MouseLeft, ImGuiInputFlags_RouteGlobal);
+
+   if (paste) {
+      const char* clipboard_text = GetClipboardText();
+
+      if (not clipboard_text) return false;
+
+      we::float2 read_value;
+
+      if (std::sscanf(clipboard_text, "%f %f", &read_value.x, &read_value.y) != 2) {
+         return false;
+      }
+
+      if (v_min != 0.0f or v_max != 0.0f) {
+         read_value = we::clamp(read_value, v_min, v_max);
+      }
+
+      *v = read_value;
+
+      return true;
+   }
+
+   if (copy) {
+      SetClipboardText(fmt::format("{} {}", v->x, v->y).c_str());
+
+      return false;
+   }
+
+   return false;
+}
+
+bool ItemCopyPaste(we::float3* v, float v_min, float v_max)
+{
+   IM_ASSERT(v);
+
+   if (not IsItemHovered()) return false;
+
+   bool copy =
+      Shortcut(ImGuiMod_Shift | ImGuiKey_MouseRight, ImGuiInputFlags_RouteGlobal);
+   bool paste =
+      Shortcut(ImGuiMod_Shift | ImGuiKey_MouseLeft, ImGuiInputFlags_RouteGlobal);
+
+   if (paste) {
+      const char* clipboard_text = GetClipboardText();
+
+      if (not clipboard_text) return false;
+
+      we::float3 read_value;
+
+      if (std::sscanf(clipboard_text, "%f %f %f", &read_value.x, &read_value.y,
+                      &read_value.z) != 3) {
+         return false;
+      }
+
+      if (v_min != 0.0f or v_max != 0.0f) {
+         read_value = we::clamp(read_value, v_min, v_max);
+      }
+
+      *v = read_value;
+
+      return true;
+   }
+
+   if (copy) {
+      SetClipboardText(fmt::format("{} {} {}", v->x, v->y, v->z).c_str());
+
+      return false;
+   }
+
+   return false;
+}
+
+bool ItemCopyPaste(we::float4* v, float v_min, float v_max)
+{
+   IM_ASSERT(v);
+
+   if (not IsItemHovered()) return false;
+
+   bool copy =
+      Shortcut(ImGuiMod_Shift | ImGuiKey_MouseRight, ImGuiInputFlags_RouteGlobal);
+   bool paste =
+      Shortcut(ImGuiMod_Shift | ImGuiKey_MouseLeft, ImGuiInputFlags_RouteGlobal);
+
+   if (paste) {
+      const char* clipboard_text = GetClipboardText();
+
+      if (not clipboard_text) return false;
+
+      we::float4 read_value;
+
+      if (std::sscanf(clipboard_text, "%f %f %f %f", &read_value.x,
+                      &read_value.y, &read_value.z, &read_value.w) != 4) {
+         return false;
+      }
+
+      if (v_min != 0.0f or v_max != 0.0f) {
+         read_value = we::clamp(read_value, v_min, v_max);
+      }
+
+      *v = read_value;
+
+      return true;
+   }
+
+   if (copy) {
+      SetClipboardText(fmt::format("{} {} {} {}", v->x, v->y, v->z, v->w).c_str());
+
+      return false;
+   }
+
+   return false;
+}
+
+bool ItemCopyPaste(we::quaternion* v)
+{
+   IM_ASSERT(v);
+
+   if (not IsItemHovered()) return false;
+
+   bool copy =
+      Shortcut(ImGuiMod_Shift | ImGuiKey_MouseRight, ImGuiInputFlags_RouteGlobal);
+   bool paste =
+      Shortcut(ImGuiMod_Shift | ImGuiKey_MouseLeft, ImGuiInputFlags_RouteGlobal);
+
+   if (paste) {
+      const char* clipboard_text = GetClipboardText();
+
+      if (not clipboard_text) return false;
+
+      we::quaternion read_value;
+
+      if (std::sscanf(clipboard_text, "%f %f %f %f", &read_value.x,
+                      &read_value.y, &read_value.z, &read_value.w) != 4) {
+         return false;
+      }
+
+      if (read_value == we::quaternion{0.0f, 0.0f, 0.0f, 0.0f}) return false;
+
+      *v = normalize(read_value);
+
+      return true;
+   }
+
+   if (copy) {
+      SetClipboardText(fmt::format("{} {} {} {}", v->x, v->y, v->z, v->w).c_str());
+
+      return false;
+   }
+
+   return false;
 }
 
 }
