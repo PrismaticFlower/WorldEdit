@@ -74,7 +74,7 @@ const std::array project_category_priority_high_table = {
    category::world,
    category::common_world,
    category::common,
-   category::project,
+   category::sides,
 };
 
 const container::enum_array<std::span<const category>, category> category_priority_high_tables =

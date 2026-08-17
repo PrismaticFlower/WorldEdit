@@ -1,6 +1,6 @@
 0.160
 
-
+- Fixed priority ordering issue with project level assets.
 
 0.159
 
