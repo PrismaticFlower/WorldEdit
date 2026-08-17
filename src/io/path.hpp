@@ -126,6 +126,11 @@ private:
 /// @return True if the path exists or false if it doesn't.
 [[nodiscard]] bool exists(const path& path) noexcept;
 
+/// @brief Check if a path exists on the filesystem and if it is a directory.
+/// @param path The path.
+/// @return True if the path is a directory or false if not.
+[[nodiscard]] bool is_directory(const path& path) noexcept;
+
 /// @brief Delete a file or an empty directory from the filesystem.
 /// @param path A path to a file or directory.
 /// @return True if the path was deleted or false if it wasn't.

@@ -1215,6 +1215,62 @@ void world_edit::ui_show_munge_config_editor() noexcept
 
          ImGui::TreePop();
       }
+
+      ImGui::SeparatorText("Deploy Rules");
+
+      if (ImGui::TreeNode("Rules")) {
+         std::optional<std::size_t> delete_index;
+
+         if (ImGui::BeginTable("Rules", 4, ImGuiTableFlags_SizingStretchProp)) {
+            ImGui::TableSetupColumn("Source", ImGuiTableColumnFlags_None, 0.4f);
+            ImGui::TableSetupColumn("Destination", ImGuiTableColumnFlags_None, 0.4f);
+            ImGui::TableSetupColumn("Recurse", ImGuiTableColumnFlags_None, 0.1f);
+            ImGui::TableSetupColumn("Remove", ImGuiTableColumnFlags_None, 0.1f);
+            ImGui::TableHeadersRow();
+
+            for (std::size_t i = 0; i < config.deploy_rules.size(); ++i) {
+               ImGui::TableNextRow();
+
+               ImGui::PushID(static_cast<int>(i));
+
+               ImGui::TableNextColumn();
+               ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+               ImGui::InputText("##source", &config.deploy_rules[i].source);
+
+               ImGui::SetItemTooltip("Source Path");
+
+               ImGui::TableNextColumn();
+               ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+               ImGui::InputText("##destination", &config.deploy_rules[i].destination);
+
+               ImGui::SetItemTooltip("Destination Path");
+
+               ImGui::TableNextColumn();
+               ImGui::Checkbox("##recurse", &config.deploy_rules[i].recurse);
+
+               ImGui::SetItemTooltip("Recurse Source Path");
+
+               ImGui::TableNextColumn();
+               if (ImGui::Button("Remove", {ImGui::CalcItemWidth(), 0.0f})) {
+                  delete_index = i;
+               }
+
+               ImGui::PopID();
+            }
+
+            ImGui::EndTable();
+         }
+
+         if (delete_index) {
+            config.deploy_rules.erase(config.deploy_rules.begin() + *delete_index);
+         }
+
+         if (ImGui::Button("Add", {ImGui::CalcItemWidth(), 0.0f})) {
+            config.deploy_rules.emplace_back();
+         }
+
+         ImGui::TreePop();
+      }
    }
 
    ImGui::End();

@@ -118,6 +118,32 @@ Custom clean directories are are simpler than commands. You specify a directory,
 
 > Example: `%PROJECT_PATH%..\PC_SP` when cleaning the `rep` side will clean everything in `DATA_MOD\_BUILD\Sides\REP\MUNGED\PC_SP`.
 
+# Deploy Customization
+Deployment rules can also be customized. Each rule has three variables. A Source Path (that can be a directory or file) that will provided the file or files to deploy. A Destination Path (that can only be a directory), deployed files will be placed here. And finally the Recurse Source Path option, when turned on child directories of the source path will also be deployed.
+
+The source and destination paths can have environment variables just like custom munge tools. WorldEdit's builtin ones are listed below.
+
+### Deploy Rule Variables
+
+| Variable | Expansion |
+| -------- | --------- |
+| `%PROJECT_PATH%` | Expands to the project path, aka the `data_MOD` folder.                                         |
+| `%LVL_PATH%`     | Expands to `%PROJECT_PATH%\_LVL_%PLATFORM%`.                                                    |
+| `%ADDME_PATH%`   | Expands to `%PROJECT_PATH%\addme\munged`.                                                       |
+| `%DEPLOY_PATH%`  | Expands to the deploy path. Typically the addon directory, unless overriden on the commandline. |
+| `%ADDON_PATH%`   | Expands to the `%DEPLOY_PATH%\%ADDON_NAME%`.                                                    |
+| `%ADDON_NAME`    | Expands to the name of the addon. For `data_MOD` this would be `MOD`.                           |
+| `%PLATFORM%`     | Expands to the platform being munged, i.e `pc`.                                                 |
+
+### Default Deploy Rules
+The default rules (which are all that's needed to deploy a regular addon map like VisualMunge) are as follows.
+
+| Source Path | Destination Path | Recurse Source Path |
+| - | - | - |
+| `%LVL_PATH%` | `%ADDON_PATH%\\data\\_LVL_%PLATFORM%` | true |
+| `%ADDME_PATH%\\addme.script` | `%ADDON_PATH%` | false |
+
+
 # Commandline
 The munge runner can also be used from the commandline without having to launch WorldEdit fully. This is done by passing `-munge` or `-clean` when launching WorldEdit.
 

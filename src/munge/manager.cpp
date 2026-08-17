@@ -72,6 +72,12 @@ struct munge_context {
    async::thread_pool& thread_pool;
 };
 
+struct deploy_target {
+   io::path source;
+   io::path destination;
+   bool recurse = false;
+};
+
 void execute_munge(const munge_config& config, const tool_context& context)
 {
    os::process process = os::process_create_desc{
@@ -1551,6 +1557,14 @@ void deploy_addon(munge_context& context)
 {
    utility::stopwatch timer;
 
+   using string::template_string_var;
+
+   const std::string lvl_path =
+      fmt::format("{}\\_LVL_{}", context.project.directory.string_view(),
+                  context.platform);
+   const std::string addme_path =
+      fmt::format("{}\\addme\\munged", context.project.directory.string_view());
+
    std::string_view addon_name = context.project.directory.stem();
 
    using namespace std::literals;
@@ -1567,6 +1581,40 @@ void deploy_addon(munge_context& context)
    const io::path addon_directory =
       io::compose_path(context.deploy_directory, addon_name);
 
+   const std::array template_variables = {
+      template_string_var{"PROJECT_PATH", context.project.directory.string_view()},
+      template_string_var{"LVL_PATH", lvl_path},
+      template_string_var{"ADDME_PATH", addme_path},
+      template_string_var{"DEPLOY_PATH", context.deploy_directory.string_view()},
+      template_string_var{"ADDON_PATH", addon_directory.string_view()},
+      template_string_var{"ADDON_NAME", addon_name},
+      template_string_var{"PLATFORM", context.platform},
+   };
+
+   context.feedback.print_output(
+      fmt::format("Deploying addon to {}", addon_directory.string_view()));
+
+   std::vector<deploy_target> deploy_targets;
+   deploy_targets.reserve(context.project.config.deploy_rules.size());
+
+   bool use_hard_links = context.project.config.deploy_allow_hard_links;
+
+   for (const project_deploy_rule& rule : context.project.config.deploy_rules) {
+      deploy_targets.push_back({
+         .source = io::path{os::expand_environment_strings(
+            string::resolve_template(rule.source, template_variables))},
+         .destination = io::path{os::expand_environment_strings(
+            string::resolve_template(rule.destination, template_variables))},
+         .recurse = rule.recurse,
+      });
+
+      context.feedback.print_output(fmt::format(
+         "Deploy Rule:\n   Source: {}\n   Destination: {}\n   Recurse: {}",
+         deploy_targets.back().source.string_view(),
+         deploy_targets.back().destination.string_view(),
+         deploy_targets.back().recurse));
+   }
+
    if (not io::create_directories(addon_directory)) {
       context.feedback.add_error({
          .file = addon_directory,
@@ -1577,82 +1625,86 @@ void deploy_addon(munge_context& context)
       return;
    }
 
-   context.feedback.print_output(
-      fmt::format("Deploying addon to {}", addon_directory.string_view()));
+   for (const deploy_target& target : deploy_targets) {
+      if (not io::create_directories(target.destination)) {
+         context.feedback.add_error({
+            .file = target.destination,
+            .tool = "Create Directory",
+            .message = "Failed to create directory for deploying addon.",
+         });
 
-   const io::path addme_src_path =
-      io::compose_path(context.project.directory, R"(addme\munged\addme.script)");
-   const io::path addme_dest_path =
-      io::compose_path(addon_directory, "addme.script");
-
-   if (not io::copy_file(addme_src_path, addme_dest_path)) {
-      context.feedback.add_error({
-         .file = addme_dest_path,
-         .tool = "Copy",
-         .message = fmt::format("Faile to copy file {}", addme_src_path.string_view()),
-      });
-
-      return;
-   }
-
-   const io::path addon_data_directory =
-      io::compose_path(addon_directory, "data");
-
-   if (not io::create_directories(addon_data_directory)) {
-      context.feedback.add_error({
-         .file = addon_data_directory,
-         .tool = "Create Directory",
-         .message = "Failed to create directory for deploying addon.",
-      });
-
-      return;
-   }
-
-   const io::path lvl_src_path =
-      io::compose_path(context.project.directory,
-                       fmt::format("_LVL_{}", context.platform));
-   const io::path lvl_dest_path =
-      io::compose_path(addon_data_directory, fmt::format("_LVL_{}", context.platform));
-
-   if (not io::create_directories(lvl_dest_path)) {
-      context.feedback.add_error({
-         .file = lvl_dest_path,
-         .tool = "Create Directory",
-         .message = "Failed to create directory for deploying addon.",
-      });
-
-      return;
-   }
-
-   bool use_hard_links = context.project.config.deploy_allow_hard_links;
-
-   for (const io::directory_entry& entry : io::directory_iterator{lvl_src_path}) {
-      const std::string_view relative_entry_path =
-         entry.path.string_view().substr(lvl_src_path.string_view().size() + 1);
-
-      if (entry.is_directory) {
-         const io::path new_directory =
-            io::compose_path(lvl_dest_path, relative_entry_path);
-
-         if (not io::create_directory(new_directory) and not io::exists(new_directory)) {
-            context.feedback.add_error({
-               .file = new_directory,
-               .tool = "Create Directory",
-               .message = "Failed to create directory for deploying addon.",
-            });
-
-            return;
-         }
-
-         context.feedback.print_output(fmt::format("Copying {}", relative_entry_path));
+         return;
       }
-      else if (entry.is_file) {
+
+      if (io::is_directory(target.source)) {
+         for (const io::directory_entry& entry : io::directory_iterator{target.source}) {
+            const std::string_view relative_entry_path =
+               entry.path.string_view().substr(target.source.string_view().size() + 1);
+
+            if (entry.is_directory) {
+               const io::path new_directory =
+                  io::compose_path(target.destination, relative_entry_path);
+
+               if (not io::create_directory(new_directory) and
+                   not io::exists(new_directory)) {
+                  context.feedback.add_error({
+                     .file = new_directory,
+                     .tool = "Create Directory",
+                     .message =
+                        "Failed to create directory for deploying addon.",
+                  });
+
+                  return;
+               }
+
+               context.feedback.print_output(
+                  fmt::format("Copying {}", relative_entry_path));
+            }
+            else if (entry.is_file) {
+               const io::path dest_file =
+                  io::compose_path(target.destination, relative_entry_path);
+
+               if (context.project.config.deploy_checkdate) {
+                  if (io::get_last_write_time(dest_file) >=
+                      io::get_last_write_time(entry.path)) {
+                     continue;
+                  }
+               }
+
+               if (use_hard_links) {
+                  (void)io::remove(dest_file);
+
+                  if (io::create_hard_link(entry.path, dest_file)) {
+                     continue;
+                  }
+                  else {
+                     // If we've failed to create a hard link it could mean the filesystem doesn't support them or
+                     // the user might be deploying across drives. In either case we stop trying to use them to save an
+                     // OS call and just fallback to regular copies.
+                     use_hard_links = false;
+                  }
+               }
+
+               if (not io::copy_file(entry.path, dest_file)) {
+                  context.feedback.add_error({
+                     .file = dest_file,
+                     .tool = "Copy",
+                     .message = fmt::format("Faile to copy file {}",
+                                            entry.path.string_view()),
+                  });
+
+                  return;
+               }
+            }
+         }
+      }
+      else {
          const io::path dest_file =
-            io::compose_path(lvl_dest_path, relative_entry_path);
+            io::compose_path(target.destination, target.source.filename());
 
          if (context.project.config.deploy_checkdate) {
             if (io::get_last_write_time(dest_file) >=
-                io::get_last_write_time(entry.path)) {
+                io::get_last_write_time(target.source)) {
                continue;
             }
          }
@@ -1660,7 +1712,7 @@ void deploy_addon(munge_context& context)
          if (use_hard_links) {
             (void)io::remove(dest_file);
 
-            if (io::create_hard_link(entry.path, dest_file)) {
+            if (io::create_hard_link(target.source, dest_file)) {
                continue;
             }
             else {
@@ -1671,15 +1723,18 @@ void deploy_addon(munge_context& context)
             }
          }
 
-         if (not io::copy_file(entry.path, dest_file)) {
+         if (not io::copy_file(target.source, dest_file)) {
             context.feedback.add_error({
                .file = dest_file,
                .tool = "Copy",
-               .message = fmt::format("Faile to copy file {}", entry.path.string_view()),
+               .message = fmt::format("Faile to copy file {}",
+                                      target.source.string_view()),
             });
 
             return;
          }
+
+         continue;
       }
    }
 

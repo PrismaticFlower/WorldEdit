@@ -162,6 +162,33 @@ void read_clean_directories(const assets::config::key_node& key_node,
    }
 }
 
+void read_deploy_rules(const assets::config::key_node& key_node,
+                       std::vector<project_deploy_rule>& rules)
+{
+   using namespace assets;
+   using string::iequals;
+
+   rules.clear();
+
+   for (const config::key_node& rule_key_node : key_node) {
+      if (iequals(rule_key_node.key, "Rule")) {
+         project_deploy_rule& rule = rules.emplace_back();
+
+         for (const config::key_node& property_key : rule_key_node) {
+            if (iequals(property_key.key, "SourcePath")) {
+               rule.source = property_key.values.get<std::string>(0);
+            }
+            else if (iequals(property_key.key, "DestinationPath")) {
+               rule.destination = property_key.values.get<std::string>(0);
+            }
+            else if (iequals(property_key.key, "RecurseSourcePath")) {
+               rule.recurse = property_key.values.get<int>(0) != 0;
+            }
+         }
+      }
+   }
+}
+
 }
 
 void save_project(const project& project, const io::path& path) noexcept
@@ -293,6 +320,20 @@ void save_project(const project& project, const io::path& path) noexcept
       write_clean_directories(out, "Shell", clean_directories.shell);
       write_clean_directories(out, "Side", clean_directories.side);
       write_clean_directories(out, "World", clean_directories.world);
+
+      out.write_ln("   }");
+
+      out.write_ln("   DeployRules()");
+      out.write_ln("   {");
+
+      for (const project_deploy_rule& deploy_rule : project.config.deploy_rules) {
+         out.write_ln("      Rule()");
+         out.write_ln("      {");
+         out.write_ln("         SourcePath({:?});", deploy_rule.source);
+         out.write_ln("         DestinationPath({:?});", deploy_rule.destination);
+         out.write_ln("         RecurseSourcePath({:d});", deploy_rule.recurse);
+         out.write_ln("      }");
+      }
 
       out.write_ln("   }");
 
@@ -548,6 +589,9 @@ auto load_project(const io::path& path) noexcept -> project
                      }
                   }
                }
+               else if (iequals("DeployRules", config_key_node.key)) {
+                  read_deploy_rules(config_key_node, project.config.deploy_rules);
+               }
             }
          }
       }
@@ -664,6 +708,7 @@ void merge_loaded_project(project& current_project, const project& loaded_projec
    current_project.config.custom_commands = loaded_project.config.custom_commands;
    current_project.config.custom_clean_directories =
       loaded_project.config.custom_clean_directories;
+   current_project.config.deploy_rules = loaded_project.config.deploy_rules;
 }
 
 auto to_ui_string(const project_platform platform) noexcept -> const char*

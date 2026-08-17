@@ -292,6 +292,15 @@ bool exists(const path& path) noexcept
    return GetFileAttributesW(wide_path{path}.c_str()) != INVALID_FILE_ATTRIBUTES;
 }
 
+bool is_directory(const path& path) noexcept
+{
+   const DWORD attributes = GetFileAttributesW(wide_path{path}.c_str());
+
+   if (attributes == INVALID_FILE_ATTRIBUTES) return false;
+
+   return (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+}
+
 bool remove(const path& path) noexcept
 {
    const wide_path wpath{path};

@@ -2,7 +2,7 @@
 
 - Added Auto-Connect Placed Hubs option when placing AI planning hubs.
 - Added the ability to copy-paste positions, rotations and most sizes using Shift + RMB (for copy) and Shift + LMB (for paste). A context menu for doing this was going to be added but I hit an issue with Dear ImGui and rather than hold it back until I can resolve that I'm going ahead with adding this as it is still useful as is. Side Note: You do not need to copy from or into the widgets, they place the values into the clipboard (as `-35.44 -62.06 -137.599` for instance) and take values from the clipboard. Not sure if that info will be useful but I thought I'd mention it.
-
+- Added the ability to customize munge deployment. See (brief but hopefully informative) docs here: https://github.com/PrismaticFlower/WorldEdit/blob/master/docs/user/Munging.md#deploy-customization It's a simple system but should be flexible enough for everyone's use cases. Feedback is welcome as always.
 
 - Fixed collapsing the Resize Entity window making the tool permanently unusable.
 - Fixed a bug in WE's handling of expanding OS environment strings.

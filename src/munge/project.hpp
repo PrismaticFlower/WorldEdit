@@ -55,6 +55,14 @@ struct project_custom_clean_directories {
    bool operator==(const project_custom_clean_directories&) const noexcept = default;
 };
 
+struct project_deploy_rule {
+   std::string source;
+   std::string destination;
+   bool recurse = false;
+
+   bool operator==(const project_deploy_rule&) const noexcept = default;
+};
+
 struct project_config {
    io::path toolsfl_bin_path;
 
@@ -73,6 +81,11 @@ struct project_config {
 
    project_custom_commands custom_commands;
    project_custom_clean_directories custom_clean_directories;
+
+   std::vector<project_deploy_rule> deploy_rules = {
+      {"%LVL_PATH%", "%ADDON_PATH%\\data\\_LVL_%PLATFORM%", true},
+      {"%ADDME_PATH%\\addme.script", "%ADDON_PATH%", false},
+   };
 
    bool operator==(const project_config&) const noexcept = default;
 };
