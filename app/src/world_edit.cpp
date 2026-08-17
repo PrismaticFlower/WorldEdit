@@ -4298,7 +4298,10 @@ void world_edit::load_world(const io::path& path) noexcept
 
    async::task<void> set_source_directory_task = _thread_pool->exec([&] {
       _asset_libraries.set_source_directory(
-         _project_dir, io::path{io::path{path.parent_path()}.parent_path()}.stem());
+         _project_dir, io::path{io::path{path.parent_path()}.parent_path()}.stem(),
+         {
+            .ignore_other_world_folders = _settings.preferences.no_assets_from_other_worlds,
+         });
    });
 
    try {

@@ -70,11 +70,19 @@ const std::array sides_category_priority_high_table = {
    category::common,
 };
 
-const std::array project_category_priority_high_table = {
+const std::array other_worlds_category_priority_high_table = {
    category::world,
    category::common_world,
    category::common,
    category::sides,
+};
+
+const std::array project_category_priority_high_table = {
+   category::world,        //
+   category::common_world, //
+   category::common,       //
+   category::sides,        //
+   category::other_worlds, //
 };
 
 const container::enum_array<std::span<const category>, category> category_priority_high_tables =
@@ -83,27 +91,36 @@ const container::enum_array<std::span<const category>, category> category_priori
       {category::common_world, common_world_category_priority_high_table},
       {category::common, common_category_priority_high_table},
       {category::sides, sides_category_priority_high_table},
+      {category::other_worlds, other_worlds_category_priority_high_table},
       {category::project, project_category_priority_high_table},
    });
 
 const std::array world_category_priority_low_table = {
-   category::common_world,
-   category::common,
-   category::sides,
-   category::project,
+   category::common_world, //
+   category::common,       //
+   category::sides,        //
+   category::other_worlds, //
+   category::project,      //
 };
 const std::array common_world_category_priority_low_table = {
    category::common,
    category::sides,
+   category::other_worlds,
    category::project,
 };
 
 const std::array common_category_priority_low_table = {
-   category::project,
    category::sides,
+   category::other_worlds,
+   category::project,
 };
 
 const std::array sides_category_priority_low_table = {
+   category::other_worlds,
+   category::project,
+};
+
+const std::array other_worlds_category_priority_low_table = {
    category::project,
 };
 
@@ -113,6 +130,7 @@ const container::enum_array<std::span<const category>, category> category_priori
       {category::common_world, common_world_category_priority_low_table},
       {category::common, common_category_priority_low_table},
       {category::sides, sides_category_priority_low_table},
+      {category::other_worlds, other_worlds_category_priority_low_table},
       {category::project, std::span<const category>{}},
    });
 
@@ -792,12 +810,13 @@ struct library<T>::impl {
                      {category::common_world, "Common World"},
                      {category::common, "Common"},
                      {category::sides, "Sides"},
+                     {category::other_worlds, "Other Worlds"},
                      {category::project, "Project"},
                   });
 
                for (const category category :
                     {category::world, category::common_world, category::common,
-                     category::sides, category::project}) {
+                     category::sides, category::other_worlds, category::project}) {
                   if (ImGui::TreeNode(category_names[category])) {
                      if (ImGui::BeginTable("Assets", 3,
                                            ImGuiTableFlags_Resizable |
@@ -1422,11 +1441,13 @@ libraries_manager::libraries_manager(output_stream& stream,
 libraries_manager::~libraries_manager() = default;
 
 void libraries_manager::set_source_directory(const io::path& source_directory,
-                                             const std::string_view world_name) noexcept
+                                             const std::string_view world_name,
+                                             const libraries_source_flags flags) noexcept
 {
    clear();
 
    _source_directory = source_directory;
+   _source_flags = flags;
 
    if (not io::exists(_source_directory)) return;
 
@@ -1435,6 +1456,7 @@ void libraries_manager::set_source_directory(const io::path& source_directory,
       {category::common_world, "\\Worlds\\Common\\"},
       {category::common, "\\Common\\"},
       {category::sides, "\\Sides\\"},
+      {category::other_worlds, "\\Worlds\\"},
       {category::project, ""},
    });
 
@@ -1539,6 +1561,8 @@ void libraries_manager::show_imgui(bool* open) noexcept
                              _category_relative_paths[category::common].c_str());
             ImGui::LabelText("Sides", "%s",
                              _category_relative_paths[category::sides].c_str());
+            ImGui::LabelText("Other Worlds", "%s",
+                             _category_relative_paths[category::other_worlds].c_str());
             ImGui::LabelText("Project", "%s",
                              _category_relative_paths[category::project].c_str());
 
@@ -1585,6 +1609,10 @@ void libraries_manager::show_imgui(bool* open) noexcept
 void libraries_manager::register_asset(const io::path& path, uint64 last_write_time) noexcept
 {
    const category category = categorize(path);
+
+   if (_source_flags.ignore_other_world_folders and category == category::other_worlds) {
+      return;
+   }
 
    if (const auto extension = path.extension(); string::iequals(extension, ".odf"sv)) {
       odfs.add(path, last_write_time, category);
@@ -1705,8 +1733,9 @@ auto libraries_manager::categorize(const io::path& path) const noexcept -> categ
    std::string_view asset_relative_path = path.string_view();
    asset_relative_path.remove_prefix(_source_directory.string_view().size());
 
-   for (const category category : {category::world, category::common_world,
-                                   category::common, category::sides}) {
+   for (const category category :
+        {category::world, category::common_world, category::common,
+         category::sides, category::other_worlds}) {
       if (string::istarts_with(asset_relative_path, _category_relative_paths[category])) {
          return category;
       }

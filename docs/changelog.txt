@@ -1,5 +1,7 @@
 0.160
 
+- Added "No Assets from Other Worlds" setting to turn off using assets from world folders other than the common one and currently loaded one. Off by default for now to avoid excessively garbage collecting thumbnails. Don't be worried about turning it on though if it's useful to you.
+
 - Fixed priority ordering issue with project level assets.
 
 0.159

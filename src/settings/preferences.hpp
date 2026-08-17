@@ -14,6 +14,7 @@ struct preferences {
    std::string text_editor = default_text_editor;
    std::string game_install_path;
 
+   bool no_assets_from_other_worlds = false;
    bool dont_save_world_effects = false;
    bool save_world_bf1_format = false;
    bool save_blocks_into_layer = true;

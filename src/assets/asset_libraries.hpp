@@ -65,6 +65,8 @@ enum class category {
    common,
    /// @brief Asset is from a side folder.
    sides,
+   /// @brief Asset is from a world folder.
+   other_worlds,
    /// @brief Asset is from the project folder. Including any of the above categories.
    project,
 
@@ -227,6 +229,10 @@ private:
    implementation_storage<impl, 80> self;
 };
 
+struct libraries_source_flags {
+   bool ignore_other_world_folders = false;
+};
+
 struct libraries_manager {
    explicit libraries_manager(output_stream& stream,
                               std::shared_ptr<async::thread_pool> thread_pool) noexcept;
@@ -235,8 +241,8 @@ struct libraries_manager {
 
    /// @brief Sets the source directory for assets.
    /// @param path The directory to search through for assets.
-   void set_source_directory(const io::path& path,
-                             const std::string_view world_name) noexcept;
+   void set_source_directory(const io::path& path, const std::string_view world_name,
+                             const libraries_source_flags flags) noexcept;
 
    /// @brief Handles broadcasting notifications of any loaded or updated assets.
    void update_loaded() noexcept;
@@ -271,6 +277,7 @@ private:
 
    std::shared_ptr<async::thread_pool> _thread_pool;
    io::path _source_directory;
+   libraries_source_flags _source_flags;
    std::string _current_platform = "PC";
    container::enum_array<std::string, category> _category_relative_paths;
 

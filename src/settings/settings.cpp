@@ -127,6 +127,12 @@ void show_imgui_editor(settings& settings, bool& open,
                ImGui::EndCombo();
             }
 
+            ImGui::Checkbox("No Assets from Other Worlds",
+                            &preferences.no_assets_from_other_worlds);
+
+            ImGui::SetItemTooltip("Don't use assets from world folders that "
+                                  "aren't the currently loaded one.");
+
             ImGui::Checkbox("Hide Entity Hover Tooltips", &ui.hide_entity_hover_tooltips);
 
             ImGui::SetItemTooltip("Hide tootlips containing brief descriptions "
