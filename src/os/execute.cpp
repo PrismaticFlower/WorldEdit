@@ -18,6 +18,10 @@ auto expand_environment_strings(const std::string& string) noexcept -> std::stri
       return "";
    }
 
+   while (not expanded_string.empty() and expanded_string.back() == '\0') {
+      expanded_string.pop_back();
+   }
+
    return expanded_string;
 }
 

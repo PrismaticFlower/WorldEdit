@@ -5,6 +5,8 @@
 
 
 - Fixed collapsing the Resize Entity window making the tool permanently unusable.
+- Fixed a bug in WE's handling of expanding OS environment strings.
+
 
 0.158
 
