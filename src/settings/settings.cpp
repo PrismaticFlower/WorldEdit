@@ -127,9 +127,6 @@ void show_imgui_editor(settings& settings, bool& open,
                ImGui::EndCombo();
             }
 
-            ImGui::SetItemTooltip(
-               "Hides the editors for the unused AI planning branch weights.");
-
             ImGui::Checkbox("Hide Entity Hover Tooltips", &ui.hide_entity_hover_tooltips);
 
             ImGui::SetItemTooltip("Hide tootlips containing brief descriptions "
