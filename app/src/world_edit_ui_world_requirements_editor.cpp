@@ -1,13 +1,20 @@
 #include "world_edit.hpp"
 
+#include "imgui_ext.hpp"
+
+#include "assets/req/builder.hpp"
+
 #include "edits/add_world_req_entry.hpp"
 #include "edits/add_world_req_list.hpp"
 #include "edits/delete_world_req_entry.hpp"
 #include "edits/delete_world_req_list.hpp"
+#include "edits/set_value.hpp"
 #include "edits/set_world_req_entry.hpp"
-#include "imgui_ext.hpp"
+
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
+
+#include "world/utility/region_properties.hpp"
 
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
@@ -241,6 +248,204 @@ void world_edit::ui_show_world_requirements_editor() noexcept
       }
 
       if (not can_add_type) ImGui::EndDisabled();
+
+      ImGui::Separator();
+
+      if (ImGui::Button("Repair World Requirements", {ImGui::CalcItemWidth(), 0.0f})) {
+         bool has_water = false;
+         bool has_shadow = false;
+         bool has_rumble = false;
+
+         if (_world.terrain.active_flags.water) {
+            for (bool water : _world.terrain.water_map) has_water |= water;
+         }
+
+         for (const world::region& region : _world.regions) {
+            switch (world::get_region_type(region.description)) {
+            case world::region_type::shadow: {
+               has_shadow = true;
+            } break;
+            case world::region_type::rumble: {
+               has_rumble = true;
+            } break;
+            }
+         }
+
+         std::vector<world::requirement_list> requirements;
+         requirements.reserve(14);
+
+         if (has_rumble) {
+            requirements.push_back({
+               .file_type = "class",
+            });
+
+            for (const world::region& region : _world.regions) {
+               switch (world::get_region_type(region.description)) {
+               case world::region_type::rumble: {
+                  world::rumble_region_properties properties =
+                     world::unpack_region_rumble(region.description);
+
+                  if (not properties.rumble_class.empty()) {
+                     assets::req::add_to(requirements.back().entries,
+                                         properties.rumble_class);
+                  }
+               } break;
+               }
+            }
+         }
+
+         requirements.push_back({
+            .file_type = "texture",
+            .entries = {fmt::format("{}_map", _world.name)},
+         });
+
+         if (has_shadow) {
+            for (const world::region& region : _world.regions) {
+               switch (world::get_region_type(region.description)) {
+               case world::region_type::shadow: {
+                  world::shadow_region_properties properties =
+                     world::unpack_region_shadow(region.description);
+
+                  if (not properties.env_map.empty()) {
+                     assets::req::add_to(requirements.back().entries, properties.env_map);
+                  }
+               } break;
+               }
+            }
+         }
+
+         if (has_water) {
+            requirements.push_back({
+               .file_type = "texture",
+               .platform = world::platform::ps2,
+            });
+
+            for (int32 i = 0;
+                 i < _world.effects.water.speckle_textures_ps2.count; ++i) {
+               requirements.back().entries.push_back(
+                  fmt::format("{}{}",
+                              _world.effects.water.speckle_textures_ps2.prefix, i));
+            }
+
+            requirements.push_back({
+               .file_type = "texture",
+               .platform = world::platform::xbox,
+            });
+
+            const world::water::animated_textures& xbox_normal_maps =
+               _world.effects.water.normal_map_textures.per_platform
+                  ? _world.effects.water.normal_map_textures.xbox
+                  : _world.effects.water.normal_map_textures.pc;
+
+            for (int32 i = 0; i < xbox_normal_maps.count; ++i) {
+               requirements.back().entries.push_back(
+                  fmt::format("{}{}", xbox_normal_maps.prefix, i));
+            }
+
+            requirements.push_back({
+               .file_type = "texture",
+               .platform = world::platform::pc,
+            });
+
+            for (int32 i = 0;
+                 i < _world.effects.water.bump_map_textures_pc.count; ++i) {
+               requirements.back().entries.push_back(
+                  fmt::format("{}{}",
+                              _world.effects.water.bump_map_textures_pc.prefix, i));
+            }
+
+            for (int32 i = 0;
+                 i < _world.effects.water.normal_map_textures.pc.count; ++i) {
+               requirements.back().entries.push_back(
+                  fmt::format("{}{}",
+                              _world.effects.water.normal_map_textures.pc.prefix, i));
+            }
+
+            for (int32 i = 0;
+                 i < _world.effects.water.specular_mask_textures_pc.count; ++i) {
+               requirements.back().entries.push_back(
+                  fmt::format("{}{}",
+                              _world.effects.water.specular_mask_textures_pc.prefix, i));
+            }
+         }
+
+         if (_world.effects.heat_shimmer.enable.per_platform
+                ? _world.effects.heat_shimmer.enable.xbox
+                : _world.effects.heat_shimmer.enable.pc) {
+            requirements.push_back({
+               .file_type = "texture",
+               .platform = world::platform::xbox,
+               .entries = {_world.effects.heat_shimmer.bump_map.per_platform
+                              ? _world.effects.heat_shimmer.bump_map.xbox.name
+                              : _world.effects.heat_shimmer.bump_map.pc.name},
+            });
+         }
+
+         requirements.push_back({
+            .file_type = "path",
+            .entries = {_world.name},
+         });
+
+         requirements.push_back({
+            .file_type = "congraph",
+            .entries = {_world.name},
+         });
+
+         requirements.push_back({
+            .file_type = "envfx",
+            .entries = {_world.name},
+         });
+
+         requirements.push_back({
+            .file_type = "world",
+            .entries = {_world.name},
+         });
+
+         for (const int layer_index : _world.common_layers) {
+            requirements.back().entries.push_back(
+               fmt::format("{}_{}", _world.name,
+                           _world.layer_descriptions[layer_index].name));
+         }
+
+         requirements.push_back({
+            .file_type = "prop",
+            .entries = {_world.name},
+         });
+
+         requirements.push_back({
+            .file_type = "boundary",
+            .entries = {_world.name},
+         });
+
+         requirements.push_back({
+            .file_type = "class",
+            .entries = {"bluelight", "redlight", "greenlight", "whitelight"},
+         });
+
+         requirements.push_back({
+            .file_type = "config",
+            .entries = {"flyerspray", "bigwalkerstomp", "walkerstomp",
+                        "hailfire_wake", "dustwake"},
+         });
+
+         requirements.push_back({
+            .file_type = "lvl",
+         });
+
+         for (const world::game_mode_description& game_mode : _world.game_modes) {
+            requirements.back().entries.push_back(
+               fmt::format("{}_{}", _world.name, game_mode.name));
+         }
+
+         requirements.push_back({
+            .file_type = "povs",
+            .entries = {_world.name},
+         });
+
+         _edit_stack_world.apply(edits::make_set_value(&_world.requirements,
+                                                       std::move(requirements)),
+                                 _edit_context, {.closed = true});
+      }
    }
 
    ImGui::End();

@@ -1,5 +1,6 @@
 0.160
 
+- Added "Repair World Requirements" tool to World Requirements (.req) Editor. It will recreate (and thus repair) the world's .req. The repaired .req will not include any custom .req entries you have added but it will include correct references for all the world's dependencies, including things like water normal maps and shadow region env maps.
 - Added "No Assets from Other Worlds" setting to turn off using assets from world folders other than the common one and currently loaded one. Off by default for now to avoid excessively garbage collecting thumbnails. Don't be worried about turning it on though if it's useful to you.
 
 - Fixed priority ordering issue with project level assets.
