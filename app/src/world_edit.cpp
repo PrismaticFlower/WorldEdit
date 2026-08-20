@@ -50,6 +50,7 @@
 #include "world/utility/drag_select.hpp"
 #include "world/utility/entity_group_utilities.hpp"
 #include "world/utility/grounding.hpp"
+#include "world/utility/hintnode_traits.hpp"
 #include "world/utility/make_command_post_linked_entities.hpp"
 #include "world/utility/mouse_pick_measurement.hpp"
 #include "world/utility/object_properties.hpp"
@@ -1013,6 +1014,118 @@ void world_edit::update_hovered_entity() noexcept
                default:
                   ImGui::Text("Type: Unknown (%i)", static_cast<int>(hintnode.type));
                   break;
+               }
+
+               const world::hintnode_traits traits =
+                  world::get_hintnode_traits(hintnode.type);
+
+               if (traits.has_command_post) {
+                  ImGui::Text("Command Post: %s",
+                              hintnode.command_post.name_lookup(_world).c_str());
+               }
+
+               if (traits.has_primary_stance) {
+                  if (hintnode.primary_stance == world::stance_flags::none) {
+                     ImGui::Text("Primary Stance: <none>");
+                  }
+                  else {
+                     ImGui::Text("Primary Stance:");
+
+                     if (are_flags_set(hintnode.primary_stance,
+                                       world::stance_flags::stand)) {
+                        ImGui::SameLine();
+                        ImGui::Text("Stand");
+                     }
+
+                     if (are_flags_set(hintnode.primary_stance,
+                                       world::stance_flags::crouch)) {
+                        ImGui::SameLine();
+                        ImGui::Text("Crouch");
+                     }
+
+                     if (are_flags_set(hintnode.primary_stance,
+                                       world::stance_flags::prone)) {
+                        ImGui::SameLine();
+                        ImGui::Text("Prone");
+                     }
+
+                     if ((hintnode.primary_stance &
+                          ~world::stance_flags::primary_stance_mask) !=
+                         world::stance_flags::none) {
+                        ImGui::SameLine();
+                        ImGui::Text("<unknown>");
+                     }
+                  }
+               }
+
+               if (traits.has_secondary_stance) {
+                  if (hintnode.secondary_stance == world::stance_flags::none) {
+                     ImGui::Text("Secondary Stance: <none>");
+                  }
+                  else {
+                     ImGui::Text("Secondary Stance:");
+
+                     if (are_flags_set(hintnode.secondary_stance,
+                                       world::stance_flags::stand)) {
+                        ImGui::SameLine();
+                        ImGui::Text("Stand");
+                     }
+
+                     if (are_flags_set(hintnode.secondary_stance,
+                                       world::stance_flags::crouch)) {
+                        ImGui::SameLine();
+                        ImGui::Text("Crouch");
+                     }
+
+                     if (are_flags_set(hintnode.secondary_stance,
+                                       world::stance_flags::prone)) {
+                        ImGui::SameLine();
+                        ImGui::Text("Prone");
+                     }
+
+                     if (are_flags_set(hintnode.secondary_stance,
+                                       world::stance_flags::left)) {
+                        ImGui::SameLine();
+                        ImGui::Text("Left");
+                     }
+
+                     if (are_flags_set(hintnode.secondary_stance,
+                                       world::stance_flags::right)) {
+                        ImGui::SameLine();
+                        ImGui::Text("Right");
+                     }
+
+                     if ((hintnode.secondary_stance &
+                          ~world::stance_flags::secondary_stance_mask) !=
+                         world::stance_flags::none) {
+                        ImGui::SameLine();
+                        ImGui::Text("<unknown>");
+                     }
+                  }
+               }
+
+               if (traits.has_mode) {
+                  switch (hintnode.mode) {
+                  case world::hintnode_mode::none:
+                     ImGui::Text("Mode: None");
+                     break;
+                  case world::hintnode_mode::attack:
+                     ImGui::Text("Mode: Attack");
+                     break;
+                  case world::hintnode_mode::defend:
+                     ImGui::Text("Mode: Defend");
+                     break;
+                  case world::hintnode_mode::both:
+                     ImGui::Text("Mode: Both");
+                     break;
+                  default:
+                     ImGui::Text("Mode: Unknown (%i)", static_cast<int>(hintnode.mode));
+                     break;
+                  }
+               }
+
+               if (traits.has_radius) {
+                  ImGui::Text("Radius: %f", hintnode.radius);
                }
 
                ImGui::PopFont();

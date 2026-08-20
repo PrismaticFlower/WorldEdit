@@ -1,5 +1,7 @@
 0.161
 
+- Added additional properties to hint node hover tool tips.
+
 - Fixed not being able to select Vehicle Cover hint node type when multiple hint nodes where selected.
 
 0.160
