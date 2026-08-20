@@ -6998,6 +6998,7 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
                  world::hintnode_type::mine,
                  world::hintnode_type::land,
                  world::hintnode_type::fortification,
+                 world::hintnode_type::vehicle_cover,
               }) {
             if (ImGui::Selectable(world::to_ui_string(other_type),
                                   properties.hintnode.type.is_different()

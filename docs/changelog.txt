@@ -1,6 +1,6 @@
 0.161
 
-
+- Fixed not being able to select Vehicle Cover hint node type when multiple hint nodes where selected.
 
 0.160
 
