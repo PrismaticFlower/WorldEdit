@@ -223,6 +223,10 @@ void world_edit::ui_show_object_class_browser() noexcept
                                                .id = world::max_id},
                                  _object_classes),
                               _edit_context);
+                           _entity_creation_config.placement_rotation =
+                              placement_rotation::manual_euler;
+                           _entity_creation_config.placement_mode =
+                              placement_mode::cursor;
                            _entity_creation_context = {};
                         }
                      }
@@ -326,6 +330,9 @@ void world_edit::ui_show_object_class_browser() noexcept
                                             .id = world::max_id},
                               _object_classes),
                            _edit_context);
+                        _entity_creation_config.placement_rotation =
+                           placement_rotation::manual_euler;
+                        _entity_creation_config.placement_mode = placement_mode::cursor;
                         _entity_creation_context = {};
                      }
                   }
