@@ -1,6 +1,6 @@
 0.163
 
-
+- Fixed being able to select leaf/grass patches behind the camera.
 
 0.162
 

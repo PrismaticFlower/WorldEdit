@@ -60,7 +60,7 @@ inline bool intersect_aabb(const float3& ray_origin, const float3& inv_ray_direc
    const float t_max =
       std::min(std::min(ts_max.x, std::min(ts_max.y, ts_max.z)), t_limit);
 
-   if (t_min <= t_max) {
+   if (t_min >= 0.0f and t_min <= t_max) {
       t = t_min;
 
       return true;
