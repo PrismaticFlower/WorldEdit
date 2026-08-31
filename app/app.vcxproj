@@ -471,6 +471,7 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
     <ClCompile Include="src\world_edit_ui_world_selection_rotate.cpp" />
     <ClCompile Include="src\world_edit_ui_world_selection_rotate_around_centre.cpp" />
     <ClCompile Include="src\world_edit_ui_world_selection_rotate_light_region.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_selection_rotate_path.cpp" />
     <ClCompile Include="src\world_edit_ui_world_selection_set_layer.cpp" />
     <ClCompile Include="src\world_edit_ui_world_stats.cpp" />
     <ClInclude Include="src\resource.h" />

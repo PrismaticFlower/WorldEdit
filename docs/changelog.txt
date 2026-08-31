@@ -1,5 +1,7 @@
 0.163
 
+- Added Rotate Path tool to complement Move Path. Find it directly below Move Path.
+
 - Fixed being able to select leaf/grass patches behind the camera.
 
 0.162

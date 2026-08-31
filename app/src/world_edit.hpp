@@ -137,6 +137,7 @@ enum class selection_edit_tool : uint8 {
    rotate,
    rotate_around_centre,
    rotate_light_region,
+   rotate_path,
    set_layer,
    match_transform,
    pick_sector,
@@ -376,6 +377,8 @@ private:
    void ui_show_world_selection_rotate_around_centre() noexcept;
 
    void ui_show_world_selection_rotate_light_region() noexcept;
+
+   void ui_show_world_selection_rotate_path() noexcept;
 
    void ui_show_world_selection_set_layer() noexcept;
 
@@ -870,6 +873,11 @@ private:
       world::planning_hub_id from_hub_id = {};
       world::planning_connection_id connection_id = {};
    } _selection_add_branch_weight_context;
+
+   struct selection_rotate_path_context {
+      world::path_id id = {};
+      float3 rotation;
+   } _selection_rotate_path_context;
 
    struct terrain_editor_config {
       terrain_edit_target edit_target = terrain_edit_target::height;

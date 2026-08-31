@@ -537,6 +537,11 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   _selection_edit_tool = selection_edit_tool::move_path;
                   _move_entire_path_id = id;
                }
+
+               if (ImGui::Button("Rotate Path", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _selection_edit_tool = selection_edit_tool::rotate_path;
+                  _selection_rotate_path_context = {.id = id};
+               }
             }
             else {
                selection_open = false;

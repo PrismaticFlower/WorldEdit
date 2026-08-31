@@ -102,6 +102,9 @@ void world_edit::update_ui() noexcept
    else if (_selection_edit_tool == selection_edit_tool::rotate_light_region) {
       ui_show_world_selection_rotate_light_region();
    }
+   else if (_selection_edit_tool == selection_edit_tool::rotate_path) {
+      ui_show_world_selection_rotate_path();
+   }
    else if (_selection_edit_tool == selection_edit_tool::set_layer) {
       ui_show_world_selection_set_layer();
    }
