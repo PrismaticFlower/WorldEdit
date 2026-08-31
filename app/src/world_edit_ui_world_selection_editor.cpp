@@ -831,38 +831,38 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      value_changed = true;
                   }
 
-                  if (float person_scale = properties.person_scale.value_or(1.0f);
+                  if (float person_scale = properties.person_scale.value_or(0.0f);
                       ImGui::DragFloat("Person Scale", &person_scale, 0.01f)) {
                      properties.person_scale = person_scale;
                      value_changed = true;
                   }
 
-                  if (float animal_scale = properties.animal_scale.value_or(1.0f);
+                  if (float animal_scale = properties.animal_scale.value_or(0.0f);
                       ImGui::DragFloat("Animal Scale", &animal_scale, 0.01f)) {
                      properties.animal_scale = animal_scale;
                      value_changed = true;
                   }
 
-                  if (float droid_scale = properties.droid_scale.value_or(1.0f);
+                  if (float droid_scale = properties.droid_scale.value_or(0.0f);
                       ImGui::DragFloat("Droid Scale", &droid_scale, 0.01f)) {
                      properties.droid_scale = droid_scale;
                      value_changed = true;
                   }
 
-                  if (float vehicle_scale = properties.vehicle_scale.value_or(1.0f);
+                  if (float vehicle_scale = properties.vehicle_scale.value_or(0.0f);
                       ImGui::DragFloat("Vehicle Scale", &vehicle_scale, 0.01f)) {
                      properties.vehicle_scale = vehicle_scale;
                      value_changed = true;
                   }
 
-                  if (float building_scale = properties.building_scale.value_or(1.0f);
+                  if (float building_scale = properties.building_scale.value_or(0.0f);
                       ImGui::DragFloat("Building Scale", &building_scale, 0.01f)) {
                      properties.building_scale = building_scale;
                      value_changed = true;
                   }
 
                   if (float building_dead_scale =
-                         properties.building_dead_scale.value_or(1.0f);
+                         properties.building_dead_scale.value_or(0.0f);
                       ImGui::DragFloat("Building Dead Scale",
                                        &building_dead_scale, 0.01f)) {
                      properties.building_dead_scale = building_dead_scale;
@@ -870,7 +870,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   }
 
                   if (float building_unbuilt_scale =
-                         properties.building_unbuilt_scale.value_or(1.0f);
+                         properties.building_unbuilt_scale.value_or(0.0f);
                       ImGui::DragFloat("Building Unbuilt Scale",
                                        &building_unbuilt_scale, 0.01f)) {
                      properties.building_unbuilt_scale = building_unbuilt_scale;
@@ -2519,19 +2519,19 @@ void world_edit::ui_show_world_selection_multi_editor() noexcept
             properties.region.damage.damage_rate.integrate(
                damage.damage_rate.value_or(0.0f));
             properties.region.damage.person_scale.integrate(
-               damage.person_scale.value_or(1.0f));
+               damage.person_scale.value_or(0.0f));
             properties.region.damage.animal_scale.integrate(
-               damage.animal_scale.value_or(1.0f));
+               damage.animal_scale.value_or(0.0f));
             properties.region.damage.droid_scale.integrate(
-               damage.droid_scale.value_or(1.0f));
+               damage.droid_scale.value_or(0.0f));
             properties.region.damage.vehicle_scale.integrate(
-               damage.vehicle_scale.value_or(1.0f));
+               damage.vehicle_scale.value_or(0.0f));
             properties.region.damage.building_scale.integrate(
-               damage.building_scale.value_or(1.0f));
+               damage.building_scale.value_or(0.0f));
             properties.region.damage.building_dead_scale.integrate(
-               damage.building_dead_scale.value_or(1.0f));
+               damage.building_dead_scale.value_or(0.0f));
             properties.region.damage.building_unbuilt_scale.integrate(
-               damage.building_unbuilt_scale.value_or(1.0f));
+               damage.building_unbuilt_scale.value_or(0.0f));
 
             region_flags |= multi_select_flags::has_region_damage;
          } break;
