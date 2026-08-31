@@ -11,7 +11,7 @@ constexpr std::array entity_follow_props{
    "VarianceX",       "VarianceY",       "VarianceZ", "BranchDifferent",
    "SingleDirection", "Direction",       "Frequency", "EnableObject",
    "Class",           "Class1",          "Class2",    "Class3",
-   "Class4",          "Class5",
+   "Class4",          "Class5",          "Name",
 };
 
 constexpr std::array entity_follow_node_props{
@@ -19,9 +19,11 @@ constexpr std::array entity_follow_node_props{
    "BranchPaths",       "Speed",        "VarianceX",    "VarianceY",
    "VarianceZ",         "LandOnArrival"};
 
-constexpr std::array formation_props{"RootIsSlot"};
+constexpr std::array formation_props{"RootIsSlot", "Name"};
 
 constexpr std::array formation_node_props{"Root", "MemberID"};
+
+constexpr std::array patrol_props{"Name"};
 
 constexpr std::array patrol_node_props{"WaitMin", "WaitMax"};
 
@@ -38,7 +40,7 @@ auto get_path_properties(const path_type type) -> std::span<const char* const>
    case path_type::formation:
       return formation_props;
    case path_type::patrol:
-      return {};
+      return patrol_props;
    }
 }
 

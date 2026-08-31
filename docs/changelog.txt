@@ -1,6 +1,8 @@
 0.162
 
 - Added Grass Patch support to the editor. ODFs with the `grasspatch` class label will now be shown as they would appear ingame, almost. Unlike leaf patches grass patches do not include a seed in their ODF so their exact particle layout depends on the game's random state when it first creates one of the grass patches. Which effectively makes it impossible to do a truly accurate preview for them in the editor. However I believe that there is still value in previewing them (even if it is slightly inaccurate).Selection for these objects is based on the bounds defined in the ODF.
+- Added missing Name property to path propert selector.
+
 
 - Fixed Damage Regions incorrectly using 1.0 as the default for unset scales instead of 0.0.
 
