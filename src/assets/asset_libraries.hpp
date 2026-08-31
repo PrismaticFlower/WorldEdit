@@ -187,7 +187,7 @@ struct library {
 private:
    struct impl;
 
-   implementation_storage<impl, 488> self;
+   implementation_storage<impl, 520> self;
 };
 
 /// @brief Tracks assets like library but does no loading or lifetime management.

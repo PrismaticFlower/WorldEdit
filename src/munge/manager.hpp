@@ -61,7 +61,7 @@ struct manager {
 private:
    struct impl;
 
-   implementation_storage<impl, 2392> impl;
+   implementation_storage<impl, 2456> impl;
 };
 
 }
