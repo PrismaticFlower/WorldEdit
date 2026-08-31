@@ -13,6 +13,7 @@ namespace we::world {
 struct billboard_patch_vertex {
    std::array<int16, 3> position = {};
    int16 darkness = 0;
+   uint32 normal = 0;
    uint32 texcoords = 0;
 };
 
@@ -32,6 +33,8 @@ struct billboard_patch_class {
    virtual auto bbox() const noexcept -> const math::bounding_box& = 0;
 
    virtual auto texture() const noexcept -> const std::string& = 0;
+
+   virtual bool is_transparent() const noexcept = 0;
 };
 
 }

@@ -5,6 +5,7 @@
 
 struct input_vertex {
    int4   positionOS : POSITION;
+   float4 normalOS   : NORMAL;
    int2   texcoords  : TEXCOORD;
    float3x4 world_from_object : TRANSFORM;
 };
@@ -15,6 +16,7 @@ struct output_vertex {
    float2 texcoords : TEXCOORD;
    float  fog : FOG;
    float  darkening : DARKNESS;
+   float  alpha : ALPHA;
 
    float4 positionPS : SV_Position;
 };
@@ -28,10 +30,11 @@ output_vertex main(input_vertex input)
    const float4 positionPS = mul(cb_frame.projection_from_world, float4(positionWS, 1.0));;
    
    output.positionWS = positionWS;
-   output.normalWS = mul((float3x3)input.world_from_object, normalize(positionOS));
+   output.normalWS = mul((float3x3)input.world_from_object, input.normalOS.xyz * 2.0 - 1.0);
    output.texcoords = input.texcoords * (1.0 / 2048.0);
    output.fog = calculate_fog(positionWS, positionPS);
    output.darkening = input.positionOS.w * (1.0 / 255.0);
+   output.alpha = input.normalOS.w;
    output.positionPS = positionPS;
 
    return output;

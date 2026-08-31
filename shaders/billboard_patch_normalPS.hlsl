@@ -11,6 +11,7 @@ struct input_vertex {
    float2 texcoords : TEXCOORD;
    float  fog : FOG;
    float  darkening : DARKNESS;
+   float  alpha : ALPHA;
 
    float4 positionPS : SV_Position;
 };
@@ -27,21 +28,21 @@ float4 main(input_vertex input) : SV_TARGET
    const float3 positionWS = input.positionWS;
    float3 normalWS = normalize(input.normalWS);
 
-   float3 diffuse_color = diffuse_map.Sample(sampler_anisotropic_wrap, input.texcoords).rgb;
+   float4 diffuse_color = diffuse_map.Sample(sampler_anisotropic_wrap, input.texcoords);
    
-   diffuse_color *= input.darkening;
+   diffuse_color.rgb *= input.darkening;
 
    calculate_light_inputs lighting_inputs;
 
    lighting_inputs.positionWS = positionWS;
    lighting_inputs.normalWS = normalWS;
    lighting_inputs.viewWS = normalize(cb_frame.view_positionWS - positionWS);
-   lighting_inputs.diffuse_color = diffuse_color;
+   lighting_inputs.diffuse_color = diffuse_color.rgb;
    lighting_inputs.specular_color = 0.0;
    lighting_inputs.positionSS = input.positionPS.xy;
    lighting_inputs.receive_static_light = true;
 
    float3 lighting = calculate_lighting(lighting_inputs);
 
-   return apply_fog(float4(lighting, 1.0), input.fog);
+   return apply_fog(float4(lighting, diffuse_color.a * input.alpha), input.fog);
 }

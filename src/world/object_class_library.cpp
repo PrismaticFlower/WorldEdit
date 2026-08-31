@@ -2,6 +2,7 @@
 #include "object.hpp"
 #include "object_class.hpp"
 
+#include "object_classes/grass_patch_class.hpp"
 #include "object_classes/leaf_patch_class.hpp"
 
 #include "assets/asset_libraries.hpp"
@@ -325,6 +326,18 @@ private:
             std::make_unique<leaf_patch_class>(*cls.definition);
          _leaf_patch_class_index.push_back(class_index);
       }
+      else if (string::iequals(cls.definition->header.class_label,
+                               "grasspatch")) {
+         cls.flags.is_billboard_patch = true;
+
+         if (_billboard_patch_class_pool.size() <= class_index) {
+            _billboard_patch_class_pool.resize(class_index + 1);
+         }
+
+         _billboard_patch_class_pool[class_index] =
+            std::make_unique<grass_patch_class>(*cls.definition);
+         _leaf_patch_class_index.push_back(class_index);
+      }
    }
 
    struct entry {
@@ -338,7 +351,7 @@ private:
    absl::flat_hash_map<lowercase_string, uint32> _class_index;
    std::vector<handle_unpacked> _class_free_list;
 
-   pinned_vector<std::unique_ptr<leaf_patch_class>> _billboard_patch_class_pool =
+   pinned_vector<std::unique_ptr<billboard_patch_class>> _billboard_patch_class_pool =
       pinned_vector_init{.max_size = max_object_classes, .initial_capacity = 1024};
    std::vector<uint32> _leaf_patch_class_index;
 

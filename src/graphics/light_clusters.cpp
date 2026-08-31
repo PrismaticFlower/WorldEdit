@@ -777,7 +777,7 @@ void light_clusters::prepare_lights(
       if (active_entity_types.objects) {
          for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
             _sun_shadow_billboard_patches_view[cascade_index] =
-               billboard_patches.prepare_view(billboard_patches_draw::shadow,
+               billboard_patches.prepare_view(billboard_patches_prepare::shadow,
                                               frustum{_sun_shadow_cascades[cascade_index]
                                                          .world_from_projection(),
                                                       1.0f, 0.0f},

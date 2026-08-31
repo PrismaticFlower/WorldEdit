@@ -511,7 +511,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
       if (active_entity_types.objects) {
          billboard_patches_view =
-            _billboard_patches.prepare_view(billboard_patches_draw::main,
+            _billboard_patches.prepare_view(billboard_patches_prepare::main,
                                             view_frustum, _dynamic_buffer_allocator);
       }
 
@@ -862,7 +862,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                               view_frustum, active_layers, _dynamic_buffer_allocator);
 
       const billboard_patches::view billboard_patches_view =
-         _billboard_patches.prepare_view(billboard_patches_draw::depth_prepass,
+         _billboard_patches.prepare_view(billboard_patches_prepare::main,
                                          view_frustum, _dynamic_buffer_allocator);
 
       build_world_mesh_render_list(view_frustum);
@@ -1067,7 +1067,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                               view_frustum, active_layers, _dynamic_buffer_allocator);
 
       const billboard_patches::view billboard_patches_view =
-         _billboard_patches.prepare_view(billboard_patches_draw::depth_prepass,
+         _billboard_patches.prepare_view(billboard_patches_prepare::main,
                                          view_frustum, _dynamic_buffer_allocator);
 
       // Pre-Render Work
@@ -1416,7 +1416,7 @@ void renderer_impl::draw_world(const frustum& view_frustum,
             _pipelines.mesh_normal[material_pipeline_flags::doublesided].get(),
             command_list);
 
-         _billboard_patches.draw(billboard_patches_draw::main,
+         _billboard_patches.draw(billboard_patches_draw::main_opaque,
                                  billboard_patches_view, _camera_constant_buffer_view,
                                  _light_clusters.lights_constant_buffer_view(),
                                  command_list, _root_signatures, _pipelines);
@@ -1468,6 +1468,11 @@ void renderer_impl::draw_world(const frustum& view_frustum,
       setup_pre_draw_world_render_list(command_list);
 
       draw_world_render_list_transparent(command_list);
+
+      _billboard_patches.draw(billboard_patches_draw::main_transparent,
+                              billboard_patches_view, _camera_constant_buffer_view,
+                              _light_clusters.lights_constant_buffer_view(),
+                              command_list, _root_signatures, _pipelines);
    }
 }
 

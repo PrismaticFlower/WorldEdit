@@ -78,6 +78,17 @@ auto pack_position(const float3& v) -> std::array<int16, 3>
            static_cast<int16>(v.z * 655.35f)};
 }
 
+auto pack_normal(const float3& v) -> uint32
+{
+   uint32 packed = 0xff'00'00'00;
+
+   packed |= static_cast<uint32>(v.x * 127.5f + 128.0f) << 0;
+   packed |= static_cast<uint32>(v.y * 127.5f + 128.0f) << 8;
+   packed |= static_cast<uint32>(v.z * 127.5f + 128.0f) << 16;
+
+   return packed;
+}
+
 const std::array<uint32, 32> particle_texcoords = {{
    0x7ff0000, 0x7ff07ff, 0x0,       0x7ff,     0x7ff07ff, 0x7ff0000, 0x7ff,
    0x0,       0x7ff0000, 0x7ff07ff, 0x0,       0x7ff,     0x7ff07ff, 0x7ff0000,
@@ -467,7 +478,8 @@ void leaf_patch_class::get_quads(const float4x4& world_matrix,
          (particle_z_axis - position_top) - offset * 0.5f;
 
       const uint32 texcoords_index =
-         std::min(static_cast<uint32>(variation & 0xff) + num_parts_is_4 * 4, 28u);
+         std::min(static_cast<uint32>(variation & 0xff) + num_parts_is_4 * 4,
+                  static_cast<uint32>(particle_texcoords.size() / 4 - 1));
 
       const uint8 darkness_u8 = static_cast<uint8>(darkness * 255.0f + 0.5f);
 
@@ -475,22 +487,22 @@ void leaf_patch_class::get_quads(const float4x4& world_matrix,
 
       quad[0].position = pack_position(position_top_left);
       quad[0].darkness = darkness_u8;
-      // quad[0].normal = normalize(quad[0].position); // Kept for posterity and clarity.
+      quad[0].normal = pack_normal(normalize(position_top_left));
       quad[0].texcoords = particle_texcoords[texcoords_index * 4 + 2];
 
       quad[1].position = pack_position(position_top_left + offset);
       quad[1].darkness = darkness_u8;
-      // quad[1].normal = normalize(quad[1].position);
+      quad[1].normal = pack_normal(normalize(position_top_left + offset));
       quad[1].texcoords = particle_texcoords[texcoords_index * 4 + 3];
 
       quad[2].position = pack_position(position_bottom_right + offset);
       quad[2].darkness = darkness_u8;
-      // quad[2].normal = normalize(quad[2].position);
+      quad[2].normal = pack_normal(normalize(position_bottom_right + offset));
       quad[2].texcoords = particle_texcoords[texcoords_index * 4 + 1];
 
       quad[3].position = pack_position(position_bottom_right);
       quad[3].darkness = darkness_u8;
-      // quad[3].normal = normalize(quad[3].position);
+      quad[3].normal = pack_normal(normalize(position_bottom_right));
       quad[3].texcoords = particle_texcoords[texcoords_index * 4];
 
       std::memcpy(&out[particle_index], &quad, sizeof(quad));
@@ -515,6 +527,11 @@ auto leaf_patch_class::bbox() const noexcept -> const math::bounding_box&
 auto leaf_patch_class::texture() const noexcept -> const std::string&
 {
    return _texture;
+}
+
+bool leaf_patch_class::is_transparent() const noexcept
+{
+   return false;
 }
 
 }

@@ -1,6 +1,8 @@
 #include "billboard_patches.hpp"
 #include "cull_objects.hpp"
 
+#include "container/enum_array.hpp"
+
 #include "gpu/resource.hpp"
 
 #include "allocators/aligned_allocator.hpp"
@@ -18,14 +20,18 @@ namespace we::graphics {
 
 namespace {
 
+enum patch_type { opaque, transparent, COUNT };
+
 auto select_pipeline(const billboard_patches_draw draw, pipeline_library& pipelines)
    -> gpu::pipeline_handle
 {
    switch (draw) {
    case billboard_patches_draw::depth_prepass:
       return pipelines.billboard_patch_depth_prepass.get();
-   case billboard_patches_draw::main:
+   case billboard_patches_draw::main_opaque:
       return pipelines.billboard_patch_normal.get();
+   case billboard_patches_draw::main_transparent:
+      return pipelines.billboard_patch_normal_transparent.get();
    case billboard_patches_draw::shadow:
       return pipelines.billboard_patch_shadow.get();
    }
@@ -55,20 +61,21 @@ struct billboard_patches::impl {
          _light_direction = {};
       }
 
-      std::erase_if(_billboard_patches,
-                    [](const billboard_patch_class_gpu& billboard_patch) {
-                       return not billboard_patch.used_this_frame;
-                    });
+      for (std::vector<billboard_patch_class_gpu>& patches : _billboard_patches) {
+         std::erase_if(patches, [](const billboard_patch_class_gpu& billboard_patch) {
+            return not billboard_patch.used_this_frame;
+         });
 
-      for (billboard_patch_class_gpu& billboard_patch : _billboard_patches) {
-         billboard_patch.used_this_frame = false;
-         billboard_patch.instances.world_from_object.clear();
-         billboard_patch.instances.bbox_minWS_x.clear();
-         billboard_patch.instances.bbox_minWS_y.clear();
-         billboard_patch.instances.bbox_minWS_z.clear();
-         billboard_patch.instances.bbox_maxWS_x.clear();
-         billboard_patch.instances.bbox_maxWS_y.clear();
-         billboard_patch.instances.bbox_maxWS_z.clear();
+         for (billboard_patch_class_gpu& billboard_patch : patches) {
+            billboard_patch.used_this_frame = false;
+            billboard_patch.instances.world_from_object.clear();
+            billboard_patch.instances.bbox_minWS_x.clear();
+            billboard_patch.instances.bbox_minWS_y.clear();
+            billboard_patch.instances.bbox_minWS_z.clear();
+            billboard_patch.instances.bbox_maxWS_x.clear();
+            billboard_patch.instances.bbox_maxWS_y.clear();
+            billboard_patch.instances.bbox_maxWS_z.clear();
+         }
       }
 
       _temp_buffer_allocator.reset();
@@ -79,8 +86,10 @@ struct billboard_patches::impl {
    {
       uint32 max_particles = 0;
 
-      for (const billboard_patch_class_gpu& billboard_patch : _billboard_patches) {
-         max_particles = std::max(billboard_patch.particle_count, max_particles);
+      for (std::vector<billboard_patch_class_gpu>& patches : _billboard_patches) {
+         for (const billboard_patch_class_gpu& billboard_patch : patches) {
+            max_particles = std::max(billboard_patch.particle_count, max_particles);
+         }
       }
 
       if (max_particles > _index_buffer_particle_capacity) {
@@ -121,11 +130,14 @@ struct billboard_patches::impl {
    {
       _world_matrix = world_matrix;
 
-      for (billboard_patch_class_gpu& gpu_billboard_patch : _billboard_patches) {
-         const world::billboard_patch_class& billboard_patch_class =
-            *reinterpret_cast<world::billboard_patch_class*>(gpu_billboard_patch.cpu_key);
+      for (std::vector<billboard_patch_class_gpu>& patches : _billboard_patches) {
+         for (billboard_patch_class_gpu& gpu_billboard_patch : patches) {
+            const world::billboard_patch_class& billboard_patch_class =
+               *reinterpret_cast<world::billboard_patch_class*>(
+                  gpu_billboard_patch.cpu_key);
 
-         update_vertices(billboard_patch_class, gpu_billboard_patch, allocator);
+            update_vertices(billboard_patch_class, gpu_billboard_patch, allocator);
+         }
       }
    }
 
@@ -136,12 +148,17 @@ struct billboard_patches::impl {
       const std::uintptr_t cpu_key =
          reinterpret_cast<std::uintptr_t>(&billboard_patch_class);
 
+      std::vector<billboard_patch_class_gpu>& billboard_patches =
+         billboard_patch_class.is_transparent()
+            ? _billboard_patches[patch_type::transparent]
+            : _billboard_patches[patch_type::opaque];
+
       if (auto gpu_billboard_patch =
-             std::find_if(_billboard_patches.begin(), _billboard_patches.end(),
+             std::find_if(billboard_patches.begin(), billboard_patches.end(),
                           [&](const billboard_patch_class_gpu& billboard_patch) {
                              return billboard_patch.cpu_key == cpu_key;
                           });
-          gpu_billboard_patch != _billboard_patches.end()) {
+          gpu_billboard_patch != billboard_patches.end()) {
          if (not gpu_billboard_patch->used_this_frame) {
             update_vertices(billboard_patch_class, *gpu_billboard_patch, allocator);
 
@@ -173,7 +190,7 @@ struct billboard_patches::impl {
       }
 
       billboard_patch_class_gpu& gpu_billboard_patch =
-         _billboard_patches.emplace_back();
+         billboard_patches.emplace_back();
 
       gpu_billboard_patch.cpu_key = cpu_key;
 
@@ -209,61 +226,21 @@ struct billboard_patches::impl {
       gpu_billboard_patch.instances.bbox_maxWS_z.push_back(bboxWS.max.z);
    }
 
-   auto prepare_view(billboard_patches_draw draw, const frustum& view_frustum,
+   auto prepare_view(billboard_patches_prepare prepare, const frustum& view_frustum,
                      dynamic_buffer_allocator& allocator) -> view
    {
-      std::span<view::instances> instance_lists =
-         {reinterpret_cast<view::instances*>(
-             _temp_buffer_allocator.allocate<view::instances>(_billboard_patches.size())),
-          _billboard_patches.size()};
+      view view;
 
-      for (std::size_t i = 0; i < instance_lists.size(); ++i) {
-         const billboard_patch_class_gpu& billboard_patch = _billboard_patches[i];
+      view.opaque = prepare_view(prepare, _billboard_patches[patch_type::opaque],
+                                 view_frustum, allocator);
 
-         if (_culling_storage.size() <
-             billboard_patch.instances.world_from_object.size()) {
-            _culling_storage.resize(billboard_patch.instances.world_from_object.size());
-         }
-
-         std::span<uint32> visible_instances =
-            draw != billboard_patches_draw::shadow
-               ? cull_objects(view_frustum, billboard_patch.instances.bbox_minWS_x,
-                              billboard_patch.instances.bbox_minWS_y,
-                              billboard_patch.instances.bbox_minWS_z,
-                              billboard_patch.instances.bbox_maxWS_x,
-                              billboard_patch.instances.bbox_maxWS_y,
-                              billboard_patch.instances.bbox_maxWS_z, _culling_storage)
-               : cull_objects_shadow_cascade(view_frustum,
-                                             billboard_patch.instances.bbox_minWS_x,
-                                             billboard_patch.instances.bbox_minWS_y,
-                                             billboard_patch.instances.bbox_minWS_z,
-                                             billboard_patch.instances.bbox_maxWS_x,
-                                             billboard_patch.instances.bbox_maxWS_y,
-                                             billboard_patch.instances.bbox_maxWS_z,
-                                             _culling_storage);
-
-         dynamic_buffer_allocator::allocation instance_allocations = allocator.allocate(
-            sizeof(std::array<float3, 4>) * visible_instances.size());
-
-         for (std::size_t visible_index = 0;
-              visible_index < visible_instances.size(); ++visible_index) {
-            const uint32 instance_index = visible_instances[visible_index];
-
-            std::memcpy(instance_allocations.cpu_address +
-                           sizeof(std::array<float3, 4>) * visible_index,
-                        &billboard_patch.instances.world_from_object[instance_index],
-                        sizeof(std::array<float3, 4>));
-         }
-
-         view::instances instances = {
-            .count = static_cast<uint32>(visible_instances.size()),
-            .world_from_object = instance_allocations.gpu_address,
-         };
-
-         std::memcpy(&instance_lists[i], &instances, sizeof(instances));
+      if (prepare != billboard_patches_prepare::shadow) {
+         view.transparent =
+            prepare_view(prepare, _billboard_patches[patch_type::transparent],
+                         view_frustum, allocator);
       }
 
-      return {instance_lists};
+      return view;
    }
 
    void draw(billboard_patches_draw draw, const view& view,
@@ -291,10 +268,18 @@ struct billboard_patches::impl {
                                               6 * sizeof(uint16)),
       });
 
+      std::span<view::instances> view_data =
+         draw != billboard_patches_draw::main_transparent ? view.opaque
+                                                          : view.transparent;
+      std::span<const billboard_patch_class_gpu> billboard_patches =
+         draw != billboard_patches_draw::main_transparent
+            ? _billboard_patches[patch_type::opaque]
+            : _billboard_patches[patch_type::transparent];
+
       for (std::size_t i = 0;
-           i < std::min(view.data.size(), _billboard_patches.size()); ++i) {
-         const view::instances& visible = view.data[i];
-         const billboard_patch_class_gpu& billboard_patch = _billboard_patches[i];
+           i < std::min(view_data.size(), billboard_patches.size()); ++i) {
+         const view::instances& visible = view_data[i];
+         const billboard_patch_class_gpu& billboard_patch = billboard_patches[i];
 
          if (visible.count == 0) continue;
 
@@ -321,11 +306,13 @@ struct billboard_patches::impl {
 
    void process_updated_textures(const updated_textures& updated)
    {
-      for (billboard_patch_class_gpu& billboard_patch : _billboard_patches) {
-         if (auto new_texture = updated.check(billboard_patch.texture_name);
-             new_texture and new_texture->dimension == world_texture_dimension::_2d) {
-            billboard_patch.texture = std::move(new_texture);
-            billboard_patch.texture_load_token = nullptr;
+      for (std::vector<billboard_patch_class_gpu>& patches : _billboard_patches) {
+         for (billboard_patch_class_gpu& billboard_patch : patches) {
+            if (auto new_texture = updated.check(billboard_patch.texture_name);
+                new_texture and new_texture->dimension == world_texture_dimension::_2d) {
+               billboard_patch.texture = std::move(new_texture);
+               billboard_patch.texture_load_token = nullptr;
+            }
          }
       }
    }
@@ -362,7 +349,7 @@ private:
 
    float4x4 _world_matrix;
    float3 _light_direction;
-   std::vector<billboard_patch_class_gpu> _billboard_patches;
+   container::enum_array<std::vector<billboard_patch_class_gpu>, patch_type> _billboard_patches;
 
    uint32 _index_buffer_particle_capacity = 0;
    gpu::unique_resource_handle _index_buffer;
@@ -392,6 +379,65 @@ private:
                                               sizeof(world::billboard_patch_vertex)};
       gpu_billboard_patch.particle_count =
          static_cast<uint32>(billboard_patch_class.num_particles());
+   }
+
+   auto prepare_view(billboard_patches_prepare prepare,
+                     std::span<const billboard_patch_class_gpu> patches,
+                     const frustum& view_frustum, dynamic_buffer_allocator& allocator)
+      -> std::span<view::instances>
+   {
+      std::span<view::instances> instance_lists =
+         {reinterpret_cast<view::instances*>(
+             _temp_buffer_allocator.allocate<view::instances>(patches.size())),
+          patches.size()};
+
+      for (std::size_t i = 0; i < instance_lists.size(); ++i) {
+         const billboard_patch_class_gpu& billboard_patch = patches[i];
+
+         if (_culling_storage.size() <
+             billboard_patch.instances.world_from_object.size()) {
+            _culling_storage.resize(billboard_patch.instances.world_from_object.size());
+         }
+
+         std::span<uint32> visible_instances =
+            prepare != billboard_patches_prepare::shadow
+               ? cull_objects(view_frustum, billboard_patch.instances.bbox_minWS_x,
+                              billboard_patch.instances.bbox_minWS_y,
+                              billboard_patch.instances.bbox_minWS_z,
+                              billboard_patch.instances.bbox_maxWS_x,
+                              billboard_patch.instances.bbox_maxWS_y,
+                              billboard_patch.instances.bbox_maxWS_z, _culling_storage)
+               : cull_objects_shadow_cascade(view_frustum,
+                                             billboard_patch.instances.bbox_minWS_x,
+                                             billboard_patch.instances.bbox_minWS_y,
+                                             billboard_patch.instances.bbox_minWS_z,
+                                             billboard_patch.instances.bbox_maxWS_x,
+                                             billboard_patch.instances.bbox_maxWS_y,
+                                             billboard_patch.instances.bbox_maxWS_z,
+                                             _culling_storage);
+
+         dynamic_buffer_allocator::allocation instance_allocations = allocator.allocate(
+            sizeof(std::array<float3, 4>) * visible_instances.size());
+
+         for (std::size_t visible_index = 0;
+              visible_index < visible_instances.size(); ++visible_index) {
+            const uint32 instance_index = visible_instances[visible_index];
+
+            std::memcpy(instance_allocations.cpu_address +
+                           sizeof(std::array<float3, 4>) * visible_index,
+                        &billboard_patch.instances.world_from_object[instance_index],
+                        sizeof(std::array<float3, 4>));
+         }
+
+         view::instances instances = {
+            .count = static_cast<uint32>(visible_instances.size()),
+            .world_from_object = instance_allocations.gpu_address,
+         };
+
+         std::memcpy(&instance_lists[i], &instances, sizeof(instances));
+      }
+
+      return instance_lists;
    }
 };
 
@@ -425,11 +471,11 @@ void billboard_patches::add_billboard_patch(const world::billboard_patch_class& 
    _impl->add_billboard_patch(billboard_patch_class, world_from_object, allocator);
 }
 
-auto billboard_patches::prepare_view(billboard_patches_draw draw,
+auto billboard_patches::prepare_view(billboard_patches_prepare prepare,
                                      const frustum& view_frustum,
                                      dynamic_buffer_allocator& allocator) -> view
 {
-   return _impl->prepare_view(draw, view_frustum, allocator);
+   return _impl->prepare_view(prepare, view_frustum, allocator);
 }
 
 void billboard_patches::draw(billboard_patches_draw draw, const view& view,

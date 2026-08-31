@@ -10,10 +10,8 @@ struct definition;
 
 namespace we::world {
 
-enum class leaf_patch_type { sphere, box, vine };
-
-struct leaf_patch_class final : billboard_patch_class {
-   explicit leaf_patch_class(const assets::odf::definition& definition) noexcept;
+struct grass_patch_class final : billboard_patch_class {
+   explicit grass_patch_class(const assets::odf::definition& definition) noexcept;
 
    void update(double delta_time) noexcept override;
 
@@ -36,45 +34,44 @@ private:
 
    struct particle {
       float3 position;
-      float wiggle;
+      float3 flat_vector;
       float size;
-      double wiggle_accum;
-      int8 variation;
-      float darkness;
+      double swing_accum;
+      float swing;
+      int8 variant;
+      uint8 darkness;
+      float flat_size;
+      float axis_factor;
+      float skew;
+      bool flat;
    };
 
    math::bounding_box _bbox;
-   uint8 _max_falling_leaves = 0;
-   uint8 _max_scatter_birds = 0;
-   float _radius = 5.0f;
-   float _height_scale = 1.0f;
-   float _height = 5.0f;
-   int _seed = 1; // Doesn't really matter for us.
-   leaf_patch_type _type = leaf_patch_type::sphere;
    int _num_particles = 50;
    std::unique_ptr<particle[]> _particles;
-   float3 _offset = {0.0f, 0.0f, 0.0f};
    float _min_size = 10.0f;
    float _max_size = 15.0f;
+   float _y_offset = 0.0f;
    float _alpha = 0.5f;
    float _max_distance = 100.0f;
-   float _cone_height = 0.0f;
-   float3 _box_size = {0.0f, 0.0f, 0.0f};
-   std::string _texture;
+   std::string _texture = "grass";
+   float _radius_fade_min = -1.0f;
+   float _radius_fade_max = -1.0f;
    float _darkness_min = 1.0f;
    float _darkness_max = 1.0f;
    int _num_parts = 4;
-   float _vineX = 1.0f;
-   float _vineZ = 0.0f;
-   int _vine_lengthX = 2;
-   int _vine_lengthZ = 4;
-   float _vine_spread = 0.6f;
-   double _wiggle_speed = 1.2;
-   float _wiggle_amount = 0.11f;
-   int _num_visible = 0;
-
-   void create_vine_branch(float3 position, float3 vine_vec, int num_particles,
-                           int& particle_index, random_gen& random) noexcept;
+   float _box_sizeX = -1.0f;
+   float _box_sizeZ = -1.0f;
+   float _flat_height_min = 0.2f;
+   float _flat_height_max = 0.2f;
+   float _flat_size_multiplier = 2.0f;
+   float _flat_face_factor = 0.5f;
+   float _max_skew = 0.1f;
+   float _flat_shadow_height = 0.0f;
+   int _flat_count = 6;
+   float _skinny_factor = 0.3f;
+   bool _flat_grass_swing = false;
+   bool _transparent = false;
 };
 
 }

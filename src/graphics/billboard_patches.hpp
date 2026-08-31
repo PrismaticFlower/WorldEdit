@@ -25,7 +25,17 @@ struct billboard_patch_class;
 
 namespace we::graphics {
 
-enum class billboard_patches_draw { depth_prepass, main, shadow };
+enum class billboard_patches_draw {
+   depth_prepass,
+   main_opaque,
+   main_transparent,
+   shadow,
+};
+
+enum class billboard_patches_prepare {
+   main,
+   shadow,
+};
 
 struct billboard_patches {
    struct view {
@@ -34,7 +44,8 @@ struct billboard_patches {
          gpu_virtual_address world_from_object = 0;
       };
 
-      std::span<instances> data;
+      std::span<instances> opaque;
+      std::span<instances> transparent;
    };
 
    billboard_patches(gpu::device& device, texture_manager& texture_manager);
@@ -58,7 +69,7 @@ struct billboard_patches {
                             const float4x4& world_from_object,
                             dynamic_buffer_allocator& allocator);
 
-   auto prepare_view(billboard_patches_draw draw, const frustum& view_frustum,
+   auto prepare_view(billboard_patches_prepare prepare, const frustum& view_frustum,
                      dynamic_buffer_allocator& allocator) -> view;
 
    void draw(billboard_patches_draw draw, const view& view,

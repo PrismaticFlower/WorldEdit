@@ -682,6 +682,14 @@
     <ClCompile Include="src\world\io\save_blocks_meshes.cpp" />
     <ClCompile Include="src\world\io\save_effects.cpp" />
     <ClCompile Include="src\world\io\save_entity_group.cpp" />
+    <ClCompile Include="src\world\object_classes\grass_patch_class.cpp">
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Develop|ARM64'">_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <ClCompile Include="src\world\object_classes\leaf_patch_class.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Develop|ARM64'">_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -1104,6 +1112,7 @@
     <ClInclude Include="src\world\object.hpp" />
     <ClInclude Include="src\world\object_class.hpp" />
     <ClInclude Include="src\world\object_classes\billboard_patch_class.hpp" />
+    <ClInclude Include="src\world\object_classes\grass_patch_class.hpp" />
     <ClInclude Include="src\world\object_classes\leaf_patch_class.hpp" />
     <ClInclude Include="src\world\object_class_library.hpp" />
     <ClInclude Include="src\world\object_instance_property.hpp" />
