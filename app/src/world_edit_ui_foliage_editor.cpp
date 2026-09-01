@@ -155,7 +155,7 @@ void world_edit::ui_show_foliage_editor() noexcept
    ImGui::End();
 
    if (not open) {
-      _terrain_edit_tool = terrain_edit_tool::none;
+      set_terrain_edit_tool(terrain_edit_tool::none);
 
       return;
    }

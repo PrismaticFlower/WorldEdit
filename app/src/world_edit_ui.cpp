@@ -146,6 +146,9 @@ void world_edit::update_ui() noexcept
    else if (_terrain_edit_tool == terrain_edit_tool::extend) {
       ui_show_terrain_extend();
    }
+   else if (_terrain_edit_tool == terrain_edit_tool::blur_height_map) {
+      ui_show_terrain_blur_height_map();
+   }
    else if (_terrain_edit_tool == terrain_edit_tool::light_baker) {
       ui_show_terrain_light_baker();
    }

@@ -162,6 +162,7 @@ enum class terrain_edit_tool : uint8 {
    resize,
    crop,
    extend,
+   blur_height_map,
    light_baker,
    water_editor,
    foliage_editor
@@ -406,6 +407,8 @@ private:
 
    void ui_show_terrain_extend() noexcept;
 
+   void ui_show_terrain_blur_height_map() noexcept;
+
    void ui_show_water_editor() noexcept;
 
    void ui_show_foliage_editor() noexcept;
@@ -516,6 +519,8 @@ private:
    void unhide_all() noexcept;
 
    void floor_terrain() noexcept;
+
+   void set_terrain_edit_tool(const terrain_edit_tool tool) noexcept;
 
    void ask_to_save_world() noexcept;
 
@@ -998,6 +1003,14 @@ private:
       int32 new_length = 0;
       bool fill_from_edges = true;
    } _terrain_extend_context;
+
+   struct terrain_blur_height_map_config {
+      int32 radius = 5;
+   } _terrain_blur_height_map_config;
+
+   struct terrain_blur_height_map_context {
+      container::dynamic_array_2d<int16> height_map;
+   } _terrain_blur_height_map_context;
 
    world::terrain_light_map_baker_config _terrain_light_baker_config;
 

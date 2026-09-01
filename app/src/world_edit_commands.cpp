@@ -166,27 +166,26 @@ void world_edit::initialize_commands() noexcept
    });
 
    _commands.add("show.terrain_height_editor"s, [this] {
-      _terrain_edit_tool = terrain_edit_tool::editor;
+      set_terrain_edit_tool(terrain_edit_tool::editor);
       _terrain_editor_config.edit_target = terrain_edit_target::height;
    });
    _commands.add("show.terrain_texture_editor"s, [this] {
-      _terrain_edit_tool = terrain_edit_tool::editor;
+      set_terrain_edit_tool(terrain_edit_tool::editor);
       _terrain_editor_config.edit_target = terrain_edit_target::texture;
    });
    _commands.add("show.terrain_color_editor"s, [this] {
-      _terrain_edit_tool = terrain_edit_tool::editor;
+      set_terrain_edit_tool(terrain_edit_tool::editor);
       _terrain_editor_config.edit_target = terrain_edit_target::color;
    });
    _commands.add("show.water_editor"s, [this] {
-      _terrain_edit_tool = terrain_edit_tool::water_editor;
-      _water_editor_context = {};
+      set_terrain_edit_tool(terrain_edit_tool::water_editor);
    });
    _commands.add("show.foliage_editor"s, [this] {
-      _terrain_edit_tool = terrain_edit_tool::foliage_editor;
-      _foliage_editor_context = {};
+      set_terrain_edit_tool(terrain_edit_tool::foliage_editor);
    });
-   _commands.add("show.bake_terrain_lighting"s,
-                 [this] { _terrain_edit_tool = terrain_edit_tool::light_baker; });
+   _commands.add("show.bake_terrain_lighting"s, [this] {
+      set_terrain_edit_tool(terrain_edit_tool::light_baker);
+   });
    _commands.add("show.tree_line_editor"s, _tree_line_editor_open);
    _commands.add("show.block_editor"s, [this] {
       _block_editor_open = true;
@@ -575,12 +574,8 @@ void world_edit::initialize_commands() noexcept
    });
 
    _commands.add("terrain.clear_edit_tool"s,
-                 [this] { _terrain_edit_tool = terrain_edit_tool::none; });
-   _commands.add("terrain.finish_import_heightmap"s, [this] {
-      _terrain_edit_tool = terrain_edit_tool::none;
-      _terrain_import_heightmap_context = {};
-      _edit_stack_world.close_last();
-   });
+                 [this] { set_terrain_edit_tool(terrain_edit_tool::none); });
+
    _commands.add("terrain.pick_height_click"s,
                  [this] { _terrain_editor_context.pick_height.clicked = true; });
    _commands.add("terrain.pick_height_cancel"s,
@@ -1336,7 +1331,21 @@ void world_edit::initialize_hotkeys() noexcept
          },
       .default_hotkeys =
          {
-            {"Finish", "terrain.finish_import_heightmap", {.key = key::escape}},
+            {"Finish", "terrain.clear_edit_tool", {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Terrain Editing (Blur Heightmap)",
+      .activated =
+         [this] {
+            return _terrain_edit_tool == terrain_edit_tool::blur_height_map;
+         },
+      .default_hotkeys =
+         {
+            {"Cancel", "terrain.clear_edit_tool", {.key = key::escape}},
          },
 
       .hidden = true,

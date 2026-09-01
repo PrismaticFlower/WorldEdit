@@ -237,7 +237,7 @@ void world_edit::ui_show_terrain_extend() noexcept
 
       ImGui::Text("Can not extend non power of 2 terrain.");
 
-      if (not open) _terrain_edit_tool = terrain_edit_tool::none;
+      if (not open) set_terrain_edit_tool(terrain_edit_tool::none);
 
       ImGui::End();
 
@@ -249,7 +249,7 @@ void world_edit::ui_show_terrain_extend() noexcept
 
       ImGui::Text("Terrain is already at the max size.");
 
-      if (not open) _terrain_edit_tool = terrain_edit_tool::none;
+      if (not open) set_terrain_edit_tool(terrain_edit_tool::none);
 
       ImGui::End();
 
@@ -295,7 +295,7 @@ void world_edit::ui_show_terrain_extend() noexcept
       ImGui::EndDisabled();
    }
 
-   if (not open) _terrain_edit_tool = terrain_edit_tool::none;
+   if (not open) set_terrain_edit_tool(terrain_edit_tool::none);
 
    ImGui::End();
 }

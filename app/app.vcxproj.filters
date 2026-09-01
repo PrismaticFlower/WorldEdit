@@ -60,6 +60,7 @@
     <ClCompile Include="src\world_edit_ui_world_object_painter.cpp" />
     <ClCompile Include="src\world_edit_ui_tree_line_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_world_selection_rotate_path.cpp" />
+    <ClCompile Include="src\world_edit_ui_terrain_blur_heightmap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />

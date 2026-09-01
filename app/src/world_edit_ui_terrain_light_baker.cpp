@@ -75,7 +75,7 @@ void world_edit::ui_show_terrain_light_baker() noexcept
       }
    }
 
-   if (not open) _terrain_edit_tool = terrain_edit_tool::none;
+   if (not open) set_terrain_edit_tool(terrain_edit_tool::none);
 
    ImGui::End();
 }

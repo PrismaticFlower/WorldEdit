@@ -181,7 +181,7 @@ void world_edit::ui_show_terrain_import_texture_weight_map() noexcept
       }
    }
 
-   if (not open) _terrain_edit_tool = terrain_edit_tool::none;
+   if (not open) set_terrain_edit_tool(terrain_edit_tool::none);
 
    ImGui::End();
 }

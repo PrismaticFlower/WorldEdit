@@ -4325,6 +4325,63 @@ void world_edit::floor_terrain() noexcept
                            _edit_context, {.closed = true});
 }
 
+void world_edit::set_terrain_edit_tool(const terrain_edit_tool tool) noexcept
+{
+   if (_terrain_edit_tool == terrain_edit_tool::import_heightmap) {
+      _terrain_import_heightmap_context = {};
+   }
+   else if (_terrain_edit_tool == terrain_edit_tool::import_texture_weight_map) {
+      _terrain_import_texture_weight_map_context = {};
+   }
+   else if (_terrain_edit_tool == terrain_edit_tool::import_color_map) {
+      _terrain_import_color_map_context = {};
+   }
+   else if (_terrain_edit_tool == terrain_edit_tool::blur_height_map) {
+      _terrain_blur_height_map_context = {};
+   }
+
+   switch (tool) {
+   case terrain_edit_tool::none:
+      break;
+   case terrain_edit_tool::editor:
+      _terrain_editor_context = {};
+      break;
+   case terrain_edit_tool::import_heightmap:
+      _terrain_import_heightmap_context = {};
+      break;
+   case terrain_edit_tool::import_texture_weight_map:
+      _terrain_import_texture_weight_map_context = {};
+      break;
+   case terrain_edit_tool::import_color_map:
+      _terrain_import_color_map_context = {};
+      break;
+   case terrain_edit_tool::resize:
+      _terrain_resize_context = {};
+      break;
+   case terrain_edit_tool::crop:
+      _terrain_crop_context = {};
+      break;
+   case terrain_edit_tool::extend:
+      _terrain_extend_context = {};
+      break;
+   case terrain_edit_tool::blur_height_map:
+      _terrain_blur_height_map_context = {};
+      break;
+   case terrain_edit_tool::light_baker:
+      break;
+   case terrain_edit_tool::water_editor:
+      _water_editor_context = {};
+      break;
+   case terrain_edit_tool::foliage_editor:
+      _foliage_editor_context = {};
+      break;
+   }
+
+   _terrain_edit_tool = tool;
+
+   _edit_stack_world.close_last();
+}
+
 void world_edit::ask_to_save_world() noexcept
 {
    if (_world_path.empty()) return;

@@ -294,137 +294,137 @@ auto resize_terrain(const world::terrain& old_terrain, const int32 new_length,
       });
 
    for (int32 texture = 0; texture < world::terrain::texture_count; ++texture) {
-      texture_weight_maps_resize[texture] = thread_pool.exec([=,
-                                                              &old_texture_weight_map =
-                                                                 old_terrain.texture_weight_maps[texture],
-                                                              &old_terrain] {
-         if (new_length > old_terrain.length) {
-            container::dynamic_array_2d<uint8>
-               intermediate_weight_map{new_length, old_terrain.length};
+      texture_weight_maps_resize[texture] = thread_pool.exec(
+         [=, &old_texture_weight_map = old_terrain.texture_weight_maps[texture],
+          &old_terrain] {
+            if (new_length > old_terrain.length) {
+               container::dynamic_array_2d<uint8>
+                  intermediate_weight_map{new_length, old_terrain.length};
 
-            const int32 footprint = new_length / old_terrain.length;
-            const float inv_footprint = 1.0f / footprint;
+               const int32 footprint = new_length / old_terrain.length;
+               const float inv_footprint = 1.0f / footprint;
 
-            for (int32 y = 0; y < old_terrain.length; ++y) {
-               for (int32 x = 0; x < old_terrain.length; ++x) {
-                  const float a = old_texture_weight_map[{x, y}];
-                  const float b =
-                     old_texture_weight_map[{std::clamp(x + 1, 0, old_terrain.length - 1), y}];
+               for (int32 y = 0; y < old_terrain.length; ++y) {
+                  for (int32 x = 0; x < old_terrain.length; ++x) {
+                     const float a = old_texture_weight_map[{x, y}];
+                     const float b =
+                        old_texture_weight_map[{std::clamp(x + 1, 0, old_terrain.length - 1), y}];
 
-                  for (int32 i = 0; i < footprint; ++i) {
-                     intermediate_weight_map[{x * footprint + i, y}] =
-                        static_cast<uint8>(lerp(a, b, i * inv_footprint) + 0.5f);
+                     for (int32 i = 0; i < footprint; ++i) {
+                        intermediate_weight_map[{x * footprint + i, y}] =
+                           static_cast<uint8>(lerp(a, b, i * inv_footprint) + 0.5f);
+                     }
+                  }
+               }
+
+               container::dynamic_array_2d<uint8> new_weight_map{new_length, new_length};
+
+               const int32 y_offset = footprint - 1;
+
+               for (int32 y = 0; y < old_terrain.length; ++y) {
+                  for (int32 x = 0; x < new_length; ++x) {
+                     const float a =
+                        intermediate_weight_map[{x, std::clamp(y, 0, old_terrain.length - 1)}];
+                     const float b =
+                        intermediate_weight_map[{x, std::clamp(y + 1, 0,
+                                                               old_terrain.length - 1)}];
+
+                     for (int32 i = 0; i < footprint; ++i) {
+                        new_weight_map[{x, std::clamp(y * footprint + i + y_offset,
+                                                      0, new_length - 1)}] =
+                           static_cast<uint8>(lerp(a, b, i * inv_footprint) + 0.5f);
+                     }
+                  }
+               }
+
+               for (int32 y = 0; y < y_offset; ++y) {
+                  for (int32 x = 0; x < new_length; ++x) {
+                     new_weight_map[{x, y}] = intermediate_weight_map[{x, 0}];
+                  }
+               }
+
+               return new_weight_map;
+            }
+            else {
+               container::dynamic_array_2d<uint8>
+                  intermediate_weight_map{new_length, old_terrain.length};
+
+               const int32 footprint = old_terrain.length / new_length;
+
+               for (int32 y = 0; y < old_terrain.length; ++y) {
+                  for (int32 x = 0; x < new_length; ++x) {
+                     int32 total = 0;
+
+                     for (int32 i = 0; i < footprint; ++i) {
+                        total += old_texture_weight_map[{x * footprint + i, y}];
+                     }
+
+                     intermediate_weight_map[{x, y}] =
+                        static_cast<uint8>(total / footprint);
+                  }
+               }
+
+               container::dynamic_array_2d<uint8> new_weight_map{new_length, new_length};
+
+               for (int32 y = 0; y < new_length; ++y) {
+                  for (int32 x = 0; x < new_length; ++x) {
+                     int32 total = 0;
+
+                     for (int32 i = 0; i < footprint; ++i) {
+                        total += intermediate_weight_map[{x, y * footprint + i}];
+                     }
+
+                     new_weight_map[{x, y}] = static_cast<uint8>(total / footprint);
+                  }
+               }
+
+               return new_weight_map;
+            }
+         });
+   }
+
+   async::task water_map_resize = thread_pool.exec(
+      [&old_water_map = old_terrain.water_map,
+       old_length = old_terrain.length / 4, new_length = new_length / 4] {
+         container::dynamic_array_2d<bool> new_water_map{new_length, new_length};
+
+         if (new_length > old_length) {
+            const int32 footprint = new_length / old_length;
+
+            for (int32 y = 0; y < old_length; ++y) {
+               for (int32 x = 0; x < old_length; ++x) {
+                  const bool water = old_water_map[{x, y}];
+
+                  for (int32 y_local = 0; y_local < footprint; ++y_local) {
+                     for (int32 x_local = 0; x_local < footprint; ++x_local) {
+                        new_water_map[{x * footprint + x_local, y * footprint + y_local}] =
+                           water;
+                     }
                   }
                }
             }
-
-            container::dynamic_array_2d<uint8> new_weight_map{new_length, new_length};
-
-            const int32 y_offset = footprint - 1;
-
-            for (int32 y = 0; y < old_terrain.length; ++y) {
-               for (int32 x = 0; x < new_length; ++x) {
-                  const float a =
-                     intermediate_weight_map[{x, std::clamp(y, 0, old_terrain.length - 1)}];
-                  const float b =
-                     intermediate_weight_map[{x, std::clamp(y + 1, 0,
-                                                            old_terrain.length - 1)}];
-
-                  for (int32 i = 0; i < footprint; ++i) {
-                     new_weight_map[{x, std::clamp(y * footprint + i + y_offset, 0, new_length - 1)}] =
-                        static_cast<uint8>(lerp(a, b, i * inv_footprint) + 0.5f);
-                  }
-               }
-            }
-
-            for (int32 y = 0; y < y_offset; ++y) {
-               for (int32 x = 0; x < new_length; ++x) {
-                  new_weight_map[{x, y}] = intermediate_weight_map[{x, 0}];
-               }
-            }
-
-            return new_weight_map;
          }
          else {
-            container::dynamic_array_2d<uint8>
-               intermediate_weight_map{new_length, old_terrain.length};
-
-            const int32 footprint = old_terrain.length / new_length;
-
-            for (int32 y = 0; y < old_terrain.length; ++y) {
-               for (int32 x = 0; x < new_length; ++x) {
-                  int32 total = 0;
-
-                  for (int32 i = 0; i < footprint; ++i) {
-                     total += old_texture_weight_map[{x * footprint + i, y}];
-                  }
-
-                  intermediate_weight_map[{x, y}] =
-                     static_cast<uint8>(total / footprint);
-               }
-            }
-
-            container::dynamic_array_2d<uint8> new_weight_map{new_length, new_length};
+            const int32 footprint = old_length / new_length;
 
             for (int32 y = 0; y < new_length; ++y) {
                for (int32 x = 0; x < new_length; ++x) {
-                  int32 total = 0;
+                  bool water = false;
 
-                  for (int32 i = 0; i < footprint; ++i) {
-                     total += intermediate_weight_map[{x, y * footprint + i}];
+                  for (int32 y_local = 0; y_local < footprint; ++y_local) {
+                     for (int32 x_local = 0; x_local < footprint; ++x_local) {
+                        water |=
+                           old_water_map[{x * footprint + x_local, y * footprint + y_local}];
+                     }
                   }
 
-                  new_weight_map[{x, y}] = static_cast<uint8>(total / footprint);
+                  new_water_map[{x, y}] = water;
                }
             }
-
-            return new_weight_map;
          }
+
+         return new_water_map;
       });
-   }
-
-   async::task water_map_resize = thread_pool.exec([&old_water_map = old_terrain.water_map,
-                                                    old_length = old_terrain.length / 4,
-                                                    new_length = new_length / 4] {
-      container::dynamic_array_2d<bool> new_water_map{new_length, new_length};
-
-      if (new_length > old_length) {
-         const int32 footprint = new_length / old_length;
-
-         for (int32 y = 0; y < old_length; ++y) {
-            for (int32 x = 0; x < old_length; ++x) {
-               const bool water = old_water_map[{x, y}];
-
-               for (int32 y_local = 0; y_local < footprint; ++y_local) {
-                  for (int32 x_local = 0; x_local < footprint; ++x_local) {
-                     new_water_map[{x * footprint + x_local, y * footprint + y_local}] =
-                        water;
-                  }
-               }
-            }
-         }
-      }
-      else {
-         const int32 footprint = old_length / new_length;
-
-         for (int32 y = 0; y < new_length; ++y) {
-            for (int32 x = 0; x < new_length; ++x) {
-               bool water = false;
-
-               for (int32 y_local = 0; y_local < footprint; ++y_local) {
-                  for (int32 x_local = 0; x_local < footprint; ++x_local) {
-                     water |=
-                        old_water_map[{x * footprint + x_local, y * footprint + y_local}];
-                  }
-               }
-
-               new_water_map[{x, y}] = water;
-            }
-         }
-      }
-
-      return new_water_map;
-   });
 
    async::task foliage_map_resize = thread_pool.exec(
       [&old_foliage_map = old_terrain.foliage_map,
@@ -531,7 +531,7 @@ void world_edit::ui_show_terrain_resize() noexcept
 
       ImGui::End();
 
-      if (not open) _terrain_edit_tool = terrain_edit_tool::none;
+      if (not open) set_terrain_edit_tool(terrain_edit_tool::none);
 
       return;
    }
@@ -599,7 +599,7 @@ void world_edit::ui_show_terrain_resize() noexcept
       ImGui::EndDisabled();
    }
 
-   if (not open) _terrain_edit_tool = terrain_edit_tool::none;
+   if (not open) set_terrain_edit_tool(terrain_edit_tool::none);
 
    ImGui::End();
 }

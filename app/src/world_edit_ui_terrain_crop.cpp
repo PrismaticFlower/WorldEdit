@@ -90,39 +90,38 @@ auto crop_terrain(const world::terrain& old_terrain, const int32 new_length,
          });
    }
 
-   async::task water_map_crop = thread_pool.exec([&old_water_map = old_terrain.water_map,
-                                                  old_length = old_terrain.length / 4,
-                                                  new_length = new_length / 4] {
-      const int32 offset = (old_length - new_length) / 2;
+   async::task water_map_crop = thread_pool.exec(
+      [&old_water_map = old_terrain.water_map,
+       old_length = old_terrain.length / 4, new_length = new_length / 4] {
+         const int32 offset = (old_length - new_length) / 2;
 
-      container::dynamic_array_2d<bool> new_water_map{new_length, new_length};
+         container::dynamic_array_2d<bool> new_water_map{new_length, new_length};
 
-      for (int32 y = 0; y < new_length; ++y) {
-         for (int32 x = 0; x < new_length; ++x) {
-            new_water_map[{x, y}] = old_water_map[{x + offset, y + offset}];
+         for (int32 y = 0; y < new_length; ++y) {
+            for (int32 x = 0; x < new_length; ++x) {
+               new_water_map[{x, y}] = old_water_map[{x + offset, y + offset}];
+            }
          }
-      }
 
-      return new_water_map;
-   });
+         return new_water_map;
+      });
 
-   async::task foliage_map_crop = thread_pool.exec([&old_foliage_map =
-                                                       old_terrain.foliage_map,
-                                                    old_length = old_terrain.length / 2,
-                                                    new_length = new_length / 2] {
-      const int32 offset = (old_length - new_length) / 2;
+   async::task foliage_map_crop = thread_pool.exec(
+      [&old_foliage_map = old_terrain.foliage_map,
+       old_length = old_terrain.length / 2, new_length = new_length / 2] {
+         const int32 offset = (old_length - new_length) / 2;
 
-      container::dynamic_array_2d<world::foliage_patch> new_foliage_map{new_length,
-                                                                        new_length};
+         container::dynamic_array_2d<world::foliage_patch> new_foliage_map{new_length,
+                                                                           new_length};
 
-      for (int32 y = 0; y < new_length; ++y) {
-         for (int32 x = 0; x < new_length; ++x) {
-            new_foliage_map[{x, y}] = old_foliage_map[{x + offset, y + offset}];
+         for (int32 y = 0; y < new_length; ++y) {
+            for (int32 x = 0; x < new_length; ++x) {
+               new_foliage_map[{x, y}] = old_foliage_map[{x + offset, y + offset}];
+            }
          }
-      }
 
-      return new_foliage_map;
-   });
+         return new_foliage_map;
+      });
 
    world::terrain new_terrain{
       .version = old_terrain.version,
@@ -176,7 +175,7 @@ void world_edit::ui_show_terrain_crop() noexcept
 
       ImGui::End();
 
-      if (not open) _terrain_edit_tool = terrain_edit_tool::none;
+      if (not open) set_terrain_edit_tool(terrain_edit_tool::none);
 
       return;
    }
@@ -189,7 +188,7 @@ void world_edit::ui_show_terrain_crop() noexcept
 
       ImGui::End();
 
-      if (not open) _terrain_edit_tool = terrain_edit_tool::none;
+      if (not open) set_terrain_edit_tool(terrain_edit_tool::none);
 
       return;
    }
@@ -227,7 +226,7 @@ void world_edit::ui_show_terrain_crop() noexcept
       ImGui::EndDisabled();
    }
 
-   if (not open) _terrain_edit_tool = terrain_edit_tool::none;
+   if (not open) set_terrain_edit_tool(terrain_edit_tool::none);
 
    ImGui::End();
 }

@@ -291,52 +291,44 @@ void world_edit::ui_show_main_menu_bar() noexcept
          if (ImGui::MenuItem("Terrain Height Editor",
                              get_display_string(_hotkeys.query_binding(
                                 "Global", "Show Terrain Height Editor")))) {
-            _terrain_edit_tool = terrain_edit_tool::editor;
+            set_terrain_edit_tool(terrain_edit_tool::editor);
             _terrain_editor_config.edit_target = terrain_edit_target::height;
          }
 
          if (ImGui::MenuItem("Terrain Texture Editor",
                              get_display_string(_hotkeys.query_binding(
                                 "Global", "Show Terrain Texture Editor")))) {
-            _terrain_edit_tool = terrain_edit_tool::editor;
+            set_terrain_edit_tool(terrain_edit_tool::editor);
             _terrain_editor_config.edit_target = terrain_edit_target::texture;
          }
 
          if (ImGui::MenuItem("Terrain Colour Editor",
                              get_display_string(_hotkeys.query_binding(
                                 "Global", "Show Terrain Colour Editor")))) {
-            _terrain_edit_tool = terrain_edit_tool::editor;
+            set_terrain_edit_tool(terrain_edit_tool::editor);
             _terrain_editor_config.edit_target = terrain_edit_target::color;
          }
 
          if (ImGui::MenuItem("Import Terrain Heightmap")) {
-            _terrain_edit_tool = terrain_edit_tool::import_heightmap;
-            _terrain_import_heightmap_context = {};
-            _edit_stack_world.close_last();
+            set_terrain_edit_tool(terrain_edit_tool::import_heightmap);
          }
 
          if (ImGui::MenuItem("Import Terrain Texture Weight Map")) {
-            _terrain_edit_tool = terrain_edit_tool::import_texture_weight_map;
-            _terrain_import_texture_weight_map_context = {};
-            _edit_stack_world.close_last();
+            set_terrain_edit_tool(terrain_edit_tool::import_texture_weight_map);
          }
 
          if (ImGui::MenuItem("Import Terrain Color Map")) {
-            _terrain_edit_tool = terrain_edit_tool::import_color_map;
-            _terrain_import_color_map_context = {};
-            _edit_stack_world.close_last();
+            set_terrain_edit_tool(terrain_edit_tool::import_color_map);
          }
 
          if (ImGui::MenuItem("Resize Terrain")) {
-            _terrain_edit_tool = terrain_edit_tool::resize;
-            _terrain_resize_context = {};
+            set_terrain_edit_tool(terrain_edit_tool::resize);
          }
 
          ImGui::SetItemTooltip("Resize the terrain, scaling it like an image.");
 
          if (ImGui::MenuItem("Crop Terrain")) {
-            _terrain_edit_tool = terrain_edit_tool::crop;
-            _terrain_crop_context = {};
+            set_terrain_edit_tool(terrain_edit_tool::crop);
          }
 
          ImGui::SetItemTooltip(
@@ -344,8 +336,7 @@ void world_edit::ui_show_main_menu_bar() noexcept
             "the uncropped terrain area.");
 
          if (ImGui::MenuItem("Extend Terrain")) {
-            _terrain_edit_tool = terrain_edit_tool::extend;
-            _terrain_extend_context = {};
+            set_terrain_edit_tool(terrain_edit_tool::extend);
          }
 
          ImGui::SetItemTooltip("Extend the terrain, increasing it's size while "
@@ -361,7 +352,7 @@ void world_edit::ui_show_main_menu_bar() noexcept
          if (ImGui::MenuItem("Bake Terrain Lighting",
                              get_display_string(_hotkeys.query_binding(
                                 "Global", "Show Bake Terrain Lighting")))) {
-            _terrain_edit_tool = terrain_edit_tool::light_baker;
+            set_terrain_edit_tool(terrain_edit_tool::light_baker);
          }
 
          ImGui::SetItemTooltip("Also known as Burn Terrain in Zero Editor.");
@@ -372,14 +363,20 @@ void world_edit::ui_show_main_menu_bar() noexcept
                              get_display_string(
                                 _hotkeys.query_binding("Global",
                                                        "Show Water Editor")))) {
-            _terrain_edit_tool = terrain_edit_tool::water_editor;
-            _water_editor_context = {};
+            set_terrain_edit_tool(terrain_edit_tool::water_editor);
          }
 
          if (ImGui::MenuItem("Foliage Editor",
                              get_display_string(_hotkeys.query_binding("Global", "Show Foliage Editor")))) {
-            _terrain_edit_tool = terrain_edit_tool::foliage_editor;
-            _foliage_editor_context = {};
+            set_terrain_edit_tool(terrain_edit_tool::foliage_editor);
+         }
+
+         if (ImGui::BeginMenu("Extra Tools")) {
+            if (ImGui::MenuItem("Blur Terrain Heightmap")) {
+               set_terrain_edit_tool(terrain_edit_tool::blur_height_map);
+            }
+
+            ImGui::EndMenu();
          }
 
          ImGui::EndMenu();

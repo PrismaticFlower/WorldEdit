@@ -801,7 +801,7 @@ void world_edit::ui_show_terrain_editor() noexcept
          }
 
          if (ImGui::Button("Bake Light Map", {ImGui::CalcItemWidth(), 0.0f})) {
-            _terrain_edit_tool = terrain_edit_tool::light_baker;
+            set_terrain_edit_tool(terrain_edit_tool::light_baker);
          }
       }
 
@@ -884,7 +884,7 @@ void world_edit::ui_show_terrain_editor() noexcept
    ImGui::End();
 
    if (not open) {
-      _terrain_edit_tool = terrain_edit_tool::none;
+      set_terrain_edit_tool(terrain_edit_tool::none);
 
       return;
    }

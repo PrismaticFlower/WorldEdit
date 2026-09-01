@@ -423,6 +423,7 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
     <ClCompile Include="src\world_edit_ui_export_selection.cpp" />
     <ClCompile Include="src\world_edit_ui_load_errors.cpp" />
     <ClCompile Include="src\world_edit_ui_munge.cpp" />
+    <ClCompile Include="src\world_edit_ui_terrain_blur_heightmap.cpp" />
     <ClCompile Include="src\world_edit_ui_texture_pick.cpp" />
     <ClCompile Include="src\world_edit_ui_tree_line_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_world_block_editor.cpp" />
