@@ -764,11 +764,11 @@ auto build_material(const msh::scene& scene, const msh::node& node,
    }
 
    material.specular_color =
-      static_cast<uint32>(msh_material.specular_color.x * 255.0f) << 16u;
+      static_cast<uint32>(msh_material.specular_color.x * 255.0f) << 0u;
    material.specular_color |=
       static_cast<uint32>(msh_material.specular_color.y * 255.0f) << 8u;
    material.specular_color |=
-      static_cast<uint32>(msh_material.specular_color.z * 255.0f) << 0u;
+      static_cast<uint32>(msh_material.specular_color.z * 255.0f) << 16u;
    material.specular_color |=
       static_cast<uint32>(msh_material.specular_color.w * 255.0f) << 24u;
 

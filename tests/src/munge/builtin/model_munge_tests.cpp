@@ -201,6 +201,11 @@ TEST_CASE("model_munge model_mtrl_00_00_reflective", "[Munge]")
    REQUIRE(golden_ref_test("model_mtrl_00_00_reflective", 344));
 }
 
+TEST_CASE("model_munge model_mtrl_00_00_specular_color", "[Munge]")
+{
+   REQUIRE(golden_ref_test("model_mtrl_00_00_specular_color", 328));
+}
+
 TEST_CASE("model_munge model_mtrl_00_01", "[Munge]")
 {
    REQUIRE(golden_ref_test("model_mtrl_00_01", 304));
