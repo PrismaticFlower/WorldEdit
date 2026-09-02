@@ -31,11 +31,7 @@ struct mesh {
 
 struct flat_model_node {
    std::string name;
-   transform transform;
-   node_type type = node_type::null;
-   bool hidden = false;
-
-   std::vector<flat_model_node> children;
+   float4x4 local_from_vertex;
 };
 
 struct flat_model_terrain_cut {
@@ -75,7 +71,7 @@ struct flat_model_collision {
 };
 
 struct flat_model {
-   explicit flat_model(const scene& scene);
+   explicit flat_model(scene scene);
 
    math::bounding_box bounding_box;
    math::bounding_box terrain_cuts_bounding_box;
@@ -84,7 +80,7 @@ struct flat_model {
    std::vector<mesh> meshes;
    std::vector<flat_model_terrain_cut> terrain_cuts;
    std::vector<flat_model_collision> collision;
-   std::vector<flat_model_node> node_hierarchy;
+   std::vector<flat_model_node> nodes;
 
    flat_model_bvh bvh;
    flat_model_terrain_cut_bvh terrain_cut_bvh;
@@ -101,11 +97,9 @@ private:
 
    void flatten_segments_to_terrain_cut(const std::vector<geometry_segment>& segments,
                                         const float4x4& node_to_object,
-                                        const std::string_view node_name,
-                                        const scene_options& options);
+                                        const std::string_view node_name);
 
-   void flatten_node_to_collision(const node& node, const float4x4& node_to_object,
-                                  const scene_options& options);
+   void flatten_node_to_collision(const node& node, const float4x4& node_to_object);
 
    auto select_mesh_for_segment(const geometry_segment& segment, const material& material,
                                 const scene_options& options) -> mesh&;

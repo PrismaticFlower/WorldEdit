@@ -1110,6 +1110,7 @@
     <ClInclude Include="src\world\global_lights.hpp" />
     <ClInclude Include="src\world\measurement.hpp" />
     <ClInclude Include="src\world\object.hpp" />
+    <ClInclude Include="src\world\object_attached.hpp" />
     <ClInclude Include="src\world\object_class.hpp" />
     <ClInclude Include="src\world\object_classes\billboard_patch_class.hpp" />
     <ClInclude Include="src\world\object_classes\grass_patch_class.hpp" />

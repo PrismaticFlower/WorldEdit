@@ -7,6 +7,8 @@
 
 #include <string_view>
 
+#include <fmt/format.h>
+
 using namespace std::literals;
 using namespace Catch::literals;
 
@@ -166,92 +168,67 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
 {
    flat_model model{input_scene};
 
-   // hierarchy checks
-   {
-      REQUIRE(model.node_hierarchy.size() == 2);
+   REQUIRE(model.nodes.size() == 6);
 
-      // root
-      {
-         auto& root = model.node_hierarchy[0];
+   CHECK(model.nodes[0].name == "root");
+   CHECK(model.nodes[0].local_from_vertex[0] ==
+         float4{0x1p+0f, 0x0p-1022f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[0].local_from_vertex[1] ==
+         float4{0x0p-1022f, 0x1p+0f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[0].local_from_vertex[2] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x1p+0f, 0x0p-1022f});
+   CHECK(model.nodes[0].local_from_vertex[3] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x0p-1022f, 0x1p+0f});
 
-         CHECK(root.name == input_scene.nodes[0].name);
-         CHECK(approx_equals(root.transform.translation,
-                             input_scene.nodes[0].transform.translation));
-         CHECK(approx_equals(root.transform.rotation,
-                             input_scene.nodes[0].transform.rotation));
-         CHECK(root.type == input_scene.nodes[0].type);
-         CHECK(root.hidden == input_scene.nodes[0].hidden);
+   CHECK(model.nodes[1].name == "null00");
+   CHECK(model.nodes[1].local_from_vertex[0] ==
+         float4{0x1.45bdcp-1f, 0x1.681f9cp-1f, 0x1.44a3bcp-2f, 0x0p-1022f});
+   CHECK(model.nodes[1].local_from_vertex[1] ==
+         float4{-0x1.425268p-1f, 0x1.6bf19cp-1f, -0x1.413b6cp-2f, 0x0p-1022f});
+   CHECK(model.nodes[1].local_from_vertex[2] ==
+         float4{-0x1.c8b4e6p-2f, 0x1.bffff6p-23f, 0x1.ca4196p-1f, 0x0p-1022f});
+   CHECK(model.nodes[1].local_from_vertex[3] ==
+         float4{0x0p-1022f, 0x1.8p+1f, 0x0p-1022f, 0x1p+0f});
 
-         REQUIRE(root.children.size() == 1);
+   CHECK(model.nodes[2].name == "geometry");
+   CHECK(model.nodes[2].local_from_vertex[0] ==
+         float4{0x1.45bdcp-1f, 0x1.681f9cp-1f, 0x1.44a3bcp-2f, 0x0p-1022f});
+   CHECK(model.nodes[2].local_from_vertex[1] ==
+         float4{-0x1.425268p-1f, 0x1.6bf19cp-1f, -0x1.413b6cp-2f, 0x0p-1022f});
+   CHECK(model.nodes[2].local_from_vertex[2] ==
+         float4{-0x1.c8b4e6p-2f, 0x1.bffff6p-23f, 0x1.ca4196p-1f, 0x0p-1022f});
+   CHECK(model.nodes[2].local_from_vertex[3] ==
+         float4{-0x1.c8b4e6p-2f, 0x1.800002p+1f, 0x1.ca4196p-1f, 0x1p+0f});
 
-         // null00
-         {
-            auto& null00 = root.children[0];
+   CHECK(model.nodes[3].name == "p_box");
+   CHECK(model.nodes[3].local_from_vertex[0] ==
+         float4{0x1.eec0fp-1f, 0x1.0b2e7ep-3f, -0x1.c65518p-3f, 0x0p-1022f});
+   CHECK(model.nodes[3].local_from_vertex[1] ==
+         float4{-0x1.c65514p-3f, 0x1.b7e954p-1f, -0x1.d81ae4p-2f, 0x0p-1022f});
+   CHECK(model.nodes[3].local_from_vertex[2] ==
+         float4{0x1.0b2e8p-3f, 0x1.fa98fep-2f, 0x1.b7e954p-1f, 0x0p-1022f});
+   CHECK(model.nodes[3].local_from_vertex[3] ==
+         float4{0x1.45bdcp-1f, 0x1.da07e8p+1f, 0x1.44a3bcp-2f, 0x1p+0f});
 
-            CHECK(null00.name == input_scene.nodes[1].name);
-            CHECK(approx_equals(null00.transform.translation,
-                                input_scene.nodes[1].transform.translation));
-            CHECK(approx_equals(null00.transform.rotation,
-                                input_scene.nodes[1].transform.rotation));
-            CHECK(null00.type == input_scene.nodes[1].type);
-            CHECK(null00.hidden == input_scene.nodes[1].hidden);
+   CHECK(model.nodes[4].name == "collision");
+   CHECK(model.nodes[4].local_from_vertex[0] ==
+         float4{0x1.45bdcp-1f, 0x1.681f9cp-1f, 0x1.44a3bcp-2f, 0x0p-1022f});
+   CHECK(model.nodes[4].local_from_vertex[1] ==
+         float4{-0x1.7e0f06p-1f, 0x1.54aba8p-1f, 0x1.5cb54p-6f, 0x0p-1022f});
+   CHECK(model.nodes[4].local_from_vertex[2] ==
+         float4{-0x1.915a84p-3f, -0x1.001d54p-2f, 0x1.e5775ep-1f, 0x0p-1022f});
+   CHECK(model.nodes[4].local_from_vertex[3] ==
+         float4{-0x1.c8b4e6p-3f, 0x1.8p+1f, 0x1.ca4196p-2f, 0x1p+0f});
 
-            REQUIRE(null00.children.size() == 3);
-
-            // geometry
-            {
-               auto& geometry = null00.children[0];
-
-               CHECK(geometry.name == input_scene.nodes[2].name);
-               CHECK(approx_equals(geometry.transform.translation,
-                                   input_scene.nodes[2].transform.translation));
-               CHECK(approx_equals(geometry.transform.rotation,
-                                   input_scene.nodes[2].transform.rotation));
-               CHECK(geometry.type == input_scene.nodes[2].type);
-               CHECK(geometry.hidden == input_scene.nodes[2].hidden);
-            }
-
-            // p_box
-            {
-               auto& p_box = null00.children[1];
-
-               CHECK(p_box.name == input_scene.nodes[3].name);
-               CHECK(approx_equals(p_box.transform.translation,
-                                   input_scene.nodes[3].transform.translation));
-               CHECK(approx_equals(p_box.transform.rotation,
-                                   input_scene.nodes[3].transform.rotation));
-               CHECK(p_box.type == input_scene.nodes[3].type);
-               CHECK(p_box.hidden == input_scene.nodes[3].hidden);
-            }
-
-            // collision
-            {
-               auto& collision = null00.children[2];
-
-               CHECK(collision.name == input_scene.nodes[4].name);
-               CHECK(approx_equals(collision.transform.translation,
-                                   input_scene.nodes[4].transform.translation));
-               CHECK(approx_equals(collision.transform.rotation,
-                                   input_scene.nodes[4].transform.rotation));
-               CHECK(collision.type == input_scene.nodes[4].type);
-               CHECK(collision.hidden == input_scene.nodes[4].hidden);
-            }
-         }
-      }
-
-      // terraincut
-      {
-         auto& terraincut = model.node_hierarchy[1];
-
-         CHECK(terraincut.name == input_scene.nodes[5].name);
-         CHECK(approx_equals(terraincut.transform.translation,
-                             input_scene.nodes[5].transform.translation));
-         CHECK(approx_equals(terraincut.transform.rotation,
-                             input_scene.nodes[5].transform.rotation));
-         CHECK(terraincut.type == input_scene.nodes[5].type);
-         CHECK(terraincut.hidden == input_scene.nodes[5].hidden);
-      }
-   }
+   CHECK(model.nodes[5].name == "terraincutter");
+   CHECK(model.nodes[5].local_from_vertex[0] ==
+         float4{0x1p+0f, 0x0p-1022f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[5].local_from_vertex[1] ==
+         float4{0x0p-1022f, 0x1p+0f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[5].local_from_vertex[2] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x1p+0f, 0x0p-1022f});
+   CHECK(model.nodes[5].local_from_vertex[3] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x0p-1022f, 0x1p+0f});
 
    // mesh checks
    {
@@ -510,92 +487,67 @@ TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
 
    flat_model model{input_scene};
 
-   // hierarchy checks
-   {
-      REQUIRE(model.node_hierarchy.size() == 2);
+   REQUIRE(model.nodes.size() == 6);
 
-      // root
-      {
-         auto& root = model.node_hierarchy[0];
+   CHECK(model.nodes[0].name == "root");
+   CHECK(model.nodes[0].local_from_vertex[0] ==
+         float4{0x1p+0f, 0x0p-1022f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[0].local_from_vertex[1] ==
+         float4{0x0p-1022f, 0x1p+0f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[0].local_from_vertex[2] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x1p+0f, 0x0p-1022f});
+   CHECK(model.nodes[0].local_from_vertex[3] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x0p-1022f, 0x1p+0f});
 
-         CHECK(root.name == input_scene.nodes[0].name);
-         CHECK(approx_equals(root.transform.translation,
-                             input_scene.nodes[0].transform.translation * 2.5f));
-         CHECK(approx_equals(root.transform.rotation,
-                             input_scene.nodes[0].transform.rotation));
-         CHECK(root.type == input_scene.nodes[0].type);
-         CHECK(root.hidden == input_scene.nodes[0].hidden);
+   CHECK(model.nodes[1].name == "null00");
+   CHECK(model.nodes[1].local_from_vertex[0] ==
+         float4{0x1p+0f, 0x0p-1022f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[1].local_from_vertex[1] ==
+         float4{0x0p-1022f, 0x1p+0f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[1].local_from_vertex[2] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x1p+0f, 0x0p-1022f});
+   CHECK(model.nodes[1].local_from_vertex[3] ==
+         float4{0x0p-1022f, 0x1.ep+2f, 0x0p-1022f, 0x1p+0f});
 
-         REQUIRE(root.children.size() == 1);
+   CHECK(model.nodes[2].name == "geometry");
+   CHECK(model.nodes[2].local_from_vertex[0] ==
+         float4{0x1p+0f, 0x0p-1022f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[2].local_from_vertex[1] ==
+         float4{0x0p-1022f, 0x1p+0f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[2].local_from_vertex[2] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x1p+0f, 0x0p-1022f});
+   CHECK(model.nodes[2].local_from_vertex[3] ==
+         float4{0x0p-1022f, 0x1.ep+2f, 0x1.4p+1f, 0x1p+0f});
 
-         // null00
-         {
-            auto& null00 = root.children[0];
+   CHECK(model.nodes[3].name == "p_box");
+   CHECK(model.nodes[3].local_from_vertex[0] ==
+         float4{0x1p+0f, 0x0p-1022f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[3].local_from_vertex[1] ==
+         float4{0x0p-1022f, 0x1p+0f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[3].local_from_vertex[2] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x1p+0f, 0x0p-1022f});
+   CHECK(model.nodes[3].local_from_vertex[3] ==
+         float4{0x1.4p+1f, 0x1.ep+2f, 0x0p-1022f, 0x1p+0f});
 
-            CHECK(null00.name == input_scene.nodes[1].name);
-            CHECK(approx_equals(null00.transform.translation,
-                                input_scene.nodes[1].transform.translation * 2.5f));
-            CHECK(approx_equals(null00.transform.rotation,
-                                input_scene.nodes[1].transform.rotation));
-            CHECK(null00.type == input_scene.nodes[1].type);
-            CHECK(null00.hidden == input_scene.nodes[1].hidden);
+   CHECK(model.nodes[4].name == "collision");
+   CHECK(model.nodes[4].local_from_vertex[0] ==
+         float4{0x1p+0f, 0x0p-1022f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[4].local_from_vertex[1] ==
+         float4{0x0p-1022f, 0x1p+0f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[4].local_from_vertex[2] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x1p+0f, 0x0p-1022f});
+   CHECK(model.nodes[4].local_from_vertex[3] ==
+         float4{0x0p-1022f, 0x1.ep+2f, 0x1.4p+0f, 0x1p+0f});
 
-            REQUIRE(null00.children.size() == 3);
-
-            // geometry
-            {
-               auto& geometry = null00.children[0];
-
-               CHECK(geometry.name == input_scene.nodes[2].name);
-               CHECK(approx_equals(geometry.transform.translation,
-                                   input_scene.nodes[2].transform.translation * 2.5f));
-               CHECK(approx_equals(geometry.transform.rotation,
-                                   input_scene.nodes[2].transform.rotation));
-               CHECK(geometry.type == input_scene.nodes[2].type);
-               CHECK(geometry.hidden == input_scene.nodes[2].hidden);
-            }
-
-            // p_box
-            {
-               auto& p_box = null00.children[1];
-
-               CHECK(p_box.name == input_scene.nodes[3].name);
-               CHECK(approx_equals(p_box.transform.translation,
-                                   input_scene.nodes[3].transform.translation * 2.5f));
-               CHECK(approx_equals(p_box.transform.rotation,
-                                   input_scene.nodes[3].transform.rotation));
-               CHECK(p_box.type == input_scene.nodes[3].type);
-               CHECK(p_box.hidden == input_scene.nodes[3].hidden);
-            }
-
-            // collision
-            {
-               auto& collision = null00.children[2];
-
-               CHECK(collision.name == input_scene.nodes[4].name);
-               CHECK(approx_equals(collision.transform.translation,
-                                   input_scene.nodes[4].transform.translation * 2.5f));
-               CHECK(approx_equals(collision.transform.rotation,
-                                   input_scene.nodes[4].transform.rotation));
-               CHECK(collision.type == input_scene.nodes[4].type);
-               CHECK(collision.hidden == input_scene.nodes[4].hidden);
-            }
-         }
-      }
-
-      // terraincut
-      {
-         auto& terraincut = model.node_hierarchy[1];
-
-         CHECK(terraincut.name == input_scene.nodes[5].name);
-         CHECK(approx_equals(terraincut.transform.translation,
-                             input_scene.nodes[5].transform.translation * 2.5f));
-         CHECK(approx_equals(terraincut.transform.rotation,
-                             input_scene.nodes[5].transform.rotation));
-         CHECK(terraincut.type == input_scene.nodes[5].type);
-         CHECK(terraincut.hidden == input_scene.nodes[5].hidden);
-      }
-   }
+   CHECK(model.nodes[5].name == "terraincutter");
+   CHECK(model.nodes[5].local_from_vertex[0] ==
+         float4{0x1p+0f, 0x0p-1022f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[5].local_from_vertex[1] ==
+         float4{0x0p-1022f, 0x1p+0f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[5].local_from_vertex[2] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x1p+0f, 0x0p-1022f});
+   CHECK(model.nodes[5].local_from_vertex[3] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x0p-1022f, 0x1p+0f});
 
    // mesh checks
    {
@@ -616,12 +568,9 @@ TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
       REQUIRE(mesh.texcoords.size() == segment.texcoords->size());
       REQUIRE(mesh.triangles.size() == 1);
 
-      CHECK(approx_equals(mesh.positions[0],
-                          translate_position_from_root(segment.positions[0]) * 2.5f));
-      CHECK(approx_equals(mesh.positions[1],
-                          translate_position_from_root(segment.positions[1]) * 2.5f));
-      CHECK(approx_equals(mesh.positions[2],
-                          translate_position_from_root(segment.positions[2]) * 2.5f));
+      CHECK(mesh.positions[0] == float3{0.0f, 7.5f, 2.5f});
+      CHECK(mesh.positions[1] == float3{0.0f, 7.5f, 5.0f});
+      CHECK(mesh.positions[2] == float3{0.0f, 10.0f, 5.0f});
 
       CHECK(mesh.triangles[0][0] == segment.triangles[0][0]);
       CHECK(mesh.triangles[0][1] == segment.triangles[0][1]);
@@ -658,12 +607,9 @@ TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
          auto& primitive =
             std::get<flat_model_collision::primitive>(model.collision[0].geometry);
 
-         CHECK(primitive.radius ==
-               Approx(input_scene.nodes[3].collision_primitive->radius));
-         CHECK(primitive.height ==
-               Approx(input_scene.nodes[3].collision_primitive->height));
-         CHECK(primitive.length ==
-               Approx(input_scene.nodes[3].collision_primitive->length));
+         CHECK(primitive.radius == 2.5f);
+         CHECK(primitive.height == 1.25f);
+         CHECK(primitive.length == 6.25f);
 
          const auto rotation = input_scene.nodes[0].transform.rotation *
                                input_scene.nodes[1].transform.rotation *
@@ -692,14 +638,9 @@ TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
                    input_scene.nodes[0].transform.translation * 2.5f;
          };
 
-         auto& segment = input_scene.nodes[4].segments[0];
-
-         CHECK(approx_equals(mesh.positions[0],
-                             transform_position_from_root(segment.positions[0]) * 2.5f));
-         CHECK(approx_equals(mesh.positions[1],
-                             transform_position_from_root(segment.positions[1]) * 2.5f));
-         CHECK(approx_equals(mesh.positions[2],
-                             transform_position_from_root(segment.positions[2]) * 2.5f));
+         CHECK(mesh.positions[0] == float3{0.0f, 7.5f, 1.25f});
+         CHECK(mesh.positions[1] == float3{0.0f, 7.5f, 3.75f});
+         CHECK(mesh.positions[2] == float3{0.0f, 10.0f, 3.75f});
       }
    }
 }
@@ -747,38 +688,27 @@ TEST_CASE(".msh flat model creation root transform skip", "[Assets][MSH]")
 
    flat_model model{input_scene};
 
-   // hierarchy checks
-   {
-      REQUIRE(model.node_hierarchy.size() == 1);
+   REQUIRE(model.nodes.size() == 2);
 
-      // root
-      {
-         auto& root = model.node_hierarchy[0];
+   CHECK(model.nodes[0].name == "root");
+   CHECK(model.nodes[0].local_from_vertex[0] ==
+         float4{0x1p+0f, 0x0p-1022f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[0].local_from_vertex[1] ==
+         float4{0x0p-1022f, 0x1p+0f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[0].local_from_vertex[2] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x1p+0f, 0x0p-1022f});
+   CHECK(model.nodes[0].local_from_vertex[3] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x0p-1022f, 0x1p+0f});
 
-         CHECK(root.name == input_scene.nodes[0].name);
-         CHECK(approx_equals(root.transform.translation,
-                             input_scene.nodes[0].transform.translation));
-         CHECK(approx_equals(root.transform.rotation,
-                             input_scene.nodes[0].transform.rotation));
-         CHECK(root.type == input_scene.nodes[0].type);
-         CHECK(root.hidden == input_scene.nodes[0].hidden);
-
-         REQUIRE(root.children.size() == 1);
-
-         // geometry
-         {
-            auto& geometry = root.children[0];
-
-            CHECK(geometry.name == input_scene.nodes[1].name);
-            CHECK(approx_equals(geometry.transform.translation,
-                                input_scene.nodes[1].transform.translation));
-            CHECK(approx_equals(geometry.transform.rotation,
-                                input_scene.nodes[1].transform.rotation));
-            CHECK(geometry.type == input_scene.nodes[1].type);
-            CHECK(geometry.hidden == input_scene.nodes[1].hidden);
-         }
-      }
-   }
+   CHECK(model.nodes[1].name == "geometry");
+   CHECK(model.nodes[1].local_from_vertex[0] ==
+         float4{0x1p+0f, 0x0p-1022f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[1].local_from_vertex[1] ==
+         float4{0x0p-1022f, 0x1p+0f, 0x0p-1022f, 0x0p-1022f});
+   CHECK(model.nodes[1].local_from_vertex[2] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x1p+0f, 0x0p-1022f});
+   CHECK(model.nodes[1].local_from_vertex[3] ==
+         float4{0x0p-1022f, 0x0p-1022f, 0x0p-1022f, 0x1p+0f});
 
    // mesh checks
    {

@@ -1,5 +1,6 @@
 #include "object_class_library.hpp"
 #include "object.hpp"
+#include "object_attached.hpp"
 #include "object_class.hpp"
 
 #include "object_classes/grass_patch_class.hpp"
@@ -12,6 +13,7 @@
 #include "container/pinned_vector.hpp"
 
 #include "utility/string_icompare.hpp"
+#include "utility/string_ops.hpp"
 
 #include <bit>
 #include <shared_mutex>
@@ -102,6 +104,9 @@ struct object_class_library::impl {
       _billboard_patch_class_pool.clear();
       _leaf_patch_class_index.clear();
 
+      _attached_objects_pool.clear();
+      _attached_objects_index.clear();
+
       _class_pool.push_back({.handle = unpack_handle(null_handle), .ref_count = 0});
 
       init_object_class(0, _asset_libraries.odfs[lowercase_string{""s}]);
@@ -141,6 +146,23 @@ struct object_class_library::impl {
          *assets::odf::default_object_class_definition()};
 
       return default_leaf_patch_class;
+   }
+
+   auto get_attached_objects(const object_class_handle packed_handle) const noexcept
+      -> std::span<const object_attached>
+   {
+      const handle_unpacked handle = unpack_handle(packed_handle);
+
+      [[likely]] if (handle.index < _class_pool.size() and
+                     handle.index < _attached_objects_pool.size()) {
+         const entry& entry = _class_pool[handle.index];
+
+         [[likely]] if (entry.handle == handle) {
+            return _attached_objects_pool[handle.index];
+         }
+      }
+
+      return {};
    }
 
    [[nodiscard]] auto acquire(const lowercase_string& name) noexcept -> object_class_handle
@@ -222,6 +244,16 @@ struct object_class_library::impl {
                   std::erase(_leaf_patch_class_index, handle.index);
                }
 
+               if (handle.index < _attached_objects_pool.size()) {
+                  for (const object_attached& object :
+                       _attached_objects_pool[handle.index]) {
+                     free(object.class_handle);
+                  }
+
+                  _attached_objects_pool[handle.index] = {};
+                  std::erase(_attached_objects_index, handle.index);
+               }
+
                break;
             }
          }
@@ -267,11 +299,18 @@ private:
 
    void model_loaded(const loaded_model& loaded)
    {
-      for (entry& entry : _class_pool) {
+      for (std::size_t entry_index = 0; entry_index < _class_pool.size(); ++entry_index) {
+         entry& entry = _class_pool[entry_index];
+
          if (entry.object_class.model_name != loaded.name) continue;
 
          entry.object_class.model_asset = loaded.asset;
          entry.object_class.model = loaded.data;
+
+         if (entry.object_class.flags.has_attached_objects) {
+            init_attached_objects_transforms(entry.object_class,
+                                             _attached_objects_pool[entry_index]);
+         }
       }
    }
 
@@ -283,6 +322,15 @@ private:
       if (class_index < _billboard_patch_class_pool.size()) {
          _billboard_patch_class_pool[class_index] = nullptr;
          std::erase(_leaf_patch_class_index, class_index);
+      }
+
+      if (class_index < _attached_objects_pool.size()) {
+         for (const object_attached& object : _attached_objects_pool[class_index]) {
+            free(object.class_handle);
+         }
+
+         _attached_objects_pool[class_index] = {};
+         std::erase(_attached_objects_index, class_index);
       }
 
       cls.definition_asset = new_definition_asset;
@@ -338,6 +386,70 @@ private:
             std::make_unique<grass_patch_class>(*cls.definition);
          _leaf_patch_class_index.push_back(class_index);
       }
+      else {
+         std::vector<object_attached> attached_objects;
+         std::string_view last_attach_odf;
+
+         for (const assets::odf::property& prop : cls.definition->properties) {
+            if (string::iequals(prop.key, "AttachOdf")) {
+               last_attach_odf = prop.value;
+            }
+            else if (string::iequals(prop.key, "AttachEffect")) {
+               last_attach_odf = "";
+            }
+            else if (string::iequals(prop.key, "AttachToHardPoint")) {
+               std::string_view hard_point =
+                  string::split_first_of_exclusive_whitespace(prop.value)[0];
+
+               if (not last_attach_odf.empty()) {
+                  object_attached attached = {
+                     .class_name = lowercase_string{last_attach_odf},
+                     .hard_point_name = std::string{hard_point},
+                  };
+
+                  attached.class_handle = acquire(attached.class_name);
+
+                  attached_objects.push_back(std::move(attached));
+               }
+            }
+         }
+
+         if (not attached_objects.empty()) {
+            cls.flags.has_attached_objects = true;
+
+            if (_attached_objects_pool.size() <= class_index) {
+               _attached_objects_pool.resize(class_index + 1);
+            }
+
+            _attached_objects_pool[class_index] = std::move(attached_objects);
+            _attached_objects_index.push_back(class_index);
+
+            init_attached_objects_transforms(cls, _attached_objects_pool[class_index]);
+         }
+      }
+   }
+
+   void init_attached_objects_transforms(const object_class& object_class,
+                                         std::span<object_attached> attachments)
+   {
+      const std::span<const assets::msh::flat_model_node> nodes =
+         object_class.model->nodes;
+
+      for (object_attached& attached : attachments) {
+         bool found = false;
+
+         for (const assets::msh::flat_model_node& node : nodes) {
+            if (string::iequals(node.name, attached.hard_point_name)) {
+               attached.object_from_local = node.local_from_vertex;
+
+               found = true;
+
+               break;
+            }
+         }
+
+         if (not found) attached.object_from_local = {};
+      }
    }
 
    struct entry {
@@ -354,6 +466,10 @@ private:
    pinned_vector<std::unique_ptr<billboard_patch_class>> _billboard_patch_class_pool =
       pinned_vector_init{.max_size = max_object_classes, .initial_capacity = 1024};
    std::vector<uint32> _leaf_patch_class_index;
+
+   pinned_vector<std::vector<object_attached>> _attached_objects_pool =
+      pinned_vector_init{.max_size = max_object_classes, .initial_capacity = 1024};
+   std::vector<uint32> _attached_objects_index;
 
    std::shared_mutex _definition_load_queue_mutex;
    std::vector<loaded_definition> _definition_load_queue;
@@ -413,6 +529,12 @@ auto object_class_library::get_billboard_patch_class(const object_class_handle h
    -> const billboard_patch_class&
 {
    return _impl->get_billboard_patch_class(handle);
+}
+
+auto object_class_library::get_attached_objects(const object_class_handle handle) const noexcept
+   -> std::span<const object_attached>
+{
+   return _impl->get_attached_objects(handle);
 }
 
 auto object_class_library::acquire(const lowercase_string& name) noexcept -> object_class_handle

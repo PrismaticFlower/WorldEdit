@@ -18,6 +18,7 @@ namespace we::world {
 
 struct object_class_flags {
    uint32 is_billboard_patch : 1 = false;
+   uint32 has_attached_objects : 1 = false;
    uint32 hidden_ingame : 1 = false;
 };
 

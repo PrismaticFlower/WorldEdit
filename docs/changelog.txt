@@ -1,6 +1,8 @@
 0.164
 
+- Added support for attached objects ("AttachOdf"). To keep things simple recursive attachments are not supported.
 
+- Aligned editor's -scale handling for meshes with the builtin model munger's handling.
 
 0.163
 

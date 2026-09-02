@@ -42,6 +42,7 @@
 #include "world/blocks/custom_mesh.hpp"
 #include "world/blocks/utility/bounding_box.hpp"
 #include "world/blocks/utility/find.hpp"
+#include "world/object_attached.hpp"
 #include "world/object_class_library.hpp"
 #include "world/object_classes/billboard_patch_class.hpp"
 #include "world/utility/evaluate_treeline.hpp"
@@ -3236,6 +3237,92 @@ void renderer_impl::draw_interaction_targets(
       _meta_draw_batcher.add_octahedron_wireframe(transform, color);
    };
 
+   const auto draw_attached_object = [&](const float4x4& world_from_object,
+                                         const world::object_class_handle class_handle,
+                                         const float3& color) {
+      const world::object_class& object_class = world_classes[class_handle];
+
+      if (object_class.flags.is_billboard_patch) [[unlikely]] {
+         const world::billboard_patch_class& billboard_patch =
+            world_classes.get_billboard_patch_class(class_handle);
+
+         const math::bounding_box& bboxOS = billboard_patch.bbox();
+
+         const float3 bbox_sizeOS = (bboxOS.max - bboxOS.min) * 0.5f;
+         const float3 bbox_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
+
+         const float4x4 scale{{bbox_sizeOS.x, 0.0f, 0.0f, 0.0f},
+                              {0.0f, bbox_sizeOS.y, 0.0f, 0.0f},
+                              {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
+                              {bbox_centreOS, 1.0f}};
+
+         _meta_draw_batcher.add_box_outline_solid(world_from_object * scale,
+                                                  {color, 1.0f});
+      }
+      else {
+         model& model = _model_manager[object_class.model_name];
+
+         if (not intersects(view_frustum, world_from_object * model.bbox)) {
+            return;
+         }
+
+         gpu_virtual_address wireframe_constants = [&] {
+            auto allocation =
+               _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
+
+            wireframe_constant_buffer constants{.color = color};
+
+            std::memcpy(allocation.cpu_address, &constants,
+                        sizeof(wireframe_constant_buffer));
+
+            return allocation.gpu_address;
+         }();
+
+         gpu_virtual_address object_constants = [&] {
+            auto allocation =
+               _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
+
+            world_mesh_constants constants = {.world_from_object = world_from_object};
+
+            std::memcpy(allocation.cpu_address, &constants,
+                        sizeof(world_mesh_constants));
+
+            return allocation.gpu_address;
+         }();
+
+         command_list.set_graphics_root_signature(
+            _root_signatures.mesh_wireframe.get());
+         command_list.set_graphics_cbv(rs::mesh_wireframe::object_cbv, object_constants);
+         command_list.set_graphics_cbv(rs::mesh_wireframe::wireframe_cbv,
+                                       wireframe_constants);
+         command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
+                                       _camera_constant_buffer_view);
+
+         command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
+
+         command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+
+         command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
+         command_list.ia_set_vertex_buffers(0, model.gpu_buffer.position_vertex_buffer_view);
+
+         bool doublesided = false;
+
+         for (auto& part : model.parts) {
+            if (std::exchange(doublesided,
+                              are_flags_set(part.material.flags,
+                                            material_pipeline_flags::doublesided)) !=
+                doublesided) {
+               command_list.set_pipeline_state(
+                  doublesided ? _pipelines.mesh_wireframe_doublesided.get()
+                              : _pipelines.mesh_wireframe.get());
+            }
+
+            command_list.draw_indexed_instanced(part.index_count, 1, part.start_index,
+                                                part.start_vertex, 0);
+         }
+      }
+   };
+
    const auto draw_object = [&](const world::object& object, const float3 color) {
       const world::object_class& object_class = world_classes[object.class_handle];
 
@@ -3261,6 +3348,17 @@ void renderer_impl::draw_interaction_targets(
          _meta_draw_batcher.add_box_outline_solid(world_from_object, {color, 1.0f});
       }
       else {
+         float4x4 world_from_object = to_matrix(object.rotation);
+         world_from_object[3] = float4{object.position, 1.0f};
+
+         if (object_class.flags.has_attached_objects) [[unlikely]] {
+            for (const world::object_attached& attachment :
+                 world_classes.get_attached_objects(object.class_handle)) {
+               draw_attached_object(world_from_object * attachment.object_from_local,
+                                    attachment.class_handle, color);
+            }
+         }
+
          model& model = _model_manager[object_class.model_name];
 
          if (not intersects(view_frustum,
@@ -3284,10 +3382,7 @@ void renderer_impl::draw_interaction_targets(
             auto allocation =
                _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
 
-            world_mesh_constants constants{};
-
-            constants.world_from_object = to_matrix(object.rotation);
-            constants.world_from_object[3] = float4{object.position, 1.0f};
+            world_mesh_constants constants = {.world_from_object = world_from_object};
 
             std::memcpy(allocation.cpu_address, &constants,
                         sizeof(world_mesh_constants));
@@ -4150,6 +4245,14 @@ void renderer_impl::draw_interaction_targets(
                return;
             }
 
+            if (object_class.flags.has_attached_objects) [[unlikely]] {
+               for (const world::object_attached& attachment :
+                    world_classes.get_attached_objects(class_handle)) {
+                  draw_attached_object(world_from_object * attachment.object_from_local,
+                                       attachment.class_handle, color);
+               }
+            }
+
             auto& model = _model_manager[world_classes[class_handle].model_name];
 
             if (not intersects(view_frustum, world_from_object * model.bbox)) {
@@ -4505,6 +4608,66 @@ void renderer_impl::build_world_mesh_list(
           : std::span<const world::object>{},
        world.objects};
 
+   const auto add_attached_object = [&](const float4x4& world_from_object,
+                                        const world::object_class_handle class_handle) {
+      if (constants_data_head == constants_data_end) return;
+
+      const world::object_class& object_class = world_classes[class_handle];
+
+      if (object_class.flags.is_billboard_patch) [[unlikely]] {
+         _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
+                                                   class_handle),
+                                                world_from_object,
+                                                _dynamic_buffer_allocator);
+
+         return;
+      }
+      else if (object_class.flags.hidden_ingame) {
+         return;
+      }
+
+      const model& model = _model_manager[object_class.model_name];
+
+      const math::bounding_box object_bbox = world_from_object * model.bbox;
+
+      const std::size_t object_constants_offset = constants_data_head;
+      const gpu_virtual_address object_constants_address =
+         constants_upload_gpu_address + object_constants_offset;
+
+      world_mesh_constants constants = {.world_from_object = world_from_object};
+
+      std::memcpy(constants_upload_data + object_constants_offset,
+                  &constants.world_from_object, sizeof(world_mesh_constants));
+
+      constants_data_head += sizeof(world_mesh_constants);
+
+      for (auto& mesh : model.parts) {
+         if (not mesh.material.is_transparent) {
+            _world_mesh_list.opaque[mesh.material.depth_prepass_flags].push_back(
+               object_bbox, object_constants_address, mesh.material.constant_buffer_view,
+               world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                          .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                  model.gpu_buffer.attributes_vertex_buffer_view},
+                          .index_count = mesh.index_count,
+                          .start_index = mesh.start_index,
+                          .start_vertex = mesh.start_vertex});
+         }
+         else {
+            _world_mesh_list.transparent.push_back(
+               object_bbox, object_constants_address,
+               float3{world_from_object[3].x, world_from_object[3].y,
+                      world_from_object[3].z},
+               mesh.material.flags, mesh.material.constant_buffer_view,
+               world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                          .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                  model.gpu_buffer.attributes_vertex_buffer_view},
+                          .index_count = mesh.index_count,
+                          .start_index = mesh.start_index,
+                          .start_vertex = mesh.start_vertex});
+         }
+      }
+   };
+
    for (const std::span<const world::object>& objects : object_arrays) {
       for (const world::object& object : objects) {
          if (constants_data_head == constants_data_end) break;
@@ -4534,6 +4697,9 @@ void renderer_impl::build_world_mesh_list(
             continue;
          }
 
+         float4x4 world_from_object = to_matrix(object.rotation);
+         world_from_object[3] = float4{object.position, 1.0f};
+
          const math::bounding_box object_bbox =
             object.rotation * model.bbox + object.position;
 
@@ -4541,10 +4707,7 @@ void renderer_impl::build_world_mesh_list(
          const gpu_virtual_address object_constants_address =
             constants_upload_gpu_address + object_constants_offset;
 
-         world_mesh_constants constants;
-
-         constants.world_from_object = to_matrix(object.rotation);
-         constants.world_from_object[3] = float4{object.position, 1.0f};
+         world_mesh_constants constants = {.world_from_object = world_from_object};
 
          std::memcpy(constants_upload_data + object_constants_offset,
                      &constants.world_from_object, sizeof(world_mesh_constants));
@@ -4588,6 +4751,14 @@ void renderer_impl::build_world_mesh_list(
                 .start_index = cut.start_index,
                 .start_vertex = cut.start_vertex});
          }
+
+         if (object_class.flags.has_attached_objects) [[unlikely]] {
+            for (const world::object_attached& attachment :
+                 world_classes.get_attached_objects(object.class_handle)) {
+               add_attached_object(world_from_object * attachment.object_from_local,
+                                   attachment.class_handle);
+            }
+         }
       }
    }
 
@@ -4624,6 +4795,9 @@ void renderer_impl::build_world_mesh_list(
          const float3 object_positionWS =
             group.rotation * object.position + group.position;
 
+         float4x4 world_from_object = to_matrix(object_rotation);
+         world_from_object[3] = float4{object_positionWS, 1.0f};
+
          const math::bounding_box object_bbox =
             object_rotation * model.bbox + object_positionWS;
 
@@ -4631,10 +4805,7 @@ void renderer_impl::build_world_mesh_list(
          const gpu_virtual_address object_constants_address =
             constants_upload_gpu_address + object_constants_offset;
 
-         world_mesh_constants constants;
-
-         constants.world_from_object = to_matrix(object_rotation);
-         constants.world_from_object[3] = float4{object_positionWS, 1.0f};
+         world_mesh_constants constants = {.world_from_object = world_from_object};
 
          std::memcpy(constants_upload_data + object_constants_offset,
                      &constants.world_from_object, sizeof(world_mesh_constants));
@@ -4677,6 +4848,14 @@ void renderer_impl::build_world_mesh_list(
                 .index_count = cut.index_count,
                 .start_index = cut.start_index,
                 .start_vertex = cut.start_vertex});
+         }
+
+         if (object_class.flags.has_attached_objects) [[unlikely]] {
+            for (const world::object_attached& attachment :
+                 world_classes.get_attached_objects(object.class_handle)) {
+               add_attached_object(world_from_object * attachment.object_from_local,
+                                   attachment.class_handle);
+            }
          }
       }
    }
@@ -4745,6 +4924,14 @@ void renderer_impl::build_world_mesh_list(
                           .index_count = mesh.index_count,
                           .start_index = mesh.start_index,
                           .start_vertex = mesh.start_vertex});
+         }
+      }
+
+      if (object_class.flags.has_attached_objects) [[unlikely]] {
+         for (const world::object_attached& attachment :
+              world_classes.get_attached_objects(object->class_handle)) {
+            add_attached_object(ghost.transform * attachment.object_from_local,
+                                attachment.class_handle);
          }
       }
    }
@@ -4816,6 +5003,14 @@ void renderer_impl::build_world_mesh_list(
                                    .index_count = mesh.index_count,
                                    .start_index = mesh.start_index,
                                    .start_vertex = mesh.start_vertex});
+                  }
+               }
+
+               if (object_class.flags.has_attached_objects) [[unlikely]] {
+                  for (const world::object_attached& attachment :
+                       world_classes.get_attached_objects(class_handle)) {
+                     add_attached_object(world_from_object * attachment.object_from_local,
+                                         attachment.class_handle);
                   }
                }
             });

@@ -4,6 +4,8 @@
 #include "object.hpp"
 #include "utility/implementation_storage.hpp"
 
+#include <span>
+
 namespace we::assets {
 
 struct libraries_manager;
@@ -13,6 +15,7 @@ struct libraries_manager;
 namespace we::world {
 
 struct object_class;
+struct object_attached;
 struct billboard_patch_class;
 
 struct object_class_library {
@@ -42,6 +45,12 @@ struct object_class_library {
    auto get_billboard_patch_class(const object_class_handle handle) const noexcept
       -> const billboard_patch_class&;
 
+   /// @brief Gets the attached objects for a handle for a handle, if it is associated with any.
+   /// @param handle The handle.
+   /// @return A span to the attached objects or an empty span.
+   auto get_attached_objects(const object_class_handle handle) const noexcept
+      -> std::span<const object_attached>;
+
    /// @brief Acquire a class handle for the class name or a handle to the default class if the max class count has been reached.
    /// @param name The name of the class to get a handle for.
    /// @return The handle. This must always be passed to free when you are done with it.
@@ -63,7 +72,7 @@ struct object_class_library {
 private:
    struct impl;
 
-   implementation_storage<impl, 320> _impl;
+   implementation_storage<impl, 360> _impl;
 };
 
 }
