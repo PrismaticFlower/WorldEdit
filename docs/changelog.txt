@@ -1,6 +1,8 @@
 0.165
 
+- Fixed scroll materials with scroll rates above 127 rendering incorrectly in WorldEdit.
 
+- Updated the builtin model munge to handle material data parameters as unsigned instead of signed. This is technically a compatibility break with pc_ModelMunge but is done as it exposes more control over things like scroll rates ingame. See here for more details: https://github.com/PrismaticFlower/WorldEdit/blob/master/docs/user/Builtin%20Mungers/Model%20Munge.md#material-data-signedness
 
 0.164
 

@@ -32,6 +32,11 @@ The `CSHD` chunk (which I suspect stands for "CPU Shadow") is not written out. T
 
 Though you will get a "No shadow data!" message in BFront2.log if you launch the game with `/fixedfunction`. But even if the chunk was there the game never draws shadows under `/fixedfunction` anyway.
 
+### Material Data Signedness
+The data parameters for animated materials are treated as signed by `pc_ModelMunge` and are sign extended before being stored in the munged model. The game then treats that as unsigned. The result of this is that when using `pc_ModelMunge` data values in the range [128, 255] all end up as 255 ingame, losing an amount of control that the game does support, at least for scrolling materials.
+
+The builtin model munge "fixes" this and treats the data parameters as unsigned. This does mean some materials could end up with slower scroll rates when munged through WorldEdit's builtin munger vs `pc_ModelMunge` but the added control given to artists is deemed worth the compatibility break.
+
 ## Node Naming Scheme
 The names of nodes in .msh files can have meaning. Below is a list of what model munge recognizes and a description of what they do. Some are case sensitive and some aren't. Ones marked as "Contains" simply need the string to appear anywhere in the name for the effects and ones marked as "Prefix" need the name to to be at the start for it to have an effect.
 
