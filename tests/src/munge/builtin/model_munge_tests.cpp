@@ -211,6 +211,11 @@ TEST_CASE("model_munge model_mtrl_00_02", "[Munge]")
    REQUIRE(golden_ref_test("model_mtrl_00_02", 304));
 }
 
+TEST_CASE("model_munge model_mtrl_00_03", "[Munge]")
+{
+   REQUIRE(golden_ref_test("model_mtrl_00_03", 304));
+}
+
 TEST_CASE("model_munge model_mtrl_00_04", "[Munge]")
 {
    REQUIRE(golden_ref_test("model_mtrl_00_04", 304));
