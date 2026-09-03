@@ -48,8 +48,8 @@ struct material {
    float4 specular_color = {1.0f, 1.0f, 1.0f, 1.0f};
    material_flags flags = material_flags::none;
    rendertype rendertype = rendertype::normal;
-   uint8 data0 = 0;
-   uint8 data1 = 0;
+   int8 data0 = 0;
+   int8 data1 = 0;
 
    std::array<std::string, 4> textures{};
 

@@ -254,13 +254,16 @@ void material::init_constant_buffer(const assets::msh::material& material,
 
    const float3 specular_color =
       has_specular ? material_specular_color : float3{0.0f, 0.0f, 0.0f};
+
+   const uint8 data0 = static_cast<uint8>(material.data0);
+   const uint8 data1 = static_cast<uint8>(material.data1);
+
    const float2 scrolling_amount =
-      is_scrolling ? float2{material.data0 / 255.0f, material.data1 / 255.0f}
-                   : float2{0.f, 0.0f};
+      is_scrolling ? float2{data0 / 255.0f, data1 / 255.0f} : float2{0.f, 0.0f};
    const float2 detail_scale =
-      is_scrolling ? float2{1.0f, 1.0f}
-                   : float2{material.data0 > 0 ? material.data0 * 1.0f : 1.0f,
-                            material.data1 > 0 ? material.data1 * 1.0f : 1.0f};
+      is_scrolling
+         ? float2{1.0f, 1.0f}
+         : float2{data0 > 0 ? data0 * 1.0f : 1.0f, data1 > 0 ? data1 * 1.0f : 1.0f};
 
    normal_material_constants constants{
       .flags = make_shader_flags(flags, material, texture_names.normal_map.empty(),
