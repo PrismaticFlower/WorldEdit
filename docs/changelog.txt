@@ -1,3 +1,7 @@
+0.166
+
+
+
 0.165
 
 - Fixed scroll materials with scroll rates above 127 rendering incorrectly in WorldEdit.
