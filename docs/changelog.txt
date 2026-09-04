@@ -1,5 +1,7 @@
 0.166
 
+- Fixed transparent unlit materials not multiplying by alpha, resulting in very washed out, bright materials.
+
 - Revert material data signdness handling changes.
 
 0.165

@@ -70,7 +70,14 @@ float4 main(input_vertex input) : SV_TARGET
       diffuse_color *= input.color;
    }
 
-   if (material.flags & flags::unlit) return apply_fog(diffuse_color, input.fog);
+   if (material.flags & flags::unlit) {
+      float4 color = apply_fog(diffuse_color, input.fog);
+
+      if (material.flags & flags::transparent) color.rgb *= color.a;
+      if (material.flags & flags::additive)    color.a   = 0.0;
+
+      return color;
+   }
 
    float specular_visibility = 1.0;
 
