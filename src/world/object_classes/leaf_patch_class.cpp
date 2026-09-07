@@ -1,5 +1,7 @@
 #include "leaf_patch_class.hpp"
 
+#include "utility/random_gen.hpp"
+
 #include "assets/odf/definition.hpp"
 
 #include "math/vector_funcs.hpp"
@@ -98,27 +100,6 @@ const std::array<uint32, 32> particle_texcoords = {{
 }};
 
 }
-
-struct leaf_patch_class::random_gen {
-   auto operator()() noexcept -> int32
-   {
-      const uint32 v = state * 0x19660d + 0x3c6ef35f;
-      state = v * 0x19660d + 0x3c6ef35f;
-
-      return v >> 0x10 | state & 0xffff0000;
-   }
-
-   constexpr auto get_float() noexcept -> float
-   {
-      const uint32 v = state * 0x19660d + 0x3c6ef35f;
-      state = v * 0x19660d + 0x3c6ef35f;
-
-      return std::bit_cast<float>((v >> 0x10 | state & 0xffff0000) >> 9 | 0x3f800000) -
-             1.0f;
-   }
-
-   uint32 state = 0x94153a94;
-};
 
 leaf_patch_class::leaf_patch_class(const assets::odf::definition& definition) noexcept
 {

@@ -10,6 +10,8 @@ struct definition;
 
 namespace we::world {
 
+struct random_gen;
+
 struct grass_patch_class final : billboard_patch_class {
    explicit grass_patch_class(const assets::odf::definition& definition) noexcept;
 
@@ -30,8 +32,6 @@ struct grass_patch_class final : billboard_patch_class {
    bool is_transparent() const noexcept override;
 
 private:
-   struct random_gen;
-
    struct particle {
       float3 position;
       float3 flat_vector;

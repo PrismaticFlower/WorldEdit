@@ -1115,6 +1115,7 @@
     <ClInclude Include="src\world\object_classes\billboard_patch_class.hpp" />
     <ClInclude Include="src\world\object_classes\grass_patch_class.hpp" />
     <ClInclude Include="src\world\object_classes\leaf_patch_class.hpp" />
+    <ClInclude Include="src\world\object_classes\utility\random_gen.hpp" />
     <ClInclude Include="src\world\object_class_library.hpp" />
     <ClInclude Include="src\world\object_instance_property.hpp" />
     <ClInclude Include="src\world\entity_optional_link.hpp" />

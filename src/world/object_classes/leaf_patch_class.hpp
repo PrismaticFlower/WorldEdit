@@ -10,6 +10,8 @@ struct definition;
 
 namespace we::world {
 
+struct random_gen;
+
 enum class leaf_patch_type { sphere, box, vine };
 
 struct leaf_patch_class final : billboard_patch_class {
@@ -32,8 +34,6 @@ struct leaf_patch_class final : billboard_patch_class {
    bool is_transparent() const noexcept override;
 
 private:
-   struct random_gen;
-
    struct particle {
       float3 position;
       float wiggle;

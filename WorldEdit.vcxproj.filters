@@ -746,6 +746,7 @@
     <ClInclude Include="src\world\io\export_terrain_map.hpp" />
     <ClInclude Include="src\world\object_classes\grass_patch_class.hpp" />
     <ClInclude Include="src\world\object_attached.hpp" />
+    <ClInclude Include="src\world\object_classes\utility\random_gen.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
