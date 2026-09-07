@@ -79,4 +79,18 @@ auto operator*(const float4x4& matrix, const bounding_box& box) noexcept -> boun
    return new_box;
 }
 
+auto operator*(const float3x3& matrix, const bounding_box& box) noexcept -> bounding_box
+{
+   const std::array<float3, 8> vertices = to_corners(box);
+
+   bounding_box new_box{matrix * vertices[0], matrix * vertices[0]};
+
+   for (std::size_t i = 1; i < vertices.size(); ++i) {
+      new_box.min = min(new_box.min, matrix * vertices[i]);
+      new_box.max = max(new_box.max, matrix * vertices[i]);
+   }
+
+   return new_box;
+}
+
 }

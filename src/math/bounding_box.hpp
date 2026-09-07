@@ -23,4 +23,6 @@ auto operator+(const bounding_box& box, const float3& offset) noexcept -> boundi
 
 auto operator*(const float4x4& matrix, const bounding_box& box) noexcept -> bounding_box;
 
+auto operator*(const float3x3& matrix, const bounding_box& box) noexcept -> bounding_box;
+
 }

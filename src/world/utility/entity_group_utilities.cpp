@@ -296,7 +296,7 @@ auto entity_group_metrics(const entity_group& group,
 
          const math::bounding_box bboxOS = billboard_patch.bbox();
          const math::bounding_box bboxGS =
-            y_flip(object.rotation) * bboxOS + object.position;
+            billboard_patch.world_from_object(object.rotation, object.position) * bboxOS;
 
          ground_distance = std::min(ground_distance, bboxOS.min.y);
          group_bbox = math::combine(group_bbox, bboxGS);

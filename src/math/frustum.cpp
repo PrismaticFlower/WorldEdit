@@ -307,4 +307,45 @@ auto transform(const frustum& world_frustum, const quaternion& rotation,
    return frustum;
 }
 
+auto transform(const frustum& world_frustum, const float4x4& matrix) noexcept -> frustum
+{
+   frustum frustum = world_frustum;
+
+   for (float3& point : frustum.corners) {
+      point = matrix * point;
+   }
+
+   frustum.planes[frustum_planes::near_] =
+      make_plane(frustum.corners[frustum_corner::top_left_near],
+                 frustum.corners[frustum_corner::top_right_near],
+                 frustum.corners[frustum_corner::bottom_left_near]);
+
+   frustum.planes[frustum_planes::far_] =
+      make_plane(frustum.corners[frustum_corner::top_left_far],
+                 frustum.corners[frustum_corner::bottom_left_far],
+                 frustum.corners[frustum_corner::top_right_far]);
+
+   frustum.planes[frustum_planes::bottom] =
+      make_plane(frustum.corners[frustum_corner::bottom_left_near],
+                 frustum.corners[frustum_corner::bottom_right_far],
+                 frustum.corners[frustum_corner::bottom_left_far]);
+
+   frustum.planes[frustum_planes::top] =
+      make_plane(frustum.corners[frustum_corner::top_left_near],
+                 frustum.corners[frustum_corner::top_left_far],
+                 frustum.corners[frustum_corner::top_right_far]);
+
+   frustum.planes[frustum_planes::left] =
+      make_plane(frustum.corners[frustum_corner::top_left_near],
+                 frustum.corners[frustum_corner::bottom_left_far],
+                 frustum.corners[frustum_corner::top_left_far]);
+
+   frustum.planes[frustum_planes::right] =
+      make_plane(frustum.corners[frustum_corner::top_right_near],
+                 frustum.corners[frustum_corner::top_right_far],
+                 frustum.corners[frustum_corner::bottom_right_far]);
+
+   return frustum;
+}
+
 }

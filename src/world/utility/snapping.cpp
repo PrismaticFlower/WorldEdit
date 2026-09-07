@@ -91,18 +91,22 @@ auto get_snapped_position(const snapping_entity& snapping,
 
       const object_class& object_class = object_classes[object.class_handle];
 
-      const math::bounding_box& bboxOS =
-         not object_class.flags.is_billboard_patch
-            ? object_class.model->bounding_box
-            : object_classes.get_billboard_patch_class(object.class_handle).bbox();
-      const quaternion object_rotation = not object_class.flags.is_billboard_patch
-                                            ? object.rotation
-                                            : y_flip(object.rotation);
+      const math::bounding_box* bboxOS = &object_class.model->bounding_box;
+      quaternion object_rotation = object.rotation;
+
+      if (object_class.flags.is_billboard_patch) {
+         const billboard_patch_class& billboard_patch =
+            object_classes.get_billboard_patch_class(object.class_handle);
+
+         bboxOS = &billboard_patch.bbox();
+         object_rotation = make_quat_from_matrix(
+            billboard_patch.world_from_object(object.rotation, object.position));
+      }
 
       const float3 positionOS =
          conjugate(object_rotation) * (snapping.positionWS - object.position);
-      const float3 box_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
-      const float3 box_size = (bboxOS.max - bboxOS.min) * 0.5f;
+      const float3 box_centreOS = (bboxOS->min + bboxOS->max) * 0.5f;
+      const float3 box_size = (bboxOS->max - bboxOS->min) * 0.5f;
 
       const float3 positionAS = positionOS - box_centreOS;
       const float3 distances = abs(positionAS) - box_size;
@@ -114,7 +118,7 @@ auto get_snapped_position(const snapping_entity& snapping,
       if (box_distance > cull_distance) continue;
 
       const std::array<float3, 8> closest_object_cornersWS =
-         get_snapping_corners(object_rotation, object.position, bboxOS);
+         get_snapping_corners(object_rotation, object.position, *bboxOS);
 
       if (flags.snap_to_corners) {
          for (const float3& cornerWS : closest_object_cornersWS) {
@@ -257,14 +261,18 @@ auto get_snapped_position(const object& snapping_object, const float3 snapping_p
    const object_class& object_class = object_classes[snapping_object.class_handle];
 
    if (object_class.flags.is_billboard_patch) [[unlikely]] {
-      return get_snapped_position(
-         snapping_entity{.rotation = y_flip(snapping_object.rotation),
-                         .positionWS = snapping_positionWS,
-                         .bboxOS = object_classes
-                                      .get_billboard_patch_class(snapping_object.class_handle)
-                                      .bbox()},
-         world_objects, snap_radius, flags, active_layers, object_classes,
-         visualizers, colors);
+      const billboard_patch_class& billboard_patch =
+         object_classes.get_billboard_patch_class(snapping_object.class_handle);
+
+      const float4x4 world_from_object =
+         billboard_patch.world_from_object(snapping_object.rotation, snapping_positionWS);
+
+      return get_snapped_position(snapping_entity{.rotation = make_quat_from_matrix(
+                                                     world_from_object),
+                                                  .positionWS = snapping_positionWS,
+                                                  .bboxOS = billboard_patch.bbox()},
+                                  world_objects, snap_radius, flags, active_layers,
+                                  object_classes, visualizers, colors);
    }
    else {
       return get_snapped_position(snapping_entity{.rotation = snapping_object.rotation,
@@ -309,9 +317,12 @@ auto get_snapped_position_filtered(
          not object_class.flags.is_billboard_patch
             ? object_class.model->bounding_box
             : object_classes.get_billboard_patch_class(object.class_handle).bbox();
-      const quaternion object_rotation = not object_class.flags.is_billboard_patch
-                                            ? object.rotation
-                                            : y_flip(object.rotation);
+      const quaternion object_rotation =
+         not object_class.flags.is_billboard_patch
+            ? object.rotation
+            : make_quat_from_matrix(
+                 object_classes.get_billboard_patch_class(object.class_handle)
+                    .world_from_object(object.rotation, object.position));
 
       const float3 positionOS =
          conjugate(object_rotation) * (snapping.positionWS - object.position);

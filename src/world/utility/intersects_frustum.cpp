@@ -15,15 +15,14 @@ bool intersects(const frustum& frustumWS, const object& object,
    const object_class& object_class = object_classes[object.class_handle];
 
    if (object_class.flags.is_billboard_patch) [[unlikely]] {
-      const quaternion object_from_world = conjugate(y_flip(object.rotation));
-      const float3 object_from_world_position = object_from_world * -object.position;
+      const billboard_patch_class& billboard_patch =
+         object_classes.get_billboard_patch_class(object.class_handle);
 
       const frustum frustumOS =
-         transform(frustumWS, object_from_world, object_from_world_position);
+         transform(frustumWS, billboard_patch.object_from_world(object.rotation,
+                                                                object.position));
 
-      return intersects(frustumOS, object_classes
-                                      .get_billboard_patch_class(object.class_handle)
-                                      .bbox());
+      return intersects(frustumOS, billboard_patch.bbox());
    }
    else {
       const quaternion inverse_rotation = conjugate(object.rotation);

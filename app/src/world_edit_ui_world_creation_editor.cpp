@@ -320,7 +320,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
                      _object_classes.get_billboard_patch_class(object.class_handle);
 
                   const math::bounding_box bbox =
-                     y_flip(object.rotation) * billboard_patch.bbox();
+                     float3x3{billboard_patch.world_from_object(object.rotation,
+                                                                object.position)} *
+                     billboard_patch.bbox();
 
                   new_position.y -= bbox.min.y;
                }

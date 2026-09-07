@@ -133,8 +133,9 @@ auto ground_object(const object& object, const world& world,
          object_classes.get_billboard_patch_class(object.class_handle);
 
       return ground_bbox(object.position,
-                         y_flip(object.rotation) * billboard_patch.bbox() +
-                            object.position,
+                         billboard_patch.world_from_object(object.rotation,
+                                                           object.position) *
+                            billboard_patch.bbox(),
                          world, object_classes, blocks_bvh_library,
                          active_layers, object.id);
    }

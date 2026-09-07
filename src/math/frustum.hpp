@@ -58,4 +58,7 @@ bool intersects(const frustum& frustum, const float3& v0, const float3& v1,
 auto transform(const frustum& world_frustum, const quaternion& rotation,
                const float3& position) noexcept -> frustum;
 
+auto transform(const frustum& world_frustum, const float4x4& transform) noexcept
+   -> frustum;
+
 }

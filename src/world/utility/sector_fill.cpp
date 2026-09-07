@@ -120,10 +120,11 @@ auto sector_fill(const sector& sector, const std::span<const object> world_objec
       const object_class& object_class = object_classes[object.class_handle];
 
       if (object_class.flags.is_billboard_patch) [[unlikely]] {
-         const math::bounding_box& patch_bbox =
-            object_classes.get_billboard_patch_class(object.class_handle).bbox();
+         const billboard_patch_class& billboard_patch =
+            object_classes.get_billboard_patch_class(object.class_handle);
 
-         bbox = y_flip(object.rotation) * patch_bbox + object.position;
+         bbox = billboard_patch.world_from_object(object.rotation, object.position) *
+                billboard_patch.bbox();
       }
       else {
          const math::bounding_box& model_bbox = object_class.model->bounding_box;
@@ -171,10 +172,11 @@ bool inside_sector(const sector& sector, const object& object,
    const object_class& object_class = object_classes[object.class_handle];
 
    if (object_class.flags.is_billboard_patch) [[unlikely]] {
-      const math::bounding_box& patch_bbox =
-         object_classes.get_billboard_patch_class(object.class_handle).bbox();
+      const billboard_patch_class& billboard_patch =
+         object_classes.get_billboard_patch_class(object.class_handle);
 
-      bbox = y_flip(object.rotation) * patch_bbox + object.position;
+      bbox = billboard_patch.world_from_object(object.rotation, object.position) *
+             billboard_patch.bbox();
    }
    else {
       const math::bounding_box& model_bbox = object_class.model->bounding_box;

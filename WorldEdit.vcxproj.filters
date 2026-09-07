@@ -344,6 +344,7 @@
     <ClCompile Include="src\munge\builtin\utility\bf_crc32.cpp" />
     <ClCompile Include="src\world\io\export_terrain_map.cpp" />
     <ClCompile Include="src\world\object_classes\grass_patch_class.cpp" />
+    <ClCompile Include="src\world\object_classes\billboard_patch_class.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />

@@ -2900,10 +2900,8 @@ void renderer_impl::draw_sector_objects(
                                  {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
                                  {bbox_centreOS, 1.0f}};
 
-            float4x4 rotation_translate = to_matrix(y_flip(object.rotation));
-            rotation_translate[3] = {object.position, 1.0f};
-
-            const float4x4 world_from_object = rotation_translate * scale;
+            const float4x4 world_from_object =
+               billboard_patch.world_from_object(object.rotation, object.position) * scale;
 
             _meta_draw_batcher.add_box_outline_solid(world_from_object,
                                                      {settings.sector_object_hightlight_color,
@@ -3340,10 +3338,8 @@ void renderer_impl::draw_interaction_targets(
                               {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
                               {bbox_centreOS, 1.0f}};
 
-         float4x4 rotation_translate = to_matrix(y_flip(object.rotation));
-         rotation_translate[3] = {object.position, 1.0f};
-
-         const float4x4 world_from_object = rotation_translate * scale;
+         const float4x4 world_from_object =
+            billboard_patch.world_from_object(object.rotation, object.position) * scale;
 
          _meta_draw_batcher.add_box_outline_solid(world_from_object, {color, 1.0f});
       }
@@ -4686,13 +4682,13 @@ void renderer_impl::build_world_mesh_list(
          }
 
          if (object_class.flags.is_billboard_patch) [[unlikely]] {
-            float4x4 world_from_object = to_matrix(y_flip(object.rotation));
-            world_from_object[3] = float4{object.position, 1.0f};
+            const world::billboard_patch_class& billboard_patch =
+               world_classes.get_billboard_patch_class(object.class_handle);
 
-            _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
-                                                      object.class_handle),
-                                                   world_from_object,
-                                                   _dynamic_buffer_allocator);
+            _billboard_patches.add_billboard_patch(
+               billboard_patch,
+               billboard_patch.world_from_object(object.rotation, object.position),
+               _dynamic_buffer_allocator);
 
             continue;
          }
@@ -4773,18 +4769,17 @@ void renderer_impl::build_world_mesh_list(
          if (not active_layers[object.layer] or object.hidden) continue;
 
          if (object_class.flags.is_billboard_patch) [[unlikely]] {
-            const quaternion object_rotation =
-               group.rotation * y_flip(object.rotation);
+            const world::billboard_patch_class& billboard_patch =
+               world_classes.get_billboard_patch_class(object.class_handle);
+
+            const quaternion object_rotation = group.rotation * object.rotation;
             const float3 object_positionWS =
                group.rotation * object.position + group.position;
 
-            float4x4 world_from_object = to_matrix(object_rotation);
-            world_from_object[3] = float4{object_positionWS, 1.0f};
-
-            _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
-                                                      object.class_handle),
-                                                   world_from_object,
-                                                   _dynamic_buffer_allocator);
+            _billboard_patches.add_billboard_patch(
+               billboard_patch,
+               billboard_patch.world_from_object(object_rotation, object_positionWS),
+               _dynamic_buffer_allocator);
 
             continue;
          }

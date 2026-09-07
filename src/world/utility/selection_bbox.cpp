@@ -31,10 +31,12 @@ auto selection_bbox_for_camera(const world& world,
             const object_class& object_class = object_classes[object->class_handle];
 
             if (object_class.flags.is_billboard_patch) [[unlikely]] {
-               math::bounding_box bbox =
-                  object_classes.get_billboard_patch_class(object->class_handle).bbox();
+               const billboard_patch_class& billboard_patch =
+                  object_classes.get_billboard_patch_class(object->class_handle);
 
-               bbox = y_flip(object->rotation) * bbox + object->position;
+               const math::bounding_box bbox =
+                  billboard_patch.world_from_object(object->rotation, object->position) *
+                  billboard_patch.bbox();
 
                selection_bbox = math::combine(bbox, selection_bbox);
             }
@@ -315,10 +317,12 @@ auto selection_metrics_for_move(const world& world,
             const object_class& object_class = object_classes[object->class_handle];
 
             if (object_class.flags.is_billboard_patch) [[unlikely]] {
-               math::bounding_box bbox =
-                  object_classes.get_billboard_patch_class(object->class_handle).bbox();
+               const billboard_patch_class& billboard_patch =
+                  object_classes.get_billboard_patch_class(object->class_handle);
 
-               bbox = y_flip(object->rotation) * bbox + object->position;
+               const math::bounding_box bbox =
+                  billboard_patch.world_from_object(object->rotation, object->position) *
+                  billboard_patch.bbox();
 
                selection_bbox = math::combine(bbox, selection_bbox);
             }

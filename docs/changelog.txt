@@ -1,6 +1,6 @@
 0.167
 
-
+- Fixed grass and leaf patch rotation not matching the rotation ingame.
 
 0.166
 
