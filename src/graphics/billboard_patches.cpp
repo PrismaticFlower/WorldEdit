@@ -39,6 +39,18 @@ auto select_pipeline(const billboard_patches_draw draw, pipeline_library& pipeli
    std::unreachable();
 }
 
+auto get_patch_type(const world::billboard_shader_type type) -> patch_type
+{
+   switch (type) {
+   case world::billboard_shader_type::lit_cutout:
+      return patch_type::opaque;
+   case world::billboard_shader_type::lit_transparent:
+      return patch_type::transparent;
+   }
+
+   std::unreachable();
+}
+
 }
 
 struct billboard_patches::impl {
@@ -149,9 +161,7 @@ struct billboard_patches::impl {
          reinterpret_cast<std::uintptr_t>(&billboard_patch_class);
 
       std::vector<billboard_patch_class_gpu>& billboard_patches =
-         billboard_patch_class.is_transparent()
-            ? _billboard_patches[patch_type::transparent]
-            : _billboard_patches[patch_type::opaque];
+         _billboard_patches[get_patch_type(billboard_patch_class.shader_type())];
 
       if (auto gpu_billboard_patch =
              std::find_if(billboard_patches.begin(), billboard_patches.end(),

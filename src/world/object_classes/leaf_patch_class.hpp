@@ -31,7 +31,7 @@ struct leaf_patch_class final : billboard_patch_class {
 
    auto texture() const noexcept -> const std::string& override;
 
-   bool is_transparent() const noexcept override;
+   auto shader_type() const noexcept -> billboard_shader_type override;
 
 private:
    struct particle {

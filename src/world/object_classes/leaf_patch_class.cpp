@@ -510,9 +510,9 @@ auto leaf_patch_class::texture() const noexcept -> const std::string&
    return _texture;
 }
 
-bool leaf_patch_class::is_transparent() const noexcept
+auto leaf_patch_class::shader_type() const noexcept -> billboard_shader_type
 {
-   return false;
+   return billboard_shader_type::lit_cutout;
 }
 
 }

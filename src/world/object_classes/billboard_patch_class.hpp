@@ -17,6 +17,11 @@ struct billboard_patch_vertex {
    uint32 texcoords = 0;
 };
 
+enum class billboard_shader_type {
+   lit_cutout,
+   lit_transparent,
+};
+
 struct billboard_patch_class {
    virtual ~billboard_patch_class() = default;
 
@@ -34,7 +39,7 @@ struct billboard_patch_class {
 
    virtual auto texture() const noexcept -> const std::string& = 0;
 
-   virtual bool is_transparent() const noexcept = 0;
+   virtual auto shader_type() const noexcept -> billboard_shader_type = 0;
 
    static auto world_from_object(const quaternion& rotation,
                                  const float3& position) noexcept -> float4x4;

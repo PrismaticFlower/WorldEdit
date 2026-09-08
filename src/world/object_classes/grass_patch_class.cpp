@@ -472,9 +472,10 @@ auto grass_patch_class::texture() const noexcept -> const std::string&
    return _texture;
 }
 
-bool grass_patch_class::is_transparent() const noexcept
+auto grass_patch_class::shader_type() const noexcept -> billboard_shader_type
 {
-   return _transparent;
+   return not _transparent ? billboard_shader_type::lit_cutout
+                           : billboard_shader_type::lit_transparent;
 }
 
 }
