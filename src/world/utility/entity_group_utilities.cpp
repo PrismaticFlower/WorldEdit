@@ -289,17 +289,20 @@ auto entity_group_metrics(const entity_group& group,
 
    for (const object& object : group.objects) {
       const object_class& object_class = object_classes[object.class_handle];
+      if (object_class.flags.is_complex) [[unlikely]] {
+         switch (object_class.flags.complex_type) {
+         case object_class_type::billboard_patch: {
+            const billboard_patch_class& billboard_patch =
+               object_classes.get_billboard_patch_class(object.class_handle);
 
-      if (object_class.flags.is_billboard_patch) [[unlikely]] {
-         const billboard_patch_class& billboard_patch =
-            object_classes.get_billboard_patch_class(object.class_handle);
+            const math::bounding_box bboxOS = billboard_patch.bbox();
+            const math::bounding_box bboxGS =
+               billboard_patch.world_from_object(object.rotation, object.position) * bboxOS;
 
-         const math::bounding_box bboxOS = billboard_patch.bbox();
-         const math::bounding_box bboxGS =
-            billboard_patch.world_from_object(object.rotation, object.position) * bboxOS;
-
-         ground_distance = std::min(ground_distance, bboxOS.min.y);
-         group_bbox = math::combine(group_bbox, bboxGS);
+            ground_distance = std::min(ground_distance, bboxOS.min.y);
+            group_bbox = math::combine(group_bbox, bboxGS);
+         } break;
+         }
       }
       else {
          const math::bounding_box bboxOS = object_class.model->bounding_box;

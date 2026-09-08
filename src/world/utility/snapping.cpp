@@ -94,13 +94,17 @@ auto get_snapped_position(const snapping_entity& snapping,
       const math::bounding_box* bboxOS = &object_class.model->bounding_box;
       quaternion object_rotation = object.rotation;
 
-      if (object_class.flags.is_billboard_patch) {
-         const billboard_patch_class& billboard_patch =
-            object_classes.get_billboard_patch_class(object.class_handle);
+      if (object_class.flags.is_complex) [[unlikely]] {
+         switch (object_class.flags.complex_type) {
+         case object_class_type::billboard_patch: {
+            const billboard_patch_class& billboard_patch =
+               object_classes.get_billboard_patch_class(object.class_handle);
 
-         bboxOS = &billboard_patch.bbox();
-         object_rotation = make_quat_from_matrix(
-            billboard_patch.world_from_object(object.rotation, object.position));
+            bboxOS = &billboard_patch.bbox();
+            object_rotation = make_quat_from_matrix(
+               billboard_patch.world_from_object(object.rotation, object.position));
+         } break;
+         }
       }
 
       const float3 positionOS =
@@ -259,20 +263,27 @@ auto get_snapped_position(const object& snapping_object, const float3 snapping_p
                           const snapping_visualizer_colors& colors) noexcept -> float3
 {
    const object_class& object_class = object_classes[snapping_object.class_handle];
+   if (object_class.flags.is_complex) [[unlikely]] {
+      switch (object_class.flags.complex_type) {
+      case object_class_type::billboard_patch: {
+         const billboard_patch_class& billboard_patch =
+            object_classes.get_billboard_patch_class(snapping_object.class_handle);
 
-   if (object_class.flags.is_billboard_patch) [[unlikely]] {
-      const billboard_patch_class& billboard_patch =
-         object_classes.get_billboard_patch_class(snapping_object.class_handle);
+         const float4x4 world_from_object =
+            billboard_patch.world_from_object(snapping_object.rotation,
+                                              snapping_positionWS);
 
-      const float4x4 world_from_object =
-         billboard_patch.world_from_object(snapping_object.rotation, snapping_positionWS);
+         return get_snapped_position(snapping_entity{.rotation = make_quat_from_matrix(
+                                                        world_from_object),
+                                                     .positionWS = snapping_positionWS,
+                                                     .bboxOS = billboard_patch.bbox()},
+                                     world_objects, snap_radius, flags, active_layers,
+                                     object_classes, visualizers, colors);
 
-      return get_snapped_position(snapping_entity{.rotation = make_quat_from_matrix(
-                                                     world_from_object),
-                                                  .positionWS = snapping_positionWS,
-                                                  .bboxOS = billboard_patch.bbox()},
-                                  world_objects, snap_radius, flags, active_layers,
-                                  object_classes, visualizers, colors);
+      } break;
+      }
+
+      std::unreachable();
    }
    else {
       return get_snapped_position(snapping_entity{.rotation = snapping_object.rotation,
@@ -313,21 +324,26 @@ auto get_snapped_position_filtered(
 
       const object_class& object_class = object_classes[object.class_handle];
 
-      const math::bounding_box& bboxOS =
-         not object_class.flags.is_billboard_patch
-            ? object_class.model->bounding_box
-            : object_classes.get_billboard_patch_class(object.class_handle).bbox();
-      const quaternion object_rotation =
-         not object_class.flags.is_billboard_patch
-            ? object.rotation
-            : make_quat_from_matrix(
-                 object_classes.get_billboard_patch_class(object.class_handle)
-                    .world_from_object(object.rotation, object.position));
+      const math::bounding_box* bboxOS = &object_class.model->bounding_box;
+      quaternion object_rotation = object.rotation;
+
+      if (object_class.flags.is_complex) [[unlikely]] {
+         switch (object_class.flags.complex_type) {
+         case object_class_type::billboard_patch: {
+            const billboard_patch_class& billboard_patch =
+               object_classes.get_billboard_patch_class(object.class_handle);
+
+            bboxOS = &billboard_patch.bbox();
+            object_rotation = make_quat_from_matrix(
+               billboard_patch.world_from_object(object.rotation, object.position));
+         } break;
+         }
+      }
 
       const float3 positionOS =
          conjugate(object_rotation) * (snapping.positionWS - object.position);
-      const float3 box_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
-      const float3 box_size = (bboxOS.max - bboxOS.min) * 0.5f;
+      const float3 box_centreOS = (bboxOS->min + bboxOS->max) * 0.5f;
+      const float3 box_size = (bboxOS->max - bboxOS->min) * 0.5f;
 
       const float3 positionAS = positionOS - box_centreOS;
       const float3 distances = abs(positionAS) - box_size;

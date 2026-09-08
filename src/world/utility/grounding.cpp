@@ -127,17 +127,22 @@ auto ground_object(const object& object, const world& world,
                    const active_layers active_layers) noexcept -> std::optional<float3>
 {
    const object_class& object_class = object_classes[object.class_handle];
+   if (object_class.flags.is_complex) [[unlikely]] {
+      switch (object_class.flags.complex_type) {
+      case object_class_type::billboard_patch: {
+         const billboard_patch_class& billboard_patch =
+            object_classes.get_billboard_patch_class(object.class_handle);
 
-   if (object_class.flags.is_billboard_patch) [[unlikely]] {
-      const billboard_patch_class& billboard_patch =
-         object_classes.get_billboard_patch_class(object.class_handle);
+         return ground_bbox(object.position,
+                            billboard_patch.world_from_object(object.rotation,
+                                                              object.position) *
+                               billboard_patch.bbox(),
+                            world, object_classes, blocks_bvh_library,
+                            active_layers, object.id);
+      } break;
+      }
 
-      return ground_bbox(object.position,
-                         billboard_patch.world_from_object(object.rotation,
-                                                           object.position) *
-                            billboard_patch.bbox(),
-                         world, object_classes, blocks_bvh_library,
-                         active_layers, object.id);
+      std::unreachable();
    }
    else {
       return ground_bbox(object.position,

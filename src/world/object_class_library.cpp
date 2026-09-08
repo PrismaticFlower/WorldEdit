@@ -364,7 +364,8 @@ private:
       }
 
       if (string::iequals(cls.definition->header.class_label, "leafpatch")) {
-         cls.flags.is_billboard_patch = true;
+         cls.flags.is_complex = true;
+         cls.flags.complex_type = object_class_type::billboard_patch;
 
          if (_billboard_patch_class_pool.size() <= class_index) {
             _billboard_patch_class_pool.resize(class_index + 1);
@@ -376,7 +377,8 @@ private:
       }
       else if (string::iequals(cls.definition->header.class_label,
                                "grasspatch")) {
-         cls.flags.is_billboard_patch = true;
+         cls.flags.is_complex = true;
+         cls.flags.complex_type = object_class_type::billboard_patch;
 
          if (_billboard_patch_class_pool.size() <= class_index) {
             _billboard_patch_class_pool.resize(class_index + 1);

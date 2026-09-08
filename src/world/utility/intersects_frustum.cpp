@@ -14,15 +14,21 @@ bool intersects(const frustum& frustumWS, const object& object,
 {
    const object_class& object_class = object_classes[object.class_handle];
 
-   if (object_class.flags.is_billboard_patch) [[unlikely]] {
-      const billboard_patch_class& billboard_patch =
-         object_classes.get_billboard_patch_class(object.class_handle);
+   if (object_class.flags.is_complex) [[unlikely]] {
+      switch (object_class.flags.complex_type) {
+      case object_class_type::billboard_patch: {
+         const billboard_patch_class& billboard_patch =
+            object_classes.get_billboard_patch_class(object.class_handle);
 
-      const frustum frustumOS =
-         transform(frustumWS, billboard_patch.object_from_world(object.rotation,
-                                                                object.position));
+         const frustum frustumOS =
+            transform(frustumWS, billboard_patch.object_from_world(object.rotation,
+                                                                   object.position));
 
-      return intersects(frustumOS, billboard_patch.bbox());
+         return intersects(frustumOS, billboard_patch.bbox());
+      } break;
+      }
+
+      std::unreachable();
    }
    else {
       const quaternion inverse_rotation = conjugate(object.rotation);

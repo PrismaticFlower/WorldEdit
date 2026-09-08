@@ -29,16 +29,20 @@ auto selection_bbox_for_camera(const world& world,
 
          if (object) {
             const object_class& object_class = object_classes[object->class_handle];
+            if (object_class.flags.is_complex) [[unlikely]] {
+               switch (object_class.flags.complex_type) {
+               case object_class_type::billboard_patch: {
+                  const billboard_patch_class& billboard_patch =
+                     object_classes.get_billboard_patch_class(object->class_handle);
 
-            if (object_class.flags.is_billboard_patch) [[unlikely]] {
-               const billboard_patch_class& billboard_patch =
-                  object_classes.get_billboard_patch_class(object->class_handle);
+                  const math::bounding_box bbox =
+                     billboard_patch.world_from_object(object->rotation,
+                                                       object->position) *
+                     billboard_patch.bbox();
 
-               const math::bounding_box bbox =
-                  billboard_patch.world_from_object(object->rotation, object->position) *
-                  billboard_patch.bbox();
-
-               selection_bbox = math::combine(bbox, selection_bbox);
+                  selection_bbox = math::combine(bbox, selection_bbox);
+               } break;
+               }
             }
             else {
                math::bounding_box bbox = object_class.model->bounding_box;
@@ -315,16 +319,20 @@ auto selection_metrics_for_move(const world& world,
 
          if (object) {
             const object_class& object_class = object_classes[object->class_handle];
+            if (object_class.flags.is_complex) [[unlikely]] {
+               switch (object_class.flags.complex_type) {
+               case object_class_type::billboard_patch: {
+                  const billboard_patch_class& billboard_patch =
+                     object_classes.get_billboard_patch_class(object->class_handle);
 
-            if (object_class.flags.is_billboard_patch) [[unlikely]] {
-               const billboard_patch_class& billboard_patch =
-                  object_classes.get_billboard_patch_class(object->class_handle);
+                  const math::bounding_box bbox =
+                     billboard_patch.world_from_object(object->rotation,
+                                                       object->position) *
+                     billboard_patch.bbox();
 
-               const math::bounding_box bbox =
-                  billboard_patch.world_from_object(object->rotation, object->position) *
-                  billboard_patch.bbox();
-
-               selection_bbox = math::combine(bbox, selection_bbox);
+                  selection_bbox = math::combine(bbox, selection_bbox);
+               } break;
+               }
             }
             else {
                math::bounding_box bbox = object_class.model->bounding_box;

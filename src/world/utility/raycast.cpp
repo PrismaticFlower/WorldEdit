@@ -34,28 +34,32 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       if (filter and not filter(object)) continue;
 
       const object_class& object_class = object_classes[object.class_handle];
+      if (object_class.flags.is_complex) [[unlikely]] {
+         switch (object_class.flags.complex_type) {
+         case object_class_type::billboard_patch: {
+            const billboard_patch_class& billboard_patch =
+               object_classes.get_billboard_patch_class(object.class_handle);
+            const math::bounding_box& bbox = billboard_patch.bbox();
 
-      if (object_class.flags.is_billboard_patch) [[unlikely]] {
-         const billboard_patch_class& billboard_patch =
-            object_classes.get_billboard_patch_class(object.class_handle);
-         const math::bounding_box& bbox = billboard_patch.bbox();
+            float4x4 object_from_world =
+               billboard_patch.object_from_world(object.rotation, object.position);
 
-         float4x4 object_from_world =
-            billboard_patch.object_from_world(object.rotation, object.position);
+            float3 ray_originOS = object_from_world * ray_origin;
+            float3 ray_directionOS =
+               normalize(float3x3{object_from_world} * ray_direction);
 
-         float3 ray_originOS = object_from_world * ray_origin;
-         float3 ray_directionOS =
-            normalize(float3x3{object_from_world} * ray_direction);
+            if (float hit_distance = 0.0f;
+                intersect_aabb(ray_originOS, 1.0f / ray_directionOS, bbox,
+                               min_distance, hit_distance)) {
+               hit = object.id;
+               hit_index = static_cast<uint32>(object_index);
+               min_distance = hit_distance;
+               surface_normalWS = normalize(
+                  billboard_patch.world_from_object(object.rotation, object.position) *
+                  (ray_originOS + ray_directionOS * hit_distance));
+            }
 
-         if (float hit_distance = 0.0f;
-             intersect_aabb(ray_originOS, 1.0f / ray_directionOS, bbox,
-                            min_distance, hit_distance)) {
-            hit = object.id;
-            hit_index = static_cast<uint32>(object_index);
-            min_distance = hit_distance;
-            surface_normalWS = normalize(
-               billboard_patch.world_from_object(object.rotation, object.position) *
-               (ray_originOS + ray_directionOS * hit_distance));
+         } break;
          }
       }
       else {

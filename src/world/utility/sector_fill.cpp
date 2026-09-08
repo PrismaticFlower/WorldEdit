@@ -118,13 +118,16 @@ auto sector_fill(const sector& sector, const std::span<const object> world_objec
       math::bounding_box bbox;
 
       const object_class& object_class = object_classes[object.class_handle];
+      if (object_class.flags.is_complex) [[unlikely]] {
+         switch (object_class.flags.complex_type) {
+         case object_class_type::billboard_patch: {
+            const billboard_patch_class& billboard_patch =
+               object_classes.get_billboard_patch_class(object.class_handle);
 
-      if (object_class.flags.is_billboard_patch) [[unlikely]] {
-         const billboard_patch_class& billboard_patch =
-            object_classes.get_billboard_patch_class(object.class_handle);
-
-         bbox = billboard_patch.world_from_object(object.rotation, object.position) *
-                billboard_patch.bbox();
+            bbox = billboard_patch.world_from_object(object.rotation, object.position) *
+                   billboard_patch.bbox();
+         } break;
+         }
       }
       else {
          const math::bounding_box& model_bbox = object_class.model->bounding_box;
@@ -171,12 +174,16 @@ bool inside_sector(const sector& sector, const object& object,
 
    const object_class& object_class = object_classes[object.class_handle];
 
-   if (object_class.flags.is_billboard_patch) [[unlikely]] {
-      const billboard_patch_class& billboard_patch =
-         object_classes.get_billboard_patch_class(object.class_handle);
+   if (object_class.flags.is_complex) [[unlikely]] {
+      switch (object_class.flags.complex_type) {
+      case object_class_type::billboard_patch: {
+         const billboard_patch_class& billboard_patch =
+            object_classes.get_billboard_patch_class(object.class_handle);
 
-      bbox = billboard_patch.world_from_object(object.rotation, object.position) *
-             billboard_patch.bbox();
+         bbox = billboard_patch.world_from_object(object.rotation, object.position) *
+                billboard_patch.bbox();
+      } break;
+      }
    }
    else {
       const math::bounding_box& model_bbox = object_class.model->bounding_box;

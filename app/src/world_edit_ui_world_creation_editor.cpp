@@ -315,16 +315,20 @@ void world_edit::ui_show_world_creation_editor() noexcept
                const world::object_class& object_class =
                   _object_classes[object.class_handle];
 
-               if (object_class.flags.is_billboard_patch) [[unlikely]] {
-                  const world::billboard_patch_class& billboard_patch =
-                     _object_classes.get_billboard_patch_class(object.class_handle);
+               if (object_class.flags.is_complex) [[unlikely]] {
+                  switch (object_class.flags.complex_type) {
+                  case world::object_class_type::billboard_patch: {
+                     const world::billboard_patch_class& billboard_patch =
+                        _object_classes.get_billboard_patch_class(object.class_handle);
 
-                  const math::bounding_box bbox =
-                     float3x3{billboard_patch.world_from_object(object.rotation,
-                                                                object.position)} *
-                     billboard_patch.bbox();
+                     const math::bounding_box bbox =
+                        float3x3{billboard_patch.world_from_object(object.rotation,
+                                                                   object.position)} *
+                        billboard_patch.bbox();
 
-                  new_position.y -= bbox.min.y;
+                     new_position.y -= bbox.min.y;
+                  } break;
+                  }
                }
                else {
                   const math::bounding_box bbox =

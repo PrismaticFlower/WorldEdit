@@ -2888,26 +2888,31 @@ void renderer_impl::draw_sector_objects(
          const world::object& object = world.objects[object_index];
          const world::object_class& object_class = world_classes[object.class_handle];
 
-         if (object_class.flags.is_billboard_patch) [[unlikely]] {
-            const world::billboard_patch_class& billboard_patch =
-               world_classes.get_billboard_patch_class(object.class_handle);
+         if (object_class.flags.is_complex) [[unlikely]] {
+            switch (object_class.flags.complex_type) {
+            case world::object_class_type::billboard_patch: {
+               const world::billboard_patch_class& billboard_patch =
+                  world_classes.get_billboard_patch_class(object.class_handle);
 
-            const math::bounding_box& bboxOS = billboard_patch.bbox();
+               const math::bounding_box& bboxOS = billboard_patch.bbox();
 
-            const float3 bbox_sizeOS = (bboxOS.max - bboxOS.min) * 0.5f;
-            const float3 bbox_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
+               const float3 bbox_sizeOS = (bboxOS.max - bboxOS.min) * 0.5f;
+               const float3 bbox_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
 
-            const float4x4 scale{{bbox_sizeOS.x, 0.0f, 0.0f, 0.0f},
-                                 {0.0f, bbox_sizeOS.y, 0.0f, 0.0f},
-                                 {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
-                                 {bbox_centreOS, 1.0f}};
+               const float4x4 scale{{bbox_sizeOS.x, 0.0f, 0.0f, 0.0f},
+                                    {0.0f, bbox_sizeOS.y, 0.0f, 0.0f},
+                                    {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
+                                    {bbox_centreOS, 1.0f}};
 
-            const float4x4 world_from_object =
-               billboard_patch.world_from_object(object.rotation, object.position) * scale;
+               const float4x4 world_from_object =
+                  billboard_patch.world_from_object(object.rotation, object.position) *
+                  scale;
 
-            _meta_draw_batcher.add_box_outline_solid(world_from_object,
-                                                     {settings.sector_object_hightlight_color,
-                                                      1.0f});
+               _meta_draw_batcher.add_box_outline_solid(world_from_object,
+                                                        {settings.sector_object_hightlight_color,
+                                                         1.0f});
+            } break;
+            }
          }
          else {
             draw_model(_model_manager[object_class.model_name], object.rotation,
@@ -3241,23 +3246,26 @@ void renderer_impl::draw_interaction_targets(
                                          const world::object_class_handle class_handle,
                                          const float3& color) {
       const world::object_class& object_class = world_classes[class_handle];
+      if (object_class.flags.is_complex) [[unlikely]] {
+         switch (object_class.flags.complex_type) {
+         case world::object_class_type::billboard_patch: {
+            const world::billboard_patch_class& billboard_patch =
+               world_classes.get_billboard_patch_class(class_handle);
 
-      if (object_class.flags.is_billboard_patch) [[unlikely]] {
-         const world::billboard_patch_class& billboard_patch =
-            world_classes.get_billboard_patch_class(class_handle);
+            const math::bounding_box& bboxOS = billboard_patch.bbox();
 
-         const math::bounding_box& bboxOS = billboard_patch.bbox();
+            const float3 bbox_sizeOS = (bboxOS.max - bboxOS.min) * 0.5f;
+            const float3 bbox_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
 
-         const float3 bbox_sizeOS = (bboxOS.max - bboxOS.min) * 0.5f;
-         const float3 bbox_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
+            const float4x4 scale{{bbox_sizeOS.x, 0.0f, 0.0f, 0.0f},
+                                 {0.0f, bbox_sizeOS.y, 0.0f, 0.0f},
+                                 {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
+                                 {bbox_centreOS, 1.0f}};
 
-         const float4x4 scale{{bbox_sizeOS.x, 0.0f, 0.0f, 0.0f},
-                              {0.0f, bbox_sizeOS.y, 0.0f, 0.0f},
-                              {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
-                              {bbox_centreOS, 1.0f}};
-
-         _meta_draw_batcher.add_box_outline_solid(world_from_object * scale,
-                                                  {color, 1.0f});
+            _meta_draw_batcher.add_box_outline_solid(world_from_object * scale,
+                                                     {color, 1.0f});
+         } break;
+         }
       }
       else {
          model& model = _model_manager[object_class.model_name];
@@ -3325,25 +3333,28 @@ void renderer_impl::draw_interaction_targets(
 
    const auto draw_object = [&](const world::object& object, const float3 color) {
       const world::object_class& object_class = world_classes[object.class_handle];
+      if (object_class.flags.is_complex) [[unlikely]] {
+         switch (object_class.flags.complex_type) {
+         case world::object_class_type::billboard_patch: {
+            const world::billboard_patch_class& billboard_patch =
+               world_classes.get_billboard_patch_class(object.class_handle);
 
-      if (object_class.flags.is_billboard_patch) [[unlikely]] {
-         const world::billboard_patch_class& billboard_patch =
-            world_classes.get_billboard_patch_class(object.class_handle);
+            const math::bounding_box& bboxOS = billboard_patch.bbox();
 
-         const math::bounding_box& bboxOS = billboard_patch.bbox();
+            const float3 bbox_sizeOS = (bboxOS.max - bboxOS.min) * 0.5f;
+            const float3 bbox_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
 
-         const float3 bbox_sizeOS = (bboxOS.max - bboxOS.min) * 0.5f;
-         const float3 bbox_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
+            const float4x4 scale{{bbox_sizeOS.x, 0.0f, 0.0f, 0.0f},
+                                 {0.0f, bbox_sizeOS.y, 0.0f, 0.0f},
+                                 {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
+                                 {bbox_centreOS, 1.0f}};
 
-         const float4x4 scale{{bbox_sizeOS.x, 0.0f, 0.0f, 0.0f},
-                              {0.0f, bbox_sizeOS.y, 0.0f, 0.0f},
-                              {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
-                              {bbox_centreOS, 1.0f}};
+            const float4x4 world_from_object =
+               billboard_patch.world_from_object(object.rotation, object.position) * scale;
 
-         const float4x4 world_from_object =
-            billboard_patch.world_from_object(object.rotation, object.position) * scale;
-
-         _meta_draw_batcher.add_box_outline_solid(world_from_object, {color, 1.0f});
+            _meta_draw_batcher.add_box_outline_solid(world_from_object, {color, 1.0f});
+         } break;
+         }
       }
       else {
          float4x4 world_from_object = to_matrix(object.rotation);
@@ -4215,30 +4226,33 @@ void renderer_impl::draw_interaction_targets(
          [&](const float4x4& world_from_object,
              const world::object_class_handle class_handle) noexcept {
             const world::object_class& object_class = world_classes[class_handle];
+            if (object_class.flags.is_complex) [[unlikely]] {
+               switch (object_class.flags.complex_type) {
+               case world::object_class_type::billboard_patch: {
+                  const world::billboard_patch_class& billboard_patch =
+                     world_classes.get_billboard_patch_class(class_handle);
 
-            if (object_class.flags.is_billboard_patch) [[unlikely]] {
-               const world::billboard_patch_class& billboard_patch =
-                  world_classes.get_billboard_patch_class(class_handle);
+                  const math::bounding_box& bboxOS = billboard_patch.bbox();
 
-               const math::bounding_box& bboxOS = billboard_patch.bbox();
+                  const float4x4 lp_world_from_object =
+                     world_from_object * to_matrix({0.0f, 0.0f, 1.0f, 0.0f});
 
-               const float4x4 lp_world_from_object =
-                  world_from_object * to_matrix({0.0f, 0.0f, 1.0f, 0.0f});
+                  if (not intersects(view_frustum, lp_world_from_object * bboxOS)) {
+                     return;
+                  }
 
-               if (not intersects(view_frustum, lp_world_from_object * bboxOS)) {
-                  return;
+                  const float3 bbox_sizeOS = (bboxOS.max - bboxOS.min) * 0.5f;
+                  const float3 bbox_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
+
+                  const float4x4 scale{{bbox_sizeOS.x, 0.0f, 0.0f, 0.0f},
+                                       {0.0f, bbox_sizeOS.y, 0.0f, 0.0f},
+                                       {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
+                                       {bbox_centreOS, 1.0f}};
+
+                  _meta_draw_batcher.add_box_outline_solid(lp_world_from_object * scale,
+                                                           {color, 1.0f});
+               } break;
                }
-
-               const float3 bbox_sizeOS = (bboxOS.max - bboxOS.min) * 0.5f;
-               const float3 bbox_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
-
-               const float4x4 scale{{bbox_sizeOS.x, 0.0f, 0.0f, 0.0f},
-                                    {0.0f, bbox_sizeOS.y, 0.0f, 0.0f},
-                                    {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
-                                    {bbox_centreOS, 1.0f}};
-
-               _meta_draw_batcher.add_box_outline_solid(lp_world_from_object * scale,
-                                                        {color, 1.0f});
 
                return;
             }
@@ -4611,12 +4625,15 @@ void renderer_impl::build_world_mesh_list(
       if (constants_data_head == constants_data_end) return;
 
       const world::object_class& object_class = world_classes[class_handle];
-
-      if (object_class.flags.is_billboard_patch) [[unlikely]] {
-         _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
-                                                   class_handle),
-                                                world_from_object,
-                                                _dynamic_buffer_allocator);
+      if (object_class.flags.is_complex) [[unlikely]] {
+         switch (object_class.flags.complex_type) {
+         case world::object_class_type::billboard_patch: {
+            _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
+                                                      class_handle),
+                                                   world_from_object,
+                                                   _dynamic_buffer_allocator);
+         } break;
+         }
 
          return;
       }
@@ -4683,14 +4700,18 @@ void renderer_impl::build_world_mesh_list(
             }
          }
 
-         if (object_class.flags.is_billboard_patch) [[unlikely]] {
-            const world::billboard_patch_class& billboard_patch =
-               world_classes.get_billboard_patch_class(object.class_handle);
+         if (object_class.flags.is_complex) [[unlikely]] {
+            switch (object_class.flags.complex_type) {
+            case world::object_class_type::billboard_patch: {
+               const world::billboard_patch_class& billboard_patch =
+                  world_classes.get_billboard_patch_class(object.class_handle);
 
-            _billboard_patches.add_billboard_patch(
-               billboard_patch,
-               billboard_patch.world_from_object(object.rotation, object.position),
-               _dynamic_buffer_allocator);
+               _billboard_patches.add_billboard_patch(
+                  billboard_patch,
+                  billboard_patch.world_from_object(object.rotation, object.position),
+                  _dynamic_buffer_allocator);
+            } break;
+            }
 
             continue;
          }
@@ -4769,19 +4790,22 @@ void renderer_impl::build_world_mesh_list(
          const world::object_class& object_class = world_classes[object.class_handle];
 
          if (not active_layers[object.layer] or object.hidden) continue;
+         if (object_class.flags.is_complex) [[unlikely]] {
+            switch (object_class.flags.complex_type) {
+            case world::object_class_type::billboard_patch: {
+               const world::billboard_patch_class& billboard_patch =
+                  world_classes.get_billboard_patch_class(object.class_handle);
 
-         if (object_class.flags.is_billboard_patch) [[unlikely]] {
-            const world::billboard_patch_class& billboard_patch =
-               world_classes.get_billboard_patch_class(object.class_handle);
+               const quaternion object_rotation = group.rotation * object.rotation;
+               const float3 object_positionWS =
+                  group.rotation * object.position + group.position;
 
-            const quaternion object_rotation = group.rotation * object.rotation;
-            const float3 object_positionWS =
-               group.rotation * object.position + group.position;
-
-            _billboard_patches.add_billboard_patch(
-               billboard_patch,
-               billboard_patch.world_from_object(object_rotation, object_positionWS),
-               _dynamic_buffer_allocator);
+               _billboard_patches.add_billboard_patch(
+                  billboard_patch,
+                  billboard_patch.world_from_object(object_rotation, object_positionWS),
+                  _dynamic_buffer_allocator);
+            } break;
+            }
 
             continue;
          }
@@ -4865,16 +4889,19 @@ void renderer_impl::build_world_mesh_list(
       if (not object) continue;
 
       const world::object_class& object_class = world_classes[object->class_handle];
+      if (object_class.flags.is_complex) [[unlikely]] {
+         switch (object_class.flags.complex_type) {
+         case world::object_class_type::billboard_patch: {
+            float4x4 world_from_object =
+               ghost.transform * to_matrix({0.0f, 0.0f, 1.0f, 0.0f});
+            world_from_object[3] = ghost.transform[3];
 
-      if (object_class.flags.is_billboard_patch) [[unlikely]] {
-         float4x4 world_from_object =
-            ghost.transform * to_matrix({0.0f, 0.0f, 1.0f, 0.0f});
-         world_from_object[3] = ghost.transform[3];
-
-         _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
-                                                   object->class_handle),
-                                                world_from_object,
-                                                _dynamic_buffer_allocator);
+            _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
+                                                      object->class_handle),
+                                                   world_from_object,
+                                                   _dynamic_buffer_allocator);
+         } break;
+         }
 
          continue;
       }
@@ -4943,15 +4970,20 @@ void renderer_impl::build_world_mesh_list(
 
                const world::object_class& object_class = world_classes[class_handle];
 
-               if (object_class.flags.is_billboard_patch) [[unlikely]] {
-                  float4x4 lp_world_from_object =
-                     world_from_object * to_matrix({0.0f, 0.0f, 1.0f, 0.0f});
-                  lp_world_from_object[3] = world_from_object[3];
+               if (object_class.flags.is_complex) [[unlikely]] {
+                  switch (object_class.flags.complex_type) {
+                  case world::object_class_type::billboard_patch: {
+                     float4x4 lp_world_from_object =
+                        world_from_object * to_matrix({0.0f, 0.0f, 1.0f, 0.0f});
+                     lp_world_from_object[3] = world_from_object[3];
 
-                  _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
-                                                            class_handle),
-                                                         lp_world_from_object,
-                                                         _dynamic_buffer_allocator);
+                     _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
+                                                               class_handle),
+                                                            lp_world_from_object,
+                                                            _dynamic_buffer_allocator);
+
+                  } break;
+                  }
 
                   return;
                }
