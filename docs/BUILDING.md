@@ -28,6 +28,10 @@ For one using non-default compile options like `/guard:ehcont` is much harder to
 
 Since one of the cool things about hobby projects is getting to try different approaches I've now stopped using vcpkg for this project and have instead added the dependencies directly, along with build files to `third_party/`. I'm sure this is horrible for various reasons but I'm interested to explore it for myself and the upside of gaining more control over the build for things like `/guard:ehcont` seems worth it.
 
+### Extra Warnings/Errors
+
+This seems worth documenting/calling out. WorldEdit now builds with `/we4062` enabled which gives an error when a switch statement doesn't handle an enum value. This helps prevent mistakes when adding new values to various enums that should typically have all their values handled.
+
 ## Running
 Running `WorldEdit.exe` is simple just find it in `bin/$Config/` and launch it. It has no dependencies except the DX12 Agility SDK runtime (and on up-to-date Windows 11 it shouldn't even need this) which is in the `./D3D12` (relative the the executable).
 

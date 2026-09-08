@@ -23,9 +23,9 @@ constexpr bool is_srgb(const texture_format format)
    case texture_format::r8g8b8a8_unorm_srgb:
    case texture_format::b8g8r8a8_unorm_srgb:
       return true;
+   default:
+      return false;
    }
-
-   return false;
 }
 
 constexpr auto format_size(const texture_format format) -> std::size_t

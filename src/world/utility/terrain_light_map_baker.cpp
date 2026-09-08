@@ -385,8 +385,7 @@ private:
       }
 
       for (const light& light : world.lights) {
-         switch (light.light_type) {
-         case light_type::point: {
+         if (light.light_type == light_type::point) {
             point_light& point_light = light.static_
                                           ? static_point_lights.emplace_back()
                                           : dynamic_point_lights.emplace_back();
@@ -395,8 +394,8 @@ private:
             point_light.range_sq = light.range * light.range;
             point_light.inv_range_sq = 1.0f / point_light.range_sq;
             point_light.color = light.color;
-         } break;
-         case light_type::spot: {
+         }
+         else if (light.light_type == light_type::spot) {
             spot_light& spot_light = light.static_
                                         ? static_spot_lights.emplace_back()
                                         : dynamic_spot_lights.emplace_back();
@@ -410,7 +409,6 @@ private:
             spot_light.inner_param =
                1.0f / (std::cos(light.inner_cone_angle * 0.5f) - spot_light.outer_param);
             spot_light.color = light.color;
-         } break;
          }
       }
    }

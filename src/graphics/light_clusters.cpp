@@ -551,6 +551,8 @@ void light_clusters::prepare_lights(
 
                 .light_index = light_index};
          } break;
+         default:
+            break;
          }
       } break;
       }
@@ -716,8 +718,12 @@ void light_clusters::prepare_lights(
 
                    .light_index = light_index};
             } break;
+            default:
+               break;
             }
          } break;
+         default:
+            break;
          }
       }
    }

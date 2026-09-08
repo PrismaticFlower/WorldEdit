@@ -69,12 +69,13 @@ bool should_save(const property_type type, const void* value,
 
    if (not unsaved) return true;
 
-   switch (type) {
-   case property_type::bool_:
+   if (type == property_type::bool_) {
       return *static_cast<const bool*>(value) != unsaved->bool_;
-   case property_type::float_:
+   }
+   else if (type == property_type::float_) {
       return *static_cast<const float*>(value) != unsaved->float_;
-   case property_type::int32:
+   }
+   else if (type == property_type::int32) {
       return *static_cast<const int32*>(value) != unsaved->int32;
    }
 

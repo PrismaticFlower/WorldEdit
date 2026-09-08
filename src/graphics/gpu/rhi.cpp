@@ -1699,6 +1699,8 @@ auto device::create_command_signature(const command_signature_desc& desc,
          case D3D12_INDIRECT_ARGUMENT_TYPE_INCREMENTING_CONSTANT:
             arg_desc.IncrementingConstant.RootParameterIndex += 1;
             break;
+         default:
+            break;
          }
       }
 
@@ -2264,6 +2266,8 @@ command_list::~command_list()
             state->device->background_copy_queue.release_command_allocator(
                pack_command_allocator_handle(allocator_ref_background.release()));
          });
+      break;
+   default:
       break;
    }
 }

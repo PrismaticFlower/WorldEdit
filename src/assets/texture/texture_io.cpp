@@ -99,9 +99,9 @@ auto get_texture_format(const DXGI_FORMAT dxgi_format) -> texture_format
       return texture_format::b8g8r8a8_unorm;
    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
       return texture_format::b8g8r8a8_unorm_srgb;
+   default:
+      throw std::runtime_error{"Texture has unsupported format!"};
    }
-
-   throw std::runtime_error{"Texture has unsupported format!"};
 }
 
 void init_texture_data(texture& texture, DirectX::Image image)

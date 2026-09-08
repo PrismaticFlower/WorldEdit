@@ -2072,6 +2072,8 @@ void renderer_impl::draw_world_meta_objects(
                                 light.region_size,
                                 world::region_shape::cylinder, light.color);
             } break;
+            default:
+               break;
             }
 
             float4x4 transform =

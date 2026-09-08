@@ -90,6 +90,8 @@ bool is_editable(const classification list_classification,
 auto classification_string(const classification list_classification) -> const char*
 {
    switch (list_classification) {
+   case classification::generic:
+      return "";
    case classification::world_ref:
       return "[World Dependency]";
    case classification::layer_ref:
@@ -98,7 +100,7 @@ auto classification_string(const classification list_classification) -> const ch
       return "[Game Mode Dependency]";
    }
 
-   return "";
+   std::unreachable();
 }
 
 }
@@ -126,6 +128,8 @@ void world_edit::ui_show_world_requirements_editor() noexcept
 
             if (list.platform != world::platform::all) {
                switch (list.platform) {
+               case world::platform::all: {
+               } break;
                case world::platform::pc: {
                   ImGui::LabelText("Platform", "PC");
                } break;
@@ -268,6 +272,8 @@ void world_edit::ui_show_world_requirements_editor() noexcept
             case world::region_type::rumble: {
                has_rumble = true;
             } break;
+            default: {
+            } break;
             }
          }
 
@@ -280,8 +286,8 @@ void world_edit::ui_show_world_requirements_editor() noexcept
             });
 
             for (const world::region& region : _world.regions) {
-               switch (world::get_region_type(region.description)) {
-               case world::region_type::rumble: {
+               if (world::get_region_type(region.description) ==
+                   world::region_type::rumble) {
                   world::rumble_region_properties properties =
                      world::unpack_region_rumble(region.description);
 
@@ -289,7 +295,6 @@ void world_edit::ui_show_world_requirements_editor() noexcept
                      assets::req::add_to(requirements.back().entries,
                                          properties.rumble_class);
                   }
-               } break;
                }
             }
          }
@@ -301,15 +306,14 @@ void world_edit::ui_show_world_requirements_editor() noexcept
 
          if (has_shadow) {
             for (const world::region& region : _world.regions) {
-               switch (world::get_region_type(region.description)) {
-               case world::region_type::shadow: {
+               if (world::get_region_type(region.description) ==
+                   world::region_type::shadow) {
                   world::shadow_region_properties properties =
                      world::unpack_region_shadow(region.description);
 
                   if (not properties.env_map.empty()) {
                      assets::req::add_to(requirements.back().entries, properties.env_map);
                   }
-               } break;
                }
             }
          }

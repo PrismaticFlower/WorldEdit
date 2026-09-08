@@ -488,6 +488,8 @@ struct gizmos::impl {
             float3 plane_normalGS = {};
 
             switch (gizmo.active_widget) {
+            case position_widget::none:
+               break;
             case position_widget::x:
             case position_widget::y:
             case position_widget::z: {
@@ -575,6 +577,8 @@ struct gizmos::impl {
          float3 plane_normalGS = {};
 
          switch (gizmo.active_widget) {
+         case position_widget::none:
+            break;
          case position_widget::x:
          case position_widget::y:
          case position_widget::z: {
@@ -978,6 +982,8 @@ struct gizmos::impl {
             float4 planeGS;
 
             switch (gizmo.active_widget) {
+            case rotation_widget::none:
+               break;
             case rotation_widget::x: {
                planeGS = float4{1.0f, 0.0f, 0.0f, 0.0f};
             } break;
@@ -1325,6 +1331,8 @@ struct gizmos::impl {
             float3 plane_normalGS = {};
 
             switch (gizmo.active_widget) {
+            case size_widget::none:
+               break;
             case size_widget::x_neg:
             case size_widget::y_neg:
             case size_widget::z_neg:
@@ -1374,6 +1382,8 @@ struct gizmos::impl {
          float3 plane_normalGS = {};
 
          switch (gizmo.active_widget) {
+         case size_widget::none:
+            break;
          case size_widget::x_neg:
          case size_widget::y_neg:
          case size_widget::z_neg:
@@ -1732,6 +1742,8 @@ struct gizmos::impl {
             float3 plane_normalGS = {};
 
             switch (gizmo.active_widget) {
+            case cone_size_widget::none:
+               break;
             case cone_size_widget::length:
             case cone_size_widget::x_neg:
             case cone_size_widget::y_neg:
@@ -1778,6 +1790,8 @@ struct gizmos::impl {
          float3 plane_normalGS = {};
 
          switch (gizmo.active_widget) {
+         case cone_size_widget::none:
+            break;
          case cone_size_widget::length:
          case cone_size_widget::x_neg:
          case cone_size_widget::y_neg:
@@ -2196,6 +2210,8 @@ struct gizmos::impl {
             float3 plane_normalGS = {};
 
             switch (gizmo.active_widget) {
+            case ring_size_widget::none:
+               break;
             case ring_size_widget::x_neg:
             case ring_size_widget::y_neg:
             case ring_size_widget::z_neg:
@@ -2253,6 +2269,8 @@ struct gizmos::impl {
          float3 plane_normalGS = {};
 
          switch (gizmo.active_widget) {
+         case ring_size_widget::none:
+            break;
          case ring_size_widget::x_neg:
          case ring_size_widget::y_neg:
          case ring_size_widget::z_neg:

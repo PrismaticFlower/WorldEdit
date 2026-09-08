@@ -140,7 +140,6 @@ enum class tool_type {
    path_planning_munge,
    script_munge,
    shader_munge,
-   sound_directory_munge,
    sound_munge,
    terrain_munge,
    texture_munge,

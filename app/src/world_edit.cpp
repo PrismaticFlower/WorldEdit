@@ -5019,11 +5019,13 @@ auto world_edit::get_mouse_cursor() const noexcept -> mouse_cursor
       case selection_edit_tool::rotate:
       case selection_edit_tool::rotate_around_centre:
       case selection_edit_tool::rotate_light_region:
+      case selection_edit_tool::rotate_path:
       case selection_edit_tool::set_layer:
          return mouse_cursor::arrow;
       case selection_edit_tool::match_transform:
       case selection_edit_tool::pick_sector:
       case selection_edit_tool::add_branch_weight:
+      case selection_edit_tool::resize_entity:
          return mouse_cursor::cross;
       }
    }

@@ -16,8 +16,14 @@ struct libraries_manager;
 
 namespace we::world {
 
+enum class object_class_type : uint32 {
+   billboard_patch,
+   particle_emitter,
+};
+
 struct object_class_flags {
    uint32 is_billboard_patch : 1 = false;
+   // object_class_type complex_type : 1 = {};
    uint32 has_attached_objects : 1 = false;
    uint32 hidden_ingame : 1 = false;
 };

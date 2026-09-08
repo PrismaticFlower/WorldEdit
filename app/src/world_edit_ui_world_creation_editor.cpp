@@ -684,6 +684,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                _edit_stack_world.close_last();
             }
          } break;
+         default: {
+         } break;
          }
       }
 
@@ -1523,6 +1525,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       switch (region_type) {
+      case world::region_type::typeless: {
+      } break;
       case world::region_type::soundstream: {
          world::sound_stream_properties properties =
             world::unpack_region_sound_stream(region.description);
@@ -1682,6 +1686,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
             _edit_stack_world.close_last();
          }
       } break;
+      case world::region_type::mapbounds: {
+      } break;
       case world::region_type::rumble: {
          world::rumble_region_properties properties =
             world::unpack_region_rumble(region.description);
@@ -1706,6 +1712,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
          if (ImGui::IsItemDeactivatedAfterEdit()) {
             _edit_stack_world.close_last();
          }
+      } break;
+      case world::region_type::reflection:
+      case world::region_type::rainshadow:
+      case world::region_type::danger: {
       } break;
       case world::region_type::damage_region: {
          world::damage_region_properties properties =
