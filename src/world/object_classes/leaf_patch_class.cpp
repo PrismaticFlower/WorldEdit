@@ -4,7 +4,6 @@
 
 #include "assets/odf/definition.hpp"
 
-#include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
 #include "utility/string_icompare.hpp"
@@ -504,24 +503,6 @@ auto leaf_patch_class::height_scale() const noexcept -> float
 auto leaf_patch_class::bbox() const noexcept -> const math::bounding_box&
 {
    return _bbox;
-}
-
-auto leaf_patch_class::world_from_object(const quaternion& rotation,
-                                         const float3& position) const noexcept -> float4x4
-{
-   float4x4 world_from_object = to_matrix(rotation);
-   world_from_object[3] = float4{position, 1.0f};
-
-   float3 y_axis = {world_from_object[1].x, world_from_object[1].y,
-                    world_from_object[1].z};
-   float3 x_axis = normalize(cross({0.0f, 0.0f, -1.0f}, y_axis));
-   float3 z_axis = normalize(cross(x_axis, y_axis));
-
-   world_from_object[0] = {x_axis, 0.0f};
-   world_from_object[1] = {y_axis, 0.0f};
-   world_from_object[2] = {z_axis, 0.0f};
-
-   return world_from_object;
 }
 
 auto leaf_patch_class::texture() const noexcept -> const std::string&

@@ -27,9 +27,6 @@ struct grass_patch_class final : billboard_patch_class {
 
    auto bbox() const noexcept -> const math::bounding_box& override;
 
-   auto world_from_object(const quaternion& rotation, const float3& position) const noexcept
-      -> float4x4 override;
-
    auto texture() const noexcept -> const std::string& override;
 
    bool is_transparent() const noexcept override;

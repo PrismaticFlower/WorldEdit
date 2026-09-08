@@ -32,16 +32,17 @@ struct billboard_patch_class {
 
    virtual auto bbox() const noexcept -> const math::bounding_box& = 0;
 
-   virtual auto world_from_object(const quaternion& rotation,
-                                  const float3& position) const noexcept
-      -> float4x4 = 0;
-
    virtual auto texture() const noexcept -> const std::string& = 0;
 
    virtual bool is_transparent() const noexcept = 0;
 
-   auto object_from_world(const quaternion& rotation,
-                          const float3& position) const noexcept -> float4x4;
+   static auto world_from_object(const quaternion& rotation,
+                                 const float3& position) noexcept -> float4x4;
+
+   static auto world_from_object(const float4x4& world_from_object) noexcept -> float4x4;
+
+   static auto object_from_world(const quaternion& rotation,
+                                 const float3& position) noexcept -> float4x4;
 };
 
 }

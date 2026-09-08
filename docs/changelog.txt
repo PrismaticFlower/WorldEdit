@@ -1,5 +1,6 @@
 0.168
 
+- Fixed ghost and treeline grass and leaf patches not having the new correct rotation handling.
 - Fixed Cycle Brush Falloff not cycling Custom brush falloff.
 
 0.167
