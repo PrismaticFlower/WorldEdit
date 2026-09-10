@@ -9,6 +9,8 @@
 
 #include "types.hpp"
 
+#include "container/enum_array.hpp"
+
 #include "math/frustum.hpp"
 
 #include "world/world.hpp"
@@ -37,6 +39,8 @@ enum class billboard_patches_prepare {
    shadow,
 };
 
+enum billboard_patches_type { opaque, transparent, dust, COUNT };
+
 struct billboard_patches {
    struct view {
       struct instances {
@@ -44,8 +48,7 @@ struct billboard_patches {
          gpu_virtual_address world_from_object = 0;
       };
 
-      std::span<instances> opaque;
-      std::span<instances> transparent;
+      container::enum_array<std::span<instances>, billboard_patches_type> data;
    };
 
    billboard_patches(gpu::device& device, texture_manager& texture_manager);

@@ -50,6 +50,8 @@ block_surface_highlightVS
 billboard_patchVS
 billboard_patch_depth_cutoutPS
 billboard_patch_normalPS
+billboard_patch_dustVS
+billboard_patch_dustPS
 
 thumbnail_meshVS
 thumbnail_meshPS

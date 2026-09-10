@@ -250,7 +250,8 @@ void show_imgui_editor(settings& settings, bool& open,
                ImGui::Checkbox("Animate Billboard Patches",
                                &settings.graphics.animate_billboard_patches);
 
-               ImGui::SetItemTooltip("Animated Leaf and Grass patches.");
+               ImGui::SetItemTooltip(
+                  "Animated Leaf and Grass patches, and Dust Effects.");
 
                ImGui::EndTable();
             }

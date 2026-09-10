@@ -1,8 +1,6 @@
 #include "billboard_patches.hpp"
 #include "cull_objects.hpp"
 
-#include "container/enum_array.hpp"
-
 #include "gpu/resource.hpp"
 
 #include "allocators/aligned_allocator.hpp"
@@ -20,10 +18,14 @@ namespace we::graphics {
 
 namespace {
 
-enum patch_type { opaque, transparent, COUNT };
+const std::array<const billboard_patches_type, 1> opaque_patch_types = {
+   billboard_patches_type::opaque};
+const std::array<const billboard_patches_type, 2> transparent_patch_types =
+   {billboard_patches_type::transparent, billboard_patches_type::dust};
 
-auto select_pipeline(const billboard_patches_draw draw, pipeline_library& pipelines)
-   -> gpu::pipeline_handle
+auto select_pipeline(const billboard_patches_draw draw,
+                     const billboard_patches_type type,
+                     pipeline_library& pipelines) -> gpu::pipeline_handle
 {
    switch (draw) {
    case billboard_patches_draw::depth_prepass:
@@ -31,7 +33,9 @@ auto select_pipeline(const billboard_patches_draw draw, pipeline_library& pipeli
    case billboard_patches_draw::main_opaque:
       return pipelines.billboard_patch_normal.get();
    case billboard_patches_draw::main_transparent:
-      return pipelines.billboard_patch_normal_transparent.get();
+      return type == billboard_patches_type::transparent
+                ? pipelines.billboard_patch_normal_transparent.get()
+                : pipelines.billboard_patch_dust.get();
    case billboard_patches_draw::shadow:
       return pipelines.billboard_patch_shadow.get();
    }
@@ -39,13 +43,15 @@ auto select_pipeline(const billboard_patches_draw draw, pipeline_library& pipeli
    std::unreachable();
 }
 
-auto get_patch_type(const world::billboard_shader_type type) -> patch_type
+auto get_patch_type(const world::billboard_shader_type type) -> billboard_patches_type
 {
    switch (type) {
    case world::billboard_shader_type::lit_cutout:
-      return patch_type::opaque;
+      return billboard_patches_type::opaque;
    case world::billboard_shader_type::lit_transparent:
-      return patch_type::transparent;
+      return billboard_patches_type::transparent;
+   case world::billboard_shader_type::unlit_dust_particle:
+      return billboard_patches_type::dust;
    }
 
    std::unreachable();
@@ -241,13 +247,16 @@ struct billboard_patches::impl {
    {
       view view;
 
-      view.opaque = prepare_view(prepare, _billboard_patches[patch_type::opaque],
-                                 view_frustum, allocator);
+      for (const billboard_patches_type type : opaque_patch_types) {
+         view.data[type] = prepare_view(prepare, _billboard_patches[type],
+                                        view_frustum, allocator);
+      }
 
       if (prepare != billboard_patches_prepare::shadow) {
-         view.transparent =
-            prepare_view(prepare, _billboard_patches[patch_type::transparent],
-                         view_frustum, allocator);
+         for (const billboard_patches_type type : transparent_patch_types) {
+            view.data[type] = prepare_view(prepare, _billboard_patches[type],
+                                           view_frustum, allocator);
+         }
       }
 
       return view;
@@ -270,47 +279,50 @@ struct billboard_patches::impl {
       command_list.set_graphics_cbv(rs::billboard_patch::lights_cbv,
                                     lights_constant_buffer_view);
 
-      command_list.set_pipeline_state(select_pipeline(draw, pipelines));
-
       command_list.ia_set_index_buffer({
          .buffer_location = _device.get_gpu_virtual_address(_index_buffer.get()),
          .size_in_bytes = static_cast<uint32>(_index_buffer_particle_capacity *
                                               6 * sizeof(uint16)),
       });
 
-      std::span<view::instances> view_data =
-         draw != billboard_patches_draw::main_transparent ? view.opaque
-                                                          : view.transparent;
-      std::span<const billboard_patch_class_gpu> billboard_patches =
+      const std::span<const billboard_patches_type> patch_types =
          draw != billboard_patches_draw::main_transparent
-            ? _billboard_patches[patch_type::opaque]
-            : _billboard_patches[patch_type::transparent];
+            ? std::span<const billboard_patches_type>{opaque_patch_types}
+            : std::span<const billboard_patches_type>{transparent_patch_types};
 
-      for (std::size_t i = 0;
-           i < std::min(view_data.size(), billboard_patches.size()); ++i) {
-         const view::instances& visible = view_data[i];
-         const billboard_patch_class_gpu& billboard_patch = billboard_patches[i];
+      for (const billboard_patches_type type : patch_types) {
+         std::span<view::instances> view_data = view.data[type];
+         std::span<const billboard_patch_class_gpu> billboard_patches =
+            _billboard_patches[type];
 
-         if (visible.count == 0) continue;
+         command_list.set_pipeline_state(select_pipeline(draw, type, pipelines));
 
-         std::array<gpu::vertex_buffer_view, 2> vertex_buffer_views;
+         for (std::size_t i = 0;
+              i < std::min(view_data.size(), billboard_patches.size()); ++i) {
+            const view::instances& visible = view_data[i];
+            const billboard_patch_class_gpu& billboard_patch = billboard_patches[i];
 
-         vertex_buffer_views[0] = billboard_patch.vertex_buffer;
-         vertex_buffer_views[1] = {
-            .buffer_location = visible.world_from_object,
-            .size_in_bytes =
-               static_cast<uint32>(sizeof(std::array<float3, 4>) * visible.count),
-            .stride_in_bytes = sizeof(std::array<float3, 4>),
-         };
+            if (visible.count == 0) continue;
 
-         command_list.set_graphics_32bit_constant(rs::billboard_patch::texture,
-                                                  billboard_patch.texture->srv.index,
-                                                  0);
+            std::array<gpu::vertex_buffer_view, 2> vertex_buffer_views;
 
-         command_list.ia_set_vertex_buffers(0, vertex_buffer_views);
+            vertex_buffer_views[0] = billboard_patch.vertex_buffer;
+            vertex_buffer_views[1] = {
+               .buffer_location = visible.world_from_object,
+               .size_in_bytes =
+                  static_cast<uint32>(sizeof(std::array<float3, 4>) * visible.count),
+               .stride_in_bytes = sizeof(std::array<float3, 4>),
+            };
 
-         command_list.draw_indexed_instanced(billboard_patch.particle_count * 6,
-                                             visible.count, 0, 0, 0);
+            command_list
+               .set_graphics_32bit_constant(rs::billboard_patch::texture,
+                                            billboard_patch.texture->srv.index, 0);
+
+            command_list.ia_set_vertex_buffers(0, vertex_buffer_views);
+
+            command_list.draw_indexed_instanced(billboard_patch.particle_count * 6,
+                                                visible.count, 0, 0, 0);
+         }
       }
    }
 
@@ -359,7 +371,7 @@ private:
 
    float4x4 _world_matrix;
    float3 _light_direction;
-   container::enum_array<std::vector<billboard_patch_class_gpu>, patch_type> _billboard_patches;
+   container::enum_array<std::vector<billboard_patch_class_gpu>, billboard_patches_type> _billboard_patches;
 
    uint32 _index_buffer_particle_capacity = 0;
    gpu::unique_resource_handle _index_buffer;

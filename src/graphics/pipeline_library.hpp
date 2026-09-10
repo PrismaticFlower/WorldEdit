@@ -103,6 +103,7 @@ struct pipeline_library {
    gpu::unique_pipeline_handle billboard_patch_depth_prepass;
    gpu::unique_pipeline_handle billboard_patch_normal;
    gpu::unique_pipeline_handle billboard_patch_normal_transparent;
+   gpu::unique_pipeline_handle billboard_patch_dust;
    gpu::unique_pipeline_handle billboard_patch_shadow;
 
    gpu::unique_pipeline_handle terrain_depth_prepass;

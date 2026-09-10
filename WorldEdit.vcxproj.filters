@@ -345,6 +345,9 @@
     <ClCompile Include="src\world\io\export_terrain_map.cpp" />
     <ClCompile Include="src\world\object_classes\grass_patch_class.cpp" />
     <ClCompile Include="src\world\object_classes\billboard_patch_class.cpp" />
+    <ClCompile Include="src\world\object_classes\dust_effect_class.cpp" />
+    <ClCompile Include="src\graphics\shaders\billboard_patch_dustPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\billboard_patch_dustVS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -748,6 +751,7 @@
     <ClInclude Include="src\world\object_classes\grass_patch_class.hpp" />
     <ClInclude Include="src\world\object_attached.hpp" />
     <ClInclude Include="src\world\object_classes\utility\random_gen.hpp" />
+    <ClInclude Include="src\world\object_classes\dust_effect_class.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

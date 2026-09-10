@@ -41,6 +41,8 @@ auto block_surface_highlightVS() noexcept -> shader_def;
 auto billboard_patchVS() noexcept -> shader_def;
 auto billboard_patch_depth_cutoutPS() noexcept -> shader_def;
 auto billboard_patch_normalPS() noexcept -> shader_def;
+auto billboard_patch_dustVS() noexcept -> shader_def;
+auto billboard_patch_dustPS() noexcept -> shader_def;
 auto thumbnail_meshVS() noexcept -> shader_def;
 auto thumbnail_meshPS() noexcept -> shader_def;
 auto thumbnail_mesh_alpha_cutoutPS() noexcept -> shader_def;
@@ -132,6 +134,8 @@ shaders::block_surface_highlightVS(),
 shaders::billboard_patchVS(),
 shaders::billboard_patch_depth_cutoutPS(),
 shaders::billboard_patch_normalPS(),
+shaders::billboard_patch_dustVS(),
+shaders::billboard_patch_dustPS(),
 shaders::thumbnail_meshVS(),
 shaders::thumbnail_meshPS(),
 shaders::thumbnail_mesh_alpha_cutoutPS(),

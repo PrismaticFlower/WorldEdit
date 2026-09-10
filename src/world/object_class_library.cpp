@@ -3,6 +3,7 @@
 #include "object_attached.hpp"
 #include "object_class.hpp"
 
+#include "object_classes/dust_effect_class.hpp"
 #include "object_classes/grass_patch_class.hpp"
 #include "object_classes/leaf_patch_class.hpp"
 
@@ -386,6 +387,19 @@ private:
 
          _billboard_patch_class_pool[class_index] =
             std::make_unique<grass_patch_class>(*cls.definition);
+         _leaf_patch_class_index.push_back(class_index);
+      }
+      else if (string::iequals(cls.definition->header.class_label,
+                               "dusteffect")) {
+         cls.flags.is_complex = true;
+         cls.flags.complex_type = object_class_type::billboard_patch;
+
+         if (_billboard_patch_class_pool.size() <= class_index) {
+            _billboard_patch_class_pool.resize(class_index + 1);
+         }
+
+         _billboard_patch_class_pool[class_index] =
+            std::make_unique<dust_effect_class>(*cls.definition);
          _leaf_patch_class_index.push_back(class_index);
       }
       else {

@@ -20,6 +20,7 @@ struct billboard_patch_vertex {
 enum class billboard_shader_type {
    lit_cutout,
    lit_transparent,
+   unlit_dust_particle,
 };
 
 struct billboard_patch_class {
