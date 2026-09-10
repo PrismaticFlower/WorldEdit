@@ -334,6 +334,7 @@ void grass_patch_class::get_quads(
 
    for (int particle_index = 0; particle_index < output_count; ++particle_index) {
       const particle& particle = _particles[particle_index];
+      const float particle_swing = animated ? particle.swing : 0.0f;
 
       float3 x_offset;
       float3 yz_offset;
@@ -342,9 +343,7 @@ void grass_patch_class::get_quads(
       if (not particle.flat) {
          const int x_axis_variant = particle_index % 10;
 
-         float swing = 0.0f;
-
-         if (animated) swing = particle.swing * 0.08f - 0.5f;
+         const float swing = particle_swing * 0.08f - 0.5f;
 
          x_offset = x_axes[x_axis_variant] * particle.size;
 
@@ -357,7 +356,7 @@ void grass_patch_class::get_quads(
       else {
          float swing = 0.0f;
 
-         if (_flat_grass_swing and animated) swing = particle.swing * 0.03f;
+         if (_flat_grass_swing) swing = particle_swing * 0.03f;
 
          swing += _flat_face_factor;
 
