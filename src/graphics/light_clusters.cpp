@@ -21,17 +21,9 @@ namespace {
 constexpr auto shadow_res = 2048;
 constexpr auto cascade_count = light_clusters::sun_cascade_count;
 constexpr auto light_tile_size = 8;
-constexpr auto max_lights = 256;
+constexpr auto max_lights = light_clusters::max_onscreen_lights;
 constexpr auto tile_light_word_bits = 32;
 constexpr auto tile_light_words = max_lights / tile_light_word_bits;
-
-enum class light_type : uint32 {
-   directional_box,
-   directional_sphere,
-   directional_cylinder,
-   point,
-   spot
-};
 
 struct alignas(16) tiling_inputs {
    std::array<uint32, 2> tile_counts;
@@ -44,7 +36,7 @@ static_assert(sizeof(tiling_inputs) == 80);
 
 struct alignas(16) light_description {
    float3 direction;
-   light_type type;
+   light_clusters::light_type type;
    float3 position;
    float range;
    float3 color;
@@ -55,6 +47,8 @@ struct alignas(16) light_description {
 };
 
 static_assert(sizeof(light_description) == 64);
+
+static_assert(sizeof(light_clusters::global_light) == 32);
 
 struct alignas(16) light_constants {
    uint32 light_tiles_width;
@@ -68,15 +62,7 @@ struct alignas(16) light_constants {
    float3 ground_ambient_color;
    uint32 padding2;
 
-   float3 global_light1_directionWS;
-   uint32 global_light1_is_dynamic;
-   float3 global_light1_color;
-   uint32 global_light1_has_shadows;
-
-   float3 global_light2_directionWS;
-   uint32 global_light2_is_dynamic;
-   float3 global_light2_color;
-   uint32 padding6;
+   std::array<light_clusters::global_light, 2> global_lights;
 
    std::array<float4x4, 4> shadow_transforms;
 
@@ -89,13 +75,12 @@ struct alignas(16) light_constants {
 static_assert(sizeof(light_constants) == 16768);
 
 struct light_region_description {
-   float4x4 inverse_transform;
-   float3 position;
+   float4x4 region_from_world;
    float3 size;
-   std::array<uint32, 2> padding;
+   uint32 pad;
 };
 
-static_assert(sizeof(light_region_description) == 96);
+static_assert(sizeof(light_region_description) == 80);
 
 struct alignas(16) light_proxy_instance {
    std::array<float4, 3> transform;
@@ -366,9 +351,14 @@ void light_clusters::prepare_lights(
    gpu::copy_command_list& command_list,
    dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
-   _light_count = 0;
+   _scene_depth_min_max = scene_depth_min_max;
+   _lights_allocated = 0;
    _light_proxy_count = 0;
    _has_sun_shadows = false;
+
+   add_world_lights(view_camera, view_frustum, world, optional_placement_light,
+                    optional_entity_group);
+
    uint32 region_lights_count = 0;
 
    light_constants light_constants{.light_tiles_width = _tiles_width,
@@ -376,355 +366,123 @@ void light_clusters::prepare_lights(
                                    .light_region_list_index =
                                       _lights_region_list_srv.get(),
                                    .shadow_map_index = _shadow_map_srv.get(),
-                                   .sky_ambient_color = world.global_lights.ambient_sky_color,
-                                   .ground_ambient_color =
-                                      world.global_lights.ambient_ground_color,
+                                   .sky_ambient_color = _ambient_sky_color,
+                                   .ground_ambient_color = _ambient_ground_color,
+                                   .global_lights = _global_lights,
                                    .shadow_resolution = {shadow_res, shadow_res},
                                    .inv_shadow_resolution = {1.0f / shadow_res,
                                                              1.0f / shadow_res}};
-   std::array<light_region_description, max_lights> region_lights_descriptions{};
-   std::array<light_proxy_instance, max_lights> sphere_light_proxies{};
 
-   if (world.global_lights.global_light_1.has_index()) {
-      const world::light& light =
-         world.lights[world.global_lights.global_light_1.index()];
+   std::array<light_region_description, max_onscreen_lights> region_lights_descriptions{};
+   std::array<light_proxy_instance, max_onscreen_lights> sphere_light_proxies{};
 
-      light_constants.global_light1_directionWS =
-         normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
-      light_constants.global_light1_has_shadows = light.shadow_caster;
-      light_constants.global_light1_color = light.color;
-      light_constants.global_light1_is_dynamic = not light.static_;
-
-      _has_sun_shadows = light.shadow_caster;
-
-      if (_has_sun_shadows) {
-         _sun_shadow_cascades =
-            make_shadow_cascades(light.rotation, view_camera, scene_depth_min_max);
-      }
-   }
-
-   if (world.global_lights.global_light_2.has_index()) {
-      const world::light& light =
-         world.lights[world.global_lights.global_light_2.index()];
-
-      light_constants.global_light2_directionWS =
-         normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
-      light_constants.global_light2_color = light.color;
-      light_constants.global_light2_is_dynamic = not light.static_;
-   }
-
-   std::array<light_description, max_lights>& lights = light_constants.lights;
-
-   const auto process_light = [&](const world::light& light) {
-      if (_light_count >= max_lights) return;
-      if (not active_layers[light.layer]) return;
-      if (light.hidden) return;
-
-      const uint32 light_index = _light_count++;
-
-      switch (light.light_type) {
-      case world::light_type::directional: {
-         _light_count -= 1; // Directional lights don't go in the main light list.
-      } break;
-      case world::light_type::point: {
-         if (not intersects(view_frustum, light.position, light.range)) {
-            return;
-         }
-
-         lights[light_index] = {.type = light_type::point,
-                                .position = light.position,
-                                .range = light.range,
-                                .color = light.color,
-                                .is_dynamic = not light.static_};
-
-         sphere_light_proxies[_light_proxy_count++] =
-            {.transform =
-                make_sphere_light_proxy_transform(light.position, light.range),
-
-             .light_index = light_index};
-      } break;
-      case world::light_type::spot: {
-         const float outer_cone_radius =
-            light.range * std::tan(light.outer_cone_angle * 0.5f);
-         const float3 light_directionWS =
-            normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
-         const float3 cone_baseWS = light.position + light_directionWS * light.range;
-         const float3 e =
-            outer_cone_radius * sqrt(1.0f - light_directionWS * light_directionWS);
-
-         const math::bounding_box bbox{.min = min(cone_baseWS - e, light.position),
-                                       .max = max(cone_baseWS + e, light.position)};
-
-         if (not intersects(view_frustum, bbox)) {
-            return;
-         }
-
-         lights[light_index] = {.direction = -light_directionWS,
-                                .type = light_type::spot,
-                                .position = light.position,
-                                .range = light.range,
-                                .color = light.color,
-                                .spot_outer_param =
-                                   std::cos(light.outer_cone_angle / 2.0f),
-                                .spot_inner_param =
-                                   1.0f / (std::cos(light.inner_cone_angle / 2.0f) -
-                                           std::cos(light.outer_cone_angle / 2.0f)),
-                                .is_dynamic = not light.static_};
-
-         sphere_light_proxies[_light_proxy_count++] =
-            {.transform =
-                make_sphere_light_proxy_transform(light.position, light.range), // TODO: Cone light proxies.
-             .light_index = light_index};
-      } break;
-      case world::light_type::directional_region_box:
-      case world::light_type::directional_region_sphere:
-      case world::light_type::directional_region_cylinder: {
-         const float3 light_direction =
-            normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
-
-         const quaternion region_rotation_inverse = conjugate(light.region_rotation);
-         float4x4 inverse_region_transform = to_matrix(region_rotation_inverse);
-         inverse_region_transform[3] = {region_rotation_inverse * -light.position, 1.0f};
-
-         inverse_region_transform = transpose(inverse_region_transform);
-
-         const uint32 region_description_index = region_lights_count++;
-
-         switch (light.light_type) {
-         case world::light_type::directional_region_box: {
-            region_lights_descriptions[region_description_index] =
-               {.inverse_transform = inverse_region_transform,
-                .position = light.position,
-                .size = light.region_size};
-
-            lights[light_index] = {.direction = light_direction,
-                                   .type = light_type::directional_box,
-                                   .color = light.color,
-                                   .directional_region_index = region_description_index,
-                                   .is_dynamic = not light.static_};
-
-            sphere_light_proxies[_light_proxy_count++] =
-               {.transform =
-                   make_sphere_light_proxy_transform(light.position,
-                                                     length(light.region_size)),
-
-                .light_index = light_index};
-         } break;
-         case world::light_type::directional_region_sphere: {
-            const float sphere_radius = length(light.region_size);
-
-            region_lights_descriptions[region_description_index] =
-               {.inverse_transform = inverse_region_transform,
-                .position = light.position,
-                .size = float3{sphere_radius, sphere_radius, sphere_radius}};
-
-            lights[light_index] = {.direction = light_direction,
-                                   .type = light_type::directional_sphere,
-                                   .color = light.color,
-                                   .directional_region_index = region_description_index,
-                                   .is_dynamic = not light.static_};
-
-            sphere_light_proxies[_light_proxy_count++] =
-               {.transform =
-                   make_sphere_light_proxy_transform(light.position, sphere_radius),
-
-                .light_index = light_index};
-         } break;
-         case world::light_type::directional_region_cylinder: {
-            const float radius =
-               length(float2{light.region_size.x, light.region_size.z});
-            region_lights_descriptions[region_description_index] =
-               {.inverse_transform = inverse_region_transform,
-                .position = light.position,
-                .size = float3{radius, light.region_size.y, radius}};
-
-            lights[light_index] = {.direction = light_direction,
-                                   .type = light_type::directional_cylinder,
-                                   .color = light.color,
-                                   .directional_region_index = region_description_index,
-                                   .is_dynamic = not light.static_};
-
-            sphere_light_proxies[_light_proxy_count++] =
-               {.transform =
-                   make_sphere_light_proxy_transform(light.position,
-                                                     length(light.region_size)),
-
-                .light_index = light_index};
-         } break;
-         default:
-            break;
-         }
-      } break;
-      }
-   };
+   std::array<light_description, max_onscreen_lights>& lights = light_constants.lights;
 
    // frustum cull lights
-   for (auto& light : world.lights) {
-      if (_light_count >= max_lights) break;
+   for (std::size_t i = 0; i < _lights_allocated; ++i) {
+      const uint32 light_index = _lights_order[i].light_index;
+      const light& light = _lights[light_index];
 
-      process_light(light);
-   }
+      switch (light.type) {
+      case light_type::point: {
+         lights[light_index] = {.type = light_type::point,
+                                .position = light.point.positionWS,
+                                .range = light.point.range,
+                                .color = light.point.color,
+                                .is_dynamic = light.is_dynamic};
 
-   if (optional_placement_light) process_light(*optional_placement_light);
+         sphere_light_proxies[_light_proxy_count++] =
+            {.transform = make_sphere_light_proxy_transform(light.point.positionWS,
+                                                            light.point.range),
 
-   if (optional_entity_group) {
-      const quaternion& group_rotation = optional_entity_group->rotation;
-      const float3& group_position = optional_entity_group->position;
+             .light_index = light_index};
+      } break;
+      case light_type::spot: {
+         lights[light_index] = {.direction = light.spot.directionWS,
+                                .type = light_type::spot,
+                                .position = light.spot.positionWS,
+                                .range = light.spot.range,
+                                .color = light.spot.color,
+                                .spot_outer_param = light.spot.spot_outer_param,
+                                .spot_inner_param = light.spot.spot_inner_param,
+                                .is_dynamic = light.is_dynamic};
 
-      for (const world::light& light : optional_entity_group->lights) {
-         if (_light_count >= max_lights) continue;
+         sphere_light_proxies[_light_proxy_count++] =
+            {.transform = make_sphere_light_proxy_transform(light.spot.positionWS,
+                                                            light.spot.range), // TODO: Cone light proxies.
+             .light_index = light_index};
+      } break;
+      case light_type::directional_box: {
+         const uint32 region_description_index = region_lights_count++;
 
-         const uint32 light_index = _light_count++;
+         region_lights_descriptions[region_description_index] = {
+            .region_from_world = light.directional_box.region_from_world,
+            .size = light.directional_box.size,
+         };
 
-         switch (light.light_type) {
-         case world::light_type::point: {
-            const float3& light_positionWS =
-               group_rotation * light.position + group_position;
+         lights[light_index] = {.direction = light.directional_box.directionWS,
+                                .type = light_type::directional_box,
+                                .color = light.directional_box.color,
+                                .directional_region_index = region_description_index,
+                                .is_dynamic = light.is_dynamic};
 
-            if (not intersects(view_frustum, light_positionWS, light.range)) {
-               continue;
-            }
+         sphere_light_proxies[_light_proxy_count++] =
+            {.transform = make_sphere_light_proxy_transform(
+                {light.directional_box.world_from_region[3].x,
+                 light.directional_box.world_from_region[3].y,
+                 light.directional_box.world_from_region[3].z},
+                length(light.directional_box.size)),
 
-            lights[light_index] = {.type = light_type::point,
-                                   .position = light_positionWS,
-                                   .range = light.range,
-                                   .color = light.color,
-                                   .is_dynamic = not light.static_};
+             .light_index = light_index};
+      } break;
+      case light_type::directional_sphere: {
+         const uint32 region_description_index = region_lights_count++;
 
-            sphere_light_proxies[_light_proxy_count++] =
-               {.transform =
-                   make_sphere_light_proxy_transform(light_positionWS, light.range),
+         region_lights_descriptions[region_description_index] = {
+            .region_from_world = light.directional_sphere.region_from_world,
+            .size = {light.directional_sphere.radius, 0.0f, 0.0f},
+         };
 
-                .light_index = light_index};
-         } break;
-         case world::light_type::spot: {
-            const float3& light_positionWS =
-               group_rotation * light.position + group_position;
-            const float3 light_directionWS =
-               normalize(group_rotation * light.rotation * float3{0.0f, 0.0f, 1.0f});
+         lights[light_index] = {.direction = light.directional_sphere.directionWS,
+                                .type = light_type::directional_sphere,
+                                .color = light.directional_sphere.color,
+                                .directional_region_index = region_description_index,
+                                .is_dynamic = light.is_dynamic};
 
-            const float outer_cone_radius =
-               light.range * std::tan(light.outer_cone_angle * 0.5f);
-            const float3 cone_baseWS =
-               light_positionWS + light_directionWS * light.range;
-            const float3 e = outer_cone_radius *
-                             sqrt(1.0f - light_directionWS * light_directionWS);
+         sphere_light_proxies[_light_proxy_count++] =
+            {.transform = make_sphere_light_proxy_transform(
+                {light.directional_sphere.world_from_region[3].x,
+                 light.directional_sphere.world_from_region[3].y,
+                 light.directional_sphere.world_from_region[3].z},
+                light.directional_sphere.radius),
 
-            const math::bounding_box bbox{.min = min(cone_baseWS - e, light_positionWS),
-                                          .max = max(cone_baseWS + e, light_positionWS)};
+             .light_index = light_index};
+      } break;
+      case light_type::directional_cylinder: {
+         const uint32 region_description_index = region_lights_count++;
 
-            if (not intersects(view_frustum, bbox)) {
-               continue;
-            }
+         region_lights_descriptions[region_description_index] = {
+            .region_from_world = light.directional_cylinder.region_from_world,
+            .size = {light.directional_cylinder.radius,
+                     light.directional_cylinder.height, 0.0f},
+         };
 
-            lights[light_index] = {.direction = -light_directionWS,
-                                   .type = light_type::spot,
-                                   .position = light_positionWS,
-                                   .range = light.range,
-                                   .color = light.color,
-                                   .spot_outer_param =
-                                      std::cos(light.outer_cone_angle / 2.0f),
-                                   .spot_inner_param =
-                                      1.0f /
-                                      (std::cos(light.inner_cone_angle / 2.0f) -
-                                       std::cos(light.outer_cone_angle / 2.0f)),
-                                   .is_dynamic = not light.static_};
+         lights[light_index] = {.direction = light.directional_cylinder.directionWS,
+                                .type = light_type::directional_cylinder,
+                                .color = light.directional_cylinder.color,
+                                .directional_region_index = region_description_index,
+                                .is_dynamic = light.is_dynamic};
 
-            sphere_light_proxies[_light_proxy_count++] =
-               {.transform = make_sphere_light_proxy_transform(light_positionWS,
-                                                               light.range), // TODO: Cone light proxies.
-                .light_index = light_index};
-         } break;
-         case world::light_type::directional_region_box:
-         case world::light_type::directional_region_sphere:
-         case world::light_type::directional_region_cylinder: {
-            const quaternion light_rotation = group_rotation * light.rotation;
-            const float3 light_positionWS =
-               group_rotation * light.position + group_position;
-            const quaternion light_region_rotation =
-               group_rotation * light.region_rotation;
+         sphere_light_proxies[_light_proxy_count++] =
+            {.transform = make_sphere_light_proxy_transform(
+                {light.directional_sphere.world_from_region[3].x,
+                 light.directional_sphere.world_from_region[3].y,
+                 light.directional_sphere.world_from_region[3].z},
+                std::max(light.directional_cylinder.radius,
+                         light.directional_cylinder.height)),
 
-            const float3 light_direction =
-               normalize(light_rotation * float3{0.0f, 0.0f, -1.0f});
-
-            const quaternion region_rotation_inverse =
-               conjugate(light_region_rotation);
-            float4x4 inverse_region_transform = to_matrix(region_rotation_inverse);
-            inverse_region_transform[3] = {region_rotation_inverse * -light_positionWS,
-                                           1.0f};
-
-            inverse_region_transform = transpose(inverse_region_transform);
-
-            const uint32 region_description_index = region_lights_count++;
-
-            switch (light.light_type) {
-            case world::light_type::directional_region_box: {
-               region_lights_descriptions[region_description_index] =
-                  {.inverse_transform = inverse_region_transform,
-                   .position = light_positionWS,
-                   .size = light.region_size};
-
-               lights[light_index] = {.direction = light_direction,
-                                      .type = light_type::directional_box,
-                                      .color = light.color,
-                                      .directional_region_index = region_description_index,
-                                      .is_dynamic = not light.static_};
-
-               sphere_light_proxies[_light_proxy_count++] =
-                  {.transform =
-                      make_sphere_light_proxy_transform(light_positionWS,
-                                                        length(light.region_size)),
-
-                   .light_index = light_index};
-            } break;
-            case world::light_type::directional_region_sphere: {
-               const float sphere_radius = length(light.region_size);
-
-               region_lights_descriptions[region_description_index] =
-                  {.inverse_transform = inverse_region_transform,
-                   .position = light_positionWS,
-                   .size = float3{sphere_radius, sphere_radius, sphere_radius}};
-
-               lights[light_index] = {.direction = light_direction,
-                                      .type = light_type::directional_sphere,
-                                      .color = light.color,
-                                      .directional_region_index = region_description_index,
-                                      .is_dynamic = not light.static_};
-
-               sphere_light_proxies[_light_proxy_count++] =
-                  {.transform = make_sphere_light_proxy_transform(light_positionWS,
-                                                                  sphere_radius),
-
-                   .light_index = light_index};
-            } break;
-            case world::light_type::directional_region_cylinder: {
-               const float radius =
-                  length(float2{light.region_size.x, light.region_size.z});
-               region_lights_descriptions[region_description_index] =
-                  {.inverse_transform = inverse_region_transform,
-                   .position = light_positionWS,
-                   .size = float3{radius, light.region_size.y, radius}};
-
-               lights[light_index] = {.direction = light_direction,
-                                      .type = light_type::directional_cylinder,
-                                      .color = light.color,
-                                      .directional_region_index = region_description_index,
-                                      .is_dynamic = not light.static_};
-
-               sphere_light_proxies[_light_proxy_count++] =
-                  {.transform =
-                      make_sphere_light_proxy_transform(light_positionWS,
-                                                        length(light.region_size)),
-
-                   .light_index = light_index};
-            } break;
-            default:
-               break;
-            }
-         } break;
-         default:
-            break;
-         }
+             .light_index = light_index};
+      } break;
       }
    }
 
@@ -1134,6 +892,472 @@ void light_clusters::draw_meshes_alpha_cutout_shadow_map(
                                           meshes.mesh[i].start_index,
                                           meshes.mesh[i].start_vertex, 0);
    }
+}
+
+void light_clusters::add_world_lights(const camera& view_camera,
+                                      const frustum& view_frustum,
+                                      const world::world& world,
+                                      const world::light* optional_placement_light,
+                                      const world::entity_group* optional_entity_group)
+{
+   _ambient_sky_color = world.global_lights.ambient_sky_color;
+   _ambient_ground_color = world.global_lights.ambient_ground_color;
+
+   if (world.global_lights.global_light_1.has_index()) {
+      const world::light& light =
+         world.lights[world.global_lights.global_light_1.index()];
+
+      _global_lights[0] = {
+         .directionWS = normalize(light.rotation * float3{0.0f, 0.0f, -1.0f}),
+         .is_dynamic = not light.static_,
+         .color = light.color,
+         .has_shadows = light.shadow_caster,
+      };
+
+      _has_sun_shadows = light.shadow_caster;
+
+      if (_has_sun_shadows) {
+         _sun_shadow_cascades =
+            make_shadow_cascades(light.rotation, view_camera, _scene_depth_min_max);
+      }
+   }
+
+   if (world.global_lights.global_light_2.has_index()) {
+      const world::light& light =
+         world.lights[world.global_lights.global_light_2.index()];
+
+      _global_lights[1] = {
+         .directionWS = normalize(light.rotation * float3{0.0f, 0.0f, -1.0f}),
+         .is_dynamic = not light.static_,
+         .color = light.color,
+         .has_shadows = false,
+      };
+   }
+
+   std::array<std::span<const world::light>, 2> light_arrays =
+      {optional_placement_light ? std::span{optional_placement_light, 1}
+                                : std::span<const world::light>{},
+       world.lights};
+
+   for (const std::span<const world::light> lights : light_arrays) {
+      for (const world::light& light : lights) {
+         switch (light.light_type) {
+         case world::light_type::directional: {
+            // Directional lights don't go in the main light list.
+         } break;
+         case world::light_type::point: {
+            if (not intersects(view_frustum, light.position, light.range)) {
+               continue;
+            }
+
+            const float light_distance =
+               distance(view_camera.position(), light.position) - light.range;
+
+            if (light_clusters::light* added_light = try_add_light(light_distance);
+                added_light) {
+               *added_light = {.type = light_type::point,
+                               .is_dynamic = not light.static_,
+
+                               .point = {
+                                  .positionWS = light.position,
+                                  .range = light.range,
+                                  .color = light.color,
+                               }};
+            }
+         } break;
+         case world::light_type::spot: {
+            const float outer_cone_radius =
+               light.range * std::tan(light.outer_cone_angle * 0.5f);
+            const float3 light_directionWS =
+               normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
+            const float3 cone_baseWS =
+               light.position + light_directionWS * light.range;
+            const float3 e = outer_cone_radius *
+                             sqrt(1.0f - light_directionWS * light_directionWS);
+
+            const math::bounding_box bbox{.min = min(cone_baseWS - e, light.position),
+                                          .max = max(cone_baseWS + e, light.position)};
+
+            if (not intersects(view_frustum, bbox)) {
+               continue;
+            }
+
+            const float light_distance_conservative =
+               distance(view_camera.position(), light.position) - light.range;
+
+            if (light_clusters::light* added_light =
+                   try_add_light(light_distance_conservative);
+                added_light) {
+               const float cos_outer_cone_angle =
+                  std::cos(light.outer_cone_angle / 2.0f);
+               const float cos_inner_cone_angle =
+                  std::cos(light.inner_cone_angle / 2.0f);
+
+               *added_light = {.type = light_type::spot,
+                               .is_dynamic = not light.static_,
+
+                               .spot = {
+                                  .positionWS = light.position,
+                                  .range = light.range,
+                                  .color = light.color,
+                                  .directionWS = -light_directionWS,
+                                  .spot_outer_param = cos_outer_cone_angle,
+                                  .spot_inner_param =
+                                     1.0f / (cos_inner_cone_angle - cos_outer_cone_angle),
+                               }};
+            }
+         } break;
+         case world::light_type::directional_region_box:
+         case world::light_type::directional_region_sphere:
+         case world::light_type::directional_region_cylinder: {
+            float4x4 world_from_region = to_matrix(light.region_rotation);
+            world_from_region[3] = {light.position, 1.0f};
+
+            float4x4 region_from_world = transpose(world_from_region);
+            region_from_world[3] = {float3x3{region_from_world} * -light.position, 1.0f};
+
+            switch (light.light_type) {
+            case world::light_type::directional_region_box: {
+               math::bounding_box bbox{.min = -light.region_size,
+                                       .max = light.region_size};
+
+               bbox = light.region_rotation * bbox + light.position;
+
+               if (not intersects(view_frustum, bbox)) {
+                  continue;
+               }
+
+               const float3 camera_positionRS =
+                  region_from_world * view_camera.position();
+               const float3 q = abs(camera_positionRS) - light.region_size;
+
+               const float light_distance =
+                  length(max(q, float3{0.0f, 0.0f, 0.0f})) -
+                  std::min(std::max(std::max(q.x, q.y), q.z), 0.0f);
+
+               if (light_clusters::light* added_light = try_add_light(light_distance);
+                   added_light) {
+                  *added_light = {.type = light_type::directional_box,
+                                  .is_dynamic = not light.static_,
+
+                                  .directional_box = {
+                                     .color = light.color,
+                                     .directionWS = normalize(
+                                        light.rotation * float3{0.0f, 0.0f, -1.0f}),
+                                     .world_from_region = world_from_region,
+                                     .region_from_world = region_from_world,
+                                     .size = light.region_size,
+                                  }};
+               }
+            } break;
+            case world::light_type::directional_region_sphere: {
+               const float sphere_radius = length(light.region_size);
+
+               if (not intersects(view_frustum, light.position, sphere_radius)) {
+                  continue;
+               }
+
+               const float light_distance =
+                  distance(view_camera.position(), light.position) - light.range;
+
+               if (light_clusters::light* added_light = try_add_light(light_distance);
+                   added_light) {
+                  *added_light = {.type = light_type::directional_sphere,
+                                  .is_dynamic = not light.static_,
+
+                                  .directional_sphere = {
+                                     .color = light.color,
+                                     .directionWS = normalize(
+                                        light.rotation * float3{0.0f, 0.0f, -1.0f}),
+                                     .world_from_region = world_from_region,
+                                     .region_from_world = region_from_world,
+                                     .radius = light.region_size.x,
+                                  }};
+               }
+            } break;
+            case world::light_type::directional_region_cylinder: {
+               const float radius =
+                  length(float2{light.region_size.x, light.region_size.z});
+               const float height = light.region_size.y;
+
+               math::bounding_box bbox{.min = {-radius, -height, -radius},
+                                       .max = {radius, height, radius}};
+
+               bbox = light.region_rotation * bbox + light.position;
+
+               if (not intersects(view_frustum, bbox)) {
+                  continue;
+               }
+
+               const float3 camera_positionRS =
+                  region_from_world * view_camera.position();
+
+               const float cap_distance =
+                  std::max(std::abs(camera_positionRS.y) - height, 0.0f);
+               const float edge_distance =
+                  std::max(length(float2{camera_positionRS.x, camera_positionRS.z}) - radius,
+                           0.0f);
+               const float light_distance = std::max(cap_distance, edge_distance);
+
+               if (light_clusters::light* added_light = try_add_light(light_distance);
+                   added_light) {
+                  *added_light = {.type = light_type::directional_cylinder,
+                                  .is_dynamic = not light.static_,
+
+                                  .directional_cylinder = {
+                                     .color = light.color,
+                                     .directionWS = normalize(
+                                        light.rotation * float3{0.0f, 0.0f, -1.0f}),
+                                     .world_from_region = world_from_region,
+                                     .region_from_world = region_from_world,
+                                     .radius = radius,
+                                     .height = height,
+                                  }};
+               }
+            } break;
+            default:
+               break;
+            }
+         } break;
+         }
+      }
+   }
+
+   if (optional_entity_group) {
+      const quaternion& group_rotation = optional_entity_group->rotation;
+      const float3& group_position = optional_entity_group->position;
+
+      for (const world::light& light : optional_entity_group->lights) {
+         const float3 light_positionWS =
+            group_rotation * light.position + group_position;
+
+         switch (light.light_type) {
+         case world::light_type::directional: {
+            // Directional lights don't go in the main light list.
+         } break;
+         case world::light_type::point: {
+            if (not intersects(view_frustum, light_positionWS, light.range)) {
+               continue;
+            }
+
+            const float light_distance =
+               distance(view_camera.position(), light_positionWS) - light.range;
+
+            if (light_clusters::light* added_light = try_add_light(light_distance);
+                added_light) {
+               *added_light = {.type = light_type::point,
+                               .is_dynamic = not light.static_,
+
+                               .point = {
+                                  .positionWS = light_positionWS,
+                                  .range = light.range,
+                                  .color = light.color,
+                               }};
+            }
+         } break;
+         case world::light_type::spot: {
+            const float outer_cone_radius =
+               light.range * std::tan(light.outer_cone_angle * 0.5f);
+            const float3 light_directionWS =
+               normalize(group_rotation * light.rotation * float3{0.0f, 0.0f, 1.0f});
+            const float3 cone_baseWS =
+               light_positionWS + light_directionWS * light.range;
+            const float3 e = outer_cone_radius *
+                             sqrt(1.0f - light_directionWS * light_directionWS);
+
+            const math::bounding_box bbox{.min = min(cone_baseWS - e, light_positionWS),
+                                          .max = max(cone_baseWS + e, light_positionWS)};
+
+            if (not intersects(view_frustum, bbox)) {
+               continue;
+            }
+
+            const float light_distance_conservative =
+               distance(view_camera.position(), light_positionWS) - light.range;
+
+            if (light_clusters::light* added_light =
+                   try_add_light(light_distance_conservative);
+                added_light) {
+               const float cos_outer_cone_angle =
+                  std::cos(light.outer_cone_angle / 2.0f);
+               const float cos_inner_cone_angle =
+                  std::cos(light.inner_cone_angle / 2.0f);
+
+               *added_light = {.type = light_type::spot,
+                               .is_dynamic = not light.static_,
+
+                               .spot = {
+                                  .positionWS = light_positionWS,
+                                  .range = light.range,
+                                  .color = light.color,
+                                  .directionWS = -light_directionWS,
+                                  .spot_outer_param = cos_outer_cone_angle,
+                                  .spot_inner_param =
+                                     1.0f / (cos_inner_cone_angle - cos_outer_cone_angle),
+                               }};
+            }
+         } break;
+         case world::light_type::directional_region_box:
+         case world::light_type::directional_region_sphere:
+         case world::light_type::directional_region_cylinder: {
+            const quaternion light_region_rotation =
+               group_rotation * light.region_rotation;
+
+            float4x4 world_from_region = to_matrix(light_region_rotation);
+            world_from_region[3] = {light.position, 1.0f};
+
+            float4x4 region_from_world = transpose(world_from_region);
+            region_from_world[3] = {float3x3{region_from_world} * -light.position, 1.0f};
+
+            switch (light.light_type) {
+            case world::light_type::directional_region_box: {
+               math::bounding_box bbox{.min = -light.region_size,
+                                       .max = light.region_size};
+
+               bbox = light_region_rotation * bbox + light_positionWS;
+
+               if (not intersects(view_frustum, bbox)) {
+                  continue;
+               }
+
+               const float3 camera_positionRS =
+                  region_from_world * view_camera.position();
+               const float3 q = abs(camera_positionRS) - light.region_size;
+
+               const float light_distance =
+                  length(max(q, float3{0.0f, 0.0f, 0.0f})) -
+                  std::min(std::max(std::max(q.x, q.y), q.z), 0.0f);
+
+               if (light_clusters::light* added_light = try_add_light(light_distance);
+                   added_light) {
+                  *added_light = {.type = light_type::directional_box,
+                                  .is_dynamic = not light.static_,
+
+                                  .directional_box = {
+                                     .color = light.color,
+                                     .directionWS =
+                                        normalize(group_rotation * light.rotation *
+                                                  float3{0.0f, 0.0f, 1.0f}),
+                                     .world_from_region = world_from_region,
+                                     .region_from_world = region_from_world,
+                                     .size = light.region_size,
+                                  }};
+               }
+            } break;
+            case world::light_type::directional_region_sphere: {
+               const float sphere_radius = length(light.region_size);
+
+               if (not intersects(view_frustum, light_positionWS, sphere_radius)) {
+                  continue;
+               }
+
+               const float light_distance =
+                  distance(view_camera.position(), light_positionWS) - light.range;
+
+               if (light_clusters::light* added_light = try_add_light(light_distance);
+                   added_light) {
+                  *added_light = {.type = light_type::directional_sphere,
+                                  .is_dynamic = not light.static_,
+
+                                  .directional_sphere = {
+                                     .color = light.color,
+                                     .directionWS =
+                                        normalize(group_rotation * light.rotation *
+                                                  float3{0.0f, 0.0f, 1.0f}),
+                                     .world_from_region = world_from_region,
+                                     .region_from_world = region_from_world,
+                                     .radius = light.region_size.x,
+                                  }};
+               }
+            } break;
+            case world::light_type::directional_region_cylinder: {
+               const float radius =
+                  length(float2{light.region_size.x, light.region_size.z});
+               const float height = light.region_size.y;
+
+               math::bounding_box bbox{.min = {-radius, -height, -radius},
+                                       .max = {radius, height, radius}};
+
+               bbox = light_region_rotation * bbox + light_positionWS;
+
+               if (not intersects(view_frustum, bbox)) {
+                  continue;
+               }
+
+               const float3 camera_positionRS =
+                  region_from_world * view_camera.position();
+
+               const float cap_distance =
+                  std::max(std::abs(camera_positionRS.y) - height, 0.0f);
+               const float edge_distance =
+                  std::max(length(float2{camera_positionRS.x, camera_positionRS.z}) - radius,
+                           0.0f);
+               const float light_distance = std::max(cap_distance, edge_distance);
+
+               if (light_clusters::light* added_light = try_add_light(light_distance);
+                   added_light) {
+                  *added_light = {.type = light_type::directional_cylinder,
+                                  .is_dynamic = not light.static_,
+
+                                  .directional_cylinder = {
+                                     .color = light.color,
+                                     .directionWS =
+                                        normalize(group_rotation * light.rotation *
+                                                  float3{0.0f, 0.0f, 1.0f}),
+                                     .world_from_region = world_from_region,
+                                     .region_from_world = region_from_world,
+                                     .radius = radius,
+                                     .height = height,
+                                  }};
+               }
+            } break;
+            default:
+               break;
+            }
+         } break;
+         }
+      }
+   }
+}
+
+auto light_clusters::try_add_light(const float distance) noexcept -> light*
+{
+   light_entry* const lights_order_end = _lights_order.data() + _lights_allocated;
+
+   auto slot = std::lower_bound(_lights_order.data(), lights_order_end, distance,
+                                [](const light_entry& entry, const float distance) {
+                                   return entry.distance < distance;
+                                });
+
+   uint32 light_index;
+
+   if (slot == lights_order_end) {
+      if (_lights_allocated < max_onscreen_lights) {
+         light_index = _lights_allocated;
+         slot = lights_order_end;
+
+         _lights_allocated += 1;
+      }
+      else {
+         return nullptr;
+      }
+   }
+   else {
+      if (_lights_allocated == max_onscreen_lights) {
+         light_index = _lights_order[_lights_allocated - 1].light_index;
+      }
+      else {
+         light_index = _lights_allocated;
+
+         _lights_allocated += 1;
+      }
+
+      std::memmove(slot + 1, slot, sizeof(light_entry) * (lights_order_end - slot));
+   }
+
+   *slot = {.distance = distance, .light_index = light_index};
+
+   return &_lights[light_index];
 }
 
 }

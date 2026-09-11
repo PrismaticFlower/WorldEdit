@@ -1,12 +1,12 @@
 #pragma once
 
+#include "billboard_patches.hpp"
 #include "blocks.hpp"
 #include "camera.hpp"
 #include "copy_command_list_pool.hpp"
 #include "dynamic_buffer_allocator.hpp"
 #include "gpu/resource.hpp"
 #include "gpu/rhi.hpp"
-#include "billboard_patches.hpp"
 #include "model_manager.hpp"
 #include "pipeline_library.hpp"
 #include "profiler.hpp"
@@ -59,6 +59,76 @@ public:
    auto lights_constant_buffer_view() const noexcept -> gpu_virtual_address;
 
    constexpr static uint32 sun_cascade_count = 4;
+   constexpr static uint32 max_onscreen_lights = 256;
+
+   enum class light_type : uint32 {
+      directional_box,
+      directional_sphere,
+      directional_cylinder,
+      point,
+      spot
+   };
+
+   struct global_light {
+      float3 directionWS;
+      uint32 is_dynamic;
+      float3 color;
+      uint32 has_shadows;
+   };
+
+   struct light {
+      light_type type = light_type::point;
+
+      uint32 is_dynamic;
+
+      struct point_desc {
+         float3 positionWS;
+         float range;
+         float3 color;
+      };
+
+      struct spot_desc {
+         float3 positionWS;
+         float range;
+         float3 color;
+         float3 directionWS;
+         float spot_outer_param;
+         float spot_inner_param;
+      };
+
+      struct directional_box_desc {
+         float3 color;
+         float3 directionWS;
+         float4x4 world_from_region;
+         float4x4 region_from_world;
+         float3 size;
+      };
+
+      struct directional_sphere_desc {
+         float3 color;
+         float3 directionWS;
+         float4x4 world_from_region;
+         float4x4 region_from_world;
+         float radius;
+      };
+
+      struct directional_cylinder_desc {
+         float3 color;
+         float3 directionWS;
+         float4x4 world_from_region;
+         float4x4 region_from_world;
+         float radius;
+         float height;
+      };
+
+      union {
+         point_desc point = {};
+         spot_desc spot;
+         directional_box_desc directional_box;
+         directional_sphere_desc directional_sphere;
+         directional_cylinder_desc directional_cylinder;
+      };
+   };
 
 private:
    void update_render_resolution(uint32 width, uint32 height, bool recreate_descriptors);
@@ -77,6 +147,13 @@ private:
                                             const std::span<const uint16> render_list,
                                             gpu::pipeline_handle pipeline,
                                             gpu::graphics_command_list& command_list) const;
+
+   void add_world_lights(const camera& view_camera, const frustum& view_frustum,
+                         const world::world& world,
+                         const world::light* optional_placement_light,
+                         const world::entity_group* optional_entity_group);
+
+   auto try_add_light(float distance) noexcept -> light*;
 
    gpu::device& _device;
 
@@ -105,9 +182,25 @@ private:
    float _render_width = 0.0f;
    float _render_height = 0.0f;
 
-   uint32 _light_count = 0;
    uint32 _light_proxy_count = 0;
    gpu_virtual_address _sphere_light_proxies_srv = 0;
+
+   std::array<float, 2> _scene_depth_min_max = {0.0f, 1.0f};
+
+   float3 _ambient_sky_color;
+   float3 _ambient_ground_color;
+
+   std::array<global_light, 2> _global_lights;
+
+   struct light_entry {
+      float distance = FLT_MAX;
+      uint32 light_index = 0;
+   };
+
+   std::array<light_entry, max_onscreen_lights> _lights_order;
+   std::array<light, max_onscreen_lights> _lights;
+
+   uint32 _lights_allocated = 0;
 
    bool _has_sun_shadows = false;
 

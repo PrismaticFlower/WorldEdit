@@ -60,10 +60,9 @@ struct light_constant_buffer {
 };
 
 struct light_region_description {
-   float4x4 world_to_region;
-   float3 position;
+   float4x4 region_from_world;
    float3 size;
-   uint2 padding;
+   uint padding;
 };
 
 struct calculate_light_inputs {
@@ -200,7 +199,7 @@ light_info get_light_info(light_description light, calculate_light_inputs input)
    case light_type::directional_box: {
       light_region_description region_desc = light_region_list.Load(light.directional_region_index);
 
-      const float3 positionRS = mul(float4(positionWS, 1.0), region_desc.world_to_region).xyz;
+      const float3 positionRS = mul(region_desc.region_from_world, float4(positionWS, 1.0)).xyz;
       const float3 region_to_position = max(abs(positionRS) - region_desc.size, 0.0);
       const float region_distance_sq = dot(region_to_position, region_to_position);
 
@@ -212,7 +211,7 @@ light_info get_light_info(light_description light, calculate_light_inputs input)
    case light_type::directional_sphere: {
       light_region_description region_desc = light_region_list.Load(light.directional_region_index);
       
-      const float3 positionRS = mul(float4(positionWS, 1.0), region_desc.world_to_region).xyz;
+      const float3 positionRS = mul(region_desc.region_from_world, float4(positionWS, 1.0)).xyz;
       const float region_distance = max(length(positionRS) - region_desc.size.x, 0.0);
       const float region_distance_sq = region_distance * region_distance;
 
@@ -224,7 +223,7 @@ light_info get_light_info(light_description light, calculate_light_inputs input)
    case light_type::directional_cylinder: {
       light_region_description region_desc = light_region_list.Load(light.directional_region_index);
       
-      const float3 positionRS = mul(float4(positionWS, 1.0), region_desc.world_to_region).xyz;
+      const float3 positionRS = mul(region_desc.region_from_world, float4(positionWS, 1.0)).xyz;
       const float radius = region_desc.size.x;
       const float height = region_desc.size.y;
 
