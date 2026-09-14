@@ -28,15 +28,21 @@ struct light_description {
    float3 color;
    float spot_outer_param;
    float spot_inner_param;
-   uint directional_region_index;
    light_flags flags;
+   uint pad0;
+};
+
+struct light_region_description {
+   float4x4 region_from_world;
+   float3 size;
+   uint padding;
 };
 
 struct light_constant_buffer {
    uint light_tiles_width;
    uint light_tiles_index;
-   uint light_region_list_index;
    uint shadow_map_index;
+
    float3 sky_ambient_color;
    uint padding1;
    float3 ground_ambient_color;
@@ -57,12 +63,7 @@ struct light_constant_buffer {
    float2 inv_shadow_map_resolution;
 
    light_description lights[MAX_LIGHTS];
-};
-
-struct light_region_description {
-   float4x4 region_from_world;
-   float3 size;
-   uint padding;
+   light_region_description light_regions[MAX_LIGHTS];
 };
 
 struct calculate_light_inputs {
@@ -89,13 +90,10 @@ const static uint light_tile_word_bits = 32;
 
 
 STRUCTURED_BUFFER_HEAP(uint[TILE_LIGHT_WORDS], LightTilesBufferHeap, STRUCTURED_BUFFER_HEAP_SPACE0);
-STRUCTURED_BUFFER_HEAP(light_region_description, LightRegionBufferHeap, STRUCTURED_BUFFER_HEAP_SPACE1);
 
 ConstantBuffer<light_constant_buffer> light_constants : register(LIGHTS_CB_REGISTER);
 static StructuredBuffer<uint[TILE_LIGHT_WORDS]> light_tiles = 
    INDEX_STRUCTURED_BUFFER_HEAP(LightTilesBufferHeap, light_constants.light_tiles_index);
-static StructuredBuffer<light_region_description> light_region_list =
-   INDEX_STRUCTURED_BUFFER_HEAP(LightRegionBufferHeap, light_constants.light_region_list_index);
 const static float shadow_map_bias = 0.001;
 
 float shadow_cascade_signed_distance(float3 positionLS)
@@ -184,7 +182,7 @@ float3 calc_ambient_light(float3 normalWS)
    return color;
 }
 
-light_info get_light_info(light_description light, calculate_light_inputs input)
+light_info get_light_info(light_description light, uint light_index, calculate_light_inputs input)
 {
    const float3 normalWS = input.normalWS;
    const float3 positionWS = input.positionWS;
@@ -197,7 +195,7 @@ light_info get_light_info(light_description light, calculate_light_inputs input)
 
    switch (light.type) {
    case light_type::directional_box: {
-      light_region_description region_desc = light_region_list.Load(light.directional_region_index);
+      light_region_description region_desc = light_constants.light_regions[light_index];
 
       const float3 positionRS = mul(region_desc.region_from_world, float4(positionWS, 1.0)).xyz;
       const float3 region_to_position = max(abs(positionRS) - region_desc.size, 0.0);
@@ -209,7 +207,7 @@ light_info get_light_info(light_description light, calculate_light_inputs input)
       break;
    }
    case light_type::directional_sphere: {
-      light_region_description region_desc = light_region_list.Load(light.directional_region_index);
+      light_region_description region_desc = light_constants.light_regions[light_index];
       
       const float3 positionRS = mul(region_desc.region_from_world, float4(positionWS, 1.0)).xyz;
       const float region_distance = max(length(positionRS) - region_desc.size.x, 0.0);
@@ -221,7 +219,7 @@ light_info get_light_info(light_description light, calculate_light_inputs input)
       break;
    }
    case light_type::directional_cylinder: {
-      light_region_description region_desc = light_region_list.Load(light.directional_region_index);
+      light_region_description region_desc = light_constants.light_regions[light_index];
       
       const float3 positionRS = mul(region_desc.region_from_world, float4(positionWS, 1.0)).xyz;
       const float radius = region_desc.size.x;
@@ -304,7 +302,7 @@ float3 calculate_lighting(calculate_light_inputs input)
          uint light_index = (i * light_tile_word_bits) + active_bit_index;
 
          light_description light = light_constants.lights[light_index];
-         light_info light_info = get_light_info(light, input);
+         light_info light_info = get_light_info(light, light_index, input);
 
          if (input.receive_static_light || (light.flags & light_flag_is_dynamic)) {
             total_light += calculate_light(input, light_info);

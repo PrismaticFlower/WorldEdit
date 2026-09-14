@@ -195,8 +195,8 @@ struct alignas(16) gpu_light_description {
    float3 color;
    float spot_outer_param;
    float spot_inner_param;
-   uint32 directional_region_index;
    uint32 is_dynamic;
+   uint32 pad0;
 };
 
 static_assert(sizeof(gpu_light_description) == 64);
@@ -211,11 +211,27 @@ struct light_projected_texture {
 
 static_assert(sizeof(light_projected_texture) == 80);
 
+struct light_region_description {
+   float4x4 region_from_world;
+   float3 size;
+   uint32 pad;
+};
+
+static_assert(sizeof(light_region_description) == 80);
+
+struct light_texture_description {
+   float4x4 texture_from_world;
+   uint32 texture_index;
+   std::array<uint32, 3> pad;
+};
+
+static_assert(sizeof(light_texture_description) == 80);
+
 struct alignas(16) light_constants {
    uint32 light_tiles_width;
    gpu::resource_view light_tiles_index;
-   gpu::resource_view light_region_list_index;
    gpu::resource_view shadow_map_index;
+   uint32 padding0;
 
    float3 sky_ambient_color;
    uint32 padding1;
@@ -231,18 +247,10 @@ struct alignas(16) light_constants {
    float2 inv_shadow_resolution;
 
    std::array<gpu_light_description, max_onscreen_lights> lights;
-   std::array < light_projected_texture,
+   std::array<light_region_description, max_onscreen_lights> light_regions;
 };
 
-static_assert(sizeof(light_constants) == 16768);
-
-struct light_region_description {
-   float4x4 region_from_world;
-   float3 size;
-   uint32 pad;
-};
-
-static_assert(sizeof(light_region_description) == 80);
+static_assert(sizeof(light_constants) == 37248);
 
 struct alignas(16) light_proxy_instance {
    std::array<float4, 3> transform;
@@ -411,12 +419,6 @@ struct light_clusters::impl {
                                                 gpu::heap_type::default_),
                            device};
 
-      _lights_region_list =
-         {device.create_buffer({.size = sizeof(light_region_description) * max_onscreen_lights,
-                                .debug_name = "Lights Region List"},
-                               gpu::heap_type::default_),
-          device};
-
       _shadow_map = {device.create_texture(
                         {.dimension = gpu::texture_dimension::t_2d,
                          .flags = {.allow_depth_stencil = true},
@@ -474,12 +476,8 @@ struct light_clusters::impl {
       add_world_lights(view_camera, view_frustum, world,
                        optional_placement_light, optional_entity_group);
 
-      uint32 region_lights_count = 0;
-
       light_constants light_constants{.light_tiles_width = _tiles_width,
                                       .light_tiles_index = _lights_tiles_srv.get(),
-                                      .light_region_list_index =
-                                         _lights_region_list_srv.get(),
                                       .shadow_map_index = _shadow_map_srv.get(),
                                       .sky_ambient_color = _ambient_sky_color,
                                       .ground_ambient_color = _ambient_ground_color,
@@ -488,7 +486,6 @@ struct light_clusters::impl {
                                       .inv_shadow_resolution = {1.0f / shadow_res,
                                                                 1.0f / shadow_res}};
 
-      std::array<light_region_description, max_onscreen_lights> region_lights_descriptions{};
       std::array<light_proxy_instance, max_onscreen_lights> sphere_light_proxies{};
 
       std::array<gpu_light_description, max_onscreen_lights>& lights =
@@ -529,18 +526,14 @@ struct light_clusters::impl {
                 .light_index = light_index};
          } break;
          case light_type::directional_box: {
-            const uint32 region_description_index = region_lights_count++;
-
-            region_lights_descriptions[region_description_index] = {
-               .region_from_world = light.directional_box.region_from_world,
-               .size = light.directional_box.size,
-            };
-
             lights[light_index] = {.direction = light.directional_box.directionWS,
                                    .type = light_type::directional_box,
                                    .color = light.directional_box.color,
-                                   .directional_region_index = region_description_index,
                                    .is_dynamic = light.is_dynamic};
+            light_constants.light_regions[light_index] = {
+               .region_from_world = light.directional_box.region_from_world,
+               .size = light.directional_box.size,
+            };
 
             sphere_light_proxies[_light_proxy_count++] =
                {.transform = make_sphere_light_proxy_transform(
@@ -552,18 +545,14 @@ struct light_clusters::impl {
                 .light_index = light_index};
          } break;
          case light_type::directional_sphere: {
-            const uint32 region_description_index = region_lights_count++;
-
-            region_lights_descriptions[region_description_index] = {
-               .region_from_world = light.directional_sphere.region_from_world,
-               .size = {light.directional_sphere.radius, 0.0f, 0.0f},
-            };
-
             lights[light_index] = {.direction = light.directional_sphere.directionWS,
                                    .type = light_type::directional_sphere,
                                    .color = light.directional_sphere.color,
-                                   .directional_region_index = region_description_index,
                                    .is_dynamic = light.is_dynamic};
+            light_constants.light_regions[light_index] = {
+               .region_from_world = light.directional_sphere.region_from_world,
+               .size = {light.directional_sphere.radius, 0.0f, 0.0f},
+            };
 
             sphere_light_proxies[_light_proxy_count++] =
                {.transform = make_sphere_light_proxy_transform(
@@ -575,9 +564,7 @@ struct light_clusters::impl {
                 .light_index = light_index};
          } break;
          case light_type::directional_cylinder: {
-            const uint32 region_description_index = region_lights_count++;
-
-            region_lights_descriptions[region_description_index] = {
+            light_constants.light_regions[light_index] = {
                .region_from_world = light.directional_cylinder.region_from_world,
                .size = {light.directional_cylinder.radius,
                         light.directional_cylinder.height, 0.0f},
@@ -586,7 +573,6 @@ struct light_clusters::impl {
             lights[light_index] = {.direction = light.directional_cylinder.directionWS,
                                    .type = light_type::directional_cylinder,
                                    .color = light.directional_cylinder.color,
-                                   .directional_region_index = region_description_index,
                                    .is_dynamic = light.is_dynamic};
 
             sphere_light_proxies[_light_proxy_count++] =
@@ -634,18 +620,6 @@ struct light_clusters::impl {
          command_list.copy_buffer_region(_lights_constants.get(), 0,
                                          upload_buffer.resource, upload_buffer.offset,
                                          sizeof(light_constants));
-      }
-
-      {
-         auto upload_buffer =
-            dynamic_buffer_allocator.allocate(sizeof(region_lights_descriptions));
-
-         std::memcpy(upload_buffer.cpu_address, &region_lights_descriptions,
-                     sizeof(region_lights_descriptions));
-
-         command_list.copy_buffer_region(_lights_region_list.get(), 0,
-                                         upload_buffer.resource, upload_buffer.offset,
-                                         sizeof(region_lights_descriptions));
       }
 
       {
@@ -964,14 +938,6 @@ private:
                                           .number_elements = _tiles_count,
                                           .structure_byte_stride = sizeof(uint32) * 8}}),
                            _device};
-
-      _lights_region_list_srv = {_device.create_shader_resource_view(
-                                    _lights_region_list.get(),
-                                    {.buffer = {.first_element = 0,
-                                                .number_elements = max_onscreen_lights,
-                                                .structure_byte_stride = sizeof(
-                                                   light_region_description)}}),
-                                 _device};
 
       _shadow_map_srv = {_device.create_shader_resource_view(_shadow_map.get(),
                                                              {.format = DXGI_FORMAT_R32_FLOAT}),
@@ -1561,7 +1527,6 @@ private:
 
    gpu::unique_resource_handle _lights_constants;
    gpu::unique_resource_handle _lights_tiles;
-   gpu::unique_resource_handle _lights_region_list;
 
    gpu::unique_resource_handle _sphere_proxy_indices;
    gpu::unique_resource_handle _sphere_proxy_vertices;
