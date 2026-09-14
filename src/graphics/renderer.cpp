@@ -306,7 +306,7 @@ private:
    texture_manager _texture_manager;
    model_manager _model_manager;
    geometric_shapes _geometric_shapes{_device, _copy_command_list_pool};
-   light_clusters _light_clusters{_device, _copy_command_list_pool,
+   light_clusters _light_clusters{_device, _texture_manager, _copy_command_list_pool,
                                   _swap_chain.width(), _swap_chain.height()};
    terrain _terrain{_device, _copy_command_list_pool, _dynamic_buffer_allocator,
                     _texture_manager};
@@ -5269,6 +5269,7 @@ void renderer_impl::update_textures(gpu::copy_command_list& command_list)
          }
       });
 
+      _light_clusters.process_updated_textures(updated);
       _terrain.process_updated_texture(updated);
       _water.process_updated_texture(updated);
       _ui_texture_manager.process_updated_textures(updated);

@@ -151,7 +151,18 @@ struct texture_manager::impl {
               std::shared_ptr<const world_texture> default_texture)
       -> std::shared_ptr<const world_texture>
    {
-      if (name.empty()) return default_texture;
+      std::shared_ptr<const world_texture> texture = at_if(name);
+
+      if (texture and texture->dimension == expected_dimension) {
+         return texture;
+      }
+
+      return default_texture;
+   }
+
+   auto at_if(const lowercase_string& name) -> std::shared_ptr<const world_texture>
+   {
+      if (name.empty()) return nullptr;
 
       // Try to find an already existing texture using a shared lock.
       {
@@ -161,20 +172,19 @@ struct texture_manager::impl {
             const auto& [_, state] = *state_entry;
 
             if (auto texture = state.texture.lock(); texture) {
-               return texture->dimension == expected_dimension ? texture
-                                                               : default_texture;
+               return texture;
             }
          }
 
          if (_pending_loads.contains(name) or _pending_creations.contains(name) or
              _failed_creations.contains(name)) {
-            return default_texture;
+            return nullptr;
          }
       }
 
       asset_ref asset = _texture_assets[name];
 
-      if (not asset.exists()) return default_texture;
+      if (not asset.exists()) return nullptr;
 
       // Try and create a new texture.
       {
@@ -184,15 +194,13 @@ struct texture_manager::impl {
          if (auto state_entry = _textures.find(name); state_entry != _textures.end()) {
             const auto& [_, state] = *state_entry;
 
-            if (auto texture = state.texture.lock(); texture) {
-               if (texture->dimension == expected_dimension) return texture;
-            }
+            if (auto texture = state.texture.lock(); texture) return texture;
          }
 
          const auto& [_, inserted] = _pending_loads.insert_or_assign(name, asset);
 
          if (not inserted or _pending_creations.contains(name)) {
-            return default_texture;
+            return nullptr;
          }
 
          if (auto asset_data = asset.get_if(); asset_data) {
@@ -200,7 +208,7 @@ struct texture_manager::impl {
          }
       }
 
-      return default_texture;
+      return nullptr;
    }
 
    auto acquire_load_token(const lowercase_string& name) noexcept
@@ -600,6 +608,12 @@ auto texture_manager::at_or(const lowercase_string& name,
    -> std::shared_ptr<const world_texture>
 {
    return _impl->at_or(name, expected_dimension, std::move(default_texture));
+}
+
+auto texture_manager::at_if(const lowercase_string& name)
+   -> std::shared_ptr<const world_texture>
+{
+   return _impl->at_if(name);
 }
 
 auto texture_manager::acquire_load_token(const lowercase_string& name) noexcept

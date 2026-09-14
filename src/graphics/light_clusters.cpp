@@ -10,8 +10,10 @@
 
 #include "utility/string_icompare.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
+#include <optional>
 #include <vector>
 
 #include <imgui.h>
@@ -19,6 +21,82 @@
 namespace we::graphics {
 
 namespace {
+
+struct light_textures {
+   explicit light_textures(texture_manager& texture_manager)
+      : _texture_manager{texture_manager}
+   {
+   }
+
+   void trim()
+   {
+      for (auto it = _textures.begin(); it != _textures.end();) {
+         if (not std::exchange(it->used, false)) {
+            it = _textures.erase(it);
+         }
+         else {
+            ++it;
+         }
+      }
+   }
+
+   auto try_get(const std::string_view name, const world_texture_dimension dimension)
+      -> std::optional<uint32>
+   {
+      if (name.empty()) return std::nullopt;
+
+      auto it = std::lower_bound(_textures.begin(), _textures.end(), name,
+                                 [](const light_texture& texture,
+                                    const std::string_view name) {
+                                    return string::iless_than(texture.name, name);
+                                 });
+
+      if (it != _textures.end() and string::iequals(it->name, name)) {
+         it->used = true;
+
+         if (not it->texture) return std::nullopt;
+         if (it->texture->dimension != dimension) return std::nullopt;
+
+         return it->texture->srv.index;
+      }
+      else {
+         light_texture texture{.name = lowercase_string{name}};
+
+         texture.texture = _texture_manager.at_if(texture.name);
+
+         if (not texture.texture) {
+            texture.load_token = _texture_manager.acquire_load_token(texture.name);
+         }
+
+         _textures.insert(it, std::move(texture));
+      }
+
+      return std::nullopt;
+   }
+
+   void process_updated(const updated_textures& updated) noexcept
+   {
+      for (light_texture& texture : _textures) {
+         if (auto new_texture = updated.check(texture.name); new_texture) {
+            texture.load_token = nullptr;
+            texture.texture = std::move(new_texture);
+         }
+      }
+   }
+
+private:
+   struct light_texture {
+      lowercase_string name;
+
+      bool used = true;
+
+      std::shared_ptr<const world_texture> texture;
+      std::shared_ptr<const world_texture_load_token> load_token;
+   };
+
+   std::vector<light_texture> _textures;
+   texture_manager& _texture_manager;
+};
 
 constexpr uint32 shadow_res = 2048;
 constexpr uint32 cascade_count = 4;
@@ -95,6 +173,9 @@ struct light_description {
       directional_sphere_desc directional_sphere;
       directional_cylinder_desc directional_cylinder;
    };
+
+   uint32 projected_texture_index;
+   float4x4 texture_from_world;
 };
 
 struct alignas(16) tiling_inputs {
@@ -122,6 +203,14 @@ static_assert(sizeof(gpu_light_description) == 64);
 
 static_assert(sizeof(global_light) == 32);
 
+struct light_projected_texture {
+   uint32 texture_index;
+   std::array<uint32, 3> pad;
+   float4x4 texture_from_world;
+};
+
+static_assert(sizeof(light_projected_texture) == 80);
+
 struct alignas(16) light_constants {
    uint32 light_tiles_width;
    gpu::resource_view light_tiles_index;
@@ -142,6 +231,7 @@ struct alignas(16) light_constants {
    float2 inv_shadow_resolution;
 
    std::array<gpu_light_description, max_onscreen_lights> lights;
+   std::array < light_projected_texture,
 };
 
 static_assert(sizeof(light_constants) == 16768);
@@ -304,9 +394,10 @@ auto make_shadow_cascades(const quaternion light_rotation, const camera& camera,
 }
 
 struct light_clusters::impl {
-   impl(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
-        uint32 render_width, uint32 render_height)
-      : _device{device}
+   impl(gpu::device& device, texture_manager& texture_manager,
+        copy_command_list_pool& copy_command_list_pool, uint32 render_width,
+        uint32 render_height)
+      : _device{device}, _textures{texture_manager}
    {
       _tiling_inputs = {device.create_buffer({.size = sizeof(tiling_inputs),
                                               .debug_name =
@@ -377,6 +468,8 @@ struct light_clusters::impl {
       _lights_allocated = 0;
       _light_proxy_count = 0;
       _has_sun_shadows = false;
+
+      _textures.trim();
 
       add_world_lights(view_camera, view_frustum, world,
                        optional_placement_light, optional_entity_group);
@@ -831,6 +924,11 @@ struct light_clusters::impl {
       return _lights_constant_buffer_view;
    }
 
+   void process_updated_textures(const updated_textures& updated) noexcept
+   {
+      _textures.process_updated(updated);
+   }
+
 private:
    void update_render_resolution(uint32 width, uint32 height, bool recreate_descriptors)
    {
@@ -1022,6 +1120,10 @@ private:
 
       for (const std::span<const world::light> lights : light_arrays) {
          for (const world::light& light : lights) {
+            if (not light.texture.empty()) {
+               _textures.try_get(light.texture, world_texture_dimension::_2d); // The dimension doesn't matter here, this is just to ref the texture.
+            }
+
             switch (light.light_type) {
             case world::light_type::directional: {
                // Directional lights don't go in the main light list.
@@ -1212,6 +1314,10 @@ private:
          const float3& group_position = optional_entity_group->position;
 
          for (const world::light& light : optional_entity_group->lights) {
+            if (not light.texture.empty()) {
+               _textures.try_get(light.texture, world_texture_dimension::_2d); // The dimension doesn't matter here, this is just to ref the texture.
+            }
+
             const float3 light_positionWS =
                group_rotation * light.position + group_position;
 
@@ -1496,6 +1602,15 @@ private:
 
    uint32 _lights_allocated = 0;
 
+   struct light_texture {
+      lowercase_string name;
+
+      std::shared_ptr<const world_texture> texture;
+      std::shared_ptr<const world_texture_load_token> load_token;
+   };
+
+   light_textures _textures;
+
    bool _has_sun_shadows = false;
 
    std::array<shadow_ortho_camera, sun_cascade_count> _sun_shadow_cascades;
@@ -1504,11 +1619,11 @@ private:
    std::vector<uint16> _shadow_render_list;
 };
 
-light_clusters::light_clusters(gpu::device& device,
+light_clusters::light_clusters(gpu::device& device, texture_manager& texture_manager,
                                copy_command_list_pool& copy_command_list_pool,
                                uint32 render_width, uint32 render_height)
-   : _impl{std::make_unique<impl>(device, copy_command_list_pool, render_width,
-                                  render_height)}
+   : _impl{std::make_unique<impl>(device, texture_manager, copy_command_list_pool,
+                                  render_width, render_height)}
 {
 }
 
@@ -1556,6 +1671,11 @@ void light_clusters::draw_shadow_maps(
 auto light_clusters::lights_constant_buffer_view() const noexcept -> gpu_virtual_address
 {
    return _impl->lights_constant_buffer_view();
+}
+
+void light_clusters::process_updated_textures(const updated_textures& updated) noexcept
+{
+   _impl->process_updated_textures(updated);
 }
 
 }

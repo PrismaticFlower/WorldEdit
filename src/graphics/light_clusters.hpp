@@ -13,6 +13,7 @@
 #include "root_signature_library.hpp"
 #include "shadow_camera.hpp"
 #include "terrain.hpp"
+#include "texture_manager.hpp"
 #include "world_mesh_list.hpp"
 
 #include "math/frustum.hpp"
@@ -27,7 +28,8 @@ namespace we::graphics {
 
 class light_clusters {
 public:
-   light_clusters(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
+   light_clusters(gpu::device& device, texture_manager& texture_manager,
+                  copy_command_list_pool& copy_command_list_pool,
                   uint32 render_width, uint32 render_height);
 
    ~light_clusters();
@@ -57,6 +59,8 @@ public:
                          profiler& profiler);
 
    auto lights_constant_buffer_view() const noexcept -> gpu_virtual_address;
+
+   void process_updated_textures(const updated_textures& updated) noexcept;
 
 private:
    struct impl;

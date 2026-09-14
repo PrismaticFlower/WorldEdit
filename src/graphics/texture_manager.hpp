@@ -86,6 +86,11 @@ struct texture_manager {
               std::shared_ptr<const world_texture> default_texture)
       -> std::shared_ptr<const world_texture>;
 
+   /// @brief Gets the specified texture or returns nullptr if it is not available.
+   /// @param name Name of the texture to get.
+   /// @return The texture or nullptr.
+   auto at_if(const lowercase_string& name) -> std::shared_ptr<const world_texture>;
+
    /// @brief Acquire a shared_ptr to be used as a token representing interest in a texture. A texture will not be removed from the updated queue while it has load tokens outstanding.
    /// @param name Name of the texture to get.
    /// @return The interest token.
