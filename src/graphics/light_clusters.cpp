@@ -8,6 +8,7 @@
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
+#include "utility/enum_bitflags.hpp"
 #include "utility/string_icompare.hpp"
 
 #include <algorithm>
@@ -114,17 +115,35 @@ enum class light_type : uint32 {
    spot
 };
 
+enum light_flags : uint32 {
+   none = 0b0,
+   is_dynamic = 0b1,
+   has_texture = 0b10,
+   texture_clamp = 0b100,
+};
+
+constexpr bool marked_as_enum_bitflag(light_flags)
+{
+   return true;
+}
+
 struct global_light {
    float3 directionWS;
-   uint32 is_dynamic;
+   light_flags flags;
    float3 color;
    uint32 has_shadows;
+   float4x4 texture_from_world;
+   uint32 texture_index;
+   uint32 texture_clamp;
+   std::array<uint32, 2> pad;
 };
+
+static_assert(sizeof(global_light) == 112);
 
 struct light_description {
    light_type type = light_type::point;
 
-   uint32 is_dynamic;
+   light_flags flags;
 
    struct point_desc {
       float3 positionWS;
@@ -174,7 +193,8 @@ struct light_description {
       directional_cylinder_desc directional_cylinder;
    };
 
-   uint32 projected_texture_index;
+   uint32 texture_index;
+   uint32 texture_clamp;
    float4x4 texture_from_world;
 };
 
@@ -195,21 +215,11 @@ struct alignas(16) gpu_light_description {
    float3 color;
    float spot_outer_param;
    float spot_inner_param;
-   uint32 is_dynamic;
+   light_flags flags;
    uint32 pad0;
 };
 
 static_assert(sizeof(gpu_light_description) == 64);
-
-static_assert(sizeof(global_light) == 32);
-
-struct light_projected_texture {
-   uint32 texture_index;
-   std::array<uint32, 3> pad;
-   float4x4 texture_from_world;
-};
-
-static_assert(sizeof(light_projected_texture) == 80);
 
 struct light_region_description {
    float4x4 region_from_world;
@@ -222,7 +232,8 @@ static_assert(sizeof(light_region_description) == 80);
 struct light_texture_description {
    float4x4 texture_from_world;
    uint32 texture_index;
-   std::array<uint32, 3> pad;
+   uint32 texture_clamp;
+   std::array<uint32, 2> pad;
 };
 
 static_assert(sizeof(light_texture_description) == 80);
@@ -248,9 +259,10 @@ struct alignas(16) light_constants {
 
    std::array<gpu_light_description, max_onscreen_lights> lights;
    std::array<light_region_description, max_onscreen_lights> light_regions;
+   std::array<light_texture_description, max_onscreen_lights> light_textures;
 };
 
-static_assert(sizeof(light_constants) == 37248);
+static_assert(sizeof(light_constants) == 57888);
 
 struct alignas(16) light_proxy_instance {
    std::array<float4, 3> transform;
@@ -502,7 +514,7 @@ struct light_clusters::impl {
                                    .position = light.point.positionWS,
                                    .range = light.point.range,
                                    .color = light.point.color,
-                                   .is_dynamic = light.is_dynamic};
+                                   .flags = light.flags};
 
             sphere_light_proxies[_light_proxy_count++] =
                {.transform = make_sphere_light_proxy_transform(light.point.positionWS,
@@ -518,7 +530,7 @@ struct light_clusters::impl {
                                    .color = light.spot.color,
                                    .spot_outer_param = light.spot.spot_outer_param,
                                    .spot_inner_param = light.spot.spot_inner_param,
-                                   .is_dynamic = light.is_dynamic};
+                                   .flags = light.flags};
 
             sphere_light_proxies[_light_proxy_count++] =
                {.transform = make_sphere_light_proxy_transform(light.spot.positionWS,
@@ -529,7 +541,7 @@ struct light_clusters::impl {
             lights[light_index] = {.direction = light.directional_box.directionWS,
                                    .type = light_type::directional_box,
                                    .color = light.directional_box.color,
-                                   .is_dynamic = light.is_dynamic};
+                                   .flags = light.flags};
             light_constants.light_regions[light_index] = {
                .region_from_world = light.directional_box.region_from_world,
                .size = light.directional_box.size,
@@ -548,7 +560,7 @@ struct light_clusters::impl {
             lights[light_index] = {.direction = light.directional_sphere.directionWS,
                                    .type = light_type::directional_sphere,
                                    .color = light.directional_sphere.color,
-                                   .is_dynamic = light.is_dynamic};
+                                   .flags = light.flags};
             light_constants.light_regions[light_index] = {
                .region_from_world = light.directional_sphere.region_from_world,
                .size = {light.directional_sphere.radius, 0.0f, 0.0f},
@@ -573,7 +585,7 @@ struct light_clusters::impl {
             lights[light_index] = {.direction = light.directional_cylinder.directionWS,
                                    .type = light_type::directional_cylinder,
                                    .color = light.directional_cylinder.color,
-                                   .is_dynamic = light.is_dynamic};
+                                   .flags = light.flags};
 
             sphere_light_proxies[_light_proxy_count++] =
                {.transform = make_sphere_light_proxy_transform(
@@ -585,6 +597,14 @@ struct light_clusters::impl {
 
                 .light_index = light_index};
          } break;
+         }
+
+         if (are_flags_set(light.flags, light_flags::has_texture)) {
+            light_constants.light_textures[light_index] = {
+               .texture_from_world = light.texture_from_world,
+               .texture_index = light.texture_index,
+               .texture_clamp = light.texture_clamp,
+            };
          }
       }
 
@@ -1054,7 +1074,7 @@ private:
 
          _global_lights[0] = {
             .directionWS = normalize(light.rotation * float3{0.0f, 0.0f, -1.0f}),
-            .is_dynamic = not light.static_,
+            .flags = not light.static_ ? light_flags::is_dynamic : light_flags::none,
             .color = light.color,
             .has_shadows = light.shadow_caster,
          };
@@ -1065,6 +1085,39 @@ private:
             _sun_shadow_cascades = make_shadow_cascades(light.rotation, view_camera,
                                                         _scene_depth_min_max);
          }
+
+         if (not light.texture.empty()) {
+            std::optional<uint32> texture =
+               _textures.try_get(light.texture, world_texture_dimension::_2d);
+
+            if (texture) {
+               _global_lights[0].flags |= light_flags::has_texture;
+               _global_lights[0].texture_index = *texture;
+               _global_lights[0].texture_clamp =
+                  light.texture_addressing == world::texture_addressing::clamp;
+
+               const float2 inv_texture_tiling = 1.0f / light.directional_texture_tiling;
+               const float2 texture_offset =
+                  light.directional_texture_offset * inv_texture_tiling;
+               const float3& directionWS = _global_lights[0].directionWS;
+
+               const float3 column0 =
+                  (float3{1.0f, 0.0f, 0.0f} - directionWS * directionWS.x) *
+                  inv_texture_tiling.x;
+               const float3 column1 =
+                  (float3{0.0f, 0.0f, 1.0f} - directionWS * directionWS.z) *
+                  inv_texture_tiling.y;
+
+               const float4x4 texture_from_world = {
+                  {column0.x, column1.x, 0.0f, 0.0f},
+                  {column0.y, column1.y, 0.0f, 0.0f},
+                  {column0.z, column1.z, 1.0f, 0.0f},
+                  {texture_offset.x, texture_offset.y, 0.0f, 1.0f},
+               };
+
+               _global_lights[0].texture_from_world = texture_from_world;
+            }
+         }
       }
 
       if (world.global_lights.global_light_2.has_index()) {
@@ -1073,10 +1126,43 @@ private:
 
          _global_lights[1] = {
             .directionWS = normalize(light.rotation * float3{0.0f, 0.0f, -1.0f}),
-            .is_dynamic = not light.static_,
+            .flags = not light.static_ ? light_flags::is_dynamic : light_flags::none,
             .color = light.color,
             .has_shadows = false,
          };
+
+         if (not light.texture.empty()) {
+            std::optional<uint32> texture =
+               _textures.try_get(light.texture, world_texture_dimension::_2d);
+
+            if (texture) {
+               _global_lights[1].flags |= light_flags::has_texture;
+               _global_lights[1].texture_index = *texture;
+               _global_lights[1].texture_clamp =
+                  light.texture_addressing == world::texture_addressing::clamp;
+
+               const float2 inv_texture_tiling = 1.0f / light.directional_texture_tiling;
+               const float2 texture_offset =
+                  light.directional_texture_offset * inv_texture_tiling;
+               const float3& directionWS = _global_lights[1].directionWS;
+
+               const float3 column0 =
+                  (float3{1.0f, 0.0f, 0.0f} - directionWS * directionWS.x) *
+                  inv_texture_tiling.x;
+               const float3 column1 =
+                  (float3{0.0f, 0.0f, 1.0f} - directionWS * directionWS.z) *
+                  inv_texture_tiling.y;
+
+               const float4x4 texture_from_world = {
+                  {column0.x, column1.x, 0.0f, 0.0f},
+                  {column0.y, column1.y, 0.0f, 0.0f},
+                  {column0.z, column1.z, 1.0f, 0.0f},
+                  {texture_offset.x, texture_offset.y, 0.0f, 1.0f},
+               };
+
+               _global_lights[1].texture_from_world = texture_from_world;
+            }
+         }
       }
 
       std::array<std::span<const world::light>, 2> light_arrays =
@@ -1089,6 +1175,9 @@ private:
             if (not light.texture.empty()) {
                _textures.try_get(light.texture, world_texture_dimension::_2d); // The dimension doesn't matter here, this is just to ref the texture.
             }
+
+            const light_flags base_flags =
+               not light.static_ ? light_flags::is_dynamic : light_flags::none;
 
             switch (light.light_type) {
             case world::light_type::directional: {
@@ -1105,18 +1194,40 @@ private:
                if (light_description* added_light = try_add_light(light_distance);
                    added_light) {
                   *added_light = {.type = light_type::point,
-                                  .is_dynamic = not light.static_,
+                                  .flags = base_flags,
 
                                   .point = {
                                      .positionWS = light.position,
                                      .range = light.range,
                                      .color = light.color,
                                   }};
+
+                  if (not light.texture.empty()) {
+                     std::optional<uint32> texture =
+                        _textures.try_get(light.texture, world_texture_dimension::cube);
+
+                     if (texture) {
+                        added_light->flags |= light_flags::has_texture;
+                        added_light->texture_index = *texture;
+                        added_light->texture_clamp = light.texture_addressing ==
+                                                     world::texture_addressing::clamp;
+
+                        const float inv_range = 1.0f / light.range;
+
+                        added_light->texture_from_world = {
+                           {inv_range, 0.0f, 0.0f, 0.0f},
+                           {0.0f, inv_range, 0.0f, 0.0f},
+                           {0.0f, 0.0f, inv_range, 0.0f},
+                           {-light.position * inv_range, 1.0f},
+                        };
+                     }
+                  }
                }
             } break;
             case world::light_type::spot: {
-               const float outer_cone_radius =
-                  light.range * std::tan(light.outer_cone_angle * 0.5f);
+               const float tan_half_outer_cone_angle =
+                  std::tan(light.outer_cone_angle * 0.5f);
+               const float outer_cone_radius = light.range * tan_half_outer_cone_angle;
                const float3 light_directionWS =
                   normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
                const float3 cone_baseWS =
@@ -1143,7 +1254,7 @@ private:
                      std::cos(light.inner_cone_angle / 2.0f);
 
                   *added_light = {.type = light_type::spot,
-                                  .is_dynamic = not light.static_,
+                                  .flags = base_flags,
 
                                   .spot = {
                                      .positionWS = light.position,
@@ -1154,6 +1265,40 @@ private:
                                      .spot_inner_param =
                                         1.0f / (cos_inner_cone_angle - cos_outer_cone_angle),
                                   }};
+
+                  if (not light.texture.empty()) {
+                     std::optional<uint32> texture =
+                        _textures.try_get(light.texture, world_texture_dimension::_2d);
+
+                     if (texture) {
+                        added_light->flags |= light_flags::has_texture;
+                        added_light->texture_index = *texture;
+                        added_light->texture_clamp = light.texture_addressing ==
+                                                     world::texture_addressing::clamp;
+
+                        const float4x4 world_from_light =
+                           std::abs(dot(light_directionWS, {0.0f, 1.0f, 0.0f})) <= 0.99f
+                              ? make_direction_transform(light_directionWS,
+                                                         {0.0f, 1.0f, 0.0f},
+                                                         light.position)
+                              : make_direction_transform(light_directionWS,
+                                                         {1.0f, 0.0f, 0.0f},
+                                                         light.position);
+                        const float4x4 light_from_world =
+                           inverse_rotation_translation(world_from_light);
+
+                        float4x4 texture_from_light;
+
+                        texture_from_light[0].x =
+                           (1.0f / tan_half_outer_cone_angle) * 0.5f;
+                        texture_from_light[1].y = texture_from_light[0].x;
+                        texture_from_light[2] = {0.5f, 0.5f, 0.0f, 1.0f};
+                        texture_from_light[3] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+                        added_light->texture_from_world =
+                           texture_from_light * light_from_world;
+                     }
+                  }
                }
             } break;
             case world::light_type::directional_region_box:
@@ -1165,6 +1310,8 @@ private:
                float4x4 region_from_world = transpose(world_from_region);
                region_from_world[3] = {float3x3{region_from_world} * -light.position,
                                        1.0f};
+
+               light_description* added_light = nullptr;
 
                switch (light.light_type) {
                case world::light_type::directional_region_box: {
@@ -1185,10 +1332,11 @@ private:
                      length(max(q, float3{0.0f, 0.0f, 0.0f})) -
                      std::min(std::max(std::max(q.x, q.y), q.z), 0.0f);
 
-                  if (light_description* added_light = try_add_light(light_distance);
-                      added_light) {
+                  added_light = try_add_light(light_distance);
+
+                  if (added_light) {
                      *added_light = {.type = light_type::directional_box,
-                                     .is_dynamic = not light.static_,
+                                     .flags = base_flags,
 
                                      .directional_box = {
                                         .color = light.color,
@@ -1210,10 +1358,11 @@ private:
                   const float light_distance =
                      distance(view_camera.position(), light.position) - light.range;
 
-                  if (light_description* added_light = try_add_light(light_distance);
-                      added_light) {
+                  added_light = try_add_light(light_distance);
+
+                  if (added_light) {
                      *added_light = {.type = light_type::directional_sphere,
-                                     .is_dynamic = not light.static_,
+                                     .flags = base_flags,
 
                                      .directional_sphere = {
                                         .color = light.color,
@@ -1251,10 +1400,11 @@ private:
                               0.0f);
                   const float light_distance = std::max(cap_distance, edge_distance);
 
-                  if (light_description* added_light = try_add_light(light_distance);
-                      added_light) {
+                  added_light = try_add_light(light_distance);
+
+                  if (added_light) {
                      *added_light = {.type = light_type::directional_cylinder,
-                                     .is_dynamic = not light.static_,
+                                     .flags = base_flags,
 
                                      .directional_cylinder = {
                                         .color = light.color,
@@ -1270,6 +1420,54 @@ private:
                default:
                   break;
                }
+
+               if (added_light and not light.texture.empty()) {
+                  std::optional<uint32> texture =
+                     _textures.try_get(light.texture, world_texture_dimension::_2d);
+
+                  if (texture) {
+                     added_light->flags |= light_flags::has_texture;
+                     added_light->texture_index = *texture;
+                     added_light->texture_clamp = light.texture_addressing ==
+                                                  world::texture_addressing::clamp;
+
+                     const float2 inv_texture_tiling =
+                        1.0f / light.directional_texture_tiling;
+                     const float2 texture_offset =
+                        light.directional_texture_offset * inv_texture_tiling;
+                     float3 directionWS;
+
+                     switch (light.light_type) {
+                     case world::light_type::directional_region_box: {
+                        directionWS = added_light->directional_box.directionWS;
+                     } break;
+                     case world::light_type::directional_region_sphere: {
+                        directionWS = added_light->directional_sphere.directionWS;
+                     } break;
+                     case world::light_type::directional_region_cylinder: {
+                        directionWS = added_light->directional_cylinder.directionWS;
+                     } break;
+                     default:
+                        break;
+                     }
+
+                     const float3 column0 =
+                        (float3{1.0f, 0.0f, 0.0f} - directionWS * directionWS.x) *
+                        inv_texture_tiling.x;
+                     const float3 column1 =
+                        (float3{0.0f, 0.0f, 1.0f} - directionWS * directionWS.z) *
+                        inv_texture_tiling.y;
+
+                     const float4x4 texture_from_world = {
+                        {column0.x, column1.x, 0.0f, 0.0f},
+                        {column0.y, column1.y, 0.0f, 0.0f},
+                        {column0.z, column1.z, 1.0f, 0.0f},
+                        {texture_offset.x, texture_offset.y, 0.0f, 1.0f},
+                     };
+
+                     added_light->texture_from_world = texture_from_world;
+                  }
+               }
             } break;
             }
          }
@@ -1283,6 +1481,9 @@ private:
             if (not light.texture.empty()) {
                _textures.try_get(light.texture, world_texture_dimension::_2d); // The dimension doesn't matter here, this is just to ref the texture.
             }
+
+            const light_flags base_flags =
+               not light.static_ ? light_flags::is_dynamic : light_flags::none;
 
             const float3 light_positionWS =
                group_rotation * light.position + group_position;
@@ -1302,18 +1503,40 @@ private:
                if (light_description* added_light = try_add_light(light_distance);
                    added_light) {
                   *added_light = {.type = light_type::point,
-                                  .is_dynamic = not light.static_,
+                                  .flags = base_flags,
 
                                   .point = {
                                      .positionWS = light_positionWS,
                                      .range = light.range,
                                      .color = light.color,
                                   }};
+
+                  if (not light.texture.empty()) {
+                     std::optional<uint32> texture =
+                        _textures.try_get(light.texture, world_texture_dimension::cube);
+
+                     if (texture) {
+                        added_light->flags |= light_flags::has_texture;
+                        added_light->texture_index = *texture;
+                        added_light->texture_clamp = light.texture_addressing ==
+                                                     world::texture_addressing::clamp;
+
+                        const float inv_range = 1.0f / light.range;
+
+                        added_light->texture_from_world = {
+                           {inv_range, 0.0f, 0.0f, 0.0f},
+                           {0.0f, inv_range, 0.0f, 0.0f},
+                           {0.0f, 0.0f, inv_range, 0.0f},
+                           {-light_positionWS * inv_range, 1.0f},
+                        };
+                     }
+                  }
                }
             } break;
             case world::light_type::spot: {
-               const float outer_cone_radius =
-                  light.range * std::tan(light.outer_cone_angle * 0.5f);
+               const float tan_half_outer_cone_angle =
+                  std::tan(light.outer_cone_angle * 0.5f);
+               const float outer_cone_radius = light.range * tan_half_outer_cone_angle;
                const float3 light_directionWS = normalize(
                   group_rotation * light.rotation * float3{0.0f, 0.0f, 1.0f});
                const float3 cone_baseWS =
@@ -1341,7 +1564,7 @@ private:
                      std::cos(light.inner_cone_angle / 2.0f);
 
                   *added_light = {.type = light_type::spot,
-                                  .is_dynamic = not light.static_,
+                                  .flags = base_flags,
 
                                   .spot = {
                                      .positionWS = light_positionWS,
@@ -1352,6 +1575,40 @@ private:
                                      .spot_inner_param =
                                         1.0f / (cos_inner_cone_angle - cos_outer_cone_angle),
                                   }};
+
+                  if (not light.texture.empty()) {
+                     std::optional<uint32> texture =
+                        _textures.try_get(light.texture, world_texture_dimension::_2d);
+
+                     if (texture) {
+                        added_light->flags |= light_flags::has_texture;
+                        added_light->texture_index = *texture;
+                        added_light->texture_clamp = light.texture_addressing ==
+                                                     world::texture_addressing::clamp;
+
+                        const float4x4 world_from_light =
+                           std::abs(dot(light_directionWS, {0.0f, 1.0f, 0.0f})) <= 0.99f
+                              ? make_direction_transform(light_directionWS,
+                                                         {0.0f, 1.0f, 0.0f},
+                                                         light_positionWS)
+                              : make_direction_transform(light_directionWS,
+                                                         {1.0f, 0.0f, 0.0f},
+                                                         light_positionWS);
+                        const float4x4 light_from_world =
+                           inverse_rotation_translation(world_from_light);
+
+                        float4x4 texture_from_light;
+
+                        texture_from_light[0].x =
+                           (1.0f / tan_half_outer_cone_angle) * 0.5f;
+                        texture_from_light[1].y = texture_from_light[0].x;
+                        texture_from_light[2] = {0.5f, 0.5f, 0.0f, 1.0f};
+                        texture_from_light[3] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+                        added_light->texture_from_world =
+                           texture_from_light * light_from_world;
+                     }
+                  }
                }
             } break;
             case world::light_type::directional_region_box:
@@ -1366,6 +1623,8 @@ private:
                float4x4 region_from_world = transpose(world_from_region);
                region_from_world[3] = {float3x3{region_from_world} * -light.position,
                                        1.0f};
+
+               light_description* added_light = nullptr;
 
                switch (light.light_type) {
                case world::light_type::directional_region_box: {
@@ -1386,10 +1645,11 @@ private:
                      length(max(q, float3{0.0f, 0.0f, 0.0f})) -
                      std::min(std::max(std::max(q.x, q.y), q.z), 0.0f);
 
-                  if (light_description* added_light = try_add_light(light_distance);
-                      added_light) {
+                  added_light = try_add_light(light_distance);
+
+                  if (added_light) {
                      *added_light = {.type = light_type::directional_box,
-                                     .is_dynamic = not light.static_,
+                                     .flags = base_flags,
 
                                      .directional_box = {
                                         .color = light.color,
@@ -1412,10 +1672,11 @@ private:
                   const float light_distance =
                      distance(view_camera.position(), light_positionWS) - light.range;
 
-                  if (light_description* added_light = try_add_light(light_distance);
-                      added_light) {
+                  added_light = try_add_light(light_distance);
+
+                  if (added_light) {
                      *added_light = {.type = light_type::directional_sphere,
-                                     .is_dynamic = not light.static_,
+                                     .flags = base_flags,
 
                                      .directional_sphere = {
                                         .color = light.color,
@@ -1454,10 +1715,11 @@ private:
                               0.0f);
                   const float light_distance = std::max(cap_distance, edge_distance);
 
-                  if (light_description* added_light = try_add_light(light_distance);
-                      added_light) {
+                  added_light = try_add_light(light_distance);
+
+                  if (added_light) {
                      *added_light = {.type = light_type::directional_cylinder,
-                                     .is_dynamic = not light.static_,
+                                     .flags = base_flags,
 
                                      .directional_cylinder = {
                                         .color = light.color,
@@ -1473,6 +1735,54 @@ private:
                } break;
                default:
                   break;
+               }
+
+               if (added_light and not light.texture.empty()) {
+                  std::optional<uint32> texture =
+                     _textures.try_get(light.texture, world_texture_dimension::_2d);
+
+                  if (texture) {
+                     added_light->flags |= light_flags::has_texture;
+                     added_light->texture_index = *texture;
+                     added_light->texture_clamp = light.texture_addressing ==
+                                                  world::texture_addressing::clamp;
+
+                     const float2 inv_texture_tiling =
+                        1.0f / light.directional_texture_tiling;
+                     const float2 texture_offset =
+                        light.directional_texture_offset * inv_texture_tiling;
+                     float3 directionWS;
+
+                     switch (light.light_type) {
+                     case world::light_type::directional_region_box: {
+                        directionWS = added_light->directional_box.directionWS;
+                     } break;
+                     case world::light_type::directional_region_sphere: {
+                        directionWS = added_light->directional_sphere.directionWS;
+                     } break;
+                     case world::light_type::directional_region_cylinder: {
+                        directionWS = added_light->directional_cylinder.directionWS;
+                     } break;
+                     default:
+                        break;
+                     }
+
+                     const float3 column0 =
+                        float3{1.0f, 0.0f, 0.0f} -
+                        directionWS * directionWS.x * inv_texture_tiling.x;
+                     const float3 column1 =
+                        float3{0.0f, 0.0f, 1.0f} -
+                        directionWS * directionWS.z * inv_texture_tiling.y;
+
+                     const float4x4 texture_from_world = {
+                        {column0.x, column1.x, 0.0f, 0.0f},
+                        {column0.y, column1.y, 0.0f, 0.0f},
+                        {column0.z, column1.z, 1.0f, 0.0f},
+                        {texture_offset.x, texture_offset.y, 0.0f, 1.0f},
+                     };
+
+                     added_light->texture_from_world = texture_from_world;
+                  }
                }
             } break;
             }

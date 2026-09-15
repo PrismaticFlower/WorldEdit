@@ -17,7 +17,9 @@ const static uint spot = 4;
 };
 
 enum light_flags : uint {
-   light_flag_is_dynamic = 0b1,
+   light_flag_none        = 0b0,
+   light_flag_is_dynamic  = 0b1,
+   light_flag_has_texture = 0b10,
 };
 
 struct light_description {
@@ -38,6 +40,13 @@ struct light_region_description {
    uint padding;
 };
 
+struct light_texture_description {
+   float4x4 texture_from_world;
+   uint texture_index;
+   uint texture_clamp;
+   uint2 pad;
+};
+
 struct light_constant_buffer {
    uint light_tiles_width;
    uint light_tiles_index;
@@ -48,15 +57,17 @@ struct light_constant_buffer {
    float3 ground_ambient_color;
    uint padding2;
 
-   float3 global_light1_directionWS;
-   bool   global_light1_is_dynamic;
-   float3 global_light1_color;
-   uint   global_light1_has_shadows;
+   float3                    global_light1_directionWS;
+   light_flags               global_light1_flags;
+   float3                    global_light1_color;
+   uint                      global_light1_has_shadows;
+   light_texture_description global_light1_texture;
 
-   float3 global_light2_directionWS;
-   bool   global_light2_is_dynamic;
-   float3 global_light2_color;
-   uint   padding3;
+   float3                    global_light2_directionWS;
+   light_flags               global_light2_flags;
+   float3                    global_light2_color;
+   uint                      global_light2_pad0;
+   light_texture_description global_light2_texture;
 
    float4x4 shadow_cascade_transforms[4];
    float2 shadow_map_resolution;
@@ -64,6 +75,7 @@ struct light_constant_buffer {
 
    light_description lights[MAX_LIGHTS];
    light_region_description light_regions[MAX_LIGHTS];
+   light_texture_description light_textures[MAX_LIGHTS];
 };
 
 struct calculate_light_inputs {
@@ -305,13 +317,43 @@ float3 calculate_lighting(calculate_light_inputs input)
          light_info light_info = get_light_info(light, light_index, input);
 
          if (input.receive_static_light || (light.flags & light_flag_is_dynamic)) {
-            total_light += calculate_light(input, light_info);
+            float3 light_sample = calculate_light(input, light_info);
+
+            if (light.flags & light_flag_has_texture) {
+               light_texture_description texture_desc = light_constants.light_textures[light_index];
+
+               float4 positionTS = mul(texture_desc.texture_from_world, float4(input.positionWS, 1.0));
+               positionTS.xyz /= positionTS.w;
+
+               if (light.type == light_type::point_) {
+                  TextureCube light_texture = TextureCubeHeap[texture_desc.texture_index];
+
+                  if (texture_desc.texture_clamp) {
+                     light_sample *= light_texture.Sample(sampler_anisotropic_clamp, positionTS.xyz).xyz;
+                  }
+                  else {
+                     light_sample *= light_texture.Sample(sampler_anisotropic_wrap, positionTS.xyz).xyz;
+                  }
+               }
+               else {
+                  Texture2D light_texture = Texture2DHeap[texture_desc.texture_index];
+
+                  if (texture_desc.texture_clamp) {
+                     light_sample *= light_texture.Sample(sampler_anisotropic_clamp, positionTS.xy).xyz;
+                  }
+                  else {
+                     light_sample *= light_texture.Sample(sampler_anisotropic_wrap, positionTS.xy).xyz;
+                  }
+               }
+            }
+
+            total_light += light_sample;
          }
       }
    }
    
    
-   if (input.receive_static_light || light_constants.global_light1_is_dynamic) {
+   if (input.receive_static_light || (light_constants.global_light1_flags & light_flag_is_dynamic)) {
       float shadow = 1.0;
 
       if (light_constants.global_light1_has_shadows) {
@@ -326,10 +368,28 @@ float3 calculate_lighting(calculate_light_inputs input)
       const float  NdotH = saturate(dot(input.normalWS, half_vectorWS));
       const float3 specular = pow(NdotH, specular_exponent) * input.specular_color;
 
-      total_light += (diffuse + specular) * light_constants.global_light1_color * shadow;
+      float3 light_sample = (diffuse + specular) * light_constants.global_light1_color * shadow;
+
+      if (light_constants.global_light1_flags & light_flag_has_texture) {
+         light_texture_description texture_desc = light_constants.global_light1_texture;
+
+         float4 positionTS = mul(texture_desc.texture_from_world, float4(input.positionWS, 1.0));
+         positionTS.xyz /= positionTS.w;
+
+         Texture2D light_texture = Texture2DHeap[texture_desc.texture_index];
+
+         if (texture_desc.texture_clamp) {
+            light_sample *= light_texture.Sample(sampler_anisotropic_clamp, positionTS.xy).xyz;
+         }
+         else {
+            light_sample *= light_texture.Sample(sampler_anisotropic_wrap, positionTS.xy).xyz;
+         }
+      }
+
+      total_light += light_sample;
    }
    
-   if (input.receive_static_light || light_constants.global_light2_is_dynamic) {
+   if (input.receive_static_light || (light_constants.global_light2_flags & light_flag_is_dynamic)) {
       const float NdotL = saturate(dot(input.normalWS, light_constants.global_light2_directionWS));
 
       const float3 diffuse = NdotL * input.diffuse_color;
@@ -338,7 +398,25 @@ float3 calculate_lighting(calculate_light_inputs input)
       const float  NdotH = saturate(dot(input.normalWS, half_vectorWS));
       const float3 specular = pow(NdotH, specular_exponent) * input.specular_color;
 
-      total_light += (diffuse + specular) * light_constants.global_light2_color;
+      float3 light_sample = (diffuse + specular) * light_constants.global_light2_color;
+
+      if (light_constants.global_light2_flags & light_flag_has_texture) {
+         light_texture_description texture_desc = light_constants.global_light2_texture;
+
+         float4 positionTS = mul(texture_desc.texture_from_world, float4(input.positionWS, 1.0));
+         positionTS.xyz /= positionTS.w;
+
+         Texture2D light_texture = Texture2DHeap[texture_desc.texture_index];
+
+         if (texture_desc.texture_clamp) {
+            light_sample *= light_texture.Sample(sampler_anisotropic_clamp, positionTS.xy).xyz;
+         }
+         else {
+            light_sample *= light_texture.Sample(sampler_anisotropic_wrap, positionTS.xy).xyz;
+         }
+      }
+
+      total_light += light_sample;
    }
 
    return total_light;

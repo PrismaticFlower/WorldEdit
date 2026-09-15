@@ -64,6 +64,20 @@ inline auto orthonormal_basis(float3 normal) noexcept -> float3x3
 
 auto inverse(const float4x4& matrix) -> float4x4;
 
+/// @brief Fast inverse of a matrix that represents only a rotation and translation. Invalid if the matrix represents any other kind of transform.
+/// @param matrix The matrix.
+/// @return The inverse of the matrix.
+inline auto inverse_rotation_translation(const float4x4& matrix) -> float4x4
+{
+   float4x4 inverse_matrix = {{matrix[0].x, matrix[1].x, matrix[2].x, 0.0f},
+                              {matrix[0].y, matrix[1].y, matrix[2].y, 0.0f},
+                              {matrix[0].z, matrix[1].z, matrix[2].z, 0.0f},
+                              {0.0f, 0.0f, 0.0f, 1.0f}};
+   inverse_matrix[3] = inverse_matrix * -matrix[3];
+
+   return inverse_matrix;
+}
+
 inline auto look_at_lh(const float3& eye_position, const float3& focus_position,
                        const float3& up_direction) noexcept -> float4x4
 {
@@ -91,6 +105,21 @@ inline auto make_rotation_matrix_from_euler(const float3& euler) noexcept -> flo
             sin.y * sin.z + cos.z * cos.y * sin.x, 0.0f}, //
            {cos.x * sin.y, -sin.x, cos.x * cos.y, 0.0f},  //
            {0.0f, 0.0f, 0.0f, 1.0f}};
+}
+
+inline auto make_direction_transform(const float3& forward, const float3& up,
+                                     const float3& position) noexcept -> float4x4
+{
+   const float3 z_axis = normalize(forward);
+   const float3 x_axis = normalize(cross(up, forward));
+   const float3 y_axis = cross(z_axis, x_axis);
+
+   return {
+      {x_axis, 0.0f},
+      {y_axis, 0.0f},
+      {z_axis, 0.0f},
+      {position, 1.0f},
+   };
 }
 
 constexpr auto operator*(const float3x3& matrix, const float3& vec) noexcept -> float3
