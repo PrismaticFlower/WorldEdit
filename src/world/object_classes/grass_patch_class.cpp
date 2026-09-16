@@ -1,6 +1,7 @@
 #include "grass_patch_class.hpp"
 
 #include "utility/random_gen.hpp"
+#include "utility/scanf.hpp"
 
 #include "assets/odf/definition.hpp"
 
@@ -16,27 +17,6 @@ using we::string::iequals;
 namespace we::world {
 
 namespace {
-
-void parse(std::string_view str, float& value)
-{
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%f", &value);
-}
-
-void parse(std::string_view str, float& x, float& y)
-{
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%f %f", &x, &y);
-}
-
-void parse(std::string_view str, int& value)
-{
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%i", &value);
-}
 
 auto pack_position(const float3& v) -> std::array<int16, 3>
 {
@@ -82,69 +62,69 @@ grass_patch_class::grass_patch_class(const assets::odf::definition& definition) 
    for (const assets::odf::property& prop : definition.properties) {
 
       if (iequals("MinSize", prop.key)) {
-         parse(prop.value, _min_size);
+         scan(prop.value, _min_size);
       }
       else if (iequals("MaxSize", prop.key)) {
-         parse(prop.value, _max_size);
+         scan(prop.value, _max_size);
       }
       else if (iequals("Alpha", prop.key)) {
-         parse(prop.value, _alpha);
+         scan(prop.value, _alpha);
       }
       else if (iequals("NumParticles", prop.key)) {
-         parse(prop.value, _num_particles);
+         scan(prop.value, _num_particles);
 
          _num_particles = std::max(_num_particles, 0);
       }
       else if (iequals("MaxDistance", prop.key)) {
-         parse(prop.value, _max_distance);
+         scan(prop.value, _max_distance);
       }
       else if (iequals("RadiusFadeMin", prop.key)) {
-         parse(prop.value, _radius_fade_min);
+         scan(prop.value, _radius_fade_min);
       }
       else if (iequals("RadiusFadeMax", prop.key)) {
-         parse(prop.value, _radius_fade_max);
+         scan(prop.value, _radius_fade_max);
       }
       else if (iequals("DarknessMin", prop.key)) {
-         parse(prop.value, _darkness_min);
+         scan(prop.value, _darkness_min);
       }
       else if (iequals("DarknessMax", prop.key)) {
-         parse(prop.value, _darkness_max);
+         scan(prop.value, _darkness_max);
       }
       else if (iequals("NumParts", prop.key)) {
-         parse(prop.value, _num_parts);
+         scan(prop.value, _num_parts);
       }
       else if (iequals("YOffset", prop.key)) {
-         parse(prop.value, _y_offset);
+         scan(prop.value, _y_offset);
       }
       else if (iequals("Texture", prop.key)) {
          _texture = prop.value;
       }
       else if (iequals("BoxSize", prop.key)) {
-         parse(prop.value, _box_sizeX, _box_sizeZ);
+         scan(prop.value, _box_sizeX, _box_sizeZ);
       }
       else if (iequals("FlatHeight", prop.key)) {
-         parse(prop.value, _flat_height_min, _flat_height_max);
+         scan(prop.value, _flat_height_min, _flat_height_max);
       }
       else if (iequals("FlatSizeMultiplier", prop.key)) {
-         parse(prop.value, _flat_size_multiplier);
+         scan(prop.value, _flat_size_multiplier);
       }
       else if (iequals("FlatFaceFactor", prop.key)) {
-         parse(prop.value, _flat_face_factor);
+         scan(prop.value, _flat_face_factor);
       }
       else if (iequals("FlatShadowHeight", prop.key)) {
-         parse(prop.value, _flat_shadow_height);
+         scan(prop.value, _flat_shadow_height);
       }
       else if (iequals("FlatGrassSwing", prop.key)) {
          _flat_grass_swing = true;
       }
       else if (iequals("FlatCount", prop.key)) {
-         parse(prop.value, _flat_count);
+         scan(prop.value, _flat_count);
       }
       else if (iequals("SkinnyFactor", prop.key)) {
-         parse(prop.value, _skinny_factor);
+         scan(prop.value, _skinny_factor);
       }
       else if (iequals("MaxSkew", prop.key)) {
-         parse(prop.value, _max_skew);
+         scan(prop.value, _max_skew);
       }
       else if (iequals("TransparentType", prop.key)) {
          _transparent = true;

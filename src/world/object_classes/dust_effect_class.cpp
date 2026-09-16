@@ -1,6 +1,7 @@
 #include "dust_effect_class.hpp"
 
 #include "utility/random_gen.hpp"
+#include "utility/scanf.hpp"
 
 #include "assets/odf/definition.hpp"
 
@@ -11,35 +12,6 @@
 using we::string::iequals;
 
 namespace we::world {
-
-void parse(std::string_view str, float& value)
-{
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%f", &value);
-}
-
-void parse(std::string_view str, float3& value)
-{
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%f %f %f", &value.x, &value.y, &value.z);
-}
-
-void parse(std::string_view str, float4& value)
-{
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%f %f %f %f", &value.x, &value.y, &value.z,
-               &value.w);
-}
-
-void parse(std::string_view str, int& value)
-{
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%i", &value);
-}
 
 auto pack_position(const float3& v) -> std::array<int16, 3>
 {
@@ -57,60 +29,60 @@ dust_effect_class::dust_effect_class(const assets::odf::definition& definition) 
 {
    for (const assets::odf::property& prop : definition.properties) {
       if (iequals("MinPos", prop.key)) {
-         parse(prop.value, _min_position);
+         scan(prop.value, _min_position);
       }
       else if (iequals("MaxPos", prop.key)) {
-         parse(prop.value, _max_position);
+         scan(prop.value, _max_position);
       }
       else if (iequals("MinVel", prop.key)) {
-         parse(prop.value, _min_velocity);
+         scan(prop.value, _min_velocity);
       }
       else if (iequals("MaxVel", prop.key)) {
-         parse(prop.value, _max_velocity);
+         scan(prop.value, _max_velocity);
       }
       else if (iequals("MinSize", prop.key)) {
-         parse(prop.value, _min_size);
+         scan(prop.value, _min_size);
       }
       else if (iequals("MaxSize", prop.key)) {
-         parse(prop.value, _max_size);
+         scan(prop.value, _max_size);
       }
       else if (iequals("MinLifeTime", prop.key)) {
-         parse(prop.value, _min_life_time);
+         scan(prop.value, _min_life_time);
       }
       else if (iequals("MaxLifeTime", prop.key)) {
-         parse(prop.value, _max_life_time);
+         scan(prop.value, _max_life_time);
       }
       else if (iequals("Alpha", prop.key)) {
-         parse(prop.value, _color.w);
+         scan(prop.value, _color.w);
       }
       else if (iequals("Color", prop.key)) {
-         parse(prop.value, _color);
+         scan(prop.value, _color);
       }
       else if (iequals("NumParticles", prop.key)) {
-         parse(prop.value, _num_particles);
+         scan(prop.value, _num_particles);
 
          _num_particles = std::max(_num_particles, 0);
       }
       else if (iequals("MinDistance", prop.key)) {
-         parse(prop.value, _min_distance);
+         scan(prop.value, _min_distance);
       }
       else if (iequals("MaxDistance", prop.key)) {
-         parse(prop.value, _max_distance);
+         scan(prop.value, _max_distance);
       }
       else if (iequals("RadiusFadeMin", prop.key)) {
-         parse(prop.value, _radius_fade_min);
+         scan(prop.value, _radius_fade_min);
       }
       else if (iequals("RadiusFadeMax", prop.key)) {
-         parse(prop.value, _radius_fade_max);
+         scan(prop.value, _radius_fade_max);
       }
       else if (iequals("HeightScale", prop.key)) {
-         parse(prop.value, _height_scale);
+         scan(prop.value, _height_scale);
       }
       else if (iequals("Texture", prop.key)) {
          _texture = prop.value;
       }
       else if (iequals("CameraDistance", prop.key)) {
-         parse(prop.value, _camera_distance);
+         scan(prop.value, _camera_distance);
       }
    }
 

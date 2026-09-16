@@ -1,6 +1,7 @@
 #include "leaf_patch_class.hpp"
 
 #include "utility/random_gen.hpp"
+#include "utility/scanf.hpp"
 
 #include "assets/odf/definition.hpp"
 
@@ -16,63 +17,6 @@ using we::string::iequals;
 namespace we::world {
 
 namespace {
-
-void parse(std::string_view str, float& value)
-{
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%f", &value);
-}
-
-void parse(std::string_view str, float& x, float& y)
-{
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%f %f", &x, &y);
-}
-
-void parse(std::string_view str, float3& value)
-{
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%f %f %f", &value.x, &value.y, &value.z);
-}
-
-void parse(std::string_view str, double& value)
-{
-   float intermediate = static_cast<float>(value);
-
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%f", &intermediate);
-
-   value = intermediate;
-}
-
-void parse(std::string_view str, int& value)
-{
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%i", &value);
-}
-
-void parse(std::string_view str, int& x, int& y)
-{
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%i %i", &x, &y);
-}
-
-void parse(std::string_view str, uint8& value)
-{
-   int intermediate = value;
-
-   std::string buffer{str};
-
-   std::sscanf(buffer.c_str(), "%i", &intermediate);
-
-   value = static_cast<uint8>(intermediate);
-}
 
 auto pack_position(const float3& v) -> std::array<int16, 3>
 {
@@ -105,52 +49,52 @@ leaf_patch_class::leaf_patch_class(const assets::odf::definition& definition) no
 {
    for (const assets::odf::property& prop : definition.properties) {
       if (iequals("MaxFallingLeaves", prop.key)) {
-         parse(prop.value, _max_falling_leaves);
+         scan(prop.value, _max_falling_leaves);
 
          _max_falling_leaves = std::min(_max_falling_leaves, uint8{50});
       }
       else if (iequals("MaxScatterBirds", prop.key)) {
-         parse(prop.value, _max_scatter_birds);
+         scan(prop.value, _max_scatter_birds);
 
          _max_scatter_birds = std::min(_max_scatter_birds, uint8{5});
       }
       else if (iequals("Radius", prop.key)) {
-         parse(prop.value, _radius);
+         scan(prop.value, _radius);
       }
       else if (iequals("HeightScale", prop.key)) {
-         parse(prop.value, _height_scale);
+         scan(prop.value, _height_scale);
       }
       else if (iequals("Height", prop.key)) {
-         parse(prop.value, _height);
+         scan(prop.value, _height);
       }
       else if (iequals("Seed", prop.key)) {
-         parse(prop.value, _seed);
+         scan(prop.value, _seed);
       }
       else if (iequals("NumParticles", prop.key)) {
-         parse(prop.value, _num_particles);
+         scan(prop.value, _num_particles);
 
          _num_particles = std::max(_num_particles, 0);
       }
       else if (iequals("Offset", prop.key)) {
-         parse(prop.value, _offset);
+         scan(prop.value, _offset);
       }
       else if (iequals("MinSize", prop.key)) {
-         parse(prop.value, _min_size);
+         scan(prop.value, _min_size);
       }
       else if (iequals("MaxSize", prop.key)) {
-         parse(prop.value, _max_size);
+         scan(prop.value, _max_size);
       }
       else if (iequals("Alpha", prop.key)) {
-         parse(prop.value, _alpha);
+         scan(prop.value, _alpha);
       }
       else if (iequals("MaxDistance", prop.key)) {
-         parse(prop.value, _max_distance);
+         scan(prop.value, _max_distance);
       }
       else if (iequals("ConeHeight", prop.key)) {
-         parse(prop.value, _cone_height);
+         scan(prop.value, _cone_height);
       }
       else if (iequals("BoxSize", prop.key)) {
-         parse(prop.value, _box_size);
+         scan(prop.value, _box_size);
 
          _type = leaf_patch_type::box;
       }
@@ -158,33 +102,33 @@ leaf_patch_class::leaf_patch_class(const assets::odf::definition& definition) no
          _texture = prop.value;
       }
       else if (iequals("DarknessMin", prop.key)) {
-         parse(prop.value, _darkness_min);
+         scan(prop.value, _darkness_min);
       }
       else if (iequals("DarknessMax", prop.key)) {
-         parse(prop.value, _darkness_max);
+         scan(prop.value, _darkness_max);
       }
       else if (iequals("NumParts", prop.key)) {
-         parse(prop.value, _num_parts);
+         scan(prop.value, _num_parts);
       }
       else if (iequals("Vine", prop.key)) {
-         parse(prop.value, _vineX, _vineZ);
+         scan(prop.value, _vineX, _vineZ);
 
          _type = leaf_patch_type::vine;
       }
       else if (iequals("VineLength", prop.key)) {
-         parse(prop.value, _vine_lengthX, _vine_lengthZ);
+         scan(prop.value, _vine_lengthX, _vine_lengthZ);
       }
       else if (iequals("VineSpread", prop.key)) {
-         parse(prop.value, _vine_spread);
+         scan(prop.value, _vine_spread);
       }
       else if (iequals("WiggleSpeed", prop.key)) {
-         parse(prop.value, _wiggle_speed);
+         scan(prop.value, _wiggle_speed);
       }
       else if (iequals("WiggleAmount", prop.key)) {
-         parse(prop.value, _wiggle_amount);
+         scan(prop.value, _wiggle_amount);
       }
       else if (iequals("NumVisible", prop.key)) {
-         parse(prop.value, _num_visible);
+         scan(prop.value, _num_visible);
       }
    }
 
