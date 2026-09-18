@@ -518,7 +518,7 @@ void world_edit::ui_show_terrain_editor() noexcept
 
             if (config.brush_mode == terrain_brush_mode::pull_towards or
                 config.brush_mode == terrain_brush_mode::blend) {
-               ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f,
+               ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 10.0f,
                                   "%.2f", ImGuiSliderFlags_NoRoundToFormat);
             }
 
