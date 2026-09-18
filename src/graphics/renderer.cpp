@@ -3280,7 +3280,9 @@ void renderer_impl::draw_interaction_targets(
                                  {0.0f, 0.0f, bbox_sizeOS.z, 0.0f},
                                  {bbox_centreOS, 1.0f}};
 
-            _meta_draw_batcher.add_box_outline_solid(world_from_object * scale,
+            _meta_draw_batcher.add_box_outline_solid(billboard_patch.world_from_object(
+                                                        world_from_object) *
+                                                        scale,
                                                      {color, 1.0f});
          } break;
          case world::object_class_type::light: {
@@ -4698,9 +4700,12 @@ void renderer_impl::build_world_mesh_list(
       if (object_class.flags.is_complex) [[unlikely]] {
          switch (object_class.flags.complex_type) {
          case world::object_class_type::billboard_patch: {
-            _billboard_patches.add_billboard_patch(world_classes.get_billboard_patch_class(
-                                                      class_handle),
-                                                   world_from_object,
+            const world::billboard_patch_class& billboard_patch =
+               world_classes.get_billboard_patch_class(class_handle);
+
+            _billboard_patches.add_billboard_patch(billboard_patch,
+                                                   billboard_patch.world_from_object(
+                                                      world_from_object),
                                                    _dynamic_buffer_allocator);
          } break;
          case world::object_class_type::light: {

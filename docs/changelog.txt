@@ -5,6 +5,8 @@
 
 - Increased slider range for Pull Towards and Blend terrain brush modes to [0, 10].
 
+- Fixed attached grass and leaf patches and dust effects not having the new correct rotation handling.
+
 0.168
 
 - Added Dust Effect support to the editor. ODFs with the `dusteffect` class label will now be shown as they would appear ingame, almost. Unlike leaf and grass patches dust effects continously spawn particles so the exact ordering of particles will not be a truly accurate preview, much like grass patches. Selection for these objects is based on the bounds defined in the ODF. Camera relative dust effects (created by defining `CameraDistance` to be > 0.0 in the .odf) are not supported and will appear as regular dust effects.
