@@ -11,6 +11,8 @@ struct graphics {
 
    bool animate_billboard_patches = true;
 
+   bool animate_object_lights = true;
+
    float world_brightness = 0.0f;
 
    float3 path_node_color = {0.15f, 1.0f, 0.3f};

@@ -6,6 +6,7 @@
 #include "object_classes/dust_effect_class.hpp"
 #include "object_classes/grass_patch_class.hpp"
 #include "object_classes/leaf_patch_class.hpp"
+#include "object_classes/light_class.hpp"
 
 #include "assets/asset_libraries.hpp"
 #include "assets/msh/default_missing_scene.hpp"
@@ -94,6 +95,10 @@ struct object_class_library::impl {
       for (const uint32 class_index : _leaf_patch_class_index) {
          _billboard_patch_class_pool[class_index]->update(delta_time);
       }
+
+      for (const uint32 class_index : _light_class_index) {
+         _light_class_pool[class_index]->update(delta_time);
+      }
    }
 
    void clear() noexcept
@@ -104,6 +109,9 @@ struct object_class_library::impl {
 
       _billboard_patch_class_pool.clear();
       _leaf_patch_class_index.clear();
+
+      _light_class_pool.clear();
+      _light_class_index.clear();
 
       _attached_objects_pool.clear();
       _attached_objects_index.clear();
@@ -147,6 +155,26 @@ struct object_class_library::impl {
          *assets::odf::default_object_class_definition()};
 
       return default_leaf_patch_class;
+   }
+
+   auto get_light_class(const object_class_handle packed_handle) const noexcept
+      -> const light_class&
+   {
+      const handle_unpacked handle = unpack_handle(packed_handle);
+
+      [[likely]] if (handle.index < _class_pool.size() and
+                     handle.index < _light_class_pool.size()) {
+         const entry& entry = _class_pool[handle.index];
+
+         [[likely]] if (entry.handle == handle) {
+            return *_light_class_pool[handle.index];
+         }
+      }
+
+      const static light_class default_light_class{
+         *assets::odf::default_object_class_definition()};
+
+      return default_light_class;
    }
 
    auto get_attached_objects(const object_class_handle packed_handle) const noexcept
@@ -245,6 +273,11 @@ struct object_class_library::impl {
                   std::erase(_leaf_patch_class_index, handle.index);
                }
 
+               if (handle.index < _light_class_pool.size()) {
+                  _light_class_pool[handle.index] = nullptr;
+                  std::erase(_light_class_index, handle.index);
+               }
+
                if (handle.index < _attached_objects_pool.size()) {
                   for (const object_attached& object :
                        _attached_objects_pool[handle.index]) {
@@ -325,6 +358,11 @@ private:
          std::erase(_leaf_patch_class_index, class_index);
       }
 
+      if (class_index < _light_class_pool.size()) {
+         _light_class_pool[class_index] = nullptr;
+         std::erase(_light_class_index, class_index);
+      }
+
       if (class_index < _attached_objects_pool.size()) {
          for (const object_attached& object : _attached_objects_pool[class_index]) {
             free(object.class_handle);
@@ -401,6 +439,18 @@ private:
          _billboard_patch_class_pool[class_index] =
             std::make_unique<dust_effect_class>(*cls.definition);
          _leaf_patch_class_index.push_back(class_index);
+      }
+      else if (string::iequals(cls.definition->header.class_label, "light")) {
+         cls.flags.is_complex = true;
+         cls.flags.complex_type = object_class_type::light;
+
+         if (_light_class_pool.size() <= class_index) {
+            _light_class_pool.resize(class_index + 1);
+         }
+
+         _light_class_pool[class_index] =
+            std::make_unique<light_class>(*cls.definition);
+         _light_class_index.push_back(class_index);
       }
       else {
          std::vector<object_attached> attached_objects;
@@ -483,6 +533,10 @@ private:
       pinned_vector_init{.max_size = max_object_classes, .initial_capacity = 1024};
    std::vector<uint32> _leaf_patch_class_index;
 
+   pinned_vector<std::unique_ptr<light_class>> _light_class_pool =
+      pinned_vector_init{.max_size = max_object_classes, .initial_capacity = 1024};
+   std::vector<uint32> _light_class_index;
+
    pinned_vector<std::vector<object_attached>> _attached_objects_pool =
       pinned_vector_init{.max_size = max_object_classes, .initial_capacity = 1024};
    std::vector<uint32> _attached_objects_index;
@@ -545,6 +599,12 @@ auto object_class_library::get_billboard_patch_class(const object_class_handle h
    -> const billboard_patch_class&
 {
    return _impl->get_billboard_patch_class(handle);
+}
+
+auto object_class_library::get_light_class(const object_class_handle handle) const noexcept
+   -> const light_class&
+{
+   return _impl->get_light_class(handle);
 }
 
 auto object_class_library::get_attached_objects(const object_class_handle handle) const noexcept

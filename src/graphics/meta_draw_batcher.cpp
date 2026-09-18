@@ -322,18 +322,18 @@ void meta_draw_batcher::add_line_overlay(const float3& a, const uint32 color_a,
    _lines_overlay.emplace_back(a, color_a, b, color_b);
 }
 
-void meta_draw_batcher::add_cricle_icon(const float3& positionVS,
+void meta_draw_batcher::add_cricle_icon(const float3& position,
                                         const float radius, const float3& color)
 {
-   _circle_icons.emplace_back(positionVS, radius, color);
+   _circle_icons.emplace_back(position, radius, color);
 }
 
-void meta_draw_batcher::add_light_icon(const float3& positionVS,
-                                       const float size, const float3& color)
+void meta_draw_batcher::add_light_icon(const float3& position, const float size,
+                                       const float3& color)
 {
-   add_cricle_icon(positionVS, size * 0.25f, color);
+   add_cricle_icon(position, size * 0.25f, color);
 
-   _light_icons.emplace_back(positionVS, size * 0.5f, color);
+   _light_icons.emplace_back(position, size * 0.5f, color);
 }
 
 void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,

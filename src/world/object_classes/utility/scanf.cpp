@@ -79,4 +79,11 @@ auto scan(std::string_view str, uint8& value) -> int
    return scanned;
 }
 
+auto scan(std::string_view str, uint32& r, uint32& g, uint32& b, uint32& a) -> int
+{
+   std::string buffer{str};
+
+   return std::sscanf(buffer.c_str(), "%u %u %u %u", &r, &g, &b, &a);
+}
+
 }

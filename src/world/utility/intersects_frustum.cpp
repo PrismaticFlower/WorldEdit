@@ -3,6 +3,7 @@
 #include "../object_class.hpp"
 #include "../object_class_library.hpp"
 #include "../object_classes/billboard_patch_class.hpp"
+#include "../object_classes/light_class.hpp"
 
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
@@ -25,6 +26,29 @@ bool intersects(const frustum& frustumWS, const object& object,
                                                                    object.position));
 
          return intersects(frustumOS, billboard_patch.bbox());
+      } break;
+      case object_class_type::light: {
+         const light_class& light =
+            object_classes.get_light_class(object.class_handle);
+         const light_class_light_description& description = light.light_description();
+
+         switch (description.type) {
+         case light_class_type::point: {
+            return intersects(frustumWS, object.position, description.range);
+         } break;
+         case light_class_type::spot: {
+            const float radius =
+               description.tan_half_outer_cone_angle * description.range;
+
+            math::bounding_box bbox{.min = {-radius, -radius, 0.0f},
+                                    .max = {radius, radius, description.range}};
+
+            bbox = object.rotation * bbox + object.position;
+
+            return intersects(frustumWS, bbox);
+         } break;
+         }
+
       } break;
       }
 

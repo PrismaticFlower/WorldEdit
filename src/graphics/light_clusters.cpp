@@ -11,6 +11,8 @@
 #include "utility/enum_bitflags.hpp"
 #include "utility/string_icompare.hpp"
 
+#include "world/object_classes/light_class.hpp"
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -119,7 +121,6 @@ enum light_flags : uint32 {
    none = 0b0,
    is_dynamic = 0b1,
    has_texture = 0b10,
-   texture_clamp = 0b100,
 };
 
 constexpr bool marked_as_enum_bitflag(light_flags)
@@ -462,9 +463,119 @@ struct light_clusters::impl {
       init_proxy_geometry(device, copy_command_list_pool);
    }
 
+   void update(const bool animate_lights)
+   {
+      _animate_object_lights = animate_lights;
+
+      _object_point_lights.clear();
+      _object_spot_lights.clear();
+   }
+
    void update_render_resolution(uint32 width, uint32 height)
    {
       update_render_resolution(width, height, true);
+   }
+
+   void add_object_light(const float4x4& world_from_object,
+                         const world::light_class& light_class)
+   {
+      for (const std::string& texture : light_class.textures()) {
+         _textures.try_get(texture, world_texture_dimension::_2d);
+      }
+
+      const world::light_class_light_description& description =
+         light_class.light_description();
+
+      if (description.range <= 0.0f) return;
+
+      switch (description.type) {
+      case world::light_class_type::point: {
+         object_point_light light = {
+            .positionWS = description.positionWS(world_from_object),
+            .range = description.range,
+            .color = _animate_object_lights ? description.color : description.fixed_color,
+         };
+
+         if (not description.flags.static_) {
+            light.flags |= light_flags::is_dynamic;
+         }
+
+         if (not(_animate_object_lights ? description.texture : description.fixed_texture)
+                   .empty()) {
+            const std::optional<uint32> texture =
+               _textures.try_get(_animate_object_lights ? description.texture
+                                                        : description.fixed_texture,
+                                 world_texture_dimension::cube);
+
+            if (texture) {
+               light.flags |= light_flags::has_texture;
+               light.texture_index = *texture;
+               light.texture_clamp = true;
+
+               const float inv_range = 1.0f / light.range;
+
+               light.texture_from_world = {
+                  {inv_range, 0.0f, 0.0f, 0.0f},
+                  {0.0f, inv_range, 0.0f, 0.0f},
+                  {0.0f, 0.0f, inv_range, 0.0f},
+                  {-light.positionWS * inv_range, 1.0f},
+               };
+            }
+         }
+
+         _object_point_lights.push_back(light);
+      } break;
+      case world::light_class_type::spot: {
+         object_spot_light light = {
+            .positionWS = description.positionWS(world_from_object),
+            .range = description.range,
+            .color = _animate_object_lights ? description.color : description.fixed_color,
+            .directionWS = description.directionWS(world_from_object),
+            .cos_half_outer_cone_angle = description.cos_half_outer_cone_angle,
+            .cos_half_inner_cone_angle = description.cos_half_inner_cone_angle,
+            .tan_half_outer_cone_angle = description.tan_half_outer_cone_angle,
+         };
+
+         if (not description.flags.static_) {
+            light.flags |= light_flags::is_dynamic;
+         }
+
+         if (not(_animate_object_lights ? description.texture : description.fixed_texture)
+                   .empty()) {
+            const std::optional<uint32> texture =
+               _textures.try_get(_animate_object_lights ? description.texture
+                                                        : description.fixed_texture,
+                                 world_texture_dimension::_2d);
+
+            if (texture) {
+               light.flags |= light_flags::has_texture;
+               light.texture_index = *texture;
+               light.texture_clamp = true;
+
+               const float4x4 world_from_light =
+                  std::abs(dot(light.directionWS, {0.0f, 1.0f, 0.0f})) <= 0.99f
+                     ? make_direction_transform(light.directionWS,
+                                                {0.0f, 1.0f, 0.0f}, light.positionWS)
+                     : make_direction_transform(light.directionWS,
+                                                {1.0f, 0.0f, 0.0f}, light.positionWS);
+               const float4x4 light_from_world =
+                  inverse_rotation_translation(world_from_light);
+
+               float4x4 texture_from_light;
+
+               texture_from_light[0].x =
+                  (1.0f / light.tan_half_outer_cone_angle) * 0.5f;
+               texture_from_light[1].y = texture_from_light[0].x;
+               texture_from_light[2] = {0.5f, 0.5f, 0.0f, 1.0f};
+               texture_from_light[3] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+               light.texture_from_world = texture_from_light * light_from_world;
+            };
+         }
+
+         _object_spot_lights.push_back(light);
+      } break;
+      }
    }
 
    void prepare_lights(const camera& view_camera, const frustum& view_frustum,
@@ -1788,6 +1899,75 @@ private:
             }
          }
       }
+
+      for (const object_point_light& light : _object_point_lights) {
+         if (not intersects(view_frustum, light.positionWS, light.range)) {
+            continue;
+         }
+
+         const float light_distance =
+            distance(view_camera.position(), light.positionWS) - light.range;
+
+         if (light_description* added_light = try_add_light(light_distance);
+             added_light) {
+            *added_light = {
+               .type = light_type::point,
+               .flags = light.flags,
+
+               .point =
+                  {
+                     .positionWS = light.positionWS,
+                     .range = light.range,
+                     .color = light.color,
+                  },
+
+               .texture_index = light.texture_index,
+               .texture_clamp = light.texture_clamp,
+               .texture_from_world = light.texture_from_world,
+            };
+         }
+      }
+
+      for (const object_spot_light& light : _object_spot_lights) {
+         const float outer_cone_radius = light.range * light.tan_half_outer_cone_angle;
+         const float3& light_directionWS = light.directionWS;
+         const float3 cone_baseWS = light.positionWS + light_directionWS * light.range;
+         const float3 e =
+            outer_cone_radius * sqrt(1.0f - light_directionWS * light_directionWS);
+
+         const math::bounding_box bbox{.min = min(cone_baseWS - e, light.positionWS),
+                                       .max = max(cone_baseWS + e, light.positionWS)};
+
+         if (not intersects(view_frustum, bbox)) {
+            continue;
+         }
+
+         const float light_distance_conservative =
+            distance(view_camera.position(), light.positionWS) - light.range;
+
+         if (light_description* added_light = try_add_light(light_distance_conservative);
+             added_light) {
+            *added_light = {
+               .type = light_type::spot,
+               .flags = light.flags,
+
+               .spot =
+                  {
+                     .positionWS = light.positionWS,
+                     .range = light.range,
+                     .color = light.color,
+                     .directionWS = -light_directionWS,
+                     .spot_outer_param = light.cos_half_outer_cone_angle,
+                     .spot_inner_param = 1.0f / (light.cos_half_inner_cone_angle -
+                                                 light.cos_half_outer_cone_angle),
+                  },
+
+               .texture_index = light.texture_index,
+               .texture_clamp = light.texture_clamp,
+               .texture_from_world = light.texture_from_world,
+            };
+         }
+      }
    }
 
    auto try_add_light(float distance) noexcept -> light_description*
@@ -1877,16 +2057,42 @@ private:
 
    uint32 _lights_allocated = 0;
 
-   struct light_texture {
-      lowercase_string name;
-
-      std::shared_ptr<const world_texture> texture;
-      std::shared_ptr<const world_texture_load_token> load_token;
-   };
-
    light_textures _textures;
 
    bool _has_sun_shadows = false;
+
+   struct object_point_light {
+      light_flags flags = light_flags::none;
+
+      float3 positionWS;
+      float range;
+      float3 color;
+
+      uint32 texture_index;
+      uint32 texture_clamp;
+      float4x4 texture_from_world;
+   };
+
+   struct object_spot_light {
+      light_flags flags = light_flags::none;
+
+      float3 positionWS;
+      float range;
+      float3 color;
+      float3 directionWS;
+      float cos_half_outer_cone_angle = 0.0f;
+      float cos_half_inner_cone_angle = 0.0f;
+      float tan_half_outer_cone_angle = 0.0f;
+
+      uint32 texture_index;
+      uint32 texture_clamp;
+      float4x4 texture_from_world;
+   };
+
+   bool _animate_object_lights = true;
+
+   std::vector<object_point_light> _object_point_lights;
+   std::vector<object_spot_light> _object_spot_lights;
 
    std::array<shadow_ortho_camera, sun_cascade_count> _sun_shadow_cascades;
    std::array<blocks::view, sun_cascade_count> _sun_shadow_blocks_view;
@@ -1904,9 +2110,20 @@ light_clusters::light_clusters(gpu::device& device, texture_manager& texture_man
 
 light_clusters::~light_clusters() = default;
 
+void light_clusters::update(const bool animate_lights)
+{
+   _impl->update(animate_lights);
+}
+
 void light_clusters::update_render_resolution(uint32 width, uint32 height)
 {
    _impl->update_render_resolution(width, height);
+}
+
+void light_clusters::add_object_light(const float4x4& world_from_object,
+                                      const world::light_class& light_class)
+{
+   _impl->add_object_light(world_from_object, light_class);
 }
 
 void light_clusters::prepare_lights(
@@ -1952,5 +2169,4 @@ void light_clusters::process_updated_textures(const updated_textures& updated) n
 {
    _impl->process_updated_textures(updated);
 }
-
 }

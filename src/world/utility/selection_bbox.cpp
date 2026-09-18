@@ -5,6 +5,7 @@
 #include "../blocks/utility/find.hpp"
 #include "../object_class.hpp"
 #include "../object_classes/billboard_patch_class.hpp"
+#include "../object_classes/light_class.hpp"
 
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
@@ -41,6 +42,41 @@ auto selection_bbox_for_camera(const world& world,
                      billboard_patch.bbox();
 
                   selection_bbox = math::combine(bbox, selection_bbox);
+               } break;
+               case object_class_type::light: {
+                  const light_class& light =
+                     object_classes.get_light_class(object->class_handle);
+                  const light_class_light_description& description =
+                     light.light_description();
+
+                  switch (description.type) {
+                  case light_class_type::point: {
+                     const math::bounding_box bbox = {.min = object->position -
+                                                             description.range,
+                                                      .max = object->position +
+                                                             description.range};
+
+                     selection_bbox = math::combine(bbox, selection_bbox);
+                  } break;
+                  case light_class_type::spot: {
+                     const float outer_cone_radius =
+                        description.range * description.tan_half_outer_cone_angle;
+                     const float3 light_directionWS =
+                        normalize(object->rotation * float3{0.0f, 0.0f, 1.0f});
+                     const float3 cone_baseWS =
+                        object->position + light_directionWS * description.range;
+                     const float3 e =
+                        outer_cone_radius *
+                        sqrt(1.0f - light_directionWS * light_directionWS);
+
+                     const math::bounding_box bbox = {.min = min(cone_baseWS - e,
+                                                                 object->position),
+                                                      .max = max(cone_baseWS + e,
+                                                                 object->position)};
+
+                     selection_bbox = math::combine(bbox, selection_bbox);
+                  } break;
+                  }
                } break;
                }
             }
@@ -331,6 +367,41 @@ auto selection_metrics_for_move(const world& world,
                      billboard_patch.bbox();
 
                   selection_bbox = math::combine(bbox, selection_bbox);
+               } break;
+               case object_class_type::light: {
+                  const light_class& light =
+                     object_classes.get_light_class(object->class_handle);
+                  const light_class_light_description& description =
+                     light.light_description();
+
+                  switch (description.type) {
+                  case light_class_type::point: {
+                     const math::bounding_box bbox = {.min = object->position -
+                                                             description.range,
+                                                      .max = object->position +
+                                                             description.range};
+
+                     selection_bbox = math::combine(bbox, selection_bbox);
+                  } break;
+                  case light_class_type::spot: {
+                     const float outer_cone_radius =
+                        description.range * description.tan_half_outer_cone_angle;
+                     const float3 light_directionWS =
+                        normalize(object->rotation * float3{0.0f, 0.0f, 1.0f});
+                     const float3 cone_baseWS =
+                        object->position + light_directionWS * description.range;
+                     const float3 e =
+                        outer_cone_radius *
+                        sqrt(1.0f - light_directionWS * light_directionWS);
+
+                     const math::bounding_box bbox = {.min = min(cone_baseWS - e,
+                                                                 object->position),
+                                                      .max = max(cone_baseWS + e,
+                                                                 object->position)};
+
+                     selection_bbox = math::combine(bbox, selection_bbox);
+                  } break;
+                  }
                } break;
                }
             }

@@ -1,6 +1,7 @@
 0.169
 
 - Added support for light textures to the editor's renderer.
+- Added support for object lights to the editor (ODFs with the "light" class label). When attached to an object they will cast light onto the world. Selection for them when placed directly (which is fairly pointless as they don't work without being attached to an object) is based on the range of the light. Support for previewing their flare and lightbeams will come in a future release. Animation of their flicker effects can be turned off using the Animate Object Lights setting.
 
 
 0.168

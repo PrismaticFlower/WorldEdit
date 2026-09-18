@@ -328,6 +328,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
                      new_position.y -= bbox.min.y;
                   } break;
+                  case world::object_class_type::light: {
+                  } break;
                   }
                }
                else {

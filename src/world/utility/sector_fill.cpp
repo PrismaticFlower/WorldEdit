@@ -2,6 +2,7 @@
 
 #include "../object_class.hpp"
 #include "../object_classes/billboard_patch_class.hpp"
+#include "../object_classes/light_class.hpp"
 
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
@@ -127,6 +128,32 @@ auto sector_fill(const sector& sector, const std::span<const object> world_objec
             bbox = billboard_patch.world_from_object(object.rotation, object.position) *
                    billboard_patch.bbox();
          } break;
+         case object_class_type::light: {
+            const light_class& light =
+               object_classes.get_light_class(object.class_handle);
+            const light_class_light_description& description =
+               light.light_description();
+
+            switch (description.type) {
+            case light_class_type::point: {
+               bbox = {.min = object.position - description.range,
+                       .max = object.position + description.range};
+            } break;
+            case light_class_type::spot: {
+               const float outer_cone_radius =
+                  description.range * description.tan_half_outer_cone_angle;
+               const float3 light_directionWS =
+                  normalize(object.rotation * float3{0.0f, 0.0f, 1.0f});
+               const float3 cone_baseWS =
+                  object.position + light_directionWS * description.range;
+               const float3 e = outer_cone_radius *
+                                sqrt(1.0f - light_directionWS * light_directionWS);
+
+               bbox = {.min = min(cone_baseWS - e, object.position),
+                       .max = max(cone_baseWS + e, object.position)};
+            } break;
+            }
+         } break;
          }
       }
       else {
@@ -183,6 +210,31 @@ bool inside_sector(const sector& sector, const object& object,
          bbox = billboard_patch.world_from_object(object.rotation, object.position) *
                 billboard_patch.bbox();
       } break;
+      case object_class_type::light: {
+         const light_class& light =
+            object_classes.get_light_class(object.class_handle);
+         const light_class_light_description& description = light.light_description();
+
+         switch (description.type) {
+         case light_class_type::point: {
+            bbox = {.min = object.position - description.range,
+                    .max = object.position + description.range};
+         } break;
+         case light_class_type::spot: {
+            const float outer_cone_radius =
+               description.range * description.tan_half_outer_cone_angle;
+            const float3 light_directionWS =
+               normalize(object.rotation * float3{0.0f, 0.0f, 1.0f});
+            const float3 cone_baseWS =
+               object.position + light_directionWS * description.range;
+            const float3 e = outer_cone_radius *
+                             sqrt(1.0f - light_directionWS * light_directionWS);
+
+            bbox = {.min = min(cone_baseWS - e, object.position),
+                    .max = max(cone_baseWS + e, object.position)};
+         } break;
+         }
+      } break;
       }
    }
    else {
@@ -203,5 +255,4 @@ bool inside_sector(const sector& sector, const object& object,
                         {object_centre.x, object_centre.z}) or
           inside_sector(sector.points, {sector_min.x, sector_min.z}, bbox);
 }
-
 }

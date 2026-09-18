@@ -16,7 +16,9 @@ namespace we::world {
 
 struct object_class;
 struct object_attached;
+
 struct billboard_patch_class;
+struct light_class;
 
 struct object_class_library {
    explicit object_class_library(assets::libraries_manager& asset_libraries) noexcept;
@@ -45,6 +47,12 @@ struct object_class_library {
    auto get_billboard_patch_class(const object_class_handle handle) const noexcept
       -> const billboard_patch_class&;
 
+   /// @brief Gets the light_class for a handle, if it is associated with one.
+   /// @param handle The handle.
+   /// @return A reference to the light_class or a reference to the default light_class.
+   auto get_light_class(const object_class_handle handle) const noexcept
+      -> const light_class&;
+
    /// @brief Gets the attached objects for a handle for a handle, if it is associated with any.
    /// @param handle The handle.
    /// @return A span to the attached objects or an empty span.
@@ -72,7 +80,7 @@ struct object_class_library {
 private:
    struct impl;
 
-   implementation_storage<impl, 360> _impl;
+   implementation_storage<impl, 424> _impl;
 };
 
 }

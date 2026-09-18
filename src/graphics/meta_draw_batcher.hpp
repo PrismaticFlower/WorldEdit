@@ -60,7 +60,7 @@ struct alignas(16) meta_draw_line_shape {
 static_assert(sizeof(meta_draw_line_shape) == 64);
 
 struct alignas(16) meta_draw_icon {
-   float3 positionVS;
+   float3 position;
    float radius;
    float3 color;
    uint32 pad;
@@ -145,10 +145,9 @@ struct meta_draw_batcher {
    void add_line_overlay(const float3& a, const uint32 color_a, const float3& b,
                          const uint32 color_b);
 
-   void add_cricle_icon(const float3& positionVS, const float radius,
-                        const float3& color);
+   void add_cricle_icon(const float3& position, const float radius, const float3& color);
 
-   void add_light_icon(const float3& positionVS, const float size, const float3& color);
+   void add_light_icon(const float3& position, const float size, const float3& color);
 
    void draw(gpu::graphics_command_list& command_list,
              gpu_virtual_address frame_constant_buffer,

@@ -45,6 +45,7 @@
 #include "world/object_attached.hpp"
 #include "world/object_class_library.hpp"
 #include "world/object_classes/billboard_patch_class.hpp"
+#include "world/object_classes/light_class.hpp"
 #include "world/utility/evaluate_treeline.hpp"
 #include "world/utility/region_properties.hpp"
 #include "world/utility/world_utilities.hpp"
@@ -333,6 +334,7 @@ private:
 
    std::vector<terrain_cut> _terrain_cut_list;
 
+   std::vector<meta_draw_icon> _world_object_light_icons;
    meta_draw_batcher _meta_draw_batcher;
    ai_overlay_batches _ai_overlay_batches;
 
@@ -446,6 +448,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    _thumbnail_manager.update_cpu_cache();
    _billboard_patches.update(camera.world_from_view(), world,
                              settings.animate_billboard_patches);
+   _light_clusters.update(settings.animate_object_lights);
 
    _profiler.show();
 
@@ -704,6 +707,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
    _device.new_frame();
    _dynamic_buffer_allocator.reset(_device.frame_index());
    _billboard_patches.update({}, world, false);
+   _light_clusters.update(false);
 
    const float pi = 3.1415927f;
    const float half_pi = 1.5707964f;
@@ -2754,6 +2758,12 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
+   for (const meta_draw_icon& icon : _world_object_light_icons) {
+      if (intersects(view_frustum, icon.position, icon.radius)) {
+         _meta_draw_batcher.add_light_icon(icon.position, icon.radius, icon.color);
+      }
+   }
+
    for (const auto& line : tool_visualizers.lines_overlay()) {
       _meta_draw_batcher.add_line_overlay(line.v0, line.v0_color, line.v1, line.v1_color);
    }
@@ -2911,6 +2921,14 @@ void renderer_impl::draw_sector_objects(
                _meta_draw_batcher.add_box_outline_solid(world_from_object,
                                                         {settings.sector_object_hightlight_color,
                                                          1.0f});
+            } break;
+            case world::object_class_type::light: {
+               const world::light_class& light_class =
+                  world_classes.get_light_class(object.class_handle);
+
+               _meta_draw_batcher.add_light_icon(object.position,
+                                                 light_class.world_icon_size(),
+                                                 settings.sector_object_hightlight_color);
             } break;
             }
          }
@@ -3265,6 +3283,40 @@ void renderer_impl::draw_interaction_targets(
             _meta_draw_batcher.add_box_outline_solid(world_from_object * scale,
                                                      {color, 1.0f});
          } break;
+         case world::object_class_type::light: {
+            const world::light_class& light_class =
+               world_classes.get_light_class(class_handle);
+            const world::light_class_light_description& description =
+               light_class.light_description();
+
+            const float3 light_positionWS = description.positionWS(world_from_object);
+
+            _meta_draw_batcher.add_light_icon(light_positionWS,
+                                              light_class.world_icon_size(), color);
+
+            switch (description.type) {
+            case world::light_class_type::point: {
+               _meta_draw_batcher.add_sphere_outline_solid(light_positionWS,
+                                                           description.range,
+                                                           float4{color, 1.0f});
+            } break;
+            case world::light_class_type::spot: {
+               const float outer_cone_radius =
+                  description.range * description.tan_half_outer_cone_angle;
+               const float half_range = description.range * 0.5f;
+
+               _meta_draw_batcher.add_cone_outline_solid(
+                  world_from_object *
+                     to_matrix(quaternion{0.707107f, -0.707107f, 0.0f, 0.0f}) *
+                     float4x4{{outer_cone_radius, 0.0f, 0.0f, 0.0f},
+                              {0.0f, half_range, 0.0f, 0.0f},
+                              {0.0f, 0.0f, outer_cone_radius, 0.0f},
+                              {0.0f, -half_range, 0.0f, 1.0f}},
+                  float4{color, 1.0f});
+            } break;
+            }
+
+         } break;
          }
       }
       else {
@@ -3353,6 +3405,13 @@ void renderer_impl::draw_interaction_targets(
                billboard_patch.world_from_object(object.rotation, object.position) * scale;
 
             _meta_draw_batcher.add_box_outline_solid(world_from_object, {color, 1.0f});
+         } break;
+         case world::object_class_type::light: {
+            const world::light_class& light_class =
+               world_classes.get_light_class(object.class_handle);
+
+            _meta_draw_batcher.add_light_icon(object.position,
+                                              light_class.world_icon_size(), color);
          } break;
          }
       }
@@ -4252,6 +4311,16 @@ void renderer_impl::draw_interaction_targets(
                   _meta_draw_batcher.add_box_outline_solid(patch_world_from_object * scale,
                                                            {color, 1.0f});
                } break;
+               case world::object_class_type::light: {
+                  const world::light_class& light_class =
+                     world_classes.get_light_class(class_handle);
+
+                  _meta_draw_batcher.add_light_icon(float3{world_from_object[0].x,
+                                                           world_from_object[0].y,
+                                                           world_from_object[0].z},
+                                                    light_class.world_icon_size(),
+                                                    color);
+               } break;
                }
 
                return;
@@ -4517,11 +4586,11 @@ void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& dr
    }
 
    for (const gizmo_draw_rotation_widget& widget : draw_lists.rotation_widgets) {
-      const float3 positionVS = camera.view_from_world() * widget.positionWS;
+      const float3 position = camera.view_from_world() * widget.positionWS;
 
       const math::bounding_box bboxVS = {
-         .min = positionVS - widget.outer_radius,
-         .max = positionVS + widget.outer_radius,
+         .min = position - widget.outer_radius,
+         .max = position + widget.outer_radius,
       };
 
       struct gizmo_rotation_widget_constants {
@@ -4530,7 +4599,7 @@ void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& dr
          float3 bbox_scaleVS;
          float outer_radius_sq;
 
-         float3 positionVS;
+         float3 position;
          uint32 padding0;
 
          float3 x_axisVS;
@@ -4556,7 +4625,7 @@ void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& dr
                .bbox_scaleVS = (bboxVS.max - bboxVS.min) * 0.5f,
                .outer_radius_sq = widget.outer_radius * widget.outer_radius,
 
-               .positionVS = positionVS,
+               .position = position,
 
                .x_axisVS = float3x3{camera.view_from_world()} * widget.x_axisWS,
                .x_visible = widget.x_visible,
@@ -4601,6 +4670,7 @@ void renderer_impl::build_world_mesh_list(
    std::span<const world::tool_visualizers_ghost> ghost_objects,
    build_world_mesh_list_flags flags)
 {
+   _world_object_light_icons.clear();
    _world_mesh_list.clear();
    _terrain_cut_list.clear();
    _terrain_cut_list.reserve(256);
@@ -4632,6 +4702,12 @@ void renderer_impl::build_world_mesh_list(
                                                       class_handle),
                                                    world_from_object,
                                                    _dynamic_buffer_allocator);
+         } break;
+         case world::object_class_type::light: {
+            const world::light_class& light_class =
+               world_classes.get_light_class(class_handle);
+
+            _light_clusters.add_object_light(world_from_object, light_class);
          } break;
          }
 
@@ -4710,6 +4786,14 @@ void renderer_impl::build_world_mesh_list(
                   billboard_patch,
                   billboard_patch.world_from_object(object.rotation, object.position),
                   _dynamic_buffer_allocator);
+            } break;
+            case world::object_class_type::light: {
+               const world::light_class& light_class =
+                  world_classes.get_light_class(object.class_handle);
+
+               _world_object_light_icons.push_back(
+                  {object.position, light_class.world_icon_size(),
+                   light_class.light_description().fixed_color});
             } break;
             }
 
@@ -4804,6 +4888,18 @@ void renderer_impl::build_world_mesh_list(
                   billboard_patch,
                   billboard_patch.world_from_object(object_rotation, object_positionWS),
                   _dynamic_buffer_allocator);
+            } break;
+            case world::object_class_type::light: {
+               const world::light_class& light_class =
+                  world_classes.get_light_class(object.class_handle);
+
+               const quaternion object_rotation = group.rotation * object.rotation;
+               const float3 object_positionWS =
+                  group.rotation * object.position + group.position;
+
+               _world_object_light_icons.push_back(
+                  {object_positionWS, light_class.world_icon_size(),
+                   light_class.light_description().fixed_color});
             } break;
             }
 
@@ -4901,6 +4997,15 @@ void renderer_impl::build_world_mesh_list(
                                                       ghost.transform),
                                                    _dynamic_buffer_allocator);
          } break;
+         case world::object_class_type::light: {
+            const world::light_class& light_class =
+               world_classes.get_light_class(object->class_handle);
+
+            _world_object_light_icons.push_back(
+               {{ghost.transform[3].x, ghost.transform[3].y, ghost.transform[3].z},
+                light_class.world_icon_size(),
+                light_class.light_description().fixed_color});
+         } break;
          }
 
          continue;
@@ -4981,6 +5086,16 @@ void renderer_impl::build_world_mesh_list(
                                                                world_from_object),
                                                             _dynamic_buffer_allocator);
 
+                  } break;
+                  case world::object_class_type::light: {
+                     const world::light_class& light_class =
+                        world_classes.get_light_class(class_handle);
+
+                     _world_object_light_icons.push_back(
+                        {{world_from_object[3].x, world_from_object[3].y,
+                          world_from_object[3].z},
+                         light_class.world_icon_size(),
+                         light_class.light_description().fixed_color});
                   } break;
                   }
 

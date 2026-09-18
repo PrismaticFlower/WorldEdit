@@ -25,4 +25,6 @@ auto scan(std::string_view str, int& x, int& y) -> int;
 
 auto scan(std::string_view str, uint8& value) -> int;
 
+auto scan(std::string_view str, uint32& r, uint32& g, uint32& b, uint32& a) -> int;
+
 }

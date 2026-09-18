@@ -253,6 +253,11 @@ void show_imgui_editor(settings& settings, bool& open,
                ImGui::SetItemTooltip(
                   "Animated Leaf and Grass patches, and Dust Effects.");
 
+               ImGui::Checkbox("Animate Object Lights",
+                               &settings.graphics.animate_object_lights);
+
+               ImGui::SetItemTooltip("Animated lights attached to objects.");
+
                ImGui::EndTable();
             }
 

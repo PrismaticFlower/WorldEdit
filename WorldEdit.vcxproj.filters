@@ -349,6 +349,7 @@
     <ClCompile Include="src\graphics\shaders\billboard_patch_dustPS.cpp" />
     <ClCompile Include="src\graphics\shaders\billboard_patch_dustVS.cpp" />
     <ClCompile Include="src\world\object_classes\utility\scanf.cpp" />
+    <ClCompile Include="src\world\object_classes\light_class.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -755,6 +756,7 @@
     <ClInclude Include="src\world\object_classes\dust_effect_class.hpp" />
     <ClInclude Include="src\world\object_classes\utility\svscanf.hpp" />
     <ClInclude Include="src\world\object_classes\utility\scanf.hpp" />
+    <ClInclude Include="src\world\object_classes\light_class.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

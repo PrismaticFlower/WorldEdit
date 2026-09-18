@@ -18,6 +18,9 @@ namespace we::world {
 
 enum class object_class_type : uint32 {
    billboard_patch,
+   light,
+
+   // Don't forget to check if the bits for object_class_type::complex_type need increasing if you add to this!
 };
 
 struct object_class_flags {

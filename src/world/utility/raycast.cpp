@@ -2,6 +2,7 @@
 
 #include "../object_class.hpp"
 #include "../object_classes/billboard_patch_class.hpp"
+#include "../object_classes/light_class.hpp"
 
 #include "math/intersectors.hpp"
 #include "math/iq_intersectors.hpp"
@@ -58,7 +59,21 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
                   billboard_patch.world_from_object(object.rotation, object.position) *
                   (ray_originOS + ray_directionOS * hit_distance));
             }
+         } break;
+         case object_class_type::light: {
+            const light_class& light =
+               object_classes.get_light_class(object.class_handle);
 
+            const float intersection =
+               sphIntersect(ray_origin, ray_direction, object.position,
+                            light.world_icon_size());
+
+            if (intersection > 0.0f and intersection < min_distance) {
+               hit = object.id;
+               hit_index = static_cast<uint32>(object_index);
+               min_distance = intersection;
+               surface_normalWS = normalize(ray_origin + ray_direction * intersection);
+            }
          } break;
          }
       }

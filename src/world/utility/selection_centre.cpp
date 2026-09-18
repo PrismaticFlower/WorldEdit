@@ -181,6 +181,10 @@ auto selection_centre_for_env_map(const world& world,
                   selection_centre += ((bbox.max + bbox.min) / 2.0f);
                   selection_axis_count += {1.0f, 1.0f, 1.0f};
                } break;
+               case object_class_type::light: {
+                  selection_centre += object->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+               } break;
                }
             }
             else {

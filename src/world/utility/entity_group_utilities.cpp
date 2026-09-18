@@ -6,6 +6,7 @@
 #include "../blocks/utility/find.hpp"
 #include "../object_class.hpp"
 #include "../object_classes/billboard_patch_class.hpp"
+#include "../object_classes/light_class.hpp"
 
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
@@ -301,6 +302,38 @@ auto entity_group_metrics(const entity_group& group,
 
             ground_distance = std::min(ground_distance, bboxOS.min.y);
             group_bbox = math::combine(group_bbox, bboxGS);
+         } break;
+         case object_class_type::light: {
+            const light_class& light =
+               object_classes.get_light_class(object.class_handle);
+            const light_class_light_description& description =
+               light.light_description();
+
+            switch (description.type) {
+            case light_class_type::point: {
+               const math::bounding_box bbox{.min = object.position -
+                                                    description.range,
+                                             .max = object.position +
+                                                    description.range};
+
+               group_bbox = math::combine(bbox, group_bbox);
+            } break;
+            case light_class_type::spot: {
+               const float outer_cone_radius =
+                  description.range * description.tan_half_outer_cone_angle;
+               const float3 light_directionGS =
+                  normalize(object.rotation * float3{0.0f, 0.0f, 1.0f});
+               const float3 cone_baseGS =
+                  object.position + light_directionGS * description.range;
+               const float3 e = outer_cone_radius *
+                                sqrt(1.0f - light_directionGS * light_directionGS);
+
+               const math::bounding_box bbox{.min = min(cone_baseGS - e, object.position),
+                                             .max = max(cone_baseGS + e, object.position)};
+
+               group_bbox = math::combine(bbox, group_bbox);
+            } break;
+            }
          } break;
          }
       }

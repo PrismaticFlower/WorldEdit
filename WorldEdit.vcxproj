@@ -695,6 +695,7 @@
     <ClCompile Include="src\world\object_classes\dust_effect_class.cpp" />
     <ClCompile Include="src\world\object_classes\grass_patch_class.cpp" />
     <ClCompile Include="src\world\object_classes\leaf_patch_class.cpp" />
+    <ClCompile Include="src\world\object_classes\light_class.cpp" />
     <ClCompile Include="src\world\object_classes\utility\scanf.cpp" />
     <ClCompile Include="src\world\utility\animation.cpp" />
     <ClCompile Include="src\world\utility\barrier_construction.cpp" />
@@ -1114,6 +1115,7 @@
     <ClInclude Include="src\world\object_classes\dust_effect_class.hpp" />
     <ClInclude Include="src\world\object_classes\grass_patch_class.hpp" />
     <ClInclude Include="src\world\object_classes\leaf_patch_class.hpp" />
+    <ClInclude Include="src\world\object_classes\light_class.hpp" />
     <ClInclude Include="src\world\object_classes\utility\random_gen.hpp" />
     <ClInclude Include="src\world\object_classes\utility\scanf.hpp" />
     <ClInclude Include="src\world\object_classes\utility\svscanf.hpp" />

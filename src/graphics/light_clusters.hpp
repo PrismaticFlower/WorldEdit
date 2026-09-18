@@ -24,6 +24,12 @@
 
 #include <memory>
 
+namespace we::world {
+
+struct light_class;
+
+}
+
 namespace we::graphics {
 
 class light_clusters {
@@ -34,7 +40,12 @@ public:
 
    ~light_clusters();
 
+   void update(const bool animate_lights);
+
    void update_render_resolution(uint32 width, uint32 height);
+
+   void add_object_light(const float4x4& world_from_object,
+                         const world::light_class& light_class);
 
    void prepare_lights(const camera& view_camera, const frustum& view_frustum,
                        const world::world& world,
